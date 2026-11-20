@@ -21,8 +21,8 @@ inspections have different chapters because they cover different places.
 
 | Tree | Chapters that ship |
 |---|---|
-| `data/dialogue/<locale>/` | `prologue`, `corridor`, `street`, `residential`, `alley`, `playground`, `inner_voice` |
-| `data/inspections/<locale>/` | `classroom`, `corridor`, `street`, `residential`, `alley`, `playground` |
+| `data/dialogue/<locale>/` | `prologue`, `corridor`, `school_annexes`, `street`, `residential`, `alley`, `playground`, `inner_voice` |
+| `data/inspections/<locale>/` | one file per location id in `data/story/locations.json` (17): `classroom`, `corridor`, `street`, `residential`, `alley`, `playground`, `laboratory`, `staff_office`, `restroom`, `restroom_02`, `restroom_03`, `archive`, `plan_room`, `projection_room`, `computer_room`, `vacant_office`, `principal_office` |
 
 `inner_voice` is not a place: it holds the lines an inner voice says without being
 asked, and keeping it separate makes it obvious how much of the game is the
@@ -53,6 +53,11 @@ Two rules keep this maintainable:
    the editor dock described below.
 5. Run the content checks (below). The game refuses to start a conversation whose
    structure is broken, and CI reports the file, the conversation and the node.
+
+For a writing pass over many scenes, export the Chinese tables as editable scripts
+instead (`python3 tools/story_doc.py export`), edit them in Google Docs and import them
+back; the format and the round trip are in
+[docs/STORY_DOCS.zh-CN.md](../../docs/STORY_DOCS.zh-CN.md).
 
 ## Editing in the editor
 
@@ -120,7 +125,7 @@ chapter list comes from the chapter files, and it warns if that disagrees with
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | yes | Stable, unique inside the conversation. Used by tests, parity and `next`. |
-| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`). |
+| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `student`) or an inner voice (`voice_orientation`). There is no narrator: narration is a `protagonist` line. |
 | `text` | yes | The line. May not be empty; a node with only choices may omit it. |
 | `source` | no | Overrides `default_source` for this line. |
 | `next` | no | Id of the next node. **Absent** = fall through to the next node in file order. **`null`** = the conversation ends here. |

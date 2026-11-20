@@ -59,7 +59,9 @@
           "speaker": "protagonist",
           "text": "摄像头不对着门，偏偏对着墙根那撮草。守在那儿的人大概连下课也看不出来。",
           "conditions": {
-            "not_flags": ["street_wall_seen"]
+            "not_flags": [
+              "street_wall_seen"
+            ]
           },
           "effects": [
             {

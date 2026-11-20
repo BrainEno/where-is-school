@@ -37,7 +37,7 @@
     "record": {
       "entry_id": "saw_pg_frame",
       "source": "observed",
-      "text": "场子里的攀爬架除了手常扶的地方，全都重新漆过。"
+      "text": "操场上的攀爬架除了手常扶的地方，全都重新漆过。"
     }
   },
   "pg_court": {
@@ -71,7 +71,7 @@
     "prompt": "看看那几只轮胎",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "靠工具棚墙边叠着四五只卡车轮胎，还有一只平放在地上。",
+    "text": "靠器材棚墙边叠着四五只卡车轮胎，还有一只平放在地上。",
     "repeat_text": "还是那些轮胎，你发现轮毂刷过一层黄色油漆，大部分已经被磨掉了。",
     "record": {
       "entry_id": "saw_pg_tyres",
