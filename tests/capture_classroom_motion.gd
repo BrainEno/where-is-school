@@ -217,6 +217,7 @@ func _capture_dressing() -> void:
 	# change the story's curtain state or take the transition out of this room.
 	var paper := _room.get_node(^"TimetableSheet") as MeshInstance3D
 	var clip := _room.get_node(^"TimetableClip") as Node3D
+	await _place(Vector3(0.45, 0.0, 3.55), Vector3.BACK)
 	_review.current = true
 	_review.position = Vector3(1.3, 1.82, 3.65)
 	_review.look_at(paper.global_position)
@@ -233,6 +234,7 @@ func _capture_dressing() -> void:
 				"The timetable slipped out of its clip.")
 			print("MOTION_PAPER bottom_lift=%.3f m" % travel)
 			await _shot("10_timetable_draft")
+			await _inspect_lifted_paper(paper, bottom)
 		await _wait(func() -> bool: return absf(paper.rotation.x) < 0.0001, "the paper to rest again")
 
 	var curtain := _room.get_node(^"Anomalies/BackCurtain") as WindowCurtain
@@ -263,6 +265,22 @@ func _capture_dressing() -> void:
 		await _shot("12_curtain_settled")
 	curtain.set_open_amount(0.0)
 	_game_camera.current = true
+
+
+func _inspect_lifted_paper(paper: MeshInstance3D, bottom: Vector3) -> void:
+	var target := _room.find_interactable(&"timetable")
+	var print_point := paper.to_global(bottom + Vector3(0, 0.06, -0.0106))
+	var pixel := _review.unproject_position(print_point)
+	if not _check.expect(target != null and _interaction.get_target_at_screen_position(pixel) == target,
+		"The lifted edge of the timetable no longer picks its own sheet."):
+		return
+	_mouse_click(pixel, target)
+	_check.expect(_dialogue.get_mode() == DialogueController.Mode.INSPECTION
+		and StringName(_dialogue.get_current_line().get("inspection_id", &"")) == &"classroom_timetable_sheet",
+		"The lifted timetable no longer opens its original inspection.")
+	_continue_line()
+	await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
+		"control after reading the moving sheet")
 
 
 func _capture_student() -> void:
@@ -299,10 +317,19 @@ func _capture_student() -> void:
 		print("MOTION_STUDENT input=%s walk=%.2f m head_turn=%.1f deg" % [
 			"touch" if MobileLayout.enabled else "mouse", _player.global_position.distance_to(at), turn])
 		await _shot("13_student_answers")
-	_dialogue.select_choice(0) # Leave him to it.
+		if not MobileLayout.enabled:
+			# The same live reply from desk height, to see the elbow and hand clearance.
+			_review.position = Vector3(-2.69, 1.49, -0.76)
+			_review.look_at(Vector3(-4.8, 0.80, -0.42))
+			_review.fov = 44.0
+			_review.current = true
+			await _shot("13b_student_at_desk")
+			_game_camera.current = true
+	if not await _choose_student(0, &"st_let_be"):
+		return
 	_check.expect(_student_node() == &"st_let_be" and not student.is_talking()
 		and student.get_current_clip() == "sit_idle", "The narrator kept the student speaking.")
-	_next_student_line()
+	_continue_line()
 	if not await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
 		"control after the short student reply"):
 		return
@@ -312,19 +339,19 @@ func _capture_student() -> void:
 	await _shot("14_student_recites_again")
 	if not await _click_student(talk, rig, head, false):
 		return
-	_ui.dialogue_panel.complete_reveal()
-	_dialogue.select_choice(1) # Wait and hear the original desk conversation.
+	if not await _choose_student(1, &"st_1"):
+		return
 	for id: StringName in [&"st_1", &"st_2", &"st_3", &"st_4", &"st_5"]:
 		var speaking := id in [&"st_1", &"st_3", &"st_5"]
 		_check.expect(_student_node() == id and student.is_talking() == speaking,
 			"The original exchange or its speaker cue changed at '%s'." % id)
-		_next_student_line()
+		_continue_line()
 	_check.expect(_student_node() == &"st_ask", "The original student choices disappeared.")
-	_ui.dialogue_panel.complete_reveal()
-	_dialogue.select_choice(0)
+	if not await _choose_student(0, &"st_moved"):
+		return
 	for id: StringName in [&"st_moved", &"st_m2", &"st_end"]:
 		_check.expect(_student_node() == id, "The desk question did not reach '%s'." % id)
-		_next_student_line()
+		_continue_line()
 	await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
 		"control after the longer exchange")
 	_check.expect(bool(state.get_flag(StoryFlags.STUDENT_TALKED, false)) and not student.is_talking()
@@ -352,7 +379,32 @@ func _student_node() -> StringName:
 	return StringName(_dialogue.get_current_line().get("node_id", &""))
 
 
-func _next_student_line() -> void:
+func _choose_student(index: int, next: StringName) -> bool:
+	var panel := _ui.dialogue_panel
+	panel.complete_reveal()
+	if not await _wait(func() -> bool:
+		var buttons := panel.get_choice_buttons()
+		if index >= buttons.size():
+			return false
+		var choice := buttons[index]
+		return choice.is_visible_in_tree() and not choice.disabled and choice.size.y >= 24.0,
+		"the student's choice button"):
+		return false
+	var button := panel.get_choice_buttons()[index]
+	var pixel := button.get_global_transform_with_canvas() * (button.size * 0.5)
+	var before := _pointer.get_world_click_event_count()
+	if MobileLayout.enabled:
+		_touch(pixel, true)
+		await process_frame
+		_touch(pixel, false)
+	else:
+		_mouse_buttons(pixel)
+	var chosen := await _wait(func() -> bool: return _student_node() == next, "student branch '%s'" % next)
+	_check.expect(_pointer.get_world_click_event_count() == before, "Choosing a reply clicked through into the room.")
+	return chosen
+
+
+func _continue_line() -> void:
 	_ui.dialogue_panel.complete_reveal()
 	_dialogue.advance_presentation()
 
@@ -374,6 +426,13 @@ func _bag_pixel() -> Vector2:
 func _mouse_click(pixel: Vector2, target: Interactable, walk_first: bool = false) -> void:
 	_clicked = null
 	var before := _pointer.get_world_click_event_count()
+	_mouse_buttons(pixel)
+	_check.expect(_pointer.get_world_click_event_count() == before + 1, "Mouse press did not reach world input exactly once.")
+	_check.expect((_pointer.get_pending_target() if walk_first else _clicked) == target,
+		"Mouse did not select %s from its visible pixel." % target.interact_id)
+
+
+func _mouse_buttons(pixel: Vector2) -> void:
 	for down: bool in [true, false]:
 		var click := InputEventMouseButton.new()
 		click.position = root.get_final_transform() * pixel
@@ -381,9 +440,6 @@ func _mouse_click(pixel: Vector2, target: Interactable, walk_first: bool = false
 		click.button_index = MOUSE_BUTTON_LEFT
 		click.pressed = down
 		_send(click)
-	_check.expect(_pointer.get_world_click_event_count() == before + 1, "Mouse press did not reach world input exactly once.")
-	_check.expect((_pointer.get_pending_target() if walk_first else _clicked) == target,
-		"Mouse did not select %s from its visible pixel." % target.interact_id)
 
 
 func _tap(pixel: Vector2, target: Interactable, walk_first: bool = false) -> void:

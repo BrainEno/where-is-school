@@ -254,10 +254,12 @@ jobs:
             done
             echo "::notice title=$(basename "$log") measurements::$(grep '^MOTION_' "$log" | paste -sd'|' -)"
           done
-      - name: Preview the returned pose
+      # Each job can relay only 50 annotations. Send the new review frames first;
+      # every image, including the original pose previews, remains in the artifact.
+      - name: Preview the student's short reply
         if: always()
         env:
-          FRAME: 03_returned_from_aisle
+          FRAME: 13_student_answers
         run: &motion_preview |
           set -euo pipefail
           file="$CI_LOG_DIR/${MODE:-mouse}/$FRAME.jpg"
@@ -271,6 +273,36 @@ jobs:
           for i in "${!parts[@]}"; do
             echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
           done
+      - name: Preview the reply at desk height
+        if: always()
+        env:
+          FRAME: 13b_student_at_desk
+        run: *motion_preview
+      - name: Preview the timetable at rest
+        if: always()
+        env:
+          FRAME: 09_timetable_still
+        run: *motion_preview
+      - name: Preview the draft at the timetable
+        if: always()
+        env:
+          FRAME: 10_timetable_draft
+        run: *motion_preview
+      - name: Preview the gathered curtain
+        if: always()
+        env:
+          FRAME: 11_curtain_recoil
+        run: *motion_preview
+      - name: Preview the student resuming recitation
+        if: always()
+        env:
+          FRAME: 14_student_recites_again
+        run: *motion_preview
+      - name: Preview the returned pose
+        if: always()
+        env:
+          FRAME: 03_returned_from_aisle
+        run: *motion_preview
       - name: Preview the lift
         if: always()
         env:
@@ -296,26 +328,6 @@ jobs:
         env:
           MODE: touch
           FRAME: 07_touch_returned
-        run: *motion_preview
-      - name: Preview the draft at the timetable
-        if: always()
-        env:
-          FRAME: 10_timetable_draft
-        run: *motion_preview
-      - name: Preview the gathered curtain
-        if: always()
-        env:
-          FRAME: 11_curtain_recoil
-        run: *motion_preview
-      - name: Preview the student's short reply
-        if: always()
-        env:
-          FRAME: 13_student_answers
-        run: *motion_preview
-      - name: Preview the student resuming recitation
-        if: always()
-        env:
-          FRAME: 14_student_recites_again
         run: *motion_preview
       - name: Publish viewport frames and motion log
         if: always()
