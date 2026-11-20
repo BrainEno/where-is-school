@@ -99,6 +99,33 @@ class ClassmatesAssets(unittest.TestCase):
                 self.assertLess(hip_weight[(p[:,1]>hip-.34) & (p[:,1]<hip-.26)].min(),.2)
                 print(f'{key}: closed 2-manifold trousers, peak hip-weight gradient {slope[transition].max():.2f}/m')
 
+    def test_thin_waist_stays_under_the_oxford(self):
+        # Rays through the central back, in a band actually covered by the
+        # shirt. This is the small area the old waist cap pierced mid-stride.
+        xy = np.stack(np.meshgrid(np.linspace(-.071,.071,31), np.linspace(.810,.890,29)),axis=-1).reshape(-1,2)
+
+        def rear_depth(points, faces):
+            a, b, c = points[faces].transpose(1,0,2)
+            u, v = b-a, c-a
+            det = u[:,0]*v[:,1]-u[:,1]*v[:,0]
+            rear = (det>1.e-11) & (a[:,1]<.960) & (a[:,1]>.720)
+            a, u, v, det = a[rear], u[rear], v[rear], det[rear]
+            dx, dy = np.moveaxis(xy[:,None,:]-a[None,:,:2],-1,0)
+            r = (dx*v[:,1]-dy*v[:,0])/det
+            s = (u[:,0]*dy-u[:,1]*dx)/det
+            hit = (r>=0.) & (s>=0.) & (r+s<=1.)
+            return np.where(hit,a[:,2]+r*u[:,2]+s*v[:,2],-np.inf).max(1)
+
+        g = Gltf(MODELS/'thin_classmate.glb')
+        for t in (0., .0328, .37, .59, .83, 1.1144):
+            depths = {name:rear_depth(pos, faces) for name,pos,_,faces,*_ in g.surfaces('walk_in_place',t)
+                      if name in ('woven_twill','cotton')}
+            shirt, trousers = depths['cotton'], depths['woven_twill']
+            samples = np.isfinite(shirt) & np.isfinite(trousers)
+            self.assertGreater(samples.sum(),300)
+            self.assertGreater((shirt[samples]-trousers[samples]).min(),.002,
+                               f'Shirt clearance while walking at {t:.3f} s')
+
     def test_foot_contact_and_signature(self):
         for key,(signature,apex) in ACTING.items():
             with self.subTest(key=key):

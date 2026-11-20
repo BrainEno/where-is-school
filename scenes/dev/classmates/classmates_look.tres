@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
@@ -253,10 +253,31 @@ shader_parameter/detail_scale = 138
 shader_parameter/detail_strength = 0.16
 shader_parameter/detail_tint = Color(0.83, 0.785, 0.795, 1)
 
+[sub_resource type="ShaderMaterial" id="Trim"]
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.16
+shader_parameter/pigment_a = Color(0.87, 0.86, 0.95, 1)
+shader_parameter/pigment_b = Color(1, 0.97, 0.9, 1)
+shader_parameter/pigment_scale = 15.0
+shader_parameter/pigment_value = 0.112
+shader_parameter/pigment_blend = 0.36
+shader_parameter/shade_tint = Color(0.63, 0.583, 0.714, 1)
+shader_parameter/light_tint = Color(0.988, 0.923, 0.831, 1)
+shader_parameter/shadow_fill = 0.49
+shader_parameter/light_strength = 0.86
+shader_parameter/shadow_edge = -0.041
+shader_parameter/light_edge = 0.45
+shader_parameter/half_tone = 0.60
+shader_parameter/edge_break = 0.16
+shader_parameter/edge_softness = 0.045
+
 [resource]
 script = ExtResource("1_look")
 materials = {
 "clipper_skin": SubResource("Crop"),
+"cloth_trim": SubResource("Trim"),
 "cotton": SubResource("Cloth"),
 "hair_combed": SubResource("Combed"),
 "hair_crest": SubResource("Crest"),

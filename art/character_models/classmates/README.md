@@ -22,7 +22,8 @@ not image planes. The runtime files use no texture atlas or third-party clips.
 
 The knee-to-seat loft on all three pairs of trousers keeps the welded crotch
 and existing fit. A tangent-continuous join and a wider, continuous pelvis
-blend replace the hard change of direction and weight at the seam. The thin
+blend replace the hard change of direction and weight at the seam. The slim
+waist also clears the back of its shirt on the pitch of the walk. The thin
 student's clipper fade is relief and pigment on the **same** scalp mesh (less
 than 2 mm of local relief), not a separate wig. A linear `COLOR_0.a` density mask
 confines the fine shader flecks to that scalp; the surface stays opaque. The

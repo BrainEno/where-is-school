@@ -439,6 +439,10 @@ class Wardrobe:
         rings = [*waist_ids]
         for y, scale in [(seat_y+.025,1.000),(self.hip+.018,.955),(self.hip+.073,.91)]:
             q = (base-[0.,0.,z0])*[scale,0.,scale]+[0.,y,z0]
+            if self.thin:
+                # Tuck the hidden back waist under the narrow oxford. It
+                # previously showed at the rear when pelvis and spine pitched.
+                q[:,2] += .0075*smoothstep(self.hip-.006,self.hip+.014,y)*smoothstep(0.,-.075,q[:,2]-z0)
             rings.extend(range(len(v),len(v)+n))
             v.extend(q); weights.extend(s.weights(n,'Hips')); paint.extend(rgb(d.pants)+trigs(q)[:,None]*.028)
         indices.extend(np.asarray(rings)[rings_faces(4,n,flip=True)])
