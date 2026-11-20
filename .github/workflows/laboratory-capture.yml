@@ -4,13 +4,13 @@ name: Laboratory capture
 # game itself, plus a recorded walkthrough. `tests/capture_laboratory.gd` takes the frames
 # and `tests/capture_laboratory_walkthrough.gd` records the route; see their headers.
 #
-# Six two-frame jobs keep the inline images below GitHub's 50-annotation-per-job limit.
+# Seven two-frame jobs (six Compatibility, one Forward+) keep the inline images
+# within GitHub's annotation budget.
 # The annotations let a reviewer read the frames through the REST API even where the artifact
 # store cannot be reached; each job also uploads the same frames at full size.
 #
-# `rendering` runs the whole set on the Compatibility renderer (opengl3, what the school
-# slice ships on) and a smaller pair on Forward+ (vulkan through lavapipe, installed
-# here). Both are required to render the room, not one of them.
+# The stills share one matrix: the full set uses the shipping Compatibility renderer,
+# and a comparison pair uses Forward+ through lavapipe. Both keep their own artifacts.
 
 on:
   pull_request:
@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   frames:
-    name: frames (${{ matrix.group }})
+    name: ${{ matrix.check_name || format('frames ({0})', matrix.group) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -52,10 +52,25 @@ jobs:
             only: "annex_door,far_corridor"
           - group: annex_walk
             only: "annex_inside,explore_to_unknown"
+          - group: forward-plus
+            check_name: forward+ (vulkan)
+            only: "room_wide,annex_inside"
+            label: forward_plus
+            driver: vulkan
+            notice_prefix: fp_
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - uses: ./.github/actions/setup-godot
+
+      - name: Install a software Vulkan driver
+        if: matrix.driver == 'vulkan'
+        shell: bash
+        run: |
+          # The runner has no GPU. Forward+ uses lavapipe; Compatibility needs only OpenGL.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary 2>&1 | head -n 20 || true
 
       - name: Import
         shell: bash
@@ -66,64 +81,66 @@ jobs:
         env:
           GROUP: ${{ matrix.group }}
           ONLY: ${{ matrix.only }}
+          LABEL: ${{ matrix.label || 'compatibility' }}
+          DRIVER: ${{ matrix.driver || 'opengl3' }}
+          NOTICE_PREFIX: ${{ matrix.notice_prefix || '' }}
         run: |
-          set +e -uo pipefail
+          set -euo pipefail
+          log="${RUNNER_TEMP}/capture.log"
+          code=0
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+            godot --path . --resolution 1600x900 --rendering-driver "${DRIVER}" --audio-driver Dummy \
             --script res://tests/capture_laboratory.gd -- \
-            "label=compatibility" "only=${ONLY}" width=960 quality=0.86 \
-            > "${RUNNER_TEMP}/capture.log" 2>&1
-          code=$?
-          grep -E "LABORATORY_CAPTURE|PASS|FAIL|SCRIPT ERROR|ERROR:" "${RUNNER_TEMP}/capture.log" | head -n 40
-          out="docs/screenshots/laboratory/compatibility"
-          ls -l "${out}" || true
-          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" | wc -l)
-          echo "frames=${frames} exit=${code}"
-          if [ "${code}" -ne 0 ] || [ "${frames}" -ne 2 ] || \
-              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
-              ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
-            echo "::error title=laboratory capture::${GROUP} wrote ${frames} frame(s), exit ${code}"
-            tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            "label=${LABEL}" "only=${ONLY}" width=960 quality=0.86 \
+            > "${log}" 2>&1 || code=$?
+          grep -m 40 -E 'LABORATORY_CAPTURE|Vulkan|vulkan|PASS|FAIL|SCRIPT ERROR|ERROR:' "${log}" || true
+          shopt -s nullglob
+          shots=(docs/screenshots/laboratory/"${LABEL}"/*.jpg)
+          echo "frames=${#shots[@]} exit=${code}"
+          if [ "${code}" -ne 0 ] || [ "${#shots[@]}" -ne 2 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${log}" || \
+              ! grep -q '^PASS:' "${log}"; then
+            echo "::error title=laboratory capture::${GROUP} wrote ${#shots[@]} frame(s), exit ${code}"
+            tail -n 25 "${log}" | cut -c1-400 || true
             exit 1
           fi
-          mkdir -p "${RUNNER_TEMP}/frames"
-          cp "${out}"/*.jpg "${RUNNER_TEMP}/frames/"
+          # Staging or encoding a frame is part of success too. Keep errexit enabled.
+          stage="${RUNNER_TEMP}/frames"
+          mkdir -p "${stage}"
+          cp -- "${shots[@]}" "${stage}/"
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
-          for file in $(ls "${RUNNER_TEMP}/frames" | sort); do
-            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
+          for shot in "${shots[@]}"; do
+            file="${shot##*/}"
+            data=$(base64 -w0 "${stage}/${file}")
             parts=$(( (${#data} + 3999) / 4000 ))
-            for i in $(seq 1 "${parts}"); do
-              echo "${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            for ((i=0; i<parts; i++)); do
+              printf '%s%s %s/%s %s\n' "${NOTICE_PREFIX}" "${file}" "$((i + 1))" "${parts}" \
+                "${data:$((i * 4000)):4000}" >> "${queue}"
             done
           done
           echo "queued $(wc -l < "${queue}") annotation part(s)"
 
       # GitHub keeps at most 10 notices per step and 50 annotations per job: five steps of
-      # ten. A frame whose parts do not all fit is incomplete in the annotations; the
-      # artifact still has it, and so does the next job's.
+      # ten. An incomplete frame is still in the artifact. Only publish after Capture
+      # succeeds; the upload step still keeps any capture log on failure.
       - name: Publish frames 1/5
-        if: always()
         shell: bash
-        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
       - name: Publish frames 2/5
-        if: always()
         shell: bash
-        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
       - name: Publish frames 3/5
-        if: always()
         shell: bash
-        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
       - name: Publish frames 4/5
-        if: always()
         shell: bash
-        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
       - name: Publish frames 5/5
-        if: always()
         shell: bash
         run: |
-          sed -n '41,50p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          sed -n '41,50p' "${RUNNER_TEMP}/queue.txt" | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt")
           if [ "${total}" -gt 50 ]; then
             echo "${total} parts queued, 50 published; the rest are only in the artifact"
           fi
@@ -133,93 +150,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: laboratory-frames-${{ matrix.group }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/frames/
-            ${{ runner.temp }}/capture.log
-          if-no-files-found: warn
-
-  forward_plus:
-    name: forward+ (vulkan)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-
-      - uses: ./.github/actions/setup-godot
-
-      - name: Install a software Vulkan driver
-        shell: bash
-        run: |
-          # The runner has no GPU. Forward+ needs Vulkan, and lavapipe (Mesa's software
-          # Vulkan) renders it; this is the same trick `xvfb-run` plays for OpenGL.
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
-          vulkaninfo --summary 2>&1 | head -n 20 || true
-
-      - name: Import
-        shell: bash
-        run: bash tools/ci_import_godot.sh "${RUNNER_TEMP}"
-
-      - name: Capture on Forward+
-        shell: bash
-        run: |
-          set +e -uo pipefail
-          xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver vulkan --audio-driver Dummy \
-            --script res://tests/capture_laboratory.gd -- \
-            "label=forward_plus" "only=room_wide,annex_inside" width=960 quality=0.86 \
-            > "${RUNNER_TEMP}/capture.log" 2>&1
-          code=$?
-          grep -E "LABORATORY_CAPTURE|Vulkan|vulkan|PASS|FAIL|SCRIPT ERROR" "${RUNNER_TEMP}/capture.log" | head -n 40
-          out="docs/screenshots/laboratory/forward_plus"
-          ls -l "${out}" || true
-          frames=$(find "${out}" -maxdepth 1 -name "*.jpg" 2>/dev/null | wc -l)
-          echo "frames=${frames} exit=${code}"
-          if [ "${code}" -ne 0 ] || [ "${frames}" -ne 2 ] || \
-              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
-              ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
-            echo "::error title=forward+ capture::Forward+ wrote ${frames} frame(s), exit ${code}"
-            tail -n 25 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
-            exit 1
-          fi
-          mkdir -p "${RUNNER_TEMP}/frames"
-          cp "${out}"/*.jpg "${RUNNER_TEMP}/frames/"
-          queue="${RUNNER_TEMP}/queue.txt"
-          : > "${queue}"
-          for file in $(ls "${RUNNER_TEMP}/frames" | sort); do
-            data=$(base64 -w0 "${RUNNER_TEMP}/frames/${file}")
-            parts=$(( (${#data} + 3999) / 4000 ))
-            for i in $(seq 1 "${parts}"); do
-              echo "fp_${file} ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
-            done
-          done
-
-      - name: Publish Forward+ frames 1/5
-        if: always()
-        shell: bash
-        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-      - name: Publish Forward+ frames 2/5
-        if: always()
-        shell: bash
-        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-      - name: Publish Forward+ frames 3/5
-        if: always()
-        shell: bash
-        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-      - name: Publish Forward+ frames 4/5
-        if: always()
-        shell: bash
-        run: sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-      - name: Publish Forward+ frames 5/5
-        if: always()
-        shell: bash
-        run: sed -n '41,50p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
-
-      - name: Upload Forward+ frames
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: laboratory-frames-forward-plus-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/frames/
             ${{ runner.temp }}/capture.log
