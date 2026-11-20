@@ -16,8 +16,8 @@ involved.
 | --- | --- | --- |
 | `textures/*.png` (31) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2130), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
-| `materials/*.tres` | `source/build_playground_art.py` | Toon `StandardMaterial3D` (`diffuse_mode = 3`, `specular_mode = 2`) plus one shared ink outline pass. |
-| `meshes/*.obj` and sidecars, `noodle_wrapper.tscn` | `source/build_playground_art.py` calls `source/yard_details.py` | Watertight structure stays in the container shell; the dressing uses shaped gridded surfaces for folds, a cut corner and split plastic film, with UVs and normals. No new collider or runtime mesh builder. |
+| `materials/*.tres` | `source/build_playground_art.py` | Local `StandardMaterial3D`: toon and a shared ink outline for the yard, softer shading on curved concrete, sand and machinery. |
+| `meshes/*.obj` and sidecars, `noodle_wrapper.tscn` | `source/build_playground_art.py` calls `source/yard_details.py` and `source/site_meshes.py` | Shaped bedding and wrapper film, plus the cast shell, sand basins, folded sheets and machine parts. Baked meshes and UID sidecars; no downloads, new paint tiles or runtime mesh builder. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
 The distribution/source record is in [ASSET_PROVENANCE.md](../../../../docs/ASSET_PROVENANCE.md).
@@ -54,33 +54,24 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
   - chimney
   - pylon and trees
   - All are unlit, cast no shadows and never sit between the camera and the player.
-- **The building under construction** (`ConstructionSite`, glossary 建造中的大楼; built by
-  `source/construction_site.py`). A raw earth plot pushed out from the yard's
-  south-west corner into the laid-flat sky (x −35.25…−23.05, z 7…19.6): the
-  yard ends and a site begins without a fence between them. On it:
-  - blue hoarding with a white band, a closed barred gate chained shut, and a blank name
-    plate over it. The school beyond has no name yet.
-  - in front of the gate, on the strip between the yard edge and the hoarding, three
-    hollow sand pyramids. The sand is near-white toon paint, blown out where it faces the
-    light, standing on a collar of wet sand. Each top is cut open, and cold, unlit water
-    stands in the dark mouth. Seen from the follow camera, this is what the corner shows
-    first. The source is the novel excerpt's sand piles before a closed school gate,
-    "像用来保存浮尸的金字塔".
-  - a yellow excavator behind the hoarding, its arm reaching over it to the smallest pile.
-  - the frame of the future 椭球大楼, which is a later glossary name. Oval floor plates
-    widen and narrow along an ellipsoid profile. There are four poured floors and a timber
-    deck, with columns and a bare core, and rebar left standing for the next storey. Two
-    drain pipes run down the yard-facing side. Rebar meridians and latitude hoops trace,
-    at full size, the ellipsoid it will become. The deck carries a chalked six-pointed
-    board with six marbles that match nothing; only the high fixed views see it.
-  - Placement rule: every piece stays west of x = −23.05 m. The walkable yard ends at
-    x ≈ −22.5, and the follow camera sits south-east of the player, so no part of the
-    site can come between the camera and the player or an interactable.
-  - Primitive meshes only, with shared shapes. Nothing collides, so the solids, the baked
-    navigation and the shape counts are unchanged. Six new materials: `site_earth`,
-    `hoarding`, `sand_glare`, `sand_wet`, `cold_water` and `slab`. No new texture: they
-    reuse the ground, metal and plaster tiles. The pylon cut-out moved from (−33, 14) to
-    (−42, 21) so that it stands clear of the plot.
+- **The building under construction** (`PlaygroundArt/ConstructionSite`, built by
+  `source/construction_site.py`). The plot still meets the yard at the same edge; it is
+  a backdrop, not a walkable extension.
+  - The ellipsoid building has a closed, opaque, 360° concrete shell. Shallow cold joints
+    mark the pours without cuts through the wall. Two pipes follow the curved face. The
+    unfinished silhouette comes from the top: exposed timber formwork, projecting rebar,
+    chalk and marbles. The shell does not fade or have an open backside.
+  - The three sand piles have irregular shoulders and real recessed walls beneath the lip.
+    Dark wet sand and shaded water sit below the opening, rather than on top of a solid cap.
+  - Ribbed blue panels keep their pale top edge and one fallen panel. The two gate leaves
+    have bars, hinge sleeves, a short chain and padlock, and the nameplate remains blank.
+  - The yellow excavator keeps its reach over the fence. Its cab frames, track shoes and
+    rollers, hydraulic cylinders and open toothed bucket describe how the separate parts fit.
+  - `site_meshes.py` bakes the closed shell, sand and reusable parts offline. The sheet ribs,
+    gate bars and tread shoes are grouped in their respective meshes. Materials reuse the
+    yard's ground, metal and plaster tiles. All geometry is at x ≤ −23.05 m (walkable yard
+    ends near −22.5); no new collision, navigation or interaction. The pinned camera test
+    now also checks the shell's opacity and triangle coverage from eight bearings.
 - **Ground.** Two pours of low-value concrete: the stage floor stays dark so the court,
   the props and the pale HUD text carry the light. The older pour is warm sand; the newer
   pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up
@@ -117,7 +108,7 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Shed / roof / door | `#CCBEA4` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
-| Site: earth tint / hoarding / sand / wet sand / cold water / slab | `#FAC8B4` × ground tile / `#4A6C94` / `#FAEECC` / `#806448` / `#92C0CC` (unlit) / `#B8B4B0` |
+| Site: earth tint / hoarding / sand / wet sand / cold water / slab / excavator | `#EDC7AE` × ground tile / `#51779C` / `#EFD8AD` / `#826950` / `#3B4E4F` (unlit) / `#B5B1A6` / `#DAA345` |
 | Sky: blue / mauve / rose / glow / ground rows | `#404A64` / `#544C68` / `#64505E` / `#685456` / `#2C283A` |
 
 Lighting (in `playground.tscn`):

@@ -150,8 +150,10 @@ const SITE_STANCES := [["corner_stance", Vector3(-20.6, 0.0, 15.2)]]
 const SITE_VIEWS := [
 	["sand_piles", Vector3(-20.9, 2.1, 13.9), Vector3(-25.2, 0.9, 14.2)],
 	["excavator", Vector3(-22.6, 3.4, 21.6), Vector3(-28.6, 2.0, 16.6)],
-	["ellipsoid_frame", Vector3(-19.5, 7.5, 3.0), Vector3(-31.4, 5.6, 11.8)],
+	["ellipsoid_exterior", Vector3(-19.5, 7.5, 3.0), Vector3(-31.4, 5.6, 11.8)],
 	["site_overview", Vector3(-23.6, 15.0, 29.0), Vector3(-29.5, 3.5, 13.0)],
+	["sand_basins", Vector3(-22.5, 4.3, 16.9), Vector3(-25.2, 1.22, 14.4)],
+	["excavator_tracks", Vector3(-26.2, 5.6, 22.3), Vector3(-28.93, 1.6, 16.98)],
 ]
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
 const RETURN_SPOTS := {
@@ -282,7 +284,7 @@ func _run() -> void:
 	if _dream_annex:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", DREAM_STANCES, DREAM_VIEWS)
 	elif _construction_site:
-		var site := ^"PlaygroundArt/ConstructionSite/EllipsoidFrame"
+		var site := ^"PlaygroundArt/ConstructionSite/EllipsoidBuilding/CastShell"
 		await _capture_views(out_dir, "playground", site, SITE_STANCES, SITE_VIEWS)
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)

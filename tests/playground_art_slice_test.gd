@@ -201,6 +201,8 @@ func _run() -> void:
 	_check_colour_system()
 	Harness.stage = "wall dressing"
 	_check_dressing()
+	Harness.stage = "construction site"
+	_check_construction_site()
 	Harness.stage = "textures"
 	_check_textures()
 	Harness.stage = "hierarchy"
@@ -459,6 +461,52 @@ func _check_dressing() -> void:
 
 
 # --- 5. textures --------------------------------------------------------------------
+
+
+func _check_construction_site() -> void:
+	var site := _yard.get_node_or_null(^"PlaygroundArt/ConstructionSite") as Node3D
+	if site == null:
+		_failures.append("The construction site is missing from the schoolyard.")
+		return
+	for node in _descendants(site):
+		var piece := node as MeshInstance3D
+		if piece == null or piece.mesh == null:
+			continue
+		var world_box := piece.global_transform * piece.get_aabb()
+		if world_box.end.x > _yard.to_global(Vector3(-23.05, 0, 0)).x + 0.001:
+			_failures.append("Site mesh '%s' extends past the yard boundary." % _relative(piece))
+
+	var shell := site.get_node_or_null(^"EllipsoidBuilding/CastShell") as MeshInstance3D
+	if shell == null or shell.mesh == null or not shell.is_visible_in_tree():
+		_failures.append("The ellipsoid building has no visible outer shell.")
+		return
+	for surface in range(shell.mesh.get_surface_count()):
+		var mat := shell.get_active_material(surface) as BaseMaterial3D
+		if mat == null or mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or mat.albedo_color.a < 1.0:
+			_failures.append("The ellipsoid's concrete must be fully opaque.")
+	if shell.transparency != 0.0 or shell.is_in_group("camera_occluder"):
+		_failures.append("The ellipsoid shell must not fade out as an occluder.")
+
+	# Test actual triangles, not only the shell's bounding box: hoops or a front-only
+	# curtain would leave rays from some heights/bearings free to see into the building.
+	var faces := shell.mesh.get_faces()
+	for height: float in [0.35, 2.75, 5.25, 7.75, 10.12]:
+		var inside := Vector3(0.0, height, 0.0)
+		for i in range(8):
+			var angle := (i + 0.27) * TAU / 8.0
+			var outside := inside + Vector3(cos(angle), 0.0, sin(angle)) * 5.0
+			if not _segment_hits_mesh(faces, outside, inside):
+				_failures.append("Gap in ellipsoid shell at %.2f m, bearing %d/8." % [height, i])
+	if not _segment_hits_mesh(faces, Vector3(0.3, 11.5, 0.4), Vector3(0.3, 9.5, 0.4)):
+		_failures.append("The ellipsoid shell is open under the timber cap.")
+	_notes.append("opaque construction shell, %d triangles" % (faces.size() / 3))
+
+
+func _segment_hits_mesh(faces: PackedVector3Array, start: Vector3, end: Vector3) -> bool:
+	for i in range(0, faces.size(), 3):
+		if Geometry3D.segment_intersects_triangle(start, end, faces[i], faces[i + 1], faces[i + 2]) != null:
+			return true
+	return false
 
 
 func _check_textures() -> void:

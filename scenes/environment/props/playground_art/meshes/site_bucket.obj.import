@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+type="Mesh"
+uid="uid://hyxmlxyaab4g"
+path="res://.godot/imported/site_bucket.obj-72382e97a599ef368be77e825b76b215.mesh"
+
+[deps]
+
+source_file="res://scenes/environment/props/playground_art/meshes/site_bucket.obj"
+dest_files=["res://.godot/imported/site_bucket.obj-72382e97a599ef368be77e825b76b215.mesh"]
+
+[params]
+
+generate_tangents=false
+generate_lods=false
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

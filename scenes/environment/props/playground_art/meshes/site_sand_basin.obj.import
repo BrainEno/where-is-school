@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+type="Mesh"
+uid="uid://g88iew6lgd0a"
+path="res://.godot/imported/site_sand_basin.obj-91eae30cc4cc2ca8fcc62603a871d740.mesh"
+
+[deps]
+
+source_file="res://scenes/environment/props/playground_art/meshes/site_sand_basin.obj"
+dest_files=["res://.godot/imported/site_sand_basin.obj-91eae30cc4cc2ca8fcc62603a871d740.mesh"]
+
+[params]
+
+generate_tangents=false
+generate_lods=false
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

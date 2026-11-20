@@ -166,17 +166,30 @@ MATERIALS: dict[str, dict] = {
     "row_tower": {"color": DISTANT, "texture": tex("row_tower"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_chimney": {"color": DISTANT, "texture": tex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
-    # The fence that carries on past the yard: the panel texture once per 3 x 2 m quad
-    # (plain UVs, not world triplanar, so each panel can sink without its rails sliding).
-    # The building under construction past the south-west corner (construction_site.py).
-    # The sand is near-white toon paint: blown out where it faces the light, against the
-    # unlit cold water standing in each hollow pile.
-    "site_earth": {"color": (250, 200, 180), "texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
-    "hoarding": {"color": (74, 108, 148), "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
-    "sand_glare": {"color": (250, 238, 204), "outline": True},
-    "sand_wet": {"color": (128, 100, 72), "outline": True},
-    "cold_water": {"color": (146, 192, 204), "unshaded": True},
-    "slab": {"color": (184, 180, 176), "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
+    # The construction plot shares the yard's painted tiles. Lambert shading keeps
+    # gradual curvature on sand and concrete instead of a toon step on each ring.
+    "site_earth": {"color": (237, 199, 174), "texture": tex("ground_tile"),
+                   "triplanar": "world", "scale": (0.40, 0.40, 0.40)},
+    "site_compacted": {"color": (194, 168, 146), "texture": tex("ground_tile"),
+                       "triplanar": "world", "scale": (0.53, 0.53, 0.53)},
+    "hoarding": {"color": (81, 119, 156), "texture": tex("metal_tile"),
+                  "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
+    "hoard_fold": {"color": (70, 97, 123), "texture": tex("metal_tile"),
+                   "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
+    "sand_glare": {"color": (239, 216, 173), "texture": tex("plaster_tile"), "diffuse": 1,
+                   "triplanar": "world", "scale": (0.78, 0.78, 0.78)},
+    "sand_wet": {"color": (130, 105, 80), "texture": tex("plaster_tile"), "diffuse": 1,
+                 "triplanar": "world", "scale": (0.92, 0.92, 0.92)},
+    "cold_water": {"color": (59, 78, 79), "unshaded": True},
+    "water_glint": {"color": (117, 143, 139), "unshaded": True},
+    "slab": {"color": (181, 177, 166), "texture": tex("plaster_tile"), "diffuse": 1,
+             "triplanar": "world", "scale": (0.33, 0.33, 0.33)},
+    "site_yellow": {"color": (218, 163, 69), "texture": tex("metal_tile"), "diffuse": 1,
+                    "triplanar": "world", "scale": (0.62, 0.62, 0.62), "roughness": 0.82},
+    "site_steel": {"color": (72, 74, 73), "texture": tex("metal_tile"), "diffuse": 1,
+                   "triplanar": "world", "scale": (0.77, 0.77, 0.77)},
+    "site_glass": {"color": (62, 82, 88), "roughness": 0.7},
+    # One panel tile per 3 x 2 m quad so its rails stay put as the fence sinks.
     "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
 
@@ -200,7 +213,7 @@ def material_tres(name: str, spec: dict) -> str:
     if spec.get("unshaded"):
         lines += ["shading_mode = 0", "disable_receive_shadows = true"]
     else:
-        lines += ["diffuse_mode = 3", f"specular_mode = {spec.get('specular', 2)}"]
+        lines += [f"diffuse_mode = {spec.get('diffuse', 3)}", f"specular_mode = {spec.get('specular', 2)}"]
     lines.append(f"albedo_color = {srgb(spec.get('color', (255, 255, 255)))}")
     if "texture" in spec:
         lines.append('albedo_texture = ExtResource("2_tex")')
@@ -838,6 +851,7 @@ def main() -> None:
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
     print(f"wrote {len(MATERIALS) + 1} materials to {MAT_DIR.relative_to(ROOT)}")
     yard_details.write_detail_meshes(ART, RES)
+    construction_site.write_assets(ART, RES)
     (ART / "noodle_wrapper.tscn").write_text(build_noodle_wrapper())
     container, container_materials = build_container()
     (ART / "container.tscn").write_text(container)
