@@ -2,12 +2,20 @@ extends SceneTree
 ## Exercise the classroom exchanges through the real opening, interaction dispatcher,
 ## controller and save file. The fixture starts at the checkpoint after Q's intro;
 ## opening_flow_test covers the wake and q_wake itself.
+##
+## The paths follow the author's own version of the prologue (round 5): the set-square
+## exchange with its camera looks, the accusation and N's guarded answer, a bag never
+## searched, the ruler check after the lesson, and the rear door for a player who said
+## they would borrow a book next door - once failed, once taken (skipping class).
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
 const READ_LOG := "user://prologue_dialogue_paths_read_log.json"
 const CHECK_NODE := &"ad_square_check"
 const CHECK_KEY := "q_after_dismissal/ad_square_check"
+const REAR_CONVERSATION := &"classroom_rear_door_borrow"
+const REAR_CHECK := &"rdb_check"
+const REAR_KEY := "classroom_rear_door_borrow/rdb_check"
 
 var _checks := Harness.Checker.new()
 var _state: Node
@@ -17,14 +25,16 @@ var _world: Node
 var _sequence: OpeningSequence
 var _dialogue: DialogueController
 var _interaction: InteractionController
+var _host: LocationHost
 var _room: LocationRoot
 var _played: Array[StringName] = []
 var _lines: Array[StringName] = []
 var _rolls: Array[Dictionary] = []
+var _inspections: Array[StringName] = []
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 150.0, "prologue_dialogue_paths_test.gd")
+	Harness.arm_watchdog(self, 170.0, "prologue_dialogue_paths_test.gd")
 	call_deferred("_run")
 
 
@@ -43,76 +53,82 @@ func _run() -> void:
 		await _square_then_bag(locale, locale == "zh-CN")
 		await _bag_then_square(locale)
 		await _no_search(locale)
-	await _book_without_pact("zh-CN", true)
-	await _book_without_pact("en", false)
+	await _book_talk("zh-CN", true)
+	await _book_talk("en", false)
+	await _rear_door(false)
+	await _rear_door(true)
 	await _release()
 	Engine.time_scale = 1.0
 	Harness.clear_session_state(self)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(READ_LOG))
 	Harness.finish(self, _checks.failures,
-		"Bilingual classroom paths: book sharing, accusation, testimony, self-answer and silence; "
-		+ "early and late ruler inspection, both check results, and a save with no replay.")
+		"Bilingual classroom paths: the set-square looks, accusation, silence and N's questions; "
+		+ "early and late ruler inspection, both check results, a save with no replay, and the "
+		+ "rear door failed and taken.")
 
 
 func _square_then_bag(locale: String, succeeds: bool) -> void:
-	Harness.stage = locale + ": ruler, share the book, answer, place the sound, reload"
+	Harness.stage = locale + ": ruler, ask about it, look again, the lesson, place the sound, reload"
 	await _boot(locale)
 	await _inspect(&"set_square")
 	_entry(&"saw_set_square", NarrativeEntry.Source.OBSERVED)
 	_entry(&"recall_set_square_placed", NarrativeEntry.Source.RECALLED)
-	var notebook := JournalCatalog.build(_dialogue.get_dialogue_library(), _dialogue.get_inspection_library())
-	_expect_ruler_pair(notebook, false)
 	await _inspect(&"schoolbag")
 	if not await _menu(&"q_after_bag", &"q_ab_1") or not _pick(&"square"):
 		return
-	if not await _menu(&"q_after_bag", &"q_ab_1"):
+	if not await _menu(&"q_after_bag", &"q_sq_2"):
 		return
-	_choice(&"square", false)
-	if not _pick(&"told") or not await _menu(&"q_after_bag", &"q_told_2") or not _pick(&"share"):
+	if not _pick(&"square_again"):
 		return
+	# The look is asked for by the option and holds for the line it leads to.
+	var square := _room.find_interactable(&"set_square")
+	var focus := _sequence.get_camera_focus()
+	_checks.expect(await Harness.wait_until(func() -> bool:
+		return focus.get_glance() == square, 2.0), "Looking at the set square again did not turn the camera to it.")
 	if not await _menu(&"n_class", &"n_8"):
 		return
-	_entry(&"q_set_square_use", NarrativeEntry.Source.REPORTED)
-	_expect_ruler_pair(notebook, true)
-	_checks.expect(_flag(StoryFlags.Q_BOOK_PACT), "Sharing did not carry a promise into the lesson.")
+	_checks.expect(focus.get_glance() == null, "The set-square look outlived its conversation.")
+	_checks.expect(_flag(StoryFlags.Q_BOOK_TALK_DONE) and not _flag(StoryFlags.TOLD_Q_ABOUT_TEXTBOOK)
+		and not _flag(StoryFlags.ACCUSED_Q), "The set-square talk closed the book talk the wrong way.")
 	_checks.expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"Q's completed book exchange did not go back to the short studying response.")
 	_switch_at_book_choice(locale)
-	if not _pick(&"share_with_q"):
-		return
 	_checks.expect(_played == [&"q_after_bag", &"expected_b", &"bell_moment", &"n_class"],
 		"Search path played the wrong sequence: %s." % str(_played))
-	if not await _answer_roll(&"answer_self", "answered_self", &"n_roll_answered_self"):
+	if not _pick(&"textbook") or not await _lesson_ends():
 		return
-	_entry(&"n_allows_book_sharing", NarrativeEntry.Source.REPORTED)
+	_checks.expect(_flag(StoryFlags.ASKED_N_ABOUT_TEXTBOOK) and not _lines.has(&"q_n_guarded")
+		and _lines.has(&"q_free"), "Asking N about the textbook took the wrong lines.")
 
-	var resolver := _resolver_for(succeeds)
+	var resolver := _resolver_for(succeeds, &"q_after_dismissal", CHECK_NODE, CHECK_KEY)
 	if resolver == null:
 		return
 	_dialogue.set_check_resolver(resolver)
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
-	_entry(&"q_repeated_absence_rumor", NarrativeEntry.Source.REPORTED)
 	_choice(&"place_sound", false)
 	if not _pick(&"look_back_at_square") or not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
-	_entry(&"q_n_left_square_alone", NarrativeEntry.Source.REPORTED)
-	_checks.expect(not _narrative.has_entry(&"q_set_square_after_roll"),
-		"Q repeated his account of the ruler's origin.")
+	_checks.expect(_lines.has(&"p_ad_square_memory") and _lines.has(&"q_ad_square_compare"),
+		"After the imagined lesson the protagonist did not compare the remembered sound.")
 	if not _pick(&"place_sound") or not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
 	_checks.expect(_rolls.size() == 1 and _rolls[0].get("success") == succeeds
 		and _rolls[0].get("kind") == "visible", "The ruler check used the wrong result/presentation.")
 	_checks.expect(not _flag(StoryFlags.LEFT_CLASSROOM) and not _flag(StoryFlags.FREE_PERIOD_STAYED)
 		and not _flag(StoryFlags.FREE_PERIOD_LEAVING), "An inquiry decided where the player would go.")
-	var entry := &"recall_square_sound_close" if succeeds else &"q_set_square_pause"
-	var source := NarrativeEntry.Source.RECALLED if succeeds else NarrativeEntry.Source.REPORTED
-	_entry(entry, source)
+	if succeeds:
+		_entry(&"recall_square_sound_close", NarrativeEntry.Source.RECALLED)
+	else:
+		_checks.expect(_lines.has(&"q_ad_square_pause") and not _narrative.has_entry(&"recall_square_sound_close"),
+			"A failed placement recorded the sound anyway, or Q did not answer.")
 	_choice(&"look_back_at_square", false)
 	_choice(&"place_sound", false)
 	if not _pick(&"later") or not await _finish():
 		return
+	_checks.expect(_flag(StoryFlags.FREE_PERIOD_STAYED) and not _flag(StoryFlags.FREE_PERIOD_LEAVING),
+		"Deferring did not record the stay.")
 
 	var saved: Dictionary = _sequence.autosave("prologue dialogue paths")
 	if not _checks.expect(saved.get("ok", false), "Could not save the completed branch."):
@@ -123,17 +139,13 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 	_state.clear()
 	_narrative.clear()
 	await _boot(locale, false)
-	_checks.expect(_sequence.next_step() == &"" and _flag(StoryFlags.Q_BOOK_PACT)
-		and _flag(StoryFlags.Q_BOOK_TALK_DONE) and _flag(StoryFlags.Q_ROLL_DEBRIEFED)
-		and _state.get_flag(StoryFlags.N_ROLL_RESPONSE, "") == "answered_self"
-		and _state.get_flag(check_flag, null) is Dictionary, "Save lost classroom progress or choices.")
-	_entry(entry, source)
-	_expect_ruler_pair(notebook, true)
+	_checks.expect(_sequence.next_step() == &"" and _flag(StoryFlags.Q_BOOK_TALK_DONE)
+		and _flag(StoryFlags.CLASS_DISMISSED) and _state.get_flag(check_flag, null) is Dictionary,
+		"Save lost classroom progress or choices.")
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
-	_checks.expect(_played == [&"q_after_dismissal"] and not _lines.has(&"q_ad_present")
-		and not _lines.has(&"q_ad_lead"), "Reload replayed the roll call or Q's debrief.")
+	_checks.expect(_played == [&"q_after_dismissal"], "Reload replayed part of the lesson: %s." % str(_played))
 	_choice(&"look_back_at_square", false)
 	_choice(&"place_sound", false)
 	if _pick(&"yes"):
@@ -142,21 +154,8 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 			and not _flag(StoryFlags.LEFT_CLASSROOM), "Changing your mind should not move the player.")
 
 
-## The normal inspection and Q choice are the only events that earn this pair.
-## Recompose after a real save/Continue; there is no comparison-specific state to load.
-func _expect_ruler_pair(catalog: JournalCatalog, ready: bool) -> void:
-	var notes: Array[NarrativeEntry] = _narrative.call("get_entries")
-	var page := JournalPage.compose(notes, catalog, L10n.current, JournalPage.COMPARE)
-	var ids := JournalPage.row_ids(page)
-	var expected: Array[StringName] = []
-	if ready:
-		expected.append(&"saw_set_square")
-		expected.append(&"q_set_square_use")
-	_checks.expect(ids == expected, "The normal square exchange/Continue left Compare with %s." % str(ids))
-
-
 func _bag_then_square(locale: String) -> void:
-	Harness.stage = locale + ": bag first, accuse, ask Q in front of N, late ruler"
+	Harness.stage = locale + ": bag first, accuse, ask N about the book, late ruler"
 	await _boot(locale)
 	await _inspect(&"schoolbag")
 	if not await _menu(&"q_after_bag", &"q_ab_1"):
@@ -164,73 +163,113 @@ func _bag_then_square(locale: String) -> void:
 	_choice(&"square", false)
 	if not _pick(&"accused") or not await _menu(&"n_class", &"n_8"):
 		return
-	_choice(&"share_with_q", false)
-	if not _pick(&"textbook") or not await _answer_roll(&"ask_q", "asked_q", &"n_roll_mark_unconfirmed"):
+	if not _pick(&"textbook") or not await _lesson_ends():
 		return
-	_checks.expect(_lines.has(&"q_n_guarded") and _flag(StoryFlags.ACCUSED_Q)
-		and not _flag(StoryFlags.Q_BOOK_PACT), "N's scene lost Q's reaction to the accusation.")
-	_entry(&"q_answered_at_door", NarrativeEntry.Source.REPORTED)
+	_checks.expect(_lines.has(&"q_n_guarded") and _flag(StoryFlags.ACCUSED_Q),
+		"N's scene lost Q's reaction to the accusation.")
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
 	_choice(&"look_back_at_square", false)
-	_checks.expect(_lines.has(&"q_ad_pressed"), "Q did not respond to being questioned in front of N.")
 	if not _pick(&"no") or not await _finish():
 		return
+	_checks.expect(_flag(StoryFlags.FREE_PERIOD_STAYED) and not _flag(StoryFlags.FREE_PERIOD_LEAVING)
+		and String(_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) == "objective.stay_classroom"
+		and not _narrative.has_entry(&"n_stayed"), "Declining did not keep its stay, or wrote a note.")
 	await _inspect(&"set_square")
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1") or not _pick(&"look_back_at_square") \
 			or not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
-	_entry(&"q_set_square_after_roll", NarrativeEntry.Source.REPORTED)
 	_choice(&"place_sound", true)
 	if _pick(&"no"):
 		await _finish()
 
 
 func _no_search(locale: String) -> void:
-	Harness.stage = locale + ": wait out the bag step and leave the roll to N"
+	Harness.stage = locale + ": wait out the bag step and stay silent in front of N"
 	await _boot(locale)
-	if not await _menu(&"n_class", &"n_8") or not _pick(&"wait") \
-			or not await _answer_roll(&"leave_to_n", "silent", &"n_roll_no_answer"):
+	if not await _menu(&"n_class", &"n_8") or not _pick(&"wait") or not await _lesson_ends():
 		return
 	_checks.expect(_flag(StoryFlags.BAG_WAIT_EXPIRED) and _flag(StoryFlags.EXPECTATION_SKIPPED)
 		and not _flag(StoryFlags.TEXTBOOK_MISSING) and not _flag(StoryFlags.EXPECTATION_PLAYED)
 		and not _played.has(&"q_after_bag") and not _played.has(&"expected_b")
 		and not _narrative.has_entry(&"bag_missing_textbook"), "Timeout invented a search or memory.")
+	_checks.expect(_lines.has(&"p_wait") and _lines.has(&"n_wait_1"), "Silence in front of N took the wrong lines.")
 	await _inspect(&"set_square")
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1") or not _pick(&"look_back_at_square") \
 			or not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
-	_checks.expect(_lines.has(&"q_ad_quiet") and not _lines.has(&"p_ad_square_memory"),
-		"Silence and a late inspection produced the wrong Q response.")
+	_checks.expect(not _lines.has(&"p_ad_square_memory") and not _lines.has(&"q_ad_square_compare"),
+		"Without the imagined lesson the protagonist still compared a remembered sound.")
 	_choice(&"place_sound", false)
 	if _pick(&"silent"):
 		await _finish()
+		_checks.expect(_flag(StoryFlags.FREE_PERIOD_STAYED)
+			and String(_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) == "objective.stay_classroom",
+			"Saying nothing did not keep the player in the room.")
 
 
-func _book_without_pact(locale: String, asks_witness: bool) -> void:
-	Harness.stage = locale + ": question the witness or decline to discuss the book"
+func _book_talk(locale: String, tells: bool) -> void:
+	Harness.stage = locale + ": tell Q the book is gone, or question the handwriting"
 	await _boot(locale)
 	await _inspect(&"schoolbag")
-	if not await _menu(&"q_after_bag", &"q_ab_1"):
-		return
-	if asks_witness:
-		if not _pick(&"told") or not await _menu(&"q_after_bag", &"q_told_2") or not _pick(&"witness"):
-			return
-	elif not _pick(&"never"):
+	if not await _menu(&"q_after_bag", &"q_ab_1") or not _pick(&"told" if tells else &"never"):
 		return
 	if not await _menu(&"n_class", &"n_8"):
 		return
-	if asks_witness:
-		_entry(&"q_bag_witness_limits", NarrativeEntry.Source.REPORTED)
-	else:
-		_checks.expect(not _flag(StoryFlags.TOLD_Q_ABOUT_TEXTBOOK) and not _flag(StoryFlags.ACCUSED_Q),
-			"Silence disclosed the missing book or accused Q.")
-	_choice(&"share_with_q", false)
-	if _pick(&"where_b") and await _answer_roll(&"leave_to_n", "silent", &"n_roll_no_answer"):
-		_entry(&"n_b_name_crossed_out", NarrativeEntry.Source.REPORTED)
+	_checks.expect(_flag(StoryFlags.TOLD_Q_ABOUT_TEXTBOOK) == tells and not _flag(StoryFlags.ACCUSED_Q)
+		and _flag(StoryFlags.Q_BOOK_TALK_DONE), "The book talk disclosed or accused the wrong way.")
+	if _pick(&"where_b") and await _lesson_ends():
+		_checks.expect(_flag(StoryFlags.ASKED_N_ABOUT_B) and _lines.has(&"n_where_1"),
+			"Asking N about B took the wrong lines.")
+
+
+## A player who told Q they would borrow a book next door gets one visible check at the
+## rear door before the lesson. A failure is the door's line and nothing else; a later
+## try is the plain locked door. A success leaves for the corridor and skips the class.
+func _rear_door(succeeds: bool) -> void:
+	Harness.stage = "rear door, check %s" % ("passed" if succeeds else "failed")
+	await _boot("zh-CN")
+	_state.set_flag(StoryFlags.BORROW_FROM_NEXT_CLASS, true)
+	var resolver := _resolver_for(succeeds, REAR_CONVERSATION, REAR_CHECK, REAR_KEY)
+	if resolver == null:
+		return
+	_dialogue.set_check_resolver(resolver)
+	_activate(&"rear_door")
+	if not await _drain(func() -> bool:
+		return _rolls.size() == 1 and not _dialogue.is_busy() and not _sequence.is_beat_active()):
+		return
+	# A success may be followed by the corridor's own arrival line; nothing comes before.
+	_checks.expect(not _played.is_empty() and _played[0] == REAR_CONVERSATION
+		and _played.count(REAR_CONVERSATION) == 1 and _rolls[0].get("success") == succeeds
+		and _rolls[0].get("kind") == "visible" and _rolls[0].get("ability") == &"orientation",
+		"The rear door did not play its one visible check: %s %s." % [str(_played), str(_rolls)])
+	var record: Variant = _state.get_flag(StoryFlags.check_record_flag(REAR_CONVERSATION, REAR_CHECK), null)
+	_checks.expect(record is Dictionary, "The rear-door check was not recorded.")
+	if not succeeds:
+		_checks.expect(_host.get_current() == _room and not _flag(StoryFlags.SKIPPED_CLASS),
+			"A failed rear-door check still let the player out.")
+		_activate(&"rear_door")
+		var inspected := await Harness.wait_until(func() -> bool:
+			return _inspections.has(&"classroom_rear_door"), 5.0)
+		_checks.expect(inspected and _rolls.size() == 1 and _played == [REAR_CONVERSATION],
+			"After a failed attempt the rear door did not go back to its locked line.")
+		return
+	var in_corridor := func() -> bool:
+		var current := _host.get_current()
+		return current != null and current.location_id == &"corridor" and not _sequence.is_beat_active()
+	var arrived := await Harness.wait_until(in_corridor, 10.0)
+	if not _checks.expect(arrived and _flag(StoryFlags.SKIPPED_CLASS), "The rear door did not lead to the corridor."):
+		return
+	# Give the prologue every chance to carry on: the bag clock, the bell and N must not.
+	await create_timer(2.0, true, false, true).timeout
+	_checks.expect(_sequence.next_step() == &"" and not _flag(StoryFlags.BELL_RUNG)
+		and not _flag(StoryFlags.N_ARRIVED) and not _flag(StoryFlags.CLASS_DISMISSED)
+		and not _flag(StoryFlags.BAG_WAIT_EXPIRED)
+		and not _played.has(&"bell_moment") and not _played.has(&"n_class"),
+		"Skipping class still ran the lesson: %s." % str(_played))
 
 
 func _boot(locale: String, fresh: bool = true) -> void:
@@ -244,7 +283,8 @@ func _boot(locale: String, fresh: bool = true) -> void:
 	_sequence = _world.get_node(^"OpeningSequence") as OpeningSequence
 	_sequence.autostart = false
 	root.add_child(_world)
-	_room = (_world.get_node(^"LocationHost") as LocationHost).get_current()
+	_host = _world.get_node(^"LocationHost") as LocationHost
+	_room = _host.get_current()
 	_dialogue = _world.get_node(^"DialogueController") as DialogueController
 	_interaction = _world.get_node(^"Player/InteractionController") as InteractionController
 	_dialogue.apply_locale(locale)
@@ -252,6 +292,8 @@ func _boot(locale: String, fresh: bool = true) -> void:
 	_played.clear()
 	_lines.clear()
 	_rolls.clear()
+	_inspections.clear()
+	_dialogue.inspection_presented.connect(func(id: StringName) -> void: _inspections.append(id))
 	_dialogue.conversation_started.connect(func(id: StringName) -> void: _played.append(id))
 	_dialogue.line_presented.connect(func(line: Dictionary) -> void:
 		_lines.append(StringName(line.get("node_id", ""))))
@@ -338,27 +380,38 @@ func _switch_at_book_choice(locale: String) -> void:
 	_checks.expect(_dialogue.apply_locale(locale), "Could not restore %s." % locale)
 
 
-func _answer_roll(choice_id: StringName, response: String, record_id: StringName) -> bool:
-	if not await _menu(&"n_class", &"n_roll_2") or not _pick(choice_id) or not await _finish():
+## N's last lines release the class: the free period is announced and the door opens.
+func _lesson_ends() -> bool:
+	if not await _finish():
 		return false
-	_entry(&"n_found_roll_mark", NarrativeEntry.Source.REPORTED)
-	_entry(record_id, NarrativeEntry.Source.REPORTED)
-	_checks.expect(_state.get_flag(StoryFlags.N_ROLL_RESPONSE, "") == response
-		and _flag(StoryFlags.CLASS_DISMISSED) and not _flag(StoryFlags.B_ON_STAGE)
-		and _room.find_interactable(&"classroom_door").is_open(),
-		"%s: wrong roll response, or the lesson did not release the class." % Harness.stage)
+	_checks.expect(_flag(StoryFlags.CLASS_DISMISSED) and not _flag(StoryFlags.B_ON_STAGE)
+		and _room.find_interactable(&"classroom_door").is_open()
+		and String(_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) == "objective.free_period",
+		"%s: the lesson did not release the class." % Harness.stage)
 	return true
 
 
-func _resolver_for(succeeds: bool) -> CheckResolver:
-	var conversation := _dialogue.get_dialogue_library().get_conversation(&"q_after_dismissal")
-	var node: DialogueGraph.DialogueNode = conversation.nodes[CHECK_NODE]
+## Advances whatever is on screen until `done` holds; false (and a failure) on timeout.
+func _drain(done: Callable, seconds: float = 20.0) -> bool:
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		if done.call():
+			return true
+		if _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		await process_frame
+	return _checks.expect(false, "%s: timed out (played %s)." % [Harness.stage, str(_played)])
+
+
+func _resolver_for(succeeds: bool, conversation_id: StringName, node_id: StringName, key: String) -> CheckResolver:
+	var conversation := _dialogue.get_dialogue_library().get_conversation(conversation_id)
+	var node: DialogueGraph.DialogueNode = conversation.nodes[node_id]
 	var ability := _dialogue.get_abilities().get_value(&"orientation")
 	for seed_value: int in range(64):
 		var resolver := CheckResolver.new(seed_value)
-		if (resolver.dice_total_for(CHECK_KEY) + ability >= int(node.check["difficulty"])) == succeeds:
+		if (resolver.dice_total_for(key) + ability >= int(node.check["difficulty"])) == succeeds:
 			return resolver
-	_checks.fail("Could not find a deterministic seed for ruler check success=%s." % str(succeeds))
+	_checks.fail("Could not find a deterministic seed for %s success=%s." % [key, str(succeeds)])
 	return null
 
 

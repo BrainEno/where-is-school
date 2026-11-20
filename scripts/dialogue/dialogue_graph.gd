@@ -19,7 +19,10 @@ extends RefCounted
 ## - a node whose `conditions` are not met is skipped, as if it were a `next` step.
 
 const FORMAT_VERSION := 2
-const EFFECT_TYPES: Array[String] = ["set_flag", "set_objective", "record"]
+## `camera_focus` is presentation only: it asks the camera to look at an interactable of
+## the current room (`target` = its `interact_id`) while the next line is read. It writes
+## no story state, so a subjective conversation may use it too.
+const EFFECT_TYPES: Array[String] = ["set_flag", "set_objective", "record", "camera_focus"]
 ## Sources that describe what actually happened. A subjective conversation may
 ## never record these, and never write flags or the objective.
 const FACTUAL_SOURCES: Array[String] = ["observed", "reported"]
@@ -507,6 +510,12 @@ func _parse_effects(raw: Variant, context: String) -> Array:
 					errors.append("%s: record needs a 'speaker'." % effect_context)
 					continue
 				speaker_ids[StringName(String(effect["speaker"]))] = true
+			"camera_focus":
+				if String(effect.get("target", "")).strip_edges().is_empty():
+					errors.append(
+						"%s: camera_focus needs a 'target' (an interact_id)." % effect_context
+					)
+					continue
 		effects.append(effect)
 	return effects
 
@@ -577,11 +586,13 @@ func _validate_conversation(conversation: Conversation, path: String) -> void:
 
 
 ## The last node in file order has no fall-through target, so it must end the
-## conversation explicitly instead of dying silently at runtime.
+## conversation explicitly instead of dying silently at runtime. Choices and a check
+## never fall through (a check names both branches, explicit null included).
 func _check_last_node_terminates(conversation: Conversation, label: String) -> void:
 	var last_id: StringName = conversation.order[conversation.order.size() - 1]
 	var last: DialogueNode = conversation.nodes[last_id]
-	if last.choices.is_empty() and not last.ends_here and String(last.next_id).is_empty():
+	if last.choices.is_empty() and last.check.is_empty() and not last.ends_here \
+			and String(last.next_id).is_empty():
 		errors.append(
 			"%s/%s: the last node of a file cannot fall through; add \"next\": null or choices."
 			% [label, last_id]

@@ -239,6 +239,8 @@ def enc_effect(effect: dict, names: Names) -> str:
         if "speaker" in effect:
             meta.append(f"说话人 {names.speaker_label(effect['speaker'])}")
         return f"记录 [{effect['entry_id']}]（{'，'.join(meta)}）：{enc_text(effect.get('text', ''))}"
+    if kind == "camera_focus" and set(effect) == {"type", "target"}:
+        return f"效果：聚焦 {effect['target']}"
     return f"效果：原样 {enc_value(effect)}"
 
 
@@ -266,9 +268,14 @@ def dec_effect(line: str, names: Names, where: str) -> dict:
         if not re.fullmatch(r"objective\.[a-z0-9_]+", key):
             raise DocError(f"{where}: 目标要写成「目标 objective.xxx」：{body}")
         return {"type": "set_objective", "key": key}
+    if head == "聚焦":
+        target = rest.strip()
+        if not re.fullmatch(r"[a-z0-9_]+", target):
+            raise DocError(f"{where}: 聚焦要写成「聚焦 <交互物 id>」，例如「聚焦 set_square」：{body}")
+        return {"type": "camera_focus", "target": target}
     if head == "原样":
         return dec_value(rest, where)
-    raise DocError(f"{where}: 效果只认「设旗／目标」或「记录 [...]」：{body}")
+    raise DocError(f"{where}: 效果只认「设旗／目标／聚焦」或「记录 [...]」：{body}")
 
 
 # --------------------------------------------------------------------------------------- check

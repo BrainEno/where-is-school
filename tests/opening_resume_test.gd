@@ -246,7 +246,7 @@ func _scenarios() -> Array:
 			"expect_next": &"expectation",
 			"run": true,
 			"expect_played": [&"expected_b"],
-			"expect_not_played": [&"q_wake", &"q_bag_reminder"],
+			"expect_not_played": [&"q_wake"],
 		},
 		{
 			"label": "the bell has rung",
@@ -272,6 +272,18 @@ func _scenarios() -> Array:
 			"expect_played": [],
 			"expect_not_played": [&"q_wake", &"expected_b", &"bell_moment", &"n_class"],
 		},
+		{
+			# Left through the rear door before the lesson (`ClassroomAnomalies`): the
+			# bag, the imagined lesson, the bell and N are all behind the player.
+			"label": "class skipped through the rear door",
+			"flags": [
+				StoryFlags.MET_Q, StoryFlags.BORROW_FROM_NEXT_CLASS, StoryFlags.SKIPPED_CLASS,
+			],
+			"expect_next": &"",
+			"run": true,
+			"expect_played": [],
+			"expect_not_played": [&"q_wake", &"expected_b", &"bell_moment", &"n_class"],
+		},
 		# The snapshots below are what saves written before #144 hold for a player who
 		# let the bag step's fallback run out: no flag says the bag step or the
 		# expectation beat is over, but the flags of the steps after them do.
@@ -282,7 +294,7 @@ func _scenarios() -> Array:
 			"run": true,
 			"expect_played": [&"n_class"],
 			"expect_not_played": [
-				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment",
+				&"q_wake", &"expected_b", &"bell_moment",
 			],
 		},
 		{
@@ -295,7 +307,7 @@ func _scenarios() -> Array:
 			"run": true,
 			"expect_played": [],
 			"expect_not_played": [
-				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment", &"n_class",
+				&"q_wake", &"expected_b", &"bell_moment", &"n_class",
 			],
 		},
 		{
@@ -310,7 +322,7 @@ func _scenarios() -> Array:
 			"run": true,
 			"expect_played": [],
 			"expect_not_played": [
-				&"q_wake", &"q_bag_reminder", &"expected_b", &"bell_moment", &"n_class",
+				&"q_wake", &"expected_b", &"bell_moment", &"n_class",
 			],
 		},
 	]

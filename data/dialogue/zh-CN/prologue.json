@@ -11,7 +11,7 @@
         {
           "id": "q_1",
           "speaker": "q",
-          "text": "你刚才睡得还挺好啊。",
+          "text": "怎么样？刚才睡爽了吧，做了什么美梦？",
           "next": "p_who",
           "effects": [
             {
@@ -24,7 +24,7 @@
         {
           "id": "p_who",
           "speaker": "protagonist",
-          "text": "……你是？",
+          "text": "……这个人是谁？",
           "source": "observed",
           "next": "q_3",
           "effects": [
@@ -38,7 +38,7 @@
         {
           "id": "q_3",
           "speaker": "q",
-          "text": "Q。坐你旁边的。你真不记得了？",
+          "text": "Q。怎么？睡傻了？装不认识我？",
           "choices": [
             {
               "id": "who",
@@ -58,23 +58,11 @@
           ]
         },
         {
-          "id": "q_who_1",
-          "speaker": "q",
-          "text": "平时我挡你的道，你就说一声「让让」。今天还跟我道歉呢。",
-          "next": "q_who_2"
-        },
-        {
-          "id": "q_who_2",
-          "speaker": "q",
-          "text": "你是怕见 B 吧？她上生物也得等铃呢。先别替她着急。",
-          "next": "p_biology"
-        },
-        {
           "id": "p_day",
           "speaker": "protagonist",
           "text": "现在几点了？",
           "source": "observed",
-          "next": "q_day_1",
+          "next": "q_who_1",
           "effects": [
             {
               "type": "set_flag",
@@ -84,23 +72,11 @@
           ]
         },
         {
-          "id": "q_day_1",
-          "speaker": "q",
-          "text": "快九点。第二遍铃还没打。",
-          "next": "q_day_2"
-        },
-        {
-          "id": "q_day_2",
-          "speaker": "q",
-          "text": "这节是生物，B 的。还来得及把书翻开。",
-          "next": "p_biology"
-        },
-        {
           "id": "p_silent",
           "speaker": "protagonist",
-          "text": "（你没接话。）",
+          "text": "（没接话。）",
           "source": "observed",
-          "next": "q_silent_1",
+          "next": "q_who_1",
           "effects": [
             {
               "type": "set_flag",
@@ -110,57 +86,79 @@
           ]
         },
         {
-          "id": "q_silent_1",
+          "id": "q_who_1",
           "speaker": "q",
-          "text": "……行。我又不是来点名的。",
-          "next": "q_silent_2"
+          "text": "哎呀，别装蒜了！平时找我借东西的时候你可不这样。",
+          "next": "q_who_2"
         },
         {
-          "id": "q_silent_2",
+          "id": "q_who_2",
           "speaker": "q",
-          "text": "这节是生物。等 B 叫你，你再开口也来得及。",
-          "next": "p_biology"
+          "text": "我看你是怕上这学期的生物课吧？别慌，B老师来上课也得等打铃呢，就算她要抽你你也还有时间清醒清醒。但她肯定会打你手板的，用那个",
+          "next": "q_who_look"
         },
         {
-          "id": "p_biology",
+          "id": "q_who_look",
           "speaker": "protagonist",
-          "text": "生物课？",
+          "text": "（Q看向讲台上的三角尺）",
           "source": "observed",
-          "next": "q_exam_1"
-        },
-        {
-          "id": "q_exam_1",
-          "speaker": "q",
-          "text": "上学期生物考完，我在门口等你还我橡皮。后来有人说你没来，有人说卷子上就一个名字。",
-          "next": "q_exam_2",
-          "effects": [
+          "choices": [
             {
-              "type": "record",
-              "entry_id": "q_claims_blank_exam",
-              "source": "reported",
-              "speaker": "q",
-              "text": "Q 说上学期生物考试结束后在门口等过你。他记不准你是没去，还是交了白卷。"
+              "id": "look_square",
+              "text": "跟着他看向三角尺。",
+              "next": "p_why",
+              "effects": [
+                {
+                  "type": "camera_focus",
+                  "target": "set_square"
+                }
+              ]
+            },
+            {
+              "id": "watch_q",
+              "text": "观察一下Q。",
+              "next": "p_why",
+              "effects": [
+                {
+                  "type": "camera_focus",
+                  "target": "q_talk"
+                }
+              ]
             }
           ]
         },
         {
-          "id": "q_exam_2",
+          "id": "p_why",
+          "speaker": "protagonist",
+          "text": "抽我？为什么",
+          "source": "observed",
+          "next": "q_zero"
+        },
+        {
+          "id": "q_zero",
           "speaker": "q",
-          "text": "传来传去，我也记不清最先是谁说的。你还记得吗？",
+          "text": "听说你上学期生物考了零分啊！怎么？搞忘了？就算你在梦里忘了，下节生物课还是逃不掉啊。",
+          "next": "p_zero"
+        },
+        {
+          "id": "p_zero",
+          "speaker": "protagonist",
+          "text": "什么？零分？",
+          "source": "observed",
           "choices": [
             {
               "id": "blank",
-              "text": "我交了白卷？",
+              "text": "难道我交了白卷？",
               "next": "p_blank"
             },
             {
               "id": "absent",
-              "text": "我没去考试？",
+              "text": "难道我没去考试？",
               "next": "p_absent"
             },
             {
               "id": "none",
-              "text": "一点印象也没有。",
+              "text": "我一点印象也没有。",
               "next": "p_none"
             }
           ]
@@ -168,33 +166,33 @@
         {
           "id": "p_blank",
           "speaker": "protagonist",
-          "text": "我交了白卷？",
+          "text": "零分？我交了白卷？",
           "source": "observed",
           "next": "q_blank_1"
         },
         {
           "id": "q_blank_1",
           "speaker": "q",
-          "text": "有张卷子是空的。后面的人说那是你的。我没看清上头的名字。",
+          "text": "是啊，一般人可考不了零分，随便蒙几道选择题顶多也就是不及格。你应该就是一个字也没写吧。",
           "next": "q_exam_end"
         },
         {
           "id": "p_absent",
           "speaker": "protagonist",
-          "text": "我是没进考场？",
+          "text": "我是不是没去考试？",
           "source": "observed",
           "next": "q_absent_1"
         },
         {
           "id": "q_absent_1",
           "speaker": "q",
-          "text": "我没等到你。交卷的人挤在一块儿往外走，我又没一个个看。",
+          "text": "我不知道，我们又不在一个考场，我们学校考场可是按照前一次的考试名次来安排的，我怎么可能碰到你。",
           "next": "q_exam_end"
         },
         {
           "id": "p_none",
           "speaker": "protagonist",
-          "text": "一点印象也没有。",
+          "text": "关于那次考试你没有任何印象。所以你一句话也没说，显得不是很在乎。",
           "source": "observed",
           "next": "q_none_1",
           "effects": [
@@ -208,23 +206,30 @@
         {
           "id": "q_none_1",
           "speaker": "q",
-          "text": "那先别想了。我那张卷子最后两道一个字没写。平时倒装得挺会。",
+          "text": "不跟你说了，我要背生物知识点了，听说要抽查。",
           "next": "q_exam_end"
         },
         {
           "id": "q_exam_end",
           "speaker": "q",
-          "text": "先过今天这节吧。",
+          "text": "你怎么还不拿书出来背？是放弃了？",
+          "next": "p_topic_what"
+        },
+        {
+          "id": "p_topic_what",
+          "speaker": "protagonist",
+          "text": "你们在背什么？",
+          "source": "observed",
           "next": "q_topic_ask"
         },
         {
           "id": "q_topic_ask",
           "speaker": "q",
-          "text": "她要问生态系统，你千万别等我给你递话。我现在一抬头就忘后半句。",
+          "text": "生态系统，课代表一开始就说了要抽查生态系统。",
           "choices": [
             {
               "id": "ask",
-              "text": "生态系统？",
+              "text": "什么是生态系统？",
               "next": "p_topic"
             },
             {
@@ -249,34 +254,49 @@
         {
           "id": "q_topic_answer",
           "speaker": "q",
-          "text": "就那个。谁吃谁，还得算上它们待的地方。",
+          "text": "生态系统嘛，就是大鱼吃小鱼什么的，等我背会了你倒是可以考我，现在就别来烦我了。",
           "next": "p_ecosystem_question"
         },
         {
           "id": "p_ecosystem_question",
           "speaker": "protagonist",
-          "text": "光说谁吃谁不行？",
+          "text": "你看到Q捧着一本书在摇头晃脑地默念着什么，但是你怀疑像他那样把书晃来晃去，连书上的字都看不清楚，更不用说记住什么了。你突然意识到Q是不是只是想跟你展示他带了课本。",
           "source": "observed",
           "next": "q_ecosystem"
         },
         {
           "id": "q_ecosystem",
           "speaker": "q",
-          "text": "不行吧。它们又不是住在箭头里。还得说水、光什么的，我老漏这一截。",
-          "next": "p_ecosystem_reply"
-        },
-        {
-          "id": "p_ecosystem_reply",
-          "speaker": "protagonist",
-          "text": "那你先别抬头。",
-          "source": "observed",
-          "next": "q_ecosystem_end"
-        },
-        {
-          "id": "q_ecosystem_end",
-          "speaker": "q",
-          "text": "行。念错了你别笑。",
-          "next": "q_end_1"
+          "text": "算了，我也放弃了，这段时间根本来不及记住什么。但我总比你好，我看你连生物书在哪都没找到，是不是没带。",
+          "choices": [
+            {
+              "id": "grab_book",
+              "text": "当然带了，我故意把它藏起来了，就在你手上。（去抢Q的生物书）",
+              "next": "q_end_2"
+            },
+            {
+              "id": "keep_searching",
+              "text": "低头继续找课本。",
+              "next": "q_topic_book"
+            },
+            {
+              "id": "borrow",
+              "text": "我马上去隔壁班借",
+              "next": "q_end_2",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "borrow_from_next_class",
+                  "value": true
+                }
+              ]
+            },
+            {
+              "id": "quiet",
+              "text": "不说话。",
+              "next": "q_topic_silent"
+            }
+          ]
         },
         {
           "id": "p_topic_silent",
@@ -288,8 +308,8 @@
         {
           "id": "q_topic_silent",
           "speaker": "q",
-          "text": "行。我再把后半句念一遍。你不用听。",
-          "next": "q_end_1"
+          "text": "行，不说话是吧。我再把后半句背一遍。",
+          "next": "q_end_2"
         },
         {
           "id": "p_topic_book",
@@ -301,25 +321,46 @@
         {
           "id": "q_topic_book",
           "speaker": "q",
-          "text": "你找书啊？我刚才说的不是让你现在就背。",
-          "next": "q_end_1"
+          "text": "怎么？你还没找到？你要挨揍了。那小老太太肯定记住你了。",
+          "next": "p_old_lady"
         },
         {
-          "id": "q_end_1",
+          "id": "p_old_lady",
+          "speaker": "protagonist",
+          "text": "小老太太？",
+          "source": "observed",
+          "next": "p_b_looks"
+        },
+        {
+          "id": "p_b_looks",
+          "speaker": "protagonist",
+          "text": "她长什么样子？我不记得她，她为什么记得我。",
+          "source": "observed",
+          "next": "q_b_looks"
+        },
+        {
+          "id": "q_b_looks",
           "speaker": "q",
-          "text": "你先看看书包吧。",
-          "effects": [
-            {
-              "type": "set_objective",
-              "key": "objective.check_bag"
-            }
-          ],
+          "text": "B吗？她有50多岁了吧，又矮又瘦，长着一张扁平脸加鹰钩鼻，一看就不是好惹的，身上还有股小市民的庸俗，平时总是提起在重点中学的儿子。上课总是做出一副老好人的样子，讲课的声音听不清，打起手板来力气可一点不小。屁大点的事情就要十几二十下，还总是表现得像是已经格外开恩，打你是完全为了你的将来似的。",
           "next": "q_end_2"
         },
         {
           "id": "q_end_2",
           "speaker": "q",
-          "text": "好啦，先不跟你说了。我得把生物课那几个知识点再背一遍。",
+          "text": "行了，不跟你说了。我得把那几个知识点再背一遍，万一碰上一个会的呢。",
+          "next": "q_end_grin",
+          "effects": [
+            {
+              "type": "set_objective",
+              "key": "objective.check_bag"
+            }
+          ]
+        },
+        {
+          "id": "q_end_grin",
+          "speaker": "protagonist",
+          "text": "（嘿嘿，Q朝你幸灾乐祸地笑了一下）",
+          "source": "observed",
           "next": null
         }
       ]
@@ -327,12 +368,19 @@
     "q_studying": {
       "default_source": "reported",
       "subjective": false,
-      "start": "q_studying_1",
+      "start": "qs_call",
       "nodes": [
+        {
+          "id": "qs_call",
+          "speaker": "protagonist",
+          "text": "你还是没找到生物书。你喊了Q一声。",
+          "source": "observed",
+          "next": "q_studying_1"
+        },
         {
           "id": "q_studying_1",
           "speaker": "q",
-          "text": "初级消费者……等我把这句背完，行不行？",
+          "text": "初级消费者……又怎么了？等我把这句背完，行不行？",
           "next": null
         }
       ]
@@ -345,7 +393,7 @@
         {
           "id": "q_ab_1",
           "speaker": "q",
-          "text": "没翻到生物书？你平时不是夹在练习册前面吗？",
+          "text": "还没找到？",
           "choices": [
             {
               "id": "told",
@@ -364,7 +412,7 @@
             },
             {
               "id": "square",
-              "text": "讲台上那把尺，不是数学课用的吗？",
+              "text": "讲台上那把三角尺，不是数学课要用的吗？",
               "next": "p_square",
               "conditions": {
                 "all_flags": [
@@ -378,9 +426,9 @@
         {
           "id": "p_told",
           "speaker": "protagonist",
-          "text": "课本不见了。",
+          "text": "找不到了，哪里都没有。",
           "source": "observed",
-          "next": "q_told_1",
+          "next": "q_told_2",
           "effects": [
             {
               "type": "set_flag",
@@ -390,76 +438,9 @@
           ]
         },
         {
-          "id": "q_told_1",
-          "speaker": "q",
-          "text": "我早上看见你把包放下了。没见你往外拿书。",
-          "next": "q_told_2"
-        },
-        {
           "id": "q_told_2",
           "speaker": "q",
-          "text": "那就看我的。你别一下翻到后头，我手指还压着这页。",
-          "choices": [
-            {
-              "id": "share",
-              "text": "要用书就跟你合看。",
-              "next": "p_q_share",
-              "conditions": {
-                "not_flags": [
-                  "q_book_pact"
-                ]
-              }
-            },
-            {
-              "id": "witness",
-              "text": "你看清是我放的？",
-              "next": "p_q_witness",
-              "once": true
-            },
-            {
-              "id": "drop",
-              "text": "（先不说了。）",
-              "next": "q_ab_end"
-            }
-          ]
-        },
-        {
-          "id": "p_accused",
-          "speaker": "protagonist",
-          "text": "是你拿了我的书？",
-          "source": "observed",
-          "next": "q_accused_1",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "accused_q",
-              "value": true
-            }
-          ]
-        },
-        {
-          "id": "q_accused_1",
-          "speaker": "q",
-          "text": "没拿。跟你借个笔盖你都认得出来，书我往哪儿藏？",
-          "next": "q_accused_2"
-        },
-        {
-          "id": "q_accused_2",
-          "speaker": "q",
-          "text": "你要借就开口。别先让我证明这本是我的。",
-          "next": "q_ab_end"
-        },
-        {
-          "id": "p_never",
-          "speaker": "protagonist",
-          "text": "（不说课本的事。）",
-          "source": "observed",
-          "next": "q_never_1"
-        },
-        {
-          "id": "q_never_1",
-          "speaker": "q",
-          "text": "行。你不说，我先背我的。",
+          "text": "你别想着看我的课本，现在去别的班借还来得及。生物老师最讨厌那种没带书跟人合看的了，说不定连我也要遭殃。",
           "next": null,
           "effects": [
             {
@@ -470,85 +451,103 @@
           ]
         },
         {
-          "id": "p_q_share",
+          "id": "p_accused",
           "speaker": "protagonist",
-          "text": "好。要翻书，我就跟你看一本。",
+          "text": "是不是你拿了我的书？",
           "source": "observed",
-          "next": "q_share"
-        },
-        {
-          "id": "q_share",
-          "speaker": "q",
-          "text": "你把凳子挪过来就行。先说好，借你看可以，叫到你名字你自己答。",
-          "next": "q_ab_end",
+          "next": "q_accused_2",
           "effects": [
             {
               "type": "set_flag",
-              "flag": "q_book_pact",
+              "flag": "accused_q",
               "value": true
             }
           ]
         },
         {
-          "id": "p_q_witness",
-          "speaker": "protagonist",
-          "text": "不是书。我问你看没看清是我。",
-          "source": "observed",
-          "next": "q_witness"
-        },
-        {
-          "id": "q_witness",
+          "id": "q_accused_2",
           "speaker": "q",
-          "text": "我看见一只手，把包往你这儿放。我认出来的是包。……你问的是脸啊？那没有。",
-          "next": "q_ab_end",
+          "text": "你想混我的书看就开口，别冤枉我说什么我偷你的书。看看，这是我的名字！再看看，这是我的笔迹。",
+          "next": null,
           "effects": [
             {
-              "type": "record",
-              "entry_id": "q_bag_witness_limits",
-              "source": "reported",
-              "speaker": "q",
-              "text": "Q 起初说看见你放下书包。追问之后，他说只看见一只手把包搁到你座位旁边，没看见脸。"
+              "type": "set_flag",
+              "flag": "q_book_talk_done",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "p_never",
+          "speaker": "protagonist",
+          "text": "你怎么证明这是你的笔迹不是我的？",
+          "source": "observed",
+          "next": "q_never_1"
+        },
+        {
+          "id": "q_never_1",
+          "speaker": "q",
+          "text": "算了，别跟我来这一套了，你影响我背书了。",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "q_book_talk_done",
+              "value": true
             }
           ]
         },
         {
           "id": "p_square",
           "speaker": "protagonist",
-          "text": "等一下。讲台上那把尺，不是数学课用的吗？",
+          "text": "等一下，讲台上那把三角尺不是数学课用的吗？",
           "source": "observed",
           "next": "q_sq_1"
         },
         {
           "id": "q_sq_1",
           "speaker": "q",
-          "text": "听说隔壁班数学老师一急，把它摔断了。后来工友又给缠上。你看，黄的那几圈。",
+          "text": "那把尺子一开始是隔壁班数学老师的，我也不知道怎么跑到生物老师手里的。",
           "next": "q_sq_2"
         },
         {
           "id": "q_sq_2",
           "speaker": "q",
-          "text": "B 就拿来指食物网。有回她往黑板上一敲，槽里的粉笔头掉了两个。我还以为她会叫我去捡。",
-          "next": "q_sq_3",
-          "effects": [
+          "text": "这尺子就是她摔坏的，她总是爱拿着这把三角尺的尖端指人，有回她往黑板上一敲尖的那头就断了，黑板槽里的粉笔头都掉了。后面她又让那小子用胶带给粘好了，缠了好几圈呢，你看那圈黄黄的。",
+          "choices": [
             {
-              "type": "record",
-              "entry_id": "q_set_square_use",
-              "source": "reported",
-              "speaker": "q",
-              "text": "Q 说听闻三角尺是隔壁班摔断后修好的。他只说自己见过 B 用它敲黑板。"
+              "id": "square_again",
+              "text": "再次观察三角尺",
+              "next": "q_sq_3",
+              "effects": [
+                {
+                  "type": "camera_focus",
+                  "target": "set_square"
+                }
+              ]
+            },
+            {
+              "id": "glasses_student",
+              "text": "顺着Q指的方向看教室里坐着的那个戴眼镜的学生。",
+              "next": "q_sq_3",
+              "effects": [
+                {
+                  "type": "camera_focus",
+                  "target": "student_talk"
+                }
+              ]
+            },
+            {
+              "id": "own_feet",
+              "text": "看着自己的脚。",
+              "next": "q_sq_3"
             }
           ]
         },
         {
           "id": "q_sq_3",
           "speaker": "q",
-          "text": "别的我没见过。……刚才说哪儿了？",
-          "next": "q_ab_1"
-        },
-        {
-          "id": "q_ab_end",
-          "speaker": "q",
-          "text": "行。让我再背一句，就一句。",
+          "text": "等会儿，我都忘了我背到哪里了。这次真不跟你说了，我要背书。",
           "next": null,
           "effects": [
             {
@@ -563,87 +562,12 @@
     "q_after_dismissal": {
       "default_source": "reported",
       "subjective": false,
-      "start": "q_ad_bell",
+      "start": "q_ad_1",
       "nodes": [
-        {
-          "id": "q_ad_bell",
-          "speaker": "q",
-          "text": "等我把这页折一下。……好了。",
-          "next": "q_ad_present"
-        },
-        {
-          "id": "q_ad_present",
-          "speaker": "q",
-          "text": "你刚才那声「到」，我听见了。上回我在门口没等着你，回去就说你没来。你要再听见这一句，有可能是我传的。",
-          "conditions": {
-            "requires": {
-              "n_roll_response": "answered_self"
-            },
-            "not_flags": [
-              "q_roll_debriefed"
-            ]
-          },
-          "next": "q_ad_pressed",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "q_repeated_absence_rumor",
-              "speaker": "q",
-              "source": "reported",
-              "text": "你亲自应名后，Q 承认上学期没在门口等到你，就回去跟人说你没参加考试。"
-            }
-          ]
-        },
-        {
-          "id": "q_ad_pressed",
-          "speaker": "q",
-          "text": "下回先问我，别当着讲台问。她低头那一下，我以为要把我名字也填进去了。",
-          "conditions": {
-            "requires": {
-              "n_roll_response": "asked_q"
-            },
-            "not_flags": [
-              "q_roll_debriefed"
-            ]
-          },
-          "next": "q_ad_quiet"
-        },
-        {
-          "id": "q_ad_quiet",
-          "speaker": "q",
-          "text": "刚才我嘴都张开了。上回我替你喊，你还说「我又没聋」。这回我没喊。",
-          "next": "q_ad_lead",
-          "conditions": {
-            "requires": {
-              "n_roll_response": "silent"
-            },
-            "not_flags": [
-              "q_roll_debriefed"
-            ]
-          }
-        },
-        {
-          "id": "q_ad_lead",
-          "speaker": "q",
-          "text": "我刚才说他们都出去了。其实就看见前排那俩，往楼梯那头走的。下没下去，我没跟着瞧。",
-          "next": "q_ad_1",
-          "conditions": {
-            "not_flags": [
-              "q_roll_debriefed"
-            ]
-          },
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "q_roll_debriefed",
-              "value": true
-            }
-          ]
-        },
         {
           "id": "q_ad_1",
           "speaker": "q",
-          "text": "去操场看看？我想知道那俩到底在不在。",
+          "text": "去操场转转？",
           "choices": [
             {
               "id": "yes",
@@ -759,105 +683,11 @@
           "next": null
         },
         {
-          "id": "p_no",
-          "speaker": "protagonist",
-          "text": "不去了，我想在这儿待着。",
-          "source": "observed",
-          "next": "q_no",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "free_period_stayed",
-              "value": true
-            },
-            {
-              "type": "set_flag",
-              "flag": "free_period_leaving",
-              "value": false
-            },
-            {
-              "type": "set_objective",
-              "key": "objective.stay_classroom"
-            },
-            {
-              "type": "record",
-              "entry_id": "n_stayed",
-              "source": "observed",
-              "speaker": "protagonist",
-              "text": "你决定这节自由活动时间先留在教室里。"
-            }
-          ]
-        },
-        {
-          "id": "q_no",
-          "speaker": "q",
-          "text": "行。不去就不去。你有事喊我。",
-          "next": null
-        },
-        {
-          "id": "p_silent",
-          "speaker": "protagonist",
-          "text": "（没回答，继续收拾东西。）",
-          "source": "observed",
-          "next": "q_silent",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "free_period_stayed",
-              "value": true
-            },
-            {
-              "type": "set_flag",
-              "flag": "free_period_leaving",
-              "value": false
-            },
-            {
-              "type": "set_objective",
-              "key": "objective.stay_classroom"
-            }
-          ]
-        },
-        {
           "id": "p_ad_square",
           "speaker": "protagonist",
           "text": "刚才点名的时候，你看见 N 碰那把尺了吗？",
           "source": "observed",
-          "next": "q_ad_square_seen"
-        },
-        {
-          "id": "q_ad_square_seen",
-          "speaker": "q",
-          "text": "没见她碰。就拿笔帽点纸。念完名字，没人应，她也等一下。",
-          "next": "q_ad_square_origin",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "q_n_left_square_alone",
-              "speaker": "q",
-              "source": "reported",
-              "text": "Q 没见 N 碰三角尺。他说 N 是用笔帽指着名单点名的。"
-            }
-          ]
-        },
-        {
-          "id": "q_ad_square_origin",
-          "speaker": "q",
-          "text": "听说是隔壁班摔断，工友拿胶带缠上的。B 有回拿它敲黑板，把粉笔头敲下来了。",
-          "conditions": {
-            "not_flags": [
-              "choice:q_after_bag:square"
-            ]
-          },
-          "next": "p_ad_square_memory",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "q_set_square_after_roll",
-              "speaker": "q",
-              "source": "reported",
-              "text": "Q 说见过 B 用三角尺敲黑板。关于尺是怎么断的，他只有听说的版本。"
-            }
-          ]
+          "next": "p_ad_square_memory"
         },
         {
           "id": "p_ad_square_memory",
@@ -892,13 +722,13 @@
             "difficulty": 9,
             "kind": "visible",
             "success": "ad_square_close",
-            "failure": "ad_square_unplaced"
+            "failure": "p_ad_square_unplaced"
           }
         },
         {
           "id": "ad_square_close",
           "speaker": "voice_orientation",
-          "text": "那一下离你左手很近。要照这间教室摆，你的手该搭在讲台沿上。可中间那几步路呢？",
+          "text": "那一下离你左手很近。",
           "source": "recalled",
           "next": "q_ad_1",
           "effects": [
@@ -912,13 +742,6 @@
           ]
         },
         {
-          "id": "ad_square_unplaced",
-          "speaker": "voice_orientation",
-          "text": "讲桌没放错。黑板也没有。你怎么挪它们，那一声还是放不回去。",
-          "source": "recalled",
-          "next": "p_ad_square_unplaced"
-        },
-        {
           "id": "p_ad_square_unplaced",
           "speaker": "protagonist",
           "text": "算了。只记得响。你那回还记得什么？",
@@ -928,41 +751,54 @@
         {
           "id": "q_ad_square_pause",
           "speaker": "q",
-          "text": "她敲完不叫人，光等。有人拿笔盖碰了一下桌面，全班都转过去看他。",
-          "next": "q_ad_1",
+          "text": "她敲完也不点名也不骂人，就是光站在讲台后面等人站起来认错。经常让人揭发抄作业的，要是没人说话全班都得罚站。",
+          "next": "q_ad_1"
+        },
+        {
+          "id": "p_no",
+          "speaker": "protagonist",
+          "text": "不去了，我想在这儿待着。",
+          "source": "observed",
+          "next": null,
           "effects": [
             {
-              "type": "record",
-              "entry_id": "q_set_square_pause",
-              "speaker": "q",
-              "source": "reported",
-              "text": "Q 说 B 敲完黑板后没叫人，教室很安静，有人碰了下笔盖就引来大家转头。"
+              "type": "set_flag",
+              "flag": "free_period_stayed",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": false
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.stay_classroom"
             }
           ]
         },
         {
-          "id": "q_silent",
-          "speaker": "q",
-          "text": "好吧。你先收拾，我不催。",
-          "next": null
-        }
-      ]
-    },
-    "q_bag_reminder": {
-      "default_source": "reported",
-      "subjective": false,
-      "start": "q_br_1",
-      "nodes": [
-        {
-          "id": "q_br_1",
-          "speaker": "q",
-          "text": "你还不看看书包？就放你脚边。"
-        },
-        {
-          "id": "q_br_2",
-          "speaker": "q",
-          "text": "别等铃响了才发现课本没带。",
-          "next": null
+          "id": "p_silent",
+          "speaker": "protagonist",
+          "text": "（没回答，继续收拾东西。）",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "free_period_stayed",
+              "value": true
+            },
+            {
+              "type": "set_flag",
+              "flag": "free_period_leaving",
+              "value": false
+            },
+            {
+              "type": "set_objective",
+              "key": "objective.stay_classroom"
+            }
+          ]
         }
       ]
     },
@@ -979,12 +815,12 @@
         {
           "id": "q_bm_2",
           "speaker": "q",
-          "text": "B 还没来。平常她这时候应该已经在门口了。"
+          "text": "B 居然还没来。平常这时候她应该早就站在讲台上了。"
         },
         {
           "id": "q_bm_3",
           "speaker": "q",
-          "text": "你看我也没用。我也不知道她去哪儿了。",
+          "text": "你挺走运啊，可以晚点挨打。",
           "next": null
         }
       ]
@@ -997,27 +833,27 @@
         {
           "id": "b_e_1",
           "speaker": "b",
-          "text": "站起来。"
+          "text": "你给我站起来。"
         },
         {
           "id": "b_e_2",
           "speaker": "b",
-          "text": "我说，站起来。"
+          "text": "我说你呢，没听见吗？知道你犯了什么错吗？"
         },
         {
           "id": "b_e_3",
           "speaker": "b",
-          "text": "别人都翻开书了。你只有两只手。"
+          "text": "别人都翻开书了，你呢，你的课本呢？一个学生不带课本来学校是干什么？"
         },
         {
           "id": "b_e_4",
           "speaker": "b",
-          "text": "过来。把你的书包带上。"
+          "text": "过来。拿着你的书包滚出教室去。你去操场上玩吧，学校不适合你这种人。"
         },
         {
           "id": "rec_1",
           "speaker": "protagonist",
-          "text": "三角尺砸在讲台上的声音。很重。这个声音你记得。别的事你就不太确定了。",
+          "text": "你仿佛听到三角尺又一次砸在讲台上的声音。很重，但是有厚厚的塑料胶带的缓冲，所以显得有点可笑。你记得这个可笑的声音，听起来很像放屁。",
           "source": "recalled",
           "effects": [
             {
@@ -1032,7 +868,7 @@
         {
           "id": "b_e_5",
           "speaker": "b",
-          "text": "这件事我会找你算。",
+          "text": "你别以为这事这样就过去了，你现在就回家叫你家长下午来我的办公室谈话。",
           "next": null
         }
       ]
@@ -1045,19 +881,13 @@
         {
           "id": "n_1",
           "speaker": "n",
-          "text": "早上好。呃……大家都到了吗？",
+          "text": "上课！呃……人都到齐了吗？",
           "next": "n_2"
         },
         {
           "id": "n_2",
           "speaker": "n",
-          "text": "我是今天来代生物课的。原来的老师没来，具体情况我也不太清楚。",
-          "next": "n_3"
-        },
-        {
-          "id": "n_3",
-          "speaker": "n",
-          "text": "教务处给了我一张名单。先点一下名吧。",
+          "text": "为什么人这么少？我是来代课的N老师，原来的B老师今天请假。教务处给了我一张名单，我先点一下名。",
           "next": "n_4",
           "effects": [
             {
@@ -1072,20 +902,20 @@
         {
           "id": "n_4",
           "speaker": "n",
-          "text": "我念到名字，你们应一声就行。",
+          "text": "我念到名字你们就站起来……或者坐着喊一声到就行。",
           "next": "p_attendance"
         },
         {
           "id": "p_attendance",
           "speaker": "protagonist",
-          "text": "她照着名单念了几个名字。有两声「到」。她再念下一个，等到教室里没声音了才抬头。",
+          "text": "她照着名单念了几个名字。有两声「到」，没人站起来。她又念了几个名字，教室里一直没有声音。",
           "source": "observed",
           "next": "n_6"
         },
         {
           "id": "n_6",
           "speaker": "n",
-          "text": "其他同学呢？今天就来了这么几个人？",
+          "text": "其他人呢？今天我们班就来了这么几个人吗？",
           "next": "q_students"
         },
         {
@@ -1097,45 +927,44 @@
         {
           "id": "student_students",
           "speaker": "student",
-          "text": "逃课了。差不多都走了。",
+          "text": "他们都逃课去上网了。",
           "next": "n_react"
         },
         {
           "id": "n_react",
           "speaker": "n",
-          "text": "「出去玩」不是一栏。光画个横线，交回去的时候他们也要问的。",
+          "text": "这么多人都不在？",
           "next": "n_8"
         },
         {
           "id": "n_8",
           "speaker": "n",
-          "text": "我先不填。有人要问什么吗？",
+          "text": "算了，那我就先不点名字了。有人要问什么生物方面的问题吗？",
           "choices": [
             {
               "id": "where_b",
-              "text": "原来的老师呢？",
+              "text": "原来的B老师呢？",
               "next": "p_where"
             },
             {
               "id": "textbook",
-              "text": "今天要用课本吗？",
+              "text": "今天还要用到课本吗？",
               "next": "p_textbook"
             },
             {
-              "id": "wait",
-              "text": "（等着。）",
-              "next": "p_wait"
+              "id": "ecosystem",
+              "text": "什么叫生态系统？",
+              "next": "n_turn_2"
             },
             {
-              "id": "share_with_q",
-              "text": "我和 Q 合看一本，行吗？",
-              "next": "p_n_share",
-              "conditions": {
-                "all_flags": [
-                  "q_book_pact",
-                  "textbook_missing"
-                ]
-              }
+              "id": "zygote",
+              "text": "问问什么是受精卵。",
+              "next": "n_turn_2"
+            },
+            {
+              "id": "wait",
+              "text": "沉默",
+              "next": "p_wait"
             }
           ]
         },
@@ -1156,17 +985,8 @@
         {
           "id": "n_where_1",
           "speaker": "n",
-          "text": "我拿到这张表的时候，她的名字已经划掉了。你要问为什么，我也想知道。",
-          "next": "n_roll_1",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "n_b_name_crossed_out",
-              "speaker": "n",
-              "source": "reported",
-              "text": "N 说拿到名单时，B 的名字已经被划掉了。她不知道是谁划的。"
-            }
-          ]
+          "text": "我也不知道，我没在办公室看到她。",
+          "next": "n_turn_2"
         },
         {
           "id": "p_textbook",
@@ -1185,13 +1005,13 @@
         {
           "id": "n_textbook_1",
           "speaker": "n",
-          "text": "我以为要用。你是没带，还是怕不带会被记下来？",
+          "text": "一般来说是要用的……你是没带？还是……",
           "next": "q_n_guarded"
         },
         {
           "id": "q_n_guarded",
           "speaker": "q",
-          "text": "他刚问过我拿没拿。老师，我手里这本是我自己的。",
+          "text": "老师，我带了，我手里这本是我自己的，他刚还说这是他的呢。",
           "next": "n_textbook_2",
           "conditions": {
             "all_flags": [
@@ -1202,8 +1022,14 @@
         {
           "id": "n_textbook_2",
           "speaker": "n",
-          "text": "我这儿只记谁到了。书先放桌上吧。",
-          "next": "n_roll_1"
+          "text": "我今天不打算讲课，大家自习吧，也可以……",
+          "next": "q_free"
+        },
+        {
+          "id": "q_free",
+          "speaker": "q",
+          "text": "去操场自由活动？",
+          "next": "n_turn_2"
         },
         {
           "id": "p_wait",
@@ -1215,194 +1041,7 @@
         {
           "id": "n_wait_1",
           "speaker": "n",
-          "text": "嗯。那先把这张表弄完。",
-          "next": "n_roll_1"
-        },
-        {
-          "id": "p_n_share",
-          "speaker": "protagonist",
-          "text": "老师，我能和 Q 合看一本吗？",
-          "source": "observed",
-          "next": "q_n_share",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "asked_n_about_textbook",
-              "value": true
-            }
-          ]
-        },
-        {
-          "id": "q_n_share",
-          "speaker": "q",
-          "text": "我说借你，没说……嗯，老师。书在我这儿。",
-          "next": "n_share_ok"
-        },
-        {
-          "id": "n_share_ok",
-          "speaker": "n",
-          "text": "行，合看吧。现在先告诉我谁在教室。",
-          "next": "n_roll_1",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "n_allows_book_sharing",
-              "source": "reported",
-              "speaker": "n",
-              "text": "你问能否和 Q 合看课本。N 同意了。"
-            }
-          ]
-        },
-        {
-          "id": "n_roll_1",
-          "speaker": "n",
-          "text": "等等。你名字后头怎么已经有个勾了？我还没念到你。",
-          "next": "p_roll_mark",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "n_found_roll_mark",
-              "speaker": "n",
-              "source": "reported",
-              "text": "N 说还没点到你，你的名字旁却已经打了勾。她没认领那个勾。"
-            }
-          ]
-        },
-        {
-          "id": "p_roll_mark",
-          "speaker": "protagonist",
-          "text": "她把笔掉了个头，用笔帽点住那一行。",
-          "next": "n_roll_2",
-          "source": "observed"
-        },
-        {
-          "id": "n_roll_2",
-          "speaker": "n",
-          "text": "这不是我画的。你先前应过吗？",
-          "choices": [
-            {
-              "id": "answer_self",
-              "text": "您现在念。我自己应。",
-              "next": "p_roll_present"
-            },
-            {
-              "id": "ask_q",
-              "text": "Q，有人先点过我的名吗？",
-              "next": "p_roll_q"
-            },
-            {
-              "id": "leave_to_n",
-              "text": "（看看她怎么记。）",
-              "next": "n_roll_silence"
-            }
-          ]
-        },
-        {
-          "id": "p_roll_present",
-          "speaker": "protagonist",
-          "text": "您现在念。我自己应。",
-          "source": "observed",
-          "next": "n_roll_calls"
-        },
-        {
-          "id": "n_roll_calls",
-          "speaker": "n",
-          "text": "好。就从你这儿开始。",
-          "next": "p_roll_answer"
-        },
-        {
-          "id": "p_roll_answer",
-          "speaker": "protagonist",
-          "text": "（她照着那一行念了一遍。）……到。",
-          "next": "n_roll_present",
-          "source": "observed"
-        },
-        {
-          "id": "n_roll_present",
-          "speaker": "n",
-          "text": "好，我在旁边写「当场应到」。原来那个勾先留着，我不知道是谁的。",
-          "next": "n_turn",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "n_roll_response",
-              "value": "answered_self"
-            },
-            {
-              "type": "record",
-              "entry_id": "n_roll_answered_self",
-              "speaker": "n",
-              "source": "reported",
-              "text": "你请 N 当场点你的名，并亲自应了一声。N 说会注明「当场应到」，保留原来那个勾。"
-            }
-          ]
-        },
-        {
-          "id": "p_roll_q",
-          "speaker": "protagonist",
-          "text": "Q，你听见有人点过我的名吗？",
-          "source": "observed",
-          "next": "q_roll_limits"
-        },
-        {
-          "id": "q_roll_limits",
-          "speaker": "q",
-          "text": "第一遍铃前，门口有人问你来了没。我看见包在，就说来了。……我没看清门口是谁。",
-          "next": "n_roll_inquire",
-          "effects": [
-            {
-              "type": "record",
-              "entry_id": "q_answered_at_door",
-              "speaker": "q",
-              "source": "reported",
-              "text": "Q 说第一遍铃前有人在门口问你到了没有。Q 看见书包就答了「到了」，但没看清来人是谁。"
-            }
-          ]
-        },
-        {
-          "id": "n_roll_inquire",
-          "speaker": "n",
-          "text": "谁问的都不一定就是谁画的。这个勾我旁边加个问号。人是在教室，我看见了。",
-          "next": "n_turn",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "n_roll_response",
-              "value": "asked_q"
-            },
-            {
-              "type": "record",
-              "entry_id": "n_roll_mark_unconfirmed",
-              "speaker": "n",
-              "source": "reported",
-              "text": "Q 无法确认是谁问过你的出勤。N 说会在原勾旁加问号，不把 Q 的话当作那个勾的来历。"
-            }
-          ]
-        },
-        {
-          "id": "n_roll_silence",
-          "speaker": "n",
-          "text": "……我就写「人在，没应声」。那个勾先不擦。问起来，我把这张表给他们看。",
-          "next": "n_turn",
-          "effects": [
-            {
-              "type": "set_flag",
-              "flag": "n_roll_response",
-              "value": "silent"
-            },
-            {
-              "type": "record",
-              "entry_id": "n_roll_no_answer",
-              "speaker": "n",
-              "source": "reported",
-              "text": "你没有回答。N 说会注记「人在，没应声」，保留先前的勾。"
-            }
-          ]
-        },
-        {
-          "id": "n_turn",
-          "speaker": "n",
-          "text": "其他几行我先空着。教案……算了，今天这节课不讲了。",
+          "text": "嗯",
           "next": "n_turn_2"
         },
         {
@@ -1432,7 +1071,7 @@
         {
           "id": "n_turn_3",
           "speaker": "n",
-          "text": "我会待在这里。有事的话……再来问我。",
+          "text": "我会待在这里改卷子。有问题的话……可以来问我。",
           "next": null
         }
       ]
@@ -1445,15 +1084,9 @@
         {
           "id": "qa_1",
           "speaker": "q",
-          "text": "你总算想起我了？我还以为你打算一个人走到底。",
-          "next": "qa_2"
-        },
-        {
-          "id": "qa_2",
-          "speaker": "protagonist",
-          "text": "（Q 追上来，走到你身边。）",
-          "source": "observed",
-          "next": null
+          "text": "自由活动，去不去？",
+          "next": null,
+          "source": "observed"
         }
       ]
     },
@@ -1483,12 +1116,7 @@
         {
           "id": "cc_1",
           "speaker": "protagonist",
-          "text": "前面那扇窗很普通：一块空地，一道矮墙，绳子上夹着谁家晾的衣服。后面那扇窗拉着窗帘。"
-        },
-        {
-          "id": "cc_2",
-          "speaker": "protagonist",
-          "text": "布边一点光都不透。另一扇窗已经让落日照成金色。",
+          "text": "前面那扇窗很普通：一块空地，一道矮墙，绳子上夹着谁家晾的衣服。后面那扇窗拉着厚厚的窗帘，窗帘从天花板一直拖到地上。",
           "choices": [
             {
               "id": "edges",
@@ -1542,7 +1170,7 @@
         {
           "id": "cc_edges_bad",
           "speaker": "voice_orientation",
-          "text": "只是很厚的蓝布。一道道折在一起。",
+          "text": "只是很厚的蓝色丝绸布，一道道折在一起，褶子。",
           "next": "cc_decide"
         },
         {
@@ -1565,7 +1193,7 @@
         {
           "id": "cc_draw",
           "speaker": "protagonist",
-          "text": "你伸手去拉那块布。",
+          "text": "伸手去拉那块布。",
           "effects": [
             {
               "type": "set_flag",
@@ -1585,7 +1213,7 @@
         {
           "id": "cc_leave",
           "speaker": "protagonist",
-          "text": "你松了手。它垂回原样，一点没变。",
+          "text": "你松了手。它还是一点光都不透。",
           "next": null
         }
       ]
@@ -1598,7 +1226,7 @@
         {
           "id": "cv_1",
           "speaker": "protagonist",
-          "text": "墙不见了，地板到这里就断了。没有玻璃，也看不见外面。落日照不到这里。",
+          "text": "窗帘后面没有窗户，也没有墙，连视线都很昏暗，很容易直接摔下去。",
           "effects": [
             {
               "type": "record",
@@ -1612,7 +1240,7 @@
         {
           "id": "cv_balance_check",
           "speaker": "voice_orientation",
-          "text": "脚尖下面就是尽头。你的重心在哪儿？",
+          "text": "停下！再往前走就要摔死了！",
           "check": {
             "ability": "orientation",
             "difficulty": 10,
@@ -1624,7 +1252,7 @@
         {
           "id": "cv_hold",
           "speaker": "voice_orientation",
-          "text": "后脚。对，把重量放回后脚，退一步。",
+          "text": "后脚。对，把重心放回后脚跟，再往后退一步，你稳住了自己。",
           "next": null
         }
       ]
@@ -1637,12 +1265,12 @@
         {
           "id": "ccd_1",
           "speaker": "protagonist",
-          "text": "蓝帘还收在两边。墙到这里就断了，再往外什么也看不见。"
+          "text": "蓝色的窗帘还垂在两边，卷了起来，外面却还是什么也看不见，你揉了揉眼睛。"
         },
         {
           "id": "ccd_2",
           "speaker": "protagonist",
-          "text": "这次你没有往前。",
+          "text": "这次你没有往前迈步。",
           "next": null
         }
       ]
@@ -1784,6 +1412,25 @@
             }
           ],
           "next": null
+        }
+      ]
+    },
+    "classroom_rear_door_borrow": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "rdb_check",
+      "nodes": [
+        {
+          "id": "rdb_check",
+          "speaker": "protagonist",
+          "text": "这扇门从来不会打开，除非使用特殊的手段。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": null,
+            "failure": null
+          }
         }
       ]
     },

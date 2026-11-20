@@ -25,7 +25,6 @@ const BELL_LEAD_IN := 6.0
 ## this lands on the second phrase, which is when someone in the room would talk over it.
 ## `tests/bell_sound_test.py` pins the buffer length this assumes.
 const BELL_SPEAK_AFTER_SECONDS := 4.6
-const BAG_REMINDER_SECONDS := 40.0
 ## Hard fallback so a player who never opens the bag still reaches the lesson.
 const BAG_WAIT_LIMIT := 95.0
 ## How often a flag wait looks again, in story seconds.
@@ -66,11 +65,12 @@ func _has_flag(flag: StringName) -> bool:
 	return bool(_game_state.get_flag(flag, false))
 
 
-## Waits until `flag` is set or `limit_seconds` of story time have passed.
+## Waits until `flag` is set or `limit_seconds` of story time have passed. Also stops when
+## the player has skipped class: nothing the prologue waits for can happen after that.
 func wait_for_flag(flag: StringName, limit_seconds: float) -> void:
 	var elapsed := 0.0
 	while elapsed < limit_seconds:
-		if _has_flag(flag):
+		if _has_flag(flag) or _has_flag(StoryFlags.SKIPPED_CLASS):
 			return
 		await _director.wait_seconds(FLAG_POLL_SECONDS)
 		elapsed += FLAG_POLL_SECONDS
@@ -109,13 +109,15 @@ func q_wake() -> void:
 	_director.end_beat()
 
 
-## Beats C/D: the bag reminder runs in the background while the player looks around.
+## Beats C/D: the player looks around; nobody prompts them about the bag.
 ## If they check the bag, Q is just beside the desk. Let him ask before the imagined
 ## lesson starts, rather than making the player catch him in its short lead-in.
-## If they never check, the fallback claims neither a search nor a conversation.
+## If they never check, the fallback claims neither a search nor a conversation. A
+## player who left through the rear door meanwhile closed the step that way instead.
 func bag() -> void:
-	_start_bag_reminder()
 	await wait_for_flag(StoryFlags.TEXTBOOK_MISSING, BAG_WAIT_LIMIT)
+	if _has_flag(StoryFlags.SKIPPED_CLASS):
+		return
 	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
 		_game_state.set_flag(StoryFlags.BAG_WAIT_EXPIRED, true)
 		return
@@ -172,8 +174,8 @@ func bell() -> void:
 
 func substitute() -> void:
 	# The class is already dismissed: N's lesson is over, and the player may not even be
-	# in the room N is in any more. Nothing to look for.
-	if _has_flag(StoryFlags.CLASS_DISMISSED):
+	# in the room N is in any more. Nothing to look for. The same once they skipped it.
+	if _has_flag(StoryFlags.CLASS_DISMISSED) or _has_flag(StoryFlags.SKIPPED_CLASS):
 		return
 	var location := _locations.get_current()
 	if location == null:
@@ -197,6 +199,10 @@ func substitute() -> void:
 		_director.end_beat()
 
 		await actor.walk_along(points.slice(1))
+		# N walks in while the player still has the controls; the rear door may have been
+		# taken meanwhile, and N's class must not start in the corridor.
+		if _has_flag(StoryFlags.SKIPPED_CLASS):
+			return
 
 	await _director.begin_beat()
 	_game_state.set_flag(StoryFlags.N_ARRIVED, true)
@@ -205,16 +211,3 @@ func substitute() -> void:
 	_director.end_beat()
 	_flow.update_exit_prompt()
 
-
-func _start_bag_reminder() -> void:
-	if _has_flag(StoryFlags.TEXTBOOK_MISSING):
-		return
-	await _director.wait_seconds(BAG_REMINDER_SECONDS)
-	if _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.BELL_RUNG) \
-			or _director.is_slice_finished():
-		return
-	await _director.begin_beat()
-	# An inspection can finish while the reminder is waiting for the dialogue lock.
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) and not _has_flag(StoryFlags.BELL_RUNG):
-		await _director.play_conversation(&"q_bag_reminder")
-	_director.end_beat()

@@ -24,11 +24,13 @@ MASTER = "zh-CN"
 STEP_NOTES = {
     "wake": "醒来：从黑场淡入，主角趴在课桌上。目标条显示「先缓一缓」。没有对话。",
     "q_wake": "Q 走过来开口（会话 q_wake）。第一句写入 met_q。",
-    "bag": "翻书包：后台计时提醒（q_bag_reminder）。玩家翻了书包 → Q 问课本（q_after_bag）；"
+    "bag": "翻书包：没有提醒。玩家翻了书包 → Q 问课本（q_after_bag）；"
     "一直没翻 → 计时用完，记 bag_wait_expired，不假装发生过对话。",
     "expectation": "想象 B 进门（expected_b，主观会话，徽章「想象中的」）。没翻书包就跳过并记 expectation_skipped。",
     "bell": "第二遍铃（bell_moment），目标条「第二遍铃响了」。",
-    "substitute": "代课的 N 进门、点名、宣布自习（n_class）。以 class_dismissed 结束，教室门从此可出。",
+    "substitute": "代课的 N 进门、点名、宣布自习（n_class）。以 class_dismissed 结束，教室门从此可出。"
+    "在 q_wake 选了「去隔壁班借」的玩家，下课前可在后门做一次定向检定（classroom_rear_door_borrow），"
+    "成功即从后门进走廊、记 skipped_class，算翘课：铃声和 N 的一拍都不再发生。",
 }
 
 OPEN_QUESTIONS = [

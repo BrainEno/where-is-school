@@ -556,6 +556,10 @@ destination_id = &"restroom_03"
 position = Vector3(-1.2, 0, -5.1)
 rotation_degrees = Vector3(0, -90, 0)
 
+[node name="FromClassroomRear" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-1.2, 0, 2)
+rotation_degrees = Vector3(0, -90, 0)
+
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0, 0, 5.4)
 

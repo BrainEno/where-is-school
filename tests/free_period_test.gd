@@ -120,10 +120,14 @@ func _check_state(line: String, choice_id: StringName) -> void:
 	if objective != expected:
 		_failures.append("%s: the objective is '%s', expected '%s'." % [line, objective, expected])
 
-	var entry := &"n_stayed" if stayed else &"n_leaving"
-	if not _narrative.has_entry(entry):
-		_failures.append("%s: the branch recorded no knowledge entry ('%s')." % [line, entry])
-	elif int(_narrative.get_entry(entry).source) != NarrativeEntry.Source.OBSERVED:
+	# Only leaving is written down; the author removed the note for staying (round 5),
+	# so "no" changes the flags and the objective and records nothing.
+	if stayed:
+		if _narrative.has_entry(&"n_stayed"):
+			_failures.append("%s: staying recorded the removed 'n_stayed' note." % line)
+	elif not _narrative.has_entry(&"n_leaving"):
+		_failures.append("%s: the branch recorded no knowledge entry ('n_leaving')." % line)
+	elif int(_narrative.get_entry(&"n_leaving").source) != NarrativeEntry.Source.OBSERVED:
 		_failures.append("%s: what the player chose was not recorded as observed." % line)
 
 	var location := String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, ""))

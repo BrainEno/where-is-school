@@ -293,7 +293,7 @@ func _compare_touch() -> void:
 	if not _check.expect(catalog != null, "Notebook has no catalog"):
 		return
 	var pairs := catalog.get_comparisons()
-	if not _check.expect(pairs.size() >= 3, "Notebook has fewer than three authored pairs"):
+	if not _check.expect(pairs.size() >= 2, "Notebook has fewer than two authored pairs"):
 		return
 	for pair: Dictionary in pairs:
 		for id: StringName in [pair["left"], pair["right"]]:

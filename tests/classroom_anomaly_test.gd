@@ -12,8 +12,10 @@ extends SceneTree
 ## 2. **The lesson is not over.** Before N lets the class go the curtain is only looked at
 ##    and the rear door does not give: nothing changes, no flag is written.
 ## 3. **The rear door never opens.** After the class is dismissed it still only says that
-##    it never opens unless special means are used: no beat, no camera, no flag, no
-##    staircase, and the leaf has not moved.
+##    it never opens unless special means are used: no conversation, no camera, no flag,
+##    no check, no staircase, and the leaf has not moved - even for a player who told Q
+##    they would borrow a book next door, whose one attempt exists only before the lesson
+##    ends (prologue_dialogue_paths_test covers it).
 ## 3b. **The projection screen is furniture.** It is rolled up when the room loads; its
 ##    pull rolls it all the way down over the board and, used again, back up, with the
 ##    prompt following. No conversation, no inspection, no story flag, nothing saved.
@@ -365,9 +367,12 @@ func _check_placement() -> void:
 	var curtain_interactable := _room().find_interactable(&"curtain") as StagedInteractable
 	if curtain_interactable == null or not curtain_interactable.is_staged():
 		_failures.append("The curtain interactable is missing or has no stage handler.")
-	var rear := _room().find_interactable(&"rear_door")
-	if rear == null or rear is StagedInteractable or rear.inspection_id != &"classroom_rear_door":
-		_failures.append("The rear door is not a plain inspection of classroom_rear_door.")
+	# Staged only for its one borrow attempt (prologue_dialogue_paths_test); otherwise
+	# its handler answers with the locked door's inspection, as below.
+	var rear := _room().find_interactable(&"rear_door") as StagedInteractable
+	if rear == null or not rear.is_staged() or rear.inspection_id != &"classroom_rear_door" \
+			or rear is LocationExit:
+		_failures.append("The rear door is not a staged door reading classroom_rear_door.")
 
 
 # --- 2. during the lesson -----------------------------------------------------------
@@ -403,6 +408,8 @@ func _check_lesson() -> void:
 
 func _check_rear_door() -> void:
 	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	# Even a player who promised to borrow a book gets no attempt once the lesson is over.
+	_game_state.set_flag(StoryFlags.BORROW_FROM_NEXT_CLASS, true)
 	_player.teleport(Transform3D(Basis(Vector3.UP, -PI * 0.5), REAR_DOOR_SPOT))
 	await _frames(4)
 	var before := _leaf_pose()
@@ -427,8 +434,10 @@ func _check_rear_door() -> void:
 		)
 	if not _conversations.is_empty():
 		_failures.append("The rear door started a conversation: %s." % str(_conversations))
-	if _flag(REAR_DOOR_OPENED):
+	if _flag(REAR_DOOR_OPENED) or _flag(StoryFlags.SKIPPED_CLASS):
 		_failures.append("The rear door recorded itself as opened.")
+	if _game_state.get_flag(StoryFlags.check_record_flag(&"classroom_rear_door_borrow", &"rdb_check"), null) != null:
+		_failures.append("The rear door rolled its borrow check after the lesson.")
 	if framed:
 		_failures.append("The camera went somewhere when the rear door was tried.")
 	if not _no_staircase():

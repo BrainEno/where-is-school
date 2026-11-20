@@ -30,6 +30,9 @@ signal subjective_changed(active: bool)
 signal locale_applied(locale: String)
 ## Emitted once per check, whether it was rolled now or replayed from a record.
 signal check_resolved(result: Dictionary)
+## Relayed from the runtime: a conversation asked the camera to look at an interactable
+## of the current room (`camera_focus` effect). `OpeningSequence` owns the camera.
+signal camera_focus_requested(target: StringName)
 ## Emitted when the first line of an inspection is on screen, so passive inner
 ## voices can react to *reading* something rather than to standing near it.
 signal inspection_presented(inspection_id: StringName)
@@ -138,6 +141,7 @@ func _ready() -> void:
 	_runtime = DialogueRuntime.new(_game_state, _narrative_state, _characters, _abilities, _resolver)
 	_runtime.line_changed.connect(_on_line_changed)
 	_runtime.check_resolved.connect(_on_check_resolved)
+	_runtime.camera_focus_requested.connect(camera_focus_requested.emit)
 	_runtime.choices_changed.connect(_on_choices_changed)
 	_runtime.conversation_started.connect(_on_runtime_conversation_started)
 	_runtime.conversation_finished.connect(_on_runtime_conversation_finished)

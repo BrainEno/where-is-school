@@ -22,6 +22,9 @@ signal effect_rejected(reason: String)
 ## Emitted when a check node is entered, after its line is shown. `visible` checks
 ## are presented with the numbers; `hidden` ones only change which line comes next.
 signal check_resolved(result: Dictionary)
+## A `camera_focus` effect: look at the interactable `target` (an `interact_id` of the
+## current room) while the next line is read. Presentation only; nothing is stored.
+signal camera_focus_requested(target: StringName)
 
 const MAX_STEPS_PER_CONVERSATION := 512
 
@@ -528,6 +531,8 @@ func _apply_effect(effect: Dictionary) -> void:
 			_set_flag(StoryFlags.OBJECTIVE_KEY, String(effect.get("key", "")))
 		"record":
 			_record_narrative(effect)
+		"camera_focus":
+			camera_focus_requested.emit(StringName(String(effect.get("target", ""))))
 		_:
 			_reject("Unknown dialogue effect '%s'. Ignored." % type_name)
 
