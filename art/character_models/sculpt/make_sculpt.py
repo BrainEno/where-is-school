@@ -18,7 +18,11 @@ sys.path[:0] = [str(HERE), str(HERE.parents[2] / 'tools')]
 import character_sculpt as io
 from character_geometry import teacher_bob
 from glb_io import accessor, decode
-from forms import LANDMARKS, components, ease, face, hairline, other_hair, shell_relief
+from forms import (LANDMARKS, components, ease, face, facial_details, hairline,
+                   lead_spikes, other_hair, shell_relief)
+
+# The prepared seated GLB retains these node IDs for the two inset nostrils.
+STUDENT_NOSTRILS = {'Sphere.019', 'Sphere.020'}
 
 
 class Surface:
@@ -56,7 +60,9 @@ def zone(role, s):
         if n.startswith('Hair_'): return 'hair'
         if n.startswith('Ear_'): return 'ear'
         if n.startswith('Eye_'): return 'eye'
-        if n.startswith(('Head_Main','Eyebrow_','Upper_Eyelid_','Mouth_Line','Lower_Lip','Nostril_')): return 'face'
+        if n in STUDENT_NOSTRILS or n.startswith((
+                'Head_Main','Eyebrow_','Upper_Eyelid_','Mouth_Line','Lower_Lip','Nostril_')):
+            return 'face'
     if role in ('thin','gentle','court','b'):
         if m.startswith('hair_') or m=='b_swept_silver': return 'hair'
         if m in ('eye_paint','b_eye'): return 'eye'
@@ -184,8 +190,9 @@ def sculpt(role, parts):
             for i, ids in enumerate(components(p,s.triangles)):
                 q[ids] = other_hair(role,p[ids],label,i)
         else:
-            q = face(role,p,kind,density)
-            if role in io.REMESH and s.mat['name'].endswith('_Mat_Skin'):
+            # Inset student nostrils were not part of the first broad pass.
+            q = p.copy() if role == 'seated' and s.node in STUDENT_NOSTRILS else face(role,p,kind,density)
+            if role in ('lead','q') and s.mat['name'].endswith('_Mat_Skin'):
                 _,ex,ey,_,_ = LANDMARKS[role]
                 lids = [ids for ids in components(p,s.triangles)
                         if len(ids)==88 and abs(abs(p[ids,0].mean())-ex)<.007
@@ -202,13 +209,29 @@ def sculpt(role, parts):
             delta = q-origin
             q = origin + delta*np.minimum(1., .0128/np.maximum(1e-12,np.linalg.norm(delta,axis=1)))[:,None]
         s.output = q
-    # Keep the measured height for game framing, including the lead's crown.
+    # Reproduce the earlier height correction before this pass. In particular,
+    # it reached the upper scalp on the lead; editing only his hair must keep
+    # all non-hair streams byte-identical to that study.
     old_peak = max(s.p[:,1].max() for s in parts)
     new_peak = max((s.p if s.output is None else s.output)[:,1].max() for s in parts)
     for s in parts:
         if s.output is not None and abs(new_peak-old_peak) > 1e-7:
             y = s.output[:,1]
             y += (old_peak-new_peak)*ease(new_peak-.070,new_peak,y)
+
+    for s in parts:
+        kind = zone(role,s)
+        if role == 'lead':
+            if s.node == 'Protagonist_Hair':
+                s.output = lead_spikes(s.p,s.triangles)
+                s.remesh = None
+        elif kind in ('face','eye'):
+            p = s.output.copy(); p[:,2] *= sign
+            q = facial_details(role,p,kind)
+            if role in ('thin','gentle','court','b'):
+                keep_deforming_lids(s,p,q)
+            q[:,2] *= sign
+            s.output = q
 
 
 def material(s):
@@ -286,7 +309,8 @@ def make(directory, blend):
     notes.write('Where Is School — eight head studies\n\n'
                 'Each performer has a collection with editable native mesh surfaces.\n'
                 'Sculpt at 1 = revision; at 0 = original. Keep indexed topology.\n'
-                'Lead and Q have rebuilt hair-only shells; unhide the original for comparison.\n'
+                'Lead uses the archived irregular spikes; Sculpt changes only the tip sweep.\n'
+                'Q alone keeps the rebuilt shell; unhide the original for comparison.\n'
                 'Expression keys are inherited offsets, not new actions. The game rigs live in the GLBs.\n'
                 'Use make_sculpt.py --export after editing; see the versioned README.\n')
     active = None

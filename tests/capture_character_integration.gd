@@ -22,8 +22,8 @@ extends SceneTree
 ## scenes/dev/character_lab/looks/.
 ##
 ## Groups (one CI job each, so each has its own annotation budget):
-##   protagonist  head to feet in the sun and in the west wall's shade, the face, and the
-##                game's own camera
+##   protagonist  head to feet in the sun and in the west wall's shade, the face, the
+##                game's own camera, and a side-on strip at four bound-walk phases
 ##   q            head to feet lit and back-lit, the face front and three-quarter, and a
 ##                talk and a walk still
 ##   n            head to feet in the sun and in the shade, the face, and N at the lectern
@@ -35,11 +35,11 @@ extends SceneTree
 ##   motion       fixed game camera/crop across walk, lesson and A1 pose phases (`after`)
 ## `--frames=a,b` limits a group to some of its frame kinds. `--freeze-pose` holds the same
 ## idle/sit pose in each variant (not for motion/dialogue captures). For a new material
-## change, `--variants=baseline,after --baseline-dir=<dir>` loads n.tres and student.tres
+## change, `--variants=baseline,after --baseline-dir=<dir>` loads the matching looks
 ## saved from that change's base; the historical `before` is NOT a current-look baseline.
-## That switch alone DOES NOT replace geometry. tools/capture_character_geometry.sh runs
-## two separate engine sessions with the base/current GLBs and looks and joins only their
-## genuine panels. It records their hashes, code head and base SHA in the artifact.
+## That switch alone DOES NOT replace geometry or motion. tools/capture_character_geometry.sh
+## runs separate sessions with base/current GLBs, looks and (for the lead) motion profiles.
+## It joins only their genuine panels and records the input hashes in the artifact.
 ##
 ## Every frame kind becomes one sheet, one column per variant, printed as
 ## `ARTSHEET: <name>.jpg <base64>` for the workflow to publish as annotations; full-size
@@ -67,7 +67,7 @@ const VARIANTS := {
 	"n_woodcut": {"n": LAB + "n_woodcut.tres"},
 }
 const GROUP_FRAMES := {
-	"protagonist": ["body_sun", "body_shade", "face", "gameplay"],
+	"protagonist": ["body_sun", "body_shade", "face", "gameplay", "stride_profile"],
 	"q": ["body_sun", "body_backlit", "face", "face_three_quarter", "talk", "walk"],
 	"n": ["body_sun", "body_shade", "face", "face_three_quarter", "hands", "cloth", "lectern", "walk"],
 	"student": ["face", "face_three_quarter", "hands", "cloth", "seated", "gameplay"],
@@ -153,7 +153,7 @@ func _run() -> void:
 		if not VARIANTS.has(variant):
 			_failures.append("Unknown variant '%s'." % variant)
 	if _variants.has("baseline") and _baseline_dir.is_empty():
-		_failures.append("The baseline variant requires --baseline-dir with n.tres and student.tres from the base revision.")
+		_failures.append("The baseline variant requires --baseline-dir with the base revision's looks.")
 	if not _failures.is_empty() or not await _boot():
 		await _finish()
 		return
@@ -268,7 +268,8 @@ func _boot() -> bool:
 func _apply_variant(variant: String) -> bool:
 	var spec: Dictionary = VARIANTS[variant].duplicate()
 	if variant == "baseline":
-		for label: String in ["n", "student"]:
+		var labels := ["protagonist"] if _group == "protagonist" else ["n", "student"]
+		for label: String in labels:
 			spec[label] = _baseline_dir.path_join(label + ".tres")
 	var ok := true
 	for label: String in _cast:
@@ -499,6 +500,22 @@ func _frame_dialogue_n(variant: String) -> Image:
 # --- motion evidence ----------------------------------------------------------
 
 
+## Same side-on camera and pixel crop in both renders, independent of hair bounds.
+func _frame_stride_profile(variant: String) -> Image:
+	var subject := _subject_for_group()
+	await _solo(subject, SUN_SPOT, 0.0)
+	var centre := subject.global_position + Vector3.UP * 0.88
+	var frame := await _frame_from(centre + Vector3.LEFT * 2.65, centre, 45.0)
+	var camera := frame["camera"] as Camera3D
+	var frame_size := (frame["image"] as Image).get_size()
+	var crop := Vector2i(roundi(frame_size.y * 0.52), roundi(frame_size.y * 0.92))
+	var box := Rect2i((frame_size - crop) / 2, crop)
+	var sheet := await _motion_strip("profile_" + variant, ["protagonist"], "walk",
+		[0.0, 0.24, 0.55, 0.76], Vector2i(192, 340), camera, box)
+	_drop_camera()
+	return sheet
+
+
 ## No alternate rig or clip: scrub the three real walk libraries in a staged lineup,
 ## without advancing the actors through space. Runtime tests cover actual foot travel.
 func _frame_cast_stride(variant: String) -> Image:
@@ -545,21 +562,22 @@ func _frame_seat_motion(variant: String) -> Image:
 	return sheet
 
 
-## Keep the production lens, angle and crop fixed within each strip. Original full
-## viewport frames go in the artifact too. Restore each animator's held state afterwards.
+## Keep the lens, angle and crop fixed within each strip. Original full viewport frames
+## go in the artifact too. A paired capture supplies the same framing to both legs.
 func _motion_strip(
-	shot_name: String, labels: Array[String], clip: String, phases: Array[float], cell: Vector2i
+	shot_name: String, labels: Array[String], clip: String, phases: Array[float], cell: Vector2i,
+	capture_camera: Camera3D = null, fixed_crop: Rect2i = Rect2i()
 ) -> Image:
-	var camera := _player.camera_rig.camera
+	var camera := _player.camera_rig.camera if capture_camera == null else capture_camera
 	camera.current = true
-	var box := Rect2i()
+	var bounds := Rect2i()
 	for label in labels:
 		var own := _screen_box(camera, _subtree_aabb(_cast[label]["animator"]))
 		if own.intersection(Rect2i(Vector2i.ZERO, root.size)).size.y < 10:
-			_failures.append("%s is out of the game camera in %s." % [label, shot_name])
+			_failures.append("%s is out of the capture camera in %s." % [label, shot_name])
 			return null
-		box = own if box.size == Vector2i.ZERO else box.merge(own)
-	box = box.grow(int(box.size.y * 0.15))
+		bounds = own if bounds.size == Vector2i.ZERO else bounds.merge(own)
+	var box := bounds.grow(int(bounds.size.y * 0.15)) if fixed_crop.size == Vector2i.ZERO else fixed_crop
 	var rig := _player.camera_rig
 	rig.set_physics_process(false)
 	const GAP := 4
@@ -582,7 +600,7 @@ func _motion_strip(
 		CharacterAnimation.play(animator.get_animation_player(), animator.get_current_clip(), 0.0)
 		animator.set_process(true)
 	rig.set_physics_process(true)
-	_note("%s: char/%s at phases %s; game fov %.1f°, fixed crop %s" % [shot_name, clip, str(phases), camera.fov, str(box)])
+	_note("%s: char/%s at phases %s; fov %.1f°, fixed crop %s" % [shot_name, clip, str(phases), camera.fov, str(box)])
 	return strip
 
 

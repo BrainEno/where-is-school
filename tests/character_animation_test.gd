@@ -672,6 +672,8 @@ func _check_motion_profiles() -> void:
 			)
 		if (entry[0] == "protagonist" or entry[0] == "Q") and moved < 3:
 			_failures.append("%s: only %d bones carry the profile's posture in the standing pose." % [label, moved])
+		if entry[0] == "protagonist":
+			_check_protagonist_walk_reach(player, bare_model, bare_player, profile, resolved)
 		bare_model.queue_free()
 		model.queue_free()
 		await process_frame
@@ -698,6 +700,58 @@ func _check_motion_profiles() -> void:
 			% [player_swing, q_swing, n_swing])
 		if q_swing < player_swing + 10.0 or player_swing < n_swing + 3.0 or n_swing < 8.0:
 			_failures.append("The walk curves lost Q's loose swing, the player's held elbows or N's small steps.")
+
+
+## Undo only the walk amplitude in a separate bind of the same player rig. Measure
+## the hands' actual forward/back travel, not just the upper-arm key angles.
+func _check_protagonist_walk_reach(
+	player: AnimationPlayer, reference_model: Node3D, reference_player: AnimationPlayer,
+	profile: CharacterMotionProfile, resolved: Dictionary
+) -> void:
+	var reference := profile.duplicate(true) as CharacterMotionProfile
+	reference.amplitude.erase("walk")
+	var report := CharacterAnimation.bind(reference_model, reference_player, false, reference)
+	if not bool(report.get("ok", false)):
+		_failures.append("Could not bind the protagonist's unscaled walk for comparison.")
+		return
+	var before := _walk_reach(reference_player, resolved)
+	var after := _walk_reach(player, resolved)
+	_notes.append("Protagonist walk wrist travel L/R: %.3f/%.3f m -> %.3f/%.3f m"
+		% [before.x, before.y, after.x, after.y])
+	for side in 2:
+		if before[side] < 0.04 or after[side] < 0.70 * before[side] or after[side] > 0.92 * before[side]:
+			_failures.append("The protagonist's walk must modestly reduce wrist travel on both sides.")
+	if not is_equal_approx(before.z, after.z) or not is_equal_approx(before.w, after.w) \
+			or not is_equal_approx(player.get_animation("char/walk").length,
+				reference_player.get_animation("char/walk").length):
+		_failures.append("Reducing the protagonist's arm swing changed his stride or cadence.")
+
+
+## Travel along character-forward of left/right hands and then left/right feet.
+func _walk_reach(player: AnimationPlayer, resolved: Dictionary) -> Vector4:
+	var model := player.get_parent() as Node3D
+	var rig := CharacterAnimation.skeletons_in(model)[0]
+	var bones := PackedInt32Array()
+	for key: String in ["hand.L", "hand.R", "foot.L", "foot.R"]:
+		var bone := rig.find_bone(String(resolved.get(key, "")))
+		if bone < 0:
+			_failures.append("Protagonist walk reach has no bone for %s." % key)
+			return Vector4.ZERO
+		bones.append(bone)
+	if not CharacterAnimation.play(player, "walk"):
+		_failures.append("Cannot play the protagonist walk reach sample.")
+		return Vector4.ZERO
+	var length := player.get_animation("char/walk").length
+	var low := Vector4(INF, INF, INF, INF)
+	var high := -low
+	for step in 49:
+		player.seek(length * step / 48.0, true)
+		for i in bones.size():
+			var depth := model.to_local(rig.to_global(rig.get_bone_global_pose(bones[i]).origin)).z
+			low[i] = minf(low[i], depth)
+			high[i] = maxf(high[i], depth)
+	player.stop()
+	return high - low
 
 
 func _check_bound_loop(label: String, clip_name: String, animation: Animation) -> void:

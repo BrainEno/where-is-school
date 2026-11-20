@@ -76,10 +76,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sculpt_base="$(PYTHONPATH=tools .venv/bin/python -c 'from character_sculpt import BASE; print(BASE)')"
-          if ! git cat-file -e "${sculpt_base}^{commit}" 2>/dev/null; then
-            git fetch --no-tags --no-recurse-submodules --depth=1 origin "$sculpt_base"
-          fi
+          bases="$(PYTHONPATH=tools .venv/bin/python -c 'from character_sculpt import BASE, REVIEW_BASE; print(BASE, REVIEW_BASE)')"
+          for sculpt_base in $bases; do
+            if ! git cat-file -e "${sculpt_base}^{commit}" 2>/dev/null; then
+              git fetch --no-tags --no-recurse-submodules --depth=1 origin "$sculpt_base"
+            fi
+          done
           .venv/bin/python tests/character_sculpt_test.py
 
       - name: Exercise the declared GDScript parser

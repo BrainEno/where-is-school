@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Install the Blender head layers on an exact pre-sculpt runtime glTF.
 
-Write two float3 streams on the explicitly authored primitives. Lead and Q
-also have new standalone hair shells, with their original rigid Head binding.
+Write two float3 streams on the explicitly authored primitives. Only Q has a
+replacement hair shell; the protagonist uses the original indexed spike mesh.
 No Blender re-export of the rig, animation, expressions or wardrobe is involved.
 Blender authoring and export instructions are under art/character_models/sculpt.
 """
@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/character_models/sculpt'
 LAYERS = ART / 'layers.json.gz'
 BASE = '25c3410c90a1825337f671648d42c344dbeb1416'
+# First sculpt pass as it actually shipped, for revision-specific regression and review.
+REVIEW_BASE = 'fd11c183249ef43730fc2fdf36be77cf10669974'
 RUNTIME = {
     'lead': 'assets/models/protagonist/Protagonist_Character.glb',
     'q': 'assets/models/q/new-Q.glb',
@@ -33,7 +35,7 @@ RUNTIME = {
     'court': 'assets/models/classmates/court_classmate.glb',
     'b': 'scenes/dev/teacher_b/teacher_b.glb',
 }
-REMESH = {'lead': 'Protagonist_Hair', 'q': 'Q_Hair'}
+REMESH = {'q': 'Q_Hair'}
 
 
 def primitives(document):
