@@ -241,6 +241,9 @@ jobs:
           # The story documents writers edit in Google Docs: an untouched export imports back
           # byte for byte, and a broken script is refused line by line before anything is written.
           python3 tests/story_doc_test.py
+          # Round 2 of the environment art (postmodern 03 offices, the Kafka archive): the
+          # merged meshes face outward and no new collider nears a reading stance or its route.
+          python3 tests/office_archive_dressing_test.py
 
       - name: Check no test waits a fixed number of frames on a fast clock
         shell: bash

@@ -14,6 +14,8 @@ from build_school_rooms import add_route, label, look, solid, start_room, walls
 from build_teaching_block import ROOT, child_path, quad, srgb, vec3
 from fixture_geometry import Facets, rounded_rect
 from school_annex_layout import ANNEXES, THRESHOLDS
+from postmodern_office import POMO, kettle, memphis_desk, principal_suite, swivel_chair, vacant_workroom
+from trial_archive import index_desk, trial_archive
 
 
 COMMON = {
@@ -139,8 +141,11 @@ def archive(b):
     paper(b, "LedgerPage", p, (-.18,.883,.062), .75,.48,"ledger",10,floor=True)
     for i,(x,z,t) in enumerate(((.53,.17,"red"),(.75,-.18,"ink"),(.40,-.08,"cream"))):
         b.box(f"IndexSlip{i}", p, (x,.806,z), (.28,.018,.23),t,rot=(0,10-i*9,0))
+    index_desk(b, p)
     chair(b, "ClerkSeat", (2.46,0,-2.49), 172)
     read(b,"archive",p,(1.04,.82,-1.46),("Ledger",))
+    # Round 2 (2026-11-20): the court offices of The Trial, around the same desk.
+    trial_archive(b)
 
 
 def plan_room(b):
@@ -261,12 +266,15 @@ def computer_room(b):
 def vacant_office(b):
     # Registration without the person: flat graphite imprints disagree with
     # familiar, solid desk and chair shapes, without adding a teacher or ghost.
-    p=table(b,"EmptyDesk",(.89,0,-1.71),2.47,1.15,top="wood_light")
+    b.pigments.update(POMO)
+    # Round 2 (2026-11-20): the same footprints, rebuilt as postmodern office furniture.
+    p=memphis_desk(b,"EmptyDesk",(.89,0,-1.71),2.47,1.15,seed=1)
     b.box("Blotter",p,(.19,.814,.02),(1.12,.046,.68),"hatching",shadow=True)
     paper(b,"Carbon",p,(.10,.846,.056),.93,.59,"ruled",-8,floor=True)
     b.box("Ruler",p,(.42,.856,.225),(.621,.024,.067),"red",rot=(0,17,0))
-    chair(b,"VacantChair",(.48,0,-2.87),180,"navy")
-    chair(b,"VisitorSeat",(-2.31,0,-1.21),28,"putty")
+    swivel_chair(b,".","VacantChair",(.48,0,-2.87),197,seat="pomo_pink",crest="disc",collider=True)
+    swivel_chair(b,".","VisitorSeat",(-2.31,0,-1.21),28,seat="pomo_mint",back="pomo_cobalt",accent="pomo_pink",
+                 crest="arch",arms=False,collider=True)
     cabinet(b,"EmptyPigeonhole",(-3.2,-2.96),1.24,1.12,3,"trim")
     for i,(x,y,w,d,angle,t) in enumerate(((-2.85,1.81,1.84,1.47,-8,"hatching"),
                         (-1.09,1.49,3.18,1.81,2,"paper"),(.35,1.65,2.69,1.40,-9,"hatching"),
@@ -277,6 +285,7 @@ def vacant_office(b):
               1.31,2.01,"hatching",28-i*11,floor=True)
     emblem(b,"MissingCorner",(1.39,1.76,-3.093),(2.24,1.08))
     read(b,"vacant_office",p,(1.04,.816,-1.34),("Blotter","Ruler"))
+    vacant_workroom(b)
 
 
 def principal_office(b):
@@ -292,16 +301,23 @@ def principal_office(b):
                         (-.49,1.63,2.25,1.77,-9,"teal"),(-.63,1.54,.48,1.68,-11,"ink"),
                         (-.61,1.50,2.42,.34,2,"ink"))):
         paper(b,f"FalseWindow{i}","PaperAssembly",(x,y,-3.320+i*.025),w,h,t,a,folded=True)
-    p=table(b,"HeadDesk",(1.62,0,-1.91),2.83,1.15,top="wood_light",tall=.84)
+    b.pigments.update(POMO)
+    p=memphis_desk(b,"HeadDesk",(1.62,0,-1.91),2.83,1.15,tall=.84,seed=2,classical=True,
+                   colours=("pomo_cobalt","pomo_pink","pomo_white"))
     b.box("Front",p,(0,.37,-.302),(2.71,.63,.17),"ink",shadow=True)
     b.box("Blotter",p,(-.24,.867,.031),(.99,.045,.68),"navy",shadow=True)
     paper(b,"UnstampedForm",p,(-.25,.895,.026),.68,.47,"ledger",-8,floor=True)
     b.box("Stamp",p,(.45,.933,.041),(.14,.131,.143),"red",rot=(0,24,0),shadow=True)
-    chair(b,"ChairOfOffice", (1.78,0,-3.00),0,"navy")
+    swivel_chair(b,".","ChairOfOffice",(1.78,0,-2.95),0,seat="red",back="navy",accent="pomo_lemon",
+                 crest="throne",collider=True)
     for i in range(4):
-        chair(b,f"WaitingSeat{i}",(-3.26+i*.87,0,.91+i*.15),147-i*8,"teal" if i%2 else "cream")
+        swivel_chair(b,".",f"WaitingSeat{i}",(-3.26+i*.87,0,.91+i*.15),147-i*8,seat="teal" if i%2 else "cream",
+                     back=("pomo_black","pomo_lilac")[i%2],accent=("pomo_lemon","pomo_pink","pomo_mint","pomo_red")[i],
+                     crest=("disc","triangle","arch","disc")[i],arms=i%2==0,collider=True)
     cabinet(b,"SideCase",(3.67,-2.97),.91,1.12,3,"navy")
     read(b,"principal_office",p,(1.48,.86,-1.41),("Blotter","Stamp"))
+    kettle(b,"Kettle",p,(1.05,.84,-.22),-25)
+    principal_suite(b)
 
 
 ROOM_CONTENT = {f.__name__: f for f in (archive, plan_room, projection_room, computer_room, vacant_office, principal_office)}

@@ -52,6 +52,7 @@
 | [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-18 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
 | [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
 | [NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md](NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md) | 剧情玩法评审、双语小试与回访切片 | 提案/待所有者 | 仓库所有者 | 2026-11-18 | 原基线 `76c5e77`，审计补核 `b8524c6` / `e143990`；不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) 或 [ARCHITECTURE.md](ARCHITECTURE.md) |
+| [OFFICE_ARCHIVE_ART.md](OFFICE_ARCHIVE_ART.md) | 环境美术实验第二轮：03 办公室后现代家具与卡夫卡《审判》式档案室 | 实验 | 实现 PR 作者 | 2026-11-20 | 生成器 `tools/postmodern_office.py`、`tools/trial_archive.py`；检查见 `tests/office_archive_dressing_test.py`；第一轮见 [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md) |
 | [OFFLINE_DIAGNOSTICS.md](OFFLINE_DIAGNOSTICS.md) | 离线事件审计、导出隐私及开发验证 | 现行 | 工程 Agent | 2026-11-18 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) §7c |
 | [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 发布流程见 [RELEASE.md](RELEASE.md) |
 | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) | 产品意图与范围 | 现行 | 仓库所有者 | 2026-11-17 | 叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |

@@ -176,19 +176,31 @@ def hen(b, parent, name, pos, yaw, coat, phase):
         part(b, part_name, p, centre, size, motion_material(b, colour, "peck", phase=phase))
 
 
-def swivel_chair(b, parent, name, pos, yaw, phase, motion="swivel"):
-    """An office chair turned away, drifting on its gas lift."""
+def swivel_chair(b, parent, name, pos, yaw, phase, motion="swivel", look=None):
+    """An office chair turned away, drifting on its gas lift.
+
+    `look` recolours it (`seat`, `back`, `frame`) and may add a postmodern `crest`
+    pigment: a square finial and a dot on the back. Every part stays an unrotated box,
+    so the one motion still turns the whole chair about its lift.
+    """
+    look = look or {}
+    seat, back, frame = look.get("seat", "chair_seat"), look.get("back", "chair_black"), look.get("frame", "chair_black")
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     p = child_path(parent, name)
-    for part_name, centre, size, colour in (
-        ("Seat", (0, .47, 0), (.48, .08, .46), "chair_seat"),
-        ("Back", (0, .83, -.22), (.44, .58, .06), "chair_black"),
+    parts = [
+        ("Seat", (0, .47, 0), (.48, .08, .46), seat),
+        ("Back", (0, .83, -.22), (.44, .58, .06), back),
         ("Spine", (0, .58, -.2), (.06, .2, .05), "chrome"),
-        ("ArmL", (-.25, .62, -.02), (.04, .05, .30), "chair_black"),
-        ("ArmR", (.25, .62, -.02), (.04, .05, .30), "chair_black"),
+        ("ArmL", (-.25, .62, -.02), (.04, .05, .30), frame),
+        ("ArmR", (.25, .62, -.02), (.04, .05, .30), frame),
         ("Lift", (0, .25, 0), (.05, .4, .05), "chrome"),
-        ("StarA", (0, .05, 0), (.62, .04, .05), "chair_black"),
-        ("StarB", (0, .05, 0), (.05, .04, .62), "chair_black"),
-    ):
+        ("StarA", (0, .05, 0), (.62, .04, .05), frame),
+        ("StarB", (0, .05, 0), (.05, .04, .62), frame),
+    ]
+    if "crest" in look:
+        parts += [("Finial", (0, 1.19, -.22), (.16, .16, .06), look["crest"]),
+                  ("Dot", (.08, .88, -.188), (.14, .14, .01), look["crest"]),
+                  ("Bar", (0, .66, -.188), (.44, .04, .01), frame)]
+    for part_name, centre, size, colour in parts:
         mat = motion_material(b, colour, motion, phase=phase, pivot=(-centre[0], 0, -centre[2]))
         part(b, part_name, p, centre, size, mat)
