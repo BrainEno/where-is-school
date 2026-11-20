@@ -1,10 +1,23 @@
-# 角色、肖像与第三方动画资产发行审计 — Issue #64
+# 角色、肖像与第三方动画资产发行审计 — Issue #64 / #308
 
-## 当前处置（#64）
+## 当前处置（#64 / #308）
 
 - **UAL 从当前树退役，不是许可放行。** 正式角色的 wrapper 使用项目语义动作、角色动作配置及 Q/N 模型内置层；未引用 `UAL1_Standard.glb`、`protagonist_ual.res` 或其专用预览。经所有者确认可移除，删除原 GLB、导入侧车、派生库以及专用预览和 bake 工作流，保留仍受测试的自有开发骨架/预览和通用算法。Windows/Linux 与移动预设的开发目录排除不变；发行验证器仍拒绝已知 UAL 名称。普通删除不移除 Git 历史、既有克隆或历史 Actions artifact；未重新打包、分享独立 UAL 资源或裁定 CC0/QAL 的适用关系。
 - **主角来源已补记。** [所有者书面确认](https://github.com/BrainEno/where-is-school/issues/64#issuecomment-6941291502)：现用主角是其本人用 Blender 和 Python 脚本制作，所有权归仓库作者。这是作者声明，不是由 GLB header 推断，也不替其他资产作权利证明。
-- **肖像发行核验尚未结束。** 同一确认记录了当时三肖像的所有者手绘与 ChatGPT 加工；当前主角和 N 的源图仍是那一版。当前 Q 是[后续重绘](https://github.com/BrainEno/where-is-school/commit/35b4560039914b0a57eec2666a3743b5138bb8da)，其源 SHA-256 是 `3d73b25001d4540802dacc052f0d561b57caeb86668b271b78faef7e5520ca60`，不能沿用对旧图的确认。当前三张的适用条款、商业使用与再分发结论仍需核验；不把删除 UAL、构建通过或 Issue 的状态当作公开/商店发行许可。现行条目见 [来源台账](ASSET_PROVENANCE.md)。
+
+### 现用对话肖像出处（#308）
+
+[游戏作者对现用版本的确认记录](https://github.com/BrainEno/where-is-school/issues/308#issuecomment-7038464634)：主角、Q、N 均由游戏作者本人手绘，再由作者使用 ChatGPT 加工生成。现用 Q 是 [后续重绘 `35b4560`](https://github.com/BrainEno/where-is-school/commit/35b4560039914b0a57eec2666a3743b5138bb8da)，由本次确认直接覆盖，不沿用 #64 对旧图的声明。肖像与对应角色的 3D 模型是不同资产。
+
+| 肖像 | 游戏供图（非未加工手绘原稿） | 游戏使用的文件 | 出处 |
+|---|---|---|---|
+| 主角 | `art/portraits/protagonist.png` | `assets/ui/portraits/protagonist.webp` | 游戏作者本人手绘，再由作者使用 ChatGPT 加工生成 |
+| Q（现用重绘） | `art/portraits/q.png` | `assets/ui/portraits/q.webp` | 游戏作者本人手绘，再由作者使用 ChatGPT 加工生成 |
+| N | `art/portraits/n.webp` | `assets/ui/portraits/n.webp` | 游戏作者本人手绘，再由作者使用 ChatGPT 加工生成 |
+
+六个文件的 SHA-256 与下文 §3.3 相应条目一致，正式档案仍绑定到上述游戏文件；旧 Q 的裁切及旧图指纹仅供历史对照。逐图的现行条目见[来源台账](ASSET_PROVENANCE.md)。
+
+**发行许可仍未核验。** 本次确认手绘作者和加工服务，不确认加工日期、ChatGPT 模型/版本、当时适用条款或输出权利。三张图的商用、修改、随游戏再分发、源图或宣传再分发、必要署名与 AI 披露仍须在发行前核验，未获放行。按所有者要求，在出处记录落到 `main` 后关闭 #308；关单不等于完成许可核验，不作为公开或商店发行批准。无法核明时仍须替换为权利清楚的版本或暂缓相应发行。
 
 下文保留 #197 及后续快照的历史审计证据；其中“当前”“本 PR”及待答项以当时的范围为准，最新处置以上段为准。
 
