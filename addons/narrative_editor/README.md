@@ -60,6 +60,8 @@ addons/narrative_editor/
   core/narrative_json_text.gd       one JSON file as text; span-level string replacement
   core/narrative_parity.gd          is the other language still the same document?
   core/narrative_file_writer.gd     staged writes, rollback, one seam for the tests
+  core/narrative_file_cleanup.gd    (its base) isolate, discard and quarantine afterwards
+  core/narrative_file_primitives.gd (its base) filesystem seams, verified moves, diagnostics
   core/narrative_describer.gd       listings, editable-field models, read-only structure text
   core/narrative_validator.gd       candidate JSON, parity, field rules and runtime validation
   core/narrative_store.gd           the session: open, edit, validate, save, search

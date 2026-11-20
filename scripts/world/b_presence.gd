@@ -1,5 +1,5 @@
 class_name BPresence
-extends RefCounted
+extends ActorPresence
 ## When the biology teacher B may be presented, and whether a room's B is on screen (#171).
 ##
 ## B is heard about before she is seen. Q's first conversation (`q_wake`) is the player's
@@ -35,20 +35,12 @@ const ACTOR_ID: StringName = &"b"
 const Q_FIRST_TALK: StringName = &"q_wake"
 const EXPECTATION_TALK: StringName = &"expected_b"
 
-var _game_state: Node = null
-var _locations: LocationHost = null
 var _dialogue: DialogueController = null
 
 
 func _init(game_state: Node, locations: LocationHost, dialogue: DialogueController) -> void:
-	_game_state = game_state
-	_locations = locations
+	super(game_state, locations)
 	_dialogue = dialogue
-	if _game_state != null:
-		_game_state.story_flag_changed.connect(_on_story_flag_changed)
-		_game_state.story_state_replaced.connect(_on_story_state_replaced)
-	if _locations != null:
-		_locations.location_entered.connect(_on_location_entered)
 	if _dialogue != null:
 		_dialogue.conversation_finished.connect(_on_conversation_finished)
 		_dialogue.subjective_changed.connect(_on_subjective_changed)
@@ -94,17 +86,19 @@ func present(position_point: Vector3, facing_point: Vector3 = Vector3.ZERO) -> b
 	return true
 
 
-## The current room's B, or null - the usual case: no room of this slice has one.
-func find_actor() -> NpcActor:
-	var location: LocationRoot = _locations.get_current() if _locations != null else null
-	return location.find_actor(ACTOR_ID) if location != null else null
+## The current room's B is `find_actor()`; usually null - no room of this slice has one.
+func _actor_id() -> StringName:
+	return ACTOR_ID
 
 
-## Makes the room's B (if it has one) match the flags.
-func sync() -> void:
+## Makes the room's B (if it has one) match the flags: shown or hidden on every sync,
+## unlike Q and N, which are only ever placed. True when the room had a B to apply to.
+func sync() -> bool:
 	var actor := find_actor()
-	if actor != null:
-		_apply(actor, is_on_stage())
+	if actor == null:
+		return false
+	_apply(actor, is_on_stage())
+	return true
 
 
 func _apply(actor: NpcActor, present_now: bool) -> void:
@@ -125,7 +119,7 @@ func _on_conversation_finished(conversation_id: StringName) -> void:
 
 
 func _on_subjective_changed(active: bool) -> void:
-	var room := _locations.get_current() if _locations != null else null
+	var room := _current()
 	if room == null:
 		return
 	var presentation := room.get_node_or_null(^"ClassroomPresentation") as ClassroomPresentation
@@ -149,15 +143,3 @@ func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant
 		sync()
 	elif flag == StoryFlags.Q_FIRST_TALK_DONE or flag == StoryFlags.B_ON_STAGE:
 		sync()
-
-
-func _on_location_entered(_location: LocationRoot, _spawn_id: StringName) -> void:
-	sync()
-
-
-func _on_story_state_replaced() -> void:
-	sync()
-
-
-func _flag(flag: StringName) -> bool:
-	return _game_state != null and bool(_game_state.get_flag(flag, false))

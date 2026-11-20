@@ -20,7 +20,7 @@ another controller, cache, state store or palette beside it.
 | Camera follow, occlusion or interaction focus | `CameraRig`, `CameraOccluderFader`, `CameraShot`, `CameraFocusDirector` | [camera](../tests/camera_rig_test.gd), [prologue art](../tests/prologue_art_test.gd) |
 | Character appearance or movement | `CharacterLook`, `CharacterLookApplier`, `CharacterAnimation`, `CharacterVisualAnimation` | [character art](CHARACTER_ART.md), [integration](CHARACTER_INTEGRATION.md), [animation](CHARACTER_ANIMATION.md), [animation test](../tests/character_animation_test.gd) |
 | Asset imports, rights or model registration | Existing preparation/generator and verifier tools below | [provenance](ASSET_PROVENANCE.md), [pipeline](ASSET_PIPELINE.md), [model catalog](MODEL_LIBRARY.md) |
-| Saves, new game, settings or music | Existing autoloads below; `SaveCodec` for typed values | [save validation](../tests/save_validation_test.gd), [new-game failure](../tests/new_game_failure_ui_test.gd), [music](../tests/music_test.gd) |
+| Saves, new game, settings or music | Existing autoloads below; `SaveCodec` for typed values, `SaveFileStore` for the save file, `InputBindings`/`SettingsOutputs` for settings rules | [save validation](../tests/save_validation_test.gd), [new-game failure](../tests/new_game_failure_ui_test.gd), [music](../tests/music_test.gd) |
 
 Search names **and behavior synonyms**, then inspect usages, not only declarations:
 
@@ -117,7 +117,10 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `SaveCodec` | [`scripts/save/save_codec.gd`](../scripts/save/save_codec.gd) | Typed JSON envelope/value encoding and strict decoding; Save owns payload selection and file I/O. |
-| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. |
+| `InputBindings` | [`scripts/save/input_bindings.gd`](../scripts/save/input_bindings.gd) | Stateless binding rules: event encoding/labels, shared pairs, stored-list validation and rebind checks; Settings owns the state and re-exports the old names. |
+| `SaveFileStore` | [`scripts/save/save_file_store.gd`](../scripts/save/save_file_store.gd) | The save file's bytes: verified writes, the non-destructive swap, staging, swap recovery and quarantine; Save owns payloads, timing and results. |
+| `SettingsOutputs` | [`scripts/save/settings_outputs.gd`](../scripts/save/settings_outputs.gd) | Where settings reach the engine: bus levels from the volume dials and the 2D layer's UI scale; no stored state. |
+| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. Also the checked readers for a choice and a percentage. |
 
 ### Interaction and world cues
 
@@ -155,6 +158,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
+| `ActorPresence` | [`scripts/world/actor_presence.gd`](../scripts/world/actor_presence.gd) | Shared presence skeleton: signal wiring, the room's actor lookup and flag reads; Q/N/B subclasses keep their own placement rules. |
 | `AmbiencePlayer` | [`scripts/world/ambience_player.gd`](../scripts/world/ambience_player.gd) | Per-location looping ambience and fade-in; session-wide background music belongs to Music. |
 | `BPresence` | [`scripts/world/b_presence.gd`](../scripts/world/b_presence.gd) | Rebuild B's presence from existing story state when locations are instantiated. |
 | `CameraFocusDirector` | [`scripts/world/camera_focus_director.gd`](../scripts/world/camera_focus_director.gd) | Engage/release interaction shots at the player-lock boundary; hover must not move the camera. |
@@ -171,7 +175,12 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `LocationRoot` | [`scripts/world/location_root.gd`](../scripts/world/location_root.gd) | Location-owned spawn, waypoint, actor and interactable lookup contract. |
 | `NavMapUtil` | [`scripts/world/nav_map_util.gd`](../scripts/world/nav_map_util.gd) | The one answer to "does this map hold geometry?"; the player, the pointer and the companion call it instead of repeating the check. Region *counts* keep their own owners. |
 | `NPresence` | [`scripts/world/n_presence.gd`](../scripts/world/n_presence.gd) | Restore substitute N at the room's authored lectern path endpoint from n_arrived. |
+| `OpeningInteractions` | [`scripts/world/opening_interactions.gd`](../scripts/world/opening_interactions.gd) | Route an activation to an exit, staged moment, conversation or text through the director's beat lock. |
+| `OpeningSave` | [`scripts/world/opening_save.gd`](../scripts/world/opening_save.gd) | The director's checkpoint, boot restore of the saved room and unreadable-save notice; Save owns the bytes. |
 | `OpeningSequence` | [`scripts/world/opening_sequence.gd`](../scripts/world/opening_sequence.gd) | Flag-gated prologue sequencing, shared beat/player locks and checkpoint/resume coordination; do not copy its lock state. |
+| `PrologueBeats` | [`scripts/world/prologue_beats.gd`](../scripts/world/prologue_beats.gd) | The authored prologue beats, timed on the director's story clock; the director chooses which runs. |
+| `PrologueSteps` | [`scripts/world/prologue_steps.gd`](../scripts/world/prologue_steps.gd) | The prologue step table and the flags that prove each step; stateless, forward-only. |
+| `QIntroApproach` | [`scripts/world/q_intro_approach.gd`](../scripts/world/q_intro_approach.gd) | Q's navigation-route walk to the desk before his first line; validates the landing and grounds the route. |
 | `QPresence` | [`scripts/world/q_presence.gd`](../scripts/world/q_presence.gd) | Restore classroom Q and the talk anchor from story flags and room markers. |
 
 ### Environment prop behavior

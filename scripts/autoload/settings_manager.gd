@@ -66,52 +66,35 @@ const DEFAULT_SKIP_SCOPE := &"read"
 const SPRINT_MODES: Array[StringName] = [&"hold", &"toggle"]
 const DEFAULT_SPRINT_MODE := &"hold"
 
-const VOLUME_KEYS: Array[StringName] = [&"master", &"music", &"sfx"]
-const VOLUME_BUS: Dictionary = {&"master": &"Master", &"music": &"Music", &"sfx": &"SFX"}
+## Sound and display constants belong to `SettingsOutputs` (issue #223); re-exported here.
+const VOLUME_KEYS: Array[StringName] = SettingsOutputs.VOLUME_KEYS
+const VOLUME_BUS: Dictionary = SettingsOutputs.VOLUME_BUS
 const DEFAULT_VOLUME := 100
 
-const UI_SCALES: Array[StringName] = [&"auto", &"100", &"125", &"150", &"200"]
+const UI_SCALES: Array[StringName] = SettingsOutputs.UI_SCALES
 const DEFAULT_UI_SCALE := &"auto"
-## The window size the interface is designed and checked at (CI measures 1280x720 to
-## 1920x1080). "Auto" starts enlarging the 2D layer only beyond the largest of those.
-const UI_REFERENCE_SIZE := Vector2(1920.0, 1080.0)
-## The smallest logical size the layout is verified at. A manual scale is capped so the
-## interface never gets less room than this.
-const UI_MINIMUM_LOGICAL := Vector2(1280.0, 720.0)
+## The window size the interface is designed and checked at; see `SettingsOutputs`.
+const UI_REFERENCE_SIZE := SettingsOutputs.UI_REFERENCE_SIZE
+## The smallest logical size the layout is verified at; see `SettingsOutputs`.
+const UI_MINIMUM_LOGICAL := SettingsOutputs.UI_MINIMUM_LOGICAL
 
-const DEVICE_KEYBOARD := &"keyboard"
-const DEVICE_MOUSE := &"mouse"
-const DEVICE_TOUCH := &"touch"
-const DEVICE_GAMEPAD := &"gamepad"
+const DEVICE_KEYBOARD := InputBindings.DEVICE_KEYBOARD
+const DEVICE_MOUSE := InputBindings.DEVICE_MOUSE
+const DEVICE_TOUCH := InputBindings.DEVICE_TOUCH
+const DEVICE_GAMEPAD := InputBindings.DEVICE_GAMEPAD
 
+## The binding rules live in `InputBindings` (issue #223); these are its constants under
+## the names callers have always used.
 ## Everything the settings screen lets the player rebind, in the order it lists them.
-const REBINDABLE_ACTIONS: Array[StringName] = [
-	&"move_forward", &"move_back", &"move_left", &"move_right", &"sprint",
-	&"interact", &"dialogue_advance", &"backlog", &"journal", &"cancel", &"pause",
-	&"toggle_language", &"toggle_fullscreen", &"dialogue_auto", &"dialogue_skip",
-]
-## Pairs that may share an input because they never listen at the same time: the same
-## button uses a thing in the room and continues a line of dialogue, and Esc both closes
-## the log and opens the menu (the log takes it first).
-const SHARED_PAIRS: Array = [
-	[&"interact", &"dialogue_advance"],
-	[&"cancel", &"pause"],
-]
+const REBINDABLE_ACTIONS: Array[StringName] = InputBindings.REBINDABLE_ACTIONS
+## Pairs that may share an input because they never listen at the same time.
+const SHARED_PAIRS: Array = InputBindings.SHARED_PAIRS
 ## Rebinding never offers these: Esc cancels a capture, so it cannot be captured.
-const RESERVED_KEYS: Array[int] = [KEY_ESCAPE]
-## Actions whose keyboard key is Esc and stays Esc, so a keyboard player can always reach
-## the menus and close what is open. Their controller buttons can still be rebound.
-const KEYBOARD_LOCKED_ACTIONS: Array[StringName] = [&"cancel", &"pause"]
-
+const RESERVED_KEYS: Array[int] = InputBindings.RESERVED_KEYS
+## Actions whose keyboard key is Esc and stays Esc.
+const KEYBOARD_LOCKED_ACTIONS: Array[StringName] = InputBindings.KEYBOARD_LOCKED_ACTIONS
 ## Xbox-style names, which is what SDL reports for most pads.
-const JOY_BUTTON_NAMES: Dictionary = {
-	JOY_BUTTON_A: "A", JOY_BUTTON_B: "B", JOY_BUTTON_X: "X", JOY_BUTTON_Y: "Y",
-	JOY_BUTTON_BACK: "Back", JOY_BUTTON_GUIDE: "Guide", JOY_BUTTON_START: "Start",
-	JOY_BUTTON_LEFT_STICK: "LS", JOY_BUTTON_RIGHT_STICK: "RS",
-	JOY_BUTTON_LEFT_SHOULDER: "LB", JOY_BUTTON_RIGHT_SHOULDER: "RB",
-	JOY_BUTTON_DPAD_UP: "D-pad ↑", JOY_BUTTON_DPAD_DOWN: "D-pad ↓",
-	JOY_BUTTON_DPAD_LEFT: "D-pad ←", JOY_BUTTON_DPAD_RIGHT: "D-pad →",
-}
+const JOY_BUTTON_NAMES: Dictionary = InputBindings.JOY_BUTTON_NAMES
 
 var _text_size: StringName = DEFAULT_TEXT_SIZE
 var _text_speed: StringName = DEFAULT_TEXT_SPEED
@@ -259,57 +242,17 @@ func set_volume(key: StringName, percent: int) -> void:
 
 ## The level a bus is actually at for a percentage: the layout's own trim plus the dial.
 func bus_db_for(key: StringName, percent: int) -> float:
-	var trim := float(_bus_trim.get(key, 0.0))
-	if percent <= 0:
-		return -80.0
-	return trim + linear_to_db(float(percent) / 100.0)
+	return SettingsOutputs.bus_db(float(_bus_trim.get(key, 0.0)), percent)
 
 
-## The trim is the level `default_bus_layout.tres` gives each bus, read from the file
-## rather than from the live bus, which may already carry a dial's setting.
 func _capture_bus_trim() -> void:
-	var authored := _authored_bus_levels()
-	for key: StringName in VOLUME_KEYS:
-		var bus_name := String(VOLUME_BUS[key])
-		if authored.has(bus_name):
-			_bus_trim[key] = float(authored[bus_name])
-			continue
-		var index := AudioServer.get_bus_index(VOLUME_BUS[key])
-		_bus_trim[key] = AudioServer.get_bus_volume_db(index) if index != -1 else 0.0
-
-
-func _authored_bus_levels() -> Dictionary:
-	var levels: Dictionary = {}
-	var path := String(
-		ProjectSettings.get_setting("audio/buses/default_bus_layout", "res://default_bus_layout.tres")
-	)
-	if not ResourceLoader.exists(path):
-		return levels
-	var layout := load(path) as AudioBusLayout
-	if layout == null:
-		return levels
-	for index in 16:
-		var bus_name: Variant = layout.get("bus/%d/name" % index)
-		if bus_name == null:
-			break
-		var level: Variant = layout.get("bus/%d/volume_db" % index)
-		levels[String(bus_name)] = float(level) if level != null else 0.0
-	return levels
+	_bus_trim = SettingsOutputs.capture_bus_trim()
 
 
 func _apply_volume(key: StringName) -> void:
-	var percent := get_volume(key)
-	var index := AudioServer.get_bus_index(VOLUME_BUS[key])
-	if index != -1:
-		AudioServer.set_bus_mute(index, percent <= 0)
-		AudioServer.set_bus_volume_db(index, bus_db_for(key, percent))
-	if key == &"sfx":
-		# The interaction cues own no bus by design (`cue_audio.gd`): the SFX dial reaches
-		# them through their own gain instead.
-		var cues := get_node_or_null(^"/root/CueAudio")
-		if cues != null and cues.has_method("set_gain_db"):
-			var gain := -80.0 if percent <= 0 else linear_to_db(float(percent) / 100.0)
-			cues.call("set_gain_db", gain)
+	SettingsOutputs.apply_volume(
+		key, get_volume(key), float(_bus_trim.get(key, 0.0)), get_node_or_null(^"/root/CueAudio")
+	)
 
 
 func _apply_all_volumes() -> void:
@@ -317,15 +260,9 @@ func _apply_all_volumes() -> void:
 		_apply_volume(key)
 
 
-## Room tones (`AmbiencePlayer`) are authored in location scenes on the default bus. They
-## are sound effects as far as the player is concerned, so they are moved onto `SFX` as
-## they enter the tree - the location scenes themselves stay as they are.
+## Room tones are moved onto the `SFX` bus as they enter the tree (`SettingsOutputs`).
 func _on_node_added(node: Node) -> void:
-	var player := node as AudioStreamPlayer
-	if player == null:
-		return
-	if player is AmbiencePlayer and player.bus == &"Master":
-		player.bus = &"SFX"
+	SettingsOutputs.route_ambience(node)
 
 
 # --- Display -------------------------------------------------------------------
@@ -344,28 +281,10 @@ func set_ui_scale(value: StringName) -> void:
 	setting_changed.emit(&"ui_scale")
 
 
-## The factor the 2D layer is drawn at for a window size and a choice.
-##
-## The layouts are measured at 1280x720, 1600x900 and 1920x1080, in real pixels. On a
-## bigger window ("auto") the whole interface layer is enlarged in quarter steps so a 4K
-## screen draws it like 1080p at twice the density, instead of as a postage stamp. A
-## manual choice is capped so the logical size never drops below 1280x720, the smallest
-## size the layout is checked at; at the three verified sizes "auto" is exactly 1.
+## The factor the 2D layer is drawn at for a window size and a choice. See
+## `SettingsOutputs.effective_ui_scale`.
 static func effective_ui_scale(window_size: Vector2, choice: StringName) -> float:
-	if window_size.x <= 0.0 or window_size.y <= 0.0:
-		return 1.0
-	var room := minf(
-		window_size.x / UI_MINIMUM_LOGICAL.x, window_size.y / UI_MINIMUM_LOGICAL.y
-	)
-	var wanted := 1.0
-	if choice == &"auto" or not UI_SCALES.has(choice):
-		var ratio := minf(
-			window_size.x / UI_REFERENCE_SIZE.x, window_size.y / UI_REFERENCE_SIZE.y
-		)
-		wanted = floorf(ratio * 4.0) / 4.0
-	else:
-		wanted = float(String(choice).to_int()) / 100.0
-	return maxf(1.0, minf(wanted, floorf(room * 4.0) / 4.0))
+	return SettingsOutputs.effective_ui_scale(window_size, choice)
 
 
 func get_applied_ui_scale() -> float:
@@ -379,27 +298,7 @@ func _apply_ui_scale() -> void:
 	if root == null:
 		return
 	_applying_scale = true
-	if MobileLayout.enabled:
-		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-		root.content_scale_size = MobileLayout.DESIGN_SIZE
-		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-		_applied_ui_scale = root.get_final_transform().get_scale().y
-		_applying_scale = false
-		return
-	var window_size := Vector2(root.size)
-	var factor := effective_ui_scale(window_size, _ui_scale)
-	if is_equal_approx(factor, 1.0):
-		if root.content_scale_mode != Window.CONTENT_SCALE_MODE_DISABLED:
-			root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
-	else:
-		var logical := Vector2i(
-			roundi(window_size.x / factor), roundi(window_size.y / factor)
-		)
-		root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-		root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-		if root.content_scale_size != logical:
-			root.content_scale_size = logical
-	_applied_ui_scale = factor
+	_applied_ui_scale = SettingsOutputs.apply_ui_scale(root, _ui_scale)
 	_applying_scale = false
 
 
@@ -433,22 +332,7 @@ func is_using_gamepad() -> bool:
 ## so pointer users see click affordances; axis noise below the gameplay deadzone is ignored.
 ## This only changes presentation state: it never replays or synthesizes an action.
 func _input(event: InputEvent) -> void:
-	if MobileLayout.is_emulated_mouse(event):
-		return
-	var device := _device
-	if MobileLayout.enabled and event is InputEventScreenTouch and event.is_pressed():
-		device = DEVICE_TOUCH
-	elif event is InputEventJoypadButton and (event as InputEventJoypadButton).pressed:
-		device = DEVICE_GAMEPAD
-	elif event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > 0.5:
-		device = DEVICE_GAMEPAD
-	elif event is InputEventKey and (event as InputEventKey).pressed:
-		device = DEVICE_KEYBOARD
-	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
-		device = DEVICE_MOUSE
-	elif event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length_squared() > 0.0:
-		device = DEVICE_MOUSE
-	_set_detected_device(device)
+	_set_detected_device(InputBindings.detected_device(event, _device))
 
 
 ## A disconnected active controller has no buttons to describe. Fall back immediately to
@@ -459,7 +343,7 @@ func _on_joy_connection_changed(_device_id: int, connected: bool) -> void:
 
 
 func _set_detected_device(device: StringName) -> void:
-	if device not in [DEVICE_KEYBOARD, DEVICE_MOUSE, DEVICE_GAMEPAD, DEVICE_TOUCH]:
+	if device not in InputBindings.DEVICES:
 		return
 	if device == _device:
 		return
@@ -475,18 +359,7 @@ func set_input_device(device: StringName) -> void:
 ## The defaults are what `project.godot` declares, read from the project settings rather
 ## than from the live input map, which may already carry the player's rebinding.
 func _capture_default_bindings() -> void:
-	_default_events.clear()
-	for action: StringName in REBINDABLE_ACTIONS:
-		var events: Array = []
-		var declared: Variant = ProjectSettings.get_setting("input/%s" % action, null)
-		if declared is Dictionary:
-			for item: Variant in ((declared as Dictionary).get("events", []) as Array):
-				if item is InputEvent:
-					events.append((item as InputEvent).duplicate())
-		elif InputMap.has_action(action):
-			for event: InputEvent in InputMap.action_get_events(action):
-				events.append(event.duplicate())
-		_default_events[action] = events
+	_default_events = InputBindings.project_defaults()
 
 
 ## The default events of an action, as `project.godot` declares them.
@@ -500,28 +373,7 @@ func default_events(action: StringName) -> Array:
 ## Godot's built-in menu actions get the pad's D-pad, A and B if the engine's defaults do
 ## not already include them, so every menu can be driven from a controller.
 func _ensure_ui_navigation() -> void:
-	var wanted: Dictionary = {
-		&"ui_accept": JOY_BUTTON_A,
-		&"ui_cancel": JOY_BUTTON_B,
-		&"ui_up": JOY_BUTTON_DPAD_UP,
-		&"ui_down": JOY_BUTTON_DPAD_DOWN,
-		&"ui_left": JOY_BUTTON_DPAD_LEFT,
-		&"ui_right": JOY_BUTTON_DPAD_RIGHT,
-	}
-	for action: StringName in wanted.keys():
-		if not InputMap.has_action(action):
-			continue
-		var button := int(wanted[action])
-		var present := false
-		for event: InputEvent in InputMap.action_get_events(action):
-			var joy := event as InputEventJoypadButton
-			if joy != null and int(joy.button_index) == button:
-				present = true
-				break
-		if not present:
-			var added := InputEventJoypadButton.new()
-			added.button_index = button as JoyButton
-			InputMap.action_add_event(action, added)
+	InputBindings.ensure_ui_navigation()
 
 
 func is_keyboard_event(event: InputEvent) -> bool:
@@ -529,7 +381,7 @@ func is_keyboard_event(event: InputEvent) -> bool:
 
 
 func is_gamepad_event(event: InputEvent) -> bool:
-	return event is InputEventJoypadButton or event is InputEventJoypadMotion
+	return InputBindings.is_gamepad_event(event)
 
 
 func _matches_device(event: InputEvent, device: StringName) -> bool:
@@ -572,170 +424,40 @@ func get_rebindable_actions() -> Array[StringName]:
 	return out
 
 
+## A short name for an input: "E", "Space", "A", "D-pad ↑". See `InputBindings`.
 static func event_label(event: InputEvent) -> String:
-	if event is InputEventKey:
-		var key := event as InputEventKey
-		var code := key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
-		var text := OS.get_keycode_string(code)
-		return text if not text.is_empty() else "?"
-	if event is InputEventMouseButton:
-		return "Mouse %d" % int((event as InputEventMouseButton).button_index)
-	if event is InputEventJoypadButton:
-		var index := int((event as InputEventJoypadButton).button_index)
-		return String(JOY_BUTTON_NAMES.get(index, "Button %d" % index))
-	if event is InputEventJoypadMotion:
-		var motion := event as InputEventJoypadMotion
-		var positive := motion.axis_value > 0.0
-		match int(motion.axis):
-			JOY_AXIS_LEFT_X:
-				return "LS →" if positive else "LS ←"
-			JOY_AXIS_LEFT_Y:
-				return "LS ↓" if positive else "LS ↑"
-			JOY_AXIS_RIGHT_X:
-				return "RS →" if positive else "RS ←"
-			JOY_AXIS_RIGHT_Y:
-				return "RS ↓" if positive else "RS ↑"
-			JOY_AXIS_TRIGGER_LEFT:
-				return "LT"
-			JOY_AXIS_TRIGGER_RIGHT:
-				return "RT"
-		return "Axis %d" % int(motion.axis)
-	return "?"
+	return InputBindings.event_label(event)
 
 
 ## `key:69`, `mouse:1`, `joy_button:0`, `joy_axis:1:-`. Empty for anything else.
 static func encode_event(event: InputEvent) -> String:
-	if event is InputEventKey:
-		var key := event as InputEventKey
-		if key.physical_keycode != KEY_NONE:
-			return "key:%d" % int(key.physical_keycode)
-		return ""
-	if event is InputEventMouseButton:
-		return "mouse:%d" % int((event as InputEventMouseButton).button_index)
-	if event is InputEventJoypadButton:
-		return "joy_button:%d" % int((event as InputEventJoypadButton).button_index)
-	if event is InputEventJoypadMotion:
-		var motion := event as InputEventJoypadMotion
-		return "joy_axis:%d:%s" % [int(motion.axis), "+" if motion.axis_value > 0.0 else "-"]
-	return ""
+	return InputBindings.encode_event(event)
 
 
 ## The inverse of `encode_event`, or null for anything that is not a valid binding.
 static func decode_event(text: String) -> InputEvent:
-	var event := _decode_event(text)
-	if event != null:
-		# Any keyboard, any pad: a second controller is the same player.
-		event.device = -1
-	return event
-
-
-static func _decode_event(text: String) -> InputEvent:
-	var parts := text.strip_edges().split(":")
-	if parts.size() < 2:
-		return null
-	for index in range(1, parts.size()):
-		if index == 2 and parts[0] == "joy_axis":
-			continue
-		if not parts[index].is_valid_int():
-			return null
-	match parts[0]:
-		"key":
-			if parts.size() != 2:
-				return null
-			var code := parts[1].to_int()
-			if code <= 0 or OS.get_keycode_string(code).is_empty():
-				return null
-			var key := InputEventKey.new()
-			key.physical_keycode = code as Key
-			return key
-		"mouse":
-			if parts.size() != 2:
-				return null
-			var button := parts[1].to_int()
-			if button < MOUSE_BUTTON_LEFT or button > MOUSE_BUTTON_XBUTTON2:
-				return null
-			var mouse := InputEventMouseButton.new()
-			mouse.button_index = button as MouseButton
-			return mouse
-		"joy_button":
-			if parts.size() != 2:
-				return null
-			var joy_index := parts[1].to_int()
-			if joy_index < 0 or joy_index >= JOY_BUTTON_SDL_MAX:
-				return null
-			var joy := InputEventJoypadButton.new()
-			joy.button_index = joy_index as JoyButton
-			return joy
-		"joy_axis":
-			if parts.size() != 3 or (parts[2] != "+" and parts[2] != "-"):
-				return null
-			var axis := parts[1].to_int()
-			if axis < 0 or axis >= JOY_AXIS_SDL_MAX:
-				return null
-			var motion := InputEventJoypadMotion.new()
-			motion.axis = axis as JoyAxis
-			motion.axis_value = 1.0 if parts[2] == "+" else -1.0
-			return motion
-	return null
+	return InputBindings.decode_event(text)
 
 
 ## Replaces the primary binding of `action` on the device the event belongs to.
 ## Returns `{ok, reason, conflict}`; `reason` is "unknown_action", "unsupported",
 ## "reserved" or "conflict" when the binding is refused, and nothing changes then.
 func rebind(action: StringName, event: InputEvent) -> Dictionary:
-	var result := {"ok": false, "reason": "", "conflict": &""}
-	if not REBINDABLE_ACTIONS.has(action) or not InputMap.has_action(action):
-		result["reason"] = "unknown_action"
+	var checked := InputBindings.check_rebind(action, event)
+	var result := {
+		"ok": false, "reason": String(checked["reason"]), "conflict": checked["conflict"]
+	}
+	if not bool(checked["ok"]):
 		return result
-	var encoded := encode_event(event)
-	if encoded.is_empty() or decode_event(encoded) == null or event is InputEventMouseButton:
-		result["reason"] = "unsupported"
-		return result
-	var clean := decode_event(encoded)
-	var key := clean as InputEventKey
-	if key != null and (
-		RESERVED_KEYS.has(int(key.physical_keycode)) or KEYBOARD_LOCKED_ACTIONS.has(action)
-	):
-		result["reason"] = "reserved"
-		return result
-	for other: StringName in REBINDABLE_ACTIONS:
-		if other == action or _may_share(action, other) or not InputMap.has_action(other):
-			continue
-		for existing: InputEvent in InputMap.action_get_events(other):
-			if encode_event(existing) == encoded:
-				result["reason"] = "conflict"
-				result["conflict"] = other
-				return result
+	var clean: InputEvent = checked["clean"]
 	var device := DEVICE_GAMEPAD if is_gamepad_event(clean) else DEVICE_KEYBOARD
-	var events: Array[InputEvent] = InputMap.action_get_events(action)
-	var replaced := false
-	for index in events.size():
-		if _matches_device(events[index], device):
-			events[index] = clean
-			replaced = true
-			break
-	if not replaced:
-		events.append(clean)
-	# The same input twice on one action is one input.
-	var seen: Dictionary = {}
-	InputMap.action_erase_events(action)
-	for item: InputEvent in events:
-		var code := encode_event(item)
-		if seen.has(code):
-			continue
-		seen[code] = true
-		InputMap.action_add_event(action, item)
+	InputBindings.apply_events(
+		action, InputBindings.events_with(action, clean, device, _matches_device)
+	)
 	_store_action(action)
 	bindings_changed.emit()
 	result["ok"] = true
 	return result
-
-
-func _may_share(first: StringName, second: StringName) -> bool:
-	for pair: Array in SHARED_PAIRS:
-		if pair.has(first) and pair.has(second):
-			return true
-	return false
 
 
 ## Every rebindable action back to `project.godot`, and the stored overrides removed.
@@ -763,18 +485,11 @@ func is_default_binding(action: StringName) -> bool:
 
 
 func _apply_events(action: StringName, events: Array) -> void:
-	if not InputMap.has_action(action):
-		return
-	InputMap.action_erase_events(action)
-	for event: InputEvent in events:
-		InputMap.action_add_event(action, event)
+	InputBindings.apply_events(action, events)
 
 
 func _encoded(events: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for event: InputEvent in events:
-		out.append(encode_event(event))
-	return out
+	return InputBindings.encoded(events)
 
 
 func _store_action(action: StringName) -> void:
@@ -839,141 +554,17 @@ func get_load_problems() -> Array[String]:
 func _read_choice(
 	config: ConfigFile, section: String, key: String, allowed: Array[StringName], fallback: StringName
 ) -> StringName:
-	if not config.has_section_key(section, key):
-		return fallback
-	var value: Variant = config.get_value(section, key)
-	if value is String or value is StringName:
-		var choice := StringName(String(value))
-		if allowed.has(choice):
-			return choice
-	_load_problems.append("[%s] %s = %s is not one of %s" % [section, key, str(value), str(allowed)])
-	return fallback
+	return SettingsStore.read_choice(config, section, key, allowed, fallback, _load_problems)
 
 
 func _read_volume(config: ConfigFile, key: String) -> int:
-	if not config.has_section_key(SECTION_AUDIO, key):
-		return DEFAULT_VOLUME
-	var value: Variant = config.get_value(SECTION_AUDIO, key)
-	if (value is int or value is float) and float(value) >= 0.0 and float(value) <= 100.0:
-		return int(round(float(value)))
-	_load_problems.append("[audio] %s = %s is not a percentage" % [key, str(value)])
-	return DEFAULT_VOLUME
+	return SettingsStore.read_percent(config, SECTION_AUDIO, key, DEFAULT_VOLUME, _load_problems)
 
 
+## Applies the stored `[input]` lists. Each is checked whole against the rules `rebind`
+## keeps (`InputBindings.load_section`), and a list that breaks one keeps the defaults.
 func _load_bindings(config: ConfigFile) -> void:
-	if not config.has_section(SECTION_INPUT):
-		return
-	var loaded: Array[StringName] = []
-	for key: String in config.get_section_keys(SECTION_INPUT):
-		var action := StringName(key)
-		if not REBINDABLE_ACTIONS.has(action):
-			_load_problems.append("[input] %s is not a rebindable action" % key)
-			continue
-		var value: Variant = config.get_value(SECTION_INPUT, key)
-		var decoded := _decode_list(value)
-		if decoded.is_empty():
-			_load_problems.append(
-				"[input] %s = %s is not a valid binding list; defaults kept" % [key, str(value)]
-			)
-			continue
-		var broken := _broken_rule(action, decoded)
-		if not broken.is_empty():
-			_load_problems.append("[input] %s = %s %s; defaults kept" % [key, str(value), broken])
-			continue
-		_apply_events(action, decoded)
-		loaded.append(action)
-	_drop_loaded_conflicts(loaded)
-
-
-## The rules `rebind` keeps one input at a time, checked on a whole stored list: a file
-## edited by hand or written by another build must not take Esc away from the menus, give
-## Esc to anything else, or leave an action without a key or a controller input it has by
-## default. Empty when the list is fine; otherwise what is wrong with it.
-func _broken_rule(action: StringName, events: Array) -> String:
-	var keys := PackedStringArray()
-	var has_key := false
-	var has_pad := false
-	for event: InputEvent in events:
-		if event is InputEventKey:
-			has_key = true
-			keys.append(encode_event(event))
-		elif is_gamepad_event(event):
-			has_pad = true
-	var default_keys := PackedStringArray()
-	var default_has_pad := false
-	for event: InputEvent in default_events(action):
-		if event is InputEventKey:
-			default_keys.append(encode_event(event))
-		elif is_gamepad_event(event):
-			default_has_pad = true
-	if KEYBOARD_LOCKED_ACTIONS.has(action):
-		if keys != default_keys:
-			return "changes the keyboard side, which stays Esc"
-	else:
-		for reserved: int in RESERVED_KEYS:
-			if keys.has("key:%d" % reserved):
-				return "binds a reserved key"
-	if not has_key and not default_keys.is_empty():
-		return "leaves the action without a key"
-	if not has_pad and default_has_pad:
-		return "leaves the action without a controller input"
-	return ""
-
-
-## Two actions on one input is what `rebind` refuses, and a stored file can still say it:
-## edited by hand, or two lists that were each fine against the defaults. The action read
-## last goes back to its defaults until nothing clashes; the defaults never clash, so this
-## ends, and it does not depend on the order the file lists a valid swap in.
-func _drop_loaded_conflicts(loaded: Array[StringName]) -> void:
-	var index := loaded.size() - 1
-	while index >= 0:
-		var action := loaded[index]
-		var other := _conflict_of(action)
-		if String(other).is_empty():
-			index -= 1
-			continue
-		_load_problems.append("[input] %s shares an input with %s; defaults kept" % [action, other])
-		_apply_events(action, default_events(action))
-		loaded.remove_at(index)
-		index = loaded.size() - 1
-
-
-## The first other action using one of `action`'s inputs, apart from the shared pairs.
-func _conflict_of(action: StringName) -> StringName:
-	var mine := _encoded(InputMap.action_get_events(action))
-	for other: StringName in REBINDABLE_ACTIONS:
-		if other == action or _may_share(action, other) or not InputMap.has_action(other):
-			continue
-		for code: String in _encoded(InputMap.action_get_events(other)):
-			if mine.has(code):
-				return other
-	return StringName()
-
-
-## Every entry must decode, and the list must not be empty; otherwise nothing is used.
-func _decode_list(value: Variant) -> Array:
-	var items: Array = []
-	if value is PackedStringArray:
-		for text: String in (value as PackedStringArray):
-			items.append(text)
-	elif value is Array:
-		items = (value as Array).duplicate()
-	else:
-		return []
-	var events: Array = []
-	var seen: Dictionary = {}
-	for item: Variant in items:
-		if not (item is String or item is StringName):
-			return []
-		var event := decode_event(String(item))
-		if event == null:
-			return []
-		var code := encode_event(event)
-		if seen.has(code):
-			continue
-		seen[code] = true
-		events.append(event)
-	return events
+	InputBindings.load_section(config, SECTION_INPUT, default_events, _load_problems)
 
 
 ## Back to every default. The language (`[display] locale`) is the player's and `Loc`'s,

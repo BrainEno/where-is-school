@@ -52,3 +52,35 @@ static func open() -> ConfigFile:
 ## settings did not persist instead of believing they did.
 static func write(config: ConfigFile) -> Error:
 	return config.save(PATH)
+
+
+## The value of `[section] key` when it is one of `allowed`; otherwise `fallback`, and a
+## stored value that is not allowed is described in `problems`. A missing key is not a
+## problem: it is a setting the player never changed.
+static func read_choice(
+	config: ConfigFile, section: String, key: String, allowed: Array[StringName],
+	fallback: StringName, problems: Array[String]
+) -> StringName:
+	if not config.has_section_key(section, key):
+		return fallback
+	var value: Variant = config.get_value(section, key)
+	if value is String or value is StringName:
+		var choice := StringName(String(value))
+		if allowed.has(choice):
+			return choice
+	problems.append("[%s] %s = %s is not one of %s" % [section, key, str(value), str(allowed)])
+	return fallback
+
+
+## A whole percentage, 0..100, from `[section] key`; `fallback` when it is missing or is
+## not one, and a stored value that is not one is described in `problems`.
+static func read_percent(
+	config: ConfigFile, section: String, key: String, fallback: int, problems: Array[String]
+) -> int:
+	if not config.has_section_key(section, key):
+		return fallback
+	var value: Variant = config.get_value(section, key)
+	if (value is int or value is float) and float(value) >= 0.0 and float(value) <= 100.0:
+		return int(round(float(value)))
+	problems.append("[%s] %s = %s is not a percentage" % [section, key, str(value)])
+	return fallback
