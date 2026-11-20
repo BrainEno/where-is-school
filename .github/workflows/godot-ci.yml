@@ -479,6 +479,8 @@ jobs:
           # clear colour, the walkway carried on past the yard door north of every sight
           # line, the end wall's picture gone but its collider kept, the door's opening clear.
           run_check corridor_art 180 godot --headless --path . --script res://tests/corridor_art_test.gd || status=1
+          # The exam-dream dressing: draws, never acts, opens the stable yard, moves nothing.
+          run_check dream_annex 160 godot --headless --path . --script res://tests/dream_annex_test.gd || status=1
           run_check school_rooms 240 godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd || status=1
           run_check school_expansion 370 godot --headless --path . --script res://tests/school_expansion_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track

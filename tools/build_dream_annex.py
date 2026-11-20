@@ -1,0 +1,527 @@
+"""The exam dream laid over the teaching block (2026-11-20; docs/EXAM_DREAM_ART.md).
+
+`build_teaching_block.py` calls `annex()` and writes `dream_annex.tscn`, which the
+hand-authored corridor instances beside `TeachingBlock`. Nothing here moves a wall,
+exit or spawn. Four layers, all procedural primitives:
+
+* the 02 -> 03 west stair is dressed as a metro escalator whose steps run down;
+* a ticket counter on 02 whose three identical clerks watch the escalator;
+* 03 as an exam floor: paper room numbers, a seating grid, turned chairs and a
+  troublemaker who punches the wall;
+* behind 01, a walkable stable yard with a two-storey dream house, an outdoor
+  escalator that ends in nothing, grain, quilts, horses, hens and their smell.
+"""
+from __future__ import annotations
+
+import math
+import random
+
+from build_teaching_block import (
+    GROUND_Y, OFFICE_X, RISE, UPPER_NORTH, UPPER_WEST, WEST_STAIR_WIDTH, WEST_STAIR_Z,
+    child_path, plane, quad, slab, srgb, vec3,
+)
+from dream_figures import PEOPLE, figure, hen, horse, motion_material, part, swivel_chair
+from fixture_geometry import FixtureBuild
+
+G = GROUND_Y
+STAIR_RUN, STAIR_ORIGIN = 7.55, (-2.2, 0.0, WEST_STAIR_Z)
+# The stable yard: open to the 01 apron's west side, walled toward the village.
+LANE_X, LANE_Z = (-40.2, -20.75), (14.68, 18.45)
+YARD_X, YARD_Z = (-40.2, -26.95), (4.6, LANE_Z[0])
+HOUSE_X, HOUSE_Z = (-40.2, -33.2), (4.6, 10.4)
+HOUSE_STOREY, HOUSE_TOP = 3.1, 6.0
+PIGMENTS = {
+    **PEOPLE,
+    # Hard-edged modern fields for the exam floor, cooler steel for the metro.
+    "vermilion": (222, 76, 52), "cobalt": (40, 74, 162), "lemon": (238, 206, 72), "paper": (237, 232, 216),
+    "graphite": (36, 38, 44), "steel": (170, 175, 181), "rubber": (24, 24, 28), "tile_white": (214, 216, 210),
+    "wayfind": (28, 36, 58), "led": (226, 64, 48),
+    # The yard: earth, dung, straw and sun-dried colour.
+    "earth": (128, 104, 76), "earth_dark": (96, 78, 58), "dung": (70, 55, 37), "straw": (212, 180, 98),
+    "grain": (224, 177, 82), "grain_ridge": (184, 138, 58), "timber": (104, 76, 54), "mud_wall": (176, 150, 116),
+    "mud_cap": (120, 104, 90), "lime": (220, 212, 190), "roof_tin": (126, 118, 112), "stall_dark": (44, 36, 30),
+    "quilt_red": (184, 52, 62), "quilt_teal": (38, 126, 124), "quilt_pink": (232, 152, 160),
+    "quilt_yellow": (236, 192, 70), "peony": (246, 226, 214), "leaf": (64, 120, 72), "window_warm": (244, 206, 140),
+    "wire": (62, 60, 58), "stool": (150, 104, 66), "rake": (170, 132, 82), "coop_wire": (150, 150, 140),
+}
+
+
+def unlit(b, name, rgb, energy=1.0):
+    r, g, bl = (round(c / 255.0 * energy, 3) for c in rgb)
+    b.mat(name, shading_mode=0, albedo_color=f"Color({r:g}, {g:g}, {bl:g}, 1)")
+
+
+def label(b, name, parent, pos, text, size=.0026, rot=(0, 0, 0), ink=(245, 240, 226)):
+    b.node(name, parent, "Label3D", position=vec3(pos), rotation_degrees=vec3(rot), text=f'"{text}"',
+           font_size=44, pixel_size=f"{size:g}", outline_size=0, modulate=srgb(ink))
+
+
+def solid(b, name, parent, pos, size, *, fade=True, rot=(0, 0, 0)):
+    p = b.shell(name, parent, pos, rot, ("camera_occluder",) if fade else ())
+    b.shape("Solid", p, (0, size[1] / 2, 0), size)
+    return p
+
+
+# --- 02 -> 03: the stair becomes a down escalator -----------------------------------------
+
+def escalator(b):
+    s = "Escalator"
+    b.node(s, ".", position=vec3(STAIR_ORIGIN), rotation_degrees=vec3((0, 90, 0)))
+    run, rise, width = STAIR_RUN, RISE, WEST_STAIR_WIDTH
+    length, pitch = math.hypot(run, rise), math.degrees(math.atan2(rise, run))
+    belt = b.bind("dream_escalator", "res://assets/shaders/school/dream_escalator.gdshader", "Shader")
+    b.local_mats["belt"] = (f'[sub_resource type="ShaderMaterial" id="Mat_belt"]\nshader = {belt}\n'
+                            f"shader_parameter/width = {width - .02:g}\nshader_parameter/step_length = {length/20:.4f}\n")
+    # One tilted frame on the line of the walkable slope. The belt covers the treads'
+    # nosings; the player still walks on the teaching block's own ramp collider.
+    b.node("Tilt", s, position=vec3((0, rise / 2, -run / 2)), rotation_degrees=vec3((pitch, 0, 0)))
+    t = child_path(s, "Tilt")
+    b.flat("Belt", t, plane(b, width - .02, length + .02), "belt", (0, .094, 0))
+    for side, x in (("West", -1), ("East", 1)):
+        gx = x * (width / 2 + .065)
+        b.box(f"Skirt{side}", t, (gx, .54, 0), (.18, 1.09, length + .03), "steel", shadow=True)
+        b.box(f"Deck{side}", t, (gx, 1.1, 0), (.24, .03, length + .2), "graphite")
+        b.box(f"Handrail{side}", t, (gx, 1.16, 0), (.11, .08, length + .55), "rubber", shadow=True)
+        b.box(f"Brush{side}", t, (x * (width / 2 - .015), .17, 0), (.03, .05, length), "lemon")
+    # Thin bars of light over the slope, not a ceiling across the follow camera.
+    for i in range(6):
+        b.box(f"LightBar{i}", t, (0, 2.75, -length / 2 + .7 + i * (length - 1.4) / 5), (width + .5, .05, .07), "metro_light")
+    for name, z, y in (("CombFoot", .27, .006), ("CombHead", -run - .27, rise + .006)):
+        b.box(name, s, (0, y, z), (width - .04, .012, .54), "steel")
+        for i in range(9):
+            b.box(f"{name}Tooth{i}", s, (-width / 2 + .2 + i * (width - .4) / 8, y + .009, z + (.2 if z > 0 else -.2)),
+                  (.06, .008, .12), "lemon")
+    b.box("HeadNewelWest", s, (-width / 2 - .065, rise + 1.0, -run - .25), (.24, .2, .62), "rubber", shadow=True)
+    b.box("HeadNewelEast", s, (width / 2 + .065, rise + 1.0, -run - .25), (.24, .2, .62), "rubber", shadow=True)
+
+    # A metro totem at the mouth: the floor number is the only promise it makes.
+    b.node("Totem", ".", position=vec3((-1.86, 0, -6.12)))
+    b.box("Post", "Totem", (0, 1.15, 0), (.16, 2.3, .16), "graphite", shadow=True)
+    b.box("Box", "Totem", (0, 2.08, .02), (.5, .66, .2), "wayfind", shadow=True)
+    b.box("Face", "Totem", (0, 2.08, .124), (.42, .58, .01), "metro_light")
+    b.box("Disc", "Totem", (0, 2.2, .132), (.3, .3, .006), "vermilion")
+    label(b, "Floor", "Totem", (0, 2.2, .137), "03", .0042)
+    label(b, "Line", "Totem", (0, 1.92, .137), "EXAM ↑", .0019, ink=(28, 36, 58))
+    label(b, "Back", "Totem", (0, 2.08, -.084), "↓ 02", .0028, rot=(0, 180, 0))
+
+
+def ticket_counter(b):
+    """02, opposite the escalator: three clerks who may be one clerk."""
+    c = "TicketCounter"
+    b.node(c, ".", position=vec3((1.5, 0, WEST_STAIR_Z)))
+    body = solid(b, "Booth", c, (0, 0, 0), (.9, 2.55, 2.8))
+    b.box("Plinth", body, (-.2, .5, 0), (.5, 1.0, 2.8), "cobalt", shadow=True)
+    b.box("Counter", body, (-.4, 1.02, 0), (.32, .05, 2.84), "steel")
+    b.box("Back", body, (.4, 1.27, 0), (.1, 2.55, 2.8), "graphite", shadow=True)
+    b.box("Head", body, (0, 2.42, 0), (.9, .26, 2.86), "lemon", shadow=True)
+    label(b, "HeadText", body, (-.452, 2.42, 0), "EXAM FEE  ·  TICKETS", .0021, rot=(0, -90, 0), ink=(28, 36, 58))
+    b.box("Partition", body, (-.45, 1.68, 0), (.02, 1.22, 2.8), "booth_glass")
+    for i, z in enumerate((-.93, 0, .93)):
+        b.round(f"Voice{i}", body, (-.47, 1.56, z), .07, .012, "graphite", rot=(0, 0, 90))
+        b.box(f"Slot{i}", body, (-.5, 1.06, z), (.16, .03, .3), "graphite")
+        b.box(f"Open{i}", body, (-.47, 2.16, z), (.02, .1, .34), "led")
+        b.box(f"Roll{i}", body, (-.18, 1.1, z + .3), (.12, .12, .12), "paper")
+        figure(b, body, f"Clerk{i}", (.14, .1, z), -90,
+               {"coat": "uniform", "hair": "hair", "droop": True, "scarf": "sleeve_white"},
+               pose="sit", hand="stamp", phase=0.0)
+        b.box(f"Stool{i}", body, (.16, .25, z), (.34, .5, .34), "graphite")
+    label(b, "EndText", body, (0, 2.42, 1.432), "TICKETS", .0024, ink=(28, 36, 58))
+    # A queue lane along the glass for a queue that never forms.
+    for i, z in enumerate((-1.3, 0, 1.3)):
+        b.box(f"Stanchion{i}", c, (-.95, .48, z), (.06, .96, .06), "steel")
+        b.round(f"StanchionFoot{i}", c, (-.95, .01, z), .14, .02, "graphite")
+    b.box("Rope", c, (-.95, .9, 0), (.03, .05, 2.6), "vermilion")
+
+
+# --- 03: an exam floor that is also a waiting room ----------------------------------------
+
+def bay_frame(b, parent, name, west, spec):
+    centre = spec[0]
+    pos, yaw = ((-14.25, RISE, centre), 90) if west else ((centre, RISE, -45.0), 0)
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    return child_path(parent, name)
+
+
+def exam_floor(b):
+    e = "ExamFloor"
+    b.node(e, ".")
+    # Paper on every door: an exam-room number in marker, and the numbers disagree.
+    numbers = iter(("07", "07", "13", "00", "07", "21", "07", "09", "07", "—"))
+    rng = random.Random(1120)
+    for west, specs in ((True, UPPER_WEST), (False, UPPER_NORTH)):
+        for i, spec in enumerate(specs):
+            p = bay_frame(b, e, f"{'West' if west else 'North'}Bay{i}", west, spec)
+            for j, x in enumerate((-3.55, 3.55)):
+                tilt = rng.uniform(-6, 6)
+                b.node(f"Notice{j}", p, position=vec3((x, 1.52, .062)), rotation_degrees=vec3((0, 0, tilt)))
+                n = child_path(p, f"Notice{j}")
+                b.box("Sheet", n, (0, 0, 0), (.3, .42, .006), "paper")
+                b.box("TapeTop", n, (0, .2, .004), (.12, .035, .004), "tile_white")
+                label(b, "Room", n, (0, .1, .005), "EXAM ROOM", .0011, ink=(36, 38, 44))
+                label(b, "Number", n, (0, -.06, .005), next(numbers), .0045, ink=(40, 74, 162))
+            # Inside, behind the high slit: desks pushed askew and paper on the floor.
+            depth, bias = spec[3], spec[4]
+            for k in range(7):
+                x, z = rng.uniform(-2.6, 2.6), rng.uniform(-depth + 1.2, -1.0)
+                b.box(f"Dropped{k}", p, (x, bias + .012 + k * .001, z), (.21, .004, .3), "paper",
+                      rot=(0, rng.uniform(0, 180), 0))
+            b.box("TippedChair", p, (1.2, bias + .2, -2.9), (.42, .4, .42), "graphite", rot=(0, 31, 78))
+    # A seating plan painted on the 03 floor, off-square, as if the corridor were the hall.
+    b.node("SeatingGrid", e, position=vec3((-12.0, RISE + .006, -30.5)), rotation_degrees=vec3((0, 2.5, 0)))
+    g = child_path(e, "SeatingGrid")
+    seat = 1
+    for row in range(3):
+        for col in range(9):
+            if (row, col) in ((1, 4), (2, 7)):
+                continue
+            x, z = -1.15 + row * 1.15, -8.4 + col * 2.05
+            for k, (dx, dz, w, d) in enumerate(((0, -.27, .82, .03), (0, .27, .82, .03), (-.41, 0, .03, .57), (.41, 0, .03, .57))):
+                b.box(f"Seat{seat}_{k}", g, (x + dx, 0, z + dz), (w, .004, d), "paper")
+            label(b, f"SeatNo{seat}", g, (x, .004, z), f"{seat:02d}", .0034, rot=(-90, 0, 0), ink=(226, 222, 206))
+            seat += 1
+    # Hard colour fields on the walls: modern wayfinding that leads nowhere in particular.
+    for i, (west, spec_i, x, y, w, h, colour) in enumerate((
+        (True, 0, 0, .8, 3.6, .9, "cobalt"), (True, 1, 1.8, .5, 1.5, 2.2, "vermilion"),
+        (True, 2, .6, 1.1, 4.0, .45, "lemon"), (False, 0, 0, .7, 3.0, 1.1, "lemon"),
+        (False, 1, -1.75, .5, 1.2, 1.8, "cobalt"),
+    )):
+        p = child_path(e, f"{'West' if west else 'North'}Bay{spec_i}")
+        b.box(f"Field{i}", p, (x, y + h / 2, .118), (w, h, .012), colour)
+    b.box("FloorRule", e, (-13.9, RISE + .008, -26.0), (.16, .006, 38.0), "vermilion")
+    b.box("FloorRuleTurn", e, ((OFFICE_X - 13.98) / 2, RISE + .008, -44.62), (OFFICE_X + 13.98, .006, .16), "vermilion")
+
+    # Queue footprints to the staff office. The last pairs face the wrong way.
+    for i in range(14):
+        x = 9.2 + i * .62
+        back = i >= 11
+        ink = "graphite" if not back else "vermilion"
+        for k, dz in enumerate((-.14, .14)):
+            fx, fz = x + (.08 if k else 0), -42.0 + dz + (.15 if back else 0)
+            b.box(f"Step{i}_{k}", e, (fx, RISE + .009, fz), (.22, .005, .09), ink)
+            b.box(f"Toe{i}_{k}", e, (fx + (-.15 if back else .15), RISE + .009, fz), (.06, .005, .08), ink)
+    # Turned chairs along the walls, drifting a little on their lifts.
+    for i, (pos, yaw) in enumerate((((-13.62, RISE, -21.6), -90), ((-13.6, RISE, -23.1), -84),
+                                    ((-13.66, RISE, -25.6), -97), ((10.2, RISE, -44.35), 180),
+                                    ((12.0, RISE, -44.3), 172), ((-5.2, RISE, -44.35), 190))):
+        swivel_chair(b, e, f"TurnedChair{i}", pos, yaw, i * .17)
+    # Two small cliques by the south glass, sharing a bag of something.
+    for c, (x, people) in enumerate(((-1.5, 3), (14.4, 2))):
+        b.node(f"Clique{c}", e, position=vec3((x, RISE, -41.25)))
+        q = child_path(e, f"Clique{c}")
+        for k in range(people):
+            angle = math.tau * k / people + .4
+            px, pz = .42 * math.cos(angle), .3 * math.sin(angle)
+            yaw = math.degrees(math.atan2(-px, -pz))
+            look = {"coat": ("coat_grey", "coat_navy", "coat_olive", "coat_cream")[(c + k) % 4],
+                    "hair": "hair" if k else "hair_grey"}
+            figure(b, q, f"Person{k}", (px, 0, pz), yaw, look, body="nod", phase=k * .31 + c)
+        b.box("Snacks", q, (0, 1.05, 0), (.16, .2, .1), "vermilion")
+    # The troublemaker, held up by an accomplice, punching the plaster.
+    b.node("Troublemaker", e, position=vec3((-13.55, RISE, -29.2)))
+    t = child_path(e, "Troublemaker")
+    figure(b, t, "Ranter", (0, 0, 0), -90, {"coat": "coat_ink", "hair": "hair", "droop": True}, hand="punch")
+    figure(b, t, "Accomplice", (.45, 0, .42), -120, {"coat": "coat_rust", "hair": "hair"}, pose="bowed")
+    b.box("HoldingArm", t, (.24, 1.16, .2), (.38, .09, .09), "coat_rust", rot=(0, 40, 0))
+    for k, (dz, dy, w) in enumerate(((0, 1.3, .18), (.1, 1.22, .07), (-.08, 1.38, .09), (.05, 1.45, .05))):
+        b.box(f"Dent{k}", t, (-.597, dy, dz), (.006, w, w * .8), "graphite")
+    # Now serving: nobody.
+    b.node("NowServing", e, position=vec3((OFFICE_X - 1.6, RISE, -40.9)))
+    n = child_path(e, "NowServing")
+    b.box("Pole", n, (0, 1.0, 0), (.07, 2.0, .07), "steel", shadow=True)
+    b.box("Screen", n, (0, 2.15, 0), (.9, .42, .1), "graphite", shadow=True)
+    label(b, "Number", n, (0, 2.15, .056), "— — —", .0034, ink=(226, 64, 48))
+    label(b, "Caption", n, (0, 1.88, .056), "NOW SERVING", .0014)
+
+
+# --- behind 01: the stable yard and the dream house ----------------------------------------
+
+def low_wall(b, parent, name, a, z_or_x, along_x, height=1.25):
+    lo, hi = a
+    length = hi - lo
+    pos = ((lo + hi) / 2, G, z_or_x) if along_x else (z_or_x, G, (lo + hi) / 2)
+    size = (length, height, .3) if along_x else (.3, height, length)
+    p = solid(b, name, parent, pos, size)
+    b.box("Mud", p, (0, height / 2 - .05, 0), (size[0], height - .1, size[2]), "mud_wall", shadow=True)
+    b.box("Cap", p, (0, height - .04, 0), (size[0] + .06 * along_x, .1, size[2] + .06 * (not along_x)), "mud_cap")
+    b.box("Lime", p, (0, .45, 0), (size[0] - .02 * along_x, .3, size[2] - .02 * (not along_x)), "lime")
+
+
+def yard_ground(b, y):
+    slab(b, y, "Lane", LANE_X, LANE_Z, G)
+    slab(b, y, "Yard", YARD_X, YARD_Z, G)
+    b.flat("LaneEarth", y, plane(b, LANE_X[1] - LANE_X[0], LANE_Z[1] - LANE_Z[0]), "earth",
+           (sum(LANE_X) / 2, G + .004, sum(LANE_Z) / 2))
+    b.flat("YardEarth", y, plane(b, YARD_X[1] - YARD_X[0], YARD_Z[1] - YARD_Z[0]), "earth",
+           (sum(YARD_X) / 2, G + .004, sum(YARD_Z) / 2))
+    # Everything past the wall is village ground, never walkable.
+    b.box("VillageGround", y, (-49.5, G - .13, 6), (45, .2, 40), "earth_dark")
+    rng = random.Random(2026)
+    for i in range(26):
+        x, z = rng.uniform(-39.5, -21.5), rng.uniform(5.0, 18.0)
+        if HOUSE_X[0] < x < HOUSE_X[1] and z < HOUSE_Z[1]:
+            continue
+        b.round(f"Dung{i}", y, (x, G + .009, z), rng.uniform(.06, .2), .012, "dung", sides=7)
+    for i in range(70):
+        x, z = rng.uniform(-39.8, -21.0), rng.uniform(4.8, 18.2)
+        if HOUSE_X[0] < x < HOUSE_X[1] and z < HOUSE_Z[1]:
+            continue
+        b.box(f"Straw{i}", y, (x, G + .012, z), (.018, .008, rng.uniform(.16, .38)), "straw",
+              rot=(0, rng.uniform(0, 180), 0))
+
+
+def grain_mat(b, parent, name, pos, size, yaw):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    w, d = size
+    b.box("Tarp", p, (0, .01, 0), (w + .16, .01, d + .16), "cobalt")
+    b.box("Grain", p, (0, .03, 0), (w, .035, d), "grain")
+    for i in range(int(d / .22)):
+        b.box(f"Ridge{i}", p, (0, .05, -d / 2 + .11 + i * .22), (w - .1, .012, .05), "grain_ridge")
+
+
+def quilts(b, y):
+    q = solid(b, "QuiltLine", y, (-37.8, G, 12.0), (4.8, 1.85, .12))
+    for i, x in enumerate((-2.45, 2.45)):
+        b.box(f"Pole{i}", q, (x, 1.05, 0), (.07, 2.1, .07), "timber", shadow=True)
+    b.box("Wire", q, (0, 2.0, 0), (4.9, .015, .015), "wire")
+    for i, (x, base, pattern) in enumerate(((-1.6, "quilt_red", "peony"), (0, "quilt_teal", "quilt_yellow"),
+                                            (1.6, "quilt_pink", "leaf"))):
+        b.box(f"Quilt{i}", q, (x, 1.12, 0), (1.5, 1.72, .045), base, shadow=True)
+        for k in range(5):
+            px, py = x - .5 + (k % 3) * .5, .62 + (k // 3) * .7 + (k % 2) * .18
+            if pattern == "quilt_yellow":
+                b.box(f"Check{i}_{k}", q, (x, .45 + k * .33, .026), (1.5, .09, .006), pattern)
+            else:
+                b.round(f"Flower{i}_{k}", q, (px, py, .026), .13, .006, pattern, sides=10, rot=(90, 0, 0))
+
+
+def dream_house(b, y):
+    h = "DreamHouse"
+    x0, x1 = HOUSE_X
+    z0, z1 = HOUSE_Z
+    w, d = x1 - x0, z1 - z0
+    cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+    body = solid(b, h, y, (cx, G, cz), (w, HOUSE_TOP, d), fade=False)
+    # 1F: stalls open to the east; 2F: a lit ticket hall that nobody can reach.
+    stall_back = 2.0
+    b.box("WestWall", body, (-w / 2 + .12, HOUSE_STOREY / 2, 0), (.24, HOUSE_STOREY, d), "mud_wall", shadow=True)
+    b.box("NorthWall", body, (0, HOUSE_STOREY / 2, -d / 2 + .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
+    b.box("SouthWall", body, (0, HOUSE_STOREY / 2, d / 2 - .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
+    b.box("StallBack", body, (w / 2 - stall_back, HOUSE_STOREY / 2, 0), (.2, HOUSE_STOREY, d - .4), "stall_dark")
+    b.box("StallFloor", body, (w / 2 - stall_back / 2, .02, 0), (stall_back, .04, d - .4), "straw")
+    b.box("UpperFloor", body, (0, HOUSE_STOREY + .1, 0), (w + .1, .22, d + .1), "timber", shadow=True)
+    # 2F is solid except for a one-metre slice behind the south window.
+    top, sill, head, hall = HOUSE_TOP, HOUSE_STOREY + .8, HOUSE_STOREY + 2.1, 1.0
+    mid = (HOUSE_STOREY + .21 + top) / 2
+    tall = top - HOUSE_STOREY - .21
+    b.box("Upper", body, (0, mid, -hall / 2), (w, tall, d - hall), "lime", shadow=True)
+    b.box("HallBack", body, (.3, (sill + head) / 2, d / 2 - hall + .005), (5.0, head - sill, .01), "window_warm")
+    for name, x, width in (("HallEndWest", -w / 2 + .12, .24), ("HallEndEast", w / 2 - .12, .24)):
+        b.box(name, body, (x, mid, d / 2 - hall / 2), (width, tall, hall), "lime", shadow=True)
+    face = d / 2 - .1
+    for name, pos, size in (("Sill", (0, (HOUSE_STOREY + .21 + sill) / 2, face), (w, sill - HOUSE_STOREY - .21, .2)),
+                            ("Lintel", (0, (head + top) / 2, face), (w, top - head, .2)),
+                            ("PierWest", ((-w / 2 - 2.2) / 2, (sill + head) / 2, face), (w / 2 - 2.2, head - sill, .2)),
+                            ("PierEast", ((w / 2 + 2.8) / 2, (sill + head) / 2, face), (w / 2 - 2.8, head - sill, .2))):
+        b.box("Hall" + name, body, pos, size, "lime", shadow=True)
+    b.box("HallGlass", body, (.3, (sill + head) / 2, d / 2 - .02), (5.0, head - sill, .01), "booth_glass")
+    b.box("Roof", body, (0, HOUSE_TOP + .06, 0), (w + .5, .12, d + .5), "roof_tin", shadow=True)
+    posts = (-d / 2 + .1, -d / 6, d / 6, d / 2 - .1)
+    for i, z in enumerate(posts):
+        b.box(f"Post{i}", body, (w / 2 - .1, HOUSE_STOREY / 2, z), (.2, HOUSE_STOREY, .2), "timber", shadow=True)
+    for i in range(3):
+        z = (posts[i] + posts[i + 1]) / 2
+        b.box(f"HalfDoor{i}", body, (w / 2 - .12, .62, z), (.08, 1.2, d / 3 - .3), "timber", shadow=True)
+        b.box(f"Partition{i}", body, (w / 2 - stall_back / 2, .8, posts[i + 1]), (stall_back, 1.6, .08), "timber")
+        b.node(f"StallLamp{i}", body, "OmniLight3D", position=vec3((w / 2 - .9, 2.5, z)),
+               light_color=srgb((255, 196, 128)), light_energy=.42, omni_range=3.2)
+    horse(b, body, "BayHorse", (w / 2 - 1.0, 0, posts[0] + 1.0), 90, "horse_bay", .1)
+    horse(b, body, "GreyHorse", (w / 2 - 1.05, 0, (posts[2] + posts[3]) / 2 - .1), 84, "horse_grey", .55)
+    # The only way in: a small doorway at the south-west corner, easy to walk past.
+    b.box("CornerDoorway", body, (-w / 2 + .75, 1.0, d / 2 + .004), (.82, 1.96, .02), "void")
+    b.box("CornerStep", body, (-w / 2 + .75, .05, d / 2 + .2), (1.0, .1, .4), "mud_cap")
+    b.box("CornerPlate", body, (-w / 2 + .75, 2.14, d / 2 + .02), (.16, .12, .01), "lime")
+    label(b, "CornerNumber", body, (-w / 2 + .75, 2.14, d / 2 + .03), "1", .002, ink=(70, 64, 58))
+    # Three seated silhouettes in the lit slice, all stamping in step.
+    for i, x in enumerate((-1.3, .3, 1.9)):
+        b.box(f"ClerkStool{i}", body, (x - .05, HOUSE_STOREY + .45, d / 2 - .5), (.3, .48, .3), "coat_ink")
+        figure(b, body, f"Clerk{i}", (x - .2, HOUSE_STOREY + .31, d / 2 - .5), 90,
+               {"coat": "coat_ink", "hair": "coat_ink", "skin": "coat_ink"}, pose="sit", hand="stamp",
+               phase=0.0, shadow=False)
+    b.box("Sign", body, (w / 2 + .06, 4.5, -.6), (.06, .9, 2.4), "wayfind", shadow=True)
+    label(b, "SignText", body, (w / 2 + .095, 4.68, -.6), "TICKETS", .0036, rot=(0, 90, 0))
+    label(b, "SignSub", body, (w / 2 + .095, 4.3, -.6), "EXAM · 2F →", .0021, rot=(0, 90, 0), ink=(238, 206, 72))
+    b.node("SignLight", body, "OmniLight3D", position=vec3((w / 2 + .9, 4.5, -.6)),
+           light_color=srgb((214, 226, 255)), light_energy=.5, omni_range=4.0)
+    sky_escalator(b, body, (-w / 2 + 3.0, HOUSE_TOP, -d / 2 + 1.4))
+
+
+def sky_escalator(b, parent, base):
+    """Leaves the roof toward the north and stops in the air. The riders keep going."""
+    run, rise, width = 11.5, 5.6, 1.4
+    length, pitch = math.hypot(run, rise), math.degrees(math.atan2(rise, run))
+    b.node("SkyEscalator", parent, position=vec3(base))
+    s = child_path(parent, "SkyEscalator")
+    b.node("Tilt", s, position=vec3((0, rise / 2, -run / 2)), rotation_degrees=vec3((pitch, 0, 0)))
+    t = child_path(s, "Tilt")
+    b.box("Truss", t, (0, -.35, 0), (width + .2, .7, length), "steel", shadow=True)
+    b.flat("Belt", t, plane(b, width, length), "belt_sky", (0, .005, 0))
+    for side, x in (("West", -1), ("East", 1)):
+        b.box(f"Glass{side}", t, (x * (width / 2 + .05), 1.05, 0), (.02, 2.1, length), "booth_glass")
+        b.box(f"Rail{side}", t, (x * (width / 2 + .05), 1.0, 0), (.08, .07, length), "rubber")
+    b.box("GlassRoof", t, (0, 2.1, 0), (width + .1, .02, length), "booth_glass")
+    b.box("Void", s, (0, rise + 1.05, -run - .02), (width + .14, 2.15, .04), "void")
+    b.box("VoidFrame", s, (0, rise + 1.05, -run - .07), (width + .34, 2.34, .03), "metro_light")
+    top = rise * .62 - .75
+    b.box("Mast", s, (0, (top - HOUSE_TOP) / 2, -run * .62), (.18, top + HOUSE_TOP, .18), "steel", shadow=True)
+    # The riders face up the slope (their +Z is the escalator's -Z).
+    travel = (0, rise, run)
+    extra = {"travel": travel, "travel_rate": .045, "fade_edge": .12}
+    for i in range(7):
+        figure(b, s, f"Rider{i}", ((i % 2) * .3 - .15, .05, 0), 180,
+               {"coat": ("coat_grey", "coat_navy", "coat_olive", "coat_cream")[i % 4]},
+               pose="bowed", body="rider_sky", phase=i / 7, extra=extra, shadow=False)
+
+
+def chickens_and_smell(b, y):
+    # Coop and hens; flies over the heap; the smell as ribbons that never thin out.
+    coop = solid(b, "Coop", y, (-28.6, G, 6.2), (2.2, 1.3, 1.6))
+    b.box("CoopRoof", coop, (0, 1.36, 0), (2.4, .08, 1.8), "roof_tin", shadow=True)
+    for i, x in enumerate((-1.05, 1.05)):
+        b.box(f"CoopPost{i}", coop, (x, .65, .75), (.07, 1.3, .07), "timber")
+    b.box("CoopMesh", coop, (0, .65, .79), (2.1, 1.2, .01), "coop_wire")
+    b.box("CoopBack", coop, (0, .65, -.75), (2.1, 1.3, .08), "timber")
+    for i, (x, z, yaw, coat) in enumerate(((-.5, .1, 30, "hen"), (.4, -.2, -60, "hen_brown"), (.1, .3, 150, "hen"))):
+        hen(b, coop, f"CoopHen{i}", (x, 0, z), yaw, coat, i * .29)
+    for i, (x, z, yaw, coat) in enumerate(((-30.2, 8.0, 20, "hen"), (-29.4, 8.9, 200, "hen_brown"),
+                                           (-31.0, 9.4, 95, "hen"))):
+        hen(b, y, f"YardHen{i}", (x, G, z), yaw, coat, i * .41 + .2)
+    b.node("Heap", y, position=vec3((-31.6, G, 5.4)))
+    for i, (dx, dz, r, hgt) in enumerate(((0, 0, .9, .32), (.3, .2, .6, .52), (-.3, -.1, .5, .62), (.1, .0, .3, .75))):
+        b.round(f"Mound{i}", child_path(y, "Heap"), (dx, hgt / 2, dz), r, hgt, "dung", top=r * .45, sides=9)
+    flies = b.bind("flies", "res://assets/shaders/school/restroom_flies.gdshader", "Shader")
+    b.local_mats["flies"] = f'[sub_resource type="ShaderMaterial" id="Mat_flies"]\nshader = {flies}\n'
+    fly = b.mesh("BoxMesh", size=vec3((.03, .012, .04)))
+    rng = random.Random(77)
+    for c, (centre, count) in enumerate((((-31.6, G + 1.1, 5.4), 26), ((-33.6, G + 1.6, 7.5), 18))):
+        floats = []
+        for _ in range(count):
+            px, py, pz = rng.uniform(-.6, .6), rng.uniform(-.35, .35), rng.uniform(-.6, .6)
+            floats.extend((1, 0, 0, px, 0, 1, 0, py, 0, 0, 1, pz))
+        mm = b.mesh("MultiMesh", transform_format=1, instance_count=count, mesh=f'SubResource("{fly}")',
+                    custom_aabb="AABB(-1, -0.82, -1, 2, 1.64, 2)",
+                    buffer="PackedFloat32Array(" + ", ".join(f"{v:.4f}" for v in floats) + ")")
+        b.node(f"Flies{c}", y, "MultiMeshInstance3D", position=vec3(centre), multimesh=f'SubResource("{mm}")',
+               material_override=b.surface("flies"), cast_shadow=0)
+    odor = b.bind("dream_odor", "res://assets/shaders/school/dream_odor.gdshader", "Shader")
+    b.local_mats["odor"] = f'[sub_resource type="ShaderMaterial" id="Mat_odor"]\nshader = {odor}\n'
+    ribbon = quad(b, .55, 2.6)
+    for i, (x, z) in enumerate(((-31.7, 5.5), (-31.2, 5.9), (-33.0, 6.0), (-33.0, 8.3), (-32.9, 9.6),
+                                (-36.0, 13.0), (-24.0, 16.2), (-29.5, 12.5))):
+        b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.35, z)),
+               rotation_degrees=vec3((0, i * 47 % 180, 0)), mesh=f'SubResource("{ribbon}")',
+               material_override=b.surface("odor"), cast_shadow=0,
+               **{"instance_shader_parameters/phase": f"{i * .23:g}"})
+
+
+def village(b, y):
+    rng = random.Random(9)
+    for i, (x, z, w, d, hgt) in enumerate(((-47, -2, 6, 5, 3.2), (-46, 10, 5, 7, 2.8), (-45, 21, 6, 5, 3.6),
+                                           (-36, -4, 7, 5, 3.0), (-27, -6, 5, 4, 2.6))):
+        b.node(f"House{i}", y, position=vec3((x, G, z)))
+        p = child_path(y, f"House{i}")
+        b.box("Mass", p, (0, hgt / 2, 0), (w, hgt, d), "mud_wall" if i % 2 else "lime", shadow=True)
+        b.box("Roof", p, (0, hgt + .08, 0), (w + .4, .16, d + .4), "roof_tin", shadow=True)
+        b.box("Door", p, (w / 2 - 1.2, .9, d / 2 + .01), (.8, 1.8, .02), "stall_dark")
+        b.box("Window", p, (-w / 4, 1.7, d / 2 + .01), (.9, .7, .02), "window_warm" if i % 2 == 0 else "stall_dark")
+        if rng.random() < .7:
+            b.box("Laundry", p, (0, hgt + .7, d / 2 - .4), (w * .6, .6, .03), ("quilt_pink", "quilt_teal", "quilt_yellow")[i % 3])
+
+
+def stable_yard(b):
+    y = "StableYard"
+    b.node(y, ".")
+    yard_ground(b, y)
+    low_wall(b, y, "WallSouth", (LANE_X[0], LANE_X[1]), LANE_Z[1] + .15, True)
+    low_wall(b, y, "WallWest", (HOUSE_Z[1], LANE_Z[1]), LANE_X[0] - .15, False)
+    low_wall(b, y, "WallNorth", (HOUSE_X[1], YARD_X[1] + .02), YARD_Z[0] - .15, True)
+    low_wall(b, y, "WallNorthEast", (YARD_Z[0] - .3, 5.52), YARD_X[1] + .15, False)
+    dream_house(b, y)
+    quilts(b, y)
+    for i, (pos, size, yaw) in enumerate((((-31.2, G, 12.7), (3.0, 2.0), 4), ((-30.4, G, 9.8), (2.6, 2.2), -3),
+                                          ((-25.0, G, 16.7), (3.4, 1.6), 0))):
+        grain_mat(b, y, f"GrainMat{i}", pos, size, yaw)
+    old = {"coat": "apron_blue", "hair": "scarf_red", "skin": "skin_dim", "droop": True}
+    b.box("Stool", y, (-33.6, G + .12, 13.2), (.3, .24, .3), "stool")
+    figure(b, y, "OldWoman0", (-33.1, G + .02, 12.4), 90, old, pose="squat")
+    raker = figure(b, y, "OldWoman1", (-28.9, G, 9.6), -90, {**old, "hair": "scarf_blue", "coat": "coat_olive"},
+                   hand="rake", phase=.3)
+    part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), motion_material(b, "rake", "rake"), phase=.3)
+    part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), motion_material(b, "rake", "rake"), phase=.3)
+    for i, (x, z) in enumerate(((-32.4, 10.1), (-32.5, 11.0), (-32.6, 10.55))):
+        b.box(f"HayBale{i}", y, (x, G + .25 + (.5 if i == 2 else 0), z), (.9, .5, .55), "straw", shadow=True)
+    chickens_and_smell(b, y)
+    village(b, y)
+    # A metro pictogram where the lane leaves the glass entrance: a horse and an arrow.
+    b.node("Pictogram", y, position=vec3((-21.2, G, 18.0)))
+    p = child_path(y, "Pictogram")
+    b.box("Post", p, (0, 1.0, 0), (.1, 2.0, .1), "graphite", shadow=True)
+    b.box("Board", p, (.06, 2.05, 0), (.06, .62, 1.0), "metro_light", shadow=True)
+    for name, (pz, py, w, h) in (("Body", (0, 2.08, .36, .14)), ("Neck", (-.17, 2.18, .06, .16)),
+                                 ("Head", (-.23, 2.25, .14, .06)), ("FrontLeg", (-.12, 1.94, .04, .16)),
+                                 ("BackLeg", (.13, 1.94, .04, .16)), ("Tail", (.21, 2.08, .04, .12))):
+        b.box(f"Horse{name}", p, (.095, py, pz), (.01, h, w), "wayfind")
+    label(b, "Arrow", p, (.1, 1.86, 0), "↑", .004, rot=(0, 90, 0), ink=(28, 36, 58))
+    for i, (pos, energy) in enumerate((((-34.0, G + 2.7, 13.0), .9), ((-29.6, G + 2.8, 8.0), .7),
+                                       ((-23.5, G + 2.6, 16.6), .55))):
+        b.node(f"YardLight{i}", y, "OmniLight3D", position=vec3(pos), light_color=srgb((255, 214, 160)),
+               light_energy=energy, omni_range=8.5)
+
+
+def waiting_room(b):
+    """The staff office as the dream's waiting room: chairs turned away, cliques with snacks.
+
+    Called from build_school_rooms.office(). Visual only: no collider joins the room's
+    routes or the inspection shots, and nothing here is an actor.
+    """
+    b.pigments.update({k: v for k, v in PIGMENTS.items() if k not in b.pigments})
+    w = "WaitingRoom"
+    b.node(w, ".")
+    for i, (pos, yaw) in enumerate((((.2, 0, -2.0), 180), ((3.55, 0, 1.6), 90), ((-.6, 0, 2.55), 0),
+                                    ((-3.85, 0, 1.25), -90))):
+        swivel_chair(b, w, f"TurnedChair{i}", pos, yaw, i * .23)
+    for c, (centre, people) in enumerate((((1.35, 1.15), 3), ((-3.7, 2.45), 2))):
+        b.node(f"Clique{c}", w, position=vec3((centre[0], 0, centre[1])))
+        q = child_path(w, f"Clique{c}")
+        for k in range(people):
+            angle = math.tau * k / people + .9
+            px, pz = .4 * math.cos(angle), .3 * math.sin(angle)
+            look = {"coat": ("coat_cream", "coat_rust", "coat_navy")[(k + c) % 3], "hair": ("hair", "hair_grey")[k % 2]}
+            figure(b, q, f"Person{k}", (px, 0, pz), math.degrees(math.atan2(-px, -pz)), look, body="nod",
+                   phase=k * .27 + c * .5)
+        b.box("Snacks", q, (0, 1.04, 0), (.15, .2, .09), "vermilion")
+        rng = random.Random(40 + c)
+        for k in range(14):
+            b.box(f"Shell{k}", q, (rng.uniform(-.6, .6), .004, rng.uniform(-.5, .5)), (.02, .004, .012), "paper",
+                  rot=(0, rng.uniform(0, 180), 0))
+    b.node("Number", w, position=vec3((-.4, 1.95, -2.99)))
+    b.box("Card", "WaitingRoom/Number", (0, 0, 0), (.62, .4, .01), "paper")
+    label(b, "Text", "WaitingRoom/Number", (0, .07, .007), "WAITING ROOM", .0012, ink=(36, 38, 44))
+    label(b, "Seat", "WaitingRoom/Number", (0, -.07, .007), "EXAM — —", .0016, ink=(222, 76, 52))
+
+
+def annex():
+    b = FixtureBuild("DreamAnnex", PIGMENTS)
+    unlit(b, "metro_light", (238, 242, 246), .96)
+    unlit(b, "void", (6, 6, 9))
+    unlit(b, "window_warm", PIGMENTS["window_warm"])
+    unlit(b, "led", PIGMENTS["led"])
+    b.mat("booth_glass", transparency=1, cull_mode=2, albedo_color="Color(0.62, 0.78, 0.84, 0.22)")
+    belt = b.bind("dream_escalator", "res://assets/shaders/school/dream_escalator.gdshader", "Shader")
+    b.local_mats["belt_sky"] = (f'[sub_resource type="ShaderMaterial" id="Mat_belt_sky"]\nshader = {belt}\n'
+                                "shader_parameter/width = 1.4\nshader_parameter/speed = -0.5\n")
+    escalator(b)
+    ticket_counter(b)
+    exam_floor(b)
+    stable_yard(b)
+    return b
