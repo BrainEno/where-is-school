@@ -43,7 +43,7 @@ func _start() -> void:
 	director.autostart = false
 	director.autosave_enabled = false
 	var host := world.get_node(^"LocationHost") as LocationHost
-	host.location_entered.connect(_prepare_doors)
+	host.location_entered.connect(_prepare_location)
 	add_child(world)
 	# Do not offer the production session's destructive commands in a tour.
 	var pause := world.get_node(^"PauseMenu") as PauseMenu
@@ -65,7 +65,12 @@ func _start() -> void:
 	director.allow_player_control()
 
 
-func _prepare_doors(location: LocationRoot, _spawn: StringName) -> void:
+func _prepare_location(location: LocationRoot, _spawn: StringName) -> void:
+	# A stroll into the yard must not expose the end card's Start again / Title
+	# commands: the new-game transaction can read the quarantined save directly.
+	for item: Interactable in location.get_interactables():
+		if item is LocationExit and (item as LocationExit).is_milestone_end:
+			item.interaction_enabled = false
 	if location.location_id != &"corridor":
 		return
 	for id: StringName in ROOMS:

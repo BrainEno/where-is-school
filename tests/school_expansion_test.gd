@@ -87,12 +87,14 @@ func _run_tour() -> void:
 			await _check_tour_pause()
 			_check_connected_landings()
 			await _visit_tour()
+			if _check.failures.is_empty():
+				await _check_tour_milestone()
 	_check.expect(not before.is_empty() and before == FileAccess.get_file_as_bytes(SaveFileStore.SAVE_PATH),
 		"The tour changed the pre-existing save bytes.")
 	_save.io = null
 	_save.suspend_writes(false)
 	_save.forget_all()
-	await _finish("dev entrance, physical route into the recess, six open studies, public office/WC, isolated pause and saves.")
+	await _finish("dev entrance, physical route into the recess, six open studies, public office/WC, isolated pause and saves, no story ending.")
 
 
 func _check_tour_pause() -> void:
@@ -109,6 +111,21 @@ func _check_tour_pause() -> void:
 			"Could not resume the tour after pausing.")
 		# Keep cleanup and the other tour assertions useful even if the key did not close it.
 		pause.close()
+
+
+func _check_tour_milestone() -> void:
+	Harness.stage = "tour detour into the real yard"
+	var path := "res://scenes/locations/playground/playground.tscn"
+	if not _check.expect(_host.load_location(path, &"FromCorridor", _player, &"playground"),
+		"Could not load the yard to check the tour's ending block.") or not await _settled(&"playground"):
+		return
+	var yard := _host.get_current()
+	var ending := yard.find_interactable(&"pg_gap_in_fence") as LocationExit
+	var back := yard.find_interactable(&"pg_to_corridor") as LocationExit
+	_check.expect(ending != null and ending.is_milestone_end and not ending.can_interact(),
+		"The tour exposes the end card's Start again command.")
+	_check.expect(back != null and back.can_interact() and back.is_open(),
+		"Blocking the milestone also blocked the normal way back.")
 
 
 func _tap_action(action: StringName) -> void:
