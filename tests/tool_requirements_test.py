@@ -22,8 +22,11 @@ from godot_sidecars import tracked_files
 PIN = re.compile(r"([A-Za-z_0-9.-]+)(?:\[[A-Za-z_0-9,.-]+\])?==([A-Za-z_0-9.+-]+)")
 IMPORT_DISTRIBUTIONS = {"PIL": "Pillow", "fontTools": "fonttools", "yaml": "PyYAML"}
 # Blender supplies these two APIs in its embedded interpreter, not in the tools
-# venv. Only the explicitly Blender-invoked source driver may use them.
-BLENDER_DRIVERS = {"art/character_models/teacher_b/make_blender_source.py"}
+# venv. Only the source drivers invoked explicitly through Blender may use them.
+BLENDER_DRIVERS = {
+    "art/character_models/classmates/make_blender_source.py",
+    "art/character_models/teacher_b/make_blender_source.py",
+}
 BLENDER_MODULES = {"bpy", "mathutils"}
 
 

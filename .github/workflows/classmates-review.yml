@@ -20,23 +20,13 @@ permissions:
 
 jobs:
   review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-godot
-      - name: Audit exact-head skinned GLBs and foot placement
-        shell: bash
-        env:
-          OPENBLAS_NUM_THREADS: '1'
-        run: |
-          set -euo pipefail
-          python3 -m venv "$RUNNER_TEMP/classmate-audit"
-          "$RUNNER_TEMP/classmate-audit/bin/pip" -q install numpy==2.2.6
-          "$RUNNER_TEMP/classmate-audit/bin/python" tests/classmates_assets_test.py
-          python3 tools/model_library.py --check
       - name: Cold import and native gesture checks
         shell: bash
         run: |
@@ -64,8 +54,9 @@ jobs:
             echo "::notice title=Classmate GLB UID::${asset} $(grep '^uid=' "$asset" || true)"
           done
           source tools/ci_run_check.sh
-          run_check classmates_scripts 90 godot --headless --path . --check-only --script res://tests/classmates_review_test.gd
-          run_check classmates_native 100 godot --headless --path . --script res://tests/classmates_review_test.gd || status=1
+          if run_check capture_script 90 godot --headless --path . --check-only --script res://tests/classmates_review_test.gd; then
+            run_check classmates_native 100 godot --headless --path . --script res://tests/classmates_review_test.gd || status=1
+          fi
           run_check_summary
       - name: Capture the painterly look, Q comparison and gestures
         shell: bash
@@ -83,6 +74,17 @@ jobs:
             status=1
           fi
           run_check_summary
+      - name: Audit exact-head skinned GLBs and foot placement
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/classmate-audit"
+          timeout 90 "$RUNNER_TEMP/classmate-audit/bin/pip" install --only-binary=:all: numpy==2.2.6
+          "$RUNNER_TEMP/classmate-audit/bin/python" tests/classmates_assets_test.py
+          python3 tools/model_library.py --check
       - name: Retain rendered review and diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -91,5 +93,6 @@ jobs:
           path: |
             builds/classmates-review/godot/*.png
             ci-logs/classmates_*.log
+            ci-logs/capture_script.log
           if-no-files-found: error
           retention-days: 30
