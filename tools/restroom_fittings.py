@@ -143,7 +143,7 @@ shader = {shader}
             scale = rng.uniform(.70, 1.24)
             floats.extend((scale,0,0,x, 0,scale,0,y, 0,0,scale,z))
         mm = b.mesh("MultiMesh", transform_format=1, instance_count=count,
-                    mesh=f'SubResource("{mesh}")', custom_aabb='AABB(-1, -.82, -1, 2, 1.64, 2)',
+                    mesh=f'SubResource("{mesh}")', custom_aabb='AABB(-1, -0.82, -1, 2, 1.64, 2)',
                     buffer='PackedFloat32Array('+', '.join(f'{a:.4f}' for a in floats)+')')
         b.node(f"Cloud{i}", "FlyClouds", "MultiMeshInstance3D", position=vec3(centre),
                multimesh=f'SubResource("{mm}")', material_override=b.surface("flies"), cast_shadow=0)

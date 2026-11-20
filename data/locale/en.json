@@ -69,7 +69,7 @@
     "prompt.yard_door": "Go out into the yard",
     "prompt.corridor_speaker": "Listen to the speaker",
     "prompt.corridor_trolley": "Look at the cleaning trolley",
-    "prompt.corridor_wait": "Stop at the railing",
+    "prompt.corridor_wait": "Pause at the window",
     "prompt.corridor_directory_tab": "Use the directory tab",
     "objective.schoolyard": "The yard is through the door at the end of the walkway.",
     "prompt.yard_to_corridor": "Go back in through the fire door",

@@ -185,7 +185,7 @@ All of these must stay inside the existing scene-transition transaction and keep
 | Area | Narrative function | Exploration purpose | Status |
 |---|---|---|---|
 | classroom | Waking; the ordinary day that is not | Desk, board, door | 已实现 |
-| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the rail | 已实现 |
+| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the window | 已实现 |
 | street | Outside, but the school is still the biggest thing | Notice pole, bins, camera, puddle | 已实现 |
 | residential | Somebody's home life, overheard | The animal, the stains, washing, the chair | 已实现 (animal's role: 尚待作者决定) |
 | alley | Pressure; the way narrows | The skip and its chair, notices, the service door | 已实现 |

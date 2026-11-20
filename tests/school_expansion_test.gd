@@ -96,10 +96,17 @@ func _check_connected_landings() -> void:
 		var stance := hall.get_spawn(key)
 		if not _check.expect(stance != null, "Missing landing %s." % key):
 			continue
-		var goal := NavigationServer3D.map_get_closest_point(map, stance.global_position)
+		var projected := nav.project_point(stance.global_position)
+		if not _check.expect(projected["ok"], "Could not project %s onto the hall: %s" % [key, projected["reason"]]):
+			continue
+		var goal: Vector3 = projected["point"]
 		var path := NavigationServer3D.map_get_path(map, start, goal, true)
-		_check.expect(goal.distance_to(stance.global_position) < .31 and path.size() >= 2
-			and path[-1].distance_to(goal) < .25, "%s is not connected to the 02 hall." % key)
+		# The baked polygon is on a voxel plane above the physics floor. Keep
+		# the landing close in XZ and reject a projection onto another storey.
+		var voxel_lift := 2.0 * NavigationServer3D.map_get_cell_height(map) + .01
+		_check.expect(float(projected["offset"]) < .31 and absf(goal.y - stance.global_position.y) <= voxel_lift
+			and path.size() >= 2 and path[-1].distance_to(goal) < .25,
+			"%s is not connected to the 02 hall (projected to %s from %s)." % [key, goal, stance.global_position])
 
 
 func _visit_all() -> void:

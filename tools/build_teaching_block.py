@@ -852,7 +852,6 @@ def teaching_block():
     glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END, (yard_gap,))
     wing_end(b, WASH_02, TURN_Z)
     wing_end(b, WASH_03, UPPER_TURN)
-    annex_portals(b)
     for side, x in zip(("West", "East"), MAIN_X):
         rail(b, l, "GateStepSide"+side, x, -0.36, 7.25, 0.19, 0.6)
     glass_run(b, u, "EastGlazing", True, -9.75, RISE, -40.5, -6.5, (west_gap,))
@@ -921,6 +920,8 @@ def teaching_block():
         b.mat(name, albedo_color=srgb(tuple(round(c*255) for c in colour)),
               albedo_texture=ruled, texture_filter=3, uv1_scale=vec3((1, repeat, 1)))
     rear_stair_and_ground_wing(b)
+    # PackedScene must see GroundFloor before the two portals that it owns.
+    annex_portals(b)
     return b
 
 

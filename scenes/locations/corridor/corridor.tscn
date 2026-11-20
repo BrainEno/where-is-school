@@ -327,12 +327,12 @@ conversation_route = &"corridor_trolley"
 radius = 1.1
 support_paths = PackedStringArray("../../CorridorTrolley")
 
-[node name="RailingWait" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(1.75, 0.9, -1.2)
+[node name="WindowWait" parent="Interactables" instance=ExtResource("11_interactable")]
+position = Vector3(1.72, 1.11, -2.81)
 interact_id = &"corridor_wait"
-outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5/Rail")
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5/WindowSill")
 support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
-prompt_text = "Stop at the railing"
+prompt_text = "Pause at the window"
 prompt_key = "prompt.corridor_wait"
 conversation_route = &"corridor_wait"
 radius = 1.2
