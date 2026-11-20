@@ -48,12 +48,12 @@
     "prompt": "读器材交还牌",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "箭头沿街指向小区楼梯那头。上面有一长横，两道短竖都挂在横线右边。",
-    "repeat_text": "箭头朝小区楼梯，两道短竖都在右边。",
+    "text": "箭头沿街指向居民楼楼梯那头。上面有一长横，两道短竖都挂在横线右边。",
+    "repeat_text": "箭头朝居民楼楼梯，两道短竖都在右边。",
     "record": {
       "entry_id": "saw_street_return_plate",
       "source": "observed",
-      "text": "街边的交还牌指向小区楼梯，标记的两道短竖都在右边。"
+      "text": "街边的交还牌指向居民楼楼梯，标记的两道短竖都在右边。"
     }
   },
   "street_receipt_slot": {

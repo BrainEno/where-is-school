@@ -24,7 +24,7 @@
     "record": {
       "entry_id": "saw_alley_bins",
       "source": "observed",
-      "text": "小区后面的垃圾斗里有一把损坏的学校椅子，椅背上缠了一大圈胶带。"
+      "text": "居民楼后面的垃圾斗里有一把损坏的学校椅子，椅背上缠了一大圈胶带。"
     }
   },
   "alley_door": {
@@ -45,12 +45,12 @@
     "prompt": "读栅门旁的路牌",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "栅门那边亮着，箭头却指回院子。一长横下面挂着两道短竖，都在左边。",
-    "repeat_text": "箭头指回院子，两道短竖都在左边。",
+    "text": "栅门那边亮着，箭头却指回居民院。一长横下面挂着两道短竖，都在左边。",
+    "repeat_text": "箭头指回居民院，两道短竖都在左边。",
     "record": {
       "entry_id": "saw_alley_return_plate",
       "source": "observed",
-      "text": "后巷的交还牌指回院子，标记的两道短竖都在左边。"
+      "text": "后巷的交还牌指回居民院，标记的两道短竖都在左边。"
     }
   },
   "alley_trolley_guide": {

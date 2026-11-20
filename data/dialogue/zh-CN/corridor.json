@@ -98,7 +98,7 @@
         {
           "id": "cw_2",
           "speaker": "protagonist",
-          "text": "院里有条白线被窗框挡住了。侧一点身，它又露出来。",
+          "text": "球场上有条白线被窗框挡住了。侧一点身，它又露出来。",
           "source": "observed",
           "next": "cw_3"
         },
@@ -124,7 +124,7 @@
               "entry_id": "corridor_waited",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "课间在窗边站了一会儿，看院里地上的线。"
+              "text": "课间在窗边站了一会儿，看球场上的线。"
             }
           ]
         }
