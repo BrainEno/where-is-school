@@ -41,29 +41,6 @@ const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
 @export var bell_audio_path: NodePath = ^"../BellAudio"
 @export var wake_audio_path: NodePath = ^"../WakeAudio"
 
-const WAKE_FADE_SECONDS := 3.0
-const WAKE_SETTLE_SECONDS := 2.0
-const EXPECTATION_LEAD_IN := 0.8
-const EXPECTATION_DISCLAIMER_SECONDS := 2.8
-const BELL_LEAD_IN := 6.0
-## How much of the bell the player hears alone before Q says anything about it.
-##
-## `assets/audio/bell_second.wav` is 7.4 s: the four-note phrase, then the corridor's quieter
-## answer. Speaking at 1.0 s cut the phrase in half and made the bell read as an alert sound;
-## this lands on the second phrase, which is when someone in the room would talk over it.
-## `tests/bell_sound_test.py` pins the buffer length this assumes.
-const BELL_SPEAK_AFTER_SECONDS := 4.6
-const BAG_REMINDER_SECONDS := 40.0
-## Hard fallback so a player who never opens the bag still reaches the lesson.
-const BAG_WAIT_LIMIT := 95.0
-
-## The card that reports an unreadable save. It is the only surface this build has for
-## a message that is not dialogue, and it goes away by itself.
-const SAVE_NOTICE_SECONDS := 9.0
-const SAVE_ERROR_TITLE_KEY := "save.error.title"
-const SAVE_ERROR_ADVICE_KEY := "save.error.advice"
-const SAVE_ERROR_QUARANTINE_KEY := "save.error.quarantined"
-
 var _player: PlayerController = null
 var _interaction: InteractionController = null
 var _ui: GameUI = null
@@ -89,21 +66,19 @@ var _n_presence: NPresence = null
 var _q_presence: QPresence = null
 ## Camera focus on important interactions (see `CameraShot`).
 var _focus: CameraFocusDirector = null
-## The save file (autoload `Save`), when the host has one.
-var _save: Node = null
+## What using an interactable does: an exit, a staged moment, a conversation, a text.
+var _interactions: OpeningInteractions = null
+## The authored beats themselves (`PrologueBeats`); the `_beat_*` methods call into it.
+var _beats: PrologueBeats = null
+## Checkpoints, the boot-time restore and the unreadable-save notice (`OpeningSave`).
+var _saves := OpeningSave.new()
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
 ## ask for is the only thing standing between them and losing the session (ADR 0005).
 var autosave_enabled: bool = true
-## True when this session came out of a save file rather than a new game.
-var _restored_from_save := false
-## What the save reader said when it refused the file, kept for the on-screen report.
-var _save_problem: Dictionary = {}
 
 ## The prologue, in order. Each step is identified by the flag that proves it is
-## done; see `next_step()`.
-const STEPS: Array[StringName] = [
-	&"wake", &"q_wake", &"bag", &"expectation", &"bell", &"substitute",
-]
+## done; see `next_step()` and `PrologueSteps`.
+const STEPS: Array[StringName] = PrologueSteps.STEPS
 
 
 func _ready() -> void:
@@ -133,15 +108,21 @@ func _ready() -> void:
 	_b_presence = BPresence.new(_game_state(), _locations, _dialogue)
 	_n_presence = NPresence.new(_game_state(), _locations)
 	_q_presence = QPresence.new(_game_state(), _locations)
+	_interactions = OpeningInteractions.new(
+		self, _dialogue, _flow, _focus, _companion, _game_state()
+	)
+	_beats = PrologueBeats.new(
+		self, _ui, _player, _locations, _bell_audio, _wake_audio, _flow, _game_state()
+	)
 
-	_bind_save()
+	_saves.bind(self, get_parent())
 
 	# A save, if the host has one, is applied *before* anything is asked about the
 	# story: `next_step()` reads flags, so restoring after it would resume from the
 	# wrong step. A file that cannot be trusted is refused loudly and the run starts
 	# from the beginning - the file itself is kept (ADR 0005 §6).
-	var restored := _restore_save()
-	if _restored_from_save:
+	var restored := _saves.restore()
+	if _saves.restored:
 		# A save with no `world` block still restored the flags; `_start_from_save` puts
 		# the player at the start marker because there is no place to put them back in.
 		_start_from_save(restored)
@@ -160,8 +141,8 @@ func _ready() -> void:
 
 	if not _load_start_location():
 		return
-	if not _save_problem.is_empty():
-		_announce_save_problem()
+	if not _saves.problem.is_empty():
+		_saves.announce_problem(_ui, self)
 	if autostart:
 		start()
 
@@ -222,61 +203,19 @@ func _restore_resume_look() -> void:
 
 # --- Saving and restoring ---------------------------------------------------
 #
-# What a save contains and why is ADR 0005; what lives here is the half only the
-# director can do - deciding that the world is at a checkpoint, and putting a restored
-# room back on screen. The bytes are `SaveManager`'s business.
-
-
-## Connects to the save autoload, if this host has one. A test that never creates it
-## gets a director that simply does not save.
-func _bind_save() -> void:
-	var save := get_node_or_null(^"/root/Save")
-	if save == null:
-		return
-	_save = save
-	if _save.has_method("bind_world"):
-		# The room, the player and the dialogue controller are children of the same
-		# node the director is on; that node is what a save describes.
-		_save.bind_world(get_parent())
+# What a save contains and why is ADR 0005; the director decides *when* the world is at a
+# checkpoint, and `OpeningSave` does the rest. The bytes are `SaveManager`'s business.
 
 
 func can_save() -> bool:
-	return _save != null
+	return _saves.can_save()
 
 
 ## Writes a checkpoint. Only called at beat boundaries - after a step finished, after a
 ## location was entered, when the prologue handed over - so nothing mid-flight ever
 ## has to be serialisable.
 func autosave(why: String = "") -> Dictionary:
-	if not autosave_enabled or _save == null or not _save.has_method("save_game"):
-		return {}
-	var result: Dictionary = _save.save_game()
-	if result.get("ok", false) != true:
-		push_error(
-			"OpeningSequence: the checkpoint after '%s' was not written: %s"
-			% [why, String(result.get("detail", ""))]
-		)
-	return result
-
-
-## Reads the save and applies it, if there is one. Returns the `world` block (which may
-## be empty) and sets `_restored_from_save`. A file that cannot be trusted is refused
-## with the reason kept for `_announce_save_problem()`; the session is untouched.
-func _restore_save() -> Dictionary:
-	_restored_from_save = false
-	if _save == null or not _save.has_method("load_game") or not _save.has_save():
-		return {}
-	var result: Dictionary = _save.load_game()
-	if result.get("ok", false) != true:
-		_save_problem = result
-		push_error(
-			"OpeningSequence: the save was refused (%s): %s"
-			% [String(result.get("reason", "")), String(result.get("detail", ""))]
-		)
-		return {}
-	_restored_from_save = true
-	var world: Variant = result.get("world", {})
-	return world if world is Dictionary else {}
+	return _saves.autosave(why, autosave_enabled)
 
 
 ## Puts a restored session on screen: the room the save names, the player where they
@@ -284,74 +223,16 @@ func _restore_save() -> Dictionary:
 func _start_from_save(world: Dictionary) -> void:
 	_ui.fade.set_opaque()
 	_restore_resume_look()
-	if not _load_saved_world(world):
+	if not _saves.load_world(world, _catalog, _locations, _player, _game_state()):
 		_load_start_location()
 	sync_player_locks()
 	if autostart:
 		_fade_in_and_start()
 
 
-func _load_saved_world(world: Dictionary) -> bool:
-	if world.is_empty():
-		return false
-	var location_id := StringName(String(world.get("location_id", "")))
-	var entry := _catalog.get_entry(location_id) if _catalog != null else null
-	if entry == null:
-		push_error(
-			"OpeningSequence: the save names location '%s', which the catalog does not describe."
-			% location_id
-		)
-		return false
-	var spawn := StringName(String(world.get("spawn", "")))
-	if not _locations.load_location(entry.scene, spawn, _player, location_id):
-		push_error(
-			"OpeningSequence: the save's location '%s' (spawn '%s') could not be entered."
-			% [location_id, spawn]
-		)
-		return false
-	_game_state().set_flag(StoryFlags.CURRENT_LOCATION, location_id)
-	if world.has("position"):
-		_player.teleport(_saved_transform(world))
-	return true
-
-
-## Position and facing as a transform. `teleport()` reads the facing off the basis, so
-## the player comes back looking where they were looking.
-func _saved_transform(world: Dictionary) -> Transform3D:
-	var position := _vec3(world.get("position", null))
-	var basis := Basis.IDENTITY
-	var facing := _vec3(world.get("facing", null))
-	if facing.length_squared() > 0.0001:
-		basis = Basis.looking_at(facing, Vector3.UP)
-	return Transform3D(basis, position)
-
-
-func _vec3(value: Variant) -> Vector3:
-	if not (value is Array) or (value as Array).size() != 3:
-		return Vector3.ZERO
-	var items: Array = value
-	return Vector3(float(items[0]), float(items[1]), float(items[2]))
-
-
 func _fade_in_and_start() -> void:
 	await _ui.fade.fade_from_black(0.6)
 	start()
-
-
-## Tells the player, on screen, that their save could not be read and what happened to
-## it. A silent reset is the failure mode ADR 0005 exists to prevent.
-func _announce_save_problem() -> void:
-	if _ui == null or _ui.end_card == null:
-		return
-	var detail := String(_save_problem.get("detail", ""))
-	var body := "%s\n%s" % [detail, L10n.t(SAVE_ERROR_ADVICE_KEY)]
-	var hint := ""
-	var quarantined_to := String(_save_problem.get("quarantined_to", ""))
-	if not quarantined_to.is_empty():
-		hint = L10n.t(SAVE_ERROR_QUARANTINE_KEY, {"path": quarantined_to})
-	_ui.end_card.present(L10n.t(SAVE_ERROR_TITLE_KEY), body, hint)
-	await wait_seconds(SAVE_NOTICE_SECONDS)
-	_ui.end_card.dismiss()
 
 
 ## Hands control to the player without running the authored beats.
@@ -427,55 +308,13 @@ func _run_opening() -> void:
 ## Index into `STEPS` of the first step the flags say is not done; `STEPS.size()`
 ## when the prologue is over.
 func _first_pending_step() -> int:
-	for index in STEPS.size():
-		if not is_step_done(STEPS[index]):
-			return index
-	return STEPS.size()
+	return PrologueSteps.first_pending(_has_flag)
 
 
-## True when `step` is behind the player: its own proof is set, or the proof of any
-## step after it is.
-##
-## Progress only moves forward. The steps run in order, so a later step's flag is proof
-## that every step before it closed, whichever way it closed - and a reload can never
-## put a finished step back in front of the player. That is also what keeps saves
-## written before `bag_wait_expired` / `expectation_skipped` existed working: a player
-## who let the bag step run out has `bell_rung` and `class_dismissed`, and those are
-## enough.
+## True when `step` is behind the player: its own proof is set, or the proof of any step
+## after it is. Progress only moves forward; the table is `PrologueSteps`.
 func is_step_done(step: StringName) -> bool:
-	var index := STEPS.find(step)
-	if index < 0:
-		return true
-	for later in range(index, STEPS.size()):
-		if _is_step_proved(STEPS[later]):
-			return true
-	return false
-
-
-## True when the flag that proves `step` itself happened is set.
-##
-## This table is the prologue's only memory. Two steps share `met_q` because the
-## wake has no flag of its own and cannot outlive Q's first line. The bag step closes
-## either way the player can close it - the bag searched, or the fallback run out - and
-## the expectation beat is either played or skipped because the bag was not searched;
-## each of those has its own flag, so nothing the player did not do is ever claimed.
-## `substitute` ends at `class_dismissed` rather than at `n_arrived`, because N arriving
-## without the conversation that dismisses the class would leave the door locked forever.
-func _is_step_proved(step: StringName) -> bool:
-	match step:
-		&"wake", &"q_wake":
-			return _has_flag(StoryFlags.MET_Q)
-		&"bag":
-			return _has_flag(StoryFlags.TEXTBOOK_MISSING) \
-				or _has_flag(StoryFlags.BAG_WAIT_EXPIRED)
-		&"expectation":
-			return _has_flag(StoryFlags.EXPECTATION_PLAYED) \
-				or _has_flag(StoryFlags.EXPECTATION_SKIPPED)
-		&"bell":
-			return _has_flag(StoryFlags.BELL_RUNG)
-		&"substitute":
-			return _has_flag(StoryFlags.CLASS_DISMISSED)
-	return true
+	return PrologueSteps.is_done(step, _has_flag)
 
 
 ## Re-applies the one exit prompt the story rewrites. The work lives in
@@ -489,10 +328,7 @@ func update_exit_prompt() -> void:
 ## The step that comes next, or `&""` when the prologue is over. Public because it
 ## is the question a save system, a debug overlay, and a test all want to ask.
 func next_step() -> StringName:
-	var index := _first_pending_step()
-	if index >= STEPS.size():
-		return &""
-	return STEPS[index]
+	return PrologueSteps.next(_has_flag)
 
 
 func _run_step(step: StringName) -> void:
@@ -521,203 +357,37 @@ func _after_opening() -> void:
 	autosave(&"opening_done")
 
 
-## Beat A: wake up. Fade in and settle into an upright seated pose; the first deliberate
-## movement is what starts the existing get-up transition.
+# The beats are `PrologueBeats`; these are the entry points `_run_step()` and the
+# headless tests call.
+
+
+## Beat A: wake up, then hand over control.
 func _beat_wake() -> void:
-	_wake_audio.play()
-	await _ui.fade.fade_from_black(WAKE_FADE_SECONDS)
-	var pose_tween := _player.settle_wake_seated_pose(WAKE_SETTLE_SECONDS)
-	_player.settle_camera_roll(WAKE_SETTLE_SECONDS)
-	if pose_tween != null:
-		await pose_tween.finished
-	await wait_seconds(0.4)
-	_control_allowed = true
-	sync_player_locks()
-	if _hud != null:
-		_hud.set_objective("objective.get_bearings")
+	await _beats.wake()
 
 
-## Beat B: Q comes over before speaking. The room owns Q's initial placement and
-## may provide a QOpeningTalk marker for the final composition (#159). This beat
-## never changes the protagonist's wake/seat pose, camera or location (#121).
+## Beat B: Q walks over (`QIntroApproach`) and starts talking.
 func _beat_q_wake() -> void:
-	if _has_flag(StoryFlags.MET_Q):
-		return
-	# Hold the existing beat lock during the approach as well as during dialogue:
-	# an early E/click must not start a second q_wake while Q is coming over.
-	await begin_beat()
-	if _has_flag(StoryFlags.MET_Q):
-		end_beat()
-		return
-	await wait_seconds(0.9)
-	if await _approach_q_for_intro():
-		await play_conversation(&"q_wake")
-	end_beat()
+	await _beats.q_wake()
 
 
-## A native map route fed to the actor's existing staging/animation API, just as N's
-## entry uses walk_along(). No new locomotion system or classroom coordinates.
-func _approach_q_for_intro() -> bool:
-	var location := _locations.get_current()
-	var actor: NpcActor = location.find_actor(&"q") if location != null else null
-	var talk: Interactable = location.find_interactable(&"q_talk") if location != null else null
-	if actor == null or talk == null:
-		push_error("OpeningSequence: Q's introduction needs the room's Q actor and q_talk anchor.")
-		return false
-	var navigation: LocationNavigation = null
-	for child in location.get_children():
-		if child is LocationNavigation:
-			navigation = child as LocationNavigation
-			break
-	# A room's bake and server map synchronize after it enters the tree. Wait in
-	# story time (including pauses), with a bound, before issuing any path query.
-	var waited := 0.0
-	while navigation != null and not navigation.is_synchronized() and waited < 3.0:
-		await wait_seconds(0.05)
-		waited += 0.05
-	if navigation == null or not navigation.is_synchronized():
-		push_error("OpeningSequence: Q cannot approach before the classroom navigation is synchronized.")
-		return false
-
-	var initial := actor.global_position
-	var landing := location.find_child("QOpeningTalk", true, false) as Marker3D
-	var target := _player.global_position + _player.get_facing_direction() * 1.25
-	if landing != null:
-		target = landing.global_position
-	else:
-		# Respect an already-authored close/front position instead of moving Q to
-		# an old world coordinate when #159 changes the desk composition.
-		var offset := initial - _player.global_position
-		offset.y = 0.0
-		if offset.length() >= 0.9 and offset.length() <= 1.65 \
-				and offset.normalized().dot(_player.get_facing_direction()) > 0.25:
-			target = initial
-	var map := navigation.get_navigation_map()
-	var snapped := NavigationServer3D.map_get_closest_point(map, target)
-	var gap := Vector2(snapped.x - target.x, snapped.z - target.z).length()
-	var reach := Vector2(snapped.x - _player.global_position.x, snapped.z - _player.global_position.z).length()
-	if gap > 0.3 or reach < 0.85 or reach > 1.65:
-		push_error("OpeningSequence: QOpeningTalk must be reachable ground close to the protagonist.")
-		return false
-	var route := NavigationServer3D.map_get_path(map, initial, snapped, true)
-	if route.size() < 2 or route[-1].distance_to(snapped) > 0.15:
-		push_error("OpeningSequence: no complete navigation route for Q's introduction.")
-		return false
-	var points: Array[Vector3] = []
-	for point in route:
-		# Recast's floor is voxel-offset. The actor has no gravity of its own, so
-		# place its feet on the actual floor rather than tweening above that floor.
-		var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point + Vector3.DOWN * 2.0, 1)
-		var hit := actor.get_world_3d().direct_space_state.intersect_ray(ray)
-		if hit.is_empty():
-			push_error("OpeningSequence: Q's introduction route has no supporting floor.")
-			return false
-		points.append(hit["position"])
-	await actor.walk_along(points)
-	actor.face_towards(_player.global_position)
-	# QTalk is a sibling in the current scene and moves by the same amount as Q (a
-	# future scene may parent it to Q, in which case it followed naturally). The same
-	# helper puts it back in a room built later, so the two cannot disagree (#160).
-	# Its pick boxes are rebuilt once, while interaction is still locked.
-	QPresence.carry_talk(location, actor, initial)
-	return true
-
-
-## Beats C/D: the bag reminder runs in the background while the player looks around.
-## If they check the bag, Q is just beside the desk. Let him ask before the imagined
-## lesson starts, rather than making the player catch him in its short lead-in.
-## If they never check, the fallback claims neither a search nor a conversation.
+## Beats C/D: the bag, its reminder, and the fallback for a bag never searched.
 func _beat_bag() -> void:
-	_start_bag_reminder()
-	await _wait_for_flag(StoryFlags.TEXTBOOK_MISSING, BAG_WAIT_LIMIT)
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING):
-		_game_state().set_flag(StoryFlags.BAG_WAIT_EXPIRED, true)
-		return
-	if not is_b_introduced() or _has_flag(StoryFlags.Q_BOOK_TALK_DONE):
-		return
-	# Wait for the bag text to close. If the player managed to ask Q in the
-	# meantime, the shared reply has already played and should not start again.
-	await begin_beat()
-	if not _has_flag(StoryFlags.Q_BOOK_TALK_DONE):
-		await play_conversation(&"q_after_bag")
-	end_beat()
+	await _beats.bag()
 
 
-## Beat E: expectation, clearly framed as imagination. Skipped when the bag was
-## never searched, which is what the fallback above produces; the skip is recorded
-## (`expectation_skipped`) so the step stays closed if the bag is searched later.
+## Beat E: the imagined lesson, or its recorded skip.
 func _beat_expectation() -> void:
-	if _has_flag(StoryFlags.EXPECTATION_PLAYED):
-		return
-	# B speaks in this scene, so it also waits for Q to have told the player about the
-	# lesson first (#171). A Q talk that never finished (its approach could not run; a
-	# searched bag routes Q to `q_after_bag` from then on) passes the scene over exactly
-	# like an unsearched bag - it is never played ahead of Q.
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) or not is_b_introduced():
-		_game_state().set_flag(StoryFlags.EXPECTATION_SKIPPED, true)
-		return
-	await wait_seconds(EXPECTATION_LEAD_IN)
-	await begin_beat()
-	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
-	await wait_seconds(0.7)
-	await play_conversation(&"expected_b")
-	_ui.overlay.show_localized_overlay("overlay.deny_title", "overlay.deny_body")
-	await wait_seconds(EXPECTATION_DISCLAIMER_SECONDS)
-	await _ui.overlay.hide_overlay()
-	_game_state().set_flag(StoryFlags.EXPECTATION_PLAYED, true)
-	end_beat()
+	await _beats.expectation()
 
 
 func _beat_bell() -> void:
-	if _has_flag(StoryFlags.BELL_RUNG):
-		return
-	await begin_beat()
-	_game_state().set_flag(StoryFlags.BELL_RUNG, true)
-	_bell_audio.play()
-	_hud.set_objective("objective.bell")
-	# Q speaks into the bell's tail rather than over its head. The phrase is 7.4 s long -
-	# four struck bars, then the corridor answering - so the wait is most of it: long enough
-	# that the player hears a bell and not an alarm, short enough that nobody is left standing
-	# in a silent room wondering whether the beat stalled.
-	await wait_seconds(BELL_SPEAK_AFTER_SECONDS)
-	await play_conversation(&"bell_moment")
-	end_beat()
+	await _beats.bell()
 
 
+## N walks in and dismisses the class.
 func _beat_substitute() -> void:
-	# The class is already dismissed: N's lesson is over, and the player may not even be
-	# in the room N is in any more. Nothing to look for.
-	if _has_flag(StoryFlags.CLASS_DISMISSED):
-		return
-	var location := _locations.get_current()
-	if location == null:
-		push_error("OpeningSequence: no location loaded for the substitute beat.")
-		return
-	var actor := location.find_actor(&"n")
-	if actor == null:
-		push_error("OpeningSequence: the classroom has no actor with npc_id 'n'.")
-		return
-	var points := location.get_waypoint_path(&"NEntryPath")
-	if points.size() < 2:
-		push_error("OpeningSequence: 'NEntryPath' needs at least two markers.")
-		return
-
-	# A resumed game may already have walked N in; the flag says so, and walking the
-	# same path again would put a second N at the front of the room. `NPresence` has
-	# already put that N at the lectern, when the room was entered.
-	if not _has_flag(StoryFlags.N_ARRIVED):
-		await begin_beat()
-		actor.place_at(points[0], points[1])
-		end_beat()
-
-		await actor.walk_along(points.slice(1))
-
-	await begin_beat()
-	_game_state().set_flag(StoryFlags.N_ARRIVED, true)
-	await wait_seconds(0.4)
-	await play_conversation(&"n_class")
-	end_beat()
-	_flow.update_exit_prompt()
+	await _beats.substitute()
 
 
 ## True once Q's first conversation has run to its end: the gate for presenting B.
@@ -736,101 +406,13 @@ func present_b(position_point: Vector3, facing_point: Vector3 = Vector3.ZERO) ->
 	return _b_presence != null and _b_presence.present(position_point, facing_point)
 
 
-func _start_bag_reminder() -> void:
-	if _has_flag(StoryFlags.TEXTBOOK_MISSING):
-		return
-	await wait_seconds(BAG_REMINDER_SECONDS)
-	if _has_flag(StoryFlags.TEXTBOOK_MISSING) or _has_flag(StoryFlags.BELL_RUNG) or is_slice_finished():
-		return
-	await begin_beat()
-	# An inspection can finish while the reminder is waiting for the dialogue lock.
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) and not _has_flag(StoryFlags.BELL_RUNG):
-		await play_conversation(&"q_bag_reminder")
-	end_beat()
-
-
 # --- Interaction routing ----------------------------------------------------
 
 
+## Routed by `OpeningInteractions`: exits, staged moments, conversations and texts.
 func _on_activation_requested(interactable: Interactable) -> void:
-	if _dialogue.is_busy() or is_slice_finished():
-		return
-
-	var exit := interactable as LocationExit
-	if exit != null:
-		_handle_exit(exit)
-		return
-
-	# An important moment pulls the camera in for as long as it holds the player.
-	if _focus != null and not (_beat_active and interactable is StagedInteractable):
-		_focus.engage(interactable)
-
-	# A room that stages its own moment (see StagedInteractable) is asked before the
-	# object's declared route or text, which are then the room's to use.
-	var staged := interactable as StagedInteractable
-	if staged != null and staged.is_staged():
-		# A staged moment owns the room while it runs (a door is still swinging, a
-		# curtain still moving), even between its lines, when no dialogue is busy.
-		if _beat_active:
-			return
-		_run_staged(staged)
-		return
-
-	if not String(interactable.conversation_route).is_empty():
-		var conversation := ConversationRouter.select(
-			interactable.conversation_route, _game_state().get_snapshot()
-		)
-		if String(conversation).is_empty():
-			push_error(
-				"OpeningSequence: no conversation rule matched route '%s'."
-				% interactable.conversation_route
-			)
-			return
-		await begin_beat()
-		await play_conversation(conversation)
-		end_beat()
-		if interactable.interact_id == &"q_ask_along" and _companion != null:
-			_companion.resume_following()
-		return
-
-	if not String(interactable.inspection_id).is_empty():
-		_dialogue.present_inspection(interactable.inspection_id)
-		return
-
-	push_error(
-		"OpeningSequence: interactable '%s' declares no inspection, conversation, or exit."
-		% interactable.interact_id
-	)
-
-
-## One staged moment: the room's handler runs inside a beat, then whatever it asked for
-## afterwards (see `StagedInteractable`) - a text once the beat is over, or a transition
-## that keeps the same beat, so the player never gets a frame of control in between.
-func _run_staged(staged: StagedInteractable) -> void:
-	await begin_beat()
-	var request: Dictionary = await staged.perform(self)
-	var transition: Dictionary = request.get("transition", {})
-	if not transition.is_empty() and _flow != null:
-		var options := transition.duplicate()
-		options["beat_held"] = true
-		if not options.has("label"):
-			options["label"] = "staged '%s'" % staged.interact_id
-		# A refused transition runs the request's `on_failure` inside `transition_to()`,
-		# before the fade back and while this beat is still held; it is not called again.
-		await _flow.transition_to(
-			String(transition.get("scene", "")),
-			StringName(String(transition.get("spawn", ""))),
-			StringName(String(transition.get("id", ""))),
-			options
-		)
-		return
-	end_beat()
-	var checkpoint := String(request.get("checkpoint", ""))
-	if not checkpoint.is_empty():
-		autosave(checkpoint)
-	var inspection := StringName(String(request.get("inspection", "")))
-	if not String(inspection).is_empty():
-		_dialogue.present_inspection(inspection)
+	if _interactions != null:
+		_interactions.activate(interactable)
 
 
 ## The body a staged moment may pose (StagedInteractable handlers run in the room and
@@ -878,7 +460,7 @@ func play_conversation(conversation_id: StringName) -> void:
 ## `SceneTree.create_timer()` keeps counting through a pause unless it is told not to,
 ## and every wait in the prologue used that default. The pause menu pauses the tree, so
 ## the beats went on timing themselves behind it: a player who spent the bag step in
-## the menu or the settings for `BAG_WAIT_LIMIT` seconds came back to a bag step that
+## the menu or the settings for `PrologueBeats.BAG_WAIT_LIMIT` seconds came back to a bag step that
 ## had already given up, and the expectation beat - which needs the bag to have been
 ## searched - was gone for the rest of the run. Q's bag reminder could likewise start
 ## its conversation while the menu was still open. The fades never had this problem:
@@ -952,13 +534,10 @@ func _on_story_flag_changed(flag: StringName, _previous: Variant, value: Variant
 			_flow.update_exit_prompt()
 
 
+## Waits until `flag` is set or `limit_seconds` of story time have passed (the bag
+## step's fallback clock; `PrologueBeats.wait_for_flag`).
 func _wait_for_flag(flag: StringName, limit_seconds: float) -> void:
-	var elapsed := 0.0
-	while elapsed < limit_seconds:
-		if _has_flag(flag):
-			return
-		await wait_seconds(0.25)
-		elapsed += 0.25
+	await _beats.wait_for_flag(flag, limit_seconds)
 
 
 func _has_flag(flag: StringName) -> bool:
