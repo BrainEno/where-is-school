@@ -45,11 +45,13 @@ func _run() -> void:
 	await _pause_navigation()
 	await _reading()
 	await _large_reading()
+	await _compare_touch()
 	_main.queue_free()
 	await process_frame
 	Harness.finish(self, _check.failures,
-		"mobile safe controls at three aspect ratios, single-finger path and get-up, "
-		+ "settings scroll, modal back/resume, dialogue reveal, choice paging and large bilingual layouts")
+		"mobile safe controls at three aspect ratios, single-finger path and get-up, settings scroll, "
+		+ "modal back/resume, dialogue reveal and choice paging; the largest bilingual notebook stays "
+		+ "readable and swipes inside comparison cards scroll through the notes")
 
 
 func _set_screen(metrics: Array) -> void:
@@ -278,6 +280,63 @@ func _large_reading() -> void:
 		_check.expect(body.get_content_height() <= body.size.y + 1.0 or body.scroll_active,
 			"Large %s reading body clipped without scroll" % sample[1])
 		panel.close()
+
+
+func _compare_touch() -> void:
+	Harness.stage = "largest bilingual notebook on mobile"
+	var loc := root.get_node(^"Loc")
+	var narrative := root.get_node(^"NarrativeState")
+	_settings.call("set_text_size", &"largest")
+	_pause.open_journal()
+	var journal := _pause.get_journal_panel()
+	var catalog := journal.get_catalog()
+	if not _check.expect(catalog != null, "Notebook has no catalog"):
+		return
+	var pairs := catalog.get_comparisons()
+	if not _check.expect(pairs.size() >= 3, "Notebook has fewer than three authored pairs"):
+		return
+	for pair: Dictionary in pairs:
+		for id: StringName in [pair["left"], pair["right"]]:
+			var note := catalog.lookup(id, "en")
+			narrative.record(id, int(note["source"]), StringName(note["speaker_id"]), String(note["text"]))
+	for metrics: Array in SCREENS:
+		await _set_screen(metrics)
+		for locale: String in L10n.LOCALES:
+			await _swipe_comparison(journal, pairs, loc, locale, "%s %s" % [metrics[0], locale])
+	await _tap_control(journal.get_back_button())
+	_check.expect(not journal.is_open(), "Mobile Back did not close the notebook after scrolling")
+
+
+func _swipe_comparison(journal: JournalPanel, pairs: Array[Dictionary], loc: Node, locale: String, tag: String) -> void:
+	# Start on a new page: a fit/rotation must not be needed after tapping a tab.
+	loc.call("set_locale", locale)
+	await process_frame
+	await _tap_control(journal.get_filter_button(JournalPage.ALL))
+	var compare := journal.get_filter_button(JournalPage.COMPARE)
+	_check_target(compare, tag + " Compare")
+	_check_target(journal.get_back_button(), tag + " Back")
+	await _tap_control(compare)
+	if not _check.expect(journal.get_filter() == JournalPage.COMPARE and journal.get_row_ids().size() == pairs.size() * 2,
+			tag + ": tapping Compare did not show both sides of each pair"):
+		return
+	var scroll := journal.get_scroll()
+	if not _check.expect(scroll.size.y >= 2.0 * MobileLayout.hit_size(scroll),
+			"%s: header and tabs leave only %.0f px for reading" % [tag, scroll.size.y]):
+		return
+	var first := journal.find_child("Comparison_%s" % pairs[0]["id"], true, false) as Control
+	var topic := first.find_child("Topic", true, false) as Control if first != null else null
+	if not _check.expect(topic != null, tag + ": the first card's title is missing"):
+		return
+	# The route and reading progress share the scroll. Bring the first topic into view
+	# before swiping on the card itself, not in the gutter or on the scrollbar.
+	scroll.ensure_control_visible(topic)
+	await process_frame
+	var clip := scroll.get_global_rect().intersection(first.get_global_rect())
+	if not _check.expect(clip.has_area(), tag + ": no part of the first card can be reached"):
+		return
+	var origin := scroll.scroll_vertical
+	await _swipe(clip.get_center(), clip.get_center() - Vector2(0, 100))
+	_check.expect(scroll.scroll_vertical > origin, tag + ": swiping a comparison card did not scroll")
 
 
 func _check_target(control: Control, label: String) -> void:

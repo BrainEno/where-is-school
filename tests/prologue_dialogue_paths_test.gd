@@ -60,6 +60,8 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 	await _inspect(&"set_square")
 	_entry(&"saw_set_square", NarrativeEntry.Source.OBSERVED)
 	_entry(&"recall_set_square_placed", NarrativeEntry.Source.RECALLED)
+	var notebook := JournalCatalog.build(_dialogue.get_dialogue_library(), _dialogue.get_inspection_library())
+	_expect_ruler_pair(notebook, false)
 	await _inspect(&"schoolbag")
 	if not await _menu(&"q_after_bag", &"q_ab_1") or not _pick(&"square"):
 		return
@@ -71,6 +73,7 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 	if not await _menu(&"n_class", &"n_8"):
 		return
 	_entry(&"q_set_square_use", NarrativeEntry.Source.REPORTED)
+	_expect_ruler_pair(notebook, true)
 	_checks.expect(_flag(StoryFlags.Q_BOOK_PACT), "Sharing did not carry a promise into the lesson.")
 	_checks.expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"Q's completed book exchange did not go back to the short studying response.")
@@ -125,6 +128,7 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 		and _state.get_flag(StoryFlags.N_ROLL_RESPONSE, "") == "answered_self"
 		and _state.get_flag(check_flag, null) is Dictionary, "Save lost classroom progress or choices.")
 	_entry(entry, source)
+	_expect_ruler_pair(notebook, true)
 	_activate(&"q_talk")
 	if not await _menu(&"q_after_dismissal", &"q_ad_1"):
 		return
@@ -136,6 +140,19 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 		await _finish()
 		_checks.expect(_flag(StoryFlags.FREE_PERIOD_LEAVING) and not _flag(StoryFlags.FREE_PERIOD_STAYED)
 			and not _flag(StoryFlags.LEFT_CLASSROOM), "Changing your mind should not move the player.")
+
+
+## The normal inspection and Q choice are the only events that earn this pair.
+## Recompose after a real save/Continue; there is no comparison-specific state to load.
+func _expect_ruler_pair(catalog: JournalCatalog, ready: bool) -> void:
+	var notes: Array[NarrativeEntry] = _narrative.call("get_entries")
+	var page := JournalPage.compose(notes, catalog, L10n.current, JournalPage.COMPARE)
+	var ids := JournalPage.row_ids(page)
+	var expected: Array[StringName] = []
+	if ready:
+		expected.append(&"saw_set_square")
+		expected.append(&"q_set_square_use")
+	_checks.expect(ids == expected, "The normal square exchange/Continue left Compare with %s." % str(ids))
 
 
 func _bag_then_square(locale: String) -> void:

@@ -175,6 +175,7 @@ def game_entries() -> list[tuple[str, int]]:
         ("res://data/dialogue/en/prologue.json", 100),
         ("res://data/dialogue/zh-CN/prologue.json", 100),
         ("res://data/inspections/en/classroom.json", 100),
+        ("res://data/story/notebook_comparisons.json", 100),
         ("res://assets/audio/bell_second.wav.import", 100),
         ("res://assets/fonts/NotoSansSC-Regular.ttf.import", 100),
     ]
@@ -215,6 +216,9 @@ def test_required_prefixes() -> None:
     expect_problem(problems, "no files at all", "an empty pack is accepted")
     expect_problem(problems, "nothing under", "a pack with no game in it is accepted")
     expect_problem(problems, "font", "a pack with no font stub is accepted")
+    comparison = "res://data/story/notebook_comparisons.json"
+    entries = [(path, size) for path, size in game_entries() if path != comparison]
+    expect_problem(vb.verify_contents(entries), comparison, "a pack with no notebook pairs is accepted")
 
 
 def test_pack_parser() -> None:

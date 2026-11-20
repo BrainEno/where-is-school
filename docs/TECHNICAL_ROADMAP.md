@@ -75,8 +75,9 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   (`scripts/ui/journal_panel.gd`, see `docs/ARCHITECTURE.md` §5g "The notebook") reads the
   knowledge log by identity, files it by place, filters the four kinds and shows the
   places reached, and how much of the game's text has been read across runs
-  (`ReadingProgress`, `docs/ARCHITECTURE.md` §5n). Still not built: any notebook *content* of its own (annotations,
-  contradictions the player can mark), which is a writing decision, not a system.
+  (`ReadingProgress`, `docs/ARCHITECTURE.md` §5n). The Compare tab links two recorded
+  notes under a question, without taking a side or changing the story. Player-authored
+  annotations and dialogue follow-ups based on comparisons are still open.
 - Dialogue portrait **art**. The contract exists (see the requirements table in §3):
   `CharacterProfile` has optional `portrait` / `portrait_path` and composition fields,
   and the dialogue panel has a layout for them. No profile sets one, because no 2D

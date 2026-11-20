@@ -686,6 +686,14 @@ neither the log nor the flags.
   appear in the order their first entry was learned and rows keep the log's order. The
   four kinds can be filtered, each with a one-line caveat on what it can be trusted for.
   Someone else's account is attributed ("Q said so").
+- **Compare, not resolve.** `data/story/notebook_comparisons.json` lists authored pairs
+  (`id`, `left` and `right` entry ids). `JournalCatalog` validates both entries and the
+  `journal.comparison.<id>.title` and `.question` labels in every locale. `JournalPage`
+  counts and exposes a pair only when both ids are in the current log, regardless of
+  learning order. The Compare tab gives both notes their original badges, places and
+  attributions, followed by an open question. Neither an incomplete pair nor its
+  question is displayed. No new flag, save field, or answer is produced; Continue
+  rebuilds the view from the same saved knowledge.
 - **Route line.** `JournalRoute` (`scripts/narrative/journal_route.gd`) lists the places
   this run has reached from flags the story already keeps — the start location, a
   location's `arrival_flags`/`arrival_flag` from `data/story/locations.json`, the
@@ -699,13 +707,16 @@ neither the log nor the flags.
 - **Opening it.** The `journal` action (N / left stick click, rebindable) during play
   opens the pause menu as the notebook's frame: the world pauses, and closing the
   notebook returns to the game. From the pause menu's Notebook entry, closing returns to
-  the menu. Esc/B, the menu button and the notebook key close it; ←/→ choose a kind,
-  ↑/↓ and Page Up/Down scroll.
+  the menu. Esc/B, the menu button and the notebook key close it; ←/→ move between tabs,
+  Enter/A selects one, and ↑/↓ or Page Up/Down scroll. On mobile the route, objective
+  and reading progress scroll with the notes; the tabs and Back remain outside the
+  reading area, so long headers cannot squeeze out the notes.
 
-Proven by `tests/journal_test.gd` (catalog against an independent scan of the content
-JSON, the page, the panel inside the real pause menu, the HUD line, the route) and by
-`tests/hud_layout_test.gd`, which fills the notebook with every entry the content can
-record and measures it at the largest text size at all five window sizes.
+Proven by `tests/journal_test.gd` (catalog, page, real pause menu, HUD line and route)
+and by `tests/hud_layout_test.gd`, which fills the notebook and measures it at the
+largest text size at all five desktop window sizes. `tests/mobile_controls_test.gd`
+taps Compare and drags inside a card with the largest text in both languages at three
+phone/tablet viewport sizes.
 
 ### Character name labels (`scripts/actors/character_nameplate.gd`)
 
