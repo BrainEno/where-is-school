@@ -3,6 +3,7 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := preload("res://scenes/main/main.tscn")
+const HOTSPOT := preload("res://scenes/interaction/interactable.tscn")
 const STREET := "res://scenes/locations/street/street.tscn"
 const HALL := "res://scenes/locations/corridor/corridor.tscn"
 
@@ -23,6 +24,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	root.size = Vector2i(1600, 900)
 	var boot := Harness.ensure_state_autoloads(self)
 	_save = boot["save"]
 	_state = boot["game_state"]
@@ -30,6 +32,8 @@ func _run() -> void:
 	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
 	_state.set_flag(StoryFlags.LEFT_CLASSROOM, true)
 	_boot()
+	# Let the initial classroom settle before replacing it with the street fixture.
+	await process_frame
 	if _load(STREET, &"FromCorridor", &"street") and await _ready_to_walk():
 		await _street_edge()
 		await _recover_on_foot()
@@ -39,7 +43,7 @@ func _run() -> void:
 	AudioRelease.wait_for_mix()
 	await process_frame
 	Harness.finish(self, _check.failures,
-		"the south barrier holds; a live fall cancels its walk, keeps the room and uses a safe checkpoint; Continue rejects a legacy void position.")
+		"the south barrier holds; a live fall cancels its walk, keeps the room and uses a safe checkpoint; Continue leaves a legacy void position at the entry.")
 
 
 func _boot() -> void:
@@ -54,6 +58,7 @@ func _boot() -> void:
 	_host.player_recovered.connect(func() -> void: _recoveries += 1)
 	_host.location_entered.connect(func(_room: LocationRoot, _spawn: StringName) -> void: _entries += 1)
 	_director.allow_player_control()
+	(_world.get_node(^"GameUI") as GameUI).fade.set_clear()
 
 
 func _load(path: String, spawn: StringName, id: StringName) -> bool:
@@ -90,6 +95,18 @@ func _recover_on_foot() -> void:
 	var street := _host.get_current()
 	var before := _state.get_snapshot() as Dictionary
 	var before_entries := _entries
+	# Only the click target is a fixture: the street edge, the fall, and the route
+	# use the game collision, pointer and navigation. A small target on the asphalt
+	# gives the falling camera something genuinely pickable to ask to walk towards.
+	var hotspot := HOTSPOT.instantiate() as Interactable
+	hotspot.position = Vector3(-0.35, 0.65, -33.2)
+	hotspot.radius = 0.64
+	hotspot.interact_id = &"recover_click_fixture"
+	hotspot.inspection_id = &"street_gutter"
+	street.get_node(^"Interactables").add_child(hotspot)
+	var pointer := _player.get_node(^"PointerNavigator") as PointerNavigator
+	var hud := (_world.get_node(^"GameUI") as GameUI).hud
+	var rig := _player.camera_rig
 	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0, 0.05, -34.8)))
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 		return _host.get_safe_checkpoint().origin.z < -34.7, 2.0), "The last safe stance was not sampled."):
@@ -102,7 +119,8 @@ func _recover_on_foot() -> void:
 	Input.action_release(&"move_right")
 	if not _check.expect(dropped and not _player.is_on_floor(), "The north-edge reproduction never fell."):
 		return
-	var safe := _host.get_safe_checkpoint().origin
+	var safe_pose := _host.get_safe_checkpoint()
+	var safe := safe_pose.origin
 	var saved := _save.save_game() as Dictionary
 	var read := _save.read_save() as Dictionary
 	var payload: Dictionary = read.get("payload", {})
@@ -110,16 +128,37 @@ func _recover_on_foot() -> void:
 	var feet := OpeningSave.vec3(checkpoint.get("position"))
 	_check.expect(saved.get("ok", false) and read.get("ok", false) and feet.is_equal_approx(safe),
 		"A save taken mid-fall put Continue below the asphalt instead of on the last safe support.")
-	_check.expect(_player.request_path_to(Vector3(0, 0, -29.0)) and _player.is_path_active(),
-		"The stale-walk fixture did not have an active route before recovery.")
+	var pixel := rig.camera.unproject_position(hotspot.global_position)
+	for down in [true, false]:
+		var click := InputEventMouseButton.new()
+		click.button_index = MOUSE_BUTTON_LEFT
+		click.pressed = down
+		click.position = pixel
+		click.global_position = pixel
+		Input.parse_input_event(click)
+	var walking := await Harness.wait_until(func() -> bool:
+		return pointer.get_pending_target() == hotspot and _player.is_path_active(), .45)
+	var cue := _world.get_node_or_null(^"DestinationCue") as DestinationCue
+	if not _check.expect(walking and cue != null and cue.is_shown() and cue.get_role() == "target",
+		"The fall never held a pending click: %s at %s, pixel %s." % [pointer.get_last_rejection(), _player.global_position, pixel]):
+		return
+	# Simulate an old shot/label still releasing when the body drops out. Recovery
+	# must cut back in the same frame, not wait for either presentation to finish.
+	rig.focus_on(hotspot, CameraShot.new())
+	await rig.frame_point(hotspot.global_position, 0.0)
+	hud.set_prompt_text("Old street prompt")
 	if not _check.expect(await Harness.wait_until(func() -> bool: return _recoveries == 1, 3.0),
 		"The body kept falling without recovering."):
 		return
 	_check.expect(_host.get_current() == street and _entries == before_entries
 		and _state.get_snapshot() == before, "Recovering replayed an arrival or changed story state.")
 	_check.expect(not _player.is_path_active() and _player.is_control_enabled()
-		and _player.camera_rig.global_position.distance_to(_player.global_position) < .13,
-		"The old route, control lock, or camera position survived the fall.")
+		and pointer.get_pending_target() == null and not pointer.is_approaching() and not cue.is_shown()
+		and rig.get_frame_weight() == 0.0 and rig.get_focus_weight() == 0.0
+		and rig.global_position.distance_to(_player.global_position) < .13
+		and hud.get_prompt_text().is_empty(), "The old click, cue, prompt or shot survived the fall.")
+	_check.expect(_player.get_facing_direction().is_equal_approx(-safe_pose.basis.z)
+		and _player.velocity.length() < 1.0, "The fall kept its velocity or heading on recovery.")
 	_check.expect(await _ready_to_walk() and _player.global_position.distance_to(safe) < .18,
 		"Recovery did not put the body on its recent support: %s (expected %s)." % [_player.global_position, safe])
 	var restored_feet := _player.global_position

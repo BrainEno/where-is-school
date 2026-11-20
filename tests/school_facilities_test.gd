@@ -53,6 +53,9 @@ func _run() -> void:
 	_state.set_flag(StoryFlags.LEFT_CLASSROOM, true)
 	_state.set_flag(StoryFlags.OBJECTIVE_KEY, OBJECTIVE)
 	_boot()
+	# Let the starting classroom finish its deferred navigation and chair binding
+	# before asking the host to remove it in this route fixture.
+	await process_frame
 	if await _load_hall(&"FromClassroom") and await _screen_control() \
 			and await _load_hall(&"FromTeachingEntrance") and await _bell_control():
 		await _continue_and_exit()
@@ -145,22 +148,26 @@ func _bell_control() -> bool:
 	_check.expect(_ic.get_current_target() != button, "The small control is advertised at the front door.")
 	if not await _walk(Vector3(-25.29, -3.4, 12.63)) or not await _walk(BELL_FEET):
 		return false
-	var first := hall.get_node(NodePath(String(REGISTER) + "/Plate0")) as Node3D
-	var last := hall.get_node(NodePath(String(REGISTER) + "/Plate2")) as Node3D
+	var register := hall.get_node(REGISTER)
+	var first := register.get_node(^"Plate0") as Node3D
+	var last := register.get_node(^"Plate2") as Node3D
+	var bell := register.get_node(^"Bell") as AudioStreamPlayer3D
 	var flag := StoryFlags.CORRIDOR_BELL_TESTED
 	if not _check.expect(is_zero_approx(first.rotation.y) and is_zero_approx(last.rotation.y) \
-			and not _state.get_flag(flag, false), "The bell began with its plates already turned."):
+			and not _state.get_flag(flag, false) and not bell.playing, "The bell did not start quiet with its plates face up."):
 		return false
 	if not await _begin(button, true, "bell"):
 		return false
 	var staggered := await Harness.wait_until(func() -> bool:
 		return first.rotation.y > 3.04 and is_zero_approx(last.rotation.y), 4.0)
-	_check.expect(staggered and not _state.get_flag(flag, false) and _director.is_beat_active(),
-		"The test bell did not turn its plates in sequence with a delayed blank.")
+	_check.expect(staggered and bell.playing and not _state.get_flag(flag, false) and _director.is_beat_active(),
+		"The first plate did not turn during the ring with the last plate still waiting.")
 	await _frame("bell_1_moving")
+	_check.expect(await Harness.wait_until(func() -> bool: return not bell.playing, 2.0)
+		and is_zero_approx(last.rotation.y), "The last plate moved before the test ring stopped.")
 	if not await _result(&"corridor_bell_reveal", flag, "bell"):
 		return false
-	_check.expect(last.rotation.y > 3.13, "The last plate did not finish turning.")
+	_check.expect(last.rotation.y > 3.13 and not bell.playing, "The test did not end on a silent blank.")
 	return true
 
 

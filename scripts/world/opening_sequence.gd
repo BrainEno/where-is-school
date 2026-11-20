@@ -504,6 +504,7 @@ func _on_player_recovered() -> void:
 		_player.camera_rig.release_frame(0.0)
 	# The next scan can find a target at the recovered position, not in the void.
 	_interaction.set_enabled(false)
+	_hud.clear_prompt()
 	sync_player_locks()
 
 

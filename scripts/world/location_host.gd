@@ -68,6 +68,9 @@ func _physics_process(delta: float) -> void:
 	if _current.is_below_playable_space(feet):
 		var target := _recovery_pose()
 		_player.teleport(target)
+		# Entry placement treats an identity basis as "keep facing". A recovered
+		# pose has a real heading even when it points along the default -Z axis.
+		_player.face_toward(-target.basis.z)
 		player_recovered.emit()
 		return
 	_sample_in -= delta
