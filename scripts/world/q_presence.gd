@@ -1,5 +1,5 @@
 class_name QPresence
-extends RefCounted
+extends ActorPresence
 ## Puts Q back where the opening left him whenever a room is built after Q's first talk
 ## has begun.
 ##
@@ -44,30 +44,22 @@ const SEAT_SPAWN: StringName = &"PlayerStart"
 ## How close to the marker counts as already standing on it.
 const AT_LANDING_METRES := 0.05
 
-var _game_state: Node = null
-var _locations: LocationHost = null
 ## Rooms already reported as having a Q but no landing, so the log says it once per room.
 var _reported_without_landing: Dictionary = {}
 
 
 func _init(game_state: Node, locations: LocationHost) -> void:
-	_game_state = game_state
-	_locations = locations
-	if _game_state != null:
-		_game_state.story_state_replaced.connect(_on_story_state_replaced)
-	if _locations != null:
-		_locations.location_entered.connect(_on_location_entered)
+	super(game_state, locations)
+
+
+## Rooms and loads re-place Q; `met_q` being written does not (see the header).
+func _actor_id() -> StringName:
+	return ACTOR_ID
 
 
 ## True once Q's first conversation has begun (its first line writes `met_q`).
 func has_met() -> bool:
-	return _game_state != null and bool(_game_state.get_flag(StoryFlags.MET_Q, false))
-
-
-## The current room's Q, or null (every room but the classroom).
-func find_actor() -> NpcActor:
-	var location := _current()
-	return location.find_actor(ACTOR_ID) if location != null else null
+	return _flag(StoryFlags.MET_Q)
 
 
 ## Where the opening leaves Q in `location`: `{point, facing}`, or `{}` when the room
@@ -134,15 +126,3 @@ func sync() -> bool:
 	actor.place_at(point, landing["facing"])
 	carry_talk(location, actor, from)
 	return true
-
-
-func _current() -> LocationRoot:
-	return _locations.get_current() if _locations != null else null
-
-
-func _on_location_entered(_location: LocationRoot, _spawn_id: StringName) -> void:
-	sync()
-
-
-func _on_story_state_replaced() -> void:
-	sync()

@@ -1,5 +1,5 @@
 class_name NPresence
-extends RefCounted
+extends ActorPresence
 ## Puts the substitute teacher N back at the lectern whenever a room is built after the story
 ## has brought her in (#166).
 ##
@@ -30,29 +30,23 @@ const ACTOR_ID: StringName = &"n"
 ## The marker path N walks in on; its last marker is where she teaches from.
 const ENTRY_PATH: StringName = &"NEntryPath"
 
-var _game_state: Node = null
-var _locations: LocationHost = null
-
 
 func _init(game_state: Node, locations: LocationHost) -> void:
-	_game_state = game_state
-	_locations = locations
-	if _game_state != null:
-		_game_state.story_flag_changed.connect(_on_story_flag_changed)
-		_game_state.story_state_replaced.connect(_on_story_state_replaced)
-	if _locations != null:
-		_locations.location_entered.connect(_on_location_entered)
+	super(game_state, locations)
+
+
+func _actor_id() -> StringName:
+	return ACTOR_ID
+
+
+## `n_arrived` being written places an N the room has not shown yet.
+func _watched_flags() -> Array[StringName]:
+	return [StoryFlags.N_ARRIVED]
 
 
 ## True once the story has walked N in.
 func is_on_stage() -> bool:
-	return _game_state != null and bool(_game_state.get_flag(StoryFlags.N_ARRIVED, false))
-
-
-## The current room's N, or null (every room but the classroom).
-func find_actor() -> NpcActor:
-	var location: LocationRoot = _locations.get_current() if _locations != null else null
-	return location.find_actor(ACTOR_ID) if location != null else null
+	return _flag(StoryFlags.N_ARRIVED)
 
 
 ## Makes the room's N (if it has one) match the story: shown at the lectern once she has
@@ -63,7 +57,7 @@ func sync() -> bool:
 	var actor := find_actor()
 	if actor == null or actor.visible:
 		return false
-	var location := _locations.get_current()
+	var location := _current()
 	var points := location.get_waypoint_path(ENTRY_PATH)
 	if points.size() < 2:
 		push_error(
@@ -75,16 +69,3 @@ func sync() -> bool:
 	var last_leg := stand - points[points.size() - 2]
 	actor.place_at(stand, stand + last_leg)
 	return true
-
-
-func _on_story_flag_changed(flag: StringName, _previous: Variant, _value: Variant) -> void:
-	if flag == StoryFlags.N_ARRIVED:
-		sync()
-
-
-func _on_location_entered(_location: LocationRoot, _spawn_id: StringName) -> void:
-	sync()
-
-
-func _on_story_state_replaced() -> void:
-	sync()
