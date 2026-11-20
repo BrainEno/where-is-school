@@ -58,6 +58,47 @@ class ClassmatesAssets(unittest.TestCase):
         self.assertGreater(width[1]-width[0],.021)
         self.assertGreater(width[2]-width[1],.033)
 
+    def test_scalp_mask_keeps_face_and_head_welded(self):
+        g = Gltf(MODELS/'thin_classmate.glb')
+        self.assertFalse(any(m['name'].startswith('hair_') for m in g.doc['materials']))
+        face, = [m for m in g.doc['meshes'] if 'extras' in m]
+        part, = face['primitives']
+        material = g.doc['materials'][part['material']]
+        self.assertEqual(material['name'], 'clipper_skin')
+        self.assertEqual(material.get('alphaMode','OPAQUE'), 'OPAQUE')
+        a = part['attributes']
+        p, density = g.arr(a['POSITION']), g.arr(a['COLOR_0'])[:,3]
+        self.assertGreater(density[p[:,1]>1.575].min(), .70)
+        self.assertLess(density[p[:,1]<1.435].max(), .01)
+        self.assertGreater(np.count_nonzero((density > .05) & (density < .95)), 150)
+        self.assertEqual(len(part['targets']), 4)
+
+    def test_welded_trousers_and_continuous_hip_blend(self):
+        for key in DESIGNS:
+            with self.subTest(key=key):
+                g = Gltf(MODELS/f'{key}.glb')
+                pants, = [part for mesh in g.doc['meshes'] for part in mesh['primitives']
+                          if g.doc['materials'][part['material']]['name'] == 'woven_twill']
+                a = pants['attributes']
+                p, weights, joints = (g.arr(a[v]) for v in ('POSITION','WEIGHTS_0','JOINTS_0'))
+                tris = g.arr(pants['indices']).reshape(-1,3)
+                e = np.sort(np.vstack((tris[:,[0,1]],tris[:,[1,2]],tris[:,[0,2]])),axis=1)
+                e, uses = np.unique(e,axis=0,return_counts=True)
+                np.testing.assert_array_equal(uses, 2)  # no unwelded crotch or waist edges
+                hip_id = next(i for i in g.doc['skins'][0]['joints'] if g.doc['nodes'][i]['name']=='Hips')
+                hip = g.world()[hip_id][1,3]
+                hip_weight = (weights*(joints==g.doc['skins'][0]['joints'].index(hip_id))).sum(1)
+                y = p[e,1]
+                transition = (y>hip-.182).all(1) & (y<hip+.08).all(1)
+                distance = np.linalg.norm(p[e[:,0]]-p[e[:,1]],axis=1)
+                self.assertGreater(distance.min(),.0003)
+                slope = np.abs(hip_weight[e[:,0]]-hip_weight[e[:,1]])/distance
+                self.assertLess(slope[transition].max(),16.)
+                self.assertGreater(hip_weight[e[transition]].max(),.97)
+                self.assertLess(hip_weight[e[transition]].min(),.80)
+                self.assertLess(hip_weight[(p[:,1]>hip-.34) & (p[:,1]<hip-.26)].min(),.2)
+                print(f'{key}: closed 2-manifold trousers, peak hip-weight gradient {slope[transition].max():.2f}/m')
+
     def test_foot_contact_and_signature(self):
         for key,(signature,apex) in ACTING.items():
             with self.subTest(key=key):

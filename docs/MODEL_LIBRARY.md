@@ -408,16 +408,20 @@ checks, so the snapshot cannot rot into a check that always passes.
 
 ## 6. Unplaced classmates
 
-### `classmates/` — 3 models, 4559 KiB
+### `classmates/` — 3 models, 4352 KiB
 
 | model | KiB | tris | materials | textures | W × H × D (m) | min y (m) | max y (m) |
 |---|---|---|---|---|---|---|---|
-| `court_classmate` | 1514.0 | 48994 | 11 | — | 0.69 × 1.8 × 0.32 | +0.000 | +1.800 |
-| `gentle_classmate` | 1530.0 | 49590 | 12 | — | 0.61 × 1.62 × 0.3 | +0.000 | +1.620 |
-| `thin_classmate` | 1514.8 | 49192 | 11 | — | 0.57 × 1.6 × 0.27 | +0.000 | +1.600 |
+| `court_classmate` | 1483.5 | 47658 | 11 | — | 0.69 × 1.8 × 0.32 | +0.000 | +1.800 |
+| `gentle_classmate` | 1513.9 | 48842 | 12 | — | 0.61 × 1.62 × 0.3 | +0.000 | +1.620 |
+| `thin_classmate` | 1354.7 | 42960 | 11 | — | 0.57 × 1.6 × 0.27 | +0.000 | +1.600 |
 
 These are separately sculpted, skinned assets with three native clips apiece.
 The heights are bind-pose geometry bounds, from the actual soles to the top of
 the hair. See the [classmates source and usage](../art/character_models/classmates/README.md).
 The runtime manifest remains unchanged: no location instantiates these models.
 The three files exceed the advisory line but meet the per-model hard limit.
+
+The revised off-stage B review model is 1509.2 KiB, 49,466 triangles, 13
+surfaces / 12 materials and 1.640 m tall. It has the same bind transform and
+no embedded actions; the separate B-only review animation library is unchanged.

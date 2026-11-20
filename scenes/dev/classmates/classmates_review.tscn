@@ -56,6 +56,7 @@ light_energy = 0.65
 [node name="Look" type="Node" parent="Actors/Thin"]
 script = ExtResource("6_apply")
 look = ExtResource("7_look")
+rest_paint_blend_shapes = true
 blinking = false
 
 [node name="Gentle" type="Node3D" parent="Actors"]

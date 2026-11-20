@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import base64
+from io import BytesIO
 import json
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -75,13 +77,53 @@ def cover(images, out):
     canvas.save(out,quality=94,subsampling=0,optimize=True)
 
 
+def classroom(captures, out):
+    """Unretouched, equal-size Godot face crops under the same classroom key."""
+    rows = [('lead', '现任主角'), ('thin_classmate', '细框眼镜新同学'),
+            ('gentle_classmate', '主角的好友'), ('court_classmate', '球场同学'), ('teacher_b', '生物老师 B')]
+    tile, gap, margin = 252, 12, 22
+    sheet = Image.new('RGB',(2*margin+len(rows)*tile+(len(rows)-1)*gap,376),PAPER)
+    d = ImageDraw.Draw(sheet)
+    label(d,(margin,14),'教室同光 · 发型与手绘着色',33,serif=True)
+    label(d,(margin,58),'Godot 实拍  /  同地面标记、同角度、同正交比例，只移动镜头高度',17,SECONDARY)
+    for i,(leaf,title) in enumerate(rows):
+        x = margin+i*(tile+gap)
+        with Image.open(captures/f'classroom_{leaf}.png') as shot:
+            # The camera keeps vertical scale. Use the same centred crop from each frame.
+            size = round(shot.height*.92)
+            left, top = (shot.width-size)//2, (shot.height-size)//2
+            image = shot.convert('RGB').crop((left,top,left+size,top+size)).resize((tile,tile),Image.Resampling.LANCZOS)
+        sheet.paste(image,(x,91))
+        label(d,(x,350),title,18)
+    # Lossless frames are kept in the artifact. A compact board also travels
+    # through the checks API for reviewers who cannot reach artifact storage.
+    for quality in (94,88,82,74,65,54):
+        buffer = BytesIO()
+        sheet.save(buffer,format='JPEG',quality=quality,optimize=True)
+        data = buffer.getvalue()
+        b64 = base64.b64encode(data).decode('ascii')
+        chunks = [b64[i:i+3900] for i in range(0,len(b64),3900)]
+        if len(chunks) <= 30:
+            (out/'classroom-comparison.jpg').write_bytes(data)
+            (out/'classroom-relay.txt').write_text(''.join(
+                f'::notice title=Classmates match cut part {i}/{len(chunks)}::{chunk}\n'
+                for i,chunk in enumerate(chunks,1)))
+            return
+    raise ValueError('Classroom comparison exceeds the 30-part review relay budget')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('studio',type=Path)
     p.add_argument('output',type=Path)
-    p.add_argument('--only',choices=DESIGNS)
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument('--only',choices=DESIGNS)
+    mode.add_argument('--classroom',action='store_true',help='compose same-light Godot captures rather than Blender frames')
     args = p.parse_args()
     args.output.mkdir(parents=True,exist_ok=True)
+    if args.classroom:
+        classroom(args.studio,args.output)
+        return
     names = [args.only] if args.only else DESIGNS
     for key in names:
         index = list(DESIGNS).index(key)+1

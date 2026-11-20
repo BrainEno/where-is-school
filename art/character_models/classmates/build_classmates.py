@@ -16,9 +16,10 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE.parent / 'teacher_b'))
-from build_teacher_b import (Sculpt, bump, cap_ends, curve, rgb, rings_faces, smoothstep,
+from build_teacher_b import (Sculpt, bump, curve, rgb, rings_faces, smoothstep,
                              sphere, target, trigs, tube, unit)
 from skinned_glb import GLB, batch_materials
+from sculpt_hair import cap_samples, comb_field, shell_grid
 
 from actions import bake
 from designs import DESIGNS
@@ -26,7 +27,8 @@ from wardrobe import Wardrobe
 
 MATS = {
     'skin_paint': (.91, 0., 1.), 'eye_paint': (.47, 0., 1.),
-    'small_detail': (.84, 0., 1.), 'hair_paint': (.83, 0., 1.),
+    'small_detail': (.84, 0., 1.), 'clipper_skin': (.94, 0., 1.),
+    'hair_combed': (.88, 0., 1.), 'hair_crest': (.89, 0., 1.),
     'frames': (.54, .09, 1.), 'optics': (.23, 0., .054),
     'cotton': (.95, 0., 1.), 'ribbed_knit': (.96, 0., 1.),
     'woven_twill': (.95, 0., 1.), 'cloth_trim': (.88, 0., 1.),
@@ -120,6 +122,16 @@ class Classmate(Sculpt):
         m = np.linalg.norm(target(self.root, 'mouth/mouth-lowerlip-volume-decr', self.n), axis=1)
         lip_y = np.average(self.v[:, 1], weights=m)
         front = smoothstep(ez - .031, ez + .001, z)
+        mouth_axis = y.copy()
+        if self.court:
+            # Slight lateral smile on just one side of a closed mouth. Keep
+            # pigment attached to the lip plane after sculpting its corner.
+            corner = (.0038*bump(x, .021, .015) - .0011*bump(x, -.024, .014))
+            corner *= bump(y, lip_y+.003, .016)*smoothstep(ez+.006, ez+.026, z)
+            y += corner
+            lip_plane = bump(x, .023, .017)*bump(y, lip_y+.007, .014)*front
+            z += .0016*lip_plane
+            mouth_axis = y-corner
         cheek = bump(abs(x), ex + .014, .025) * bump(y, ey - .033, .026)
         jaw = bump(abs(x), ex + .016, .020) * bump(y, ey - .066, .029) * front
         orbit = bump(abs(x), ex, .021) * bump(y, ey - .008, .013) * front
@@ -129,12 +141,13 @@ class Classmate(Sculpt):
         neck_shade = 1. - smoothstep(neck + .036, neck + .115, y)
         c = rgb(d.skin) + .016 * trigs(p)[:, None]
         c += cheek[:, None] * ([.086, .020, .018] if self.gentle else [.047, .010, .016])
-        c -= orbit[:, None] * ([.113, .104, .062] if self.thin else [.079, .062, .045])
+        c -= orbit[:, None] * ([.113, .104, .062] if self.thin else
+                               [.064, .042, .031] if self.court else [.079, .062, .045])
         c -= jaw[:, None] * ([.067, .075, .046] if not self.gentle else [.013, .020, .015])
         c += temple[:, None] * [-.052, -.035, -.013]
         c += forehead[:, None] * [.057, .057, .049] + nose[:, None] * [.079, .038, .025]
         c -= neck_shade[:, None] * [.098, .099, .080]
-        lip = (bump(y, lip_y + .010, .008) * .64 + bump(y, lip_y+.0006, .0043) * .67)
+        lip = (bump(mouth_axis, lip_y + .010, .008) * .64 + bump(mouth_axis, lip_y+.0006, .0043) * .67)
         lip *= bump(x, .0016, .0225) * smoothstep(ez+.023, ez+.056, z)
         lip = np.clip(lip, 0., .80)
         c += (rgb(d.lip) - c) * lip[:, None]
@@ -154,7 +167,10 @@ class Classmate(Sculpt):
                 ('SoftSmile', 'mouth-corner-puller', .67), ('LipRelease', 'mouth-open', .26),
             )
         }
-        self.add('Sculpted face and neck', p, fs, c, 'skin_paint', skin, morphs)
+        if self.thin:
+            c = self.clipper_stubble(p, c)
+        self.add('Face and clipper scalp' if self.thin else 'Sculpted face and neck', p, fs, c,
+                 'clipper_skin' if self.thin else 'skin_paint', skin, morphs)
         for side in SIDES:
             shoulder, elbow, wrist = (self.bones[f'{b}_{side}'][1] for b in ('UpperArm', 'Forearm', 'Hand'))
             arm = self.masks([g for g in self.source_weights if g.endswith('.' + side) and
@@ -199,17 +215,23 @@ class Classmate(Sculpt):
             white = rgb('ddd2bd') + (vv[:, 1] / rad)[:, None] * .026
             c = white * (1.-iris[:, None]) + tint * iris[:, None]
             c += (rgb('1d1920') - c) * pupil[:, None]
+            if self.court:
+                key = unit(gaze + [-.130, .179, 0.])
+                dot = (vv/rad) @ key
+                fleck = smoothstep(.982,.998,dot)*.47
+                c += (rgb('ead9c5') - c) * fleck[:,None]
             self.add(f'{side} iris and sclera', p, f, c, 'eye_paint', f'Eye_{side}')
-            raised = .0019 if side == 'L' else -.0012
-            arc = .001 if self.thin else .004 if self.gentle else .005 if side=='L' else -.001
-            inner = .005 if self.thin else .001 if self.gentle else -.001
+            raised = (.0023 if self.court else .0019) if side == 'L' else -.0012
+            arc = .001 if self.thin else .004 if self.gentle else .0062 if side=='L' else .001
+            inner = .005 if self.thin else .001 if self.gentle else -.002 if side=='R' else -.0005
+            tail = .0021 if self.court and side == 'L' else 0.
             xy = curve([(x-s*.019, y+.011+raised+inner), (x-s*.011, y+.016+raised+inner*.45),
-                        (x+s*.003, y+.017+raised+arc), (x+s*.015, y+.017+raised),
-                        (x+s*.026, y+.009+raised)], 6)
+                        (x+s*.003, y+.017+raised+arc), (x+s*.015, y+.017+raised+tail),
+                        (x+s*.026, y+.009+raised+tail)], 6)
             q = self.facial_surface(xy)
             q[:, 2] += .0009
             t = np.sin(np.linspace(.16, math.pi-.16, len(q)))**.62
-            p, f = tube(q, t*.00086, 8, t*(.00215 if self.thin else .0030), reference=(0, 0, 1))
+            p, f = tube(q, t*.00086, 8, t*(.00215 if self.thin else .00256 if self.court else .0030), reference=(0, 0, 1))
             self.add(f'{side} individually arced brow', p, f, d.brows, 'small_detail', 'Head', grain=.035)
             # Very faint orbital relief ends before the lens rim.
             xy = curve([(x+s*.011, y-.010), (x+s*.020, y-.0116), (x+s*.023, y-.014)], 5)
@@ -283,68 +305,93 @@ class Classmate(Sculpt):
 
     def hairline(self, a):
         front = np.sin(a)
-        back = smoothstep(-.12, -.91, front)
+        back = smoothstep(-.14, -.93, front)
         if self.thin:
-            return 1.53 - .33*front + .33*back + .128*np.cos(2*a+.95) + .046*np.cos(7*a+.5)
+            # Tight temples and squared front corners. At the ears this is
+            # clipped away, not a short wig rim hanging over the frames.
+            return 1.48 - .389*front + .33*back + .037*np.cos(2*a+.27) + .009*np.cos(7*a+.5)
         if self.gentle:
-            return 1.52 - .35*front + .30*back + .09*np.sin(3*a-.88) + .019*np.cos(6*a)
-        return 1.54 - .41*front + .27*back + .05*np.cos(4*a-.2)
+            return 1.48 - .36*front + .30*back + .084*np.sin(3*a-.84) + .018*np.cos(6*a)
+        return 1.47 - .32*front + .24*back + .070*np.cos(4*a-.2)
+
+    def clipper_stubble(self, p, c):
+        # Near-shaved hair belongs on the same scalp, not on a second cap.
+        # Displace the actual crown by under 2 mm and paint a softly clipped
+        # temple gradient. Alpha carries the follicle mask to Godot without
+        # making the glTF material transparent.
+        eye = np.mean(self.eyes, axis=0)
+        center = np.array([0.,eye[1]+.015,eye[2]-.050])
+        xx, yy, zz = (p-center).T
+        angle = np.arctan2(zz,xx)
+        reach = np.arctan2(np.hypot(xx,zz),yy)/self.hairline(angle)
+        density = smoothstep(1.005,.46,reach)
+        fleck = np.cos(1390*xx + 763*yy - 981*zz)*np.sin(947*xx - 567*yy + 1271*zz)
+        relief = density*(.00165+.00017*fleck)
+        p += (p-center)/np.maximum(np.linalg.norm(p-center,axis=1,keepdims=True),.001)*relief[:,None]
+        a, b = (rgb(tone) for tone in self.design.hair)
+        dark = a + (.50+.20*fleck)[:,None]*(b-a)
+        amount = (.83+.065*fleck)*density
+        tint = c + amount[:,None]*(dark-c)
+        return np.column_stack((tint, density))
 
     def hair(self):
+        if self.thin:
+            return  # Clipper relief and pigment are part of the welded head.
         y = np.mean([e[1] for e in self.eyes])
         z = np.mean([e[2] for e in self.eyes])
         center = np.array([0., y+.015, z-.050])
-        sides = 76
-        a = np.linspace(0, TAU, sides, endpoint=False)[None, :]
-        s = np.linspace(1., .014, 23)[:, None]
-        phi = self.hairline(a)*s
-        radius = self.scalp_rays(center, self.directions(a, phi)).reshape(phi.shape)
-        phase = (24.9*phi + 16.6*np.cos(a+.55*phi) + np.sin(4*a+phi)*1.3)
-        grooves = (.5+.5*np.cos(phase))**5
-        top = .006 + (.006 if self.thin else .008 if self.gentle else .017) * np.cos(phi)**4
-        if self.court:
-            # A dark cropped underlayer becomes the red ridge rather than a wig.
-            top *= .24 + .76 * smoothstep(1.21, .51, phi)
-            top *= .74 + .36 * np.sin(a+.83)*np.sin(phi)
-        thickness = .0016 + (top+.0018*grooves) * smoothstep(1.024, .87, s)
-        xyz = center + self.directions(a, phi)*(radius+thickness).ravel()[:, None]
-        p, f = cap_ends(xyz, rings_faces(len(s), sides, flip=True), len(s), sides, True)
-        crest = smoothstep(1.24, .46, phi) if self.court else .48 + .34*np.cos(phi)**2
-        full = np.clip(crest*(.72+.18*np.cos(phase)+.10*np.cos(2*phase)), 0., .96)
-        tint = rgb(self.design.hair[0]) + np.r_[full.ravel(), .20, .62][:, None] * (
-            rgb(self.design.hair[1]) - rgb(self.design.hair[0]))
-        self.add('Sculpted crown with swept channels', p, f, tint, 'hair_paint', 'Head', grain=.018)
-        # Separate hand-arranged tapering locks cross the cap. The shallow ends
-        # bury in the cap; they are not a ring of identical exposed spikes.
-        starts = ([-.18, .03, .28, .55, .82, 1.16, 1.46, 1.73] if self.thin else
-                  [.42, .72, 1.02, 1.30, 1.62, 1.94] if self.gentle else
-                  [-.24, .10, .36, .65, .92, 1.17, 1.47, 1.83])
-        for i, start in enumerate(starts):
-            if self.court:
-                data = [(start-.08, .69), (start+.16, .40), (start+.40, .24), (start+.64, .55)]
-                heights = [.0016, .014+.0029*(i%3), .024+.0039*(i%4), .009]
-                widths = .0091+.0008*(i%3)
-            elif self.thin:
-                data = [(start, .42), (start+.29, .58), (start+.56, .81), (start+.81, .98+.025*(i%3))]
-                heights = [.0041, .011+.002*(i%2), .0068, -.0005]
-                widths = .0067+.001*(i%3)
-            else:
-                data = [(start, .28), (start+.17, .50), (start+.37, .69), (start+.48, .91)]
-                heights = [.0052, .011, .0082, .0014]
-                widths = .0084
-            rows = curve([(a, t, h) for (a, t), h in zip(data, heights)], 6)
-            a, s, h = rows.T
-            dr = self.directions(a, self.hairline(a)*s)
-            path = center + dr * (self.scalp_rays(center, dr)+h)[:, None]
-            t = np.sin(np.linspace(.14, math.pi-.077, len(path)))**.7
-            p, f = tube(path, t*widths*.59, 9, t*widths, reference=unit(dr[len(dr)//2]))
-            shade = .44+.12*(i%3)+(.17 if self.court else 0.)
-            c = rgb(self.design.hair[0]) + shade*(rgb(self.design.hair[1])-rgb(self.design.hair[0]))
-            self.add(f'Combed lock {i+1:02}', p, f, c, 'hair_paint', 'Head', grain=.025)
-
-    @staticmethod
-    def directions(a, phi):
-        return np.stack((np.sin(phi)*np.cos(a), np.cos(phi), np.sin(phi)*np.sin(a)), axis=-1).reshape(-1, 3)
+        fitted = cap_samples(self, center, self.hairline, 24, 90)
+        a, s, phi, rays, radius = fitted
+        base = center + rays * radius[..., None]
+        x, yy, zz = np.moveaxis(base, -1, 0)
+        root, tip = (rgb(tone) for tone in self.design.hair)
+        if self.gentle:
+            ridges, fine, hatch = comb_field(rays, 14., .72, -.53, -.38)
+            # A side part tilted into the forelock and lighter ridges following
+            # its broad overlapping sweep, with only millimetres of relief.
+            part = bump(x - .026 + .27*(zz-center[2]), 0., .0044)
+            part *= smoothstep(y+.032, y+.072, yy)*smoothstep(center[2]-.024, center[2]+.027, zz)
+            lift = (1.-smoothstep(.82, 1.66, phi))*smoothstep(.94, .67, s)
+            volume = .0058 + lift*(.0061 + .0048*bump(a, 1.70, .65)*bump(s,.52,.37))
+            relief = (ridges*.0016 + .00060*fine)*smoothstep(.038,.23,s)
+            depth = -.0006 + smoothstep(1.,.922,s)*(volume + relief - .0041*part)
+            tint = .28 + .22*ridges + .089*fine + .049*hatch + .089*lift
+            pigment = root + tint[..., None]*(tip-root) + part[..., None]*[.035,.025,.023]
+            name, material = 'Side-part crown / split comb ridges', 'hair_combed'
+        else:
+            # Short faded sides, brushed forward. Matched dark roots and red
+            # tips inhabit the same shell so no rows of separate spikes float.
+            ridges, fine, hatch = comb_field(rays, 16., -.49, .24, -.39)
+            crest = bump(x - .13*(zz-center[2]) + .005, 0., .047) * smoothstep(y+.013,y+.078,yy)
+            crest *= .64 + .36*smoothstep(center[2]-.075, center[2]+.074, zz)
+            crest *= .78 + .22*bump(a,1.21,.65)*bump(s,.52,.38)
+            relief = (ridges*.00315 + fine*.00064)*smoothstep(.02,.21,s)
+            depth = -.0004 + smoothstep(1.,.931,s)*(.0028 + crest*(.030 + 1.7*relief) + .0006*ridges)
+            dye = np.clip((.13+.67*smoothstep(.20,.71,crest))*(.80+.31*ridges+.11*fine) + .040*hatch, 0., .95)
+            pigment = root + dye[..., None]*(tip-root)
+            name, material = 'Dyed crest crown / taper and split forelocks', 'hair_crest'
+        grid = shell_grid(center, fitted, depth)
+        self.add_hair_shell(name, grid, pigment, material)
+        if self.gentle:
+            guides = [
+                (((.08,.35),(.69,.43),(1.37,.59),(1.88,.81)), .0083,.0039),
+                (((.14,.40),(.82,.50),(1.61,.68),(2.06,.93)), .0072,.0044),
+                (((.17,.50),(.85,.57),(1.53,.77),(1.96,.98)), .0076,.0048),
+                (((.30,.61),(.96,.70),(1.46,.82),(1.75,.985)), .0068,.0043),
+                (((3.02,.34),(3.02,.50),(2.84,.74),(2.64,.97)), .0072,.0036),
+            ]
+            accent = [.074,.065,.079]
+        else:
+            guides = [
+                (((.83,.40),(1.01,.43),(1.11,.58),(1.18,.80)), .0051,.0046),
+                (((1.40,.32),(1.37,.45),(1.32,.61),(1.28,.78)), .0055,.0049),
+                (((1.68,.31),(1.62,.44),(1.57,.56),(1.46,.82)), .0056,.0059),
+                (((1.94,.35),(1.87,.46),(1.77,.62),(1.64,.81)), .0066,.0052),
+                (((2.29,.44),(2.12,.53),(1.99,.63),(1.85,.78)), .0059,.0042),
+                (((4.31,.42),(4.30,.62),(4.05,.72),(3.96,.91)), .0068,.0033),
+            ]
+            accent = [.14,.072,.047]
+        self.add_hair_ribbons('Combed lock', center, grid, pigment, self.hairline, guides, material, accent)
 
     def build(self, output, split=None):
         self.skin()

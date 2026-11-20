@@ -337,6 +337,17 @@ class Wardrobe:
         v, indices, weights, paint = [], [], [], []
         weld = {}
         waist_ids = [None]*n
+
+        def leg_weights(points, side, ay, ky):
+            w = s.axial_weights(points,[f'Foot_{side}',f'LowerLeg_{side}',f'Thigh_{side}','Hips'],
+                                [ay-.048,ay+.061,ky+.050,seat_y+.025])
+            # Blend into the pelvis across the actual welded seam, not an
+            # entire horizontal ring. The outer thigh can still swing freely.
+            bridge = (1. - smoothstep(.001, .047, abs(points[:,0]))) * smoothstep(join_y-.073, join_y-.019, points[:,1])
+            w *= 1. - bridge[:,None]
+            w[:,s.ids['Hips']] += bridge
+            return w
+
         for side, sign in SIDES:
             hip, knee, ankle = (s.bones[f'{b}_{side}'][1] for b in ('Thigh','LowerLeg','Foot'))
             hx,hy,hz = hip
@@ -344,16 +355,22 @@ class Wardrobe:
             ax,ay,az = ankle
             fit = d.trousers_fit
             crotch = .014 if not self.court else .011
-            start = join_y-.027
+            start = join_y-.042
+            # Place the upper leg along its own knee-hip axis, rather than
+            # pulling every thigh in to the same x before it meets the seat.
+            axis = sign*min(abs(.70*hx + .30*kx), seat_x*.61)
+            knee_r = .046*fit
+            thigh_r = seat_x - abs(axis) + (.006 if self.court else .004)
+            thigh_z = .60*z0 + .40*hz
             data = [(ay-.025,ax,az+.008,.037*fit,.045*fit,.87),
                     (ay+.014,ax,az+.006,.040*fit,.047*fit,.87),
                     (ay+.081,ax+sign*.002,az+.002,.038*fit,.044*fit,.90),
-                    (ky-.100,kx+.003*sign,kz-.015,.043*fit,.048*fit,.90),
-                    (ky-.012,kx+.002*sign,kz-.010,.047*fit,.055*fit,.88),
-                    (ky+.071,kx,kz-.010,.050*fit,.059*fit,.88),
-                    (start-.054,sign*.079,hz+.008,.056*fit,.067*fit,.88),
-                    (start,sign*.079,hz+.008,.063*fit,.074*fit,.88)]
-            p, _ = loft(data,n,3,.014 if not self.court else .021)
+                    (ky-.100,kx+.001*sign,kz-.013,.043*fit,.049*fit,.91),
+                    (ky-.012,kx,kz-.009,knee_r,.053*fit,.90),
+                    (ky+.062,.80*kx+.20*axis,.63*kz+.37*thigh_z,knee_r+.002,.059*fit,.90),
+                    (start-.039,.31*kx+.69*axis,.25*kz+.75*thigh_z,.31*knee_r+.69*thigh_r,.066*fit,.89),
+                    (start,axis,thigh_z,thigh_r,.073*fit,.89)]
+            p, _ = loft(data,n,3,.011 if not self.court else .014)
             rings = p[:-2].reshape(-1,n,3)
             if sign < 0:
                 rings = rings[:,(n//2-np.arange(n))%n,:]
@@ -364,24 +381,30 @@ class Wardrobe:
                                    z0+seat_z*np.sign(sn)*abs(sn)**.90))
             top[inner,0] = 0.
             top[:,1] -= crotch*bump(cs,-1.,.270)
-            last = rings[-1].copy()
+            last = rings[-1]
+            span = top[:,1] - last[:,1]
+            prev = rings[-2]
+            enter = (last-prev) * (span/(last[:,1]-prev[:,1]))[:,None]
+            # Vertical tangent at the exterior, across the seam at the
+            # interior. This eases the old visible bend without making a
+            # round hip bulge or a sharp V in the crotch.
+            medial = 1. - smoothstep(-.10, .46, cs)
+            leave = np.column_stack((-sign*medial*(.019+.034*np.maximum(-cs, 0.)),
+                                     span*(1.-medial), np.zeros(n)))
             rows = [*rings]
-            for u in (.22,.46,.69,.86,1.):
-                t = u**.96
-                rows.append(last*(1.-t)+top*t)
+            for t in (.20,.41,.62,.82,1.):
+                rows.append((2*t**3-3*t**2+1)*last + (t**3-2*t**2+t)*enter
+                            + (-2*t**3+3*t**2)*top + (t**3-t**2)*leave)
             p = np.asarray(rows).reshape(-1,3)
             yy = p[:,1]
-            center = np.interp(yy,[ay,ky,hy],[ax,kx,sign*.079])
-            original = yy < start-.022
-            crease = bump(p[:,0],center+sign*.010,.008)*smoothstep(.021,.075,p[:,2])*original
-            knee_pleat = bump(yy,ky-.014,.040)*np.cos(100*(yy-ky)+17*p[:,0])*original
-            p[:,2] += .004*crease + .0022*knee_pleat*np.sign(p[:,2]-kz)
+            center = np.interp(yy,[ay,ky,start],[ax,kx,axis])
+            fade = 1.-smoothstep(start-.105,start-.002,yy)
+            crease = bump(p[:,0],center+sign*.010,.008)*smoothstep(.021,.075,p[:,2])*fade
+            knee_pleat = bump(yy,ky-.014,.041)*np.cos(100*(yy-ky)+17*p[:,0])*fade
+            p[:,2] += .0028*crease + .0017*knee_pleat*np.sign(p[:,2]-kz)
             c = rgb(d.pants)+trigs(p)[:,None]*[.037,.033,.035]+crease[:,None]*[.056,.054,.051]
             c -= smoothstep(.064,-.040,p[:,2])[:,None]*[.014,.016,.009]
-            w = s.axial_weights(p,[f'Foot_{side}',f'LowerLeg_{side}',f'Thigh_{side}','Hips'],
-                               [ay-.048,ay+.061,ky+.050,seat_y+.017])
-            w[-n:] = s.weights(n,'Hips')
-            w[-2*n:-n] = w[-2*n:-n]*.65 + s.weights(n,'Hips')*.35
+            w = leg_weights(p, side, ay, ky)
             ix = []
             for i, pt in enumerate(p):
                 if i >= len(p)-n and inner[i%n] and i%n in weld:
@@ -408,14 +431,13 @@ class Wardrobe:
             q[:,0] += sign*.00029
             q = q[q[:,1] < self.hem+.003]
             pp,ff = tube(q,.00089 if self.court else .00070,6)
-            wq = s.axial_weights(pp,[f'Foot_{side}',f'LowerLeg_{side}',f'Thigh_{side}','Hips'],
-                                [ay-.048,ay+.061,ky+.050,seat_y+.017])
+            wq = leg_weights(pp, side, ay, ky)
             s.add(f'{side} sewn twill welt',pp,ff,'817883' if self.court else d.pants,'cloth_trim',wq)
         if any(i is None for i in waist_ids):
             raise ValueError('Open trouser seat')
         base = np.array([v[i] for i in waist_ids])
         rings = [*waist_ids]
-        for y, scale in [(seat_y+.022,1.008),(self.hip+.018,.945),(self.hip+.073,.91)]:
+        for y, scale in [(seat_y+.025,1.000),(self.hip+.018,.955),(self.hip+.073,.91)]:
             q = (base-[0.,0.,z0])*[scale,0.,scale]+[0.,y,z0]
             rings.extend(range(len(v),len(v)+n))
             v.extend(q); weights.extend(s.weights(n,'Hips')); paint.extend(rgb(d.pants)+trigs(q)[:,None]*.028)

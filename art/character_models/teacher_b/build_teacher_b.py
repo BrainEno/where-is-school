@@ -16,8 +16,11 @@ from pathlib import Path
 import numpy as np
 
 from skinned_glb import GLB, Piece, batch_materials, unit
+from sculpt_hair import cap_samples, comb_field, fitted_ribbon, shell_grid
 
 PI = np.pi
+# Sculpt-space ceiling of the first B export; freezes the rig and floor transform.
+B_HAIR_CROWN = 1.6191551725561004
 MATS = {
     'b_skin': (.86, 0., 1.), 'b_brows_and_crease': (.89, 0., 1.),
     'b_eye': (.46, 0., 1.), 'b_swept_silver': (.87, 0., 1.),
@@ -324,7 +327,8 @@ class Sculpt:
         if c.shape == (3,):
             c = np.broadcast_to(c, (len(p), 3)).copy()
         if grain:
-            c = c + trigs(p)[:, None] * grain
+            c = c.copy()
+            c[:, :3] += trigs(p)[:, None] * grain
         self.pieces.append(Piece(name, p, f, c, material,
                                  self.weights(len(p), weight) if isinstance(weight, str) else weight, morphs or {}))
 
@@ -550,45 +554,85 @@ class Sculpt:
             raise ValueError('Scalp did not close over the fitted skull')
         return radii
 
+    def add_hair_shell(self, name, grid, colors, material):
+        rows, sides = grid.shape[:2]
+        p, f = cap_ends(grid.reshape(-1, 3), rings_faces(rows, sides, flip=True), rows, sides, True)
+        c = np.vstack((colors.reshape(-1, 3), colors[0].mean(0), colors[-1].mean(0)))
+        self.add(name, p, f, c, material, 'Head')
+
+    def add_hair_ribbons(self, name, center, grid, colors, hairline, guides, material, accent, crown=None):
+        for index, (anchors, width, height) in enumerate(guides, 1):
+            lock, tint = fitted_ribbon(center, grid, colors, hairline, curve(anchors, 4), width, height, accent)
+            if crown is not None:
+                lock[..., 1] = np.minimum(lock[..., 1], crown-.0002)
+            pos = lock.reshape(-1,3)
+            f = np.array([(k,l,k+1) if j==0 else (k+1,l,l+1)
+                          for row in range(len(lock)-1) for u in range(4)
+                          for k,l in [(row*5+u,(row+1)*5+u)] for j in range(2)])
+            tri = pos[f]
+            n = np.cross(tri[:,1] - tri[:,0], tri[:,2] - tri[:,0])
+            if np.sum(n * (tri.mean(1) - center)) < 0.:
+                f = f[:,[0,2,1]]
+            self.add(f'{name} {index:02}', pos, f, tint.reshape(-1,3), material, 'Head')
+
     def hair(self):
         eye_y = self.eyes[0][1]
         center = np.array([0., eye_y + .012, self.eyes[0][2] - .053])
-        a = np.linspace(0, 2*PI, 84, endpoint=False)
-        line = (1.56 - .45 * np.sin(a) + .21 * smoothstep(-.16, -.92, np.sin(a))
-                + .078*np.sin(2*a + .25) + .025*np.sin(7*a + .1))
-        # Hairline at the entire forehead, not a painted flat cap. Sweep the
-        # grain across the crown from an off-center part into the back roll.
-        s = np.linspace(1, .019, 30)[:, None]
-        phi = line[None, :] * s
-        directions = np.stack((np.sin(phi)*np.cos(a), np.cos(phi), np.sin(phi)*np.sin(a)), axis=2).reshape(-1, 3)
-        base = self.scalp_rays(center, directions).reshape(phi.shape)
-        phase = 19.5 * phi + 17.8 * np.cos(a + .67*phi) + np.sin(4*a + phi) * 1.4
-        groove = (.5 + .5 * np.cos(phase)) ** 4
-        crest = .0018 * groove * smoothstep(.22, .78, s) + .0027*np.cos(a + 1.6)*np.sin(phi)**2
-        thick = (.0034 + .0049 * np.sin(PI*.78 * s)**.72 + crest) * smoothstep(1.032, .86, s)
-        # A compact patch at the silver side-part separates broad locks.
-        xyz = center + directions * (base + thick).reshape(-1, 1)
-        p, f = cap_ends(xyz, rings_faces(len(s), len(a), flip=True), len(s), len(a), True)
-        x, y, z = p.T
-        silver = .13 + .43 * smoothstep(eye_y+.012, eye_y+.099, y) + .18 * bump(x, -.026, .042)
-        silver *= .67 + .33 * smoothstep(eye_y+.020, eye_y+.076, y)
-        pigment = .13*np.cos(phase) + .050*np.cos(2.*phase + .5*np.sin(phi))
-        pigment *= smoothstep(.02, .28, s) * (.59 + .41*smoothstep(-.45, .68, np.sin(a)))
-        strokes = np.concatenate(((pigment).ravel(), [0., 0.]))
-        part = bump(x + .022 - .20*(z - center[2]), 0., .003) * smoothstep(eye_y+.045, eye_y+.082, y)
-        c = rgb('302d32') + np.clip(silver + strokes - .17*part, 0., .93)[:, None] * (rgb('94968f') - rgb('302d32'))
-        self.add('Swept silver scalp', p, f, c, 'b_swept_silver', 'Head', grain=.022)
-        # Tucked rather than spherical bun. The grooves turn continuously
-        # into a few soft rolls with a matte dark nape.
-        bun_center = np.array([.012, eye_y-.037, center[2]-.087])
-        p, f = sphere(bun_center, [.057, .038, .032], 19, 42)
-        bx, by, bz = (p - bun_center).T
-        theta = np.arctan2(by/.038, bx/.057)
-        d = np.hypot(by/.038, bx/.057)
-        waves = .5 + .5*np.cos(5.0*theta + 10.8*d + 30.*bz)
-        p[:, 2] -= .0021 * waves**3 * smoothstep(.005, -.03, bz)
-        c = rgb('38363a') + (.13 + .18*waves + .14*smoothstep(-.028, .037, by))[:, None]*(rgb('8f908d')-rgb('38363a'))
-        self.add('Low rolled silver bun', p, f, c, 'b_swept_silver', 'Head', grain=.028)
+
+        def hairline(a):
+            front = np.sin(a)
+            return (1.55 - .44*front + .21*smoothstep(-.16, -.92, front)
+                    + .082*np.sin(2*a+.25) + .012*np.sin(7*a+.1))
+
+        fitted = cap_samples(self, center, hairline, 25, 88)
+        a, s, phi, ray, r = fitted
+        base = center + ray*r[..., None]
+        x, y, z = np.moveaxis(base, -1, 0)
+        blades, finer, grain = comb_field(ray, 15., -.81, .64, -.28)
+        # Break the shell into combed, feathered sections. The thin diagonal
+        # part at the crown is carved back towards the scalp; it is not a line
+        # pasted on top. Farther back the locks tuck into the low roll.
+        part = bump(x + .021 - .28*(z-center[2]), 0., .0042)
+        part *= smoothstep(eye_y+.033, eye_y+.069, y)*smoothstep(center[2]-.019, center[2]+.026, z)
+        edge = smoothstep(1.00, .93, s)
+        relief = (blades*.00166 + finer*.00064)*smoothstep(.028, .24, s)
+        swell = .005 + .0036*np.sin(.79*PI*s)**.85 + .0045*bump(a, 1.10, .91)*bump(s,.56,.36)
+        depth = -.0007 + edge*(swell + relief + .0009*np.cos(a+.35) - part*.0048)
+        silver = .22 + .20*smoothstep(eye_y+.012, eye_y+.107, y) + .17*blades + .073*finer + .046*grain
+        silver *= .65 + .35*smoothstep(eye_y-.020, eye_y+.055, y)
+        c = rgb('302d34') + np.clip(silver, 0., .94)[..., None]*(rgb('a5a59c')-rgb('302d34'))
+        c += part[..., None] * np.array([.044, .028, .018])
+        # Keep the original measured sculpt-space ceiling and hence the exact
+        # rest rig, garment bounds and B-only animation calibration.
+        grid = shell_grid(center, fitted, depth, crown=B_HAIR_CROWN)
+        material = 'b_swept_silver'
+        self.add_hair_shell('Silver side-part / carved swept crown', grid, c, material)
+        guides = [
+            (((2.48,.34),(1.65,.48),(1.05,.65),(.86,.91)), .0074,.0048),
+            (((2.67,.43),(1.85,.49),(1.28,.62),(1.14,.92)), .0062,.0049),
+            (((2.89,.54),(2.01,.57),(1.54,.71),(1.45,.97)), .0079,.0045),
+            (((3.15,.59),(2.60,.58),(2.09,.73),(1.98,.98)), .0069,.0037),
+            (((.34,.38),(.05,.58),(-.61,.73),(-1.11,.92)), .0090,.0042),
+            (((3.15,.46),(3.63,.58),(4.31,.76),(4.64,.98)), .0082,.0039),
+        ]
+        self.add_hair_ribbons('Silver combed lock', center, grid, c, hairline, guides, material,
+                              [.085,.080,.069], crown=B_HAIR_CROWN)
+
+        # The chignon is a compressed twist with a tapered tuck, not a grooved
+        # ball. The asymmetric ridge turns into the nape below the ears.
+        anchor = np.array([.012, eye_y-.037, center[2]-.087])
+        p, f = sphere(anchor, [.057, .038, .032], 18, 40)
+        bx, by, bz = (p-anchor).T
+        xx, yy = bx/.057, by/.038
+        theta = np.arctan2(yy, xx+1.e-7)
+        radial = np.hypot(yy, xx)
+        phase = 6.*theta + 10.0*radial + 1.7*xx - .75*np.sin(2*theta)
+        lock = (.5+.5*np.cos(phase))**3
+        tuck = bump(by+.26*bx, -.012, .012) * smoothstep(.007, -.028, bz)
+        p[:, 0] -= .004*smoothstep(.023, -.035, by)
+        p[:, 2] += .006*smoothstep(.017, -.039, by) - .003*lock*smoothstep(.007, -.031, bz) + tuck*.0021
+        c = rgb('363139') + (.15 + .25*lock + .13*smoothstep(-.026, .032, by) - .09*tuck)[:, None]*(rgb('96938c')-rgb('363139'))
+        self.add('Silver folded chignon / nape tuck', p, f, c, 'b_swept_silver', 'Head', grain=.012)
 
     def cloth_weights(self, p):
         return self.axial_weights(p, ['Hips', 'Spine', 'Spine_01', 'Spine_02', 'Chest'],

@@ -19,7 +19,7 @@ class Piece:
     name: str
     points: np.ndarray
     faces: np.ndarray
-    color: np.ndarray
+    color: np.ndarray  # sRGB RGB, optional fourth channel is a linear paint mask
     material: str
     weights: np.ndarray
     morphs: dict[str, np.ndarray] = field(default_factory=dict)
@@ -144,11 +144,12 @@ class GLB:
             # Keep fine face/hair gradients at 16 bits in the compact variant.
             # Four components keep byte attributes aligned. Quantized weights
             # sum to exactly the integer max; zero-weight joints are cleared.
-            color16 = not compact or p.morphs or p.material in ('hair_paint', 'eye_paint')
+            color16 = not compact or p.morphs or (p.material.startswith('hair_') or p.material == 'eye_paint')
             color_max, color_type = (65535, 5123) if color16 else (255, 5121)
             weight_max, weight_type = (255, 5121) if compact else (65535, 5123)
-            color = np.round(color_max * linear_rgb(np.clip(p.color, 0., 1.)))
-            color = np.column_stack((color, np.full(len(p.points), color_max)))
+            color = np.round(color_max * linear_rgb(np.clip(p.color[:, :3], 0., 1.)))
+            mask = np.round(color_max*np.clip(p.color[:, 3], 0., 1.)) if p.color.shape[1] == 4 else np.full(len(p.points), color_max)
+            color = np.column_stack((color, mask))
             weight = np.rint(weight_max * weight).astype(np.int32)
             weight[:, 0] += weight_max - weight.sum(axis=1)
             order[weight == 0] = 0

@@ -4,6 +4,9 @@ extends SceneTree
 const Harness := preload("res://tests/test_harness.gd")
 const Stage := preload("res://scenes/dev/classmates/classmates_review.gd")
 const SCENE := preload("res://scenes/dev/classmates/classmates_review.tscn")
+const ClassroomReview := preload("res://scenes/dev/teacher_b/teacher_b_review.gd")
+const CLASSROOM_SCENE := preload("res://scenes/dev/teacher_b/teacher_b_review.tscn")
+const HAIR_MATERIALS := ["clipper_skin", "hair_combed", "hair_crest"]
 const OUT := "res://builds/classmates-review/godot"
 
 var checks := Harness.Checker.new()
@@ -26,6 +29,7 @@ func _run() -> void:
 	if checks.failures.is_empty() and "--capture" in OS.get_cmdline_user_args():
 		if checks.expect(DisplayServer.get_name() != "headless", "a real renderer is required for capture"):
 			await _capture(stage)
+			await _capture_under_classroom_key(stage)
 	stage.queue_free()
 	await process_frame
 	Harness.finish(self, checks.failures, "Three classmates: imported paint, 57-joint rigs, independently authored gestures")
@@ -46,6 +50,7 @@ func _verify_member(stage: Stage, i: int) -> void:
 	var surface_count := 0
 	var painted := 0
 	var optics := 0
+	var hair_surface := false
 	for node in stage.performers[i].find_children("*", "MeshInstance3D", true, false):
 		var part := node as MeshInstance3D
 		if not checks.expect(part.skin != null and part.get_node_or_null(part.skeleton) == skeleton, "%s binds %s to the imported skin" % [label, part.name]):
@@ -58,6 +63,9 @@ func _verify_member(stage: Stage, i: int) -> void:
 			var material := part.mesh.surface_get_material(surface) as BaseMaterial3D
 			if material != null and material.vertex_color_use_as_albedo and not material.vertex_color_is_srgb:
 				painted += 1
+			if material != null and material.resource_name == HAIR_MATERIALS[i]:
+				_verify_hair(part, surface, i, label)
+				hair_surface = true
 			if material != null and material.resource_name == "optics":
 				optics += 1
 				checks.expect(material.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED, label + " retains a clear lens surface")
@@ -81,7 +89,8 @@ func _verify_member(stage: Stage, i: int) -> void:
 				if absf(total - 1.0) > 0.001 or not points[n].is_finite():
 					invalid += 1
 			checks.expect(invalid == 0, label + " has normalized, finite skin data on " + String(part.name))
-	checks.expect(surface_count == [12, 13, 12][i] and painted == surface_count and soles == 1 and optics == (0 if i == 2 else 1), "%s imported %d painted surfaces; soles and optics kept" % [label, painted])
+	checks.expect(hair_surface, label + " has its own hair treatment")
+	checks.expect(surface_count == [11, 13, 12][i] and painted == surface_count and soles == 1 and optics == (0 if i == 2 else 1), "%s imported %d painted surfaces; soles and optics kept" % [label, painted])
 	checks.expect(face != null and face.get_blend_shape_count() == 4, label + " keeps four independent facial controls")
 	var look := stage.performers[i].get_node(^"Look") as CharacterLookApplier
 	checks.expect(look != null and int(look.get_report().get("replaced", 0)) >= 5, label + " uses the existing painterly treatment in this stage")
@@ -108,6 +117,9 @@ func _verify_member(stage: Stage, i: int) -> void:
 	if i == 1 and face != null:
 		var smile := face.find_blend_shape_by_name(&"SoftSmile")
 		checks.expect(smile >= 0 and face.get_blend_shape_value(smile) > 0.25, "friend opens his hand with a separately keyed smile")
+	if i == 0 and face != null:
+		var release := face.find_blend_shape_by_name(&"LipRelease")
+		checks.expect(release >= 0 and face.get_blend_shape_value(release) > 0.08, "the clipper scalp keeps the mutter's morph track on the rebuilt mesh")
 	stage.play_clip(&"walk_in_place")
 	var before := skeleton.get_bone_global_pose(foot).origin
 	player.seek(0.45, true, true)
@@ -118,7 +130,24 @@ func _verify_member(stage: Stage, i: int) -> void:
 	stage.bind(i)
 
 
-func _save(stage: Stage, leaf: String) -> void:
+func _verify_hair(part: MeshInstance3D, surface: int, i: int, label: String) -> void:
+	var paint := part.get_surface_override_material(surface) as ShaderMaterial
+	checks.expect(paint != null and paint.get_shader_parameter(&"detail_kind") == (5 if i == 0 else 4), label + " uses the stubble or comb paint on the right surface")
+	var arrays := part.mesh.surface_get_arrays(surface)
+	var points: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var rest: Variant = arrays[Mesh.ARRAY_CUSTOM0]
+	checks.expect(rest is PackedFloat32Array and rest.size() == points.size() * 4, label + " keeps fine pigment in bind coordinates")
+	if i == 0:
+		var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		var low := 1.0
+		var high := 0.0
+		for c in colours:
+			low = minf(low, c.a)
+			high = maxf(high, c.a)
+		checks.expect(low < .01 and high > .95 and part.get_blend_shape_count() == 4, "clipper mask, rest coordinates and face morphs coexist on one opaque head")
+
+
+func _save(stage: Node3D, leaf: String) -> void:
 	await process_frame
 	await RenderingServer.frame_post_draw
 	var img := stage.get_viewport().get_texture().get_image()
@@ -141,3 +170,46 @@ func _capture(stage: Stage) -> void:
 		if stage.play_clip(Stage.GESTURES[i]):
 			stage.player(i).seek(Stage.BEATS[i], true, true)
 			await _save(stage, "%s_%s" % [Stage.IDS[i], Stage.GESTURES[i]])
+		if stage.play_clip(&"walk_in_place"):
+			stage.player(i).seek(0.37, true, true)
+			for angle: int in [0, 90, 180]:
+				stage.set_view(float(angle))
+				await _save(stage, "%s_step_%03d" % [Stage.IDS[i], angle])
+
+
+func _capture_under_classroom_key(stage: Stage) -> void:
+	# Reuse the actual B sandbox (no classroom actors, story or input handlers).
+	# Temporarily move the review-only meshes under it, never into a shipped scene.
+	var room := CLASSROOM_SCENE.instantiate() as ClassroomReview
+	for i in Stage.IDS.size():
+		stage.bind(i)
+		stage.performers[i].hide()
+		stage.performers[i].reparent(room, false)
+	stage.hide()
+	stage.get_node("Environment").free()
+	root.add_child(room)
+	room.get_node("Help").hide()
+	room.look.blinking = false
+	room.show_shot("face", true)
+	await _save(room, "classroom_lead")
+	room.show_shot("face")
+	await _save(room, "classroom_teacher_b")
+	room.teacher.hide()
+	# Same position, turn, orientation and orthographic scale. Translate only
+	# the lens height to centre each face without resizing the character.
+	var b_eye := room.camera.position
+	for i in Stage.IDS.size():
+		var subject := stage.performers[i]
+		subject.position = ClassroomReview.MARK
+		subject.rotation = room.teacher.rotation
+		subject.show()
+		room.camera.position = b_eye + Vector3.UP * (float(Stage.HEIGHTS[i]) - 1.640)
+		await _save(room, "classroom_" + String(Stage.IDS[i]))
+		subject.hide()
+	room.show_shot("back")
+	var nape := ClassroomReview.MARK + Vector3(0., 1.489, 0.)
+	room.camera.position = nape + Vector3(0., .18, 1.04)
+	room.camera.look_at(nape)
+	room.camera.size = .414
+	await _save(room, "classroom_teacher_b_nape")
+	room.queue_free()

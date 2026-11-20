@@ -23,7 +23,7 @@ def group(obj):
     name = obj.name
     if name.startswith(('Tortoiseshell', 'Optical lens', 'Acetate', 'Hinge pin', 'Arched saddle', 'Old brass')):
         return '03 · Spectacles and earrings'
-    if 'silver' in name:
+    if 'silver' in name.lower():
         return '02 · Silver hair'
     if name.startswith(('Face', 'Eye ', 'Hands', 'Outer lid', 'Tapered brow')):
         return '01 · Face and hands'
@@ -48,7 +48,7 @@ def make_source(glb, output):
     rig, = (o for o in scene.objects if o.type == 'ARMATURE')
     widgets = {bone.custom_shape for bone in rig.pose.bones if bone.custom_shape is not None}
     parts = [o for o in scene.objects if o.type == 'MESH' and o not in widgets]
-    if len(rig.data.bones) != 57 or len(parts) != 57:
+    if len(rig.data.bones) != 57 or not any(o.name.startswith("Silver folded chignon") for o in parts):
         raise ValueError('Use the split-part GLB, not the batched Godot export')
     for obj in parts:
         if not any(m.type == 'ARMATURE' and m.object == rig for m in obj.modifiers):

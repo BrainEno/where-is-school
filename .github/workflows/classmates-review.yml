@@ -10,7 +10,7 @@ on:
       - 'assets/models/classmates/**'
       - 'assets/shaders/characters/**'
       - 'scenes/dev/classmates/**'
-      - 'scenes/dev/teacher_b/apply_vertex_paint.gd'
+      - 'scenes/dev/teacher_b/**'
       - 'scripts/actors/character_look*.gd'
       - 'tests/classmates_*_test.*'
   workflow_dispatch:
@@ -58,7 +58,7 @@ jobs:
             run_check classmates_native 100 godot --headless --path . --script res://tests/classmates_review_test.gd || status=1
           fi
           run_check_summary
-      - name: Capture the painterly look, Q comparison and gestures
+      - name: Capture hair, gestures, walking and the lead under the same classroom light
         shell: bash
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
@@ -82,9 +82,23 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m venv "$RUNNER_TEMP/classmate-audit"
-          timeout 90 "$RUNNER_TEMP/classmate-audit/bin/pip" install --only-binary=:all: numpy==2.2.6
+          timeout 90 "$RUNNER_TEMP/classmate-audit/bin/pip" install --only-binary=:all: numpy==2.2.6 Pillow==11.3.0
           "$RUNNER_TEMP/classmate-audit/bin/python" tests/classmates_assets_test.py
           python3 tools/model_library.py --check
+      - name: Compose same-light capture sheet
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/godot/classroom_teacher_b_nape.png') != '' }}
+        run: >-
+          "$RUNNER_TEMP/classmate-audit/bin/python" art/character_models/classmates/compose_review.py
+          builds/classmates-review/godot builds/classmates-review --classroom
+      - name: Relay same-light crops (1–10)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '1,10p' builds/classmates-review/classroom-relay.txt
+      - name: Relay same-light crops (11–20)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '11,20p' builds/classmates-review/classroom-relay.txt
+      - name: Relay same-light crops (21–30)
+        if: ${{ !cancelled() && hashFiles('builds/classmates-review/classroom-relay.txt') != '' }}
+        run: sed -n '21,30p' builds/classmates-review/classroom-relay.txt
       - name: Retain rendered review and diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -92,6 +106,7 @@ jobs:
           name: classmates-review-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             builds/classmates-review/godot/*.png
+            builds/classmates-review/classroom-comparison.jpg
             ci-logs/classmates_*.log
             ci-logs/capture_script.log
           if-no-files-found: error

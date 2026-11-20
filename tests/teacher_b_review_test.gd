@@ -77,6 +77,11 @@ func _surfaces(teacher: Node3D, skeleton: Skeleton3D) -> Array[Dictionary]:
 			if not _check.expect(original != null and original.vertex_color_use_as_albedo, "%s retains vertex paint in the imported material" % part.name):
 				continue
 			var material := original.resource_name
+			if material == "b_swept_silver":
+				var pigment := part.get_surface_override_material(surface) as ShaderMaterial
+				_check.expect(pigment != null and pigment.get_shader_parameter(&"detail_kind") == 4, "silver cap and chignon use the fine comb field")
+				var rest: Variant = arrays[Mesh.ARRAY_CUSTOM0]
+				_check.expect(rest is PackedFloat32Array and rest.size() == points.size() * 4, "silver strokes stay on the moving head in bind coordinates")
 			result.append({"points": points, "weights": weights, "indices": indices,
 				"joints": joints, "inverse": inverse_binds, "material": material})
 			var invalid := 0
