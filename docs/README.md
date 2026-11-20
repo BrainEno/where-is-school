@@ -33,7 +33,7 @@
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-18 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
-| [GLOSSARY.md](GLOSSARY.md) | 术语表：玩家称呼 ↔ 位置 id、autoload 名 ↔ 脚本、核心术语 | 现行 | 文档 Agent | 2026-11-19 | 消除 walkway=corridor、schoolyard=playground、Save=save_manager.gd 三处命名分歧；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
+| [GLOSSARY.md](GLOSSARY.md) | 术语表：游戏文字用词、17 个地点 id ↔ 中英地名、人物与徽章、对话章节、10 个 autoload | 现行 | 文档 Agent | 2026-11-19 | 台词用词以本表为准（器材棚、居民楼、球场等）；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |
 | [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) | 走廊模型落地实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行资产台账见 [MODEL_LIBRARY.md](MODEL_LIBRARY.md) |
 | [IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md](IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md) | 显示与输入提示适配实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 唯一无英文配对的实现笔记；现行边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
@@ -58,6 +58,7 @@
 | [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) | 首个可玩垂直切片验收范围 | 现行 | 仓库所有者 | 2026-11-17 | 人工验收见 [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) |
 | [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [RELEASE.md](RELEASE.md) | 双平台发布与导出验证流程 | 现行 | 工程 Agent | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
+| [STORY_DOCS.zh-CN.md](STORY_DOCS.zh-CN.md) | 故事文档（台本）格式与 Google 文档往返流程 | 现行 | 内容 Agent | 2026-11-19 | 工具 `tools/story_doc.py`；内容契约见 [data/dialogue_schema/README.md](../data/dialogue_schema/README.md) |
 | [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-17 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) | 视觉实验开发场景说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用；同类实验见 [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) |
 | [adr/README.md](adr/README.md) | 架构决策记录索引 | 目录/索引 | 文档 Agent | 2026-11-17 | ADR 文件路径是编号权威；见 [README.md](README.md) |

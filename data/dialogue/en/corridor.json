@@ -109,7 +109,9 @@
           "source": "observed",
           "next": null,
           "conditions": {
-            "not_flags": ["corridor_waited"]
+            "not_flags": [
+              "corridor_waited"
+            ]
           },
           "effects": [
             {
