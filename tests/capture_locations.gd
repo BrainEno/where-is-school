@@ -21,6 +21,9 @@ extends SceneTree
 ## `school-details` uses matched hall, lab and fitted-room stances.
 ## Add `school-focus` for authored CameraShots, including the updated wet bench.
 ## `review_width=400` additionally writes compact copies for inline CI review.
+## `dream-annex` frames the exam-dream dressing (docs/EXAM_DREAM_ART.md) on the live
+## corridor: two follow-camera stances, then fixed views of the escalator, the ticket
+## counter, the 03 exam floor and the stable yard behind 01.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -129,6 +132,19 @@ const TEACHING_SPOTS := {
 	"half_landing": [^"TeachingBlock/RearStair/DownLanding", Vector3.ZERO],
 	"laboratory_recess": [^"SpawnPoints/FromLaboratory", Vector3.ZERO],
 }
+## [name, player feet] for the follow camera, then [name, eye, target] fixed views.
+const DREAM_STANCES := [
+	["yard_stance", Vector3(-31.0, -3.4, 13.4)],
+	["exam_lane_stance", Vector3(-13.2, 3.6, -27.0)],
+]
+const DREAM_VIEWS := [
+	["escalator", Vector3(0.6, 1.9, -5.4), Vector3(-5.0, 2.0, -8.45)],
+	["ticket_counter", Vector3(-1.5, 1.55, -6.1), Vector3(1.4, 1.35, -8.45)],
+	["exam_floor_west", Vector3(-12.3, 5.4, -17.6), Vector3(-13.7, 4.2, -29.5)],
+	["exam_floor_north", Vector3(-5.5, 5.5, -40.4), Vector3(9.0, 4.2, -43.6)],
+	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],
+	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-33.0, -1.0, 7.0)],
+]
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
 const RETURN_SPOTS := {
 	"street": [
@@ -165,6 +181,7 @@ var _return_route := false
 var _return_board_focus := false
 var _school_details := false
 var _school_focus := false
+var _dream_annex := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -200,6 +217,8 @@ func _initialize() -> void:
 			_school_focus = true
 		elif arg == "return-board-focus":
 			_return_board_focus = true
+		elif arg == "dream-annex":
+			_dream_annex = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -249,7 +268,9 @@ func _run() -> void:
 	_lines.append("The game camera frames stand the player on each spot; `wide` looks along")
 	_lines.append("the same bearing from further away. HUD hidden.")
 	_lines.append("")
-	if _school_details and SCHOOL_SCENES.has(_only):
+	if _dream_annex:
+		await _capture_dream(out_dir)
+	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:
 		for entry: Array in LOCATIONS:
@@ -314,6 +335,49 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 			await _capture_focus(current, out_dir, shot[1], shot[2], "%s_shot_detail_%s" % [location_id, shot[0]])
 	await _wide(current, subject, out_dir)
 	_lines.append("")
+
+
+func _capture_dream(out_dir: String) -> void:
+	if not _host.load_location("res://scenes/locations/corridor/corridor.tscn", &"", _player, &"corridor"):
+		_failures.append("corridor did not load")
+		return
+	_player.set_wake_pose(0.0)
+	var current := _host.get_current()
+	var nav := current.get_node_or_null(^"Navigation") as LocationNavigation
+	if nav == null or not await Harness.wait_until(nav.is_routable, 8.0):
+		_failures.append("corridor has no synchronized navigation.")
+		return
+	if current.get_node_or_null(^"DreamAnnex/StableYard/DreamHouse") == null:
+		_failures.append("The corridor does not instance the dream annex.")
+	_lines.append("## dream_annex")
+	_lines.append("")
+	var index := 0
+	for stance: Array in DREAM_STANCES:
+		var feet := NavigationServer3D.map_get_closest_point(nav.get_navigation_map(), stance[1])
+		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-45.0)), feet + Vector3.UP * 0.05))
+		await _wait(0.5)
+		if _rig.has_method("snap"):
+			_rig.call("snap")
+		await _wait(0.6)
+		var shot := "dream_annex_%02d_detail_%s" % [index, stance[0]]
+		_save(out_dir, shot)
+		_lines.append("- `%s.jpg` (follow camera) at %s, asked for %s" % [shot, str(feet), str(stance[1])])
+		index += 1
+	var camera := Camera3D.new()
+	camera.fov = 58.0
+	camera.far = 300.0
+	_main.add_child(camera)
+	for view: Array in DREAM_VIEWS:
+		camera.global_position = view[1]
+		camera.look_at(view[2], Vector3.UP)
+		camera.make_current()
+		await _wait(0.5)
+		var shot := "dream_annex_%02d_detail_%s" % [index, view[0]]
+		_save(out_dir, shot)
+		_lines.append("- `%s.jpg` (fixed view, not gameplay) from %s" % [shot, str(view[1])])
+		index += 1
+	camera.queue_free()
+	await _wait(0.1)
 
 
 ## This is not a gameplay shot: the low matched plate makes the old unsupported

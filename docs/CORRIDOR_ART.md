@@ -62,9 +62,19 @@ only in the separately loaded room. None changes the objective or the story rout
 Each return is unconditional and lands outside its own door. The original staff office
 retains its rota, trays and hook, and remains unstaffed.
 
+## Exam dream layer (experimental)
+
+`DreamAnnex` overlays an exam dream on the block without moving anything. The 02 -> 03
+west stair becomes a metro escalator whose steps run down. A ticket counter of three
+identical clerks stands on 02. 03 becomes an exam floor with paper room numbers, a
+painted seating plan, hard colour fields, turned chairs, cliques and a troublemaker. The
+staff office becomes the waiting room. Behind 01, the forecourt's west side now opens onto
+a walkable stable yard, with a two-storey dream house whose only door is at its
+south-west corner. Rules, element map and checks are in [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md).
+
 ## Build and check
 
-- Edit `tools/build_teaching_block.py`, then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.
+- Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn`, `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.
 - Reuse `build_outdoor_locations.build_playground()` for the view's measurements and `build_playground_art.court_landmarks()` for its painted lines and rims. Rebuild the playground graybox and art pass first if changing those shared features. The old stage generator no longer rewrites `corridor.tscn`; its material/texture definitions keep the painted kit reproducible.
 - `godot --headless --resolution 1600x900 --path . --script res://tests/corridor_art_test.gd` checks the floor plan, window/yard alignment, input on the stairs and both ways of peeking, a player-capsule sweep and clear/blocked rays through the sash/pier, a real click through one 03 window, the paired biology thresholds and a click on the locked rear door, and the existing location round trips. It also enters by the new glass door on foot, clicks across the opening, reads the directory, and takes the forecourt exit. `corridor_props_test.gd` covers the original placements and routes. `location_art_test.gd` checks the visual-only exterior against the stage rules.
 

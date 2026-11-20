@@ -332,6 +332,8 @@ def office():
     for i in range(5):
         b.box(f"MatRule{i}", ".", (OFFICE_DOOR_X,.007,2.15+i*.107), (1.41,.002,.013), "edge")
 
+    from build_dream_annex import waiting_room  # the exam dream's waiting room (2026-11-20)
+    waiting_room(b)
     # A slight turn toward the working area also makes this an explicit facing
     # basis (the player preserves the old yaw on identity teleports).
     add_route(b, "staff_office", (OFFICE_DOOR_X,0,1.67), (OFFICE_DOOR_X,.81,2.61), -12)

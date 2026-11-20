@@ -650,7 +650,8 @@ def rear_stair_and_ground_wing(b):
         solid_wall(b, g, name, (sum(ends)/2, GROUND_Y, ground_z[1]), ends[1]-ends[0],
                    base="entry_glaze", field="municipal_rose", height=2.83)
     b.instance("GlassEntrance", g, "teaching_entrance", (ENTRANCE_X, GROUND_Y, ground_z[1]))
-    guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y, {"North": [entrance_x]},
+    # The west side opens onto the stable lane of tools/build_dream_annex.py.
+    guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y, {"North": [entrance_x], "West": [apron_z]},
                 "entry_glaze", "brass_rule")
     b.box("StreetPlateRiser", g, (ENTRANCE_X, GROUND_Y+0.7, ENTRANCE_APRON_END-0.104),
           (0.26, 0.14, 0.08), "entry_glaze")
@@ -987,7 +988,9 @@ def main():
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     stale = []
+    from build_dream_annex import annex  # noqa: E402 - it imports this module's helpers
     scenes = ((LOC / "teaching_block.tscn", teaching_block()),
+              (LOC / "dream_annex.tscn", annex()),
               (LOC / "courtyard_view.tscn", courtyard_view()),
               (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()))
     for path, generated in scenes:
@@ -999,7 +1002,7 @@ def main():
             path.write_text(text, encoding="utf-8", newline="\n")
     if stale:
         sys.exit("Teaching block needs regeneration: " + ", ".join(stale))
-    print("Teaching block, glass entrance and yard view " + ("match the generator." if args.check else "generated."))
+    print("Teaching block, dream annex, glass entrance and yard view " + ("match the generator." if args.check else "generated."))
 
 
 if __name__ == "__main__":
