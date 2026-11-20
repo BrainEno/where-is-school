@@ -1,5 +1,5 @@
 extends SceneTree
-## Captures the real staged curtain, drop, impact and ladder actions in a window, with
+## Captures the real curtain, drop, impact, ladder and yard inspection shots, with
 ## the HUD hidden for art review. The fixture places the player near each route's start;
 ## the game drives character travel, body poses, lighting and camera. `classroom_anomaly_test`
 ## separately exercises both routes with ground/roof movement input and checks state.
@@ -11,9 +11,9 @@ const OUT_DIR := "res://docs/screenshots/classroom_anomalies"
 const LOG_PATH := "res://docs/screenshots/classroom_anomalies/CAPTURE.log"
 const INLINE_SIZE := Vector2i(480, 270)
 ## Four 4000-character parts per frame, even with textured walls. The full PNG is
-## not affected. Ten frames then fit the workflow's 40 notice slots.
+## not affected. The workflow prioritizes the last (yard detail) frames inline.
 const INLINE_BYTES := 12000
-const EXPECTED_SHOTS := 10
+const EXPECTED_SHOTS := 14
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -107,13 +107,37 @@ func _run() -> void:
 	if _player.global_position.y > 0.10:
 		_finish(["The protagonist is still above the yard after using the ladder."])
 		return
-	await _stand(container.to_global(Vector3(4.15, 0.02, 0.20)), Vector3.LEFT)
+	# Same review convention as hiding GameUI: do not let a billboard label hide a fitting.
+	(_player.get_node(^"Nameplate") as Label3D).hide()
+	await _stand(container.to_global(Vector3(4.15, 0.02, 0.12)), Vector3.LEFT)
 	await _shot("09-open-cabin.png")
-	_activate(&"pg_container_look")
-	await create_timer(1.15).timeout
-	await _shot("10-cabin-focus.png")
-	await _settle()
+	await _focus_shot(&"pg_container_look", "10-cabin-focus.png")
+	await _stand(container.to_global(Vector3(2.67, 0.23, -0.21)), Vector3.LEFT)
+	await _focus_shot(&"pg_cabin_papers_look", "11-cabin-papers.png")
+	await _stand(Vector3(10.03, 0.03, 3.66), Vector3.RIGHT)
+	await _focus_shot(&"pg_bench_look", "12-noodle-wrapper.png")
+	await _stand(Vector3(-4.67, 0.03, 14.42), Vector3.LEFT)
+	await _focus_shot(&"pg_tap", "13-tap-and-drain.png")
+	await _stand(Vector3(-12.5, 0.03, -4.4), Vector3.LEFT)
+	await _focus_shot(&"pg_shed_door", "14-equipment-shed.png")
 	_finish(_failures)
+
+
+func _focus_shot(id: StringName, frame: String) -> void:
+	_activate(id)
+	var rig := _player.camera_rig
+	if not await Harness.wait_until(func() -> bool:
+		var focus := rig.get_focus_subject()
+		return focus != null and focus.interact_id == id and rig.get_focus_weight() > 0.97
+	, 6.0):
+		_failures.append("%s never reached its live focus shot." % id)
+	else:
+		await _shot(frame)
+	# Only photograph the shut facade. Do not start a visible roll with the HUD hidden.
+	if id == &"pg_shed_door" and not await _choose(&"leave"):
+		_failures.append("The shed inspection did not offer its unchanged leave choice.")
+		return
+	await _settle()
 
 
 func _seed_balance(passed: bool) -> bool:

@@ -783,10 +783,13 @@ def build_playground(for_courtyard_view: bool = False):
 
     # the equipment shed on the west side
     s.box("ShedBody", (-17.0, 1.5, -4.0), (6.0, 3.0, 8.0), "wall", ["camera_occluder"])
+    # Both views use the actual roof slab. The yard art pass adds seams and a gutter
+    # to it and replaces the distant door, glazing and sign with detailed wall trim.
     s.box("ShedRoof", (-17.0, 3.1, -4.0), (6.4, 0.2, 8.4), "metal", None, False)
-    s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
-    s.box("ShedWindow", (-13.95, 1.9, -6.2), (0.1, 0.8, 1.2), "glass", None, False)
-    s.box("ShedSheet", (-13.9, 1.9, -6.2), (0.08, 0.5, 0.9), "paper", None, False)
+    if for_courtyard_view:
+        s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
+        s.box("ShedWindow", (-13.95, 1.9, -6.2), (0.1, 0.8, 1.2), "glass", None, False)
+        s.box("ShedSheet", (-13.9, 1.9, -6.2), (0.08, 0.5, 0.9), "paper", None, False)
     # two footings, and the gap is only on the left one
     s.box("ShedFootingWest", (-15.6, 0.2, -0.1), (1.4, 0.4, 1.4), "concrete")
     s.box("ShedFootingEast", (-13.2, 0.3, -0.1), (1.4, 0.6, 1.4), "concrete")
@@ -799,9 +802,6 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("BoardPostB", (14.0, 1.3, 4.4), (0.12, 2.6, 0.12), "metal")
     s.box("BoardSheet", (14.0, 1.9, 3.2), (0.06, 1.1, 1.8), "paper", None, False)
     s.box("BoardBacking", (14.06, 1.9, 3.2), (0.04, 1.2, 1.9), "metal", None, False)
-
-    # bench and the bag on it: both are authored models now (s.props below). The seat
-    # plane is still 0.51 m and the bag still rests on it, so the yard reads the same.
 
     # climbing frame on the east side
     for i, z in enumerate((7.0, 9.0, 11.0)):
@@ -837,24 +837,22 @@ def build_playground(for_courtyard_view: bool = False):
         s.box(f"Bird_{i}", (x, y, z), (0.16, 0.12, 0.22), "metal", None, False)
     s.box("BirdWire", (2.0, 2.9, -18.4), (16.0, 0.02, 0.02), "metal", None, False)
 
-    # a tap and a drain: ordinary fittings, so the yard reads as used
+    # Keep the standpipe solid. The art pass supplies a round pipe, bibcock and grating.
     s.box("TapPost", (-6.0, 0.9, 14.0), (0.16, 1.8, 0.16), "metal")
-    s.box("TapSpout", (-5.8, 1.6, 14.0), (0.4, 0.1, 0.1), "metal", None, False)
-    s.box("TapDrain", (-5.4, 0.02, 14.3), (0.8, 0.06, 0.6), "metal", None, False)
     s.box("TreeTrunk", (20.0, 2.0, 15.0), (0.5, 4.0, 0.5), "soil")
     s.box("TreeCrown", (20.0, 4.6, 15.0), (3.6, 2.2, 3.6), "hedge", None, False)
 
-    # The bench runs along Z, so it needs a 90 degree yaw to line up with the space the
-    # grey-box seat left. -90 puts its back to the notice board and its seat towards the
-    # court, which is the way the boxes already faced. The bag sits on the seat at 0.52 m
-    # (its own base is 1.4 cm under its origin) and leans into the back of the bench.
+    # The wooden bench faces the court. The split film rests on the existing
+    # 0.51 m slats. It does not need the old backpack's collider inside the bench.
     s.props = [
         ("YardBench", "res://scenes/environment/props/playground_bench.tscn", (11.0, 0.0, 3.2), -90.0),
-        ("YardBag", "res://scenes/environment/props/student_backpack.tscn", (11.03, 0.52, 3.75), -90.0),
     ]
-
     if not for_courtyard_view:
-        s.props.append(("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0))
+        s.props.extend([
+            ("YardNoodleWrapper", "res://scenes/environment/props/playground_art/noodle_wrapper.tscn",
+             (10.99, 0.51, 3.74), -14.0),
+            ("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0),
+        ])
 
     s.interactables = [
         {"name": "HoopLook", "pos": (-8.0, 1.4, 8.8), "id": "pg_hoop_near",
@@ -865,14 +863,17 @@ def build_playground(for_courtyard_view: bool = False):
          # The painted court markings: what "the court" is, as opposed to the ground it is on.
          "outline": ("PlaygroundArt/Court",)},
         {"name": "BenchLook", "pos": (10.2, 1.0, 3.2), "id": "pg_bench_look",
-         "inspection": "pg_bench", "radius": 1.4, "outline": ("YardBench", "YardBag")},
+         "inspection": "pg_bench", "radius": 1.4,
+         "shot": "res://assets/camera/shots/playground_bench.tres",
+         "outline": ("YardBench", "YardNoodleWrapper/Film")},
         {"name": "FrameLook", "pos": (17.0, 1.4, 9.0), "id": "pg_frame_look",
          "inspection": "pg_frame", "radius": 1.5,
          "outline": tuple(f"FramePost_{i}" for i in range(3)) + tuple(f"FrameRung_{i}" for i in range(4))
                     + ("FrameTopBar",)},
         {"name": "ShedLook", "pos": (-13.2, 1.1, -4.0), "id": "pg_shed_door",
          "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5,
-         "outline": ("ShedDoor", "PlaygroundArt/Equipment/ShedHasp", "PlaygroundArt/Equipment/ShedPadlock")},
+         "shot": "res://assets/camera/shots/playground_shed.tres",
+         "outline": ("ShedBody/Facade/Door", "ShedBody/Facade/Hasp", "ShedBody/Facade/Padlock")},
         {"name": "BallLook", "pos": (-14.2, 0.8, 0.6), "id": "pg_ball_look",
          "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4,
          "outline": ("PingPongBall",)},
@@ -886,11 +887,17 @@ def build_playground(for_courtyard_view: bool = False):
          "outline": ("PlaygroundArt/ChalkGuide/Caddy",)},
         {"name": "TapLook", "pos": (-5.58, 1.08, 14.0), "id": "pg_tap",
          "inspection": "pg_tap", "radius": 1.3,
-         "outline": ("TapPost/MeshInstance3D", "PlaygroundArt/TapDetail/Cap")},
+         "shot": "res://assets/camera/shots/playground_tap.tres",
+         "outline": ("PlaygroundArt/TapDetail/Standpipe", "PlaygroundArt/TapDetail/Bib",
+                     "PlaygroundArt/TapDetail/Wheel/Rim", "PlaygroundArt/TapDetail/Cap")},
         {"name": "ContainerLook", "pos": (15.25, 1.05, -15.5), "id": "pg_container_look",
          "inspection": "pg_container", "radius": 1.4,
          "shot": "res://assets/camera/shots/container_cabin.tres",
          "outline": ("ContainerBody/EndHeader", "ContainerBody/DoorNorth/Panel", "ContainerBody/DoorSouth/Panel")},
+        {"name": "CabinPapersLook", "pos": (14.21, 0.32, -14.91), "id": "pg_cabin_papers_look",
+         "inspection": "pg_cabin_papers", "radius": 0.95,
+         "shot": "res://assets/camera/shots/container_papers.tres",
+         "outline": ("ContainerBody/Cabin/Papers/ClippedPage/Paper",)},
         {"name": "TyreLook", "pos": (-14.6, 0.7, 2.9), "id": "pg_tyre_look",
          "inspection": "pg_tyres", "radius": 1.4,
          # The ring tyres the art pass adds; the graybox stack they replace is hidden, and

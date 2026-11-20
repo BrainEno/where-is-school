@@ -46,6 +46,7 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import re
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -264,6 +265,39 @@ def check(source: Path, output: Path, characters: set[str], margin: set[str]) ->
     return 0
 
 
+# Documents that describe the shipped subset in the present tense (issue #286). Its size
+# changes whenever the text does, so a byte or KiB count written next to "subset" in one of
+# them is stale by the next content PR; `--check` prints the real size instead. Dated
+# measurements (the archive, the pack-size tables) are records of a moment and are not
+# listed. A count that equals an upstream source font's size is stable and allowed.
+LIVE_SIZE_PROSE = (
+    "README.md",
+    "docs/TECHNICAL_ROADMAP.md",
+    "docs/ASSET_PROVENANCE.md",
+    ".github/workflows/godot-ci.yml",
+    ".github/workflows/test-tooling.yml",
+)
+SIZE_LITERAL = re.compile(r"\b(\d[\d,.]*)\s?(KiB|KB|kB|bytes)\b")
+
+
+def stale_size_prose(root: Path = Path(".")) -> list[str]:
+    stable = {path.stat().st_size for target in TARGETS for path in (root / target.source,) if path.is_file()}
+    problems = []
+    for relative in LIVE_SIZE_PROSE:
+        path = root / relative
+        if not path.is_file():
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if "subset" not in line.lower():
+                continue
+            for match in SIZE_LITERAL.finditer(line):
+                value = match.group(1).replace(",", "")
+                if match.group(2) == "bytes" and value.isdigit() and int(value) in stable:
+                    continue
+                problems.append(f"{relative}:{number}: \"{match.group(0)}\" next to the font subset")
+    return problems
+
+
 def oversized_shipped_fonts() -> list[Path]:
     return [
         path
@@ -313,6 +347,15 @@ def main(argv: list[str]) -> int:
                     "res:// are packed into the build",
                     file=sys.stderr,
                 )
+            status = 1
+        stale = stale_size_prose()
+        for problem in stale:
+            print(
+                f"FAIL: {problem}; the subset's size changes with the text - drop the number "
+                "and point at `tools/subset_font.py --check` (issue #286)",
+                file=sys.stderr,
+            )
+        if stale:
             status = 1
         return status
 

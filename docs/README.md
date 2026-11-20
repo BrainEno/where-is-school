@@ -24,7 +24,7 @@
 | [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 是证据台账而非许可证明；见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 导入 3D 模型与字体等资产的合同 | 现行 | 工程 Agent | 2026-11-18 | 来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；§10.2b 同步 N／学生几何修订合同 |
-| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含教室靛蓝帆布书包的第一方派生来源；记录不等于美术批准 |
+| [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含教室帆布书包、操场集装箱铺盖与球场道具的第一方来源；记录不等于美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐和翻包；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
@@ -33,6 +33,7 @@
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-18 | 共用舞台规则见 `tests/location_art_test.gd`；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
+| [GLOSSARY.md](GLOSSARY.md) | 术语表：玩家称呼 ↔ 位置 id、autoload 名 ↔ 脚本、核心术语 | 现行 | 文档 Agent | 2026-11-19 | 消除 walkway=corridor、schoolyard=playground、Save=save_manager.gd 三处命名分歧；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |
 | [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) | 走廊模型落地实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行资产台账见 [MODEL_LIBRARY.md](MODEL_LIBRARY.md) |
 | [IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md](IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md) | 显示与输入提示适配实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 唯一无英文配对的实现笔记；现行边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
@@ -49,6 +50,7 @@
 | [MOBILE_BUILDS.md](MOBILE_BUILDS.md) | 原生移动构建、签名与设备验收 | 现行 | 工程 Agent | 2026-11-18 | 独立按需 APK/IPA 工作流、Mac 模拟器与 Windows ADB 调试；桌面发布见 [RELEASE.md](RELEASE.md) |
 | [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-18 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
 | [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
+| [NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md](NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md) | 剧情玩法评审、双语小试与回访切片 | 提案/待所有者 | 仓库所有者 | 2026-11-18 | 原基线 `76c5e77`，审计补核 `b8524c6` / `e143990`；不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) 或 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [OFFLINE_DIAGNOSTICS.md](OFFLINE_DIAGNOSTICS.md) | 离线事件审计、导出隐私及开发验证 | 现行 | 工程 Agent | 2026-11-18 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) §7c |
 | [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 发布流程见 [RELEASE.md](RELEASE.md) |
 | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) | 产品意图与范围 | 现行 | 仓库所有者 | 2026-11-17 | 叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |

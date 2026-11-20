@@ -268,7 +268,8 @@ jobs:
       - name: Check the bundled font covers the current text
         shell: bash
         run: |
-          # The font that ships is a 325 KiB subset of the 10 MB upstream one, rebuilt by
+          # The font that ships is a subset of the 10 MB upstream one (its size is whatever
+          # --check prints below; no comment keeps a copy, issue #286), rebuilt by
           # tools/subset_font.py from every character the project can put on screen. Text
           # that needs a character the subset does not carry would render as a tofu box in
           # a *build*, where no test would ever see it. This step fails on exactly that,

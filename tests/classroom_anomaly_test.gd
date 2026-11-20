@@ -43,6 +43,9 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
+## The rear door never opens, so the registry no longer declares a flag for it (#292). The
+## old name is kept here so the test still proves nothing records the door as opened.
+const REAR_DOOR_OPENED := &"rear_door_opened"
 const TIME_SCALE := 4.0
 ## Real seconds for the whole file; godot-ci.yml gives it 300 and the watchdog 290.
 const BUDGET_SECONDS := 270.0
@@ -387,7 +390,7 @@ func _check_lesson() -> void:
 	if _curtain().is_open() or not _no_staircase():
 		_failures.append("Something moved during the lesson.")
 	for flag: StringName in [
-		StoryFlags.CURTAIN_FALL_PENDING, StoryFlags.CURTAIN_DRAWN, StoryFlags.REAR_DOOR_OPENED
+		StoryFlags.CURTAIN_FALL_PENDING, StoryFlags.CURTAIN_DRAWN, REAR_DOOR_OPENED
 	]:
 		if _flag(flag):
 			_failures.append("'%s' was set during the lesson." % flag)
@@ -424,7 +427,7 @@ func _check_rear_door() -> void:
 		)
 	if not _conversations.is_empty():
 		_failures.append("The rear door started a conversation: %s." % str(_conversations))
-	if _flag(StoryFlags.REAR_DOOR_OPENED):
+	if _flag(REAR_DOOR_OPENED):
 		_failures.append("The rear door recorded itself as opened.")
 	if framed:
 		_failures.append("The camera went somewhere when the rear door was tried.")
@@ -753,7 +756,7 @@ func _check_refused_state_on_disk() -> void:
 		_failures.append("%s: what the player saw before the refusal was not restored." % label)
 	if ConversationRouter.select(&"classroom_curtain", _game_state.get_snapshot()) != &"classroom_curtain":
 		_failures.append("%s: the curtain routes to another conversation." % label)
-	if not _flag(StoryFlags.CLASS_DISMISSED) or _flag(StoryFlags.REAR_DOOR_OPENED):
+	if not _flag(StoryFlags.CLASS_DISMISSED) or _flag(REAR_DOOR_OPENED):
 		_failures.append("%s: the rest of the story did not come back." % label)
 	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), CURTAIN_SPOT))
 	await _frames(4)
@@ -910,7 +913,7 @@ func _check_return() -> void:
 	await _settle(30.0, "the classroom again")
 	if not _curtain().is_open() or not _void().visible:
 		_failures.append("Back in the classroom the curtain is closed over the void again.")
-	if not _no_staircase() or _flag(StoryFlags.REAR_DOOR_OPENED):
+	if not _no_staircase() or _flag(REAR_DOOR_OPENED):
 		_failures.append("Back in the classroom the rear door opened or a staircase appeared.")
 	var curtain: Interactable = _room().find_interactable(&"curtain")
 	if curtain != null and curtain.get_prompt_override() != "prompt.curtain_drawn":
@@ -1076,24 +1079,63 @@ func _check_ladder(hurt: bool) -> void:
 	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == look, 3.0):
 		_failures.append("The open door doesn't offer its inspection.")
 		return
-	var bed := container.get_node(^"Cabin/Mattress") as MeshInstance3D
+	var sheet := container.get_node_or_null(^"Cabin/Bedding/Sheet") as MeshInstance3D
+	if sheet == null:
+		_failures.append("The cabin lost the sheet on the deck.")
+		return
+	# Sample the near part of the sheet actually visible through the opening.
+	var sheet_point := container.to_global(Vector3(1.82, 0.272, -0.53))
 	var eye := _player.global_position + Vector3.UP * 1.4
-	var mattress_top := bed.global_position + Vector3.UP * 0.073
-	var ray := _ray(eye, mattress_top)
+	var ray := _ray(eye, sheet_point)
 	if not ray.is_empty():
-		_failures.append("A solid blocks the cot from the real doorway (%s)." % ray.get("collider"))
+		_failures.append("A solid blocks the bedding from the real doorway (%s)." % ray.get("collider"))
 	var rig := _player.camera_rig
 	rig.snap()
 	var camera := rig.camera
-	if not camera.is_position_in_frustum(mattress_top) \
-		or not _ray(camera.global_position, mattress_top).is_empty():
-		_failures.append("The cot is blocked or off-screen from the default doorway camera.")
+	if not camera.is_position_in_frustum(sheet_point) \
+		or not _ray(camera.global_position, sheet_point).is_empty():
+		_failures.append("The bedding is blocked or off-screen from the default doorway camera.")
 	await _interact_key()
-	await _settle(20.0, "seeing the cot")
+	if not await Harness.wait_until(func() -> bool: return rig.get_focus_weight() > 0.95, 3.0):
+		_failures.append("The cabin read did not settle on its camera shot.")
+	elif not camera.is_position_in_frustum(sheet_point) or not _ray(camera.global_position, sheet_point).is_empty():
+		_failures.append("The cabin camera misses the bedding at the open end.")
+	await _settle(20.0, "seeing the bedding")
 	if not _narrative.has_entry(&"saw_pg_container"):
 		_failures.append("Inspecting the open end did not record the cabin.")
-	_notes.append("%s ladder: %d heights, %d supported phases; cot from open door"
+	_notes.append("%s ladder: %d heights, %d supported phases; bedding from open door"
 		% ["injured" if hurt else "braced", levels.size(), planted.size()])
+	# The old doorway observation must be enough; the papers are a separate, optional read.
+	if hurt:
+		await _check_cabin_papers(container)
+
+
+func _check_cabin_papers(container: Node3D) -> void:
+	if _narrative.has_entry(&"saw_pg_cabin_papers"):
+		_failures.append("Looking at the open container also awarded the optional paper note.")
+	if not await _walk_to(container.to_global(Vector3(2.67, 0.22, -0.21)), 0.14):
+		_failures.append("Couldn't walk through the threshold to see the papers.")
+		return
+	var papers := _room().find_interactable(&"pg_cabin_papers_look")
+	if papers == null:
+		_failures.append("The old papers have no inspection.")
+		return
+	_player.face_toward(papers.global_position - _player.global_position)
+	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == papers, 3.0):
+		_failures.append("The papers are not the visible target when facing them inside the cabin.")
+		return
+	await _interact_key()
+	await _settle(20.0, "reading the papers")
+	if not _narrative.has_entry(&"saw_pg_cabin_papers"):
+		_failures.append("Reading the clipped paper did not leave its own observation.")
+	var observed: int = _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
+	if not await Harness.wait_until(func() -> bool: return _interaction.get_current_target() == papers, 3.0):
+		_failures.append("Finished reading the paper but could not inspect it again.")
+		return
+	await _interact_key()
+	await _settle(20.0, "rereading the papers")
+	if _narrative.count_for_source(NarrativeEntry.Source.OBSERVED) != observed:
+		_failures.append("Rereading the clipped paper duplicated its observation.")
 
 
 func _has_ladder_support(container: Node3D, skeleton: Skeleton3D) -> bool:

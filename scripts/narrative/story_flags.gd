@@ -63,6 +63,20 @@ const ALLEY_ARRIVED: StringName = &"alley_arrived"
 const PLAYGROUND_ARRIVED: StringName = &"playground_arrived"
 ## bool: one of the playground checks has been attempted at least once.
 const PLAYGROUND_CHECKED: StringName = &"playground_checked"
+## bool: the shed door's boundary check passed - the gap by the hinges was found (`pg_shed`).
+const PLAYGROUND_SHED_OPEN: StringName = &"playground_shed_open"
+## bool: the shed door's boundary check failed - the door held, the hasp was looked at (`pg_shed`).
+const PLAYGROUND_SHED_LOOKED: StringName = &"playground_shed_looked"
+## bool: the duty rota on the shed was read in full - nine rows (`pg_shed`).
+const PLAYGROUND_ROTA_READ: StringName = &"playground_rota_read"
+## bool: the duty rota was miscounted - rain had smudged two rows together (`pg_shed`).
+const PLAYGROUND_ROTA_SMUDGED: StringName = &"playground_rota_smudged"
+## bool: reaching behind the stuck ball found the ledge and what lies on it (`pg_ball`).
+const PLAYGROUND_TAG_FOUND: StringName = &"playground_tag_found"
+## bool: the ball stayed stuck - either of `pg_ball`'s checks failed.
+const PLAYGROUND_BALL_STUCK: StringName = &"playground_ball_stuck"
+## bool: the shadow by the shed was measured against the gap (`pg_ball`).
+const PLAYGROUND_SHADOW_MEASURED: StringName = &"playground_shadow_measured"
 ## bool: the player stayed at their desk after N announced the free period.
 const FREE_PERIOD_STAYED: StringName = &"free_period_stayed"
 ## bool: the player chose to get up and leave after N announced the free period.
@@ -83,8 +97,6 @@ const CURTAIN_DRAWN: StringName = &"curtain_drawn"
 const CURTAIN_EDGE_HELD: StringName = &"curtain_edge_held"
 ## bool: the player hurt their ankle on their last landing. Written only on arrival.
 const CURTAIN_LANDING_INJURED: StringName = &"curtain_landing_injured"
-## bool: the rear door has been opened and the staircase hangs in the classroom.
-const REAR_DOOR_OPENED: StringName = &"rear_door_opened"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -95,14 +107,6 @@ const ASKED_Q_DATE: StringName = &"asked_q_date"
 const STAYED_SILENT: StringName = &"stayed_silent"
 ## bool: the protagonist denied remembering the biology exam.
 const DENIED_EXAM_MEMORY: StringName = &"denied_exam_memory"
-## bool: the protagonist insisted the exam was only one page.
-const CLAIMED_ONE_PAGE_EXAM: StringName = &"claimed_one_page_exam"
-## bool: the protagonist challenged Q's interest.
-const CHALLENGED_Q: StringName = &"challenged_q"
-## bool: the protagonist asked whether B is strict.
-const ASKED_IF_B_STRICT: StringName = &"asked_if_b_strict"
-## bool: the protagonist pointed out that B may be late.
-const NOTED_B_LATE: StringName = &"noted_b_late"
 ## bool: the protagonist told Q the textbook is gone.
 const TOLD_Q_ABOUT_TEXTBOOK: StringName = &"told_q_about_textbook"
 ## bool: the protagonist accused Q of taking the textbook.
@@ -119,8 +123,8 @@ const Q_ROLL_DEBRIEFED: StringName = &"q_roll_debriefed"
 const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
 ## bool: the player asked the substitute about spare textbooks.
 const ASKED_N_ABOUT_TEXTBOOK: StringName = &"asked_n_about_textbook"
-## bool: the player noticed that N is a substitute.
-const NOTICED_N_SUBSTITUTE: StringName = &"noticed_n_substitute"
+## bool: the player talked to the classmate in the classroom (`StudentTalk`, `student`).
+const STUDENT_TALKED: StringName = &"student_talked"
 
 # --- Small runtime values used by presentation ------------------------------
 ## String: locale key of the single objective line the HUD shows, e.g.
@@ -130,6 +134,8 @@ const OBJECTIVE_KEY: StringName = &"objective_key"
 ## StringName: id of the location the player is currently in.
 const CURRENT_LOCATION: StringName = &"current_location"
 
+## Every constant above, in declaration order. `tools/check_story_flags.py` keeps it
+## complete, so code that needs the whole registry can rely on it.
 const ALL_FLAGS: Array[StringName] = [
 	MET_Q,
 	Q_FIRST_TALK_DONE,
@@ -143,14 +149,34 @@ const ALL_FLAGS: Array[StringName] = [
 	N_ARRIVED,
 	CLASS_DISMISSED,
 	LEFT_CLASSROOM,
+	LEFT_SCHOOL,
+	STREET_ARRIVED,
+	STREET_WALL_SEEN,
+	RESIDENTIAL_ARRIVED,
+	ANIMAL_SEEN,
+	ALLEY_ARRIVED,
+	PLAYGROUND_ARRIVED,
+	PLAYGROUND_CHECKED,
+	PLAYGROUND_SHED_OPEN,
+	PLAYGROUND_SHED_LOOKED,
+	PLAYGROUND_ROTA_READ,
+	PLAYGROUND_ROTA_SMUDGED,
+	PLAYGROUND_TAG_FOUND,
+	PLAYGROUND_BALL_STUCK,
+	PLAYGROUND_SHADOW_MEASURED,
+	FREE_PERIOD_STAYED,
+	FREE_PERIOD_LEAVING,
+	Q_COMPANION,
+	CORRIDOR_WAITED,
+	CORRIDOR_DIRECTORY_TAB,
+	CURTAIN_FALL_PENDING,
+	CURTAIN_DRAWN,
+	CURTAIN_EDGE_HELD,
+	CURTAIN_LANDING_INJURED,
 	ASKED_Q_IDENTITY,
 	ASKED_Q_DATE,
 	STAYED_SILENT,
 	DENIED_EXAM_MEMORY,
-	CLAIMED_ONE_PAGE_EXAM,
-	CHALLENGED_Q,
-	ASKED_IF_B_STRICT,
-	NOTED_B_LATE,
 	TOLD_Q_ABOUT_TEXTBOOK,
 	ACCUSED_Q,
 	Q_BOOK_TALK_DONE,
@@ -159,25 +185,9 @@ const ALL_FLAGS: Array[StringName] = [
 	Q_ROLL_DEBRIEFED,
 	ASKED_N_ABOUT_B,
 	ASKED_N_ABOUT_TEXTBOOK,
-	NOTICED_N_SUBSTITUTE,
+	STUDENT_TALKED,
 	OBJECTIVE_KEY,
 	CURRENT_LOCATION,
-	# Free period and the companion.
-	FREE_PERIOD_STAYED,
-	FREE_PERIOD_LEAVING,
-	Q_COMPANION,
-	CORRIDOR_WAITED,
-	CORRIDOR_DIRECTORY_TAB,
-	# The biology classroom's two anomalies.
-	CURTAIN_FALL_PENDING,
-	CURTAIN_DRAWN,
-	CURTAIN_EDGE_HELD,
-	CURTAIN_LANDING_INJURED,
-	REAR_DOOR_OPENED,
-	# Outdoor beats.
-	STREET_WALL_SEEN,
-	ALLEY_ARRIVED,
-	PLAYGROUND_ARRIVED,
 ]
 
 
