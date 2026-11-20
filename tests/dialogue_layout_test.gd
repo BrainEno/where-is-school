@@ -77,11 +77,12 @@ func _run() -> void:
 	_check_portrait_resources_are_warm()
 	_check_source_inks()
 
-	# The longest paragraphs the shipped content actually has, in both languages. Each
-	# sample stands for the kind of line it is measured as: object descriptions for
-	# ordinary prose, the inner-voice file for the inner voice. The prologue's longest line
-	# is the author's (Q describing B, about 145 characters since the author's rewrite), so it
-	# is measured as what it is - a spoken line that may scroll - not as ordinary prose.
+	# The longest paragraphs the shipped content actually has, in both languages. The object
+	# descriptions are "ordinary prose": they must fit without scrolling, and the inner voice
+	# is measured with them too. The prologue's longest line is the author's (Q describing B,
+	# about 145 characters since the author's rewrite), so it is measured as what it is - a
+	# spoken line that may scroll. The inner-voice file's longest line is reported and
+	# measured the same way, since a few inner voices run longer than ordinary prose.
 	var samples := {
 		"prose_en": _longest_text("res://data/inspections/en/classroom.json"),
 		"prose_zh": _longest_text("res://data/inspections/zh-CN/classroom.json"),
@@ -237,7 +238,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 
 	# 7. Consecutive inner voices: subjective, imagined, no role.
 	var voice_line := _line(
-		voice_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
+		prose_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
 	)
 	await _show(voice_line)
 	_measure("%s inner voice" % tag, layout_size, true)
@@ -246,8 +247,11 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 		_failures.append("%s inner voice: the subjective tint was not applied." % tag)
 	_expect_portrait("%s inner voice" % tag, false)
 
-	# 7b. The longest spoken line in the prologue, with Q's portrait. It may scroll at the
-	# small sizes; what is checked is that it scrolls exactly when it does not fit.
+	# 7b. The longest inner voice and the longest spoken line in the prologue. Either may
+	# scroll at the small sizes; what is checked is that each scrolls exactly when it does
+	# not fit.
+	await _show(_line(voice_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true))
+	_measure("%s longest inner voice" % tag, layout_size, false)
 	await _show(_line(beat_en, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false))
 	_measure("%s longest spoken line" % tag, layout_size, false)
 
