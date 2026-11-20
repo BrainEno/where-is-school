@@ -24,6 +24,7 @@ on:
     paths:
       - "tools/godot_sidecars.py"
       - "tools/engine_noise_report.py"
+      - "tools/ci_import_godot.sh"
       - "tests/engine_hygiene/**"
       - "tests/test_harness.gd"
       - "project.godot"
@@ -45,6 +46,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/setup-godot
 
@@ -56,15 +59,9 @@ jobs:
           python3 tools/godot_sidecars.py --report >> "${GITHUB_STEP_SUMMARY}"
           python3 tools/godot_sidecars.py --check --github
 
-      - name: Import the project, as godot-ci.yml does
+      - name: Import the clean checkout and validate the warmed editor
         shell: bash
-        run: |
-          # The same blocking import the gameplay checks run after. Its exit code is not a
-          # verdict (the theme loads before its font is imported); what it changed is.
-          set -uo pipefail
-          mkdir -p hygiene-logs
-          timeout 420 godot --headless --path . --import > hygiene-logs/import.log 2>&1 || true
-          tail -n 20 hygiene-logs/import.log
+        run: bash tools/ci_import_godot.sh hygiene-logs/import
 
       - name: Publish what the import created and rewrote
         shell: bash
@@ -94,8 +91,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: ./.github/actions/setup-godot
+
+      - name: Import the clean checkout and validate the warmed editor
+        shell: bash
+        run: bash tools/ci_import_godot.sh hygiene-logs/import
 
       - name: Run the probe ladder and the leaking checks with --verbose
         shell: bash
@@ -103,7 +106,6 @@ jobs:
           set -uo pipefail
           export CI_LOG_DIR=hygiene-logs
           source tools/ci_run_check.sh
-          run_check import 420 godot --headless --path . --import || true
           # The ladder: one more shared set-up step per rung (see the script's header).
           run_check probe_0_bare 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=0 || status=1
           run_check probe_1_watchdog 120 godot --headless --verbose --path . --script res://tests/engine_hygiene/leak_probe.gd -- --rung=1 || status=1
@@ -127,7 +129,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          rm -f hygiene-logs/import.log
+          # Import logs are in a subdirectory so only the probe/test logs are attributed.
           # The runner reads `::notice` commands from this step's own output, so the report
           # goes through `tee`: redirected into the file alone, the annotations never reach it.
           python3 tools/engine_noise_report.py hygiene-logs --github --summary "${GITHUB_STEP_SUMMARY}" | tee hygiene-logs/report.md

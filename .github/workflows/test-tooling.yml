@@ -107,6 +107,10 @@ jobs:
           .venv/bin/python tests/gdscript_quality_test.py
           .venv/bin/python tests/gdscript_quality_ci_test.py
 
+      - name: Test the Godot import preflight without the engine
+        shell: bash
+        run: bash tests/ci_import_godot_test.sh
+
       - name: Check Python tools and asset sources without rewriting them
         shell: bash
         run: |
