@@ -91,8 +91,8 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `CharacterProfile` | [`scripts/narrative/character_profile.gd`](../scripts/narrative/character_profile.gd) | Speaker display/portrait resource; narrative text stays in content files. |
 | `InspectionLibrary` | [`scripts/narrative/inspection_library.gd`](../scripts/narrative/inspection_library.gd) | Load and validate localized inspectable-object content, records and first-read effects. |
 | `JsonTable` | [`scripts/narrative/json_table.gd`](../scripts/narrative/json_table.gd) | Standardised JSON file reading, syntax parsing, object validation and error reporting. |
-| `JournalCatalog` | [`scripts/narrative/journal_catalog.gd`](../scripts/narrative/journal_catalog.gd) | Resolve knowledge-entry identities back to content in the current locale. |
-| `JournalPage` | [`scripts/narrative/journal_page.gd`](../scripts/narrative/journal_page.gd) | Pure grouping/filtering of knowledge entries into notebook presentation dictionaries. |
+| `JournalCatalog` | [`scripts/narrative/journal_catalog.gd`](../scripts/narrative/journal_catalog.gd) | Resolve entry ids to localized content; validate authored notebook pairs. |
+| `JournalPage` | [`scripts/narrative/journal_page.gd`](../scripts/narrative/journal_page.gd) | Group, filter and compare already recorded entries without changing the log. |
 | `JournalRoute` | [`scripts/narrative/journal_route.gd`](../scripts/narrative/journal_route.gd) | Derive visited places from catalog arrival flags already stored by GameState. |
 | `NarrativeEntry` | [`scripts/narrative/narrative_entry.gd`](../scripts/narrative/narrative_entry.gd) | Observed/reported/recalled/imagined knowledge model; never silently convert one source into another. |
 | `StoryFlags` | [`scripts/narrative/story_flags.gd`](../scripts/narrative/story_flags.gd) | Stable named flag constants and value contracts; renaming requires a save-migration plan. |

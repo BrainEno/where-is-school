@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 
 from build_teaching_block import ROOT, ROOM_PORTAL_WIDTH, complement, srgb, vec3
 from fixture_geometry import Facets, FixtureBuild, basin, pipe, rounded_rect, vessel
@@ -236,19 +237,34 @@ def office():
     b.detail("WindowWash", ".", (0, 0, 0), light, "sun_wash")
 
     # Reading table and an empty chair on its working side. Both cast tidy contact shadows.
-    p = solid(b, "Desk", ".", (-2.28, .81, -1.43), (2.60, .086, 1.04), "maple")
-    b.box("Lip", p, (0, -.070, .421), (2.47, .090, .147), "edge")
+    # Round 2 (2026-11-20, docs/OFFICE_ARCHIVE_ART.md): the same colliders, dressed as a
+    # postmodern office - a terrazzo top on a fluted drum and a drawer ziggurat, a gas-lift chair.
+    from postmodern_office import POMO, confetti, swivel_chair
+    b.pigments.update(POMO)
+    p = solid(b, "Desk", ".", (-2.28, .81, -1.43), (2.60, .086, 1.04), "terrazzo")
+    confetti(b, "Terrazzo", p, .0442, 2.6, 1.04, ("pomo_black", "pomo_red", "pomo_cobalt", "pomo_mint"),
+             count=170, seed=5)
+    b.box("Lip", p, (0, -.070, .421), (2.47, .090, .147), "pomo_black")
+    b.box("Band", p, (0, -.004, .523), (2.6, .07, .012), "pomo_lemon")
     for i, x in enumerate((-3.37, -1.20)):
-        foot = solid(b, f"Pedestal{i}", ".", (x, .384, -1.45), (.36, .768, .85), "enamel")
-        for j, y in enumerate((-.210, 0, .210)):
-            b.box(f"Drawer{j}", foot, (0, y, .43), (.31, .173, .036), "maple")
-            b.box(f"Pull{j}", foot, (0, y+.032, .458), (.17, .028, .038), "edge")
-    chair = solid(b, "Chair", ".", (-2.38, .445, -2.45), (.49, .094, .50), "ochre", rotation=(0, -11, 0))
-    for i, dx in enumerate((-.198, .198)):
-        b.box(f"BackPost{i}", chair, (dx, .21, -.224), (.044, .49, .047), "edge")
-        for j, dz in enumerate((-.194, .194)):
-            b.box(f"Foot{i}_{j}", chair, (dx, -.229, dz), (.047, .437, .049), "edge", shadow=True)
-    b.box("ChairBack", chair, (0, .370, -.233), (.47, .17, .067), "maple", shadow=True)
+        foot = b.shell(f"Pedestal{i}", ".", (x, .384, -1.45))
+        b.shape("Collision", foot, (0, 0, 0), (.36, .768, .85))
+        if i == 0:
+            b.round("Drum", foot, (0, 0, 0), .17, .768, "pomo_cobalt", sides=20, shadow=True)
+            for k in range(10):
+                a = math.tau * k / 10
+                b.box(f"Flute{k}", foot, (.172 * math.cos(a), 0, .172 * math.sin(a)), (.014, .7, .014), "pomo_white")
+            b.box("Capital", foot, (0, .36, 0), (.36, .05, .4), "pomo_lemon")
+            b.box("Plinth", foot, (0, -.36, 0), (.38, .05, .42), "pomo_black")
+            continue
+        for j, (y, w, d) in enumerate(((-.26, .36, .85), (-.01, .31, .74), (.24, .26, .63))):
+            b.box(f"Tier{j}", foot, (0, y, 0), (w, .25, d), ("pomo_pink", "pomo_lilac", "pomo_pink")[j], shadow=True)
+            b.box(f"Drawer{j}", foot, (0, y, d/2+.006), (w-.06, .17, .014), "pomo_lemon")
+            b.round(f"Pull{j}", foot, (0, y, d/2+.03), .024, .03, "pomo_black", rot=(90, 0, 0), sides=10)
+    chair = b.shell("Chair", ".", (-2.38, .445, -2.45), (0, -11, 0))
+    b.shape("Collision", chair, (0, 0, 0), (.49, .094, .50))
+    swivel_chair(b, chair, "Swivel", (0, -.445, 0), 0, seat="pomo_pink", back="pomo_black", accent="pomo_lemon",
+                 crest="disc")
 
     b.node("Rota", ".", position=vec3((-2.19, .853, -1.27)), rotation_degrees=vec3((0, -9, 0)))
     b.box("Binder", "Rota", (0, .012, 0), (.94, .024, .50), "ledger")
@@ -332,6 +348,8 @@ def office():
     for i in range(5):
         b.box(f"MatRule{i}", ".", (OFFICE_DOOR_X,.007,2.15+i*.107), (1.41,.002,.013), "edge")
 
+    from postmodern_office import staff_office_dressing  # round 2 (2026-11-20)
+    staff_office_dressing(b)
     from build_dream_annex import waiting_room  # the exam dream's waiting room (2026-11-20)
     waiting_room(b)
     # A slight turn toward the working area also makes this an explicit facing

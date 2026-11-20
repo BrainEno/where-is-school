@@ -209,8 +209,9 @@ code uses, and defines the words the content files are written in (`beat`, `Sour
   twice). Options taken in an earlier run are drawn in a quieter colour.
 - **N** (controller: left stick click) — open the notebook: everything learned so far,
   filed by place and marked as seen, heard, remembered or imagined, with the places this
-  run has reached. It pauses the game; Esc, B or N again closes it. It is also the
-  second entry of the pause menu, which says how many entries are new.
+  run has reached. In **Compare**, two related notes appear together once both have
+  been recorded, with their sources and a question left open. The notebook pauses
+  the game; Esc, B or N again closes it. The pause menu also says how many entries are new.
 - **L** — switch between English and simplified Chinese at any time. The choice is remembered between runs.
 - **F11** — switch between windowed and fullscreen. The game opens in a 1600×900
   window, centred, and can be resized down to 1280×720. Leaving fullscreen puts the

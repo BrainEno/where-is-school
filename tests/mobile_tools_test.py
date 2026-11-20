@@ -28,7 +28,8 @@ class AndroidContentTest(unittest.TestCase):
     members = {name.removeprefix("res://").removesuffix("/") + ("/sample.json" if name.endswith("/") else ""): b"x"
                for name in REQUIRED_PREFIXES}
     members.update(dict.fromkeys(("project.binary", "data/locale/en.json", "data/locale/zh-CN.json",
-                                  "data/story/locations.json", "assets/fonts/NotoSansSC-Regular.ttf.import"), b"x"))
+                                  "data/story/locations.json", "data/story/notebook_comparisons.json",
+                                  "assets/fonts/NotoSansSC-Regular.ttf.import"), b"x"))
 
     def index(self, extra: tuple[str, bytes] | None = None) -> bytes:
         entries = list(self.members.items()) + ([extra] if extra else [])

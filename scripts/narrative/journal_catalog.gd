@@ -24,10 +24,12 @@ extends RefCounted
 ## - an `entry_id` means one thing: every place that records it gives the same source;
 ## - every language records the same ids with the same sources (the dialogue and
 ##   inspection parity checks compare structure, not record ids across both kinds);
-## - every entry has a non-empty text in every language.
+## - every entry has a non-empty text in every language;
+## - comparisons name two distinct entries and a title and question in every language.
 
 const ORIGIN_DIALOGUE := "dialogue"
 const ORIGIN_INSPECTION := "inspection"
+const COMPARISONS_PATH := "res://data/story/notebook_comparisons.json"
 
 ## Chapter files that are not the name of a place. The prologue is the classroom scene;
 ## inner-voice reactions happen in the protagonist's head, wherever he stands.
@@ -43,12 +45,17 @@ var _index: Dictionary = {}
 ## entry_id -> the first locale's descriptor order, for stable sorting.
 var _order: Dictionary = {}
 var _problems: Array[String] = []
+var _comparisons: Array[Dictionary] = []
 
 
 ## Builds the catalog from libraries that are already loaded (the dialogue controller's),
 ## so nothing is parsed twice. Either library may be null; the catalog then covers what
-## the other one has.
-static func build(dialogue: DialogueLibrary, inspections: InspectionLibrary) -> JournalCatalog:
+## the other one has. Comparisons are only validated against a complete catalog.
+static func build(
+	dialogue: DialogueLibrary,
+	inspections: InspectionLibrary,
+	comparisons_path: String = COMPARISONS_PATH
+) -> JournalCatalog:
 	var catalog := JournalCatalog.new()
 	for locale: String in L10n.LOCALES:
 		catalog._index[locale] = {}
@@ -58,6 +65,8 @@ static func build(dialogue: DialogueLibrary, inspections: InspectionLibrary) -> 
 		if inspections != null:
 			counter = catalog._index_inspections(inspections, locale, counter)
 	catalog._check_parity()
+	if dialogue != null and inspections != null:
+		catalog._load_comparisons(comparisons_path)
 	return catalog
 
 
@@ -136,6 +145,66 @@ func size(locale: String = "") -> int:
 ## Every way the content breaks the contract above. Empty is good.
 func problems() -> Array[String]:
 	return _problems.duplicate()
+
+
+## Author-ordered candidate pairs. This is content, not the pairs known in a run.
+func get_comparisons() -> Array[Dictionary]:
+	return _comparisons.duplicate(true)
+
+
+func _load_comparisons(path: String) -> void:
+	var previous_problems := _problems.size()
+	var data := JsonTable.read_dict(path, _problems)
+	if _problems.size() != previous_problems:
+		return
+	var version: Variant = data.get("format_version")
+	if not (version is float or version is int) or version != 1 or not (data.get("comparisons") is Array):
+		_problems.append("%s: expected format_version 1 and a comparisons array." % path)
+		return
+	var ids: Dictionary = {}
+	var pairs: Dictionary = {}
+	var definitions: Array = data["comparisons"]
+	for at: int in definitions.size():
+		var raw: Variant = definitions[at]
+		var where := "%s: comparison %d" % [path, at + 1]
+		if not (raw is Dictionary):
+			_problems.append("%s must be an object." % where)
+			continue
+		var item: Dictionary = raw
+		var id := _identifier(item, "id")
+		var left := _identifier(item, "left")
+		var right := _identifier(item, "right")
+		if id.is_empty() or left.is_empty() or right.is_empty() or left == right:
+			_problems.append("%s needs an id and two distinct entry ids." % where)
+			continue
+		var pair_key := "%s:%s" % [left, right] if left < right else "%s:%s" % [right, left]
+		if ids.has(id) or pairs.has(pair_key):
+			_problems.append("%s: duplicate comparison id or pair '%s'." % [where, id])
+			continue
+		var title_key := "journal.comparison.%s.title" % id
+		var question_key := "journal.comparison.%s.question" % id
+		var valid := true
+		for locale: String in L10n.LOCALES:
+			for entry_id: String in [left, right]:
+				if lookup(StringName(entry_id), locale).is_empty():
+					_problems.append("%s '%s': unknown entry '%s' in %s." % [where, id, entry_id, locale])
+					valid = false
+			for key: String in [title_key, question_key]:
+				if L10n.t_for(key, locale).strip_edges().is_empty():
+					_problems.append("%s: missing text for '%s' in %s." % [where, key, locale])
+					valid = false
+		if valid:
+			ids[id] = true
+			pairs[pair_key] = true
+			_comparisons.append({
+				"id": StringName(id), "left": StringName(left), "right": StringName(right),
+				"title_key": title_key, "question_key": question_key,
+			})
+
+
+static func _identifier(item: Dictionary, key: String) -> String:
+	var value: Variant = item.get(key)
+	return String(value) if value is String and (value as String).is_valid_identifier() else ""
 
 
 # --- Indexing ----------------------------------------------------------------------

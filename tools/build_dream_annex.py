@@ -478,6 +478,14 @@ def stable_yard(b):
                light_energy=energy, omni_range=8.5)
 
 
+WAITING_LOOKS = (
+    {"seat": "pomo_pink", "back": "pomo_black", "frame": "pomo_black", "crest": "pomo_lemon"},
+    {"seat": "pomo_lemon", "back": "pomo_cobalt", "frame": "pomo_black", "crest": "pomo_red"},
+    {"seat": "pomo_mint", "back": "pomo_pink", "frame": "pomo_black", "crest": "pomo_cobalt"},
+    {"seat": "pomo_cobalt", "back": "pomo_lilac", "frame": "pomo_black", "crest": "pomo_mint"},
+)
+
+
 def waiting_room(b):
     """The staff office as the dream's waiting room: chairs turned away, cliques with snacks.
 
@@ -489,7 +497,8 @@ def waiting_room(b):
     b.node(w, ".")
     for i, (pos, yaw) in enumerate((((.2, 0, -2.0), 180), ((3.55, 0, 1.6), 90), ((-.6, 0, 2.55), 0),
                                     ((-3.85, 0, 1.25), -90))):
-        swivel_chair(b, w, f"TurnedChair{i}", pos, yaw, i * .23)
+        # Round 2 (2026-11-20): postmodern upholstery, still turning away on the lift.
+        swivel_chair(b, w, f"TurnedChair{i}", pos, yaw, i * .23, look=WAITING_LOOKS[i])
     for c, (centre, people) in enumerate((((1.35, 1.15), 3), ((-3.7, 2.45), 2))):
         b.node(f"Clique{c}", w, position=vec3((centre[0], 0, centre[1])))
         q = child_path(w, f"Clique{c}")
