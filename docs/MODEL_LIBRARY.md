@@ -26,6 +26,7 @@ draws from:
 | `protagonist/` | 2 | `Protagonist_Character.glb`, the player (`player.tscn`, via `scenes/environment/characters/protagonist.tscn`); `protagonist.glb`, the former protagonist, seated in the classroom (`classroom_student.tscn`) |
 | `q/` | 1 | the NPC and companion controllers, via `scenes/environment/characters/q.tscn` |
 | `teacher-n/` | 1 | the classroom's `Actors/N`, via `scenes/environment/characters/teacher_n.tscn`; built from the owner's export by `tools/prepare_teacher_n.py` |
+| `classmates/` | 3 | Unplaced, inspected with `scenes/dev/classmates/classmates_review.tscn`; excluded from release exports |
 | `school_desk/`, `stationery_supplies/`, `playground_bench/`, `student_backpack/` | 1 each | the wrappers in `scenes/environment/props/` |
 | `sample/` | 2 | test fixtures, built by `tools/build_sample_models.py` |
 
@@ -405,3 +406,18 @@ each list, duplicate mesh/skin/animation names on both sides, a resource replace
 of another, and an update run against a malformed file that must leave it untouched. 140
 checks, so the snapshot cannot rot into a check that always passes.
 
+## 6. Unplaced classmates
+
+### `classmates/` — 3 models, 4559 KiB
+
+| model | KiB | tris | materials | textures | W × H × D (m) | min y (m) | max y (m) |
+|---|---|---|---|---|---|---|---|
+| `court_classmate` | 1514.0 | 48994 | 11 | — | 0.69 × 1.8 × 0.32 | +0.000 | +1.800 |
+| `gentle_classmate` | 1530.0 | 49590 | 12 | — | 0.61 × 1.62 × 0.3 | +0.000 | +1.620 |
+| `thin_classmate` | 1514.8 | 49192 | 11 | — | 0.57 × 1.6 × 0.27 | +0.000 | +1.600 |
+
+These are separately sculpted, skinned assets with three native clips apiece.
+The heights are bind-pose geometry bounds, from the actual soles to the top of
+the hair. See the [classmates source and usage](../art/character_models/classmates/README.md).
+The runtime manifest remains unchanged: no location instantiates these models.
+The three files exceed the advisory line but meet the per-model hard limit.

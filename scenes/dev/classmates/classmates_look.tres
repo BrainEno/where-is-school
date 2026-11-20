@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
+[ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_ink"]
+
+[sub_resource type="ShaderMaterial" id="Ink"]
+shader = ExtResource("3_ink")
+shader_parameter/ink = Color(0.145, 0.134, 0.168, 1)
+shader_parameter/width = 0.0022
+shader_parameter/wobble = 0.19
+
+[sub_resource type="ShaderMaterial" id="Skin"]
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 15.0
+shader_parameter/pigment_value = 0.082
+shader_parameter/shade_tint = Color(0.725, 0.63, 0.62, 1)
+shader_parameter/shadow_fill = 0.47
+shader_parameter/light_strength = 0.83
+shader_parameter/edge_softness = 0.086
+
+[sub_resource type="ShaderMaterial" id="Hair"]
+next_pass = SubResource("Ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 13.0
+shader_parameter/pigment_value = 0.16
+shader_parameter/shade_tint = Color(0.76, 0.69, 0.82, 1)
+shader_parameter/shadow_fill = 0.44
+shader_parameter/light_strength = 0.83
+shader_parameter/edge_softness = 0.070
+
+[sub_resource type="ShaderMaterial" id="Cloth"]
+next_pass = SubResource("Ink")
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 12.3
+shader_parameter/pigment_value = 0.115
+shader_parameter/shade_tint = Color(0.72, 0.70, 0.745, 1)
+shader_parameter/shadow_fill = 0.49
+shader_parameter/light_strength = 0.84
+shader_parameter/edge_softness = 0.070
+
+[sub_resource type="ShaderMaterial" id="Knit"]
+shader = ExtResource("2_paint")
+shader_parameter/use_vertex_paint = true
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/pigment_mix = 0.0
+shader_parameter/pigment_scale = 12.5
+shader_parameter/pigment_value = 0.14
+shader_parameter/shade_tint = Color(0.73, 0.64, 0.65, 1)
+shader_parameter/shadow_fill = 0.51
+shader_parameter/light_strength = 0.81
+shader_parameter/edge_softness = 0.070
+shader_parameter/detail_kind = 2
+shader_parameter/detail_strength = 0.09
+shader_parameter/detail_scale = 118.0
+shader_parameter/detail_tint = Color(0.48, 0.42, 0.39, 1)
+
+[resource]
+script = ExtResource("1_look")
+materials = {
+"cotton": SubResource("Cloth"),
+"hair_paint": SubResource("Hair"),
+"ribbed_knit": SubResource("Knit"),
+"skin_paint": SubResource("Skin"),
+"woven_twill": SubResource("Cloth")
+}
+label = "Classmates — linear vertex pigment, warm cloth, restrained ink"
