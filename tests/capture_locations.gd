@@ -24,6 +24,7 @@ extends SceneTree
 ## `dream-annex` frames the exam-dream dressing (docs/EXAM_DREAM_ART.md) on the live
 ## corridor: two follow-camera stances, then fixed views of the escalator, the ticket
 ## counter, the 03 exam floor and the stable yard behind 01.
+## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -145,6 +146,13 @@ const DREAM_VIEWS := [
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],
 	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-33.0, -1.0, 7.0)],
 ]
+const SITE_STANCES := [["corner_stance", Vector3(-20.6, 0.0, 15.2)]]
+const SITE_VIEWS := [
+	["sand_piles", Vector3(-20.9, 2.1, 13.9), Vector3(-25.2, 0.9, 14.2)],
+	["excavator", Vector3(-22.6, 3.4, 21.6), Vector3(-28.6, 2.0, 16.6)],
+	["ellipsoid_frame", Vector3(-19.5, 7.5, 3.0), Vector3(-31.4, 5.6, 11.8)],
+	["site_overview", Vector3(-23.6, 15.0, 29.0), Vector3(-29.5, 3.5, 13.0)],
+]
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
 const RETURN_SPOTS := {
 	"street": [
@@ -182,6 +190,7 @@ var _return_board_focus := false
 var _school_details := false
 var _school_focus := false
 var _dream_annex := false
+var _construction_site := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -219,6 +228,8 @@ func _initialize() -> void:
 			_return_board_focus = true
 		elif arg == "dream-annex":
 			_dream_annex = true
+		elif arg == "construction-site":
+			_construction_site = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -269,7 +280,10 @@ func _run() -> void:
 	_lines.append("the same bearing from further away. HUD hidden.")
 	_lines.append("")
 	if _dream_annex:
-		await _capture_dream(out_dir)
+		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", DREAM_STANCES, DREAM_VIEWS)
+	elif _construction_site:
+		var site := ^"PlaygroundArt/ConstructionSite/EllipsoidFrame"
+		await _capture_views(out_dir, "playground", site, SITE_STANCES, SITE_VIEWS)
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:
@@ -337,29 +351,38 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 	_lines.append("")
 
 
-func _capture_dream(out_dir: String) -> void:
-	if not _host.load_location("res://scenes/locations/corridor/corridor.tscn", &"", _player, &"corridor"):
-		_failures.append("corridor did not load")
+## Loads a location, checks that `marker` exists, then frames its stances and views.
+func _capture_views(out_dir: String, location_id: String, marker: NodePath, stances: Array, views: Array) -> void:
+	var scene_path := "res://scenes/locations/%s/%s.tscn" % [location_id, location_id]
+	if not _host.load_location(scene_path, &"", _player, StringName(location_id)):
+		_failures.append("%s did not load" % location_id)
 		return
 	_player.set_wake_pose(0.0)
 	var current := _host.get_current()
 	var nav := current.get_node_or_null(^"Navigation") as LocationNavigation
 	if nav == null or not await Harness.wait_until(nav.is_routable, 8.0):
-		_failures.append("corridor has no synchronized navigation.")
-		return
-	if current.get_node_or_null(^"DreamAnnex/StableYard/DreamHouse") == null:
-		_failures.append("The corridor does not instance the dream annex.")
-	_lines.append("## dream_annex")
+		_failures.append("%s has no synchronized navigation." % location_id)
+	elif current.get_node_or_null(marker) == null:
+		_failures.append("%s has no %s." % [location_id, marker])
+	else:
+		var subject := "dream_annex" if location_id == "corridor" else "%s_site" % location_id
+		await _stances_and_views(current, out_dir, subject, stances, views)
+
+
+## Follow-camera stances ([name, feet]) first, then fixed views ([name, eye, target]).
+func _stances_and_views(current: Node, out_dir: String, subject: String, stances: Array, views: Array) -> void:
+	var nav := current.get_node(^"Navigation") as LocationNavigation
+	_lines.append("## %s" % subject)
 	_lines.append("")
 	var index := 0
-	for stance: Array in DREAM_STANCES:
+	for stance: Array in stances:
 		var feet := NavigationServer3D.map_get_closest_point(nav.get_navigation_map(), stance[1])
 		_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-45.0)), feet + Vector3.UP * 0.05))
 		await _wait(0.5)
 		if _rig.has_method("snap"):
 			_rig.call("snap")
 		await _wait(0.6)
-		var shot := "dream_annex_%02d_detail_%s" % [index, stance[0]]
+		var shot := "%s_%02d_detail_%s" % [subject, index, stance[0]]
 		_save(out_dir, shot)
 		_lines.append("- `%s.jpg` (follow camera) at %s, asked for %s" % [shot, str(feet), str(stance[1])])
 		index += 1
@@ -367,12 +390,12 @@ func _capture_dream(out_dir: String) -> void:
 	camera.fov = 58.0
 	camera.far = 300.0
 	_main.add_child(camera)
-	for view: Array in DREAM_VIEWS:
+	for view: Array in views:
 		camera.global_position = view[1]
 		camera.look_at(view[2], Vector3.UP)
 		camera.make_current()
 		await _wait(0.5)
-		var shot := "dream_annex_%02d_detail_%s" % [index, view[0]]
+		var shot := "%s_%02d_detail_%s" % [subject, index, view[0]]
 		_save(out_dir, shot)
 		_lines.append("- `%s.jpg` (fixed view, not gameplay) from %s" % [shot, str(view[1])])
 		index += 1

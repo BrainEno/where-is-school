@@ -54,6 +54,33 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
   - chimney
   - pylon and trees
   - All are unlit, cast no shadows and never sit between the camera and the player.
+- **The building under construction** (`ConstructionSite`, glossary 建造中的大楼; built by
+  `source/construction_site.py`). A raw earth plot pushed out from the yard's
+  south-west corner into the laid-flat sky (x −35.25…−23.05, z 7…19.6): the
+  yard ends and a site begins without a fence between them. On it:
+  - blue hoarding with a white band, a closed barred gate chained shut, and a blank name
+    plate over it. The school beyond has no name yet.
+  - in front of the gate, on the strip between the yard edge and the hoarding, three
+    hollow sand pyramids. The sand is near-white toon paint, blown out where it faces the
+    light, standing on a collar of wet sand. Each top is cut open, and cold, unlit water
+    stands in the dark mouth. Seen from the follow camera, this is what the corner shows
+    first. The source is the novel excerpt's sand piles before a closed school gate,
+    "像用来保存浮尸的金字塔".
+  - a yellow excavator behind the hoarding, its arm reaching over it to the smallest pile.
+  - the frame of the future 椭球大楼, which is a later glossary name. Oval floor plates
+    widen and narrow along an ellipsoid profile. There are four poured floors and a timber
+    deck, with columns and a bare core, and rebar left standing for the next storey. Two
+    drain pipes run down the yard-facing side. Rebar meridians and latitude hoops trace,
+    at full size, the ellipsoid it will become. The deck carries a chalked six-pointed
+    board with six marbles that match nothing; only the high fixed views see it.
+  - Placement rule: every piece stays west of x = −23.05 m. The walkable yard ends at
+    x ≈ −22.5, and the follow camera sits south-east of the player, so no part of the
+    site can come between the camera and the player or an interactable.
+  - Primitive meshes only, with shared shapes. Nothing collides, so the solids, the baked
+    navigation and the shape counts are unchanged. Six new materials: `site_earth`,
+    `hoarding`, `sand_glare`, `sand_wet`, `cold_water` and `slab`. No new texture: they
+    reuse the ground, metal and plaster tiles. The pylon cut-out moved from (−33, 14) to
+    (−42, 21) so that it stands clear of the plot.
 - **Ground.** Two pours of low-value concrete: the stage floor stays dark so the court,
   the props and the pale HUD text carry the light. The older pour is warm sand; the newer
   pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up
@@ -90,6 +117,7 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | Shed / roof / door | `#CCBEA4` / `#684E5A` / `#567040` |
 | Climbing frame, hoop rings / fire door / brass | `#D6A83C` / `#963A2A` / `#BE963E` |
 | Container / shutter / estate | `#425678` / `#344460` / `#806874` |
+| Site: earth tint / hoarding / sand / wet sand / cold water / slab | `#FAC8B4` × ground tile / `#4A6C94` / `#FAEECC` / `#806448` / `#92C0CC` (unlit) / `#B8B4B0` |
 | Sky: blue / mauve / rose / glow / ground rows | `#404A64` / `#544C68` / `#64505E` / `#685456` / `#2C283A` |
 
 Lighting (in `playground.tscn`):

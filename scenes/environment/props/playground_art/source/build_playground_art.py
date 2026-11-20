@@ -37,6 +37,7 @@ import re
 import sys
 from pathlib import Path
 
+import construction_site
 import yard_details
 
 HERE = Path(__file__).resolve().parent
@@ -167,6 +168,15 @@ MATERIALS: dict[str, dict] = {
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
     # The fence that carries on past the yard: the panel texture once per 3 x 2 m quad
     # (plain UVs, not world triplanar, so each panel can sink without its rails sliding).
+    # The building under construction past the south-west corner (construction_site.py).
+    # The sand is near-white toon paint: blown out where it faces the light, against the
+    # unlit cold water standing in each hollow pile.
+    "site_earth": {"color": (250, 200, 180), "texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
+    "hoarding": {"color": (74, 108, 148), "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
+    "sand_glare": {"color": (250, 238, 204), "outline": True},
+    "sand_wet": {"color": (128, 100, 72), "outline": True},
+    "cold_water": {"color": (146, 192, 204), "unshaded": True},
+    "slab": {"color": (184, 180, 176), "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
 
@@ -542,7 +552,8 @@ def build_nodes() -> Builder:
         ("RowFlats", "row_flats", (13.0, 5.4), (-31.0, -12.0)),
         ("RowTower", "row_tower", (9.0, 3.75), (-29.5, 3.0)),
         ("RowChimney", "row_chimney", (11.0, 4.6), (-36.0, -26.0)),
-        ("RowPylon", "row_pylon", (10.0, 4.2), (-33.0, 14.0)),
+        # Moved out from behind the construction plot (x -35..-23, z 7..19.6).
+        ("RowPylon", "row_pylon", (10.0, 4.2), (-42.0, 21.0)),
     ]
     for name, mat, (w, h), (x, z) in rows:
         b.flat(name, f"{A}/Distance", quad(b, w, h), mat, (x, -1.2 + h / 2, z), (0, 45, 0))
@@ -594,6 +605,7 @@ def build_nodes() -> Builder:
     b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
     school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
     _yard_return_details(b, A)
+    construction_site.build(b, A)
     return b
 
 
