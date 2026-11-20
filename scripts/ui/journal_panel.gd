@@ -98,23 +98,37 @@ func _ready() -> void:
 	column.add_theme_constant_override(&"separation", 10)
 	_panel.add_child(column)
 
+	_scroll = ScrollContainer.new()
+	_scroll.name = "Scroll"
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var context := column
+	if MobileLayout.enabled:
+		# Longer route and progress lines must scroll with the notes instead of
+		# squeezing them out of a short safe area at the largest text size.
+		context = VBoxContainer.new()
+		context.name = "Reading"
+		context.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		context.add_theme_constant_override(&"separation", 10)
+		_scroll.add_child(context)
+
 	_title = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER, 0.6, 3)
 	_title.name = "Title"
 	column.add_child(_title)
 	_subtitle = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_subtitle.name = "Subtitle"
-	column.add_child(_subtitle)
+	context.add_child(_subtitle)
 	_route = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.ACCENT)
 	_route.name = "Route"
-	column.add_child(_route)
+	context.add_child(_route)
 	_objective = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.PAGE_TEXT)
 	_objective.name = "Objective"
-	column.add_child(_objective)
+	context.add_child(_objective)
 	_progress = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_progress.name = "ReadingProgress"
 	_progress.visible = false
-	column.add_child(_progress)
-	column.add_child(MenuStyle.rule(56.0))
+	context.add_child(_progress)
+	context.add_child(MenuStyle.rule(56.0))
 
 	_filters = HFlowContainer.new()
 	_filters.name = "Filters"
@@ -136,22 +150,19 @@ func _ready() -> void:
 
 	_caveat = MenuStyle.paragraph("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
 	_caveat.name = "Caveat"
-	column.add_child(_caveat)
+	context.add_child(_caveat)
 
-	_scroll = ScrollContainer.new()
-	_scroll.name = "Scroll"
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(_scroll)
 	_rows = VBoxContainer.new()
 	_rows.name = "Rows"
 	_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows.add_theme_constant_override(&"separation", 10)
-	_scroll.add_child(_rows)
+	var rows_parent: Control = context if MobileLayout.enabled else _scroll
+	rows_parent.add_child(_rows)
 	_empty = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.MUTED)
 	_empty.name = "Empty"
 	_empty.visible = false
-	column.add_child(_empty)
+	context.add_child(_empty)
 
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override(&"separation", 16)
@@ -429,7 +440,8 @@ func _rebuild() -> void:
 			first = false
 	var shown := int(_page.get("shown", 0))
 	_empty.visible = shown == 0
-	_scroll.visible = shown > 0
+	_rows.visible = shown > 0
+	_scroll.visible = shown > 0 or MobileLayout.enabled
 	if _filter == JournalPage.COMPARE:
 		_empty.text = L10n.t("journal.empty_compare")
 	elif int(_page.get("total", 0)) == 0:
@@ -443,6 +455,7 @@ func _add_section(section: Dictionary, first: bool) -> void:
 	if not first:
 		var gap := Control.new()
 		gap.custom_minimum_size = Vector2(0.0, 8.0)
+		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_rows.add_child(gap)
 	var heading := MenuStyle.serif_label(
 		L10n.t(String(section.get("place_key", JournalCatalog.ELSEWHERE_KEY))),
@@ -460,6 +473,8 @@ func _add_section(section: Dictionary, first: bool) -> void:
 ## large text sizes. The existing entry rows still own source colours and labels.
 func _add_comparison(section: Dictionary) -> void:
 	var card := PanelContainer.new()
+	# The frame is decorative; drags must reach the notebook's ScrollContainer.
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.name = "Comparison_%s" % section["comparison_id"]
 	var style := MenuStyle.panel_style()
 	style.content_margin_left = 16.0

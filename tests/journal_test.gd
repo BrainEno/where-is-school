@@ -704,6 +704,15 @@ func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
 			"F: the drawn rows lost their source, speaker or place in %s." % locale)
 		_expect(compare.text == L10n.t("journal.filter_count", {"label": L10n.t("journal.filter.compare"), "count": 1}),
 			"F: the drawn tab does not count the complete pair in %s." % locale)
+		var settings := root.get_node(^"Settings")
+		for device: StringName in [&"gamepad", &"keyboard"]:
+			settings.call("set_input_device", device)
+			var confirm := InputHint.action_key(journal, &"ui_accept")
+			var close := InputHint.action_key(journal, &"ui_cancel")
+			var hint := journal.get_hint_text()
+			_expect(not confirm.is_empty() and not close.is_empty() and not hint.contains("{")
+				and hint.contains("[%s]" % confirm) and hint.contains("[%s]" % close),
+				"F: the %s hint in %s did not show both bindings." % [device, locale])
 	_expect(_narrative.call("to_snapshot") == snapshot and game_state.call("get_snapshot") == story_before,
 		"F: opening or rewording Compare changed saved knowledge or flags.")
 	_narrative.clear()

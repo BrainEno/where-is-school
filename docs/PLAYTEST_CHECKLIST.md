@@ -130,6 +130,9 @@ GitHub release, if one exists). Record at the top:
       your observation and Q's account together, names the sources, and leaves a question
       rather than an answer. Switch language, then use Save and quit, followed by Continue;
       the same pair is available.
+- [ ] On a phone or tablet with the largest text size, tap Compare and swipe up starting
+      on a card. The notes scroll, the route and progress are still readable at the top
+      of the scroll, and the tabs and Back remain in reach.
 - [ ] Start a conversation and start a new game from the menu while a line is still
       typing; replay it and press F: skip passes the lines read whole and stops at the one
       that was cut off.
