@@ -37,13 +37,9 @@ LITERAL = re.compile(
     rf"(?:\s*,\s*(?P<a>{_NUMBER}))?\s*,?\s*\)"
 )
 
-# The distinct band inks stay as authored pending the visual decision in #210.
-# The notebook paper is painted as a whole, not a general UI colour system.
+# Source inks now live in Palette (#288). The remaining one-off band inks and paper
+# details are still authored per surface; this baseline must shrink when any moves.
 BASELINE: dict[Key, str] = {
-    ("scripts/ui/dialogue_panel.gd", (0.42, 0.35, 0.29, 1.0)): "band: source OBSERVED",
-    ("scripts/ui/dialogue_panel.gd", (0.24, 0.37, 0.52, 1.0)): "band: source REPORTED",
-    ("scripts/ui/dialogue_panel.gd", (0.32, 0.4, 0.34, 1.0)): "band: source RECALLED",
-    ("scripts/ui/dialogue_panel.gd", (0.64, 0.32, 0.15, 1.0)): "band: source IMAGINED",
     ("scripts/ui/dialogue_panel.gd", (0.62, 0.27, 0.13, 1.0)): "band: inner voices' rust",
     ("scripts/ui/dialogue_panel.gd", (0.30, 0.16, 0.20, 1.0)): "band: unaccented speaker's plum",
     ("scripts/ui/dialogue_panel.gd", (0.16, 0.14, 0.20, 1.0)): "band: sentence's blue-black ink",

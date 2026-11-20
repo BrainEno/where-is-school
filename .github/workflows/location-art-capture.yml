@@ -85,6 +85,7 @@ jobs:
           - {location: principal_office, side: after}
           - {location: restroom_02, side: after}
           - {location: restroom_03, side: after}
+          - {location: dream_annex, side: after}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -153,6 +154,12 @@ jobs:
               detail=(school-details school-focus review_width=380)
               width=1600
               expect=3
+              ;;
+            dream_annex)
+              # Exam-dream dressing on the live corridor (docs/EXAM_DREAM_ART.md).
+              detail=(dream-annex review_width=360)
+              width=1280
+              expect=8
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

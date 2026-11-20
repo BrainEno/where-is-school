@@ -77,6 +77,7 @@ STATUSES = ("current", "historical")
 UI_FINGERPRINT_FILES = (
     "scenes/ui/dialogue_panel.tscn",
     "scripts/ui/dialogue_panel.gd",
+    "scripts/theme/palette.gd",
 )
 # The clocks a `shows.kind: "clock"` frame can name: scene -> (hour hand, minute hand), each
 # `<pivot>/<hand>` directly under the scene root. The face looks along the room's +Z.

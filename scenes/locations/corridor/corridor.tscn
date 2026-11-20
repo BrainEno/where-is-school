@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -16,6 +16,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/metal_ink.tres" id="art_metal_ink"]
 [ext_resource type="PackedScene" path="res://scenes/locations/corridor/teaching_block.tscn" id="block"]
 [ext_resource type="PackedScene" path="res://scenes/locations/corridor/courtyard_view.tscn" id="courtyard"]
+[ext_resource type="PackedScene" path="res://scenes/locations/corridor/dream_annex.tscn" id="dream_annex"]
 [ext_resource type="Script" path="res://scenes/locations/corridor/high_window_peek.gd" id="high_peek"]
 [ext_resource type="Script" path="res://scenes/locations/corridor/directory_tab.gd" id="directory_tab"]
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
@@ -108,6 +109,8 @@ script = ExtResource("90_navigation")
 [node name="TeachingBlock" parent="." instance=ExtResource("block")]
 
 [node name="StageArt" parent="." instance=ExtResource("courtyard")]
+
+[node name="DreamAnnex" parent="." instance=ExtResource("dream_annex")]
 
 [node name="GateEnd" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(0, 0.52, 7.64)

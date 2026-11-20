@@ -52,17 +52,23 @@ const BRICK := Color(0.4, 0.192, 0.133, 1.0)
 const OCHRE := Color(0.62, 0.471, 0.29, 1.0)
 const GROUND := Color(0.027, 0.033, 0.033, 1.0)
 
-## What a notebook entry of each kind is called in colour: seen, heard, remembered,
-## imagined. A kind has to look the same wherever it is named - the notebook, the HUD's
-## "noted" line, and (once the reading band is restyled on paper) its badges.
-##
-## `SOURCE_OBSERVED` is the bone accent today, but it is named for what it means: the colour
-## of a seen thing may move without moving every border in the menus. `SOURCE_IMAGINED` and
-## `WARN` are the same clay today, for the same reason.
+## Source accents for the dark notebook and HUD. Bone and caution clay also serve other
+## controls today, but those controls need not change if the source colours change.
 const SOURCE_OBSERVED := ACCENT
 const SOURCE_REPORTED := Color(0.561, 0.663, 0.710, 1.0)
 const SOURCE_RECALLED := Color(0.604, 0.639, 0.592, 1.0)
 const SOURCE_IMAGINED := WARN
+
+## One source map for both surfaces (#288). Preserve the dark inks on light paper and
+## the lighter accents on the dark notebook/HUD; sharing one RGB would lose contrast.
+## Keys are NarrativeEntry's stable content IDs. Callers translate the enum to an ID so
+## this file remains a leaf, and keep their own opacity and localized source label.
+const _SOURCE_COLORS: Dictionary = {
+	"observed": {"accent": SOURCE_OBSERVED, "ink": Color(0.42, 0.35, 0.29, 1.0)},
+	"reported": {"accent": SOURCE_REPORTED, "ink": Color(0.24, 0.37, 0.52, 1.0)},
+	"recalled": {"accent": SOURCE_RECALLED, "ink": Color(0.32, 0.4, 0.34, 1.0)},
+	"imagined": {"accent": SOURCE_IMAGINED, "ink": Color(0.64, 0.32, 0.15, 1.0)},
+}
 
 ## The reading band (#231): the dialogue is written on a sheet torn from an exercise book, in
 ## ink. Only the values the band's files share are here; each keeps its own one-off inks.
@@ -74,3 +80,15 @@ const NOTEBOOK_MUTED := Color(0.36, 0.33, 0.35, 1.0)
 const RED_INK := Color(0.66, 0.24, 0.14, 1.0)
 ## The deeper red of an option under the pointer and of a mode that is on.
 const RED_INK_LIT := Color(0.44, 0.1, 0.06, 1.0)
+
+
+## Ink for a narrative source on the reading band's light paper.
+static func source_ink(source_id: String) -> Color:
+	var colors: Dictionary = _SOURCE_COLORS.get(source_id, {})
+	return colors.get("ink", NOTEBOOK_MUTED)
+
+
+## Accent on a dark ground. The HUD keeps its bone fallback for an unknown source.
+static func source_accent(source_id: String, fallback: Color = PAPER) -> Color:
+	var colors: Dictionary = _SOURCE_COLORS.get(source_id, {})
+	return colors.get("accent", fallback)

@@ -14024,28 +14024,6 @@ mesh = SubResource("BoxMesh_art463")
 material_override = SubResource("Mat_brass_rule")
 cast_shadow = 0
 
-[node name="ApronRailWest0" type="StaticBody3D" parent="GroundFloor" groups=["camera_occluder"]]
-position = Vector3(-20.75, -3.4, 16.5)
-rotation_degrees = Vector3(0, 0, 0)
-collision_layer = 1
-collision_mask = 0
-
-[node name="Guard" type="CollisionShape3D" parent="GroundFloor/ApronRailWest0"]
-position = Vector3(0, 0.55, 0)
-shape = SubResource("BoxShape3D_art464")
-
-[node name="Panel" type="MeshInstance3D" parent="GroundFloor/ApronRailWest0"]
-position = Vector3(0, 0.5, 0)
-mesh = SubResource("BoxMesh_art465")
-material_override = SubResource("Mat_entry_glaze")
-cast_shadow = 0
-
-[node name="Cap" type="MeshInstance3D" parent="GroundFloor/ApronRailWest0"]
-position = Vector3(0, 1.04, 0)
-mesh = SubResource("BoxMesh_art466")
-material_override = SubResource("Mat_brass_rule")
-cast_shadow = 0
-
 [node name="ApronRailEast0" type="StaticBody3D" parent="GroundFloor" groups=["camera_occluder"]]
 position = Vector3(-14.55, -3.4, 16.5)
 rotation_degrees = Vector3(0, 0, 0)

@@ -149,15 +149,6 @@ signal skip_requested
 @onready var _content: VBoxContainer = $Frame/Content
 @onready var _header_row: HBoxContainer = $Frame/Content/HeaderRow
 
-## The narrative source, as inks on the paper: brown-black for what was seen, a blue for
-## what was heard, a grey-green for what is remembered, a rust for what is imagined.
-const SOURCE_COLORS: Dictionary = {
-	NarrativeEntry.Source.OBSERVED: Color(0.42, 0.35, 0.29, 1.0),
-	NarrativeEntry.Source.REPORTED: Color(0.24, 0.37, 0.52, 1.0),
-	NarrativeEntry.Source.RECALLED: Color(0.32, 0.4, 0.34, 1.0),
-	NarrativeEntry.Source.IMAGINED: Color(0.64, 0.32, 0.15, 1.0),
-}
-
 ## The inner voices' name: a rust ink, warmer than any speaker's.
 const SUBJECTIVE_TINT := Color(0.62, 0.27, 0.13, 1.0)
 ## The sheet the band is written on (`NotebookPaper.PAPER`).
@@ -1450,7 +1441,7 @@ func _accent_for(line: Dictionary) -> Color:
 	if line.get("subjective", false):
 		return SUBJECTIVE_TINT
 	var source_value := int(line.get("source", NarrativeEntry.Source.OBSERVED))
-	return SOURCE_COLORS.get(source_value, MUTED)
+	return Palette.source_ink(NarrativeEntry.source_to_id(source_value))
 
 
 ## The source is drawn twice, both times quietly: a hairline along the top edge and a
