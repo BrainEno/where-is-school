@@ -30,7 +30,7 @@
   "frames": [
     {
       "file": "01_opening_line.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -50,8 +50,7 @@
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
         "text": "Enjoy your nap, did you?"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "02_walking.png",
@@ -1048,7 +1047,7 @@
     },
     {
       "file": "ui-dialogue-1280x720-en.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1068,12 +1067,11 @@
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
         "text": "Enjoy your nap, did you?"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-dialogue-1280x720-zh.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1093,12 +1091,11 @@
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
         "text": "你刚才睡得还挺好啊。"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-dialogue-1600x900-en.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1118,12 +1115,11 @@
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
         "text": "Enjoy your nap, did you?"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-dialogue-1600x900-zh.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1143,12 +1139,11 @@
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
         "text": "你刚才睡得还挺好啊。"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-dialogue-1920x1080-en.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1168,12 +1163,11 @@
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
         "text": "Enjoy your nap, did you?"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-dialogue-1920x1080-zh.jpg",
-      "status": "historical",
+      "status": "current",
       "captured": {
         "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
         "run_id": 44672222712,
@@ -1193,8 +1187,7 @@
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
         "text": "你刚才睡得还挺好啊。"
-      },
-      "reason": "Captured before the author's round-5 rewrite of the prologue changed Q's first line (q_wake/q_1). The dialogue box and its layout are unchanged; the line is not. Comparison only until the next Playthrough capture with relay_dialogue_evidence=true replaces it."
+      }
     },
     {
       "file": "ui-inspection-1600x900-zh.png",

@@ -370,8 +370,8 @@ func _check_placement() -> void:
 	# Staged only for its one borrow attempt (prologue_dialogue_paths_test); otherwise
 	# its handler answers with the locked door's inspection, as below.
 	var rear := _room().find_interactable(&"rear_door") as StagedInteractable
-	if rear == null or not rear.is_staged() or rear.inspection_id != &"classroom_rear_door" \
-			or rear is LocationExit:
+	# The cast is null for anything that is not staged, a LocationExit included.
+	if rear == null or not rear.is_staged() or rear.inspection_id != &"classroom_rear_door":
 		_failures.append("The rear door is not a staged door reading classroom_rear_door.")
 
 
