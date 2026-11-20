@@ -1,64 +1,82 @@
 #!/usr/bin/env bash
-# CI evidence only. Uses the current harness/scene in two real engine sessions, swapping
-# just the two baseline GLBs between sessions; always restores the current runtime bytes.
+# CI evidence only. Uses the current harness/scene in two real engine sessions. Changes
+# only the selected baseline GLBs (and the lead's motion profile) between sessions; always
+# restores the current runtime bytes.
 # No checkout of another branch/revision, no offline rendering, no generated portrait.
 # bash tools/capture_character_geometry.sh n 'face,hands,cloth' <prepared-baseline-dir>
 set -euo pipefail
 
-group=${1:?n or student}
+group=${1:?n, student or protagonist}
 frames=${2-}
-baseline=${3:?directory with n/student .glb/.tres and base-sha.txt}
-case "$group" in n|student) ;; *) echo "unsupported geometry group: $group" >&2; exit 2 ;; esac
+baseline=${3:?directory with selected .glb/.tres inputs and base-sha.txt}
+declare -A models
+motion=assets/characters/protagonist/protagonist_motion.tres
+case "$group" in
+  n|student)
+    models=([n]=assets/models/teacher-n/teacher-n.glb [student]=assets/models/protagonist/protagonist.glb)
+    motion= ;;
+  protagonist) models=([protagonist]=assets/models/protagonist/Protagonist_Character.glb) ;;
+  *) echo "unsupported geometry group: $group" >&2; exit 2 ;;
+esac
+for label in "${!models[@]}"; do
+  test -s "$baseline/$label.glb"
+  test -s "$baseline/$label.tres"
+done
+if [ -n "$motion" ]; then test -s "$baseline/protagonist_motion.tres"; fi
 engine=${GODOT_BIN:-godot}
 python=${EVIDENCE_PYTHON:-python3}
 shots=docs/screenshots/character_integration
 mkdir -p "$shots"
 : > capture.log
 vault=$(mktemp -d)
-n_model=assets/models/teacher-n/teacher-n.glb
-student_model=assets/models/protagonist/protagonist.glb
-cp "$n_model" "$vault/n.glb"
-cp "$student_model" "$vault/student.glb"
 restore_models() {
-  cp "$vault/n.glb" "$n_model"
-  cp "$vault/student.glb" "$student_model"
+  for label in "${!models[@]}"; do
+    if [ -f "$vault/$label.glb" ]; then cp "$vault/$label.glb" "${models[$label]}"; fi
+  done
+  if [ -f "$vault/protagonist_motion.tres" ]; then cp "$vault/protagonist_motion.tres" "$motion"; fi
   if [ -f "$vault/cache-paths.txt" ]; then
     while IFS= read -r cache; do cp "$vault/cache/$cache" "$cache"; done < "$vault/cache-paths.txt"
   fi
   rm -rf "$vault"
 }
 trap restore_models EXIT
-for label in n student; do
-  test -s "$baseline/$label.glb"
-  test -s "$baseline/$label.tres"
-done
+for label in "${!models[@]}"; do cp "${models[$label]}" "$vault/$label.glb"; done
+if [ -n "$motion" ]; then cp "$motion" "$vault/protagonist_motion.tres"; fi
 base_sha=$(cat "$baseline/base-sha.txt")
 head_sha=$(git rev-parse HEAD)
 engine_version=$("$engine" --version)
 export GEOMETRY_BASE_SHA="$base_sha" GEOMETRY_HEAD_SHA="$head_sha" GEOMETRY_ENGINE="$engine_version"
 export GEOMETRY_BASELINE="$baseline" GEOMETRY_VAULT="$vault" GEOMETRY_GROUP="$group"
-# Record the actual inputs before any swap. Capturing old assets through the head scene
-# isolates geometry/material changes; it is explicitly NOT a historical whole-game build.
-"$python" - <<'PY'
-import hashlib, json, os
+# Record the actual inputs before any swap. This isolates asset changes in the head scene;
+# it is explicitly NOT a historical whole-game build.
+"$python" - "${!models[@]}" <<'PY'
+import hashlib, json, os, sys
 from pathlib import Path
 base, head = Path(os.environ['GEOMETRY_BASELINE']), Path(os.environ['GEOMETRY_VAULT'])
 group = os.environ['GEOMETRY_GROUP']
-sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+roles = sorted(sys.argv[1:])
+looks = {
+    'n': 'teacher_n/teacher_n_look.tres',
+    'student': 'classroom_student/student_look.tres',
+    'protagonist': 'protagonist/protagonist_look.tres',
+}
+def pair(before, after):
+    return {k: hashlib.sha256(p.read_bytes()).hexdigest()
+            for k, p in [('baseline_sha256', before), ('head_sha256', after)]}
+inputs = 'GLB, look and motion profile' if group == 'protagonist' else 'GLB and look'
 record = {
     'schema': 'where-is-school/character-geometry-evidence/1',
     'status': 'inputs-only; not a completed capture',
     'base_sha': os.environ['GEOMETRY_BASE_SHA'], 'code_head_sha': os.environ['GEOMETRY_HEAD_SHA'],
     'engine': os.environ['GEOMETRY_ENGINE'], 'method': 'gl_compatibility', 'driver': 'opengl3',
-    'columns': ['base GLB and look', 'head GLB and look'],
-    'scene_camera_shader_pose_code': 'head in BOTH legs; held idle/sit/walk stills, NOT motion signoff',
-    'models': {k: {'baseline_sha256': sha(base / (k + '.glb')), 'head_sha256': sha(head / (k + '.glb'))}
-               for k in ('n', 'student')},
-    'looks': {k: {'baseline_sha256': sha(base / (k + '.tres')),
-                  'head_sha256': sha(Path('assets/characters') / directory / filename)}
-              for k, directory, filename in [('n', 'teacher_n', 'teacher_n_look.tres'),
-                                               ('student', 'classroom_student', 'student_look.tres')]},
+    'columns': [f'base {inputs}', f'head {inputs}'],
+    'scene_camera_shader_pose_code': 'head in BOTH legs; held walk phases or idle/sit stills, NOT motion signoff',
+    'models': {k: pair(base / (k + '.glb'), head / (k + '.glb')) for k in roles},
+    'looks': {k: pair(base / (k + '.tres'), Path('assets/characters') / looks[k]) for k in roles},
 }
+if group == 'protagonist':
+    name = 'protagonist_motion.tres'
+    record['motion_profiles'] = {'protagonist': pair(base / name, head / name)}
 Path(f'docs/screenshots/character_integration/geometry_comparison_{group}.json').write_text(
     json.dumps(record, indent=2) + '\n')
 PY
@@ -93,12 +111,12 @@ if [ "$status" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error' geometry-head-impo
   echo "Geometry current import failed (exit $status)" >&2
   exit 1
 fi
-"$python" - <<'PY_CACHE'
-import os, re, shutil
+"$python" - "${models[@]}" <<'PY_CACHE'
+import os, re, shutil, sys
 from pathlib import Path
 vault = Path(os.environ['GEOMETRY_VAULT'])
 paths = []
-for model in ['assets/models/teacher-n/teacher-n.glb', 'assets/models/protagonist/protagonist.glb']:
+for model in sys.argv[1:]:
     sidecar = Path(model + '.import')
     match = re.search(r'^path="res://(\.godot/imported/[^/]+\.scn)"$', sidecar.read_text(), re.M)
     if match is None:
@@ -113,8 +131,8 @@ for model in ['assets/models/teacher-n/teacher-n.glb', 'assets/models/protagonis
 (vault / 'cache-paths.txt').write_text('\n'.join(paths) + '\n')
 PY_CACHE
 capture_leg after
-cp "$baseline/n.glb" "$n_model"
-cp "$baseline/student.glb" "$student_model"
+for label in "${!models[@]}"; do cp "$baseline/$label.glb" "${models[$label]}"; done
+if [ -n "$motion" ]; then cp "$baseline/protagonist_motion.tres" "$motion"; fi
 # A new engine process must actually import the changed files. Reusing the head's
 # imported meshes would produce a material-only comparison and is forbidden here.
 status=0
@@ -193,5 +211,5 @@ for frame in sorted(frames):
     print(f'ARTSHEET: {name}.jpg {encoded}')
 record['status'] = 'complete; static rendered comparisons, not motion or owner signoff'
 manifest_path.write_text(json.dumps(record, indent=2) + '\n')
-print('ARTNOTE: geometry comparison uses actual base/current GLBs and looks; head scene/camera/shader in both legs')
+print(f"ARTNOTE: uses actual base/current {record['columns'][0][5:]}; head scene/camera/shader in both legs")
 PY

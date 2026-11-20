@@ -22,7 +22,9 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS = {"n": "assets/models/teacher-n/teacher-n.glb",
-          "student": "assets/models/protagonist/protagonist.glb"}
+          "student": "assets/models/protagonist/protagonist.glb",
+          "protagonist": "assets/models/protagonist/Protagonist_Character.glb"}
+MOTION = "assets/characters/protagonist/protagonist_motion.tres"
 
 
 def write(path: Path, text: str, executable: bool = False) -> None:
@@ -33,7 +35,8 @@ def write(path: Path, text: str, executable: bool = False) -> None:
 
 
 class GeometryCaptureOrchestrationTest(unittest.TestCase):
-    def fixture(self, folder: Path, fail: str = "", dense: bool = False) -> subprocess.CompletedProcess:
+    def fixture(self, folder: Path, fail: str = "", dense: bool = False,
+                group: str = "n") -> subprocess.CompletedProcess:
         baseline = folder / "baseline"
         shots = folder / "docs/screenshots/character_integration"
         shots.mkdir(parents=True, exist_ok=True)
@@ -46,6 +49,9 @@ class GeometryCaptureOrchestrationTest(unittest.TestCase):
             write(baseline / (label + ".tres"), "fixture-base-look-" + label)
         write(folder / "assets/characters/teacher_n/teacher_n_look.tres", "fixture-head-look-n")
         write(folder / "assets/characters/classroom_student/student_look.tres", "fixture-head-look-student")
+        write(folder / "assets/characters/protagonist/protagonist_look.tres", "fixture-head-look-protagonist")
+        write(folder / MOTION, "fixture-head-walk")
+        write(baseline / "protagonist_motion.tres", "fixture-base-walk")
         # The exact values identify synthetic test revisions, never a real evidence run.
         write(baseline / "base-sha.txt", "fixture-base-revision\n")
         tools = folder / "bin"
@@ -59,13 +65,15 @@ from PIL import Image
 if '--version' in sys.argv:
     print('fixture-not-godot')
     raise SystemExit(0)
-base = Path('assets/models/teacher-n/teacher-n.glb').read_text().startswith('fixture-base')
+models = [('n', 'assets/models/teacher-n/teacher-n.glb'),
+          ('student', 'assets/models/protagonist/protagonist.glb'),
+          ('protagonist', 'assets/models/protagonist/Protagonist_Character.glb')]
+base = any(Path(path).read_text().startswith('fixture-base') for _, path in models)
 if '--import' in sys.argv:
     if base and os.environ.get('FIXTURE_FAIL') == 'baseline-import':
         print('ERROR: synthetic baseline import failure')
         raise SystemExit(6)
-    for label, path in [('n', 'assets/models/teacher-n/teacher-n.glb'),
-                        ('student', 'assets/models/protagonist/protagonist.glb')]:
+    for label, path in models:
         for suffix in ['scn', 'md5']:
             target = Path(f'.godot/imported/{label}.{suffix}')
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +81,11 @@ if '--import' in sys.argv:
     raise SystemExit(0)
 variant = next(a.split('=', 1)[1] for a in sys.argv if a.startswith('--variants='))
 group = next(a.split('=', 1)[1] for a in sys.argv if a.startswith('--group='))
+if group == 'protagonist':
+    leg = 'base' if variant == 'baseline' else 'head'
+    assert Path('assets/characters/protagonist/protagonist_motion.tres').read_text() == f'fixture-{leg}-walk'
+    assert Path('.godot/imported/protagonist.scn').read_text() == f'fixture-cache-fixture-{leg}-protagonist'
+    assert Path('assets/models/protagonist/protagonist.glb').read_text() == 'fixture-head-student'
 if variant == 'baseline' and os.environ.get('FIXTURE_FAIL') == 'baseline-capture':
     print('ARTNOTE: RESULT: FAILURE')
     raise SystemExit(7)
@@ -95,10 +108,11 @@ print('ARTNOTE: RESULT: SUCCESS')
                    GODOT_BIN=str(tools / "fixture-engine"), EVIDENCE_PYTHON=sys.executable,
                    FIXTURE_FAIL=fail, FIXTURE_DENSE="1" if dense else "")
         return subprocess.run(["bash", str(ROOT / "tools/capture_character_geometry.sh"),
-                               "n", "face,hands", str(baseline)], cwd=folder, env=env,
+                               group, "face,hands", str(baseline)], cwd=folder, env=env,
                               text=True, capture_output=True, timeout=30)
 
     def assert_restored(self, folder: Path) -> None:
+        self.assertEqual((folder / MOTION).read_text(), "fixture-head-walk")
         for label, relative in MODELS.items():
             self.assertEqual((folder / relative).read_text(), "fixture-head-" + label)
             for suffix in ("scn", "md5"):
@@ -117,8 +131,8 @@ print('ARTNOTE: RESULT: SUCCESS')
             manifest = json.loads((shots / "geometry_comparison_n.json").read_text())
             self.assertTrue(manifest["status"].startswith("complete;"))
             self.assertEqual(len(manifest["rendered_sheets"]), 2)
-            for label in MODELS:
-                entry = manifest["models"][label]
+            self.assertEqual(set(manifest["models"]), {"n", "student"})
+            for label, entry in manifest["models"].items():
                 self.assertEqual(entry["baseline_sha256"], hashlib.sha256(("fixture-base-" + label).encode()).hexdigest())
                 self.assertEqual(entry["head_sha256"], hashlib.sha256(("fixture-head-" + label).encode()).hexdigest())
             with Image.open(shots / "n_hands__geometry_base_after.png") as image:
@@ -126,6 +140,22 @@ print('ARTNOTE: RESULT: SUCCESS')
                 self.assertEqual(image.getpixel((64, 40)), (0xbb, 0x77, 0x33))
             log = (folder / "capture.log").read_text()
             self.assertEqual(log.count("ARTSHEET: "), 2)
+
+    def test_protagonist_swap_uses_both_production_profiles_and_restores_them(self) -> None:
+        for fail in ("", "baseline-capture"):
+            with self.subTest(fail=fail), tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory)
+                result = self.fixture(folder, group="protagonist", fail=fail)
+                self.assertEqual(result.returncode != 0, bool(fail), result.stdout + result.stderr)
+                self.assert_restored(folder)
+                manifest = folder / "docs/screenshots/character_integration/geometry_comparison_protagonist.json"
+                info = json.loads(manifest.read_text())
+                self.assertEqual(set(info["models"]), {"protagonist"})
+                self.assertEqual(info["motion_profiles"]["protagonist"], {
+                    "baseline_sha256": hashlib.sha256(b"fixture-base-walk").hexdigest(),
+                    "head_sha256": hashlib.sha256(b"fixture-head-walk").hexdigest(),
+                })
+                self.assertEqual(info["status"].startswith("complete;"), not fail)
 
     def test_every_preview_fits_the_published_chunk_budget(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

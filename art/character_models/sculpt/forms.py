@@ -127,6 +127,148 @@ def face(role, p, mode, density=None):
     return out
 
 
+# Detail cuts are laid out on the first pass, in metres (dimensions) and mm
+# (relief). Each performer gets a different brow, aperture, bridge and lip:
+# Q's lifted corners, N's narrow bridge, the student's small flat eyelids,
+# the thin student's deep-set eyes, the friend's softer mouth, the court
+# student's one-sided brow and B's hooded eyes and thin, longer mouth.
+# eye: (lower shelf, upper crease, narrowing fraction, outer-corner weight)
+# brow: (height above iris, left/right bias, arch lift, ridge)
+# nose: (tip below eye, bridge relief, tip relief, wing width change)
+# lip: (centre shift from LANDMARKS, front of lips, half-width, upper/lower relief, corner lift)
+DETAILS = {
+    'q': ((2.1, 2.6, .15, .45), (.026, -.002, 2.8, 1.6),
+          (.0525, 1.9, -2.5, -.9), (.001, .113, .026, 2.0, 2.4, 1.0)),
+    'n': ((2.2, 2.8, .18, -.25), (.025, -.001, 2.7, 2.1),
+          (.045, 2.2, -2.0, -.9), (-.001, .089, .024, 2.0, 1.8, -.5)),
+    'seated': ((1.4, 2.7, 0., -.65), (.018, -.001, 2.5, 1.7),
+               (.034, .9, -2.7, -.9), (0., .108, .025, 1.7, 2.3, -.4)),
+    'thin': ((2.5, 3.2, 0., -.55), (.017, .002, 2.6, 2.0),
+             (.042, 1.6, -2.2, -1.3), (.001, .159, .022, 1.6, 1.9, -.9)),
+    'gentle': ((2.4, 1.8, 0., .65), (.019, .0015, 2.6, 1.3),
+               (.036, 1.1, -1.8, 1.0), (.002, .138, .026, 2.1, 2.6, 1.0)),
+    'court': ((2.1, 2.8, 0., .75), (.018, .004, 3.1, 2.1),
+              (.044, 1.9, -1.5, -.9), (.002, .158, .024, 2.2, 2.2, 1.3)),
+    'b': ((2.2, 3.1, 0., -.75), (.023, .0015, -2.4, 2.0),
+          (.041, 2.0, -3.1, -.8), (-.016, .176, .028, 2.0, 1.7, -.7)),
+}
+
+
+def facial_details(role, p, kind):
+    """Small shared cuts across the face, lip and brow surfaces, not new paint."""
+    _, ex, ey, ze, mouth = LANDMARKS[role]
+    eye, brow, nose, lip = DETAILS[role]
+    x, y, z = p.T
+    ax, side = abs(x), np.sign(x)
+    out = p.copy()
+
+    # The orbit is a very shallow fold, not a translated eyeball. Q and N can
+    # take a small taper across the complete aperture (sclera, iris and lids).
+    # The student keeps the exact cut-surface eye patches, and donor eyelids
+    # keep their blink seam; their relief is sculpted just outside the rim.
+    shelf, crease, aperture, tilt = eye
+    eye_y = ey - .00125 * side if role == 'n' else ey
+    dy = y - eye_y
+    orbital_front = ease(ze - .032, ze - .008, z)
+    fit = oval(ax, dy, ex, 0., .024, .020) * orbital_front
+    out[:, 1] -= dy * aperture * fit
+    out[:, 1] += .001 * tilt * (ax - ex) / .024 * fit * (aperture > 0.)
+    if aperture:
+        floor = ze - .024
+        out[:, 2] -= .14*np.maximum(0., z-floor)*fit
+    if kind == 'eye':
+        return out
+    rim = 1. - oval(ax, dy, ex, 0., .022, .013)
+    lower_shelf = oval(ax, dy, ex + .004, -.015, .030, .014)
+    upper_fold = oval(ax, dy, ex - .001, .013, .028, .012)
+    outer = oval(ax, dy, ex + .017, -.001, .013, .014)
+    depth = orbital_front * rim * (shelf*lower_shelf - crease*upper_fold + tilt*outer)
+
+    # Broaden the ridge under the brow but taper its tail. The offset is the
+    # same field on skin and brow islands, including N's two-sided strokes.
+    rise, bias, lift, ridge = brow
+    u = np.clip((ax - ex) / .032, -1., 1.)
+    brow_axis = ey + rise + bias*side - .004*u*u
+    arch = oval(ax, y - brow_axis, ex, 0., .031, .012)
+    brow_front = ease(ze - .035, ze - .006, z)
+    depth += ridge*arch*brow_front
+    out[:, 1] += .001*lift*(.54 - .72*u)*arch*brow_front
+
+    # A straightening stroke on the bridge fades into two alae. Do not shift
+    # the separately painted nostrils away from that same underlying relief.
+    tip_drop, bridge, tip, wing = nose
+    tip_y = ey - tip_drop
+    nose_front = ease(ze - .004, ze + .011, z)
+    bridge_plane = oval(x, y, 0., ey - .016, .014, .030)
+    tip_plane = oval(x, y, 0., tip_y, .018, .014)
+    alae = oval(ax, y, .013, tip_y - .006, .011, .011)
+    depth += nose_front*(bridge*bridge_plane + tip*tip_plane + .83*alae)
+    out[:, 0] += .001*side*wing*nose_front*alae
+
+    # A slight Cupid's bow and a wider lower plane, with a groove above and
+    # soft corners rather than moving the lip seam as a separate ribbon.
+    shift, z_lip, width, upper, lower, corner = lip
+    lip_y = mouth + shift
+    lip_front = ease(z_lip - .024, z_lip - .006, z)
+    seam = lip_y + .003*np.minimum(1., (x/width)**2)
+    lip_top = oval(ax, y - seam, .006, .0055, .020, .009)
+    lip_bottom = oval(x, y - seam, 0., -.005, width, .010)
+    philtrum = oval(x, y, 0., lip_y + .014, .006, .009)
+    mouth_corner = oval(ax, y - seam, width - .004, 0., .014, .011)
+    if role in ('thin','gentle','court'):
+        # The donor's SoftSmile folds into the old mouth corners. Keep that
+        # hinge instead of pulling it out with the central lip planes.
+        lip_front *= 1. - ease(.008, .015, ax)
+    depth += lip_front*(upper*lip_top + lower*lip_bottom - .95*philtrum - .74*mouth_corner)
+    out[:, 1] += .001*corner*mouth_corner*lip_front*(.64 + .36*side)
+    out[:, 2] += .001*depth
+    return out
+
+
+def lead_spikes(p, triangles):
+    """Loosen the archived spike silhouette on the original indexed hair."""
+    out = p.copy()
+    centre = np.array([0., 1.627, .029])
+    crown = p[:, 1].max()
+    cap, *locks = components(p, triangles)
+    x, y, z = p[cap].T
+    fringe = ease(.098, .124, z) * ease(1.656, 1.624, y)
+    out[cap, 1] += fringe*(.0056*np.sin(127*x+.37) + .0028*np.cos(223*x))
+    for ids in locks:
+        v = p[ids]
+        mid = v.mean(axis=0)
+        centred = v - mid
+        _, _, axes = np.linalg.svd(centred, full_matrices=False)
+        axis = axes[0]
+        radial = mid - centre
+        if axis @ radial < 0.:
+            axis = -axis
+        length = centred @ axis
+        span = np.ptp(length)
+        if span < .020:
+            continue
+        t = (length - length.min()) / span
+        root = ease(.19, .94, t) * (1. - ease(crown - .013, crown, v[:, 1]))
+        # Sweep some tufts off-axis; the nearly horizontal long needles near
+        # the ears come back a little. The irregular, tall crown still reads
+        # very differently from the combed shell, even at gameplay distance.
+        noise = np.sin(radial @ [217., 143., 79.])
+        horizontal = 1. - abs(axis[1])
+        contraction = .095 * horizontal * ease(.044, .082, span)
+        sweep = unit_rows(np.array([[radial[2], .27*abs(radial[0]), -radial[0]]]))[0]
+        fringe_drop = .010*ease(.093, .128, mid[2])*ease(1.708, 1.667, mid[1])
+        bend = (.0036 + .0056*noise) * sweep + [0., .0037*horizontal*noise - fringe_drop, 0.]
+        out[ids] += root[:, None] * (bend - contraction*span*axis)
+        x, y, z = v.T
+        # Rake locks which cross the pinna back behind it, retaining their
+        # insertions and most of the side silhouette, not trimming them off.
+        crosses_ear = (abs(x) > .062) & (abs(x) < .098) & (y > 1.537) & (y < 1.600) \
+            & (z > -.012) & (z < .035)
+        if crosses_ear.any():
+            out[ids, 2] -= .037*ease(.049, .077, abs(x))
+    return out
+
+
 def components(p, triangles):
     """Join vertex splits by position for brush grouping, never merge their indices."""
     _, ids = np.unique(np.round(p,6),axis=0,return_inverse=True)

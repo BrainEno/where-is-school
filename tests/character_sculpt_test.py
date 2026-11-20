@@ -24,6 +24,22 @@ MOUTH = {'MouthOpen', 'Mouth_Open', 'LipRelease'}
 FACE = dict(lead='Protagonist_Head', q='Q_Head', n='ST_Head_Skin', seated='Head_Main_Mesh_Mesh',
             thin='Face and clipper scalp', gentle='Sculpted face and neck', court='Sculpted face and neck',
             b='Face and neck')
+DETAIL_MESHES = {
+    'lead': {HAIR['lead']},
+    'q': {FACE['q'], 'Q_Eyes'},
+    'n': {FACE['n'], 'ST_Eye_L', 'ST_Eye_R', 'ST_Eyebrow_L', 'ST_Eyebrow_R'},
+    'seated': {FACE['seated'], 'Eyebrow_L_Curve', 'Eyebrow_R_Curve', 'Sphere.019', 'Sphere.020',
+               'Upper_Eyelid_L_Curve', 'Upper_Eyelid_R_Curve', 'Mouth_Line_Curve', 'Lower_Lip_Plane_Curve'},
+    'thin': {FACE['thin'], 'small_detail'},
+    'gentle': {FACE['gentle'], 'small_detail'},
+    'court': {FACE['court'], 'small_detail'},
+    'b': {FACE['b'], 'b_brows_and_crease'},
+}
+
+
+def stream_bytes(doc, data, index):
+    first, last = sculpt.span(doc, index)
+    return data[first:last]
 
 
 def view_bytes(doc, data, i):
@@ -49,6 +65,8 @@ class HeadSculpts(unittest.TestCase):
     def setUpClass(cls):
         cls.bases = {role: subprocess.check_output(['git','show',f'{sculpt.BASE}:{path}'],cwd=ROOT)
                      for role,path in sculpt.RUNTIME.items()}
+        cls.review_bases = {role: subprocess.check_output(['git','show',f'{sculpt.REVIEW_BASE}:{path}'],cwd=ROOT)
+                            for role,path in sculpt.RUNTIME.items()}
         cls.outputs = {role:(ROOT/path).read_bytes() for role,path in sculpt.RUNTIME.items()}
         cls.layers = sculpt.read_layers()
 
@@ -154,7 +172,59 @@ class HeadSculpts(unittest.TestCase):
         self.assertEqual(active_roles['blink'], {'lead','q','thin','gentle','court','b'})
         self.assertEqual(active_roles['mouth'], {'lead','q','thin','gentle','court'})
 
-    def test_new_crowns_are_single_closed_head_bound_shells(self):
+    def test_second_pass_only_touches_the_lead_hair_and_seven_faces(self):
+        for role, base in self.review_bases.items():
+            with self.subTest(role=role):
+                a, ab = decode(base)
+                b, bb = decode(self.outputs[role])
+                changed = set()
+                for (slot, name, p), (slot2, name2, q) in zip(
+                        sculpt.primitives(a), sculpt.primitives(b), strict=True):
+                    self.assertEqual((slot, name), (slot2, name2))
+                    if any(stream_bytes(a, ab, p['attributes'][k]) != stream_bytes(b, bb, q['attributes'][k])
+                           for k in ('POSITION', 'NORMAL')):
+                        changed.add(name)
+                        if role != 'lead':
+                            before = read(a, ab, p['attributes']['POSITION'])
+                            after = read(b, bb, q['attributes']['POSITION'])
+                            self.assertEqual(before.shape, after.shape)
+                            self.assertLess(np.linalg.norm(after-before, axis=1).max(), .005, (role, name))
+                        if role == 'thin' and name == FACE[role]:
+                            crown = before[:, 1] >= 1.528
+                            np.testing.assert_array_equal(before[crown], after[crown])
+                self.assertEqual(changed, DETAIL_MESHES[role])
+
+    def test_details_keep_every_supported_expression_on_the_previous_rig(self):
+        for role, base in self.review_bases.items():
+            if role == 'lead':
+                continue
+            a, ab = decode(base)
+            b, bb = decode(self.outputs[role])
+            for (slot, name, p), (_, _, q) in zip(sculpt.primitives(a), sculpt.primitives(b), strict=True):
+                keys = a['meshes'][slot[0]].get('extras', {}).get('targetNames', ())
+                if not keys:
+                    continue
+                before = read(a, ab, p['attributes']['POSITION'])
+                after = read(b, bb, q['attributes']['POSITION'])
+                triangles = read(a, ab, p['indices']).reshape(-1, 3)
+                for key, target in zip(keys, p.get('targets', ()), strict=True):
+                    delta = read(a, ab, target['POSITION'])
+                    moving = (np.linalg.norm(delta, axis=1) > 1e-6)[triangles].any(axis=1)
+                    if not moving.any():
+                        continue
+                    faces = triangles[moving]
+                    for weight in (.25, .5, .75, 1.):
+                        with self.subTest(role=role, surface=name, key=key, weight=weight):
+                            old, new = ((x + weight*delta)[faces] for x in (before, after))
+                            n0 = np.cross(old[:, 1]-old[:, 0], old[:, 2]-old[:, 0])
+                            n1 = np.cross(new[:, 1]-new[:, 0], new[:, 2]-new[:, 0])
+                            area = np.linalg.norm(n0, axis=1)
+                            stable = area > 1e-9
+                            self.assertTrue((np.linalg.norm(n1[stable], axis=1) > .5*area[stable]).all())
+                            self.assertTrue((np.sum(n0[stable]*n1[stable], axis=1) > 0.).all())
+
+    def test_q_crown_is_a_single_closed_head_bound_shell(self):
+        self.assertEqual(sculpt.REMESH, {'q': 'Q_Hair'})
         for role,name in sculpt.REMESH.items():
             with self.subTest(role=role):
                 doc,data = decode(self.outputs[role])

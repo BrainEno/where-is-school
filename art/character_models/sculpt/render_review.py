@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
 import sys
 
 import bpy
@@ -22,6 +23,8 @@ CAMERA_DEPTH = dict(lead=.035, q=.024, n=.002, seated=.015, thin=-.058, gentle=-
 STATES = {
     'blink': {'Blink_L','Blink_R','Eye_Blink_L','Eye_Blink_R'},
     'mouth': {'MouthOpen','Mouth_Open','LipRelease'},
+    'smile': {'Smile','SoftSmile'},
+    'brow': {'BrowRaise','Brow_Raise'},
 }
 
 
@@ -114,13 +117,20 @@ def clay(meshes):
 
 def compare(args):
     args.out.mkdir(parents=True,exist_ok=True)
-    manifest = dict(renderer=f'Blender {bpy.app.version_string}, Cycles CPU',basis=BASE,
+    basis = subprocess.check_output(['git','rev-parse','--verify',f'{args.comparison_base}^{{commit}}'],
+                                    cwd=ROOT,text=True).strip()
+    manifest = dict(renderer=f'Blender {bpy.app.version_string}, Cycles CPU',basis=basis,
                     scale_m=.356,views_deg={name:VIEWS[name] for name in args.views},
+                    details_at=dict(scale_m=.230,yaw=[0,37],lift=.015) if args.close else None,
                     resolution_px=args.size,samples=args.samples,
                     expressions_at=dict(yaw=10,lift=.015,weight=1.),models={})
     for role in args.roles or RUNTIME:
         manifest['models'][role] = {}
-        for state,path in (('before',args.bases/f'{role}.glb'),('after',ROOT/RUNTIME[role])):
+        before = args.bases/f'{role}.glb'
+        expected = subprocess.check_output(['git','show',f'{basis}:{RUNTIME[role]}'],cwd=ROOT)
+        if before.read_bytes() != expected:
+            raise ValueError(f'{before} is not the {basis} comparison GLB')
+        for state,path in (('before',before),('after',ROOT/RUNTIME[role])):
             scene,meshes,keys = load(path)
             camera,target,sign = studio(scene,role,args.size,args.samples)
             files = []
@@ -130,6 +140,15 @@ def compare(args):
 
             for name in args.views:
                 shoot(f'paint-{name}',VIEWS[name])
+            if args.close:
+                _, _, eye, front, _ = LANDMARKS[role]
+                bust = target
+                target = Vector((0.,-sign*(front-.040),eye-.032))
+                camera.data.ortho_scale = .230
+                shoot('detail-front',0,.015)
+                shoot('detail-quarter',37,.015)
+                camera.data.ortho_scale = .356
+                target = bust
             expressions = []
             if args.expressions and any(item.name in targets for key in keys for item in key.key_blocks
                                         for targets in STATES.values()):
@@ -158,12 +177,14 @@ def compare(args):
 def main(argv):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bases',type=Path,required=True)
+    p.add_argument('--comparison-base',default=BASE,help='git revision that must match the before inputs')
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--roles',choices=list(RUNTIME),nargs='+')
     p.add_argument('--views',choices=list(VIEWS),default=list(VIEWS),nargs='+')
     p.add_argument('--size',type=int,default=416)
     p.add_argument('--samples',type=int,default=14)
     p.add_argument('--clay',action='store_true')
+    p.add_argument('--close',action='store_true',help='extra matched close-ups of the face')
     p.add_argument('--expressions',action='store_true')
     compare(p.parse_args(argv))
 

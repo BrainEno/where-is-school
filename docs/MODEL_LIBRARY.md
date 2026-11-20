@@ -262,12 +262,13 @@ Measured from the committed `.glb` files, not from the Blender sources and not f
 | meshes / primitives | 9 / 15 | 64 / 64 | 9 / 16 | 18 / 28 |
 | materials | 12 | 22 | 12 | 17 |
 | embedded animations | 5 (721 channels; not played by the game) | 0 | 6 (70 channels; native idle/talk and named actions) | 4 (8 channels; played together as N's idle) |
-| triangles | 17,590 | 46,384 | 18,310 | 56,950 |
-| file | 886.5 KiB | 1083.8 KiB | 969.5 KiB | 1314.7 KiB |
+| triangles | 15,782 | 46,384 | 18,310 | 56,950 |
+| file | 852.4 KiB | 1083.8 KiB | 969.5 KiB | 1314.7 KiB |
 
-The lead and Q triangle counts include their new, continuous head-bound hair shells.
-The [Blender head pass](../art/character_models/sculpt/README.md) changes no registered
-hierarchy, action or material key; the exact pre-pass runtime models remain the test basis.
+The lead wears the original indexed spiky hair again, with local bends; only Q has a
+replacement continuous hair shell. The [Blender head studies](../art/character_models/sculpt/README.md)
+change no registered hierarchy, embedded action or material key. Tests use both the
+exact pre-sculpt basis and the shipped first pass.
 
 The former protagonist and N retain the 16-joint naming convention. Q no longer
 shares that hierarchy: its approved replacement has `Root → Pelvis → Spine → Spine_01

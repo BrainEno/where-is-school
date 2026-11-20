@@ -44,7 +44,7 @@ jobs:
           - name: protagonist
             group: protagonist
             variants: "before,after"
-            frames: ""
+            frames: "body_sun,body_shade,face,gameplay"
           - name: q-body
             group: q
             variants: "before,q_paper,after"
@@ -79,6 +79,10 @@ jobs:
             frames: ""
           # Two real engine sessions: actual PR base GLBs/looks vs this exact head.
           # The same head scene/camera/shader/pose code is used for both legs.
+          - name: refinement-protagonist
+            group: protagonist
+            variants: "baseline,after"
+            frames: "face,gameplay,stride_profile"
           - name: refinement-n
             group: n
             variants: "baseline,after"
@@ -94,7 +98,7 @@ jobs:
 
       - uses: ./.github/actions/setup-godot
 
-      - name: Prepare geometry and material baseline
+      - name: Prepare exact character comparison inputs
         if: startsWith(matrix.name, 'refinement-')
         shell: bash
         env:
@@ -103,18 +107,27 @@ jobs:
           set -euo pipefail
           git fetch --no-tags --depth=1 origin "${BASE_SHA}"
           mkdir -p "${RUNNER_TEMP}/character-look-baseline"
-          git show "${BASE_SHA}:assets/characters/teacher_n/teacher_n_look.tres" \
-            > "${RUNNER_TEMP}/character-look-baseline/n.tres"
-          git show "${BASE_SHA}:assets/characters/classroom_student/student_look.tres" \
-            > "${RUNNER_TEMP}/character-look-baseline/student.tres"
-          git show "${BASE_SHA}:assets/models/teacher-n/teacher-n.glb" \
-            > "${RUNNER_TEMP}/character-look-baseline/n.glb"
-          git show "${BASE_SHA}:assets/models/protagonist/protagonist.glb" \
-            > "${RUNNER_TEMP}/character-look-baseline/student.glb"
+          if [ "${{ matrix.group }}" = protagonist ]; then
+            git show "${BASE_SHA}:assets/models/protagonist/Protagonist_Character.glb" \
+              > "${RUNNER_TEMP}/character-look-baseline/protagonist.glb"
+            git show "${BASE_SHA}:assets/characters/protagonist/protagonist_look.tres" \
+              > "${RUNNER_TEMP}/character-look-baseline/protagonist.tres"
+            git show "${BASE_SHA}:assets/characters/protagonist/protagonist_motion.tres" \
+              > "${RUNNER_TEMP}/character-look-baseline/protagonist_motion.tres"
+          else
+            git show "${BASE_SHA}:assets/characters/teacher_n/teacher_n_look.tres" \
+              > "${RUNNER_TEMP}/character-look-baseline/n.tres"
+            git show "${BASE_SHA}:assets/characters/classroom_student/student_look.tres" \
+              > "${RUNNER_TEMP}/character-look-baseline/student.tres"
+            git show "${BASE_SHA}:assets/models/teacher-n/teacher-n.glb" \
+              > "${RUNNER_TEMP}/character-look-baseline/n.glb"
+            git show "${BASE_SHA}:assets/models/protagonist/protagonist.glb" \
+              > "${RUNNER_TEMP}/character-look-baseline/student.glb"
+          fi
           printf '%s\n' "${BASE_SHA}" > "${RUNNER_TEMP}/character-look-baseline/base-sha.txt"
           python3 -m venv "${RUNNER_TEMP}/character-evidence-python"
           "${RUNNER_TEMP}/character-evidence-python/bin/pip" install Pillow==11.3.0
-          echo "Geometry/material baseline: ${BASE_SHA}; left base GLB/look, right head; fixed pose"
+          echo "Comparison baseline: ${BASE_SHA}; left base assets, right head; fixed poses"
 
       - name: Import project
         shell: bash
