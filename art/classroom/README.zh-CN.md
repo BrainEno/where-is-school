@@ -139,3 +139,12 @@ N 不与讲桌重叠、头肩露出讲桌上方，以及行走路线不穿过讲
 `tests/capture_classroom_art.gd` 会生成十四张真实 1600 × 900 游戏视图，包括建筑构图、拉下的投影幕、后窗墙洞，以及四张讲桌画面（正面、侧面、教师一侧、游戏镜头）；
 headless 画面会被拒绝。`Classroom visual evidence` PR 工作流用 Godot 4.7.2 Stable 渲染这十四张画面，
 并将它们发布为可下载的 CI Artifact。
+
+### 静场里的小动作
+
+`TimetableSheet` 绕原有 `TimetableClip` 向室内轻抬几度：先翻起一次，再小幅回弹，随后静止。
+印刷面和描边跟随同一网格。后窗帘只在深度上摆动，不拉开闭合时的中缝；收拢到位后，两边下摆略有迟滞地停下。
+两者都不改碰撞、检视或揭开墙洞的剧情条件。时钟仍停在九点。
+
+`tests/capture_classroom_motion.gd` 在真实 Compatibility 渲染下检查课表的固定点、幕布遮挡和拉开后的余摆，
+`classroom-motion-<head>` 工件内有课表静止/起翘、幕布余摆/归位的画面。同一套捕获也会用正常鼠标和触摸从过道走近 A1 的学生搭话。

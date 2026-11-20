@@ -9,7 +9,7 @@ const WRAPPER := "res://scenes/environment/characters/q.tscn"
 const FINGERS := ["Thumb", "Index", "Middle", "Ring", "Little"]
 const SOURCE_CLIPS := ["Q_Casual_Hand_Gesture", "Q_Head_Movement", "Q_Idle_Breathing",
 	"Q_Pose_Preview", "Q_Slight_Body_Lean", "Q_Face_Test"]
-const BOUND_CLIPS := ["idle", "walk", "jog", "sit_idle", "get_up", "wave", "talk",
+const BOUND_CLIPS := ["idle", "walk", "jog", "sit_idle", "sit_talk", "get_up", "wave", "talk",
 	"head_movement", "hand_gesture", "body_lean", "pose_preview"]
 
 var _failures: Array[String] = []

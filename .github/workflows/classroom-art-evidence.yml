@@ -42,6 +42,13 @@ on:
       - 'scripts/world/camera_occluder_fader.gd'
       - 'tests/capture_classroom_art.gd'
       - 'tests/capture_classroom_motion.gd'
+      - 'scripts/environment/window_curtain.gd'
+      - 'scripts/actors/character_animation.gd'
+      - 'scripts/actors/character_dialogue_animation.gd'
+      - 'scripts/actors/character_visual_animation.gd'
+      - 'scenes/environment/characters/classroom_student.tscn'
+      - 'assets/characters/classroom_student/student_motion.tres'
+      - 'data/dialogue/*/prologue.json'
       - 'scenes/environment/props/schoolbag.*'
       - 'scenes/environment/props/classroom_desk.tscn'
       - 'assets/models/classroom/schoolbag/**'
@@ -289,6 +296,26 @@ jobs:
         env:
           MODE: touch
           FRAME: 07_touch_returned
+        run: *motion_preview
+      - name: Preview the draft at the timetable
+        if: always()
+        env:
+          FRAME: 10_timetable_draft
+        run: *motion_preview
+      - name: Preview the gathered curtain
+        if: always()
+        env:
+          FRAME: 11_curtain_recoil
+        run: *motion_preview
+      - name: Preview the student's short reply
+        if: always()
+        env:
+          FRAME: 13_student_answers
+        run: *motion_preview
+      - name: Preview the student resuming recitation
+        if: always()
+        env:
+          FRAME: 14_student_recites_again
         run: *motion_preview
       - name: Publish viewport frames and motion log
         if: always()

@@ -8,9 +8,8 @@ extends Node3D
 ##
 ##   1. an *action*: a one-shot transition (`get_up`), started by `play_action()`, which owns
 ##      the body until its clip reports `animation_finished` and then hands back;
-##   2. *seated*: `set_seated(true)` holds `sit_idle` and ignores the body's velocity,
-##      because a character sitting on a chair is not walking no matter what the capsule does.
-##      The wake beat uses this: the protagonist starts slumped at a desk;
+##   2. *seated*: `set_seated(true)` holds `sit_idle` or an opted-in seated speech clip,
+##      ignoring body velocity. The protagonist can still start slumped at a desk;
 ##   3. *locomotion*: `idle`, `walk` or `jog`, from the planar velocity the character's own
 ##      controller already produces. It is the same decision for everyone:
 ##
@@ -83,9 +82,12 @@ const SEATED_CLIP := "sit_idle"
 ## supplies idle/talk and its extra authored actions. Empty leaves existing rigs
 ## untouched; source AnimationPlayers never autoplay alongside the bound player.
 @export var authored_clip_layers: Dictionary[String, PackedStringArray] = {}
-## Optional standing speech state, requested by CharacterDialogueAnimation. Moving,
-## sitting and one-shot actions keep their existing precedence. Q and N opt in.
+## Optional standing speech state. Moving, sitting and actions take precedence.
 @export var dialogue_clip: String = ""
+## Optional speech while seated; never substitutes the standing clip for a seat pose.
+@export var seated_dialogue_clip: String = ""
+## For static speakers with no NpcActor; moving actors keep their own npc_id.
+@export var dialogue_speaker_id: StringName = &""
 ## Per-character motion in `assets/characters/*/…_motion.tres`: semantic tracks, tempo,
 ## amplitude, posture and layers. A null profile uses the shared defaults. The controller
 ## and state names are the same regardless of who authored the keys.
@@ -192,6 +194,9 @@ func _ready() -> void:
 		_body = _find_body_ancestor()
 	_seated = _seated or start_seated
 	_show(_resume_clip(), 0.0)
+	if not dialogue_speaker_id.is_empty():
+		add_to_group("seated_dialogue_speaker")
+	visibility_changed.connect(_on_visibility_changed)
 
 
 func _process(_delta: float) -> void:
@@ -247,15 +252,20 @@ func is_seated() -> bool:
 	return _seated
 
 
-## Dialogue presentation requests speech, not a one-shot action: it can end on any
-## line and must yield immediately to walking. Other characters have no speech clip.
+## A request from presentation, not an action lock. The current posture decides how
+## to answer; a seated performance must not lift the actor off the chair to speak.
 func set_talking(talking: bool) -> void:
-	if dialogue_clip.is_empty() or _talking == talking:
+	if (dialogue_clip.is_empty() and seated_dialogue_clip.is_empty()) or _talking == talking:
 		return
 	_talking = talking
-	if _bound and _action.is_empty() and not _seated:
+	if _bound and _action.is_empty():
 		_show(_resume_clip(), blend_time)
-		_player.speed_scale = playback_for(_state, _planar_speed)
+		_player.speed_scale = 1.0 if _seated else playback_for(_state, _planar_speed)
+
+
+func _on_visibility_changed() -> void:
+	if not is_visible_in_tree():
+		set_talking(false)
 
 
 func is_talking() -> bool:
@@ -384,7 +394,7 @@ func walk_playback_for(speed: float) -> float:
 ## otherwise whatever the body is doing.
 func _resume_clip() -> String:
 	if _seated:
-		return SEATED_CLIP
+		return seated_dialogue_clip if _talking and not seated_dialogue_clip.is_empty() else SEATED_CLIP
 	if _talking and _state == STATE_IDLE and not dialogue_clip.is_empty():
 		return dialogue_clip
 	return String(_state)
@@ -408,7 +418,7 @@ func _show(clip_name: String, blend: float) -> void:
 	if not CharacterAnimation.play(_player, clip_name, blend):
 		return
 	_current_clip = clip_name
-	if clip_name == SEATED_CLIP or clip_name == String(STATE_IDLE):
+	if _seated or clip_name == String(STATE_IDLE):
 		_player.speed_scale = 1.0
 
 

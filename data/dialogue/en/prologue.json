@@ -1788,8 +1788,32 @@
       ]
     },
     "student": {
-      "start": "st_1",
+      "start": "st_reciting",
       "nodes": [
+        {
+          "id": "st_reciting",
+          "speaker": "student",
+          "text": "I'm trying to get this line by heart. Can we talk in a minute?",
+          "choices": [
+            {
+              "id": "leave",
+              "text": "(Leave him to it.)",
+              "next": "st_let_be"
+            },
+            {
+              "id": "wait",
+              "text": "(Wait for him to finish.)",
+              "next": "st_1"
+            }
+          ]
+        },
+        {
+          "id": "st_let_be",
+          "speaker": "protagonist",
+          "text": "He lowers his head and picks up where he left off.",
+          "source": "observed",
+          "next": null
+        },
         {
           "id": "st_1",
           "speaker": "student",

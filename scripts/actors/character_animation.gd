@@ -17,9 +17,9 @@ extends RefCounted
 ## bone names at bind time. A bone a rig does not have is reported and its track is left out;
 ## nothing is silently dropped and nothing is played on a bone that is not there.
 ##
-## The set is seven clips: four that loop a state (`idle`, `walk`, `jog`, `sit_idle`), two
-## that are beats (`wave`, `talk`), and one transition (`get_up`) that is played once and
-## hands back. What selects them is the character's own driver, not this file.
+## The library includes locomotion, seated poses, gestures and the `get_up` transition.
+## Standing speech loops; `sit_talk` is a brief gesture that holds its last pose until the
+## speaker changes. What selects these clips is the character's driver, not this file.
 ## A model that arrives with motion of its own can have one of them rebuilt from it instead
 ## (`adopt_authored_layers()`): N's idle is the four loops its author made in Blender.
 ##
@@ -110,11 +110,8 @@ const BONE_ALIASES := {
 ## `bind()`), and it bent hips, shoulders and elbows the wrong way once keys were composed
 ## with the rest pose.
 ##
-## A clip may set `"loop": false`. Such a clip is a *transition*: it is played once and hands
-## back to whatever was there before (the wrapper's `play_action()`), and its last key is the
-## rest pose (zero offset) rather than its first, because arriving is the point. `get_up` is
-## the only one, and the test checks that its first key is the seated pose that `sit_idle`
-## holds, so the two cannot drift apart.
+## A non-looping clip holds its last key. An action such as `get_up` hands back to the driver
+## at that point; `sit_talk` is not an action and does not take input or own a beat.
 const CLIPS := {
 	"idle": {
 		"length": 2.0,
@@ -181,6 +178,26 @@ const CLIPS := {
 			"upper_arm.R": [[0.0, Vector3(-26.0, 0.0, -8.0)], [1.2, Vector3(-28.0, 0.0, -8.0)], [2.4, Vector3(-26.0, 0.0, -8.0)]],
 			"fore_arm.L": [[0.0, Vector3(-48.0, 0.0, 0.0)], [1.2, Vector3(-50.0, 0.0, 0.0)], [2.4, Vector3(-48.0, 0.0, 0.0)]],
 			"fore_arm.R": [[0.0, Vector3(-48.0, 0.0, 0.0)], [1.2, Vector3(-50.0, 0.0, 0.0)], [2.4, Vector3(-48.0, 0.0, 0.0)]],
+		},
+	},
+	# Same lower body as the start of sit_idle: the chair and floor carry the weight.
+	"sit_talk": {
+		"length": 2.4,
+		"loop": false,
+		"tracks": {
+			"thigh.L": [[0.0, Vector3(-82, 0, 2)], [2.4, Vector3(-82, 0, 2)]],
+			"thigh.R": [[0.0, Vector3(-82, 0, -2)], [2.4, Vector3(-82, 0, -2)]],
+			"shin.L": [[0.0, Vector3(84, 0, 0)], [2.4, Vector3(84, 0, 0)]],
+			"shin.R": [[0.0, Vector3(84, 0, 0)], [2.4, Vector3(84, 0, 0)]],
+			"foot.L": [[0.0, Vector3(-6, 0, 0)], [2.4, Vector3(-6, 0, 0)]],
+			"foot.R": [[0.0, Vector3(-6, 0, 0)], [2.4, Vector3(-6, 0, 0)]],
+			"spine": [[0.0, Vector3(10, 0, 0)], [2.4, Vector3(10, 0, 0)]],
+			"neck": [[0.0, Vector3(4, 0, 0)], [2.4, Vector3(4, 0, 0)]],
+			"head": [[0.0, Vector3(8, 0, 0)], [0.5, Vector3(-4, -10, 2)], [2.4, Vector3(8, 0, 0)]],
+			"upper_arm.L": [[0.0, Vector3(-26, 0, 8)], [2.4, Vector3(-26, 0, 8)]],
+			"upper_arm.R": [[0.0, Vector3(-26, 0, -8)], [2.4, Vector3(-26, 0, -8)]],
+			"fore_arm.L": [[0.0, Vector3(-48, 0, 0)], [2.4, Vector3(-48, 0, 0)]],
+			"fore_arm.R": [[0.0, Vector3(-48, 0, 0)], [2.4, Vector3(-48, 0, 0)]],
 		},
 	},
 	"get_up": {
@@ -422,8 +439,7 @@ static func bind(
 		var animation := Animation.new()
 		var tempo := 1.0 if profile == null else profile.tempo_for(clip_name)
 		animation.length = float(spec["length"]) * tempo
-		# A transition is played once and stops on its last key; everything else closes
-		# its cycle, so the last key repeats the first.
+		# A non-looping clip stops on its last key; looping tracks close their cycle.
 		var loops := bool(spec.get("loop", true))
 		animation.loop_mode = Animation.LOOP_LINEAR if loops else Animation.LOOP_NONE
 		var tracks: Dictionary = spec["tracks"]

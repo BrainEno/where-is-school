@@ -1,11 +1,12 @@
 extends SceneTree
-## Live-window acceptance for the classroom actions. Compare the fixed side view
-## with the baseline and use the real gameplay camera for pointer/inspection checks.
+## Live-window acceptance for the classroom. Review the movement under fixed lenses;
+## use the real gameplay camera for the chair, bag and seated classmate input checks.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const APPROACH := Vector3(-0.75, 0, 2.15)
 const OTHER_AISLE := Vector3(-2.43, 0, 2.83)
+const STUDENT_AISLE := Vector3(-1.6, 0, 0.33)
 const CAMERA_AT := Vector3(0.65, 1.46, 2.48)
 const LOOK_AT := Vector3(-1.53, 0.84, 1.95)
 
@@ -99,6 +100,11 @@ func _run() -> void:
 		await _run_touch()
 	else:
 		await _run_desktop()
+	if _check.expect(not _dialogue.is_busy() and _player.is_control_enabled(),
+		"The classroom did not return control after the bag inspection."):
+		if not MobileLayout.enabled:
+			await _capture_dressing()
+		await _capture_student()
 	_finish()
 
 
@@ -206,6 +212,151 @@ func _run_touch() -> void:
 	await _finish_search()
 
 
+func _capture_dressing() -> void:
+	# A fixed review lens shows the authored edge movement. The scenario does not
+	# change the story's curtain state or take the transition out of this room.
+	var paper := _room.get_node(^"TimetableSheet") as MeshInstance3D
+	var clip := _room.get_node(^"TimetableClip") as Node3D
+	_review.current = true
+	_review.position = Vector3(1.3, 1.82, 3.65)
+	_review.look_at(paper.global_position)
+	_review.fov = 50.0
+	var pin := paper.to_local(clip.global_position)
+	var bottom := Vector3(0.0, paper.get_aabb().position.y, 0.0)
+	if await _wait(func() -> bool: return absf(paper.rotation.x) < 0.0001, "the paper's rest"):
+		var rest := paper.to_global(bottom)
+		await _shot("09_timetable_still")
+		if await _wait(func() -> bool: return paper.rotation_degrees.x > 3.2, "a draft at the timetable", 13.0):
+			var travel := rest.z - paper.to_global(bottom).z
+			_check.expect(travel > 0.035 and travel < 0.055, "Timetable lift is not a bounded lift into the room.")
+			_check.expect(paper.to_global(pin).distance_to(clip.global_position) < 0.001,
+				"The timetable slipped out of its clip.")
+			print("MOTION_PAPER bottom_lift=%.3f m" % travel)
+			await _shot("10_timetable_draft")
+		await _wait(func() -> bool: return absf(paper.rotation.x) < 0.0001, "the paper to rest again")
+
+	var curtain := _room.get_node(^"Anomalies/BackCurtain") as WindowCurtain
+	var panels := curtain.get_fabric_meshes()
+	var left := panels[0].get_parent() as Node3D
+	var right := panels[1].get_parent() as Node3D
+	var rail_left := left.position
+	var stop := _room.get_node(^"WallWest/ClosedCurtainStop") as CollisionShape3D
+	if await _wait(func() -> bool: return absf(left.rotation_degrees.x) > 0.35, "a draft at the curtain", 13.0):
+		_check.expect(not stop.disabled and is_zero_approx(curtain.get_open_amount())
+			and is_equal_approx(left.rotation.x, right.rotation.x), "The closed curtain draft uncovered the seam.")
+		var fabric := curtain.get_fabric_aabb()
+		_check.expect(fabric.position.z <= 0.75 and fabric.end.z >= 3.65 and fabric.position.y < 0.12,
+			"A moving curtain does not cover the cut from floor to rail.")
+	_review.position = Vector3(-3.0, 1.66, 2.55)
+	_review.look_at(Vector3(-6.55, 1.58, 2.2))
+	_review.fov = 64.0
+	await curtain.open()
+	if await _wait(func() -> bool:
+		return absf(left.rotation_degrees.x - right.rotation_degrees.x) > 0.24, "the hems to recoil after the pull"):
+		_check.expect(curtain.is_open() and left.position.is_equal_approx(rail_left) and stop.disabled == false,
+			"Visual recoil changed the gather, rail or room collision.")
+		print("MOTION_CURTAIN gathered=%.3f hem_lag=%.2f deg" % [curtain.get_open_amount(),
+			absf(left.rotation_degrees.x - right.rotation_degrees.x)])
+		await _shot("11_curtain_recoil")
+	if await _wait(func() -> bool:
+		return is_equal_approx(left.rotation.x, right.rotation.x), "the hems to come to rest"):
+		await _shot("12_curtain_settled")
+	curtain.set_open_amount(0.0)
+	_game_camera.current = true
+
+
+func _capture_student() -> void:
+	var student := _room.get_node(^"Actors/SeatedStudent") as CharacterVisualAnimation
+	var talk := _room.find_interactable(&"student_talk")
+	if not _check.expect(talk != null and student.is_bound(), "The seated visual or talk anchor is missing."):
+		return
+	if MobileLayout.enabled:
+		root.get_node(^"Loc").set_locale("en")
+	await _place(STUDENT_AISLE, Vector3.LEFT)
+	var at := _player.global_position
+	var rig := student.get_skeleton()
+	var bones: Dictionary = student.get_bind_report()["resolved"]
+	var head := rig.find_bone(String(bones["head"]))
+	var rest := rig.get_bone_pose_rotation(head)
+	var body := student.global_transform
+	var played := student.get_animation_player()
+	if not await _click_student(talk, rig, head, true):
+		return
+	_check.expect(_player.global_position.distance_to(at) > 0.7 and not _player.is_control_enabled(),
+		"Student talk did not walk to A1 and hold control during the line.")
+	_check.expect(student.is_seated() and student.is_talking() and not student.is_playing_action()
+		and student.get_current_clip() == "sit_talk", "The visible student never entered seated speech.")
+	var line := _dialogue.get_current_line()
+	var expected := "I'm trying to get this line by heart." if MobileLayout.enabled else "我正背到这句。"
+	_check.expect(String(line.get("text", "")).begins_with(expected), "The short answer is missing in the active language.")
+	_ui.dialogue_panel.complete_reveal()
+	if await _wait(func() -> bool:
+		return played.current_animation == "char/sit_talk" and played.current_animation_position >= 0.46,
+		"the student to lift his head"):
+		var turn := rad_to_deg(rest.angle_to(rig.get_bone_pose_rotation(head)))
+		_check.expect(turn > 16.0 and student.global_transform.is_equal_approx(body),
+			"The answer needs a visible head turn without traveling in the chair.")
+		print("MOTION_STUDENT input=%s walk=%.2f m head_turn=%.1f deg" % [
+			"touch" if MobileLayout.enabled else "mouse", _player.global_position.distance_to(at), turn])
+		await _shot("13_student_answers")
+	_dialogue.select_choice(0) # Leave him to it.
+	_check.expect(_student_node() == &"st_let_be" and not student.is_talking()
+		and student.get_current_clip() == "sit_idle", "The narrator kept the student speaking.")
+	_next_student_line()
+	if not await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
+		"control after the short student reply"):
+		return
+	var state := root.get_node(^"GameState")
+	_check.expect(not bool(state.get_flag(StoryFlags.STUDENT_TALKED, false)),
+		"Leaving the student to recite completed the longer conversation's flag.")
+	await _shot("14_student_recites_again")
+	if not await _click_student(talk, rig, head, false):
+		return
+	_ui.dialogue_panel.complete_reveal()
+	_dialogue.select_choice(1) # Wait and hear the original desk conversation.
+	for id: StringName in [&"st_1", &"st_2", &"st_3", &"st_4", &"st_5"]:
+		var speaking := id in [&"st_1", &"st_3", &"st_5"]
+		_check.expect(_student_node() == id and student.is_talking() == speaking,
+			"The original exchange or its speaker cue changed at '%s'." % id)
+		_next_student_line()
+	_check.expect(_student_node() == &"st_ask", "The original student choices disappeared.")
+	_ui.dialogue_panel.complete_reveal()
+	_dialogue.select_choice(0)
+	for id: StringName in [&"st_moved", &"st_m2", &"st_end"]:
+		_check.expect(_student_node() == id, "The desk question did not reach '%s'." % id)
+		_next_student_line()
+	await _wait(func() -> bool: return not _dialogue.is_busy() and _player.is_control_enabled(),
+		"control after the longer exchange")
+	_check.expect(bool(state.get_flag(StoryFlags.STUDENT_TALKED, false)) and not student.is_talking()
+		and student.is_seated() and student.get_current_clip() == "sit_idle",
+		"The longer exchange lost its completion flag or did not restore recitation.")
+
+
+func _click_student(talk: Interactable, rig: Skeleton3D, head: int, walk_first: bool) -> bool:
+	var head_at := rig.to_global(rig.get_bone_global_pose(head).origin) + Vector3(0.0, 0.10, 0.0)
+	var pixel := _game_camera.unproject_position(head_at)
+	var target := _interaction.get_target_at_screen_position(pixel, false)
+	if not _check.expect(target == talk, "A1 head pixel %s selected '%s' instead of the student." % [
+		pixel, String(target.interact_id) if target != null else "nothing"]):
+		return false
+	_check.expect(_interaction.is_in_reach(talk) != walk_first, "Student scene did not cover both approach and direct talk.")
+	if MobileLayout.enabled:
+		_tap(pixel, talk, walk_first)
+	else:
+		_mouse_click(pixel, talk, walk_first)
+	return await _wait(func() -> bool:
+		return _clicked == talk and _student_node() == &"st_reciting", "the clicked student to answer")
+
+
+func _student_node() -> StringName:
+	return StringName(_dialogue.get_current_line().get("node_id", &""))
+
+
+func _next_student_line() -> void:
+	_ui.dialogue_panel.complete_reveal()
+	_dialogue.advance_presentation()
+
+
 func _settled_at_seat() -> bool:
 	return _player.is_seated() and not _sequence.is_beat_active()
 
@@ -220,7 +371,7 @@ func _bag_pixel() -> Vector2:
 	return _game_camera.unproject_position(shell.to_global(shell.get_aabb().get_center()))
 
 
-func _mouse_click(pixel: Vector2, target: Interactable) -> void:
+func _mouse_click(pixel: Vector2, target: Interactable, walk_first: bool = false) -> void:
 	_clicked = null
 	var before := _pointer.get_world_click_event_count()
 	for down: bool in [true, false]:
@@ -231,10 +382,11 @@ func _mouse_click(pixel: Vector2, target: Interactable) -> void:
 		click.pressed = down
 		_send(click)
 	_check.expect(_pointer.get_world_click_event_count() == before + 1, "Mouse press did not reach world input exactly once.")
-	_check.expect(_clicked == target, "Mouse did not activate %s from its own visible pixel." % target.interact_id)
+	_check.expect((_pointer.get_pending_target() if walk_first else _clicked) == target,
+		"Mouse did not select %s from its visible pixel." % target.interact_id)
 
 
-func _tap(pixel: Vector2, target: Interactable) -> void:
+func _tap(pixel: Vector2, target: Interactable, walk_first: bool = false) -> void:
 	_clicked = null
 	var before := _pointer.get_world_click_event_count()
 	_check.expect(MobileLayout.safe_rect(_ui.hud).has_point(pixel), "The target pixel is outside the touch safe area.")
@@ -242,7 +394,8 @@ func _tap(pixel: Vector2, target: Interactable) -> void:
 	_check.expect(_pointer.get_world_click_event_count() == before, "Touch-down activated the prop.")
 	_touch(pixel, false)
 	_check.expect(_pointer.get_world_click_event_count() == before + 1, "A tap did not reach world input exactly once.")
-	_check.expect(_clicked == target, "Touch did not activate %s from its own visible pixel." % target.interact_id)
+	_check.expect((_pointer.get_pending_target() if walk_first else _clicked) == target,
+		"Touch did not select %s from its visible pixel." % target.interact_id)
 
 
 func _touch(pixel: Vector2, down: bool, canceled: bool = false) -> void:
@@ -357,8 +510,8 @@ func _phase(clip: String, phase: float) -> bool:
 	)
 
 
-func _wait(predicate: Callable, what: String) -> bool:
-	return _check.expect(await Harness.wait_until(predicate, 9.0), "Timed out waiting for %s." % what)
+func _wait(predicate: Callable, what: String, timeout: float = 9.0) -> bool:
+	return _check.expect(await Harness.wait_until(predicate, timeout), "Timed out waiting for %s." % what)
 
 
 func _shot(file_name: String) -> void:
@@ -378,4 +531,6 @@ func _finish() -> void:
 	if is_instance_valid(_main):
 		_main.queue_free()
 		await process_frame
-	Harness.finish(self, _check.failures, "live seat contacts, approach, separate world input and the staged bag inspection (touch=%s)." % MobileLayout.enabled)
+	Harness.finish(self, _check.failures,
+		"live seat contacts, bag inspection, bounded prop motion (desktop) and both student reply paths (touch=%s)."
+		% MobileLayout.enabled)
