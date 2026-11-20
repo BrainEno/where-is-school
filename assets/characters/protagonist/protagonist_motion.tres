@@ -28,8 +28,8 @@ amplitude = {
 "*": 0.5
 },
 "walk": {
-"fore_arm": 0.82,
-"upper_arm": 0.85
+"fore_arm": 0.78,
+"upper_arm": 0.92
 },
 "wave": {
 "fore_arm.R": 0.6,

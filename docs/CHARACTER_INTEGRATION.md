@@ -483,4 +483,7 @@ the leg curves, cadence, other animation states and shared binder are unchanged.
 See the [editable sources and matched Blender review commands](../art/character_models/sculpt/README.md).
 `character_sculpt_test.py` checks both the original basis and the first-pass exports, including
 which surfaces are allowed to move and the inherited face-key triangles at sampled weights.
-The studio comparisons are not viewport captures or owner acceptance.
+The `refinement-protagonist` capture uses the actual base/current GLB, look and motion
+profile, with the same classroom, lens and crop at walk phases 0%, 24%, 55% and 76%.
+It is a comparison of held poses, not a playability verdict. The studio comparisons are
+not viewport captures or owner acceptance.

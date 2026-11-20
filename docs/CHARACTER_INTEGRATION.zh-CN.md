@@ -358,4 +358,6 @@ B 的年龄特征及原表情偏移仍在。主角只收 `walk` 的上臂和前�
 
 见[编辑源及同机位 Blender 对照命令](../art/character_models/sculpt/README.md)。
 `character_sculpt_test.py` 同时对照最初基网格和已整合的首轮 GLB，检查改动面范围及原表情
-抽样时的活动三角面。棚拍不是游戏视口，也不等于所有者验收。
+抽样时的活动三角面。`refinement-protagonist` 使用两版实际的 GLB、外观与动作 profile，在同一教室、
+同焦距同裁幅下拍摄步行周期的 0%、24%、55%、76%。定格不等于连贯试玩；棚拍不是游戏视口，
+也不等于所有者验收。

@@ -201,7 +201,7 @@ replaced or scaled by its profile.
 
 | Wrapper profile | Personality as seen in motion |
 |---|---|
-| `protagonist/protagonist_motion.tres` | Asymmetric, held-in walk; upper-arm keys ×0.85 and forearm keys ×0.82 on `walk` only. The original key times, legs and additive slump remain. Jog adds two forward pulses; idle, seated posture and staged actions are unchanged by the walk trim. |
+| `protagonist/protagonist_motion.tres` | Asymmetric, held-in walk; upper-arm keys ×0.92 and forearm keys ×0.78 on `walk` only. The original key times, legs and additive slump remain. Jog adds two forward pulses; idle, seated posture and staged actions are unchanged by the walk trim. |
 | `q/q_motion.tres` | Looser shoulders and a delayed elbow over a quicker weight transfer, with the head counter-turning. Jog has a wider torso turn and its own elbow timing. Same resource in the classroom and on the follower. Keeps native breathing/lean, speech hand and finger motion and diagnostic actions. |
 | `teacher_n/teacher_n_motion.tres` | Close, measured steps with small arm travel. At the lectern, `n_class` lines for N drive a 3 s cycle with a nod, one low hand prompt behind the lectern lip, and a pause. An actual change of speaker/close blends back to the four embedded idle layers. |
 | `classroom_student/student_motion.tres` | A 7.2 s recitation loop: two small downward beats, a sleeve shift and a pause. For the reply, a delayed glance toward the aisle and one small forearm lift return to the desk. Hips, shins and boots share the same planted pose across both clips. |
