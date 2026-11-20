@@ -849,6 +849,8 @@ func teleport(target: Transform3D) -> void:
 	_abandon_seat_transition()
 	global_position = target.origin
 	velocity = Vector3.ZERO
+	_sprint_latched = false
+	_sprint_idle = 0.0
 	if not target.basis.is_equal_approx(Basis.IDENTITY):
 		_facing_direction = -target.basis.z
 	# Snap the view in the same frame as the body: a camera that arrives a frame

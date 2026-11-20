@@ -106,5 +106,19 @@
     "source": "observed",
     "text": "The long stroke marks the centre of the plate. Two pinholes sit off to one side. The pin behind the slide is worn only there.",
     "repeat_text": "The long stroke marks the centre of the plate. Two pinholes sit off to one side. The pin behind the slide is worn only there."
+  },
+  "corridor_stair_screen": {
+    "title": "Stair shutter",
+    "prompt": "Press the recessed brass button",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "The shutter is still up. There’s another half-flight behind it, but the first step hangs beyond the rail."
+  },
+  "corridor_bell_register": {
+    "title": "Bell register",
+    "prompt": "Press the bell test button",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Two plates have lines on the other side. The last one is blank."
   }
 }

@@ -13,6 +13,20 @@ extends Node3D
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
 
 signal location_entered(location: LocationRoot, spawn_id: StringName)
+## In-place recovery, not an arrival: no story flags, hooks or saves are replayed.
+signal player_recovered
+
+const SAFE_SAMPLE_INTERVAL := 0.12
+const SUPPORT_MARGIN := 0.38 # Wider than the playable capsule's 0.35 m radius.
+const SUPPORT_VERTICAL := 0.30 # Allows contact on either side of a normal stair slope.
+const WORLD_SOLIDS := 1
+const SUPPORT_DIRECTIONS: Array[Vector3] = [
+	Vector3.ZERO, Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD, Vector3.BACK,
+]
+var _player: PlayerController = null
+var _entry_pose := Transform3D.IDENTITY
+var _safe_pose := Transform3D.IDENTITY
+var _sample_in := 0.0
 
 ## Kept for error messages and for tests that assert the old scene survived.
 var _current: LocationRoot = null
@@ -39,6 +53,73 @@ var transition_history: Array[Dictionary] = []
 ## `_mark()` inside the transaction and consumed by `_record()` when it returns, whichever
 ## way it returned.
 var _marks: Dictionary = {}
+
+
+func _ready() -> void:
+	# Sample the result of move_and_slide(), not the previous tick's floor.
+	process_physics_priority = 1
+
+
+func _physics_process(delta: float) -> void:
+	if _current == null or not is_instance_valid(_player) or not _player.is_control_enabled():
+		# Staged departures (curtain, ladder) own the body until they release the beat.
+		return
+	var feet := _player.global_position
+	if _current.is_below_playable_space(feet):
+		var target := _recovery_pose()
+		_player.teleport(target)
+		player_recovered.emit()
+		return
+	_sample_in -= delta
+	if _sample_in > 0.0 or not _player.is_on_floor() or _player.velocity.y > 0.001:
+		return
+	_sample_in = SAFE_SAMPLE_INTERVAL
+	if _has_support(feet):
+		_safe_pose = Transform3D(Basis.looking_at(_player.get_facing_direction(), Vector3.UP), feet)
+
+
+## A save taken during a deep fall can keep all its flags without putting Continue in
+## the void. Normal grounded saves still preserve the exact live position and facing.
+func needs_safe_checkpoint(player: PlayerController) -> bool:
+	return player == _player and _current != null and (
+		_current.is_below_playable_space(player.global_position)
+		or (not player.is_on_floor() and player.velocity.y < -1.5)
+	)
+
+
+func get_safe_checkpoint() -> Transform3D:
+	# Called by the save writer, which may be outside the physics step. The pose was
+	# already verified in physics; a live recovery checks it again before placing.
+	return _safe_pose
+
+
+func _recovery_pose() -> Transform3D:
+	if _has_support(_safe_pose.origin):
+		# Give the capsule a little room to settle instead of restoring exactly on a contact.
+		return _safe_pose.translated(Vector3.UP * 0.04)
+	_safe_pose = _entry_pose
+	return _entry_pose
+
+
+func _has_support(feet: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.new()
+	query.collision_mask = WORLD_SOLIDS
+	query.exclude = [_player.get_rid()]
+	# A capsule can report floor contact with only a sliver of its rim over a drop.
+	# Require a cushion of stationary world geometry around the contact, not Q or glass.
+	for direction in SUPPORT_DIRECTIONS:
+		var probe := feet + direction * SUPPORT_MARGIN
+		query.from = probe + Vector3.UP * SUPPORT_VERTICAL
+		query.to = probe - Vector3.UP * SUPPORT_VERTICAL
+		var hit := space.intersect_ray(query)
+		var body := hit.get("collider") as StaticBody3D
+		if body == null or not _current.is_ancestor_of(body):
+			return false
+		var normal: Vector3 = hit["normal"]
+		if normal.y < cos(_player.floor_max_angle):
+			return false
+	return true
 
 
 func get_current() -> LocationRoot:
@@ -195,6 +276,10 @@ func _swap(
 	_current = location
 	_current_path = scene_path
 	_current_spawn = spawn_id
+	_player = player as PlayerController
+	_entry_pose = target
+	_safe_pose = target
+	_sample_in = 0.0
 	if previous != null:
 		remove_child(previous)
 		previous.queue_free()

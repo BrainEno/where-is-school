@@ -106,5 +106,19 @@
     "source": "observed",
     "text": "长线画在牌子正中。两个小孔偏在一侧。拨片背后的销，只在小孔那头磨亮。",
     "repeat_text": "长线画在牌子正中。两个小孔偏在一侧。拨片背后的销，只在小孔那头磨亮。"
+  },
+  "corridor_stair_screen": {
+    "title": "楼梯挡墙",
+    "prompt": "按下嵌在扶栏里的铜钮",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "挡墙还升在半空。后面还有半截楼梯，第一级却悬在栏杆外面。"
+  },
+  "corridor_bell_register": {
+    "title": "试铃登记牌",
+    "prompt": "按下试铃按钮",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "前两块牌子的背面都有字线。最后一块空着。"
   }
 }

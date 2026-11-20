@@ -101,6 +101,7 @@ func _ready() -> void:
 		OfflineDiagnostics.note("assets.load_failed", {"kind": "locations"})
 		push_error("OpeningSequence: %s" % _catalog.describe_errors())
 	_focus = CameraFocusDirector.new(_player.camera_rig)
+	_locations.player_recovered.connect(_on_player_recovered)
 	_flow = LocationFlow.new(
 		self, _locations, _catalog, _game_state(), _ui, _player, _dialogue, _companion
 	)
@@ -495,6 +496,15 @@ func end_beat() -> void:
 	# the target itself may not change again for a while.
 	if _interaction != null and _hud != null and not is_slice_finished():
 		_on_target_changed(_interaction.get_current_target())
+
+
+func _on_player_recovered() -> void:
+	_focus.clear()
+	if _player.camera_rig != null:
+		_player.camera_rig.release_frame(0.0)
+	# The next scan can find a target at the recovered position, not in the void.
+	_interaction.set_enabled(false)
+	sync_player_locks()
 
 
 func _on_presentation_active_changed(_active: bool) -> void:

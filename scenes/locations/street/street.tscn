@@ -1,4 +1,4 @@
-[gd_scene load_steps=195 format=3]
+[gd_scene load_steps=206 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass"]
@@ -441,6 +441,39 @@ size = Vector3(4.2, 2.8, 0.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_93"]
 size = Vector3(1.4, 2.2, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_94"]
+size = Vector3(34, 1.06, 0.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_94"]
+size = Vector3(34, 1.06, 0.28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_95"]
+size = Vector3(34, 0.12, 0.31)
+
+[sub_resource type="BoxMesh" id="BoxMesh_96"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_97"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_98"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_99"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_100"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_101"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_102"]
+size = Vector3(0.055, 0.9, 0.028)
+
+[sub_resource type="BoxMesh" id="BoxMesh_103"]
+size = Vector3(0.055, 0.9, 0.028)
 
 [sub_resource type="BoxShape3D" id="RampShape_0"]
 size = Vector3(4.0, 0.1, 4.7007)
@@ -1229,6 +1262,61 @@ material_override = ExtResource("art_metal_ink")
 position = Vector3(10.5, 2.7, -41.38)
 mesh = SubResource("BoxMesh_93")
 material_override = ExtResource("9_dusk")
+
+[node name="SouthWorksBarrier" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0.53, 19.79)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SouthWorksBarrier"]
+shape = SubResource("BoxShape3D_94")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SouthWorksBarrier"]
+mesh = SubResource("BoxMesh_94")
+material_override = ExtResource("art_pavement")
+
+[node name="SouthWorksCap" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.085, 19.79)
+mesh = SubResource("BoxMesh_95")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint0" type="MeshInstance3D" parent="."]
+position = Vector3(-14.7, 0.53, 19.647)
+mesh = SubResource("BoxMesh_96")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint1" type="MeshInstance3D" parent="."]
+position = Vector3(-10.5, 0.53, 19.647)
+mesh = SubResource("BoxMesh_97")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint2" type="MeshInstance3D" parent="."]
+position = Vector3(-6.299999999999999, 0.53, 19.647)
+mesh = SubResource("BoxMesh_98")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint3" type="MeshInstance3D" parent="."]
+position = Vector3(-2.099999999999998, 0.53, 19.647)
+mesh = SubResource("BoxMesh_99")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint4" type="MeshInstance3D" parent="."]
+position = Vector3(2.1000000000000014, 0.53, 19.647)
+mesh = SubResource("BoxMesh_100")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint5" type="MeshInstance3D" parent="."]
+position = Vector3(6.300000000000001, 0.53, 19.647)
+mesh = SubResource("BoxMesh_101")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint6" type="MeshInstance3D" parent="."]
+position = Vector3(10.500000000000004, 0.53, 19.647)
+mesh = SubResource("BoxMesh_102")
+material_override = ExtResource("art_metal_ink")
+
+[node name="SouthWorksJoint7" type="MeshInstance3D" parent="."]
+position = Vector3(14.700000000000003, 0.53, 19.647)
+mesh = SubResource("BoxMesh_103")
+material_override = ExtResource("art_metal_ink")
 
 [node name="StairRamp" type="StaticBody3D" parent="."]
 position = Vector3(10.5, 0.753, -32.407)

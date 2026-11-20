@@ -102,6 +102,8 @@ func _ready() -> void:
 	var host := get_node_or_null(location_host_path)
 	if host != null and host.has_signal("location_entered"):
 		host.location_entered.connect(_on_location_entered)
+	if host is LocationHost:
+		host.player_recovered.connect(cancel)
 
 
 func set_enabled(interact: bool) -> void:

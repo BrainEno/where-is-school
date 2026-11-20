@@ -185,11 +185,13 @@ All of these must stay inside the existing scene-transition transaction and keep
 | Area | Narrative function | Exploration purpose | Status |
 |---|---|---|---|
 | classroom | Waking; the ordinary day that is not | Desk, board, door | 已实现 |
-| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the window | 已实现 |
+| corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the window; the offset stair and lab recess controls | 已实现 |
 | street | Outside, but the school is still the biggest thing | Notice pole, bins, camera, puddle | 已实现 |
 | residential | Somebody's home life, overheard | The animal, the stains, washing, the chair | 已实现 (animal's role: 尚待作者决定) |
 | alley | Pressure; the way narrows | The skip and its chair, notices, the service door | 已实现 |
 | playground | Waiting; the open stage | Hasp, rota, moved hoop, stamped tag; the gap | 已实现 (the middle of the yard is reserved for events) |
+
+The two [service controls](CORRIDOR_ART.md#service-controls-and-the-edge-of-the-set) are small local events in the existing corridor, not new links. The offset stair shutter changes the section on view without opening the void guard. The 01 bell register stages a delayed blank. The southern street barrier marks the end of the physical road, with in-place fall recovery beyond other edges.
 
 ## 9. Separate scenes or zones
 

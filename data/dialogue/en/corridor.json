@@ -109,7 +109,9 @@
           "source": "observed",
           "next": null,
           "conditions": {
-            "not_flags": ["corridor_waited"]
+            "not_flags": [
+              "corridor_waited"
+            ]
           },
           "effects": [
             {
@@ -204,6 +206,52 @@
           "speaker": "protagonist",
           "text": "A little warmth from your finger on the tab. Leave it there.",
           "next": null
+        }
+      ]
+    },
+    "corridor_screen_reveal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "look",
+      "nodes": [
+        {
+          "id": "look",
+          "speaker": "protagonist",
+          "text": "Behind the shutter there’s a half-flight. It comes up short of the landing.",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "corridor_screen_revealed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The shutter on the offset landing rose. The steps behind it stop on the far side of the rail."
+            }
+          ]
+        }
+      ]
+    },
+    "corridor_bell_reveal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "look",
+      "nodes": [
+        {
+          "id": "look",
+          "speaker": "protagonist",
+          "text": "The bell is over. The last plate turns anyway. Nothing is written on the other side.",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "corridor_bell_revealed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "The bell test by the laboratory turned three plates. The last one turned late and showed a blank face."
+            }
+          ]
         }
       ]
     }

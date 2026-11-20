@@ -62,6 +62,32 @@ only in the separately loaded room. None changes the objective or the story rout
 Each return is unconditional and lands outside its own door. The original staff office
 retains its rota, trays and hook, and remains unstaffed.
 
+## Service controls and the edge of the set
+
+- **Offset stair between 02 and 03:** the dark panel in the north balustrade has a
+  small brass plunger. It raises a whole shutter 2.62 m and exposes a suspended
+  half-flight with another 02 plate. This is a section of impossible building, not
+  another exit: the real balustrade stays solid, and both ordinary flights stay open.
+- **01, around the laboratory return:** follow the existing amber line around the
+  screen, then look along the west side wall. The test bell turns three register
+  plates. The third hesitates until the bell cuts out, then shows a blank reverse.
+  The assembly uses the teaching-block kit and the existing bell sample, trimmed by
+  the scene's audio envelope. There is no new exterior texture or voice asset.
+
+Both controls are optional and work by the normal mouse/touch/facing interaction.
+They hold the ordinary staged beat and an authored camera shot; their finished poses
+and observed notebook entries survive leaving and Continue. Reusing a finished
+control offers an inspection rather than playing the movement again. No objective,
+room gate, or existing exit is conditional on either control.
+
+The repeated bay pilasters, skirts and room returns are set off the adjacent faces;
+window-wall corners butt together, and the fire-door canopy and tread no longer
+share planes with their neighbors. A short restoration grace in the camera fade
+keeps adjacent cutaways from pulsing when the sight ray alternates across a seam.
+The south end of the street has a visible works barrier where its physical road
+ends. Leaving the playable floor elsewhere has a same-location fallback (see
+[the placement contract](ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract)).
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py`, then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.
@@ -70,3 +96,8 @@ retains its rota, trays and hook, and remains unstaffed.
 
 - `python3 tools/build_school_rooms.py --check` covers the staff office, the three restrooms, their shared fittings and all fitted leaves. `godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd` walks from 02 up to the office and down to the restroom, uses both input paths, checks the six inspections and restores in each room before taking the matching door back. See the [wing's art notes](../art/teaching_block/README.md) for matched captures.
 - `python3 tools/build_school_annexes.py --check` covers six separate interiors and the measured exits/returns generated into `corridor.tscn`. `tests/school_expansion_test.gd` exercises the public washrooms, local prerequisites, deterministic success and failure, manual correction, journal notes, re-entry and Continue. No experiment under `scenes/dev` is required by a production room.
+- `tests/school_facilities_test.gd` walks to both controls, observes their intermediate
+  states, checks entry/Continue and walks back out. `Location art capture` also runs
+  it under Xvfb, capturing three stages of each mechanism from the gameplay camera.
+  `tests/fall_recovery_test.gd` walks into the street barrier and off an unguarded
+  edge. `tests/occluder_seam_test.gd` alternates the sight ray over adjacent occluders.

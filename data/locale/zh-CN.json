@@ -71,6 +71,7 @@
     "prompt.corridor_trolley": "看看清洁车",
     "prompt.corridor_wait": "在窗边停一会儿",
     "prompt.corridor_directory_tab": "拨一下路签",
+    "prompt.service_result": "看机关",
     "objective.schoolyard": "操场在走廊尽头的那扇门外。",
     "prompt.yard_to_corridor": "从防火门回走廊",
     "prompt.back_to_classroom": "回到教室",

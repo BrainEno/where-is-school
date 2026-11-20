@@ -492,9 +492,16 @@ func _capture_world() -> Dictionary:
 	var player := _world_child("Player") as Node3D
 	if player != null:
 		var position := player.global_position
+		var facing: Variant = null
+		if location_host is LocationHost and player is PlayerController \
+				and location_host.needs_safe_checkpoint(player):
+			var safe: Transform3D = location_host.get_safe_checkpoint()
+			position = safe.origin
+			facing = -safe.basis.z
+		elif player.has_method("get_facing_direction"):
+			facing = player.get_facing_direction()
 		world["position"] = [position.x, position.y, position.z]
-		if player.has_method("get_facing_direction"):
-			var facing: Vector3 = player.get_facing_direction()
+		if facing is Vector3:
 			world["facing"] = [facing.x, facing.y, facing.z]
 	return world
 

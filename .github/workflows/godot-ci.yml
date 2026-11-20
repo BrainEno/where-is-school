@@ -478,6 +478,9 @@ jobs:
           run_check corridor_art 180 godot --headless --path . --script res://tests/corridor_art_test.gd || status=1
           run_check school_rooms 240 godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd || status=1
           run_check school_expansion 370 godot --headless --path . --script res://tests/school_expansion_test.gd || status=1
+          run_check school_facilities 160 godot --headless --resolution 1600x900 --path . --script res://tests/school_facilities_test.gd || status=1
+          run_check fall_recovery 80 godot --headless --path . --script res://tests/fall_recovery_test.gd || status=1
+          run_check occluder_seam 30 godot --headless --path . --script res://tests/occluder_seam_test.gd || status=1
           # The four clips in `CharacterAnimation`, on both rigged characters: every track
           # has to point at a bone that exists on that rig, every clip has to actually move
           # the bone it is about, and the loop has to come back to where it started. The two
