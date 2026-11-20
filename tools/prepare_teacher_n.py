@@ -66,6 +66,9 @@ re-export from Blender can go through the same pass:
    neck rings, leaving the source bob shell, torso and limb weights. Sculpt eye/lip
    planes together; build sewn collar leaves, a knit welt and open cuff rims. The
    smaller welded hand mesh has a bevel, a knuckle arch and digit-specific relaxed curl.
+9. **Blender head layer.** After the original geometry preparation, a pinned indexed
+   edit refines the face and tucks the existing bob clear of the cheek and ear. No changes
+   to binding indices or animation payloads. See `art/character_models/sculpt/README.md`.
 
 No node is rotated, moved or scaled. The model faces -Z, which is what
 `docs/ASSET_PIPELINE.md` section 1 asks a new export to do, and stands with its soles on the
@@ -95,6 +98,7 @@ import sys
 import numpy as np
 
 import character_geometry as geometry
+from character_sculpt import apply
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = "art/character_models/teacher-n/teacher-n_source.glb"
@@ -390,7 +394,7 @@ def _refine_surface(name: str, material: str, positions: np.ndarray, normals: np
     return positions, normals, joints, weights, indices
 
 
-def prepare(source: bytes) -> tuple[bytes, dict]:
+def prepare_base(source: bytes) -> tuple[bytes, dict]:
     if len(source) != SOURCE_BYTES or hashlib.sha256(source).hexdigest() != SOURCE_SHA256:
         raise PrepareError(
             "%s is not the export this script was written for (expected %d bytes, sha256 %s). "
@@ -555,6 +559,13 @@ def prepare(source: bytes) -> tuple[bytes, dict]:
     return data, report
 
 
+def prepare(source: bytes) -> tuple[bytes, dict]:
+    basis, report = prepare_base(source)
+    data = apply(basis, "n")
+    report["bytes"] = len(data)
+    return data, report
+
+
 def describe(data: bytes) -> str:
     document, binary = load_glb(data)
     vertices = triangles = 0
@@ -581,7 +592,7 @@ def main(argv: list[str]) -> int:
         with open(os.path.join(ROOT, SOURCE), "rb") as handle:
             source = handle.read()
         data, report = prepare(source)
-    except (OSError, PrepareError) as error:
+    except (OSError, PrepareError, ValueError, KeyError) as error:
         print("PREPARE_TEACHER_N_PROBLEM: %s" % error)
         return 1
     target = os.path.join(ROOT, OUTPUT)

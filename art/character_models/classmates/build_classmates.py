@@ -18,6 +18,7 @@ ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE.parent / 'teacher_b'))
 from build_teacher_b import (Sculpt, bump, curve, rgb, rings_faces, smoothstep,
                              sphere, target, trigs, tube, unit)
+from character_sculpt import apply, apply_split
 from skinned_glb import GLB, batch_materials
 from sculpt_hair import cap_samples, comb_field, shell_grid
 
@@ -393,29 +394,46 @@ class Classmate(Sculpt):
             accent = [.14,.072,.047]
         self.add_hair_ribbons('Combed lock', center, grid, pigment, self.hairline, guides, material, accent)
 
-    def build(self, output, split=None):
+    def build(self, output, split=None, basis_only=False):
         self.skin()
         self.face_details()
         self.spectacles()
         self.hair()
         Wardrobe(self).build()
-        for out, parts in [(output, batch_materials(self.pieces)), (split, self.pieces)]:
-            if out is not None:
-                materials = {m: spec for m, spec in MATS.items() if any(p.material == m for p in parts)}
-                GLB().write(out, parts, self.bones, materials, self.design.height, self.design.label,
-                            compact=split != out, animate=lambda writer, doc: bake(self.key, writer, doc))
+        role = self.key.removesuffix('_classmate')
+
+        def pack(parts, compact):
+            materials = {m: spec for m, spec in MATS.items() if any(p.material == m for p in parts)}
+            return GLB().encode(parts, self.bones, materials, self.design.height, self.design.label,
+                                compact=compact, animate=lambda writer, doc: bake(self.key, writer, doc))
+
+        basis = pack(batch_materials(self.pieces), True)
+        result = basis if basis_only else apply(basis, role)
+        if split is not None:
+            part_basis = pack(self.pieces, False)
+            part_data = part_basis if basis_only else apply_split(basis, part_basis, role)
+            split.parent.mkdir(parents=True, exist_ok=True)
+            split.write_bytes(part_data)
+            print(f'WROTE {split} ({len(part_data):,} bytes)')
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(result)
+        print(f'WROTE {output} ({len(result):,} bytes)')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--makehuman-data', type=Path, required=True)
-    parser.add_argument('--output-dir', type=Path, default=ROOT/'assets/models/classmates')
+    parser.add_argument('--output-dir', type=Path)
     parser.add_argument('--split-dir', type=Path, help='Optional editable GLBs with named separate parts')
     parser.add_argument('--only', choices=DESIGNS)
+    parser.add_argument('--basis-only', action='store_true', help='Write the pre-sculpt basis for editing')
     args = parser.parse_args()
+    if args.basis_only and args.output_dir is None:
+        parser.error('--basis-only requires a separate --output-dir')
+    output_dir = args.output_dir or ROOT/'assets/models/classmates'
     for key in ([args.only] if args.only else DESIGNS):
         split = args.split_dir/f'{key}_parts.glb' if args.split_dir else None
-        Classmate(args.makehuman_data, key).build(args.output_dir/f'{key}.glb', split)
+        Classmate(args.makehuman_data, key).build(output_dir/f'{key}.glb', split, args.basis_only)
 
 
 if __name__ == '__main__':

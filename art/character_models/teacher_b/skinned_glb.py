@@ -9,7 +9,6 @@ import json
 import math
 import struct
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 
@@ -105,7 +104,7 @@ class GLB:
         self.accessors.append(a)
         return len(self.accessors) - 1
 
-    def write(self, path, pieces, bones, materials, height, character='Teacher B', *,
+    def encode(self, pieces, bones, materials, height, character='Teacher B', *,
               compact=False, animate=None):
         ground = min(float(p.points[:, 1].min()) for p in pieces)
         ceiling = max(float(p.points[:, 1].max()) for p in pieces)
@@ -193,10 +192,6 @@ class GLB:
         js = json.dumps(document, ensure_ascii=False, separators=(',', ':')).encode()
         js += b' ' * ((-len(js)) % 4)
         binary = self.data
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(struct.pack('<4sII', b'glTF', 2, 28 + len(js) + len(binary))
-                         + struct.pack('<I4s', len(js), b'JSON') + js
-                         + struct.pack('<I4s', len(binary), b'BIN\0') + binary)
-        print(f'{path}: {len(bones)} joints, {sum(len(p.faces) for p in pieces)} triangles, '
-              f'{len(out_mats)} materials, {len(pieces)} surfaces, {scale:.5f} stature scale, {path.stat().st_size} bytes')
+        return (struct.pack('<4sII', b'glTF', 2, 28 + len(js) + len(binary))
+                + struct.pack('<I4s', len(js), b'JSON') + js
+                + struct.pack('<I4s', len(binary), b'BIN\0') + binary)

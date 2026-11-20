@@ -455,3 +455,16 @@ The annotation previews now fit whole chunks so a dense set cannot silently drop
 last seated panel. The artifact retains unscaled PNGs. Structural checks, fixed-phase
 OpenGL renders, continuous motion on the target hardware and owner art judgment are
 separate; the PR records which were actually run.
+
+
+## 11. Blender head studies on the existing cast
+
+The [editable head studies and independent source record](../art/character_models/sculpt/README.md)
+refine the four existing runtime actors and four review-only actors, without moving their
+wrappers, adding expression keys, changing the painted materials, or placing the review cast.
+Lead and Q alone get new, closed hair topology, replacing the disconnected spikes and cards.
+The other heads retain their indexed surfaces. N keeps the existing crown and bob envelope;
+the seated student's sclera/iris/pupil/glint contract still applies. The review models keep their
+rigged piecewise Blender sources, end poses, paint masks and native actions as before.
+`tests/character_sculpt_test.py` compares the GLBs to the exact pre-pass commit, not to each other;
+the matching Blender renders are a geometry review, separate from existing Godot captures.

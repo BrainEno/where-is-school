@@ -25,9 +25,11 @@ IMPORT_DISTRIBUTIONS = {"PIL": "Pillow", "fontTools": "fonttools", "yaml": "PyYA
 # venv. Only the source drivers invoked explicitly through Blender may use them.
 BLENDER_DRIVERS = {
     "art/character_models/classmates/make_blender_source.py",
+    "art/character_models/sculpt/make_sculpt.py",
+    "art/character_models/sculpt/render_review.py",
     "art/character_models/teacher_b/make_blender_source.py",
 }
-BLENDER_MODULES = {"bpy", "mathutils"}
+BLENDER_MODULES = {"bpy", "mathutils", "mathutils.bvhtree"}
 
 
 def normalized(name: str) -> str:
