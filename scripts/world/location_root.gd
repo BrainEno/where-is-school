@@ -10,6 +10,15 @@ extends Node3D
 ## data ("classroom", "corridor"). Set by each location scene.
 @export var location_id: StringName = &""
 
+## Local height below the lowest playable surface. This is a void boundary, not a
+## maximum drop from the last floor: the teaching block legitimately goes down to -3.4 m.
+@export var void_recovery_y: float = -7.0
+
+
+func is_below_playable_space(point: Vector3) -> bool:
+	return to_local(point).y < void_recovery_y
+
+
 ## Returns the marker the player should be placed on.
 ##
 ## The two cases are deliberately different, and mixing them up sends the player into

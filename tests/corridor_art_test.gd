@@ -174,6 +174,10 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 	print("corridor art: gate to fire door %.1f m on the baked map" % length)
 	_check.expect(not path.is_empty() and path[-1].distance_to(end) < 0.5 and length > 42.0,
 		"The gate to fire door no longer follows a long connected route (%.1f m)." % length)
+	var school := corridor.get_node(SCHOOL) as Node3D
+	_check_separate_box_faces(school, ^"YardPortal/YardDoorStep", ^"YardPortal/YardDoorLeaf")
+	_check_separate_box_faces(school, ^"YardPortal/CeilingReturn", ^"Stairs/YardLandingSide0/Plaster")
+	_check_separate_box_faces(school, ^"UpperFloor/SouthGlazing/Bay0_0/SillWall", ^"UpperFloor/EastGlazing/Bay0_0/SillWall")
 
 
 ## The formerly identical faces were visible from the follow camera. The
@@ -183,8 +187,9 @@ func _check_separate_box_faces(bay: Node3D, first: NodePath, second: NodePath) -
 	var b := bay.get_node_or_null(second) as MeshInstance3D
 	if not _check.expect(a != null and b != null, "%s is missing a wall or ceiling piece." % bay.name):
 		return
-	var ax := a.transform * a.get_aabb()
-	var bx := b.transform * b.get_aabb()
+	var to_bay := bay.global_transform.affine_inverse()
+	var ax := (to_bay * a.global_transform) * a.get_aabb()
+	var bx := (to_bay * b.global_transform) * b.get_aabb()
 	var coverage := ax.end.min(bx.end) - ax.position.max(bx.position)
 	for axis in 3:
 		var same_face := absf(ax.position[axis] - bx.position[axis]) < 0.001 or absf(ax.end[axis] - bx.end[axis]) < 0.001
@@ -212,6 +217,11 @@ func _check_bay(bay: StaticBody3D, map: RID) -> void:
 	_check_separate_box_faces(bay, ^"Wall6_0", ^"CeilingReturn")
 	_check_separate_box_faces(bay, ^"Return0", ^"RoomRoof")
 	_check_separate_box_faces(bay, ^"Return1", ^"RoomBack")
+	# Repeated classroom pieces used to have exact matches on the end or foot of
+	# the bay, most visible in motion when the camera cut away the stairs or piers.
+	for pair: Array in [[^"Pier0", ^"Wall0_0"], [^"Pier1", ^"Wall0_2"],
+			[^"Skirt1", ^"Wall0_1"], [^"Return0", ^"RoomFloor"], [^"Return1", ^"RoomFloor"]]:
+		_check_separate_box_faces(bay, pair[0], pair[1])
 	var quad := slit.mesh as QuadMesh
 	_check.expect(quad != null and quad.size.x > quad.size.y * 5.0 and is_equal_approx(slit.position.y, ROOM_WINDOW_Y),
 		"%s's high window is not a narrow slit above standing eye height." % bay.name)

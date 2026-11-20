@@ -785,6 +785,18 @@ authoring a rotation on a marker is what changes it. Which marker an exit names 
 checked by the test above: the marker must exist, must be the one the player lands on,
 must be walkable ground, and for a return trip must sit by the exit that leads back.
 
+**Accidental falls are not arrivals.** A successful commit seeds the recovery pose
+from its entry marker. `LocationHost` checks the live player after physics movement;
+it remembers grounded poses with nearby static floor support and resets that memory
+on every *successful* swap. Below `LocationRoot.void_recovery_y` (local to the room,
+by default −7 m), it uses the latest supported pose or the current entry. `teleport()`
+clears path and velocity; the recovery signal clears the pending pointer action and
+stale camera focus and prompt. No location, story flag, or checkpoint is replayed.
+The monitor does not take the body from an authored beat: the curtain and the ladder
+keep their staged placement. A snapshot taken during a substantial unsupported drop
+uses the recovery pose; a legacy saved position already below the room uses its
+entry on Continue. The save envelope and the normal saved position are unchanged.
+
 ## 5i. Editing text: the narrative editor (editor only, implemented contract)
 
 Writing one line in two languages by hand means opening two files, finding the same node

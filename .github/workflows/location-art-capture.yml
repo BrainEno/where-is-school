@@ -34,6 +34,7 @@ on:
       - "assets/shaders/school/**"
       - "tests/location_art_test.gd"
       - "tests/school_rooms_test.gd"
+      - "tests/school_facilities_test.gd"
       - "tests/playground_art_slice_test.gd"
       - "tests/return_route_test.gd"
       - "assets/camera/shots/return_board.tres"
@@ -223,11 +224,38 @@ jobs:
             cp "$wing/review/"*.jpg "$inline/"
             echo "::notice title=teaching wing capture::${shots} full-size frames, including the close views of 01, 02 and 03"
           fi
+          if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
+            service="${RUNNER_TEMP}/service"
+            xvfb-run -a --server-args="-screen 0 1600x900x24" \
+              godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+              --script res://tests/school_facilities_test.gd -- "capture=${service}" \
+              > "${RUNNER_TEMP}/service.log" 2>&1
+            service_code=$?
+            service_shots=("$service/"service_*.jpg)
+            if [ "$service_code" -ne 0 ] || [ "${#service_shots[@]}" -ne 6 ] || \
+                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/service.log" || \
+                ! grep -q '^PASS:' "${RUNNER_TEMP}/service.log"; then
+              tail -n 45 "${RUNNER_TEMP}/service.log"
+              awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)/ {print; if (++count == 6) exit}' \
+                "${RUNNER_TEMP}/service.log" | while read -r issue; do
+                  echo "::error title=school facilities::$issue"
+                done
+              exit 1
+            fi
+            cp "${service_shots[@]}" "${RUNNER_TEMP}/service.log" "${RUNNER_TEMP}/frames/"
+            cp "$service/review/"*.jpg "$inline/"
+            echo "::notice title=school facilities::6 real game-camera images: both controls, three stages apiece"
+          fi
           # Keep full-size frames in the artifact. Use compact detail copies within
           # the inline annotation budget.
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
+          # Mechanism evidence goes first; the artifact still holds every old view.
+          priority=("$inline"/service_*.jpg)
           for path in "$inline"/*.jpg; do
+            if [[ "${path##*/}" != service_* ]]; then priority+=("$path"); fi
+          done
+          for path in "${priority[@]}"; do
             file=${path##*/}
             data=$(base64 -w0 "$path")
             parts=$(( (${#data} + 3999) / 4000 ))

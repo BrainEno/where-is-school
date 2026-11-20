@@ -42,8 +42,10 @@ the village.
   numbers say `07`. The footprints reverse. The escalator runs down under people walking up.
 - **Motion without behaviour.** Every movement is a vertex offset or a turn about a shared
   pivot in `dream_motion.gdshader`. Every part of an assembly is an unrotated box with the
-  same `phase`, so the assembly moves as one piece. Fades are dithered discards, not alpha,
-  so nothing sorts against the cutaway glass.
+  same `phase`, so the assembly moves as one piece. The builder stores phases and pivots
+  in shared material variants, not per-instance uniforms. This keeps a corridor reload
+  from exhausting Compatibility's shared uniform buffer while both instances exist.
+  Fades are dithered discards, not alpha, so nothing sorts against the cutaway glass.
 - **No resolution.** No new text, dialogue, flag or exit. The doorway and the sky
   escalator lead nowhere.
 

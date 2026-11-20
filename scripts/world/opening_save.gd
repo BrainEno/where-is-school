@@ -97,7 +97,11 @@ func load_world(world: Dictionary, catalog: LocationCatalog, locations: Location
 		return false
 	game_state.set_flag(StoryFlags.CURRENT_LOCATION, location_id)
 	if world.has("position"):
-		player.teleport(saved_transform(world))
+		var pose := saved_transform(world)
+		# Earlier saves could record a position below the world. Keep the entry
+		# LocationHost just placed rather than uncovering a void on Continue.
+		if not locations.get_current().is_below_playable_space(pose.origin):
+			player.teleport(pose)
 	return true
 
 

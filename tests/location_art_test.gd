@@ -62,7 +62,7 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 29, # Same 15, eight new doors and six registration slides.
+		"interactables": 31, # Original 29 plus two mechanical controls.
 		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
 			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
@@ -87,7 +87,7 @@ const LOCATIONS := {
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 93, # Same 89 plus two anchors with one pick box apiece.
+		"shapes": 94, # Original 93 plus the southern works barrier.
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
@@ -299,11 +299,18 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		return
 	var interactables := anchors.get_children()
 	# Keep the stage-pass contract on its own anchor list (e.g. the teaching wing's
-	# nine recessed windows have their own test). The yard's fitted ladder is nested.
+	# nine recessed windows have their own test). These controls live with their props.
+	var fitted: Array[StringName] = []
 	if id == "playground":
-		var ladder := (location as LocationRoot).find_interactable(&"pg_container_ladder")
-		if ladder != null:
-			interactables.append(ladder)
+		fitted = [&"pg_container_ladder"]
+	elif id == "corridor":
+		fitted = [&"corridor_stair_screen", &"corridor_bell_register"]
+	for anchor_id in fitted:
+		var control := (location as LocationRoot).find_interactable(anchor_id)
+		if control == null:
+			_failures.append("%s lost its fitted control %s." % [id, anchor_id])
+		else:
+			interactables.append(control)
 	_checks += 1
 	if interactables.size() != int(spec["interactables"]):
 		_failures.append(

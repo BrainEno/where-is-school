@@ -252,6 +252,7 @@
     "journal.read_areas": "Not yet read through: {areas}",
     "journal.read_area_left": "{place}: {count} still unread",
     "journal.read_areas_more": "{count} more",
+    "prompt.service_result": "Look at the mechanism",
     "prompt.annex_align": "Try the registration slide",
     "prompt.enter_archive": "Try the door to the archive",
     "prompt.enter_plan_room": "Try the door to the plan room",

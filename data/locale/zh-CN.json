@@ -252,6 +252,7 @@
     "journal.read_areas": "尚未读完的区域：{areas}",
     "journal.read_area_left": "{place}：还有 {count} 句",
     "journal.read_areas_more": "另有 {count} 处",
+    "prompt.service_result": "看机关",
     "prompt.annex_align": "拨动校准片",
     "prompt.enter_archive": "试试档案室的门",
     "prompt.enter_plan_room": "试试图纸室的门",

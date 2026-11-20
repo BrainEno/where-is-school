@@ -88,6 +88,9 @@ const CORRIDOR_WAITED: StringName = &"corridor_waited"
 ## String: the directory tab points to the glass doors (glass) or the stairs (stair).
 ## Missing in old saves and before marking: the tab is centered.
 const CORRIDOR_DIRECTORY_TAB: StringName = &"corridor_directory_tab"
+## bool: optional local mechanisms, restored at their final poses on Continue and return.
+const CORRIDOR_SCREEN_RAISED: StringName = &"corridor_screen_raised"
+const CORRIDOR_BELL_TESTED: StringName = &"corridor_bell_tested"
 ## Optional school doors: aligned opens the latch; unclear enables the manual correction.
 const ANNEX_ARCHIVE_ALIGNED: StringName = &"annex.archive.aligned"
 const ANNEX_ARCHIVE_UNCLEAR: StringName = &"annex.archive.unclear"
@@ -182,6 +185,8 @@ const ALL_FLAGS: Array[StringName] = [
 	Q_COMPANION,
 	CORRIDOR_WAITED,
 	CORRIDOR_DIRECTORY_TAB,
+	CORRIDOR_SCREEN_RAISED,
+	CORRIDOR_BELL_TESTED,
 	ANNEX_ARCHIVE_ALIGNED,
 	ANNEX_ARCHIVE_UNCLEAR,
 	ANNEX_PLAN_ROOM_ALIGNED,

@@ -422,6 +422,12 @@ def build_street():
          "id_dest": "residential"},
     ]
     s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromResidential", (10.5, 1.6, -35.4))]
+    # The painted distance keeps going, but neither the asphalt nor the pavements
+    # do. A low works barrier makes the playable southern edge physical and legible.
+    s.box("SouthWorksBarrier", (0, 0.53, 19.79), (34, 1.06, 0.28), "concrete", ["camera_occluder"])
+    s.box("SouthWorksCap", (0, 1.085, 19.79), (34, 0.12, 0.31), "metal", body=False)
+    for i in range(8):
+        s.box(f"SouthWorksJoint{i}", (-14.7+4.2*i, 0.53, 19.647), (.055, .90, .028), "metal", body=False)
     return s
 
 

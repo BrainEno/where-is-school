@@ -14,9 +14,11 @@ uniform float sway_rate = 0.0;
 uniform float mechanical = 0.0;
 uniform float turn = 0.0;
 uniform float turn_rate = 0.0;
-instance uniform float phase = 0.0;
+// The generator shares materials with the same motion parameters. Keep these
+// out of the Compatibility renderer's instance buffer when locations overlap.
+uniform float phase = 0.0;
 // Pivot of the turn relative to this mesh's own origin, in the shared frame.
-instance uniform vec3 pivot = vec3(0.0);
+uniform vec3 pivot = vec3(0.0);
 varying float fade;
 
 void vertex() {

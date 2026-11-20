@@ -46,7 +46,11 @@ var _target: Node3D = null
 ## Who the facing comes from: the target, or what it follows (resolved once, lazily).
 var _actor: Node = null
 var _actor_resolved := false
-var _faded: Array[Node] = []
+## Stall restoration briefly at seams. Two rays grazing adjacent bays may alternate
+## hits while the player and camera settle; neither bay should pulse back to opaque.
+const CLEAR_GRACE_SECONDS := 0.10
+## Occluder root -> seconds left before it can restore, kept only until fully opaque.
+var _release_in: Dictionary = {}
 ## Geometry -> {"override": its authored material_override, "surfaces": its authored
 ## surface override materials, "copies": the alpha-blended copies drawn instead}, for
 ## every piece whose materials are currently swapped.
@@ -86,17 +90,9 @@ func _physics_process(delta: float) -> void:
 	if followed != null:
 		blockers.append(_first_occluder(space, followed.global_position + Vector3(0.0, target_eye_height, 0.0)))
 
-	# Rebuild the set every frame instead of appending to it. Each ray has at most one
-	# blocker, and "what blocks the view now" is the whole truth. Appending made the set a
-	# history: when the blocker changed from one wall to another with no unobstructed
-	# frame in between - the normal case in a corridor, or when the player walks along a
-	# wall - the first wall stayed in the set, was never restored, and stayed dithered
-	# after the player had walked away from it.
-	_faded.clear()
 	for blocker in blockers:
-		if blocker != null and not _faded.has(blocker):
-			_faded.append(blocker)
-
+		if blocker != null:
+			_release_in[blocker] = CLEAR_GRACE_SECONDS
 	_update_materials(delta)
 
 
@@ -170,19 +166,21 @@ func _find_occluder_root(node: Node) -> Node:
 
 func _update_materials(delta: float) -> void:
 	var step := fade_speed * delta
-	for node in _faded:
-		for geometry in _collect_geometry(node):
-			geometry.transparency = move_toward(geometry.transparency, faded_transparency, step)
-			_apply_fade(geometry)
-	# Restore everything that is no longer blocking.
-	var faded_nodes := get_tree().get_nodes_in_group(occluder_group) if is_inside_tree() else []
-	for node in faded_nodes:
-		if _faded.has(node):
+	for key: Variant in _release_in.keys():
+		if not is_instance_valid(key) or not key.is_inside_tree():
+			_release_in.erase(key)
 			continue
-		for geometry in _collect_geometry(node):
-			if geometry.transparency > 0.0:
-				geometry.transparency = move_toward(geometry.transparency, 0.0, step)
-				_apply_fade(geometry)
+		var remaining := float(_release_in[key])
+		var target := faded_transparency if remaining > 0.0 else 0.0
+		var settled := true
+		for geometry in _collect_geometry(key):
+			geometry.transparency = move_toward(geometry.transparency, target, step)
+			_apply_fade(geometry)
+			settled = settled and geometry.transparency <= 0.0
+		if target <= 0.0 and settled:
+			_release_in.erase(key)
+		else:
+			_release_in[key] = maxf(0.0, remaining - delta)
 	# Anything freed while swapped (a location swap) is forgotten, not restored.
 	for key: Variant in _swapped.keys():
 		if not is_instance_valid(key):

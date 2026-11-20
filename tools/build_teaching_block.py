@@ -272,8 +272,10 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     plate_y = 1.83 if biology else 1.89  # Below the biology high window sill.
     sign(b, p, "Number", (plate_x, plate_y, 0.112), plate, 0.33)
     upper = name.startswith("Upper")
-    for side, x in enumerate((-width/2+0.09, width/2-0.09)):
-        b.box(f"Pier{side}", p, (x, 1.56, 0.104), (0.18, 3.12, 0.29),
+    # Inset the pilaster ends from the plaster's side faces. A flush end
+    # multiplies the same plane by two materials when the bay cuts away.
+    for side, x in enumerate((-width/2+0.104, width/2-0.104)):
+        b.box(f"Pier{side}", p, (x, 1.569, 0.104), (0.18, 3.102, 0.29),
               "blue_hour" if upper else "office_sage")
     # Cutaway ceiling: the return/beam and its shadow remain, not a roof across the
     # follow camera's line from the open side of the sectional model.
@@ -284,14 +286,14 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
           "night_lilac" if upper else "office_ochre")
     for i, (start, end) in enumerate(complement(-width/2, width/2,
             [(x - DOOR_WIDTH/2, x + DOOR_WIDTH/2) for x in door_x])):
-        b.box(f"Skirt{i}", p, ((start+end)/2, 0.06, 0.111), (end-start, 0.12, 0.065), "walk_dado")
+        b.box(f"Skirt{i}", p, ((start+end)/2, 0.068, 0.111), (end-start-.016, 0.104, 0.065), "walk_dado")
     # Real depth and furnishings (not a pasted image). The only playable classroom
     # interior is still its own story scene. The floor behind each slit is off its datum.
     b.box("RoomFloor", p, (0, bias - 0.1, -depth / 2 - 0.1), (width - 0.04, 0.20, depth), "upper_concrete")
     b.box("RoomBack", p, (0, 1.53, -depth - 0.1), (width, 3.25, 0.20), "gallery_base")
     for index, x in enumerate((-width / 2 + 0.08, width / 2 - 0.08)):
-        b.box(f"Return{index}", p, (x, 1.505, -depth / 2 - 0.048),
-              (0.16, 3.20, depth-0.104), "walk_plaster")
+        b.box(f"Return{index}", p, (x, 1.505, -depth / 2 - 0.065),
+              (0.16, 3.20, depth-0.13), "walk_plaster")
     b.box("RoomRoof", p, (0, 3.206, -depth / 2 - 0.12), (width-0.024, 0.16, depth+0.036),
           "blue_hour" if upper else "roof", shadow=True)
     b.box("Blackboard", p, (0.55, 1.64 + bias, -depth + 0.024), (2.9, 1.16, 0.075), "room_ink")
@@ -818,6 +820,83 @@ def annex_portals(b):
 
 
 
+def service_button(b, parent, pos, name, key, shot, effect, mechanism):
+    script = b.bind("service_control", "res://scenes/locations/corridor/service_control.gd", "Script")
+    camera = b.bind(shot, f"res://assets/camera/shots/{shot}.tres", "Resource")
+    b.instance(name, parent, "interactable", pos, script=script, mechanism=mechanism,
+               effect_path=f'NodePath("{effect}")', camera_shot=camera,
+               interact_id=f'&"{key}"', inspection_id=f'&"{key}"', radius=.24,
+               outline_paths='PackedStringArray("Housing", "Plunger")',
+               support_paths='PackedStringArray("..")')
+    p = child_path(parent, name)
+    # Enamel and two slotted screws: visible on approach, no glow or quest icon.
+    b.box("Housing", p, (0, 0, -.035), (.37, .32, .10), "directory_black", shadow=True)
+    b.box("Collar", p, (0, 0, .022), (.223, .224, .054), "exit_steel")
+    cap = b.mesh("CylinderMesh", top_radius=.079, bottom_radius=.084, height=.068, radial_segments=16, rings=1)
+    b.flat("Plunger", p, cap, "brass_rule", (0, 0, .079), (90, 0, 0))
+    for i, x in enumerate((-.137, .138)):
+        b.box(f"Screw{i}", p, (x, .087, .022), (.035, .024, .019), "signal_ivory")
+
+
+def service_controls(b):
+    # Midway between 02 and 03. The screen and the extra half-flight sit outside
+    # the landing. The balustrade never moves, and the glimpse is not a destination.
+    parent = "Stairs"
+    b.node("ClosedSection", parent, position=vec3((.72, 1.8, -37.68)))
+    p = child_path(parent, "ClosedSection")
+    for i, x in enumerate((-1.63, 1.63)):
+        b.box(f"Guide{i}", p, (x, 2.55, -.04), (.13, 5.08, .36), "night_blue", shadow=True)
+        b.box(f"Rebate{i}", p, (x, 1.26, -.60), (.16, 2.47, 1.05), "clay_red", shadow=True)
+    b.box("Hoist", p, (0, 5.11, -.04), (3.44, .22, .43), "night_blue", shadow=True)
+    b.box("SectionBack", p, (0, 1.44, -1.18), (3.18, 2.8, .20), "chalk_rose", shadow=True)
+    b.box("Crown", p, (0, 2.89, -.65), (3.22, .17, 1.18), "office_sage", shadow=True)
+    b.box("SuspendedSlab", p, (0, -.08, -.64), (3.26, .18, 1.16), "deep_plum", shadow=True)
+    for i in range(5):
+        b.box(f"FalseTread{i}", p, (.6-.20*i, .073+.14*i, -.31-.16*i),
+              (1.30-.08*i, .16, .22), "arch_chalk" if i % 2 else "office_sage")
+    for i, x in enumerate((-.93, .69)):
+        b.box(f"Sash{i}", p, (x, 1.67, -1.052), (.94, 1.27, .076), "night_blue")
+        b.box(f"LitPaper{i}", p, (x, 1.68, -1.003), (.76, 1.05, .03), "lamp_tube")
+        b.box(f"Mullion{i}", p, (x, 1.68, -.972), (.044, 1.06, .033), "gallery_frame")
+    sign(b, p, "RepeatPlate", (.05, 2.49, -1.037), "02", .42, plate="night_blue")
+    b.node("Screen", p)
+    screen = child_path(p, "Screen")
+    b.box("Leaf", screen, (0, 1.38, .034), (3.16, 2.63, .18), "upper_concrete", shadow=True)
+    b.box("Toe", screen, (0, .23, .137), (3.12, .27, .039), "night_blue")
+    b.box("TopRail", screen, (0, 2.42, .142), (3.12, .075, .026), "office_sage")
+    b.box("WornRule", screen, (0, .95, .131), (3.12, .038, .019), "clay_red")
+    for i, x in enumerate((-.86, -.52, -.18, .16, .50, .84)):
+        b.box(f"Vent{i}", screen, (x, 1.94, .136), (.065, .28, .032), "directory_black")
+    service_button(b, f"{parent}/LandingNorth", (-.80, .79, .135), "ScreenControl",
+                   "corridor_stair_screen", "stair_service", "../../ClosedSection/Screen", 0)
+
+    # 01: the opaque lab return hides the end wall from the main gallery. The
+    # station is on the side wall, off the walking line to the laboratory door.
+    end = "GroundFloor/EndWall"
+    b.node("BellRegister", end, position=vec3((-.12, 1.63, .222)))
+    p = child_path(end, "BellRegister")
+    b.box("Rail", p, (0, .43, -.032), (2.26, .09, .112), "night_blue", shadow=True)
+    b.box("Backing", p, (0, -.01, -.059), (2.27, .72, .096), "clay_red", shadow=True)
+    for i in range(3):
+        b.node(f"Plate{i}", p, position=vec3(((i-1)*.73, 0, .32)))
+        plate = child_path(p, f"Plate{i}")
+        b.box("Frame", plate, (0, 0, 0), (.61, .66, .046), "gallery_frame", shadow=True)
+        b.box("Front", plate, (0, 0, .035), (.53, .56, .025), "office_sage")
+        b.box("Reverse", plate, (0, 0, -.034), (.53, .56, .022), "arch_chalk")
+        b.box(f"PivotHead{i}", p, ((i-1)*.73, .39, .24), (.082, .12, .24), "exit_steel")
+        for j in range(3):
+            b.box(f"RegisterLine{j}", plate, (.025*j, .13-.12*j, .054),
+                  (.31-.047*j, .018, .01), "directory_black")
+            if i < 2:
+                b.box(f"Answer{j}", plate, (-.025*j, .13-.12*j, -.053),
+                      (.31-.047*j, .022, .014), "clay_red")
+    bell = b.bind("service_bell", "res://assets/audio/bell_second.wav", "AudioStream")
+    b.node("Bell", p, "AudioStreamPlayer3D", stream=bell, bus='&"SFX"', volume_db=-16.0,
+           max_distance=9.0)
+    service_button(b, end, (.61, .91, .178), "BellControl",
+                   "corridor_bell_register", "bell_service", "../BellRegister", 1)
+
+
 def teaching_block():
     b = Build("TeachingBlock")
     b.mat("clear_glass", transparency=1, cull_mode=2, albedo_color="Color(0.67, 0.81, 0.88, 0.15)")
@@ -850,13 +929,14 @@ def teaching_block():
     classroom_run(b, u, False, -45, RISE, (-14.25, UPPER_END), UPPER_NORTH,
                   ((OFFICE_X-ROOM_PORTAL_WIDTH/2, OFFICE_X+ROOM_PORTAL_WIDTH/2), threshold_gap(PRINCIPAL)))
     glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95)
-    glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END, (yard_gap,))
+    glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END-.11, (yard_gap,))
     wing_end(b, WASH_02, TURN_Z)
     wing_end(b, WASH_03, UPPER_TURN)
     for side, x in zip(("West", "East"), MAIN_X):
         rail(b, l, "GateStepSide"+side, x, -0.36, 7.25, 0.19, 0.6)
     glass_run(b, u, "EastGlazing", True, -9.75, RISE, -40.5, -6.5, (west_gap,))
-    glass_run(b, u, "SouthGlazing", False, -40.5, RISE, -9.75, UPPER_END, (upper_gap,))
+    # Butt-joint the inner corner and east return instead of overlapping their sill courses.
+    glass_run(b, u, "SouthGlazing", False, -40.5, RISE, -9.75+.13, UPPER_END-.11, (upper_gap,))
     # The short flight closes the loop near the biology room. The far stair breaks
     # alignment by 4.5 m across its deep intermediate landing before it climbs again.
     flight(b, s, "WestFlight", (-2.2, 0, WEST_STAIR_Z), 90, 7.55, RISE, WEST_STAIR_WIDTH, 20, "warm_tile")
@@ -905,8 +985,8 @@ def teaching_block():
     b.shape("Stop", p, (0, 1.6, 0), (YARD_WIDTH, 3.2, 0.20))
     facade_sections(b, p, YARD_WIDTH, [(-0.7, 0.7, 0, 2.6)])
     b.box("YardDoorLeaf", p, (0, 1.3, 0.03), (1.4, 2.6, 0.14), "yard/fire_door")
-    b.box("YardDoorStep", p, (0, 0.06, 0.18), (1.7, 0.12, 0.36), "walk_step")
-    b.box("CeilingReturn", p, (0, 3.13, 0.41), (YARD_WIDTH+0.18, 0.17, 0.77), "upper_concrete", shadow=True)
+    b.box("YardDoorStep", p, (0, 0.054, 0.18), (1.7, 0.132, 0.36), "walk_step")
+    b.box("CeilingReturn", p, (0, 3.13, 0.41), (YARD_WIDTH+0.12, 0.17, 0.77), "upper_concrete", shadow=True)
     fittings = child_path(p, "Fittings")
     b.node("Fittings", p, position=vec3((0, 1.3, 0.03)))
     school_exit_fittings(b, fittings, 1.4, 2.6, 0.07, inside=True)
@@ -923,6 +1003,7 @@ def teaching_block():
     rear_stair_and_ground_wing(b)
     # PackedScene must see GroundFloor before the two portals that it owns.
     annex_portals(b)
+    service_controls(b)
     return b
 
 

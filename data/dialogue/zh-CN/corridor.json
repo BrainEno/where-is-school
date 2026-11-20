@@ -208,6 +208,52 @@
           "next": null
         }
       ]
+    },
+    "corridor_screen_reveal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "look",
+      "nodes": [
+        {
+          "id": "look",
+          "speaker": "protagonist",
+          "text": "挡墙后头还有半截楼梯，差一点才够到平台。",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "corridor_screen_revealed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "折梯平台的挡墙升了起来，露出的台阶停在栏杆外面。"
+            }
+          ]
+        }
+      ]
+    },
+    "corridor_bell_reveal": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "look",
+      "nodes": [
+        {
+          "id": "look",
+          "speaker": "protagonist",
+          "text": "铃声已经过去，最后一块牌子还是翻了过来。背面什么也没写。",
+          "source": "observed",
+          "next": null,
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "corridor_bell_revealed",
+              "source": "observed",
+              "speaker": "protagonist",
+              "text": "实验室外的试铃翻了三块牌子。最后一块晚了一拍，翻过来是空白。"
+            }
+          ]
+        }
+      ]
     }
   }
 }
