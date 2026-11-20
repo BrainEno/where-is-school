@@ -17,8 +17,9 @@ extends Node3D
 ## Opening is driven by one number (`set_open_amount`, 0 = closed, 1 = drawn aside). Each
 ## panel hangs under a pivot on its outer edge, and opening squeezes the pivot toward that
 ## edge while deepening the folds - the fabric gathers at the sides the way a curtain on a
-## track does. Driving everything from one value keeps the open state exact and testable:
-## a curtain loaded open (a save) is in the same pose the animation ends in.
+## track does. The gather state stays exact, including on reload. A separate, shallow tilt
+## about that same rail carries a brief draft and the hem's recoil after a pull; it never
+## changes the cut, the overlap along the wall, or the fabric's gather amount.
 ##
 ## Local space: x runs along the wall, y is up, +z faces the room. The origin is the
 ## underside of the track at the middle of the curtain; the cloth hangs down from y = 0 to
@@ -38,6 +39,8 @@ const SAMPLES_PER_FOLD := 12
 const ROWS := 6
 const TRACK_HEIGHT := 0.06
 const TRACK_DEPTH := 0.3
+const DRAFT_PERIOD := 10.4
+const SETTLE_SECONDS := 0.94
 
 ## Width of the whole curtain along the wall, metres, closed.
 @export var width: float = 3.3
@@ -71,11 +74,31 @@ var _panels: Array[MeshInstance3D] = []
 var _track: MeshInstance3D = null
 var _tween: Tween = null
 var _built := false
+var _draft_phase := DRAFT_PERIOD - 2.7
+var _settle_left := 0.0
 
 
 func _ready() -> void:
-	_build()
 	set_open_amount(1.0 if start_open else 0.0)
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		return
+	_draft_phase = fposmod(_draft_phase + delta, DRAFT_PERIOD)
+	_settle_left = maxf(_settle_left - delta, 0.0)
+	_update_hem()
+
+
+func _update_hem() -> void:
+	var gust := sin(PI * clampf(_draft_phase / 3.6, 0.0, 1.0))
+	var draft := deg_to_rad(0.9) * gust * gust * sin(TAU * _draft_phase / 3.4)
+	# Both closed panels sway together: the seam never loses its overlap. Only when
+	# gathered can one hem lag the other. The weighted folds settle in two small arcs.
+	var t := 1.0 - _settle_left / SETTLE_SECONDS
+	var recoil := deg_to_rad(1.9) * sin(TAU * t) * (1.0 - t) * (1.0 - t)
+	_left_pivot.rotation.x = draft + recoil
+	_right_pivot.rotation.x = draft + recoil * 0.62
 
 
 ## True once the curtain is fully drawn aside.
@@ -103,13 +126,20 @@ func open(animated: bool = true) -> void:
 		return
 	_tween = create_tween()
 	_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_method(set_open_amount, _open_amount, 1.0, open_seconds)
+	_tween.tween_method(_set_gather, _open_amount, 1.0, open_seconds)
 	await _tween.finished
+	_settle_left = SETTLE_SECONDS
 	opened.emit()
 
 
-## Puts both panels where `amount` says (0 closed, 1 drawn aside).
+## Direct state restore clears any recoil. The rail, overlap and passage stay exact.
 func set_open_amount(amount: float) -> void:
+	_set_gather(amount)
+	_settle_left = 0.0
+	_update_hem()
+
+
+func _set_gather(amount: float) -> void:
 	_build()
 	_open_amount = clampf(amount, 0.0, 1.0)
 	var squeeze := lerpf(1.0, gathered_width, _open_amount)

@@ -9,6 +9,8 @@
 [node name="ClassroomStudent" type="Node3D"]
 script = ExtResource("2_animation")
 start_seated = true
+seated_dialogue_clip = "sit_talk"
+dialogue_speaker_id = &"student"
 motion_profile = ExtResource("5_motion")
 
 [node name="Model" parent="." instance=ExtResource("1_model")]

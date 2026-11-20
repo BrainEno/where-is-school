@@ -1,5 +1,5 @@
 extends SceneTree
-## The seven clips in `CharacterAnimation` drive every rigged character in the repository,
+## The shared clips in `CharacterAnimation` drive every rigged character in the repository,
 ## and each one is authored against canonical bone names rather than a rig's own.
 ##
 ## That is the claim this file checks, and it is the claim the retarget experiment failed:
@@ -13,7 +13,7 @@ extends SceneTree
 ##   2. every track in every built clip points at a bone that exists on that rig;
 ##   3. each clip actually moves the bones it claims to move, measured by seeking the
 ##      animation and reading the skeleton's bone poses;
-##   4. both rigs get the same seven clip names despite naming their bones differently;
+##   4. both rigs get the same shared clip names despite naming their bones differently;
 ##   5. both production models have skeletons and bind;
 ##   6. a transition does not loop: `get_up` is built with `LOOP_NONE`, ends on the rest pose,
 ##      and starts from *exactly* the pose `sit_idle` holds, so the two cannot drift apart;
@@ -51,14 +51,14 @@ const CLIPS := {
 	"walk": "thigh.L",
 	"jog": "thigh.L",
 	"sit_idle": "thigh.L",
+	"sit_talk": "head",
 	"wave": "upper_arm.R",
 	"talk": "head",
 	"get_up": "thigh.L",
 }
 
-## The one clip that is a transition rather than a state. It is checked differently: it ends
-## on the rest pose instead of returning to its first key.
-const TRANSITIONS := ["get_up"]
+## The transition reaches the standing pose; seated speech holds its last key.
+const NON_LOOPING_CLIPS := ["get_up", "sit_talk"]
 
 ## Degrees two keys of the same bone may differ by and still count as the same pose.
 const POSE_TOLERANCE_DEGREES := 0.5
@@ -139,7 +139,7 @@ func _run() -> void:
 	_report()
 	Harness.finish(
 		self, _failures,
-		"every rigged character (+Z and -Z) plays the same seven clips, every track points at a bone that "
+		"every rigged character (+Z and -Z) plays the same shared clips, every track points at a bone that "
 		+ "exists, the transition does not loop, and the seats and speeds are wired."
 	)
 
@@ -210,7 +210,7 @@ func _check_model(
 	_check_track_paths(label, player, skeleton)
 	for clip_name in CLIPS:
 		_check_clip(
-			label, player, skeleton, resolved, clip_name, not TRANSITIONS.has(clip_name),
+			label, player, skeleton, resolved, clip_name, not NON_LOOPING_CLIPS.has(clip_name),
 			report.get("posed", [])
 		)
 	_check_transition_poses(label, player, skeleton, resolved)
@@ -311,7 +311,7 @@ func _check_clip(
 			"%s: clip '%s' ends %.2f° away from where it starts, so the loop jumps."
 			% [label, clip_name, returned]
 		)
-	if not loops:
+	if clip_name == "get_up":
 		# A bone's pose rotation is its whole local rotation, so "standing up" is the bone's
 		# rest rotation. (It is not the identity: every limb on these rigs rests ~170–180°
 		# from its parent, and a clip that ended on the identity would end with the legs and
@@ -566,7 +566,7 @@ func _first_pose(
 ## The protagonist and Q each carry the shared clips their own way. A profile is written into
 ## the keys at bind time, so the checks are on what `bind()` builds:
 ##
-## - the same seven clips, the same tracks on the same bones as without it — a profile never
+## - the same shared clips, the same tracks on the same bones as without it — a profile never
 ##   widens the set of joints that move — and nothing it names is ignored;
 ## - every clip as long as `CLIPS` says times the profile's tempo, `get_up` still once;
 ## - `get_up` still starts on exactly the pose `sit_idle` holds (posture included), and the
@@ -641,7 +641,7 @@ func _check_motion_profiles() -> void:
 					if animation.track_get_path(track) != bare_animation.track_get_path(track):
 						_failures.append("%s: '%s' track %d moved to another bone." % [label, clip_name, track])
 						break
-			var loops := not TRANSITIONS.has(clip_name)
+			var loops := not NON_LOOPING_CLIPS.has(clip_name)
 			if (animation.loop_mode == Animation.LOOP_LINEAR) != loops:
 				_failures.append("%s: '%s' changed its loop mode." % [label, clip_name])
 			if loops:
@@ -844,7 +844,7 @@ func _check_runtime_wrapper(label: String, path: String) -> void:
 	if not visual.dialogue_clip.is_empty():
 		_check_speech_precedence(label, visual)
 	_notes.append(
-		"%s runtime wrapper plays seven clips: locomotion by speed, seated, and a one-shot "
+		"%s runtime wrapper supports: locomotion by speed, seated, and a one-shot "
 		% label
 		+ "get-up that hands back."
 	)
@@ -874,8 +874,8 @@ func _check_speech_precedence(label: String, visual: CharacterVisualAnimation) -
 	visual.set_talking(false)
 
 
-## The classroom student is scenery: no body above it, `start_seated` set, so it has to open
-## on `sit_idle` by itself, bound, with nothing to read a velocity from, and stay there.
+## The A1 visual has no body or movement controller. Its speech, like its idle,
+## must preserve the chair contacts and cannot take over as a staged action.
 func _check_seated_student(path: String) -> void:
 	var packed := load(path) as PackedScene
 	if packed == null:
@@ -903,9 +903,45 @@ func _check_seated_student(path: String) -> void:
 	await _wait_seconds(0.5)
 	if visual.get_current_clip() != "sit_idle":
 		_failures.append("classroom student got up by itself ('%s')." % visual.get_current_clip())
-	_notes.append("classroom student: opens and stays on '%s'" % visual.get_current_clip())
+	if visual.is_bound():
+		_check_seated_speech(visual)
 	holder.queue_free()
 	await process_frame
+
+
+func _check_seated_speech(visual: CharacterVisualAnimation) -> void:
+	var player := visual.get_animation_player()
+	var rig := visual.get_skeleton()
+	var resolved: Dictionary = visual.get_bind_report()["resolved"]
+	var contacts := {}
+	player.seek(0.0, true)
+	for key: String in ["thigh.L", "thigh.R", "shin.L", "shin.R", "foot.L", "foot.R"]:
+		var bone := rig.find_bone(String(resolved[key]))
+		contacts[bone] = rig.get_bone_global_pose(bone)
+	visual.set_talking(true)
+	visual.report_velocity(Vector3.RIGHT * 1.6)
+	if visual.get_current_clip() != "sit_talk" or visual.is_playing_action() or not visual.is_seated():
+		_failures.append("A1 speech did not stay in the seated state, independent of motion and actions.")
+		return
+	var clip := player.get_animation("char/sit_talk")
+	var worst := 0.0
+	for index in range(25):
+		player.seek(clip.length * index / 24.0, true)
+		for bone: int in contacts:
+			var rest: Transform3D = contacts[bone]
+			var pose := rig.get_bone_global_pose(bone)
+			worst = maxf(worst, rest.origin.distance_to(pose.origin))
+			if not pose.basis.is_equal_approx(rest.basis):
+				_failures.append("A1 speech rotated a loaded joint: %s." % rig.get_bone_name(bone))
+				return
+	if worst > 0.002:
+		_failures.append("A1 speech shifted a loaded joint %.4f m." % worst)
+	visual.hide()
+	if visual.is_talking() or visual.get_current_clip() != "sit_idle":
+		_failures.append("A1 speech survived hiding the student.")
+	visual.show()
+	visual.clear_reported_velocity()
+	_notes.append("classroom student: seated talk keeps all six loaded joints (%.4f m drift)." % worst)
 
 
 ## An AnimationPlayer that is a child of the model, which is what makes a track path of

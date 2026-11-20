@@ -193,3 +193,16 @@ three initial story positions. `tests/capture_classroom_art.gd` produces fourtee
 window's opening and four of the lectern (front, side, teacher's side, game camera); it
 rejects headless output. The `Classroom visual evidence` PR workflow renders the fourteen views
 under Godot 4.7.2 Stable and publishes them as a downloadable CI artifact.
+
+### Small motions under a still room
+
+`TimetableSheet` tips a few degrees into the room around the existing `TimetableClip`:
+one lift, a weaker echo and a long rest. The print and the outline follow the same node.
+The back curtain sways in depth without widening its closed seam; once the gather reaches
+its end, the two hems settle at slightly different rates. Neither changes the collision,
+inspection or the story's decision to uncover the cut. The clock still reads nine.
+
+`tests/capture_classroom_motion.gd` checks the pinned paper, cloth coverage and the
+post-pull recoil under the live Compatibility renderer. `classroom-motion-<head>` carries
+still/lift and recoil/rest frames. The same capture exercises the regular mouse and touch
+approach to the A1 student from the aisle.

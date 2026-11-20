@@ -1788,8 +1788,32 @@
       ]
     },
     "student": {
-      "start": "st_1",
+      "start": "st_reciting",
       "nodes": [
+        {
+          "id": "st_reciting",
+          "speaker": "student",
+          "text": "我正背到这句。等会儿再说，好吗？",
+          "choices": [
+            {
+              "id": "leave",
+              "text": "（先走开。）",
+              "next": "st_let_be"
+            },
+            {
+              "id": "wait",
+              "text": "（等他背完。）",
+              "next": "st_1"
+            }
+          ]
+        },
+        {
+          "id": "st_let_be",
+          "speaker": "protagonist",
+          "text": "他低下头，从断掉的地方接着背。",
+          "source": "observed",
+          "next": null
+        },
         {
           "id": "st_1",
           "speaker": "student",

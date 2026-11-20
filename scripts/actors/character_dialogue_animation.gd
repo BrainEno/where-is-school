@@ -1,8 +1,8 @@
 class_name CharacterDialogueAnimation
 extends Node
 ## Presentation -> actor animation bridge. It owns no dialogue, routing or movement.
-## Only visuals with an explicit `dialogue_clip` opt in (Q and N). An invisible
-## classroom actor must never talk while its companion incarnation is on screen.
+## Only explicitly opted-in visuals speak: the visible incarnation of an NpcActor,
+## or a stationary visual with a speaker id of its own (the seated classmate).
 
 @export var controller_path: NodePath = ^"../DialogueController"
 
@@ -40,4 +40,9 @@ func _apply_speaker(speaker: StringName) -> void:
 		var animator := actor.get_character_animator()
 		if animator != null:
 			animator.set_talking(not speaker.is_empty() and actor.npc_id == speaker
-				and actor.is_visible_in_tree())
+				and animator.is_visible_in_tree())
+	for node in get_tree().get_nodes_in_group("seated_dialogue_speaker"):
+		var visual := node as CharacterVisualAnimation
+		if visual != null:
+			visual.set_talking(not speaker.is_empty() and visual.dialogue_speaker_id == speaker
+				and visual.is_visible_in_tree())
