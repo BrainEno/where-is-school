@@ -101,17 +101,19 @@ TARGETS = (
     ),
 )
 
-# Ranges kept whether or not the current text uses them. Measured cost: about 20 KB on
-# top of the used characters, which buys full-width punctuation, quotation marks, dashes
-# and arrows without a regeneration on every new sentence.
+# Ranges kept whether or not the current text uses them, so a new sentence with a dash,
+# a curly quote or full-width punctuation does not need a regeneration. Only the margin is
+# optional: any character the text actually uses is required whatever range it is in, so
+# an arrow or a bullet written into a line is still drawn.
+#
+# Arrows, mathematical operators, currency signs and geometric shapes used to be kept as
+# well. No shipped text used them, and together they cost about 26 KB across the two
+# subsets - space the 16 MiB pack (`tools/verify_build.py`) no longer had once the author's
+# rewritten prologue needed its own new characters. Add a range back only with that budget.
 ALWAYS_INCLUDED = (
     (0x0020, 0x007E),  # ASCII printable
     (0x00A0, 0x00FF),  # Latin-1 supplement (names, accents)
     (0x2000, 0x206F),  # general punctuation: en/em dash, ellipsis, curly quotes
-    (0x20A0, 0x20BF),  # currency signs
-    (0x2190, 0x21FF),  # arrows
-    (0x2200, 0x22FF),  # mathematical operators
-    (0x25A0, 0x25FF),  # geometric shapes, bullet marks
     (0x3000, 0x303F),  # CJK punctuation: 、。「」『』
     (0xFF00, 0xFFEF),  # full-width forms: ，！？：；（）
 )
