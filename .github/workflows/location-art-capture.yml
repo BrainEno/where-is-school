@@ -87,6 +87,7 @@ jobs:
           - {location: restroom_03, side: after}
           - {location: dream_annex, side: after}
           - {location: playground_site, side: after}
+          - {location: playground_site, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -164,10 +165,10 @@ jobs:
               ;;
             playground_site)
               # The building under construction past the yard's south-west corner
-              # (docs/GLOSSARY.md, 建造中的大楼): one follow stance, four fixed views.
+              # One gameplay stance, matched exterior views, and two detail views.
               detail=(construction-site review_width=500)
               width=1280
-              expect=5
+              expect=7
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

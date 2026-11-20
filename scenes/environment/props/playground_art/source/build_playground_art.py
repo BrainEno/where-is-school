@@ -34,7 +34,10 @@ import argparse
 import math
 from functools import lru_cache
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import construction_site
@@ -46,7 +49,16 @@ ROOT = HERE.parents[4]
 SCENE = ROOT / "scenes" / "locations" / "playground" / "playground.tscn"
 MAT_DIR = ART / "materials"
 RES = "res://scenes/environment/props/playground_art"
-MARKER = '[node name="PlaygroundArt" type="Node3D" parent="."]'
+ART_ROOT = '[node name="PlaygroundArt" type="Node3D"]'
+ART_INSTANCE = '[node name="PlaygroundArt" parent="." instance=ExtResource("yard_scenery")]'
+SCENERY_FILE = "scenery.scn"
+# These overrides belong only to the static yard scenery. Shared wall, prop and
+# distant-row colours stay addressable by path; do not ship these ones twice.
+SCENERY_MATERIALS = {
+    "site_earth", "site_compacted", "hoarding", "hoard_fold", "sand_glare", "sand_wet",
+    "cold_water", "water_glint", "slab", "site_yellow", "site_steel", "site_glass",
+    "bench_patch", "hoop_patch", "pour_b", "seam", "sky_floor", "fence_far", "tap_runoff",
+}
 
 
 def srgb(c) -> str:
@@ -166,17 +178,30 @@ MATERIALS: dict[str, dict] = {
     "row_tower": {"color": DISTANT, "texture": tex("row_tower"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_chimney": {"color": DISTANT, "texture": tex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
-    # The fence that carries on past the yard: the panel texture once per 3 x 2 m quad
-    # (plain UVs, not world triplanar, so each panel can sink without its rails sliding).
-    # The building under construction past the south-west corner (construction_site.py).
-    # The sand is near-white toon paint: blown out where it faces the light, against the
-    # unlit cold water standing in each hollow pile.
-    "site_earth": {"color": (250, 200, 180), "texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
-    "hoarding": {"color": (74, 108, 148), "texture": tex("metal_tile"), "triplanar": "world", "scale": (0.5, 0.5, 0.5), "outline": True},
-    "sand_glare": {"color": (250, 238, 204), "outline": True},
-    "sand_wet": {"color": (128, 100, 72), "outline": True},
-    "cold_water": {"color": (146, 192, 204), "unshaded": True},
-    "slab": {"color": (184, 180, 176), "texture": tex("plaster_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
+    # The construction plot shares the yard's painted tiles. Lambert shading keeps
+    # gradual curvature on sand and concrete instead of a toon step on each ring.
+    "site_earth": {"color": (237, 199, 174), "texture": tex("ground_tile"),
+                   "triplanar": "world", "scale": (0.40, 0.40, 0.40)},
+    "site_compacted": {"color": (194, 168, 146), "texture": tex("ground_tile"),
+                       "triplanar": "world", "scale": (0.53, 0.53, 0.53)},
+    "hoarding": {"color": (81, 119, 156), "texture": tex("metal_tile"),
+                  "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
+    "hoard_fold": {"color": (70, 97, 123), "texture": tex("metal_tile"),
+                   "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
+    "sand_glare": {"color": (239, 216, 173), "texture": tex("plaster_tile"), "diffuse": 1,
+                   "triplanar": "world", "scale": (0.78, 0.78, 0.78)},
+    "sand_wet": {"color": (130, 105, 80), "texture": tex("plaster_tile"), "diffuse": 1,
+                 "triplanar": "world", "scale": (0.92, 0.92, 0.92)},
+    "cold_water": {"color": (59, 78, 79), "unshaded": True},
+    "water_glint": {"color": (117, 143, 139), "unshaded": True},
+    "slab": {"color": (181, 177, 166), "texture": tex("plaster_tile"), "diffuse": 1,
+             "triplanar": "world", "scale": (0.33, 0.33, 0.33)},
+    "site_yellow": {"color": (218, 163, 69), "texture": tex("metal_tile"), "diffuse": 1,
+                    "triplanar": "world", "scale": (0.62, 0.62, 0.62), "roughness": 0.82},
+    "site_steel": {"color": (72, 74, 73), "texture": tex("metal_tile"), "diffuse": 1,
+                   "triplanar": "world", "scale": (0.77, 0.77, 0.77)},
+    "site_glass": {"color": (62, 82, 88), "roughness": 0.7},
+    # One panel tile per 3 x 2 m quad so its rails stay put as the fence sinks.
     "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
 
@@ -200,7 +225,7 @@ def material_tres(name: str, spec: dict) -> str:
     if spec.get("unshaded"):
         lines += ["shading_mode = 0", "disable_receive_shadows = true"]
     else:
-        lines += ["diffuse_mode = 3", f"specular_mode = {spec.get('specular', 2)}"]
+        lines += [f"diffuse_mode = {spec.get('diffuse', 3)}", f"specular_mode = {spec.get('specular', 2)}"]
     lines.append(f"albedo_color = {srgb(spec.get('color', (255, 255, 255)))}")
     if "texture" in spec:
         lines.append('albedo_texture = ExtResource("2_tex")')
@@ -352,8 +377,8 @@ class Builder:
             props["cast_shadow"] = "0"
         self.node(name, parent, "MeshInstance3D", **props)
 
-    def mesh_resources(self) -> list[str]:
-        return [f'[ext_resource type="Mesh" path="{RES}/meshes/{name}.obj" id="mesh_{name}"]'
+    def mesh_resources(self, extension: str = "mesh") -> list[str]:
+        return [f'[ext_resource type="Mesh" path="{RES}/meshes/{name}.{extension}" id="mesh_{name}"]'
                 for name in sorted(self.imported_meshes)]
 
 
@@ -540,7 +565,7 @@ def _yard_return_details(b: Builder, parent: str) -> None:
 def build_nodes() -> Builder:
     b = Builder()
     A = "PlaygroundArt"
-    b.nodes.append(MARKER + "\n")
+    b.node(A, ".")
 
     # Beyond the yard. The camera looks down at ~53 degrees from the south-east, so past the
     # open west edge it sees *below* the horizon: the sky is laid flat under the stage, and
@@ -770,7 +795,7 @@ def material_for(path: str) -> str | None:
 
 
 def apply(text: str) -> tuple[str, set[str]]:
-    if MARKER in text:
+    if '[node name="PlaygroundArt"' in text:
         sys.exit("playground.tscn already has the art pass; regenerate the graybox first (tools/build_outdoor_locations.py)")
     # Keep the generator's own separators so the diff shows only what changed.
     parts = re.split(r"(\n+)(?=\[)", text.rstrip("\n"))
@@ -806,15 +831,86 @@ def apply(text: str) -> tuple[str, set[str]]:
     return "".join(b + s for b, s in zip(out, seps)), used
 
 
+def split_scenery(b: Builder) -> tuple[str, Builder]:
+    """Separate visual-only descendants without moving any node across an occluder."""
+    inner = Builder()
+    outer = Builder()
+    inner.nodes.append(ART_ROOT + "\n")
+    outer.nodes.append(ART_INSTANCE + "\n")
+    for node in b.nodes[1:]:
+        head, _, props = node.partition("\n")
+        parent = re.search(r'parent="([^"]+)"', head).group(1)
+        if parent == "PlaygroundArt" or parent.startswith("PlaygroundArt/"):
+            local = parent.removeprefix("PlaygroundArt/") if "/" in parent else "."
+            inner.nodes.append(head.replace(f'parent="{parent}"', f'parent="{local}"') + "\n" + props)
+        else:
+            outer.nodes.append(node)
+    for part in (inner, outer):
+        body = "\n".join(part.nodes)
+        refs = set(re.findall(r'SubResource\("([^"]+)"\)', body))
+        part.subs = [block for block in b.subs if re.search(r' id="([^"]+)"', block)[1] in refs]
+        part.imported_meshes = {name for name in b.imported_meshes if f'ExtResource("mesh_{name}")' in body}
+    ext = material_resources(dressed_materials(inner)) + inner.mesh_resources("obj")
+    header = f"[gd_scene load_steps={1 + len(ext) + len(inner.subs)} format=3]\n"
+    # A fresh PackedScene.pack otherwise generates random node IDs at each bake.
+    nodes = [node.replace("]\n", f" unique_id={i}]\n", 1)
+             for i, node in enumerate(inner.nodes, start=1)]
+    text = "\n".join([header, *ext, "", *inner.subs, *nodes])
+    return text, outer
+
+
+def bake_scenery(text: str, engine: str) -> None:
+    """Import generated shapes in isolation, then embed them in an RSCC scene."""
+    prefix = RES.removeprefix("res://")
+    with tempfile.TemporaryDirectory(prefix="wis-yard-art-") as tmp:
+        stage = Path(tmp)
+        staged_art = stage / prefix
+        # Isolate the generated imports from the editor's main asset cache.
+        write_materials(staged_art / "materials", MATERIALS)
+        shutil.copytree(ART / "textures", staged_art / "textures")
+        construction_site.write_assets(staged_art, RES)
+        yard_details.write_detail_meshes(staged_art, RES)
+        (stage / "project.godot").write_text('''config_version=5
+
+[application]
+config/name="Playground scenery bake"
+
+[compression]
+formats/zstd/compression_level=15
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+''')
+        (stage / "scenery_source.tscn").write_text(text)
+        common = [engine, "--headless", "--path", tmp]
+        for args in (
+            ["--import"],
+            ["--script", str(ROOT / "tools" / "bake_playground_scenery.gd"), "--",
+             "res://scenery_source.tscn", f"{RES}/{SCENERY_FILE}", *sorted(SCENERY_MATERIALS)],
+        ):
+            result = subprocess.run(common + args, capture_output=True, text=True, timeout=180)
+            errors = {line for line in result.stderr.splitlines() if "ERROR:" in line}
+            # Headless builds without system fonts can still import these meshes.
+            no_fontconfig = "ERROR: Godot was compiled without fontconfig, system font support is disabled."
+            if args[0] == "--import" and no_fontconfig in errors:
+                print(no_fontconfig, file=sys.stderr)
+                errors.remove(no_fontconfig)
+            if result.returncode or errors:
+                sys.exit(f"scenery bake failed ({result.returncode}):\n{result.stdout}\n{result.stderr}")
+        shutil.copyfile(staged_art / SCENERY_FILE, ART / SCENERY_FILE)
+        for mesh in sorted((staged_art / "meshes").glob("*.mesh")):
+            shutil.copyfile(mesh, ART / "meshes" / mesh.name)
+
+
 def finish(text: str, used: set[str], b: Builder) -> str:
-    used.update(dressed_materials(b))
     # Drop the graybox's shared-material ext_resources nothing refers to any more.
     def keep(match: re.Match) -> str:
         rid = match.group(1)
         return match.group(0) if f'ExtResource("{rid}")' in text else ""
 
     text = re.sub(r'\[ext_resource type="StandardMaterial3D" path="res://assets/materials/[^"]+" id="([^"]+)"\]\n', keep, text)
-    new_ext = "\n".join(material_resources(used) + b.mesh_resources()) + "\n"
+    ext = [f'[ext_resource type="PackedScene" path="{RES}/{SCENERY_FILE}" id="yard_scenery"]']
+    new_ext = "\n".join(ext + material_resources(used) + b.mesh_resources()) + "\n"
     first_sub = text.index("\n\n[sub_resource")
     text = text[: first_sub + 1] + new_ext + text[first_sub + 1 :]
     first_node = text.index('\n[node name="Playground"')
@@ -826,37 +922,58 @@ def finish(text: str, used: set[str], b: Builder) -> str:
     return text
 
 
+def write_materials(directory: Path, names) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "ink_outline.tres").write_text(OUTLINE_TRES)
+    for name in sorted(names):
+        (directory / f"{name}.tres").write_text(material_tres(name, MATERIALS[name]))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("--scene", type=Path, default=SCENE)
     parser.add_argument("--materials-only", action="store_true")
+    parser.add_argument("--engine", default="godot", help="Godot editor binary for the scenery bake")
     args = parser.parse_args()
 
-    MAT_DIR.mkdir(parents=True, exist_ok=True)
-    (MAT_DIR / "ink_outline.tres").write_text(OUTLINE_TRES)
-    for name, spec in MATERIALS.items():
-        (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
-    print(f"wrote {len(MATERIALS) + 1} materials to {MAT_DIR.relative_to(ROOT)}")
-    yard_details.write_detail_meshes(ART, RES)
-    (ART / "noodle_wrapper.tscn").write_text(build_noodle_wrapper())
-    container, container_materials = build_container()
-    (ART / "container.tscn").write_text(container)
+    if not args.materials_only:
+        engine = shutil.which(args.engine)
+        if engine is None:
+            parser.error("Godot is required to bake the scenery (set --engine)")
+        version = subprocess.check_output([engine, "--version"], text=True).strip()
+        pin = (ROOT / ".godot-version").read_text().strip()
+        if not version.startswith(pin + ".stable."):
+            parser.error(f"need Godot {pin} stable, got {version}")
+        text, used = apply(args.scene.read_text())
+
+    loose_materials = set(MATERIALS) - SCENERY_MATERIALS
     if args.materials_only:
+        write_materials(MAT_DIR, loose_materials)
         return
 
-    text, used = apply(args.scene.read_text())
-    b = build_nodes()
-    text = finish(text, used, b)
-    # Include the materials of the two separate prop scenes.
-    used.update(container_materials | {"noodle_film"})
+    container, container_materials = build_container()
+    full = build_nodes()
+    scenery, fittings = split_scenery(full)
+    used.update(dressed_materials(fittings))
+    shared = (used | container_materials | {"noodle_film"}) & SCENERY_MATERIALS
+    if shared:
+        sys.exit("scenery-only materials used outside the bake: " + ", ".join(sorted(shared)))
+    text = finish(text, used, fittings)
+    used.update(dressed_materials(full) | container_materials | {"noodle_film"})
     unknown = sorted(m for m in used if m not in MATERIALS)
     if unknown:
         sys.exit("unknown materials: " + ", ".join(unknown))
     unused = sorted(set(MATERIALS) - used)
     if unused:
         sys.exit("materials written but not used: " + ", ".join(unused))
+    bake_scenery(scenery, engine)
+    write_materials(MAT_DIR, loose_materials)
+    (ART / "container.tscn").write_text(container)
+    (ART / "noodle_wrapper.tscn").write_text(build_noodle_wrapper())
     args.scene.write_text(text)
-    print(f"dressed {args.scene.relative_to(ROOT)}: {len(b.nodes)} nodes, {len(b.subs)} meshes added")
+    print(f"wrote {len(loose_materials) + 1} shared materials to {MAT_DIR.relative_to(ROOT)}")
+    print(f"dressed {args.scene.relative_to(ROOT)}: {len(full.nodes)} nodes, {len(full.subs)} meshes added")
+    print(f"baked {SCENERY_FILE}: {(ART / SCENERY_FILE).stat().st_size:,} bytes")
 
 
 if __name__ == "__main__":

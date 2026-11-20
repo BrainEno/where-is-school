@@ -33,6 +33,7 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
 const ART := "res://scenes/environment/props/playground_art/"
+const SCENERY := ART + "scenery.scn::"
 const ART_MATERIALS := "res://scenes/environment/props/playground_art/materials/"
 const ART_TEXTURES := "res://scenes/environment/props/playground_art/textures/"
 const FOREIGN_PREFIXES: Array[String] = [
@@ -151,6 +152,7 @@ var _main: Node = null
 var _player: PlayerController = null
 var _yard: Node3D = null
 var _albedo_cache := {}
+var _used_art_materials: Dictionary[String, Material] = {}
 
 
 func _initialize() -> void:
@@ -201,6 +203,8 @@ func _run() -> void:
 	_check_colour_system()
 	Harness.stage = "wall dressing"
 	_check_dressing()
+	Harness.stage = "construction site"
+	_check_construction_site()
 	Harness.stage = "textures"
 	_check_textures()
 	Harness.stage = "hierarchy"
@@ -380,7 +384,6 @@ func _shape_origin(path: String) -> Vector3:
 
 
 func _check_colour_system() -> void:
-	var used := {}
 	var surfaces := 0
 	for node in _descendants(_yard):
 		var mesh_instance := node as MeshInstance3D
@@ -396,14 +399,14 @@ func _check_colour_system() -> void:
 				_failures.append("'%s' surface %d draws with no material." % [path, surface])
 				continue
 			var resource_path := material.resource_path
-			if not resource_path.begins_with(ART_MATERIALS):
+			if not (resource_path.begins_with(ART_MATERIALS) or resource_path.begins_with(SCENERY)):
 				_failures.append(
 					"'%s' draws '%s', which is not part of the schoolyard's colour system."
 					% [path, resource_path if not resource_path.is_empty() else "<embedded>"]
 				)
-			used[resource_path] = true
-	for resource_path: String in used:
-		var material := load(resource_path) as Material
+			_used_art_materials[resource_path] = material
+	for resource_path: String in _used_art_materials:
+		var material: Material = _used_art_materials[resource_path]
 		while material != null:
 			for prefix: String in FOREIGN_PREFIXES:
 				if material.resource_path.begins_with(prefix):
@@ -413,7 +416,7 @@ func _check_colour_system() -> void:
 				if not standard.albedo_texture.resource_path.begins_with(ART_TEXTURES):
 					_failures.append("'%s' samples '%s'." % [resource_path, standard.albedo_texture.resource_path])
 			material = material.next_pass
-	_notes.append("%d surfaces, %d materials" % [surfaces, used.size()])
+	_notes.append("%d surfaces, %d materials" % [surfaces, _used_art_materials.size()])
 
 
 func _has_own_materials(path: String) -> bool:
@@ -461,8 +464,58 @@ func _check_dressing() -> void:
 # --- 5. textures --------------------------------------------------------------------
 
 
+func _check_construction_site() -> void:
+	var site := _yard.get_node_or_null(^"PlaygroundArt/ConstructionSite") as Node3D
+	if site == null:
+		_failures.append("The construction site is missing from the schoolyard.")
+		return
+	for node in _descendants(site):
+		var piece := node as MeshInstance3D
+		if piece == null or piece.mesh == null:
+			continue
+		var world_box := piece.global_transform * piece.get_aabb()
+		if world_box.end.x > _yard.to_global(Vector3(-23.05, 0, 0)).x + 0.001:
+			_failures.append("Site mesh '%s' extends past the yard boundary." % _relative(piece))
+
+	var shell := site.get_node_or_null(^"EllipsoidBuilding/CastShell") as MeshInstance3D
+	if shell == null or shell.mesh == null or not shell.is_visible_in_tree():
+		_failures.append("The ellipsoid building has no visible outer shell.")
+		return
+	for surface in range(shell.mesh.get_surface_count()):
+		var mat := shell.get_active_material(surface) as BaseMaterial3D
+		if mat == null or mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or mat.albedo_color.a < 1.0:
+			_failures.append("The ellipsoid's concrete must be fully opaque.")
+	if shell.transparency != 0.0 or shell.is_in_group("camera_occluder"):
+		_failures.append("The ellipsoid shell must not fade out as an occluder.")
+
+	# Test actual triangles, not only the shell's bounding box: hoops or a front-only
+	# curtain would leave rays from some heights/bearings free to see into the building.
+	var faces := shell.mesh.get_faces()
+	for height: float in [0.35, 2.75, 5.25, 7.75, 10.12]:
+		var inside := Vector3(0.0, height, 0.0)
+		for i in range(8):
+			var angle := (i + 0.27) * TAU / 8.0
+			var outside := inside + Vector3(cos(angle), 0.0, sin(angle)) * 5.0
+			if not _segment_hits_mesh(faces, outside, inside):
+				_failures.append("Gap in ellipsoid shell at %.2f m, bearing %d/8." % [height, i])
+	if not _segment_hits_mesh(faces, Vector3(0.3, 11.5, 0.4), Vector3(0.3, 9.5, 0.4)):
+		_failures.append("The ellipsoid shell is open under the timber cap.")
+	_notes.append("opaque construction shell, %d triangles" % (faces.size() / 3))
+
+
+func _segment_hits_mesh(faces: PackedVector3Array, start: Vector3, end: Vector3) -> bool:
+	for i in range(0, faces.size(), 3):
+		if Geometry3D.segment_intersects_triangle(start, end, faces[i], faces[i + 1], faces[i + 2]) != null:
+			return true
+	return false
+
+
 func _check_textures() -> void:
 	var textures := {}
+	for override: Material in _used_art_materials.values():
+		var active := override as BaseMaterial3D
+		if active != null and active.albedo_texture != null:
+			textures[active.albedo_texture.resource_path] = active.albedo_texture
 	var dir := DirAccess.open(ART_MATERIALS)
 	if dir == null:
 		_failures.append("The schoolyard's material folder is missing.")
@@ -528,10 +581,9 @@ func _check_hierarchy() -> void:
 func _material_colour(material_name: String, cache: Dictionary) -> Color:
 	if cache.has(material_name):
 		return cache[material_name]
-	var path := ART_MATERIALS + material_name + ".tres"
-	var material := load(path) as BaseMaterial3D
+	var material := _material_named(material_name)
 	if material == null:
-		_failures.append("The colour system names '%s', which does not load." % path)
+		_failures.append("The colour system names '%s', which is not drawn." % material_name)
 		cache[material_name] = Color.BLACK
 		return Color.BLACK
 	var colour := material.albedo_color
@@ -861,6 +913,10 @@ func _hud_context() -> Dictionary:
 	var exclude: Array[RID] = []
 	for body in _main.find_children("*", "CharacterBody3D", true, false):
 		exclude.append((body as CharacterBody3D).get_rid())
+	var sky := _material_named("sky_floor")
+	if sky == null:
+		_failures.append("The painted sky material is not drawn.")
+		sky = StandardMaterial3D.new()
 	var paints := []  # [floor box, material, brightness], for the decals lying on the yard
 	for node in _descendants(_yard):
 		var mesh := node as MeshInstance3D
@@ -876,6 +932,7 @@ func _hud_context() -> Dictionary:
 		"to_sun": sun.global_basis.z.normalized(), "paints": paints,
 		"exposure": env.tonemap_exposure, "white": env.tonemap_white, "text": text,
 		"space": _yard.get_world_3d().direct_space_state, "exclude": exclude,
+		"sky": sky,
 		"worst": {}, "loose": {}, "samples": 0, "low_loose": 0,
 	}
 
@@ -906,8 +963,7 @@ func _hud_hit(hud: Dictionary, origin: Vector3, direction: Vector3) -> Array:
 		query.exclude = exclude
 		var result: Dictionary = hud.space.intersect_ray(query)
 		if result.is_empty():
-			var sky := load(ART_MATERIALS + "sky_floor.tres") as BaseMaterial3D
-			return ["sky", _shade(hud, sky, Vector3.UP, false)]
+			return ["sky", _shade(hud, hud.sky, Vector3.UP, false)]
 		var body := result.collider as CollisionObject3D
 		var material: BaseMaterial3D = null
 		for child in body.get_children():
@@ -937,7 +993,16 @@ func _hud_hit(hud: Dictionary, origin: Vector3, direction: Vector3) -> Array:
 
 
 func _name(material: Resource) -> String:
+	if material.resource_path.begins_with(SCENERY):
+		return material.resource_name
 	return material.resource_path.get_file().get_basename()
+
+
+func _material_named(name: String) -> BaseMaterial3D:
+	for material: Material in _used_art_materials.values():
+		if _name(material) == name:
+			return material as BaseMaterial3D
+	return null
 
 
 ## Relative luminance on screen: albedo x (ambient + toon-lit Sun) x exposure, Filmic.
