@@ -12,9 +12,9 @@ import random
 
 from build_school_rooms import add_route, label, look, solid, start_room, walls
 from build_teaching_block import ROOT, child_path, quad, srgb, vec3
-from fixture_geometry import Facets, rounded_rect
-from school_annex_layout import ANNEXES, THRESHOLDS
-from postmodern_office import POMO, kettle, memphis_desk, principal_suite, swivel_chair, vacant_workroom
+from fixture_geometry import Facets, FixtureBuild, rounded_rect
+from school_annex_layout import ANNEXES, THRESHOLDS, UNMARKED_ANNEXES
+from postmodern_office import POMO, memphis_desk, principal_suite, swivel_chair, vacant_workroom
 from registry_archive import index_desk, registry_archive
 
 
@@ -31,10 +31,10 @@ COMMON = {
 PALETTES = {
     "archive": ((8.8, 6.9), 2.86, (199, 171, 126), (105, 71, 62), (162, 126, 88), (73, 51, 68)),
     "plan_room": ((8.8, 6.9), 2.86, (135, 154, 155), (54, 81, 91), (58, 103, 122), (48, 66, 83)),
-    "projection_room": ((8.8, 6.9), 2.86, (146, 132, 162), (71, 57, 84), (97, 79, 99), (66, 55, 80)),
-    "computer_room": ((10.1, 7.2), 3.45, (155, 164, 140), (72, 99, 91), (76, 92, 84), (48, 66, 63)),
-    "vacant_office": ((8.8, 6.9), 2.86, (197, 189, 165), (111, 108, 99), (193, 184, 158), (76, 70, 85)),
-    "principal_office": ((9.2, 6.9), 2.86, (130, 105, 135), (61, 52, 89), (69, 88, 122), (55, 44, 73)),
+    "projection_room": ((8.8, 6.9), 2.86, (96, 64, 81), (57, 44, 60), (74, 53, 71), (51, 42, 61)),
+    "computer_room": ((10.1, 7.2), 3.45, (103, 126, 120), (55, 73, 77), (65, 87, 81), (36, 55, 55)),
+    "vacant_office": ((8.8, 6.9), 2.86, (216, 212, 200), (131, 130, 126), (188, 186, 180), (96, 93, 96)),
+    "principal_office": ((9.2, 6.9), 2.86, (124, 89, 101), (61, 48, 76), (68, 63, 94), (54, 46, 69)),
 }
 
 
@@ -170,16 +170,29 @@ def plan_room(b):
 
 
 def projection_room(b):
-    # A scaled aperture nested three times, with the beam and scenery still
-    # made of objects. The lit patches have hard paper edges, not bloom.
-    for i,(x,y,w,h,axis,t) in enumerate(((-1.72,1.60,3.91,2.11,-9,"rules"),
-                     (.35,1.58,4.41,2.22,4,"paper"),(1.56,1.72,2.43,1.64,-12,"navy"),
-                     (1.90,1.63,1.91,1.17,5,"cyanotype"),(2.17,1.64,1.27,.77,4,"white"))):
-        paper(b,f"ProjectedAperture{i}","PaperAssembly",(x,y,-3.31+i*.039),w,h,t,axis,folded=True)
-    b.box("ScreenRoller", "PaperAssembly", (.46,2.715,-3.202),(4.8,.132,.121), "ink",shadow=True)
-    b.box("LowerRod", "PaperAssembly", (.46,.371,-3.122),(4.3,.036,.042), "navy",rot=(0,0,5))
-    flat_mark(b,"Spill",[(-2.66,-3.09),(2.98,-2.82),(1.17,1.78),(-.09,1.83)],"ochre")
-    flat_mark(b,"SpillShadow",[(.67,-2.96),(1.29,-2.92),(.29,1.82),(-.12,1.85)],"navy",.016)
+    # The light has a carrier, a surface and a weaker repeat. They neither light
+    # the whole room nor disappear when the player walks across the paper beam.
+    film = b.bind("film", "res://assets/shaders/school/after_image.gdshader", "Shader")
+    for name, phase, fade in (("exposure", 0.0, 1.0), ("ghost", -1.35, .63)):
+        b.local_mats[name] = f'''[sub_resource type="ShaderMaterial" id="Mat_{name}"]
+shader = {film}
+shader_parameter/phase_offset = {phase}
+shader_parameter/fade = {fade}
+'''
+    b.pigments.update({"velvet": (71, 42, 58), "spill": (180, 114, 80), "sprocket": (222, 169, 102)})
+    for i, x in enumerate((-3.65,-3.32,-2.93,3.69,4.02)):
+        b.box(f"Baffle{i}", "PaperAssembly", (x,1.41,-3.276+i*.016), (.31,2.56,.15), "velvet",
+              rot=(0, 0, -2 if i < 3 else 2), shadow=True)
+    b.box("ScreenBacking", "PaperAssembly", (.42,1.44,-3.237), (5.91,2.48,.081), "ink", shadow=True)
+    b.flat("FilmLoop", "PaperAssembly", quad(b, 5.72, 2.29), "exposure", (.42,1.44,-3.184))
+    b.box("ScreenRoller", "PaperAssembly", (.42,2.687,-3.184), (6.06,.11,.126), "ink", shadow=True)
+    b.box("LowerRod", "PaperAssembly", (.42,.245,-3.17), (5.8,.045,.073), "ink", rot=(0,0,1))
+    b.flat("DelayedPrint", "PaperAssembly", quad(b, 2.19, 1.08), "ghost", (-4.262,1.64,-1.66), (0,90,-9))
+    flat_mark(b,"Spill",[(-2.77,-3.08),(3.37,-3.08),(1.46,1.30),(.28,1.18)],"spill")
+    flat_mark(b,"SpillShadow",[(.47,-3.04),(1.25,-3.04),(1.10,1.18),(.68,1.18)],"ink",.016)
+    for i in range(7):
+        b.box(f"Sprocket{i}", "FloorComposition", (-2.60+i*.36,.018,-2.86+i*.51),(.20-i*.013,.012,.16),
+              "sprocket", rot=(0,-33,0))
     p=table(b,"ProjectionCart",(.94,0,.16),1.68,.84,top="navy")
     b.box("Projector",p,(-.17,.946,-.028),(.69,.316,.52),"cream",rot=(0,9,0),shadow=True)
     b.round("Housing",p,(-.15,1.00,-.31),.109,.16,"ink",rot=(90,0,0),sides=12)
@@ -189,7 +202,8 @@ def projection_room(b):
     for i in range(3):
         paper(b,f"Acetate{i}",p,(.46,.794+i*.006,.15),.43,.32,"ruled",8-i*10,floor=True)
     cabinet(b,"ApertureCabinet",(-3.63,-2.95),1.06,1.13,3,"navy")
-    chair(b,"ViewingSeat",(-1.74,0,1.47),180,"ochre")
+    for i, (x,z,yaw) in enumerate(((-1.74,1.47,167), (-2.72,.98,151), (-2.02,-.36,214))):
+        chair(b,f"ViewingSeat{i}",(x,0,z),yaw,"velvet")
     read(b,"projection_room",p,(.85,.91,.48),("Projector","Housing","Glass"),(.55,.80,16,44,(0,0,-.10)))
 
 
@@ -205,9 +219,14 @@ shader_parameter/channel = {float(channel)}
     return name
 
 
-def terminal(b, p, slot, x, channel):
-    q = child_path(p, slot)
-    b.node(slot,p,position=vec3((x,.785,-.098)))
+TERMINAL_PATH = "res://scenes/environment/props/computer_terminal.tscn"
+
+
+def terminal_scene():
+    # Six instances share the cabinet geometry; their screens keep independent
+    # channels. Keyboard/Bezel remain addressable by the existing inspection.
+    b = FixtureBuild("Terminal", COMMON)
+    q = "."
     b.box("SwivelBase",q,(0,.032,0),(.63,.066,.49),"putty",shadow=True)
     b.box("Foot",q,(0,.091,0),(.43,.10,.34),"cream")
     # CRT tapers behind its glass. Cross-sections run down the depth axis.
@@ -222,7 +241,6 @@ def terminal(b, p, slot, x, channel):
     b.detail("TubeHousing",q,(0,0,0),mesh,"cream",shadow=True)
     b.box("Bezel",q,(0,.457,.367),(.684,.482,.046),"putty",shadow=True)
     b.box("InnerBead",q,(0,.472,.392),(.602,.413,.028),"edge")
-    b.flat("Raster",q,quad(b,.562,.378),phosphor(b,channel),(0,.475,.410))
     b.box("Power",q,(.307,.212,.389),(.037,.036,.018),"phosphor")
     for i in range(4):
         b.box(f"TubeVent{i}",q,(.038+i*.081,.737,-.033),(.028,.011,.19),"edge")
@@ -239,6 +257,15 @@ def terminal(b, p, slot, x, channel):
     for i in range(3):
         b.box(f"Intake{i}",q,(.557,.149+i*.031,.126),(.154,.014,.022),"edge")
 
+    return b.emit()
+
+
+def terminal(b, p, slot, x, channel):
+    scene = b.bind("terminal", TERMINAL_PATH, "PackedScene")
+    b.nodes.append(f'[node name="{slot}" parent="{p}" instance={scene}]\n'
+                   f'position = {vec3((x,.785,-.098))}\n')
+    b.flat("Raster", child_path(p, slot), quad(b,.562,.378), phosphor(b,channel), (0,.475,.410))
+
 
 def computer_room(b):
     for i,(x,z,w) in enumerate(((-2.65,-2.51,3.62),(2.65,-2.51,3.62),(-2.65,.48,3.62))):
@@ -249,14 +276,17 @@ def computer_room(b):
     b.box("PatchPanel", "PaperAssembly", (2.17,1.20,-3.457), (2.59,.705,.17),"ink")
     for i in range(6):
         b.box(f"Jack{i}", "PaperAssembly", (1.16+i*.38,1.13,-3.35),(.099,.088,.044),"putty")
-    # The scale error is a giant offset raster across the back, not an extra
-    # monitor to be clicked or a copy of a real operating system.
-    for i,(x,y,w,h,a,t) in enumerate(((-2.66,1.86,3.68,1.44,-4,"navy"),(-1.33,2.08,3.30,.89,5,"cyanotype"),
-                        (.23,1.95,1.81,1.21,-6,"ledger"))):
-        paper(b,f"RasterPrint{i}","PaperAssembly",(x,y,-3.473+i*.022),w,h,t,a)
-    for i in range(7):
-        b.box(f"ScanStep{i}","FloorComposition",(1.54+i*.295,.011,-.59+i*.364),(3.84-i*.34,.013,.041),
-              "phosphor" if i%3 else "paper")
+    # The same CRT material is registered one row late at classroom scale.
+    # Black rows and copper floor conduits make a circuit without new colliders.
+    b.pigments.update({"trace": (112, 152, 127), "solder": (184, 141, 100)})
+    b.box("RasterHousing", "PaperAssembly", (-1.54,1.73,-3.424), (5.49,1.82,.18), "ink", shadow=True)
+    b.flat("DeferredRaster", "PaperAssembly", quad(b, 5.22,1.60), phosphor(b, 3), (-1.53,1.73,-3.324))
+    b.box("LostRow", "PaperAssembly", (-1.16,2.09,-3.311), (5.63,.084,.018), "edge")
+    b.box("UpperRail", "PaperAssembly", (1.79,2.697,-3.319), (5.11,.09,.082), "trace")
+    for i in range(5):
+        x, z = -1.24 + i*.45, -.52 + i*.56
+        b.box(f"ScanStep{i}","FloorComposition",(x+1.47,.011,z),(4.47,.013,.067), "trace")
+        b.box(f"Offset{i}","FloorComposition",(x+3.725,.011,z+.267),(.041,.013,.597), "solder")
     # The outline follows CRT glass and housing, supported by the station top.
     p = "Station1"
     read(b,"computer_room",p,(1.89,1.18,-1.87),("Left/Bezel","Left/Raster","Left/Keyboard"),
@@ -264,11 +294,13 @@ def computer_room(b):
 
 
 def vacant_office(b):
-    # Registration without the person: flat graphite imprints disagree with
-    # familiar, solid desk and chair shapes, without adding a teacher or ghost.
-    b.pigments.update(POMO)
-    # Round 2 (2026-11-20): the same footprints, rebuilt as postmodern office furniture.
-    p=memphis_desk(b,"EmptyDesk",(.89,0,-1.71),2.47,1.15,seed=1)
+    # A single occupied footprint on a graphite proof at room scale. Keep
+    # the spot under the player's feet flat, including the folded corner.
+    b.pigments.update({**POMO, "pomo_pink": (187,109,98), "pomo_mint": (156,155,144),
+                       "pomo_lilac": (147,143,160), "pomo_cobalt": (64,77,123),
+                       "pomo_lemon": (186,173,144), "carbon_stock": (194,188,180)})
+    p=memphis_desk(b,"EmptyDesk",(.89,0,-1.71),2.47,1.15,seed=1,
+                   colours=("pomo_black", "pomo_lilac", "pomo_white"))
     b.box("Blotter",p,(.19,.814,.02),(1.12,.046,.68),"hatching",shadow=True)
     paper(b,"Carbon",p,(.10,.846,.056),.93,.59,"ruled",-8,floor=True)
     b.box("Ruler",p,(.42,.856,.225),(.621,.024,.067),"red",rot=(0,17,0))
@@ -276,14 +308,18 @@ def vacant_office(b):
     swivel_chair(b,".","VisitorSeat",(-2.31,0,-1.21),28,seat="pomo_mint",back="pomo_cobalt",accent="pomo_pink",
                  crest="arch",arms=False,collider=True)
     cabinet(b,"EmptyPigeonhole",(-3.2,-2.96),1.24,1.12,3,"trim")
-    for i,(x,y,w,d,angle,t) in enumerate(((-2.85,1.81,1.84,1.47,-8,"hatching"),
-                        (-1.09,1.49,3.18,1.81,2,"paper"),(.35,1.65,2.69,1.40,-9,"hatching"),
-                        (1.59,2.124,1.58,.90,-4,"ruled"),(3.21,1.56,1.40,1.30,6,"hatching"))):
-        paper(b,f"CarbonPull{i}","PaperAssembly",(x,y,-3.336+i*.021),w,d,t,angle,folded=True)
-    for i in range(4):
-        paper(b,f"FloorPull{i}","FloorComposition",(-2.32+i*.96,.016+i*.001,.169-i*.22),
-              1.31,2.01,"hatching",28-i*11,floor=True)
-    emblem(b,"MissingCorner",(1.39,1.76,-3.093),(2.24,1.08))
+    b.box("PaperBed", "PaperAssembly",(-.29,1.35,-3.312),(7.94,2.66,.038),"carbon_stock")
+    for i, (x,y,w,h,a,tone) in enumerate(((-1.79,1.56,3.18,2.37,-3,"hatching"),
+            (.16,1.34,4.00,2.26,1,"paper"), (1.85,1.84,2.94,1.23,-6,"hatching"))):
+        paper(b,f"CarbonPull{i}","PaperAssembly",(x,y,-3.285+i*.022),w,h,tone,a)
+    # The print crosses a crease and puts the furniture's marks somewhere the
+    # furniture isn't. The real desk is kept right of this false plan.
+    flat_mark(b,"FoldedProof",[(-4.22,-3.28),(.35,-3.28),(-.45,2.72),(-3.99,2.93)],"hatching")
+    flat_mark(b,"SkippedPrint",[(-2.12,-3.29),(.66,-3.29),(.29,-.68),(-2.29,-.88)],"carbon_stock",.014)
+    for i, (x,z,w,d) in enumerate(((-2.72,-1.07,2.43,.076),(-3.93,-.27,.075,1.65),
+                                   (-2.44,-.83,2.43,.061),(-3.63,.03,.06,1.64))):
+        b.box(f"DeskImprint{i}", "FloorComposition", (x,.018,z), (w,.014,d), "ink" if i < 2 else "red")
+    emblem(b,"MissingCorner",(1.32,1.52,-3.217),(2.58,1.25))
     read(b,"vacant_office",p,(1.04,.816,-1.34),("Blotter","Ruler"))
     vacant_workroom(b)
 
@@ -295,13 +331,21 @@ def principal_office(b):
     flat_mark(b,"Perpendicular",[(-4.4,.19),(-4.4,.63),(3.52,-1.22),(3.52,-1.72)],"ink",.020)
     flat_mark(b,"FalseCross",[(1.09,3.29),(1.60,3.29),(-1.67,-3.28),(-2.16,-3.28)],"ink",.023)
     flat_mark(b,"PetrolField",[(1.7,3.25),(4.44,3.25),(4.44,-3.29),(.80,-3.29)],"teal",.014)
-    # Mount a coloured, flat architectural perspective drawing well above the
-    # real floor. It reads as an institution, not a second exit.
-    for i,(x,y,w,h,a,t) in enumerate(((-2.67,1.57,2.67,2.18,-12,"navy"),(-1.52,1.63,3.56,2.22,4,"ochre"),
-                        (-.49,1.63,2.25,1.77,-9,"teal"),(-.63,1.54,.48,1.68,-11,"ink"),
-                        (-.61,1.50,2.42,.34,2,"ink"))):
-        paper(b,f"FalseWindow{i}","PaperAssembly",(x,y,-3.320+i*.025),w,h,t,a,folded=True)
-    b.pigments.update(POMO)
+    # Two false frames on the existing wall: both point down separate axes,
+    # neither one is an opening. The room behind the chair never gets deeper.
+    b.pigments.update({**POMO, "pomo_pink": (125,66,86), "pomo_white": (200,173,121),
+                       "pomo_lemon": (215,170,89), "pomo_cobalt": (53,61,100),
+                       "pomo_lilac": (120,99,133), "pomo_mint": (79,111,113)})
+    b.box("PaintedRecess", "PaperAssembly", (.21,1.35,-3.312), (8.37,2.64,.10), "ink")
+    for i, (x,y,w,h,tone) in enumerate(((-1.09,1.47,5.65,2.27,"rules"),
+                                         (-.94,1.34,4.98,2.01,"navy"),
+                                         (-.46,1.45,3.92,2.22,"ochre"),
+                                         (-.18,1.32,3.28,1.96,"ink"),
+                                         (.82,1.54,2.04,1.67,"teal"))):
+        b.box(f"CourtDepth{i}", "PaperAssembly", (x,y,-3.25+.025*i), (w,h,.020), tone)
+    b.box("PaintedAxis", "PaperAssembly", (.74,1.35,-3.119), (.037,1.97,.020), "brass")
+    b.box("BrokenPedimentLeft", "PaperAssembly", (-1.54,2.582,-3.131), (2.76,.103,.066), "brass", rot=(0,0,4))
+    b.box("BrokenPedimentRight", "PaperAssembly", (1.82,2.482,-3.111), (2.94,.122,.072), "brass", rot=(0,0,-5))
     p=memphis_desk(b,"HeadDesk",(1.62,0,-1.91),2.83,1.15,tall=.84,seed=2,classical=True,
                    colours=("pomo_cobalt","pomo_pink","pomo_white"))
     b.box("Front",p,(0,.37,-.302),(2.71,.63,.17),"ink",shadow=True)
@@ -311,12 +355,11 @@ def principal_office(b):
     swivel_chair(b,".","ChairOfOffice",(1.78,0,-2.95),0,seat="red",back="navy",accent="pomo_lemon",
                  crest="throne",collider=True)
     for i in range(4):
-        swivel_chair(b,".",f"WaitingSeat{i}",(-3.26+i*.87,0,.91+i*.15),147-i*8,seat="teal" if i%2 else "cream",
-                     back=("pomo_black","pomo_lilac")[i%2],accent=("pomo_lemon","pomo_pink","pomo_mint","pomo_red")[i],
+        swivel_chair(b,".",f"WaitingSeat{i}",(-3.26+i*.87,0,.91+i*.15),147-i*8,seat="navy",
+                     back="pomo_black",accent="pomo_lemon",
                      crest=("disc","triangle","arch","disc")[i],arms=i%2==0,collider=True)
     cabinet(b,"SideCase",(3.67,-2.97),.91,1.12,3,"navy")
     read(b,"principal_office",p,(1.48,.86,-1.41),("Blotter","Stamp"))
-    kettle(b,"Kettle",p,(1.05,.84,-.22),-25)
     principal_suite(b)
 
 
@@ -325,11 +368,15 @@ ROOM_CONTENT = {f.__name__: f for f in (archive, plan_room, projection_room, com
 
 def room(r):
     dims, door_x, plaster, lower, floor, backdrop = PALETTES[r.id]
-    # Eyes adapt across the threshold, but nothing changes the player's lens
-    # globally or affects the hallway. All scenes use the existing follow rig.
-    b = start_room(r.id,{**COMMON,"lower":lower},(200,188,189),backdrop,(255,220,169),
-                   sun=.84 if r.id != "principal_office" else .97,
-                   sun_yaw=-40 if r.floor != "02" else 18)
+    # Lighting follows the room's medium rather than the floor where the door
+    # happens to be. The global camera and renderer don't change on arrival.
+    ambient, key, strength, yaw = {
+        "projection_room": ((182,160,191),(254,176,137),.49,18),
+        "computer_room": ((157,193,191),(209,234,211),.60,18),
+        "vacant_office": ((203,196,202),(247,235,215),.70,-40),
+        "principal_office": ((177,160,191),(255,208,145),.89,-40),
+    }.get(r.id, ((200,188,189),(255,220,169),.84,-40))
+    b = start_room(r.id,{**COMMON,"lower":lower},ambient,backdrop,key,sun=strength,sun_yaw=yaw)
     tissue(b,"plaster",plaster,lower,3 if r.id=="vacant_office" else 0)
     tissue(b,"floor",floor,lower,2 if r.id in ("plan_room","computer_room") else (3 if r.id=="vacant_office" else 0))
     tissue(b,"ledger",(224,204,161),(112,78,71),1)
@@ -341,10 +388,12 @@ def room(r):
     walls(b,dims,r.id,door_x)
     b.node("PaperAssembly", ".")
     b.node("FloorComposition", ".")
-    label(b,"RoomSign","WallNorth0",(dims[0]*.16,2.662,.134),r.english, .00237,ink=(232,215,172))
+    if r.id not in UNMARKED_ANNEXES:
+        label(b,"RoomSign","WallNorth0",(dims[0]*.16,2.662,.134),r.english, .00237,ink=(232,215,172))
     b.box("SwitchPlate", ".", (door_x-1.14,1.15,dims[1]/2-.129),(.12,.22,.02), "trim")
     b.node("WorkLamp", ".", "OmniLight3D", position=vec3((-2.83,2.55,-1.92)),
-           light_color=srgb((255,229,179)), light_energy=.46, omni_range=4.2)
+           light_color=srgb(key if r.id in UNMARKED_ANNEXES else (255,229,179)),
+           light_energy=.25 if r.id == "projection_room" else .46, omni_range=4.2)
     add_route(b,r.id,(door_x,0,dims[1]/2-1.27),(door_x,.84,dims[1]/2-.40),12)
     ROOM_CONTENT[r.id](b)
     return b.emit()
@@ -360,12 +409,13 @@ def corridor_exits():
         door_point = r.point(.53, 1.10, .45) if r.gated else r.point(0, .83, .51)
         door_shape = ("HallLever", "HallSign") if r.gated else ("Leaf", "HallLever", "HallSign")
         outline = ", ".join(f'"{support}/{part}"' for part in door_shape)
+        prompt = "door_try" if r.id in UNMARKED_ANNEXES else f"enter_{r.id}" if r.gated else "enter_restroom"
         yield f'''[node name="{r.name}Door" parent="Interactables" instance=ExtResource("12_location_exit")]
 position = {vec3(door_point)}
 interact_id = &"to_{r.id}"
 outline_paths = PackedStringArray({outline})
 support_paths = PackedStringArray("{support}")
-prompt_key = "prompt.{f'enter_{r.id}' if r.gated else 'enter_restroom'}"
+prompt_key = "prompt.{prompt}"
 radius = {.36 if r.gated else 1.38}
 {extra}destination_scene = "res://scenes/locations/{r.id}/{r.id}.tscn"
 destination_spawn = &"FromCorridor"
@@ -410,6 +460,7 @@ def main():
     text = _replace_fragment(corridor.read_text(), "annex exits", '[node name="SpawnPoints"', corridor_exits())
     text = _replace_fragment(text, "annex returns", '[node name="Ambience"', corridor_spawns())
     targets = {corridor: text, **{ROOT/f"scenes/locations/{r.id}/{r.id}.tscn": room(r) for r in ANNEXES}}
+    targets[ROOT / TERMINAL_PATH.removeprefix("res://")] = terminal_scene()
     for path, text in targets.items():
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != text:

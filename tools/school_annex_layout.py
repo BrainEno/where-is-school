@@ -34,12 +34,14 @@ ARCHIVE = Threshold("archive", "Archive", "01", "档案室", "ARCHIVE", (-14.48,
                     (74, 56, 62), (127, 91, 71))
 PLAN_ROOM = Threshold("plan_room", "PlanRoom", "01", "图纸室", "PLAN ROOM", (-10.77, -3.4, 10.55), 0,
                       (42, 66, 73), (84, 113, 112))
-PROJECTION = Threshold("projection_room", "ProjectionRoom", "02", "投影准备室", "PROJECTION", (2.79, 0, -30), 0,
-                       (64, 66, 85), (99, 100, 127))
-COMPUTER = Threshold("computer_room", "ComputerRoom", "02", "计算机教室", "COMPUTER LAB", (5.06, 0, -30), 0,
-                     (49, 68, 69), (105, 123, 101))
-VACANT = Threshold("vacant_office", "VacantOffice", "03", "空办公室", "STAFF WORKROOM", (-14.25, 3.6, -17.72), 90,
-                   (69, 59, 87), (114, 105, 132))
+# The screen on 01 hides the aperture until the player rounds the laboratory return.
+PROJECTION = Threshold("projection_room", "ProjectionRoom", "01", "投影准备室", "PROJECTION", (-23.2, -3.4, 8.02), -90,
+                       (50, 43, 59), (81, 54, 65))
+# This gap is the pier between 104 and 105, across from the yard stair.
+COMPUTER = Threshold("computer_room", "ComputerRoom", "02", "计算机教室", "COMPUTER LAB", (17.37, 0, -30), 0,
+                     (43, 66, 67), (78, 102, 93))
+VACANT = Threshold("vacant_office", "VacantOffice", "02", "空办公室", "STAFF WORKROOM", (2.1, 0, -18.68), -90,
+                   (103, 98, 99), (174, 159, 147))
 PRINCIPAL = Threshold("principal_office", "PrincipalOffice", "03", "校长室", "PRINCIPAL", (2.68, 3.6, -45), 0,
                       (67, 52, 71), (134, 96, 76))
 WASH_02 = Threshold("restroom_02", "Restroom02", "02", "厕所", "RESTROOM", (29, 0, -27.75), -90,
@@ -49,3 +51,6 @@ WASH_03 = Threshold("restroom_03", "Restroom03", "03", "厕所", "RESTROOM", (20
 ANNEXES = (ARCHIVE, PLAN_ROOM, PROJECTION, COMPUTER, VACANT, PRINCIPAL)
 UPPER_WASHES = (WASH_02, WASH_03)
 THRESHOLDS = ANNEXES + UPPER_WASHES
+
+# No room-use labels on these hall leaves. The plate, handle and inset are the clues.
+UNMARKED_ANNEXES = frozenset(r.id for r in (PROJECTION, COMPUTER, VACANT, PRINCIPAL))

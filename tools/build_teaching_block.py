@@ -70,7 +70,7 @@ BEND_STAIR_X = 4.5
 # the shifted floors/landings are architecture; routes do not secretly teleport.
 LOWER_WEST = [(-1.55, 10, "101", 5.6, 0), (-15.25, 9.5, "102", 5.2, -0.22),
               (-24.8, 9.0, "104", 6.4, 0.18)]
-LOWER_NORTH = [(11.45, 10, "104", 5.8, -0.31), (23.05, 10, "105", 6.3, 0)]
+LOWER_NORTH = [(11.45, 10, "104", 5.8, -0.31), (23.05, 9.52, "105", 6.3, 0)]
 UPPER_WEST = [(-12.2, 9, "201", 6.6, 0), (-23.5, 9.5, "202", 5.1, 0.22),
               (-35.1, 10, "202", 6.1, -0.30)]
 UPPER_NORTH = [(-3.5, 9.5, "204", 5.6, 0.22), (11.2, 10.5, "205", 7.2, -0.45)]
@@ -330,7 +330,7 @@ def classroom_run(b, parent, west, axis, y, span, specs, gap=(), biology=False):
         facade_sections(b, p, hi-lo, [])
 
 
-def glass_run(b, parent, name, west, axis, y, low, high, gap=()):
+def glass_run(b, parent, name, west, axis, y, low, high, gap=(), *, insert=None):
     """Deep reveals and normal-height sashes in real masonry, not an alpha wall.
 
     The plaster, sill and glazed aperture have separate physical jobs. Picking
@@ -348,6 +348,18 @@ def glass_run(b, parent, name, west, axis, y, low, high, gap=()):
             centre = start + (j + .5) * width
             pos = (axis, y, centre) if west else (centre, y, axis)
             yaw = -90 if west else 180
+            if insert is not None:
+                left, right = centre-width/2, centre+width/2
+                if left < insert[1] and insert[0] < right:
+                    # Close just this old bay around the leaf. Every other sash,
+                    # including the panes still used for the court view, stays put.
+                    assert left < insert[0] and insert[1] < right
+                    for side, (lo, hi) in enumerate(complement(left, right, [insert])):
+                        x, z = (axis, (lo+hi)/2) if west else ((lo+hi)/2, axis)
+                        blocked = solid_wall(b, p, f"Boarded{i}_{j}_{side}", (x,y,z), hi-lo, yaw,
+                                             WALL_HEIGHT, "office_ochre", "chalk_rose")
+                        b.box("PaintOver", blocked, (0,.94,.117), (hi-lo-.012,.32,.016), "chalk_rose")
+                    continue
             # A short return next to a stair is a pier, not a token slit window.
             if width < 3.16:
                 solid_wall(b, p, f"Bay{i}_{j}", pos, width, yaw, WALL_HEIGHT, base, field)
@@ -636,7 +648,7 @@ def rear_stair_and_ground_wing(b):
 
     # 01: municipal terrazzo and an over-scaled entrance, across from the
     # folded room directory. The lobby itself is a passage, not a teleport plane.
-    alcove_x, alcove_z = (ground_x[0], -23.2), (5.65, ground_z[0])
+    alcove_x, alcove_z = (ground_x[0], PROJECTION.pos[0]), (5.65, ground_z[0])
     entrance_x = (ENTRANCE_X-ENTRANCE_WIDTH/2, ENTRANCE_X+ENTRANCE_WIDTH/2)
     apron_z = (ground_z[1], ENTRANCE_APRON_END)
     slab(b, g, "Gallery", ground_x, ground_z, GROUND_Y, "gallery_tile", rotate=True)
@@ -682,9 +694,14 @@ def rear_stair_and_ground_wing(b):
     b.box("WashFloorRule", g, (ground_x[0]+0.64, GROUND_Y+0.009, RESTROOM_Z-0.58),
           (1.26, 0.01, 0.082), "atrium_mint")
     screen_z = (alcove_z[0]+0.12, alcove_z[1]-0.11)
-    return_wall = solid_wall(b, g, "RecessScreen", (alcove_x[1], GROUND_Y, sum(screen_z)/2),
-                             screen_z[1]-screen_z[0], yaw=-90, base="night_blue")
-    b.box("AmberRule", return_wall, (0.25, 0.96, 0.123), (3.35, 0.07, 0.05), "apricot")
+    for name, (lo, hi) in zip(("RecessScreen", "RecessScreenReturn"),
+                              complement(*screen_z, [threshold_gap(PROJECTION, True)])):
+        return_wall = solid_wall(b, g, name, (alcove_x[1], GROUND_Y, (lo+hi)/2),
+                                 hi-lo, yaw=-90, base="night_blue")
+        # The last part of the original amber rule turns from the public side of
+        # the screen into the recess. It is not another interaction target.
+        side = .123 if name == "RecessScreen" else -.123
+        b.box("AmberRule", return_wall, (0, .96, side), (hi-lo-.08, .07, .05), "apricot")
     b.box("ReturnInlay", g, (-25.25, GROUND_Y+0.009, (alcove_z[0]+13.33)/2),
           (0.1, 0.01, 13.33-alcove_z[0]), "apricot")
     lab_left = alcove_x[0]+0.12
@@ -699,7 +716,12 @@ def room_portal(b, parent, name, pos, yaw, scene, trim, plaster):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     path = child_path(parent, name)
     b.instance("Door", path, scene, (0, 0, 0))
-    head = b.shell("WallHead", path, (0, 2.36, 0), groups=("camera_occluder",))
+    # On these east wall inserts the follow camera looks over the back of the
+    # leaf. Cut the header and Panel together: fading just the header can still
+    # leave the leaf hiding the separate, hall-facing registration slide.
+    shared_cutaway = scene in (PROJECTION.id, VACANT.id)
+    head = b.shell("WallHead", f"{path}/Door/Panel" if shared_cutaway else path,
+                   (0, 2.36, 0), groups=() if shared_cutaway else ("camera_occluder",))
     b.shape("Solid", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22))
     b.box("Face", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22), plaster)
     b.box("Header", head, (0, 0.064, 0.112), (ROOM_PORTAL_WIDTH+0.012, 0.13, 0.082), trim)
@@ -734,8 +756,12 @@ def gallery_details(b, lower, upper):
                 "office_door", "blue_hour", "night_lilac")
     b.box("OfficeThresholdIndex", upper, (OFFICE_X, RISE+0.009, -44.17),
           (1.42, 0.01, 0.07), "apricot")
-    # Keep a quiet ledger beside the new rest-room threshold, rather than
-    # covering the end with an unwalkable decorative door.
+    # The same ledger rule turns the end corner and becomes broken enamel by the
+    # washroom. Staff and washroom keep separate handles and separate thresholds.
+    for i, (x, z, w, d) in enumerate(((19.68,-44.17,.72,.07),(20.14,-44.06,.07,.29),
+                                      (20.14,-43.79,.07,.14),(20.14,-43.54,.07,.19))):
+        b.box(f"OfficeReturnRule{i}", upper, (x, RISE+.010, z), (w, .01, d),
+              "apricot" if not i else "night_lilac")
     b.node("HourRegister", upper, position=vec3((UPPER_END, RISE, -44.56)),
            rotation_degrees=vec3((0, -90, 0)))
     end = child_path(upper, "HourRegister")
@@ -811,12 +837,38 @@ def annex_portals(b):
     for r in THRESHOLDS:
         room_portal(b, r.parent, r.name + "Portal", r.pos, r.yaw, r.id, "night_blue", "chalk_rose")
         p = f"{r.parent}/{r.name}Portal"
-        # Painted threshold index, outside the pickable silhouette. The trapped
-        # registration slide beside the hinge is the only check affordance.
-        b.box("FloorIndex", p, (0, .011, .43), (1.46, .012, .059),
-              "brass_rule" if r.gated else "atrium_mint")
+        threshold_trace(b, p, r.id)
         if r.gated:
             registration_plate(b, p, r.id)
+
+
+def threshold_trace(b, p, id):
+    # These marks are painted onto existing surfaces, never arrow markers or
+    # extra solids. Each is picked up again on the other side of its door.
+    if id == "projection_room":
+        for i, (x, z, width, depth) in enumerate(((.02, .31, 1.62, .083), (.11, .61, 1.27, .057),
+                                                  (.28, .86, .82, .047))):
+            b.box(f"ApertureTrace{i}", p, (x, .011, z), (width, .012, depth), "night_lilac")
+    elif id == "vacant_office":
+        for i, (x, z) in enumerate(((-.43, .63), (-.24, .89))):
+            tone = ("office_ochre", "signal_ivory")[i]
+            b.box(f"PrintToe{i}", p, (x+.39, .011, z), (.89, .012, .047), tone)
+            b.box(f"PrintHeel{i}", p, (x-.032, .012, z+.30), (.042, .012, .58), tone)
+    elif id == "computer_room":
+        for i in range(4):
+            b.box(f"RasterTrace{i}", p, (-.58+i*.216, .011, .42+i*.162), (.41, .012, .049),
+                  "atrium_mint" if i == 3 else "office_sage")
+    elif id == "principal_office":
+        for i, x in enumerate((-.32, .19)):
+            b.box(f"FalseCentre{i}", p, (x, .011, .71), (.053, .012, 1.17-i*.22),
+                  "brass_rule" if i else "deep_plum")
+    elif id == "restroom_03":
+        for i, (x, z) in enumerate(((-.41,.29), (-.10,.29), (-.10,.60), (.21,.60), (.21,.91))):
+            b.box(f"EnamelTrace{i}", p, (x, .011, z), (.29, .012, .29),
+                  "atrium_mint" if i % 2 == 0 else "blue_hour")
+    else:
+        b.box("FloorIndex", p, (0, .011, .43), (1.46, .012, .059),
+              "atrium_mint" if id == "restroom_02" else "brass_rule")
 
 
 
@@ -924,11 +976,11 @@ def teaching_block():
     slab(b, u, "Turn", (-9.75, UPPER_END), UPPER_TURN, RISE, "upper_turn", rotate=True)
     classroom_run(b, l, True, -2.2, 0, MAIN_Z, LOWER_WEST, (west_gap, REAR_JUNCTION_Z), biology=True)
     classroom_run(b, l, False, -30, 0, (-2.2, EAST_END), LOWER_NORTH,
-                  (north_gap, threshold_gap(PROJECTION), threshold_gap(COMPUTER)))
-    classroom_run(b, u, True, -14.25, RISE, UPPER_Z, UPPER_WEST, (threshold_gap(VACANT, True),))
+                  (north_gap, threshold_gap(COMPUTER)))
+    classroom_run(b, u, True, -14.25, RISE, UPPER_Z, UPPER_WEST)
     classroom_run(b, u, False, -45, RISE, (-14.25, UPPER_END), UPPER_NORTH,
                   ((OFFICE_X-ROOM_PORTAL_WIDTH/2, OFFICE_X+ROOM_PORTAL_WIDTH/2), threshold_gap(PRINCIPAL)))
-    glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95)
+    glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95, insert=threshold_gap(VACANT, True))
     glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END-.11, (yard_gap,))
     wing_end(b, WASH_02, TURN_Z)
     wing_end(b, WASH_03, UPPER_TURN)

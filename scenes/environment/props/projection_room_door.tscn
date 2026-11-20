@@ -1,18 +1,18 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=28 format=3]
 
-[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="font"]
+
 
 [sub_resource type="StandardMaterial3D" id="Mat_door_leaf"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.388, 0.392, 0.498, 1)
+albedo_color = Color(0.318, 0.212, 0.255, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_door_frame"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.251, 0.259, 0.333, 1)
+albedo_color = Color(0.196, 0.169, 0.231, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_tread"]
 diffuse_mode = 3
@@ -32,23 +32,29 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.745, 0.694, 0.58, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_vision"]
+[sub_resource type="StandardMaterial3D" id="Mat_wine"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.263, 0.365, 0.42, 1)
+albedo_color = Color(0.471, 0.231, 0.286, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_vision_light"]
+[sub_resource type="StandardMaterial3D" id="Mat_old_gold"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.525, 0.612, 0.624, 1)
+albedo_color = Color(0.718, 0.561, 0.325, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_sign_ink"]
+[sub_resource type="StandardMaterial3D" id="Mat_carbon"]
 diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
-albedo_color = Color(0.188, 0.184, 0.255, 1)
+albedo_color = Color(0.255, 0.235, 0.333, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_milk"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.855, 0.792, 0.643, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
 size = Vector3(1.84, 2.36, 0.22)
@@ -66,35 +72,47 @@ size = Vector3(1.84, 0.112, 0.29)
 size = Vector3(1.84, 0.036, 0.27)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art6"]
-size = Vector3(1.59, 0.21, 0.02)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art7"]
 size = Vector3(0.095, 0.32, 0.029)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art8"]
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
 size = Vector3(0.05, 0.042, 0.058)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art9"]
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
 size = Vector3(0.2, 0.041, 0.032)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_art10"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_art9"]
 top_radius = 0.022
 bottom_radius = 0.022
 height = 0.143
 radial_segments = 8
 rings = 0
 
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(0.94, 1.72, 0.041)
+
 [sub_resource type="BoxMesh" id="BoxMesh_art11"]
-size = Vector3(0.71, 0.44, 0.035)
+size = Vector3(0.78, 0.091, 0.022)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art12"]
-size = Vector3(0.622, 0.35, 0.014)
+size = Vector3(0.091, 1.399, 0.022)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art13"]
-size = Vector3(0.037, 0.29, 0.005)
+size = Vector3(0.27, 1.29, 0.017)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art14"]
-size = Vector3(1.08, 0.3, 0.042)
+size = Vector3(0.079, 0.048, 0.015)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art15"]
+size = Vector3(0.34, 0.046, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art16"]
+size = Vector3(0.046, 0.474, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art17"]
+size = Vector3(0.31, 0.152, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art18"]
+size = Vector3(0.15, 0.019, 0.022)
 
 [node name="ProjectionRoomDoor" type="Node3D"]
 
@@ -135,186 +153,302 @@ mesh = SubResource("BoxMesh_art5")
 material_override = SubResource("Mat_tread")
 cast_shadow = 0
 
-[node name="HallKick" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 0.172, 0.085)
-mesh = SubResource("BoxMesh_art6")
-material_override = SubResource("Mat_door_frame")
-cast_shadow = 0
-
 [node name="HallBackplate" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.623, 1.035, 0.085)
-mesh = SubResource("BoxMesh_art7")
+mesh = SubResource("BoxMesh_art6")
 material_override = SubResource("Mat_edge")
 cast_shadow = 0
 
 [node name="HallLeverMount" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.623, 1.102, 0.118)
-mesh = SubResource("BoxMesh_art8")
+mesh = SubResource("BoxMesh_art7")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="HallLever" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.547, 1.102, 0.141)
-mesh = SubResource("BoxMesh_art9")
+mesh = SubResource("BoxMesh_art8")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="HallHinge0" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 0.33, 0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="HallHinge1" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 1.2, 0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="HallHinge2" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 2.01, 0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="HallBead" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.45, 0.085)
+[node name="HallBaffle" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 1.27, 0.093)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="HallLightTrapTop" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 2.035, 0.121)
 mesh = SubResource("BoxMesh_art11")
 material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="HallGlass" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.45, 0.103)
+[node name="HallLightTrapBottom" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 0.545, 0.121)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_door_frame")
+cast_shadow = 0
+
+[node name="HallLightTrapLeft" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.3145, 1.29, 0.121)
 mesh = SubResource("BoxMesh_art12")
-material_override = SubResource("Mat_vision")
+material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="HallGlaze0" type="MeshInstance3D" parent="Panel"]
-position = Vector3(-0.13, 1.45, 0.112)
-mesh = SubResource("BoxMesh_art13")
-material_override = SubResource("Mat_vision_light")
+[node name="HallLightTrapRight" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.3745, 1.29, 0.121)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="HallGlaze1" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0.12, 1.45, 0.112)
+[node name="HallFilmLeader" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.21, 1.27, 0.126)
 mesh = SubResource("BoxMesh_art13")
-material_override = SubResource("Mat_vision_light")
+material_override = SubResource("Mat_wine")
+cast_shadow = 0
+
+[node name="HallPerforation0" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 0.76, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation1" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 0.898, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation2" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.036, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation3" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.174, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation4" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.312, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation5" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.45, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallPerforation6" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.588, 0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallGateTop" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.15, 1.73, 0.129)
+mesh = SubResource("BoxMesh_art15")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallGateBottom" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.15, 1.21, 0.129)
+mesh = SubResource("BoxMesh_art15")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallGateLeft" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.003, 1.47, 0.129)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="HallGateRight" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.297, 1.47, 0.129)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_old_gold")
 cast_shadow = 0
 
 [node name="HallSign" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.95, 0.102)
-mesh = SubResource("BoxMesh_art14")
-material_override = SubResource("Mat_sign_ink")
+position = Vector3(0.17, 1.991, 0.143)
+mesh = SubResource("BoxMesh_art17")
+material_override = SubResource("Mat_carbon")
 cast_shadow = 0
 
-[node name="HallPrimary" type="Label3D" parent="Panel"]
-position = Vector3(0, 2.005, 0.128)
-rotation_degrees = Vector3(0, 0, 0)
-text = "投影准备室"
-font = ExtResource("font")
-font_size = 54
-pixel_size = 0.0026666666666666666
-outline_size = 0
-modulate = Color(0.945, 0.878, 0.733, 1)
-
-[node name="HallSecondary" type="Label3D" parent="Panel"]
-position = Vector3(0, 1.881, 0.128)
-rotation_degrees = Vector3(0, 0, 0)
-text = "PROJECTION"
-font = ExtResource("font")
-font_size = 54
-pixel_size = 0.00138
-outline_size = 0
-modulate = Color(0.945, 0.878, 0.733, 1)
-
-[node name="RoomKick" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 0.172, -0.085)
-mesh = SubResource("BoxMesh_art6")
-material_override = SubResource("Mat_door_frame")
+[node name="HallLeaderTip" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.2, 1.996, 0.157)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_milk")
 cast_shadow = 0
 
 [node name="RoomBackplate" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.623, 1.035, -0.085)
-mesh = SubResource("BoxMesh_art7")
+mesh = SubResource("BoxMesh_art6")
 material_override = SubResource("Mat_edge")
 cast_shadow = 0
 
 [node name="RoomLeverMount" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.623, 1.102, -0.118)
-mesh = SubResource("BoxMesh_art8")
+mesh = SubResource("BoxMesh_art7")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="RoomLever" type="MeshInstance3D" parent="Panel"]
 position = Vector3(0.547, 1.102, -0.141)
-mesh = SubResource("BoxMesh_art9")
+mesh = SubResource("BoxMesh_art8")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="RoomHinge0" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 0.33, -0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="RoomHinge1" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 1.2, -0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
 [node name="RoomHinge2" type="MeshInstance3D" parent="Panel"]
 position = Vector3(-0.795, 2.01, -0.085)
-mesh = SubResource("CylinderMesh_art10")
+mesh = SubResource("CylinderMesh_art9")
 material_override = SubResource("Mat_steel")
 cast_shadow = 0
 
-[node name="RoomBead" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.45, -0.085)
+[node name="RoomBaffle" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 1.27, -0.093)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_edge")
+cast_shadow = 0
+
+[node name="RoomLightTrapTop" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 2.035, -0.121)
 mesh = SubResource("BoxMesh_art11")
 material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="RoomGlass" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.45, -0.103)
+[node name="RoomLightTrapBottom" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.03, 0.545, -0.121)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_door_frame")
+cast_shadow = 0
+
+[node name="RoomLightTrapLeft" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.3145, 1.29, -0.121)
 mesh = SubResource("BoxMesh_art12")
-material_override = SubResource("Mat_vision")
+material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="RoomGlaze0" type="MeshInstance3D" parent="Panel"]
-position = Vector3(-0.13, 1.45, -0.112)
-mesh = SubResource("BoxMesh_art13")
-material_override = SubResource("Mat_vision_light")
+[node name="RoomLightTrapRight" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.3745, 1.29, -0.121)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_door_frame")
 cast_shadow = 0
 
-[node name="RoomGlaze1" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0.12, 1.45, -0.112)
+[node name="RoomFilmLeader" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.21, 1.27, -0.126)
 mesh = SubResource("BoxMesh_art13")
-material_override = SubResource("Mat_vision_light")
+material_override = SubResource("Mat_wine")
+cast_shadow = 0
+
+[node name="RoomPerforation0" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 0.76, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation1" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 0.898, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation2" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.036, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation3" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.174, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation4" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.312, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation5" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.45, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomPerforation6" type="MeshInstance3D" parent="Panel"]
+position = Vector3(-0.22, 1.588, -0.141)
+mesh = SubResource("BoxMesh_art14")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomGateTop" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.15, 1.73, -0.129)
+mesh = SubResource("BoxMesh_art15")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomGateBottom" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.15, 1.21, -0.129)
+mesh = SubResource("BoxMesh_art15")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomGateLeft" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.003, 1.47, -0.129)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_old_gold")
+cast_shadow = 0
+
+[node name="RoomGateRight" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.297, 1.47, -0.129)
+mesh = SubResource("BoxMesh_art16")
+material_override = SubResource("Mat_old_gold")
 cast_shadow = 0
 
 [node name="RoomSign" type="MeshInstance3D" parent="Panel"]
-position = Vector3(0, 1.95, -0.102)
-mesh = SubResource("BoxMesh_art14")
-material_override = SubResource("Mat_sign_ink")
+position = Vector3(0.17, 1.991, -0.143)
+mesh = SubResource("BoxMesh_art17")
+material_override = SubResource("Mat_carbon")
 cast_shadow = 0
 
-[node name="RoomPrimary" type="Label3D" parent="Panel"]
-position = Vector3(0, 2.005, -0.128)
-rotation_degrees = Vector3(0, 180, 0)
-text = "02"
-font = ExtResource("font")
-font_size = 54
-pixel_size = 0.0027
-outline_size = 0
-modulate = Color(0.945, 0.878, 0.733, 1)
-
-[node name="RoomSecondary" type="Label3D" parent="Panel"]
-position = Vector3(0, 1.881, -0.128)
-rotation_degrees = Vector3(0, 180, 0)
-text = "HALL"
-font = ExtResource("font")
-font_size = 54
-pixel_size = 0.00138
-outline_size = 0
-modulate = Color(0.945, 0.878, 0.733, 1)
+[node name="RoomLeaderTip" type="MeshInstance3D" parent="Panel"]
+position = Vector3(0.2, 1.996, -0.157)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_milk")
+cast_shadow = 0

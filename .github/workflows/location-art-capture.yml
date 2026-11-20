@@ -79,6 +79,7 @@ jobs:
           - {location: archive, side: after}
           - {location: plan_room, side: after}
           - {location: projection_room, side: after}
+          - {location: projection_room, side: forward-plus}
           - {location: computer_room, side: after}
           - {location: computer_room, side: forward-plus}
           - {location: vacant_office, side: after}
@@ -86,6 +87,8 @@ jobs:
           - {location: restroom_02, side: after}
           - {location: restroom_03, side: after}
           - {location: dream_annex, side: after}
+          - {location: annex_thresholds, side: before}
+          - {location: annex_thresholds, side: after}
           - {location: playground_site, side: after}
           - {location: playground_site, side: forward-plus}
     steps:
@@ -156,6 +159,12 @@ jobs:
               detail=(school-details school-focus review_width=380)
               width=1600
               expect=3
+              if [ "$LOCATION" = projection_room ]; then expect=4; fi
+              ;;
+            annex_thresholds)
+              detail=(annex-thresholds review_width=360)
+              width=1280
+              expect=7
               ;;
             dream_annex)
               # Exam-dream dressing on the live corridor (docs/EXAM_DREAM_ART.md).
