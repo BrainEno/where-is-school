@@ -19,7 +19,7 @@
 | [archive/full-code-review.md](archive/full-code-review.md) | 评审报告的历史仓库侧索引 | 历史/归档 | 文档 Agent | 2026-11-17 | 由 [README.md](README.md)、[MODULE_INDEX.md](MODULE_INDEX.md) 与 [ADR 0004](adr/0004-art-direction.md) 取代；基线 f027f35 |
 | [AGENT_EVALUATION.md](AGENT_EVALUATION.md) | 编码 Agent 的公平比较与选型协议 | 现行 | 仓库所有者 | 2026-11-17 | 与 [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) 配套使用 |
 | [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) | 强制协作、证据与合并边界规则 | 现行 | 仓库所有者 | 2026-11-17 | 唯一入口是 [AGENTS.md](../AGENTS.md)；文档状态入口是本页 |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 运行时模块边界与交互规则 | 现行 | 工程 Agent | 2026-11-18 | 全局类型见 [MODULE_INDEX.md](MODULE_INDEX.md)，离线诊断见 §7c |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 运行时模块边界与交互规则 | 现行 | 工程 Agent | 2026-11-18 | 全局类型见 [MODULE_INDEX.md](MODULE_INDEX.md)，笔记本对照见 §5g，离线诊断见 §7c |
 | [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
 | [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 是证据台账而非许可证明；见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
@@ -53,14 +53,14 @@
 | [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
 | [NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md](NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md) | 剧情玩法评审、双语小试与回访切片 | 提案/待所有者 | 仓库所有者 | 2026-11-18 | 原基线 `76c5e77`，审计补核 `b8524c6` / `e143990`；不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) 或 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [OFFLINE_DIAGNOSTICS.md](OFFLINE_DIAGNOSTICS.md) | 离线事件审计、导出隐私及开发验证 | 现行 | 工程 Agent | 2026-11-18 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) §7c |
-| [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 发布流程见 [RELEASE.md](RELEASE.md) |
+| [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 含笔记本对照与续档路径；发布流程见 [RELEASE.md](RELEASE.md) |
 | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) | 产品意图与范围 | 现行 | 仓库所有者 | 2026-11-17 | 叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |
 | [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) | 序章美术迁移与证据记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行截图证据说明见 [screenshots/README.md](screenshots/README.md) |
 | [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) | 首个可玩垂直切片验收范围 | 现行 | 仓库所有者 | 2026-11-17 | 人工验收见 [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) |
 | [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [RELEASE.md](RELEASE.md) | 双平台发布与导出验证流程 | 现行 | 工程 Agent | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
 | [STORY_DOCS.zh-CN.md](STORY_DOCS.zh-CN.md) | 故事文档（台本）格式与 Google 文档往返流程 | 现行 | 内容 Agent | 2026-11-19 | 工具 `tools/story_doc.py`；内容契约见 [data/dialogue_schema/README.md](../data/dialogue_schema/README.md) |
-| [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-17 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
+| [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-17 | 笔记本对照已接入，追问留待后续；运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) | 视觉实验开发场景说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用；同类实验见 [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) |
 | [adr/README.md](adr/README.md) | 架构决策记录索引 | 目录/索引 | 文档 Agent | 2026-11-17 | ADR 文件路径是编号权威；见 [README.md](README.md) |
 | [adr/0001-engine-and-rendering.md](adr/0001-engine-and-rendering.md) | ADR 0001：引擎、语言与渲染器 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |

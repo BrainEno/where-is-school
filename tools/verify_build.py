@@ -306,6 +306,10 @@ def verify_contents(entries: list[tuple[str, int]]) -> list[str]:
         if not any(path.startswith(prefix) for path in paths):
             problems.append(f"nothing under {prefix} is in the build")
 
+    comparison_path = "res://data/story/notebook_comparisons.json"
+    if comparison_path not in sizes:
+        problems.append(f"the notebook comparisons are not in the build (no {comparison_path})")
+
     font_stub = sizes.get("res://assets/fonts/NotoSansSC-Regular.ttf.import")
     if font_stub is None:
         problems.append(

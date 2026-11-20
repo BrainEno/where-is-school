@@ -124,6 +124,12 @@ GitHub release, if one exists). Record at the top:
       number went up. Look at the same thing twice: the second look adds nothing. Switch
       language with the notebook open: same numbers, other words. After "Forget read text"
       it reads 0%. It only names places you have read something in.
+- [ ] In the classroom, inspect the wooden set square. Before hearing Q's account of it,
+      the Compare tab does not name that pair. Search the schoolbag and ask Q about the
+      set square. When movement is available again, press N and select Compare: it puts
+      your observation and Q's account together, names the sources, and leaves a question
+      rather than an answer. Switch language, then use Save and quit, followed by Continue;
+      the same pair is available.
 - [ ] Start a conversation and start a new game from the menu while a line is still
       typing; replay it and press F: skip passes the lines read whole and stops at the one
       that was cut off.

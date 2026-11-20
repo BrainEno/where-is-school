@@ -19,6 +19,8 @@ extends SceneTree
 ##    restore shows nothing.
 ## E. **The route line.** The places reached, from the flags the story already keeps, in
 ##    the story's order, never a place not reached, with where the player stands now.
+## F. **Compare.** Only complete pairs appear, still labelled with both sources and places.
+##    Rewording, clear and restore work without persisting extra state.
 
 const Harness = preload("res://tests/test_harness.gd")
 const SETTINGS_SCRIPT := "res://scripts/autoload/settings_manager.gd"
@@ -77,6 +79,7 @@ func _run() -> void:
 	_check_page()
 	_check_route()
 	if _catalog != null:
+		_check_comparison_page()
 		await _check_panel()
 		await _check_hud()
 
@@ -88,8 +91,8 @@ func _run() -> void:
 		_failures,
 		"the notebook indexes every recorded entry in both languages, files and filters "
 		+ "the log in reading order, opens from the key and the menu, re-words itself on "
-		+ "a language switch, tracks what is new without saving it, and the HUD notes "
-		+ "new entries."
+		+ "a language switch, compares complete pairs without writing state, tracks what is "
+		+ "new without saving it, and the HUD notes new entries."
 	)
 
 
@@ -106,6 +109,7 @@ func _check_catalog() -> void:
 	_catalog = JournalCatalog.build(dialogue, inspections)
 	for problem: String in _catalog.problems():
 		_failures.append("A: %s" % problem)
+	_check_comparison_catalog(dialogue, inspections)
 
 	for locale: String in L10n.LOCALES:
 		var expected := _scan_content(locale)
@@ -272,12 +276,13 @@ func _check_page() -> void:
 
 	_expect(JournalPage.step_filter(JournalPage.ALL, 1) == NarrativeEntry.Source.OBSERVED,
 		"B: the kind after All is not Seen.")
-	_expect(JournalPage.step_filter(JournalPage.ALL, -1) == NarrativeEntry.Source.IMAGINED,
-		"B: the kinds do not wrap backwards.")
-	_expect(JournalPage.step_filter(NarrativeEntry.Source.IMAGINED, 1) == JournalPage.ALL,
-		"B: the kinds do not wrap forwards.")
-	for filter: int in [JournalPage.ALL, NarrativeEntry.Source.OBSERVED, NarrativeEntry.Source.REPORTED,
-			NarrativeEntry.Source.RECALLED, NarrativeEntry.Source.IMAGINED]:
+	_expect(JournalPage.step_filter(JournalPage.ALL, -1) == JournalPage.COMPARE,
+		"B: the tabs do not wrap backwards to Compare.")
+	_expect(JournalPage.step_filter(NarrativeEntry.Source.IMAGINED, 1) == JournalPage.COMPARE,
+		"B: Compare is not adjacent to Imagined.")
+	_expect(JournalPage.step_filter(JournalPage.COMPARE, 1) == JournalPage.ALL,
+		"B: the tabs do not wrap forwards to All.")
+	for filter: int in JournalPage.filter_order():
 		for locale: String in L10n.LOCALES:
 			_expect(L10n.has_key(JournalPage.caveat_key(filter), locale),
 				"B: %s has no caveat for %s." % [locale, JournalPage.caveat_key(filter)])
@@ -480,6 +485,7 @@ func _check_panel() -> void:
 	journal.close()
 	await _frames(2)
 	_expect(not menu.is_open(), "C: closing the notebook opened from play left the menu open.")
+	await _check_comparison_panel(menu, journal)
 	menu.queue_free()
 	await _frames(1)
 
@@ -594,6 +600,136 @@ func _check_hud() -> void:
 	await _frames(1)
 
 
+# --- F. Compare -------------------------------------------------------------------------
+
+
+func _check_comparison_catalog(dialogue: DialogueLibrary, inspections: InspectionLibrary) -> void:
+	var path := "user://journal_comparison_fixture.json"
+	var fixture := FileAccess.open(path, FileAccess.WRITE)
+	if fixture == null:
+		_failures.append("F: could not write the comparison validation fixture.")
+		return
+	fixture.store_string(JSON.stringify({"format_version": 1, "comparisons": [
+		{"id": "set_square", "left": "saw_set_square", "right": "q_set_square_use"},
+		{"id": "reverse", "left": "q_set_square_use", "right": "saw_set_square"},
+		{"id": "duty_sheets", "left": "saw_staff_office_rota", "right": "not_an_entry"},
+		{"id": "animal_picture", "left": "animal_bill_seen", "right": "animal_bill_seen"},
+		{"id": "no_title", "left": "animal_bill_seen", "right": "animal_recall"},
+	]}))
+	fixture.close()
+	var catalog := JournalCatalog.build(dialogue, inspections, path)
+	DirAccess.remove_absolute(path)
+	var problems := "\n".join(catalog.problems())
+	_expect(catalog.get_comparisons().size() == 1 and problems.contains("duplicate comparison")
+		and problems.contains("unknown entry 'not_an_entry'") and problems.contains("distinct entry ids")
+		and problems.contains("missing text for 'journal.comparison.no_title.title'"),
+		"F: a bad pair survived or a diagnostic was absent: %s" % problems)
+
+
+func _check_comparison_page() -> void:
+	Harness.stage = "F. comparison page"
+	var pairs := _catalog.get_comparisons()
+	_expect(pairs.size() >= 3, "F: there are fewer than three authored comparisons.")
+	var entries: Array[NarrativeEntry] = []
+	for pair: Dictionary in pairs:
+		entries.append(_stored_entry(pair["right"]))
+	var page := JournalPage.compose(entries, _catalog, "en", JournalPage.COMPARE)
+	_expect(JournalPage.row_ids(page).is_empty() and (page["sections"] as Array).is_empty(),
+		"F: a half-known comparison revealed a row or question.")
+	_expect(int((page["counts"] as Dictionary)[JournalPage.COMPARE]) == 0,
+		"F: the tab counted a half-known pair.")
+	var expected: Array[StringName] = []
+	for index: int in pairs.size():
+		var pair: Dictionary = pairs[index]
+		entries.append(_stored_entry(pair["left"]))
+		expected.append(pair["left"])
+		expected.append(pair["right"])
+		for locale: String in L10n.LOCALES:
+			page = JournalPage.compose(entries, _catalog, locale, JournalPage.COMPARE)
+			_expect(JournalPage.row_ids(page) == expected,
+				"F: %s: completed pairs do not keep the authored order." % locale)
+			_expect(int(page["shown"]) == expected.size() and int(page["total"]) == entries.size(),
+				"F: comparing rows changed the log count.")
+			_expect(int((page["counts"] as Dictionary)[JournalPage.COMPARE]) == index + 1,
+				"F: a completed pair did not increment the tab count once.")
+			var rows := _rows_by_id(page)
+			for entry_id: StringName in expected:
+				var row: Dictionary = rows.get(entry_id, {})
+				var authored := _catalog.lookup(entry_id, locale)
+				_expect(row.get("text") == authored.get("text") and row.get("source") == authored.get("source")
+					and row.get("speaker_id") == authored.get("speaker_id")
+					and row.get("place_key") == _catalog.place_key_for(entry_id),
+					"F: '%s' lost its text or provenance in %s." % [entry_id, locale])
+	var all := JournalPage.compose(entries, _catalog, "en")
+	_expect(all["counts"] == page["counts"] and all["place_counts"] == page["place_counts"]
+		and all["unread"] == page["unread"] and JournalPage.row_ids(all).size() == entries.size(),
+		"F: the ordinary page counted comparisons as new evidence.")
+
+
+func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
+	Harness.stage = "F. comparison panel"
+	_narrative.clear()
+	_record(&"saw_set_square")
+	var game_state := root.get_node(^"GameState")
+	var story_before: Dictionary = game_state.call("get_snapshot")
+	await _key(KEY_N)
+	await _frames(2)
+	await _key(KEY_LEFT)
+	var compare := journal.get_filter_button(JournalPage.COMPARE)
+	_expect(compare != null and compare.has_focus(), "F: Left from All did not reach Compare.")
+	await _key(KEY_ENTER)
+	_expect(journal.get_filter() == JournalPage.COMPARE and journal.get_row_ids().is_empty(),
+		"F: keyboard did not open an empty Compare tab.")
+	_expect(journal.get_empty_text() == L10n.t("journal.empty_compare"),
+		"F: Compare did not explain what is missing without naming a clue.")
+	_record(&"q_set_square_use")
+	var snapshot: Dictionary = _narrative.call("to_snapshot")
+	_record(&"q_set_square_use")
+	var expected: Array[StringName] = [&"saw_set_square", &"q_set_square_use"]
+	_expect(await Harness.wait_until(func() -> bool: return journal.get_row_ids() == expected, 2.0),
+		"F: recording the other half did not reveal exactly two rows.")
+	for locale: String in L10n.LOCALES:
+		_set_locale(locale)
+		await _frames(2)
+		_expect(journal.get_row_ids() == expected and compare.has_focus(),
+			"F: a language switch lost the pair or its focus.")
+		var card := journal.find_child("Comparison_set_square", true, false)
+		var question := card.find_child("Question", true, false) as Label if card != null else null
+		_expect(question != null and question.text == L10n.t("journal.comparison.set_square.question"),
+			"F: the question was not rendered in %s." % locale)
+		var headers := journal.get_row_headers()
+		_expect(headers.size() == 2 and headers[0].contains(L10n.t("badge.observed"))
+			and headers[1].contains(L10n.t("badge.reported")) and headers[1].contains(L10n.t("name.q"))
+			and headers[0].contains(L10n.t("place.classroom")),
+			"F: the drawn rows lost their source, speaker or place in %s." % locale)
+		_expect(compare.text == L10n.t("journal.filter_count", {"label": L10n.t("journal.filter.compare"), "count": 1}),
+			"F: the drawn tab does not count the complete pair in %s." % locale)
+	_expect(_narrative.call("to_snapshot") == snapshot and game_state.call("get_snapshot") == story_before,
+		"F: opening or rewording Compare changed saved knowledge or flags.")
+	_narrative.clear()
+	_expect(await Harness.wait_until(func() -> bool: return journal.get_row_ids().is_empty(), 2.0),
+		"F: a new run inherited comparison cards.")
+	_narrative.call("restore_snapshot", snapshot)
+	_expect(await Harness.wait_until(func() -> bool:
+		return journal.get_row_ids() == expected and journal.get_unread_count() == 0, 2.0),
+		"F: restoring existing knowledge did not rebuild the same pair as read.")
+	await _pad(JOY_BUTTON_DPAD_RIGHT)
+	await _pad(JOY_BUTTON_A)
+	_expect(journal.get_filter() == JournalPage.ALL, "F: the controller could not go back to All.")
+	await _pad(JOY_BUTTON_DPAD_LEFT)
+	await _pad(JOY_BUTTON_A)
+	_expect(journal.get_filter() == JournalPage.COMPARE and journal.get_row_ids() == expected,
+		"F: D-pad and A did not select the comparison.")
+	await _key(KEY_ESCAPE)
+	_expect(not menu.is_open() and not paused, "F: Escape from Compare did not return to play.")
+	_set_locale("zh-CN")
+
+
+func _stored_entry(entry_id: StringName) -> NarrativeEntry:
+	var descriptor := _catalog.lookup(entry_id, "en")
+	return NarrativeEntry.new(entry_id, int(descriptor["source"]), descriptor["speaker_id"], "old words")
+
+
 # --- Helpers ----------------------------------------------------------------------------
 
 
@@ -636,6 +772,15 @@ func _key(code: Key) -> void:
 		var event := InputEventKey.new()
 		event.keycode = code
 		event.physical_keycode = code
+		event.pressed = pressed
+		root.push_input(event)
+		await process_frame
+
+
+func _pad(button: JoyButton) -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventJoypadButton.new()
+		event.button_index = button
 		event.pressed = pressed
 		root.push_input(event)
 		await process_frame

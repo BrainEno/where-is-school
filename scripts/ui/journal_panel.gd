@@ -13,6 +13,9 @@ extends Control
 ## objective on screen, and how much of the game's text has been read across every run
 ## (`ReadingProgress`, asked for through `set_progress_source`). That distinction is the game's (see
 ## `docs/PRODUCT_BRIEF.md`); the notebook is where the player can read it back.
+## The Compare tab groups two related notes without changing their origin. Each card
+## preserves the badges, places and attributions, and asks a question without adding
+## an entry.
 ##
 ## Rows are worded from their identity, not from the stored text: a `JournalCatalog`
 ## built from the loaded content gives the words for an `entry_id` in the language on
@@ -25,7 +28,7 @@ extends Control
 ## saved: the save format stays what ADR 0005 says it is.
 ##
 ## Built in code, set like the settings screen (one face, `MenuStyle.page_theme()`), and
-## usable without a mouse: ←/→ move between the kinds, Enter/A picks one, ↑/↓ and Page
+## usable without a mouse: ←/→ move between tabs, Enter/A picks one, ↑/↓ and Page
 ## Up/Down scroll the page, and Esc/B, the menu button or the notebook key close it.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
@@ -53,7 +56,7 @@ var _rows: VBoxContainer = null
 var _empty: Label = null
 var _hint: Label = null
 var _back: Button = null
-## filter (ALL or a source) -> its button.
+## Notebook tab -> its button.
 var _filter_buttons: Dictionary = {}
 var _filter: int = JournalPage.ALL
 var _catalog: JournalCatalog = null
@@ -118,8 +121,7 @@ func _ready() -> void:
 	_filters.add_theme_constant_override(&"h_separation", 8)
 	_filters.add_theme_constant_override(&"v_separation", 6)
 	column.add_child(_filters)
-	var order: Array[int] = [JournalPage.ALL]
-	order.append_array(JournalPage.SOURCES)
+	var order := JournalPage.filter_order()
 	for filter: int in order:
 		var button := MenuStyle.entry_button("", MenuStyle.BODY_SIZE, _factor)
 		button.name = "Filter_%s" % _filter_slug(filter)
@@ -274,7 +276,7 @@ func get_filter() -> int:
 	return _filter
 
 
-## Narrows the page to one kind of knowledge, or shows all of them (`JournalPage.ALL`).
+## Shows all records, a single source, or the pairs known in this run.
 func set_filter(filter: int) -> void:
 	if not _filter_buttons.has(filter):
 		return
@@ -332,7 +334,7 @@ func get_section_titles() -> PackedStringArray:
 ## The drawn header line of every row ("Seen · new"), in drawing order.
 func get_row_headers() -> PackedStringArray:
 	var headers := PackedStringArray()
-	for child in _rows.get_children():
+	for child: Node in _entry_rows():
 		var header := child.get_node_or_null(^"Text/Header") as Label
 		if header != null:
 			headers.append(header.text)
@@ -407,25 +409,30 @@ func _rebuild() -> void:
 			"count": int(counts.get(int(filter), 0)),
 		})
 		button.set_pressed_no_signal(int(filter) == _filter)
-		if int(filter) != JournalPage.ALL:
+		if JournalPage.SOURCES.has(int(filter)):
 			button.add_theme_color_override(&"font_color", _source_color(int(filter)))
 	_caveat.text = L10n.t(JournalPage.caveat_key(_filter))
 	_caveat.add_theme_color_override(
 		&"font_color",
-		MenuStyle.MUTED if _filter == JournalPage.ALL else Color(_source_color(_filter), 0.85)
+		Color(_source_color(_filter), 0.85) if JournalPage.SOURCES.has(_filter) else MenuStyle.MUTED
 	)
 
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
 	var first := true
-	for section: Variant in _page.get("sections", []):
-		_add_section(section as Dictionary, first)
-		first = false
+	for section: Dictionary in _page.get("sections", []):
+		if _filter == JournalPage.COMPARE:
+			_add_comparison(section)
+		else:
+			_add_section(section, first)
+			first = false
 	var shown := int(_page.get("shown", 0))
 	_empty.visible = shown == 0
 	_scroll.visible = shown > 0
-	if int(_page.get("total", 0)) == 0:
+	if _filter == JournalPage.COMPARE:
+		_empty.text = L10n.t("journal.empty_compare")
+	elif int(_page.get("total", 0)) == 0:
 		_empty.text = L10n.t("journal.empty")
 	else:
 		_empty.text = L10n.t("journal.empty_filter")
@@ -446,10 +453,37 @@ func _add_section(section: Dictionary, first: bool) -> void:
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_rows.add_child(heading)
 	for row: Variant in section.get("rows", []):
-		_add_row(row as Dictionary)
+		_add_row(row as Dictionary, _rows)
 
 
-func _add_row(row: Dictionary) -> void:
+## Stack the two entries in one card so both remain legible at narrow widths and at
+## large text sizes. The existing entry rows still own source colours and labels.
+func _add_comparison(section: Dictionary) -> void:
+	var card := PanelContainer.new()
+	card.name = "Comparison_%s" % section["comparison_id"]
+	var style := MenuStyle.panel_style()
+	style.content_margin_left = 16.0
+	style.content_margin_right = 16.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	card.add_theme_stylebox_override(&"panel", style)
+	_rows.add_child(card)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override(&"separation", 10)
+	card.add_child(column)
+	var title := MenuStyle.paragraph(L10n.t(section["title_key"]), MenuStyle.ENTRY_SIZE, _factor, MenuStyle.PAPER)
+	title.name = "Topic"
+	column.add_child(title)
+	for row: Dictionary in section["rows"]:
+		_add_row(row, column, true)
+	var question := MenuStyle.paragraph(
+		L10n.t(section["question_key"]), MenuStyle.BODY_SIZE, _factor, MenuStyle.ACCENT
+	)
+	question.name = "Question"
+	column.add_child(question)
+
+
+func _add_row(row: Dictionary, parent: VBoxContainer, show_place: bool = false) -> void:
 	var source := int(row.get("source", NarrativeEntry.Source.OBSERVED))
 	var color := _source_color(source)
 	var line := HBoxContainer.new()
@@ -470,6 +504,8 @@ func _add_row(row: Dictionary) -> void:
 	text.add_theme_constant_override(&"separation", 2)
 	line.add_child(text)
 	var parts := PackedStringArray([L10n.t(String(row.get("badge_key", "")))])
+	if show_place:
+		parts.append(L10n.t(String(row.get("place_key", JournalCatalog.ELSEWHERE_KEY))))
 	var attribution := String(row.get("attribution", ""))
 	if not attribution.is_empty():
 		parts.append(attribution)
@@ -485,7 +521,7 @@ func _add_row(row: Dictionary) -> void:
 	)
 	body.name = "Body"
 	text.add_child(body)
-	_rows.add_child(line)
+	parent.add_child(line)
 
 
 func _refresh_route() -> void:
@@ -537,10 +573,14 @@ func _queue_rebuild() -> void:
 func _scroll_to_first_new() -> void:
 	if not visible or _rows == null:
 		return
-	for child in _rows.get_children():
-		if child is Control and child.has_meta(&"is_new") and bool(child.get_meta(&"is_new")):
-			_scroll.ensure_control_visible(child as Control)
+	for row: Node in _entry_rows():
+		if bool(row.get_meta(&"is_new", false)):
+			_scroll.ensure_control_visible(row as Control)
 			return
+
+
+func _entry_rows() -> Array[Node]:
+	return _rows.find_children("Row_*", "HBoxContainer", true, false)
 
 
 static func _source_color(source: int) -> Color:
@@ -548,7 +588,11 @@ static func _source_color(source: int) -> Color:
 
 
 static func _filter_slug(filter: int) -> String:
-	return "all" if filter == JournalPage.ALL else NarrativeEntry.source_to_id(filter)
+	if filter == JournalPage.ALL:
+		return "all"
+	if filter == JournalPage.COMPARE:
+		return "compare"
+	return NarrativeEntry.source_to_id(filter)
 
 
 # --- Input ----------------------------------------------------------------------------
@@ -577,9 +621,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-## ←/→ walk the kinds in order and wrap, whatever the row looks like: at a narrow window
+## ←/→ walk the tabs in order and wrap, whatever the row looks like: at a narrow window
 ## or the largest text the flow wraps, and the nearest button to the right on screen is
-## then not the next kind. ↑/↓ stay put, because they scroll (see below).
+## then not the next tab. ↑/↓ stay put, because they scroll (see below).
 func _link_filter_focus(order: Array[int]) -> void:
 	var count := order.size()
 	for index in count:
@@ -594,7 +638,7 @@ func _link_filter_focus(order: Array[int]) -> void:
 		button.focus_previous = button.focus_neighbor_left
 
 
-## ↑/↓ on a kind scroll the page instead of leaving the row of kinds: the rows are text,
+## ↑/↓ on a tab scroll the page instead of leaving the tab strip: the rows are text,
 ## not things to focus, so scrolling is the only thing up and down can mean here.
 func _on_filter_gui_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_down") or event.is_action_pressed(&"ui_up") \

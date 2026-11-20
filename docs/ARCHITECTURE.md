@@ -686,6 +686,14 @@ neither the log nor the flags.
   appear in the order their first entry was learned and rows keep the log's order. The
   four kinds can be filtered, each with a one-line caveat on what it can be trusted for.
   Someone else's account is attributed ("Q said so").
+- **Compare, not resolve.** `data/story/notebook_comparisons.json` lists authored pairs
+  (`id`, `left` and `right` entry ids). `JournalCatalog` validates both entries and the
+  `journal.comparison.<id>.title` and `.question` labels in every locale. `JournalPage`
+  counts and exposes a pair only when both ids are in the current log, regardless of
+  learning order. The Compare tab gives both notes their original badges, places and
+  attributions, followed by an open question. Neither an incomplete pair nor its
+  question is displayed. No new flag, save field, or answer is produced; Continue
+  rebuilds the view from the same saved knowledge.
 - **Route line.** `JournalRoute` (`scripts/narrative/journal_route.gd`) lists the places
   this run has reached from flags the story already keeps — the start location, a
   location's `arrival_flags`/`arrival_flag` from `data/story/locations.json`, the
