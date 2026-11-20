@@ -15370,7 +15370,7 @@ mesh = SubResource("BoxMesh_art549")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
-[node name="PivotHead" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
+[node name="PivotHead0" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
 position = Vector3(-0.73, 0.39, 0.24)
 mesh = SubResource("BoxMesh_art550")
 material_override = ExtResource("art_exit_steel")
@@ -15432,7 +15432,7 @@ mesh = SubResource("BoxMesh_art549")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
-[node name="PivotHead" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
+[node name="PivotHead1" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
 position = Vector3(0, 0.39, 0.24)
 mesh = SubResource("BoxMesh_art550")
 material_override = ExtResource("art_exit_steel")
@@ -15494,7 +15494,7 @@ mesh = SubResource("BoxMesh_art549")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
-[node name="PivotHead" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
+[node name="PivotHead2" type="MeshInstance3D" parent="GroundFloor/EndWall/BellRegister"]
 position = Vector3(0.73, 0.39, 0.24)
 mesh = SubResource("BoxMesh_art550")
 material_override = ExtResource("art_exit_steel")

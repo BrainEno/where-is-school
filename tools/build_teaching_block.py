@@ -882,7 +882,7 @@ def service_controls(b):
         b.box("Frame", plate, (0, 0, 0), (.61, .66, .046), "gallery_frame", shadow=True)
         b.box("Front", plate, (0, 0, .035), (.53, .56, .025), "office_sage")
         b.box("Reverse", plate, (0, 0, -.034), (.53, .56, .022), "arch_chalk")
-        b.box("PivotHead", p, ((i-1)*.73, .39, .24), (.082, .12, .24), "exit_steel")
+        b.box(f"PivotHead{i}", p, ((i-1)*.73, .39, .24), (.082, .12, .24), "exit_steel")
         for j in range(3):
             b.box(f"RegisterLine{j}", plate, (.025*j, .13-.12*j, .054),
                   (.31-.047*j, .018, .01), "directory_black")
