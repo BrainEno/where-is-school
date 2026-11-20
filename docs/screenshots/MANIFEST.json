@@ -32,8 +32,8 @@
       "file": "01_opening_line.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -41,7 +41,7 @@
         1600,
         900
       ],
-      "sha256": "ad9039cde5c20e36811cae91770126ad961f741a05b721f3cb12a9bdb347d2cc",
+      "sha256": "abb33590ca29f57376a59b730a723e27bf28808202b0603898dca767d6487032",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -49,7 +49,7 @@
         "locale": "en",
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
-        "text": "Enjoy your nap, did you?"
+        "text": "So? Good nap? Have any sweet dreams?"
       }
     },
     {
@@ -1049,8 +1049,8 @@
       "file": "ui-dialogue-1280x720-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1058,7 +1058,7 @@
         1280,
         720
       ],
-      "sha256": "7a07053c3a3dab6c9fcc0aba0089312d5d38e5e05d374f5ff3671ad88c594c29",
+      "sha256": "6e9135d7c8fb2cc2826a920fa79b8456478d46600ac74c9383d6a7c395120eea",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1066,15 +1066,15 @@
         "locale": "en",
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
-        "text": "Enjoy your nap, did you?"
+        "text": "So? Good nap? Have any sweet dreams?"
       }
     },
     {
       "file": "ui-dialogue-1280x720-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1082,7 +1082,7 @@
         1280,
         720
       ],
-      "sha256": "a6fb58110e6f961aef914b20d9061a58e60fb28c4816869c90e0219dff44c282",
+      "sha256": "46ceb8f2f720b28908189b1395265af2b0504a41ed7510c2a8f7617355c212a4",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1090,15 +1090,15 @@
         "locale": "zh-CN",
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
-        "text": "你刚才睡得还挺好啊。"
+        "text": "怎么样？刚才睡爽了吧，做了什么美梦？"
       }
     },
     {
       "file": "ui-dialogue-1600x900-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1106,7 +1106,7 @@
         1600,
         900
       ],
-      "sha256": "676380a3200d8e79ee89a2b66dad672356aee8953b931e08adb8628d3a2cfa9d",
+      "sha256": "7298ecdd695e3c34affa0df8fe01f55a8b5c0d1952639f6c6ce7efb3d28c5144",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1114,15 +1114,15 @@
         "locale": "en",
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
-        "text": "Enjoy your nap, did you?"
+        "text": "So? Good nap? Have any sweet dreams?"
       }
     },
     {
       "file": "ui-dialogue-1600x900-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1130,7 +1130,7 @@
         1600,
         900
       ],
-      "sha256": "f26e80796d71994395547bdd51ee2695977646cdccf603ad1d8eb600f0f8d7a7",
+      "sha256": "52ef2688aaad5925b3646484ba65dc63018e6f6708234c74a720318eb6aa8ed5",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1138,15 +1138,15 @@
         "locale": "zh-CN",
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
-        "text": "你刚才睡得还挺好啊。"
+        "text": "怎么样？刚才睡爽了吧，做了什么美梦？"
       }
     },
     {
       "file": "ui-dialogue-1920x1080-en.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1154,7 +1154,7 @@
         1920,
         1080
       ],
-      "sha256": "cbbd3ffdde6f17684693ca4488027b4fdf9684cd5d93cb26a412fd939dd70a6d",
+      "sha256": "103e1a47acc674a27929c45bb0ab969c8c669fab87fd451040a7f96a696c0829",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1162,15 +1162,15 @@
         "locale": "en",
         "node": "q_1",
         "source": "data/dialogue/en/prologue.json",
-        "text": "Enjoy your nap, did you?"
+        "text": "So? Good nap? Have any sweet dreams?"
       }
     },
     {
       "file": "ui-dialogue-1920x1080-zh.jpg",
       "status": "current",
       "captured": {
-        "commit": "5e00c6223a15f3c71484123a4e23642157344cb3",
-        "run_id": 44672222712,
+        "commit": "a5256f42269d699f3eee0565cdff344a0f95189a",
+        "run_id": 44782238644,
         "workflow": "Playthrough capture",
         "godot": "4.7.2"
       },
@@ -1178,7 +1178,7 @@
         1920,
         1080
       ],
-      "sha256": "a9c2cdd2d588efb0fd99c45e3ecbecf533961c6758480eaefa082e03082a39c3",
+      "sha256": "2052c78731e8f26806957ec44508d2de6298cc5ff06fc43c22967609cb71342e",
       "ui_fingerprint": "5b919083c9dec35f",
       "shows": {
         "conversation": "q_wake",
@@ -1186,7 +1186,7 @@
         "locale": "zh-CN",
         "node": "q_1",
         "source": "data/dialogue/zh-CN/prologue.json",
-        "text": "你刚才睡得还挺好啊。"
+        "text": "怎么样？刚才睡爽了吧，做了什么美梦？"
       }
     },
     {
