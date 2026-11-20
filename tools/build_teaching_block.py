@@ -716,7 +716,12 @@ def room_portal(b, parent, name, pos, yaw, scene, trim, plaster):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     path = child_path(parent, name)
     b.instance("Door", path, scene, (0, 0, 0))
-    head = b.shell("WallHead", path, (0, 2.36, 0), groups=("camera_occluder",))
+    # On these east wall inserts the follow camera looks over the back of the
+    # leaf. Cut the header and Panel together: fading just the header can still
+    # leave the leaf hiding the separate, hall-facing registration slide.
+    shared_cutaway = scene in (PROJECTION.id, VACANT.id)
+    head = b.shell("WallHead", f"{path}/Door/Panel" if shared_cutaway else path,
+                   (0, 2.36, 0), groups=() if shared_cutaway else ("camera_occluder",))
     b.shape("Solid", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22))
     b.box("Face", head, (0, 0.345, 0), (ROOM_PORTAL_WIDTH, 0.69, 0.22), plaster)
     b.box("Header", head, (0, 0.064, 0.112), (ROOM_PORTAL_WIDTH+0.012, 0.13, 0.082), trim)

@@ -59,6 +59,8 @@ leaves it shut and the matching marks release it without another roll. The game 
 the `check:align_<room>:bearing` record and `annex.<room>.aligned` flag. Going inside
 uses an ordinary `LocationExit` once released; the special surfaces and inspection are
 only in the separately loaded room. None changes the objective or the story route.
+At the two east-wall inserts (projection and borrowed office), the leaf and lintel
+fade together under the follow camera so the slide stays visible when facing it.
 Each return is unconditional and lands outside its own door. The original staff office
 retains its rota, trays and hook, and remains unstaffed.
 
@@ -70,7 +72,7 @@ retains its rota, trays and hook, and remains unstaffed.
 godot --path . res://scenes/dev/school_room_tour.tscn
 ```
 
-屏幕左上角出现 `ROOM ART TOUR / NO STORY SAVE`，人物站在 **01 的双 01 玻璃门外**。走进大门，用 **E 面向把手**或**点把手**进房；进去后也用原门返回。试玩不读写剧情存档，只放开本次六个校准入口；门上的拨片仍可看，但试玩不用拨。正常运行（F5）和发行包没有这个入口，仍用原有校准规则；教师办公室和三个厕所本来就直通。退出试玩可直接关闭窗口或停止当前场景。
+屏幕左上角出现 `ROOM ART TOUR / NO STORY SAVE`，人物站在 **01 的双 01 玻璃门外**。走进大门，用 **E 面向把手**或**点把手**进房；进去后也用原门返回。试玩不读写剧情存档，只放开本次六个校准入口；门上的拨片仍可看，但试玩不用拨。正常运行（F5）和发行包没有这个入口，仍用原有校准规则；教师办公室和三个厕所本来就直通。试玩的暂停页不会显示现有剧情存档，也没有「新游戏」或「保存退出」。退出试玩可直接关闭窗口或停止当前场景。
 
 | 房间 | 沿走廊怎么找 | 到了先看哪里 |
 |---|---|---|

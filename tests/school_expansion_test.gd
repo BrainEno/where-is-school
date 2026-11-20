@@ -84,6 +84,7 @@ func _run_tour() -> void:
 				"The tour did not start at the real entrance.")
 			_check.expect(not _state.get_flag(sentinel, false) and not _save.has_save() and _save.writes_suspended(),
 				"The tour exposed or restored the pre-existing story save.")
+			await _check_tour_pause()
 			_check_connected_landings()
 			await _visit_tour()
 	_check.expect(not before.is_empty() and before == FileAccess.get_file_as_bytes(SaveFileStore.SAVE_PATH),
@@ -91,7 +92,31 @@ func _run_tour() -> void:
 	_save.io = null
 	_save.suspend_writes(false)
 	_save.forget_all()
-	await _finish("dev entrance, physical route into the recess, six open studies, public office/WC, no story writes.")
+	await _finish("dev entrance, physical route into the recess, six open studies, public office/WC, isolated pause and saves.")
+
+
+func _check_tour_pause() -> void:
+	var pause := _main.get_node(^"PauseMenu") as PauseMenu
+	_tap_action(&"pause")
+	if _check.expect(await Harness.wait_until(pause.is_open, 2.0), "The tour could not open its pause menu."):
+		_check.expect(pause.get_entry(&"resume").is_visible_in_tree()
+			and not pause.get_entry(&"new_game").is_visible_in_tree()
+			and not pause.get_entry(&"save_quit").is_visible_in_tree()
+			and pause.get_status_text() == L10n.t("menu.no_save_yet"),
+			"Pausing exposed the live save or a story session command.")
+		_tap_action(&"pause")
+		_check.expect(await Harness.wait_until(func() -> bool: return not pause.is_open() and not paused, 2.0),
+			"Could not resume the tour after pausing.")
+		# Keep cleanup and the other tour assertions useful even if the key did not close it.
+		pause.close()
+
+
+func _tap_action(action: StringName) -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		Input.parse_input_event(event)
 
 
 func _visit_tour() -> void:
@@ -236,8 +261,10 @@ func _study(id: StringName, marker: StringName, success: bool, observation_stanc
 	var slide := hall.find_interactable(route)
 	if not _check.expect(door != null and slide != null and not door.is_open(), "Fresh %s was open or incomplete." % id):
 		return false
-	var toward_hall := (feet - door.global_position) * Vector3(1, 0, 1)
-	var slide_stance := Vector3(slide.global_position.x, feet.y, slide.global_position.z) + toward_hall.normalized() * 1.05
+	# The return marker faces out of the portal. The lever anchor is offset
+	# along the leaf, so the vector from it would skew the stance sideways.
+	var toward_hall := -hall.get_spawn(marker).global_basis.z
+	var slide_stance := Vector3(slide.global_position.x, feet.y, slide.global_position.z) + toward_hall * 1.05
 	var record_key := StoryFlags.check_record_flag(route, &"bearing")
 	if not await _show_choices(slide, slide_stance, route, id == &"archive"):
 		return false
@@ -258,7 +285,8 @@ func _study(id: StringName, marker: StringName, success: bool, observation_stanc
 	# seeds the single real resolver; it does not inject the outcome flag.
 	if not _set_die(String(route)+"/bearing", 11 if success else 4):
 		return false
-	if not await _show_choices(slide, slide_stance, route) or not _choose(&"check") or not await _close():
+	if not await _show_choices(slide, slide_stance, route, id in [&"projection_room", &"vacant_office"]) \
+		or not _choose(&"check") or not await _close():
 		return false
 	if not _check.expect(_rolls.size() == roll_count+1, "No unique roll for %s." % id):
 		return false
@@ -363,6 +391,7 @@ func _use(target: Interactable, stance: Vector3, via_mouse: bool) -> bool:
 	_player.face_toward(target.global_position - stance)
 	_player.camera_rig.snap()
 	if via_mouse:
+		var id := target.interact_id
 		var camera := _player.camera_rig.camera
 		var mesh := target.get_outline_meshes()[0] as MeshInstance3D
 		var screen := camera.unproject_position(mesh.to_global(mesh.get_aabb().get_center()))
@@ -370,18 +399,21 @@ func _use(target: Interactable, stance: Vector3, via_mouse: bool) -> bool:
 			return _ic.get_target_at_screen_position(screen, false) == target, 3.0),
 			"No pointer target %s from %s." % [target.interact_id, stance]):
 			return false
-		_pointer.click_at_screen_position(screen)
-		return _check.expect(_pointer.was_last_click_accepted(), _pointer.get_last_rejection())
+		var clicks := _pointer.get_world_click_event_count()
+		for pressed: bool in [true, false]:
+			var event := InputEventMouseButton.new()
+			event.button_index = MOUSE_BUTTON_LEFT
+			event.position = screen
+			event.global_position = screen
+			event.pressed = pressed
+			Input.parse_input_event(event)
+		return _check.expect(await Harness.wait_until(func() -> bool:
+			return _pointer.get_world_click_event_count() == clicks + 1, 1.5) and _pointer.was_last_click_accepted(),
+			"World click for %s was not accepted: %s" % [id, _pointer.get_last_rejection()])
 	if not _check.expect(await Harness.wait_until(func() -> bool: return _ic.get_current_target() == target, 3.0),
 		"No E target %s from %s; got %s." % [target.interact_id, stance, _ic.get_current_target()]):
 		return false
-	var press := InputEventAction.new()
-	press.action = &"interact"
-	press.pressed = true
-	Input.parse_input_event(press)
-	var release := InputEventAction.new()
-	release.action = &"interact"
-	Input.parse_input_event(release)
+	_tap_action(&"interact")
 	return true
 
 

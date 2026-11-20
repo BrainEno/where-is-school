@@ -51,6 +51,9 @@ func _start() -> void:
 	pause.get_entry(&"save_quit").hide()
 	world.get_node(^"InnerVoiceDirector").set_process(false)
 
+	# Main still mounts its default classroom with autostart off. Let that room's
+	# deferred nav bake and chair binding run before the host detaches it.
+	await get_tree().process_frame
 	var player := world.get_node(^"Player") as PlayerController
 	player.set_wake_pose(0.0)
 	player.set_camera_roll(0.0)

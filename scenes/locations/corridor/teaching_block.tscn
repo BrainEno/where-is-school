@@ -14575,41 +14575,41 @@ rotation_degrees = Vector3(0, -90, 0)
 [node name="Door" parent="GroundFloor/ProjectionRoomPortal" instance=ExtResource("projection_room")]
 position = Vector3(0, 0, 0)
 
-[node name="WallHead" type="StaticBody3D" parent="GroundFloor/ProjectionRoomPortal" groups=["camera_occluder"]]
+[node name="WallHead" type="StaticBody3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel"]
 position = Vector3(0, 2.36, 0)
 rotation_degrees = Vector3(0, 0, 0)
 collision_layer = 1
 collision_mask = 0
 
-[node name="Solid" type="CollisionShape3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="Solid" type="CollisionShape3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.345, 0)
 shape = SubResource("BoxShape3D_art294")
 
-[node name="Face" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="Face" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.345, 0)
 mesh = SubResource("BoxMesh_art295")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Header" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="Header" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.064, 0.112)
 mesh = SubResource("BoxMesh_art296")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
-[node name="DoorLightTray" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="DoorLightTray" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.37, 0.32)
 mesh = SubResource("BoxMesh_art297")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
-[node name="DoorLightTube" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="DoorLightTube" type="MeshInstance3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.323, 0.32)
 mesh = SubResource("BoxMesh_art298")
 material_override = SubResource("Mat_lamp_tube")
 cast_shadow = 0
 
-[node name="DoorLight" type="OmniLight3D" parent="GroundFloor/ProjectionRoomPortal/WallHead"]
+[node name="DoorLight" type="OmniLight3D" parent="GroundFloor/ProjectionRoomPortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.16, 0.32)
 light_color = Color(1, 0.83, 0.64, 1)
 light_energy = 0.45
@@ -14855,41 +14855,41 @@ rotation_degrees = Vector3(0, -90, 0)
 [node name="Door" parent="LowerFloor/VacantOfficePortal" instance=ExtResource("vacant_office")]
 position = Vector3(0, 0, 0)
 
-[node name="WallHead" type="StaticBody3D" parent="LowerFloor/VacantOfficePortal" groups=["camera_occluder"]]
+[node name="WallHead" type="StaticBody3D" parent="LowerFloor/VacantOfficePortal/Door/Panel"]
 position = Vector3(0, 2.36, 0)
 rotation_degrees = Vector3(0, 0, 0)
 collision_layer = 1
 collision_mask = 0
 
-[node name="Solid" type="CollisionShape3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="Solid" type="CollisionShape3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.345, 0)
 shape = SubResource("BoxShape3D_art294")
 
-[node name="Face" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="Face" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.345, 0)
 mesh = SubResource("BoxMesh_art295")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Header" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="Header" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.064, 0.112)
 mesh = SubResource("BoxMesh_art296")
 material_override = SubResource("Mat_night_blue")
 cast_shadow = 0
 
-[node name="DoorLightTray" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="DoorLightTray" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.37, 0.32)
 mesh = SubResource("BoxMesh_art297")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
-[node name="DoorLightTube" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="DoorLightTube" type="MeshInstance3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.323, 0.32)
 mesh = SubResource("BoxMesh_art298")
 material_override = SubResource("Mat_lamp_tube")
 cast_shadow = 0
 
-[node name="DoorLight" type="OmniLight3D" parent="LowerFloor/VacantOfficePortal/WallHead"]
+[node name="DoorLight" type="OmniLight3D" parent="LowerFloor/VacantOfficePortal/Door/Panel/WallHead"]
 position = Vector3(0, 0.16, 0.32)
 light_color = Color(1, 0.83, 0.64, 1)
 light_energy = 0.45
