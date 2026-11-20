@@ -36,16 +36,6 @@ const PANEL_MAX_WIDTH := 940.0
 const OUTER_MARGIN := 40.0
 const SCROLL_STEP := 72.0
 
-## The notebook's colours for the four kinds, so a kind looks the same wherever it is
-## named. The values live in `Palette`, which is the project's one palette: the HUD reads
-## this table instead of writing the bone literal a second time (issue #210).
-const SOURCE_COLORS: Dictionary = {
-	NarrativeEntry.Source.OBSERVED: Palette.SOURCE_OBSERVED,
-	NarrativeEntry.Source.REPORTED: Palette.SOURCE_REPORTED,
-	NarrativeEntry.Source.RECALLED: Palette.SOURCE_RECALLED,
-	NarrativeEntry.Source.IMAGINED: Palette.SOURCE_IMAGINED,
-}
-
 var _factor := 1.0
 var _panel: PanelContainer = null
 var _outer: MarginContainer
@@ -554,7 +544,7 @@ func _scroll_to_first_new() -> void:
 
 
 static func _source_color(source: int) -> Color:
-	return SOURCE_COLORS.get(source, MenuStyle.PAPER)
+	return Palette.source_accent(NarrativeEntry.source_to_id(source))
 
 
 static func _filter_slug(filter: int) -> String:

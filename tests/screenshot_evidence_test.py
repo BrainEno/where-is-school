@@ -391,12 +391,18 @@ def fingerprint_matches_the_game() -> None:
         root = Path(folder)
         (root / "scenes/ui").mkdir(parents=True)
         (root / "scenes/ui/dialogue_panel.tscn").write_bytes(b"scene")
+        (root / "scripts/theme").mkdir(parents=True)
+        palette = root / "scripts/theme/palette.gd"
+        palette.write_bytes(b"palette")
         joined = (
             "scenes/ui/dialogue_panel.tscn\n" + hashlib.sha256(b"scene").hexdigest() + "\n"
             "scripts/ui/dialogue_panel.gd\nmissing\n"
+            "scripts/theme/palette.gd\n" + hashlib.sha256(b"palette").hexdigest() + "\n"
         )
         expected = hashlib.sha256(joined.encode()).hexdigest()[:16]
         expect(evidence.ui_fingerprint(root) == expected, "the fingerprint is not path, digest, newline, hashed again")
+        palette.write_bytes(b"new source ink")
+        expect(evidence.ui_fingerprint(root) != expected, "changing a source ink must stale reading-band evidence")
 
 
 # --- the relay -----------------------------------------------------------------------
