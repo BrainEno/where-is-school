@@ -72,6 +72,25 @@ python3 -m venv .venv
   基线缺失或无效是错误，不会用当前提交和自身比较。手动 dispatch 明确只输出盘点。
   测试用本地浅克隆实际执行工作流步骤，分别证明新增违规失败、合法变更通过、缺基线拒绝。
 
+### 大文件拆分记录（#223）
+
+按职责拆分，公开接口、信号、常量和测试接缝保持原名；原文件里的方法改为一行转发，
+测试和场景不需要改动。拆分后各文件均在 600 行以内：
+
+| 原文件 | 拆出 | 留在原处 |
+|---|---|---|
+| `scripts/autoload/save_manager.gd` | `SaveFileStore`：校验写入、不删旧档的替换、暂存、中断恢复、隔离副本 | 载荷、校验与应用、何时允许写、结果与信号；测试仍通过 `Save.io` 注入故障 |
+| `scripts/autoload/settings_manager.gd` | `InputBindings`：事件编码/名称、共享键、存档列表校验、改键检查；`SettingsOutputs`：音量到总线、界面缩放 | 设置状态、文件读写、信号；旧常量与静态函数以原名转出 |
+| `scripts/world/opening_sequence.gd` | `PrologueSteps`（步骤与证明旗标）、`PrologueBeats`（各节拍）、`QIntroApproach`（Q 走到桌前）、`OpeningSave`（检查点与开机恢复）、`OpeningInteractions`（交互路由） | 节拍锁、玩家锁、对话播放、故事时钟、`_beat_*` 等测试入口 |
+| `addons/narrative_editor/core/narrative_file_writer.gd` | 继承链三层：`narrative_file_primitives.gd`（文件系统接缝、校验移动）→ `narrative_file_cleanup.gd`（隔离、清理、隔离区）→ 本文件（事务） | 外部仍只 preload 本文件；测试子类覆盖的接缝对三层都生效 |
+
+`ActorPresence`（#213）是 Q/N/B 三个 presence 共用的骨架：信号连接、房间角色查找、旗标读取；
+何时出现、站在哪里仍由各自子类决定。
+
+**例外：`scripts/ui/dialogue_panel.gd`。** 仍超过 600 行。#223 要求它在 F-004（界面设计令牌/
+调色板，#210）之后拆分（布局测量 / 选项 / 肖像），而该工作正由另一位代理在同一文件上进行；
+现在拆会与之冲突。门禁照常对它的增长告警，F-004 合并后再拆。
+
 相邻守卫继续由 Godot CI 调用：`check_ui_literals.py` 按文件和完整 RGBA 约束每一次沿用的
 界面字面量；跨行构造、同一行的额外色值和改写旧色都会被识别。白/黑过渡端点与命名色不拦截，
 不更改任何现有画面；`check_ui_palette.py`、引擎版本与用例注册检查保持原职责。
