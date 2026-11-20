@@ -26,7 +26,7 @@ Root
 - Existing deform meshes and their vertex weights are retained; limb vertex groups are renamed to humanoid names.
 - Added Hips/Chest/UpperChest/Shoulder bones are non-deforming hierarchy pivots.
 - The unparented helper mesh (if present) is retained in the .blend but excluded from the exported character GLB.
-- No animation is baked or copied. Import the Godot-ready Quaternius animation library separately and retarget it in Godot.
+- No animation is baked or copied. The formerly separate Quaternius animation experiment has been retired; this rig is still used by the first-party preview and character animation tests.
 - Do not replace the production `assets/models/protagonist/protagonist.glb` until the Godot import and playback test passes.
 
 ## Warnings

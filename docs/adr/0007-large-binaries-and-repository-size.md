@@ -148,11 +148,10 @@ Three items the issue names, with what is true today:
    exactly sample-length so the seam measured by that script and asserted by
    `tests/music_test.gd` does not become audible. That is an audio pass with the engine in
    the loop, not a format swap in a repository-hygiene pull request.
-2. **`scenes/dev/animation_retarget_test/protagonist_ual.res`** (0.96 MiB) is a baked
-   animation library that `.github/workflows/bake-animation-retarget.yml` regenerates; it is
-   under the ceiling, so nothing forces a decision, but by rule 2 it should either be
-   committed-and-checked or not committed at all. It belongs with whoever finishes the
-   animation retargeting work.
+2. **`scenes/dev/animation_retarget_test/protagonist_ual.res`** was the development-only
+   bake of the third-party library. The [#64 retirement](../ASSET_LICENSE_AUDIT.md) removes
+   it, its source GLB and the dedicated bake from the current tree. The earlier size
+   measurements above describe the audit snapshot; deleting files does not purge history.
 3. **The 4K model's blob in history** — see "Consequences", last bullet.
 
 ## Revisit when

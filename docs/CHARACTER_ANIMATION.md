@@ -409,13 +409,13 @@ crop. The real routes and controller timing are asserted by the tests below.
   `main.tscn` views at the fixed task base and current head, using one camera script,
   plus a real route walk sequence. See [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md).
 
-The separate `ual_retarget` check still verifies the 42 Universal Animation Library clips
-baked onto the development protagonist (the library ships 43; `A_TPose` is a rest pose and
-is skipped). That library and its baked resource remain development-only; the game uses the
-project-authored clips above. Its licence is recorded in
-`docs/ASSET_PROVENANCE.md` — CC0 1.0 on every channel that distributes the pack — together
-with the note there about Quaternius's site-wide licence and the decision to keep it out of
-every build.
+The Universal Animation Library (UAL), its baked library and the dedicated bake/preview
+have been retired from the current tree (#64). Neither the game nor the first-party preview
+above used them. `tests/animation_retarget_test.gd` now checks the generic retarget algorithm
+with two synthetic rigs and original test clips: semantic mapping, target track paths, actual
+movement and preservation of rotation changes relative to each rest pose. The separate
+production animation tests above still run. See the [asset audit](ASSET_LICENSE_AUDIT.md)
+for the licence history and the distinction between removal and clearance.
 
 ## Remaining limitations
 

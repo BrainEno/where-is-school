@@ -444,8 +444,7 @@ def this_repository() -> None:
     check(code == 0, f"the repository's own workflows must pass:\n{out}")
     uses, _ = pins.audit(pins.ROOT)
     files = {u.path for u in uses}
-    for name in ("godot-ci.yml", "playthrough-capture.yml", "bake-animation-retarget.yml",
-                 "release.yml"):
+    for name in ("godot-ci.yml", "playthrough-capture.yml", "mobile-tooling.yml", "release.yml"):
         check(f".github/workflows/{name}" in files, f"{name} was not scanned")
     release = {u.repository: (u.ref, u.version) for u in uses
                if u.path.endswith("release.yml") and not u.is_local}

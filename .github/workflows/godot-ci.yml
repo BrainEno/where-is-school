@@ -505,11 +505,9 @@ jobs:
           # The approved replacement Q: imported skin/morph/material paths, native hands,
           # reset-complete cross-state tracks and the real dialogue presentation.
           run_check q_model 240 godot --headless --resolution 1600x900 --path . --script res://tests/q_model_test.gd || status=1
-          # The animation library retargeted onto the protagonist: the bones pair up, the
-          # baked clip actually moves the character, and the retarget is rest-relative (the
-          # source's rotation change and the target's are the same rotation). Then the
-          # committed library the dev scene loads is checked the same way.
-          run_check ual_retarget 420 godot --headless --path . --script res://tests/ual_retarget_test.gd || status=1
+          # Synthetic rigs exercise semantic mapping and rest-relative playback without
+          # importing third-party motion or keeping a committed bake in the tree.
+          run_check animation_retarget 45 godot --headless --path . --script res://tests/animation_retarget_test.gd || status=1
           run_check playground_flow 420 godot --headless --path . --script res://tests/playground_flow_test.gd || status=1
           run_check free_period 180 godot --headless --path . --script res://tests/free_period_test.gd || status=1
           run_check subjective_isolation 180 godot --headless --path . --script res://tests/subjective_isolation_test.gd || status=1

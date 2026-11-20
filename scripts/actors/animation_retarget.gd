@@ -4,16 +4,10 @@ extends RefCounted
 ## resources with this character's bone names — so the result can be scrubbed in the editor's
 ## animation panel, not only watched at runtime.
 ##
-## The characters and the animation library name their bones three different ways:
-##
-##   Universal Animation Library   root, pelvis, spine_01..03, upperarm_l, lowerarm_l, calf_l
-##   protagonist (retargeted)      Root, Hips, Spine, Chest, LeftUpperArm, LeftLowerArm, …
-##   protagonist (production)      Root, Spine, Neck_2, UpperArm.L, LowerArm.L, Shin.L, …
-##
 ## `CharacterAnimation.resolve_rig()` already answers "which bone on this rig is the upper
-## arm", and its canonical names are the humanoid profile's (`LeftUpperArm`, `LeftUpperLeg`,
-## `Hips`, …) — which is exactly what the `BoneMap` in both `.import` sidecars says. So the
-## pairing is the intersection of the two resolutions, and every pair is reported.
+## arm" (for example, `upperarm_l` and `LeftUpperArm` resolve to the same semantic name).
+## The pairing is the intersection of the two resolutions, and every pair is reported.
+## This utility does not load any source assets; its test supplies both rigs and clips.
 ##
 ## Retargeting is rest-relative, in skeleton space: for each pair, take the source bone's
 ## rotation *change* since its rest pose, apply it to the target bone's rest rotation, and
@@ -55,9 +49,8 @@ static func map_bones(source: Skeleton3D, target: Skeleton3D) -> Dictionary:
 ##
 ## `skeleton_path` is the target skeleton's path *relative to the node that will play the
 ## result*, so `"Skeleton3D:UpperChest"` means the right bone on the right character. `fps`
-## is the sampling rate; the source clips key at 30 fps and are re-sampled onto a fixed grid,
-## which keeps every clip's keys at the same times regardless of which channels the source
-## happened to animate.
+## sets a fixed sampling grid so all tracks in the output share key times, regardless of
+## the timing or channels in the source.
 static func bake(
 	source: Skeleton3D,
 	player: AnimationPlayer,
