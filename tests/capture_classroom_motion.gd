@@ -246,7 +246,13 @@ func _capture_dressing() -> void:
 	if await _wait(func() -> bool: return absf(paper.rotation.x) < 0.0001, "the paper's rest"):
 		var rest := paper.to_global(bottom)
 		await _shot("09_timetable_still")
-		if await _wait(func() -> bool: return paper.rotation_degrees.x > 3.2, "a draft at the timetable", 13.0):
+		# The draft follows the game clock. Let that clock advance without a full
+		# software-rendered frame on every wait tick; neither pose is forced.
+		var was_rendering := RenderingServer.render_loop_enabled
+		RenderingServer.render_loop_enabled = false
+		var draft := await _wait(func() -> bool: return paper.rotation_degrees.x > 3.2, "a draft at the timetable", 13.0)
+		RenderingServer.render_loop_enabled = was_rendering
+		if draft:
 			var travel := rest.z - paper.to_global(bottom).z
 			_check.expect(travel > 0.035 and travel < 0.055, "Timetable lift is not a bounded lift into the room.")
 			_check.expect(paper.to_global(pin).distance_to(clip.global_position) < 0.001,
