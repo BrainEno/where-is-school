@@ -21,8 +21,12 @@ decision, and this pipeline round is not allowed to make one.
 
 ## 1. The model contract
 
-A runtime model is one `.glb` file and nothing else. Lightmaps, `.blend` files, and
-texture sources stay out of `assets/`; the runtime file is a build artefact.
+An imported runtime model is one `.glb` file and nothing else. Lightmaps, `.blend`
+files, and texture sources stay out of `assets/`; the runtime file is a build artefact.
+The yard resident is built in-repository as a native scene, not imported: its rigid
+joints each draw one vertex-painted surface, reuse the `NpcActor` placement API and
+carry no images, skeleton importer, collision or navmesh. See the [yard art build
+notes](../scenes/environment/props/playground_art/README.md) for the editable source.
 
 | Rule | Why |
 |---|---|

@@ -374,6 +374,27 @@ the repository depends on their content.
 | `notebook_comparisons.json` | The "wooden set square" pair was removed with its right half (`q_set_square_use`). The author may add a new set-square pair once a new note exists. |
 | `prologue.json` options without a reply (`q_wake` `q_who_look`, `q_ecosystem`; `q_after_bag` `q_sq_2`; `n_class` `n_8` `ecosystem`/`zygote`) | The author wrote the options but not yet what follows them. Until then each keeps only its mechanics (a camera look, a branch, the rear-door attempt) and continues to the author's next line; no reply is written for them. |
 
+### Container resident — lines and choices not yet in the game
+
+The roof impact wakes the resident, who collects scrap and sleeps on the existing
+bedding. The scene stops at him coming to the doorway and looking up;
+`classroom_fall_landing` is unchanged. No new portrait, interaction prompt, spoken
+line or choice text is in either locale.
+
+Draft the exchange against **two independent inputs**: the completed landing
+(`curtain_landing_injured` is `false` for a braced drop, `true` for the slip) and the
+player's reply. An absent outcome is a normal yard visit, not a braced drop.
+
+| Landing | De-escalating / respectful reply | Dismissive / hostile reply |
+|---|---|---|
+| Braced | An ordinary exchange is available. | It may still turn into an argument. |
+| Injured | A calm reply and a way to keep talking are still available. | Offer more reactive replies; it should take less to start an argument, not happen automatically. |
+
+The author supplies the resident's opening, the choices and the replies for both
+outcomes, and decides where a normal exchange or an argument ends. Once approved,
+use the existing conversation conditions and choices. Test both attitudes after
+both landings, and do not treat an ordinary gate arrival as an impact encounter.
+
 Working through this list is what the editor dock is for: both languages of one line are
 in front of you, the structure they have to keep is shown read-only beside them, and a
 save refuses to write a file that breaks it.

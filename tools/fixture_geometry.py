@@ -38,12 +38,16 @@ class Facets:
                 self.face(a[i], a[j], b[j], b[i])
         return self
 
-    def surface(self):
-        # Godot 4 ArrayMesh format v2 (1 << 35), POSITION | NORMAL | TANGENT | INDEX.
-        # The engine stores float32 positions followed by interleaved octahedral UNORM16 normals and tangents;
-        # indices below 65536 vertices are uint16. See RenderingServer::mesh_create_surface_data_from_arrays.
+    def surface(self, colors: bytes = b""):
+        # Godot 4 ArrayMesh format v2: POSITION | NORMAL | TANGENT | optional COLOR | INDEX.
+        # Positions are float32, normals/tangents octahedral UNORM16, colors RGBA8 in
+        # a separate stream, and indices uint16 below 65536 vertices.
         count = len(self.points)
         assert 3 <= count < 65536
+        if colors and len(colors) != count * 4:
+            raise ValueError("RGBA8 needs four bytes per vertex")
+        attributes = f'"attribute_data": {_packed(colors)},\n' if colors else ""
+        flags = (1 << 35) | 1 | 2 | 4 | (8 if colors else 0) | (1 << 12)
         origin = tuple(min(axis) for axis in zip(*self.points))
         size = tuple(max(axis)-lo for axis, lo in zip(zip(*self.points), origin))
         vertex = b"".join(struct.pack("<3f", *p) for p in self.points)
@@ -54,7 +58,8 @@ class Facets:
         return (
             '[{\n'
             f'"aabb": AABB({", ".join(f"{v:.7f}" for v in (*origin, *size))}),\n'
-            f'"format": {(1 << 35) | 1 | 2 | 4 | (1 << 12)},\n'
+            f'"format": {flags},\n'
+            f'{attributes}'
             f'"index_count": {len(self.indices)},\n'
             f'"index_data": {_packed(index)},\n'
             '"primitive": 3,\n'

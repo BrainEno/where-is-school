@@ -725,6 +725,7 @@ def build_playground(for_courtyard_view: bool = False):
     empty on purpose: that is the room later events and NPCs need.
     """
     s = Scene("Playground", "playground")
+    container_origin = (12, 0, -15.5)
     s.env = {
         'sky': 'Color(0.26, 0.22, 0.2, 1)',
         'ambient': 'Color(0.54, 0.46, 0.38, 1)',
@@ -857,7 +858,9 @@ def build_playground(for_courtyard_view: bool = False):
         s.props.extend([
             ("YardNoodleWrapper", "res://scenes/environment/props/playground_art/noodle_wrapper.tscn",
              (10.99, 0.51, 3.74), -14.0),
-            ("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", (12, 0, -15.5), 0),
+            ("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", container_origin, 0),
+            # Same origin, separate from the shell so occlusion fading never dissolves the resident.
+            ("RoofEncounter", "res://scenes/locations/playground/roof_encounter.tscn", container_origin, 0),
         ])
 
     s.interactables = [

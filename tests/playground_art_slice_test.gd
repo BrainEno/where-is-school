@@ -398,6 +398,14 @@ func _check_colour_system() -> void:
 			if material == null:
 				_failures.append("'%s' surface %d draws with no material." % [path, surface])
 				continue
+			if path.begins_with("RoofEncounter/Collector/Visual/"):
+				var paint := material as BaseMaterial3D
+				var mesh := mesh_instance.mesh as ArrayMesh
+				if paint == null or not paint.vertex_color_use_as_albedo or paint.albedo_texture != null \
+					or mesh == null or mesh.get_surface_count() != 1 \
+					or mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR == 0:
+					_failures.append("'%s' should be one painted surface with no image asset." % path)
+				continue
 			var resource_path := material.resource_path
 			if not (resource_path.begins_with(ART_MATERIALS) or resource_path.begins_with(SCENERY)):
 				_failures.append(
