@@ -19,6 +19,13 @@ The game should preserve uncertainty. Do not confirm that the world is a dream, 
 
 ## Opening sequence: Biology Class
 
+The owner has proposed an optional subjective-imagination sequence centered on B;
+its scene beats, choice directions and unresolved boundaries are recorded in
+[PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md](PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md).
+That proposal does not cancel the current opening fact that B is absent from the
+actual first lesson and N takes the class. Keep imagined events explicitly distinct
+from observed classroom events.
+
 The opening takes place in a classroom at the beginning of a final school term. The protagonist wakes at a desk with a headache and incomplete memory. The scene should not immediately identify itself as a flashback or explain why the protagonist is a student again.
 
 ### Scene beats
@@ -83,7 +90,7 @@ An initial choice may influence scene order and which evidence appears first. It
 The owner has confirmed the intended design roster and broad behavior (2026-11-11).
 The six core voices are:
 
-- **路感 (Orientation):** spatial relations, direction and spatial intuition.
+- **洞察 (Insight):** interprets subtext, inconsistencies, motives as hypotheses, and meanings that are not immediately explicit. It replaces the former 路感 (Orientation) design; spatial route-finding is no longer its defining function.
 - **细察 (Scrutiny):** observation, details and evidence.
 - **回声 (Echo):** memory, experience and associative recollection.
 - **臆想 (Imagination):** imagination, subconscious associations and speculative
@@ -91,11 +98,13 @@ The six core voices are:
 - **推演 (Inference):** logical analysis, deduction and causal reasoning.
 - **共鸣 (Resonance):** emotional attunement, empathy and interpersonal signals.
 
-This is a narrative design decision, not an implementation claim. **Only one
-provisional voice is currently implemented**: Orientation (路感), in
-`data/abilities/`. The ability registry, character profiles, dialogue runtime,
-dice core and passive director support multiple voices, but the other five are not
-yet shipped as content.
+This is a narrative design decision, not an implementation claim. The current
+runtime/data still contains the provisional Orientation (路感) implementation in
+`data/abilities/`; this documentation change does not rename or migrate that code.
+The owner has now directed the design to replace 路感 with 洞察 (Insight), so the
+implementation migration remains a separate follow-up. The ability registry,
+character profiles, dialogue runtime, dice core and passive director support
+multiple voices, but the other five are not yet shipped as content.
 
 Voices volunteer automatically when relevant scene details, events or interactions
 activate them. They are not primarily a player-operated skill menu. The player's
