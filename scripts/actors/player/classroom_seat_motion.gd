@@ -73,23 +73,24 @@ func sample_stand(t: float) -> void:
 
 ## A standing actor reaches from the flank, not from inside the tucked chair.
 ## Use the early brace of the existing sit with the feet planted on this mark.
-func pull_out(actor: Node3D) -> void:
+func pull_out(actor: Node3D, flank: float) -> void:
 	chair.start_slide()
 	var feet := actor.global_position
 	var tween := actor.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tween.tween_method(_sample_pull.bind(feet), 0.0, 1.0, PULL_SECONDS)
+	tween.tween_method(_sample_pull.bind(feet, flank), 0.0, 1.0, PULL_SECONDS)
 	await tween.finished
 	chair.snap_back()
 	_animator.release_sampled_action()
 
 
-func _sample_pull(t: float, feet: Vector3) -> void:
+func _sample_pull(t: float, feet: Vector3, flank: float) -> void:
 	var reach := smoothstep(0.0, 0.23, t) * (1.0 - smoothstep(0.73, 1.0, t))
 	if _animator.prologue_actions:
 		_animator.sample_action(SIT, 0.23 * reach)
 	else:
 		_animator.sample_action("get_up", 1.0 - 0.32 * reach)
-	var toward_chair := _visual.get_parent_node_3d().global_basis.inverse() * -chair.global_basis.x
+	var outside := chair.global_basis.x * flank
+	var toward_chair := _visual.get_parent_node_3d().global_basis.inverse() * -outside
 	_visual.position = Vector3.UP * (_standing - 0.24 * reach) + toward_chair * (0.08 * reach)
 	chair.sample_slide(smoothstep(0.23, 0.73, t))
 	for side: String in [".L", ".R"]:
@@ -97,11 +98,11 @@ func _sample_pull(t: float, feet: Vector3) -> void:
 		if leg != null:
 			var stance := (leg.skeleton.global_basis * leg.rest_end.origin).slide(Vector3.UP)
 			leg.plant_flat(feet + stance, -chair.global_basis.z, reach)
-	# The chair is on the actor's -X side in the room, so use the near arm
-	# instead of reaching across the torso as the backrest slides past.
-	var hand: Limb = _joints.get("hand.R")
+	# Both actors face -Z. Reach with the arm and rim on the flank being used;
+	# the sit/rise brace still uses the same corner of the seat for each actor.
+	var hand: Limb = _joints.get("hand.R" if flank > 0.0 else "hand.L")
 	if hand != null:
-		hand.hold_at(chair.backrest_grip_point(), chair.global_basis.x + 0.45 * chair.global_basis.z, reach)
+		hand.hold_at(chair.backrest_grip_point(flank), outside + 0.45 * chair.global_basis.z, reach)
 
 
 func sample_sit(t: float) -> void:

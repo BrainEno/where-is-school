@@ -23,7 +23,7 @@ extends SceneTree
 ## So this test loads the real scenes — `classroom.tscn`, `player.tscn`,
 ## `companion.tscn`, `npc_actor.tscn` — and checks what the player sees and bumps into.
 ## It does not photograph anything (that is `capture_playthrough.gd`) and it is not a
-## layout review: the twelve desks are required to still be where they were.
+## layout rework: the twelve original desks stay put, with one new seat for Q.
 ##
 ## Where a number could be read off the thing being tested, it is read rather than
 ## copied: the desk's top is measured on the instantiated desk, and the character's feet
@@ -43,14 +43,15 @@ const Q_CHARACTER := "res://scenes/environment/characters/q.tscn"
 const N_CHARACTER := "res://scenes/environment/characters/teacher_n.tscn"
 const NPC_ACTOR := "res://scenes/actors/npc/npc_actor.tscn"
 
-## All twelve student desks in the expanded classroom. Each imported model remains
-## registered with its wrapper and one collider; adding rows does not change desk scale.
+## The original grid and Q’s new desk. Each uses the same imported model and one
+## desk collider, so adding a seat does not change the scale of the furniture.
 const DESKS := {
 	"DeskA1": Vector3(-4.8, 0, -0.8),
 	"DeskA2": Vector3(-1.6, 0, -0.8),
 	"DeskA3": Vector3(1.6, 0, -0.8),
 	"DeskA4": Vector3(4.8, 0, -0.8),
 	"DeskB1": Vector3(-4.8, 0, 1.3),
+	"DeskQ": Vector3(-2.35, 0, 1.3),
 	"DeskB2": Vector3(-1.6, 0, 1.3),
 	"DeskB3": Vector3(1.6, 0, 1.3),
 	"DeskB4": Vector3(4.8, 0, 1.3),
@@ -127,7 +128,7 @@ func _run() -> void:
 
 	Harness.finish(
 		self, _failures,
-		"the twelve student desks are the imported model with one collider each, the "
+		"thirteen imported desks with one desk collider each, a narrow seam at the paired desks, the "
 		+ "stationery sits on the player's own desk, the player and Q both wear their "
 		+ "authored models with their feet on the floor, the grayboxes are retired, and "
 		+ "N keeps his."
@@ -151,6 +152,7 @@ func _check_classroom(holder: Node3D) -> void:
 	await process_frame
 
 	_check_student_desks(location)
+	_check_desk_pair(location)
 	_check_teacher_desk(location)
 	_check_stationery(location)
 
@@ -194,6 +196,21 @@ func _check_student_desks(location: Node3D) -> void:
 		_check_chair(desk_name, desk, model)
 
 
+## A measured seam: not touching, but not an aisle. Both desk tops are in the same row.
+func _check_desk_pair(location: Node3D) -> void:
+	var left := location.get_node_or_null(^"Furniture/DeskQ/Desk")
+	var right := location.get_node_or_null(^"Furniture/DeskB2/Desk")
+	if left == null or right == null:
+		return  # _check_student_desks reports the missing model.
+	var a := _subtree_aabb(left)
+	var b := _subtree_aabb(right)
+	var seam := b.position.x - a.end.x
+	if seam < 0.015 or seam > 0.06 or not is_equal_approx(a.position.z, b.position.z) \
+			or not is_equal_approx(a.end.y, b.end.y):
+		_failures.append("Q and the protagonist need parallel, level desktops with a small seam (%.3f m)." % seam)
+	print("DESKMATES desktop_seam=%.3f m" % seam)
+
+
 ## The desk the classroom draws is the imported model, and the only solid part of the
 ## desk is that model's own wrapper: one body, one box, the size of the desk.
 func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
@@ -215,8 +232,8 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			% [desk_name, str(model.scale)]
 		)
 
-	# The chair standing at the desk is not part of the desk; its one body is the wake-up
-	# chair's and `_check_chair` is what judges it.
+	# The chair standing at the desk is not part of the desk. `_check_chair` checks
+	# the two chairs that can slide.
 	var bodies: Array[Node] = []
 	var shapes: Array[Node] = []
 	for node in _descendants(desk):
@@ -301,19 +318,15 @@ func _under_chair(desk: Node, node: Node) -> bool:
 
 ## The detailed chair keeps the original seat and collision boundary.
 ##
-## The one chair that *does* collide - the one the protagonist wakes in - gets its body from
-## the classroom scene, not from this shared prop, precisely so that the eleven desks nobody
-## sits in stay as they were. `classroom_visual_slice_test.gd` is what checks that exception.
+## Only the desk mates' chairs get colliders, authored by the room and not the
+## shared prop. The eleven other chairs keep their existing walk routes.
 func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 	var chair := desk.get_node_or_null(^"Chair") as Node3D
 	if chair == null:
 		_failures.append("'%s' lost its Chair subtree." % desk_name)
 		return
-	# The chairs have never collided and the walk routes are laid out on that - with one
-	# exception, which the classroom scene authors itself: the chair the protagonist wakes in
-	# (`DeskB2`) carries a body on layer 3. Layer 3 is solid to the body but enters neither the
-	# navigation bake nor the interaction rays (see `pushable_chair.gd`), so the walk routes
-	# this rule protects are untouched by it.
+	# The sliding pair uses layer 3: solid to the body at the pushed stops, but
+	# invisible to the navigation bake and interaction rays.
 	for node in _descendants(chair):
 		if not (node is CollisionObject3D or node is CollisionShape3D):
 			continue
@@ -323,15 +336,14 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		# Its layer reads 0, not 3: the chair opens its collision in `_ready` because the
 		# opening has the protagonist asleep inside it. The authored layer is checked in
 		# `pushable_chair_test.py`, which reads the scene file rather than a built tree.
-		var is_wake_chair := desk_name == "DeskB2" and (
+		var is_sliding_chair := desk_name in ["DeskB2", "DeskQ"] and (
 			String(node.name) == "Solid" or String(node.name) == "CollisionShape3D"
 		)
-		if is_wake_chair and holder != null and holder.collision_layer == 0:
+		if is_sliding_chair and holder != null and holder.collision_layer == 0:
 			continue
 		_failures.append(
-			"'%s/Chair/%s' collides; the chairs have never collided and the walk routes "
+			"'%s/Chair/%s' collides at home. Only the sliding pair may have a body at the pushed stop."
 			% [desk_name, node.name]
-			+ "are laid out on that."
 		)
 		break
 	var seat := chair.get_node_or_null(^"Seat") as MeshInstance3D

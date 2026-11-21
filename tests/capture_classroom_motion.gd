@@ -5,7 +5,8 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const APPROACH := Vector3(-0.75, 0, 2.15)
-const OTHER_AISLE := Vector3(-2.43, 0, 2.83)
+# Start in the open left aisle, outside Q's desk and chair, not in the desktop seam.
+const OTHER_AISLE := Vector3(-3.77, 0, 2.20)
 const STUDENT_AISLE := Vector3(-1.6, 0, 0.33)
 const CAMERA_AT := Vector3(0.65, 1.46, 2.48)
 const LOOK_AT := Vector3(-1.53, 0.84, 1.95)

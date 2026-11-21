@@ -152,8 +152,11 @@ hook (`Furniture/DeskB2/Schoolbag`), with its own hit area separate from the sli
 Rebuild the sewn meshes and woven texture with
 `python3 art/classroom/build_schoolbag.py` (`--check` verifies the shipped assets).
 The player wakes in the chair (`PlayerStart`), and
-Q starts a little way down the aisle and walks to `QOpeningTalk`, at the player's left,
-before the first line (the opening's Q beat, #160). The stage and its step are actual colliders: the 0.12 m rise stays below the
+Q starts a little way down the aisle and walks to `QOpeningTalk` just outside the left
+chair, before the first line (the opening's Q beat, #160). At the bell he returns to `DeskQ`,
+a thirteenth desk 0.75 m left of `DeskB2` with a 3.8 cm seam between the tops. The original
+12 desks and the bag's right aisle stay in place. The stage and its step are actual
+colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage
 is the only teacher's furniture: the low teacher's desk was taken out and its inspection
 (`front_desk` / `classroom_teacher_desk`) now sits on the lectern (`Interactables/LecternInspect`). Q/N states, inspection IDs, `Sun`,
@@ -161,7 +164,7 @@ is the only teacher's furniture: the low teacher's desk was taken out and its in
 
 ### Student chair
 
-All twelve desks instance the same chair through `scenes/environment/props/classroom_desk.tscn`.
+All thirteen desks instance the same chair through `scenes/environment/props/classroom_desk.tscn`.
 The quiet plywood pan has a rolled edge, a shallow dish and subdued grain; the curved back
 has four dull fasteners. Splayed steel legs, continuous back posts, cross-bracing and rubber
 feet leave air below the seat instead of the old solid posts. The chair uses three opaque,
@@ -170,8 +173,11 @@ They are first-party geometry and colour. Rebuild them with `python3 tools/build
 (`--check` compares without writing).
 
 The seat's 0.46 × 0.42 m footprint and 0.475 m top stay in place, as do its `SeatMark`, hand
-contact and the 0.65 m slide. Only the wake chair still has a collider, and only at its
-pushed stop. These meshes do not affect the navigation bake. `imported_placement_test.gd`
+contact. The two desk mates use the same 0.64 m slide and collar-height backrest grip:
+Q uses the outside −X corner and the player uses +X. Sit and rise keep their original
+seat brace. If the other student is in a chair's sweep, the transfer waits for a clear
+route; the front cross-aisle lets the player go around the pair rather than through it.
+Only these two chairs are solid at their pushed stops, outside the navigation bake. `imported_placement_test.gd`
 checks the shipped mesh colours, seat and four floor contacts. `capture_classroom_motion.gd`
 adds front and rear review views of the actual wake chair after the stand-up; the same capture
 exercises the chair and bag with mouse and touch.

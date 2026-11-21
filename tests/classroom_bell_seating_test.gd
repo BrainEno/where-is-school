@@ -1,6 +1,6 @@
 extends SceneTree
 ## Exercise the real bell and substitute beats in the real classroom. Optional frames
-## (-- capture=/path) come from the gameplay camera, not a separate pose preview.
+## (-- capture=/path) show the live transfers in the game and a close view of the finished pair.
 
 const Harness = preload("res://tests/test_harness.gd")
 const Limb = preload("res://scripts/actors/character_limb_contact.gd")
@@ -9,6 +9,8 @@ const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const RIGHT_AISLE := Vector3(-0.74, 0, 2.83)
 const FRONT_AISLE := Vector3(3.22, 0, -1.65)
 const WAIT := 40.0
+
+enum BellStart { STANDING, SEATED, IN_Q_TRACK, Q_CHAIR_OUT }
 
 var _check := Harness.Checker.new()
 var _state: Node
@@ -45,21 +47,22 @@ func _run() -> void:
 		# software renderer warming up the room must not stall the transfer clock.
 		RenderingServer.render_loop_enabled = false
 	Engine.time_scale = 3.0
-	await _through_bell(false)
+	await _through_bell(BellStart.STANDING)
 	await _free_world()
 	if not capture:
-		# These two cases run in full headless CI. Only the moving pair needs
-		# real pixels; avoid three complete software-rendered lessons.
-		await _through_bell(true)
-		await _free_world()
+		# Only the moving pair needs real pixels. Check the other start states
+		# and the continue/return path in headless CI.
+		for start: BellStart in [BellStart.SEATED, BellStart.IN_Q_TRACK, BellStart.Q_CHAIR_OUT]:
+			await _through_bell(start)
+			await _free_world()
 		await _after_bell()
 		await _free_world()
 	Engine.time_scale = 1.0
 	Harness.clear_session_state(self)
 	if capture:
-		_check.expect(_saved_frames == 3, "Expected all three live frames; saved %d." % _saved_frames)
-	Harness.finish(self, _check.failures, "bell seating: two real chair transfers and lesson handoff."
-		if capture else "bell seating: moving pair, already-seated player, lesson handoff and post-bell restore.")
+		_check.expect(_saved_frames == 5, "Expected all five live frames; saved %d." % _saved_frames)
+	Harness.finish(self, _check.failures, "bell seating: live pull, sit, side-by-side and stand, then lesson handoff."
+		if capture else "bell seating: both students at the paired desks, clear paths, lesson handoff and restore.")
 
 
 func _boot(after_bell: bool) -> bool:
@@ -82,7 +85,7 @@ func _boot(after_bell: bool) -> bool:
 	_q = room.find_actor(&"q")
 	_n = room.find_actor(&"n")
 	_chair = room.get_node(^"Furniture/DeskB2/Chair") as PushableChair
-	_q_chair = room.get_node(^"Furniture/DeskB1/Chair") as PushableChair
+	_q_chair = room.get_node(^"Furniture/DeskQ/Chair") as PushableChair
 	if not after_bell:
 		_player.set_wake_pose(1.0)
 		_player.settle_wake_seated_pose(0.0)
@@ -91,13 +94,21 @@ func _boot(after_bell: bool) -> bool:
 		"Classroom navigation did not synchronize.")
 
 
-func _through_bell(already_seated: bool) -> void:
-	Harness.stage = "already seated" if already_seated else "both students standing"
+func _through_bell(start: BellStart) -> void:
+	Harness.stage = "bell: " + BellStart.keys()[start]
 	if not await _boot(false):
 		return
-	var q_start := _q.global_position
+	_expect_pair_geometry()
+	var already_seated := start == BellStart.SEATED or start == BellStart.Q_CHAIR_OUT
+	var q_already_pulled := start == BellStart.Q_CHAIR_OUT
 	var q_chair_home := _q_chair.global_position
 	var player_chair_home := _chair.global_position
+	if q_already_pulled:
+		_q_chair.snap_back()
+		var solid := _q_chair.get_node(^"Solid") as StaticBody3D
+		_check.expect(await Harness.wait_until(func() -> bool: return solid.collision_layer == PushableChair.SOLID_LAYER, 3.0),
+			"Q's empty chair never became solid at the pushed stop.")
+		_expect_pushed_clearance(_q_chair, q_chair_home)
 	if not already_seated:
 		_player.stand_up()
 		var ticks := Engine.get_physics_frames()
@@ -106,13 +117,11 @@ func _through_bell(already_seated: bool) -> void:
 		if not _check.expect(rose, "The existing rise never finished (%d physics ticks, paused=%s, clip=%s at %.2f)." % [
 				Engine.get_physics_frames() - ticks, str(paused), animation.get_current_clip(), animation.get_action_progress()]):
 			return
-		var pushed := _chair.global_position.distance_to(player_chair_home)
-		var gap := _chair.mesh_bounds().position.z - _chair.home_mark().z - _player.navigation_agent.radius
-		_check.expect(_chair.is_pushed_back() and is_equal_approx(pushed, 0.64) and gap >= 0.009,
-			"The shortened stand stopped at %.3f m with only %.3f m of mesh clearance." % [pushed, gap])
-		_check.expect(not _player.test_move(_player.global_transform.translated(Vector3.UP * 0.035),
-			Vector3.ZERO, null, _player.safe_margin, true), "The pushed chair or desk overlaps the standing body.")
-		_player.teleport(Transform3D(Basis.IDENTITY, RIGHT_AISLE))
+		_expect_pushed_clearance(_chair, player_chair_home)
+		# There is floor behind the tucked chair, but this point lies in the full
+		# sweep. Q must let the protagonist go around the desks and sit first.
+		var from := _q_chair.home_mark() + Vector3.BACK * 0.81 if start == BellStart.IN_Q_TRACK else RIGHT_AISLE
+		_player.teleport(Transform3D(Basis.IDENTITY, from))
 
 	var player_start := _player.global_position
 	_sequence.start()
@@ -120,8 +129,16 @@ func _through_bell(already_seated: bool) -> void:
 	var q_sitting := false
 	var player_sitting := false
 	var player_moved := false
+	var last_q := _q.global_position
+	var q_walked := 0.0
+	var body_gap := INF
+	var chair_gap := INF
 	var deadline := Time.get_ticks_msec() + int(WAIT * 1000.0)
 	while not _n.visible and Time.get_ticks_msec() < deadline:
+		q_walked += _q.global_position.distance_to(last_q)
+		last_q = _q.global_position
+		body_gap = minf(body_gap, (_player.global_position - last_q).slide(Vector3.UP).length())
+		chair_gap = minf(chair_gap, _neighbour_chair_gap())
 		var q_slide := _q_chair.global_position.distance_to(q_chair_home)
 		var q_arrived := _q.global_position.distance_to(_q_chair.home_mark()) < 0.03
 		var player_animation := _player.get_character_animator()
@@ -130,17 +147,19 @@ func _through_bell(already_seated: bool) -> void:
 			q_pulling = true
 			_check.expect(_sequence.is_beat_active() and not _player.is_control_enabled()
 				and _q.get_character_animator().is_playing_action(), "Q slid the chair without a locked performance.")
-			_expect_support(_q.get_character_animator(), _q_chair, true, "Q pulls B1")
-			if not already_seated:
-				await _shot("01_q_pulls_chair")
+			_check.expect(_q_chair.to_local(_q.global_position).x < -0.58,
+				"Q pulled from between the chairs, not from the outside of the pair.")
+			if start == BellStart.IN_Q_TRACK:
+				_check.expect(_player.is_seated(), "Q pulled through the protagonist instead of waiting for them to sit.")
+			_expect_support(_q.get_character_animator(), _q_chair, -1.0, "Q pulls DeskQ")
+			await _shot("01_q_pulls_chair")
 		if q_slide > 0.15 and q_slide < 0.47 and q_arrived and not q_sitting:
 			q_sitting = true
-			_expect_support(_q.get_character_animator(), _q_chair, false, "Q sits")
+			_expect_support(_q.get_character_animator(), _q_chair, 0.0, "Q sits")
 		if player_clip == "classroom_sit" and player_animation.get_action_progress() >= 0.53 and not player_sitting:
 			player_sitting = true
-			_expect_support(player_animation, _chair, false, "Player sits")
-			if not already_seated:
-				await _shot("02_player_sits")
+			_expect_support(player_animation, _chair, 0.0, "Player sits")
+			await _shot("02_player_sits")
 		player_moved = player_moved or _player.global_position.distance_to(player_start) > 0.03
 		_pump_text()
 		# Contact and chair progress are sampled in physics, not at the runner's
@@ -148,19 +167,72 @@ func _through_bell(already_seated: bool) -> void:
 		await physics_frame
 	if not _check.expect(_n.visible, "N never reached the entrance after the bell."):
 		return
-	_check.expect(_q.global_position.distance_to(q_start) > 0.8 and q_pulling and q_sitting,
-		"Q did not walk back, draw the chair out and slide it under himself to sit.")
+	_check.expect(q_walked > 0.8 and q_pulling != q_already_pulled and q_sitting,
+		"Q did not walk back, pull an initially tucked chair and slide it under himself to sit.")
+	_check.expect(body_gap >= 2.0 * _player.navigation_agent.radius and chair_gap >= 0.009,
+		"Neighbours crossed during the transfers (axes %.3f m apart, chair clearance %.3f m)." % [body_gap, chair_gap])
+	print("::notice title=Desk mate clearance::%s | body axes %.3f m | neighbour chair gap %.3f m" % [
+		Harness.stage, body_gap, chair_gap])
 	_check.expect(player_sitting != already_seated and player_moved != already_seated,
 		"The player did not return with the sit clip, or re-animated the already settled seat.")
 	_expect_both_seated()
-	if not already_seated:
-		await _shot("03_seated_before_lesson")
+	await _shot("03_seated_before_lesson")
+	await _shot_pair_detail()
 	# Do not remove the short free window during N's walk. If the player deliberately
-	# stands there, the lesson still begins at the seats rather than in mid-rise.
-	if already_seated:
+	# stands there, Q stays seated and the lesson waits for the whole transfer.
+	if start == BellStart.SEATED or not _output.is_empty():
 		_check.expect(_player.is_control_enabled(), "N's walk took away the existing escape window.")
 		_player.stand_up()
+		if _check.expect(await Harness.wait_until(func() -> bool:
+			var push := _chair.global_position.distance_to(player_chair_home)
+			return _player.is_getting_up() and push > 0.15 and push < 0.47, 5.0),
+			"No visible push while the player stood up beside Q."):
+			_expect_support(_player.get_character_animator(), _chair, 0.0, "Player pushes beside Q")
+			_expect_seated(_q, _q.get_character_animator(), _q_chair)
+			_check.expect(_neighbour_chair_gap() >= 0.009, "A chair crossed into its neighbour during the stand.")
+			await _shot("05_player_rises_beside_q")
 	await _expect_lesson()
+
+
+func _expect_pair_geometry() -> void:
+	var offset := _chair.home_mark() - _q_chair.home_mark()
+	_check.expect(offset.x > 0.70 and offset.x < 0.80 and is_zero_approx(offset.z),
+		"The two seat marks are no longer aligned and separated as a pair: %s." % offset)
+	var furniture := _host.get_current().get_node(^"Furniture")
+	for chair: PushableChair in [_chair, _q_chair]:
+		var sweep := chair.sweep_bounds()
+		for desk: Node in furniture.get_children():
+			var shape := desk.get_node_or_null(^"Desk/CollisionShape3D") as CollisionShape3D
+			if shape != null:
+				var size := (shape.shape as BoxShape3D).size
+				var box := shape.global_transform * AABB(-size * 0.5, size)
+				_check.expect(not sweep.intersects(box), "%s's slide hits %s." % [chair.get_parent().name, desk.name])
+			var neighbour := desk.get_node_or_null(^"Chair") as PushableChair
+			if neighbour == null or neighbour == chair:
+				continue
+			var box := neighbour.sweep_bounds() if neighbour in [_chair, _q_chair] else neighbour.mesh_bounds()
+			_check.expect(not sweep.intersects(box), "%s's slide hits %s's chair." % [chair.get_parent().name, desk.name])
+
+
+func _expect_pushed_clearance(chair: PushableChair, home: Vector3) -> void:
+	var pushed := chair.global_position.distance_to(home)
+	var gap := chair.mesh_bounds().position.z - chair.home_mark().z - _player.navigation_agent.radius
+	_check.expect(chair.is_pushed_back() and is_equal_approx(pushed, 0.64) and gap >= 0.009,
+		"The chair stopped at %.3f m with only %.3f m of mesh clearance." % [pushed, gap])
+	var probe := Transform3D(_player.global_basis, chair.home_mark() + Vector3.UP * 0.035)
+	_check.expect(not _player.test_move(probe, Vector3.ZERO, null, _player.safe_margin, true),
+		"The pushed chair or desk overlaps the standing body.")
+
+
+func _neighbour_chair_gap() -> float:
+	return minf(_horizontal_gap(_player.global_position, _q_chair.mesh_bounds()),
+		_horizontal_gap(_q.global_position, _chair.mesh_bounds())) - _player.navigation_agent.radius
+
+
+func _horizontal_gap(feet: Vector3, box: AABB) -> float:
+	var dx := maxf(0.0, maxf(box.position.x - feet.x, feet.x - box.end.x))
+	var dz := maxf(0.0, maxf(box.position.z - feet.z, feet.z - box.end.z))
+	return Vector2(dx, dz).length()
 
 
 func _after_bell() -> void:
@@ -179,7 +251,7 @@ func _after_bell() -> void:
 			var offset := _chair.global_position.distance_to(tucked)
 			return offset > 0.15 and offset < 0.47 and not _chair.is_pushed_back()),
 			"Continue did not pull out the protagonist's tucked chair."):
-		_expect_support(_player.get_character_animator(), _chair, true, "Player pulls B2")
+		_expect_support(_player.get_character_animator(), _chair, 1.0, "Player pulls B2")
 	if not await _expect_lesson():
 		return
 	# No post-lesson move or actor state is serialized. A fresh instance derives Q's
@@ -190,7 +262,7 @@ func _after_bell() -> void:
 	if _check.expect(_host.load_location(CLASSROOM, &"FromCorridor", _player, &"classroom"),
 			"Could not re-enter the real classroom."):
 		_q = _host.get_current().find_actor(&"q")
-		_q_chair = _host.get_current().get_node(^"Furniture/DeskB1/Chair") as PushableChair
+		_q_chair = _host.get_current().get_node(^"Furniture/DeskQ/Chair") as PushableChair
 		_check.expect(_q.get_instance_id() != previous and not _player.is_seated(),
 			"Re-entry reused old nodes or forced the player into a seat after dismissal.")
 		_expect_seated(_q, _q.get_character_animator(), _q_chair)
@@ -229,12 +301,12 @@ func _expect_seated(body: Node3D, animator: CharacterVisualAnimation, chair: Pus
 		print("BELL_SEAT %s thigh_gap=%.3f" % [body.name, height])
 
 
-func _expect_support(animator: CharacterVisualAnimation, chair: PushableChair, flank: bool, label: String) -> void:
+func _expect_support(animator: CharacterVisualAnimation, chair: PushableChair, flank: float, label: String) -> void:
 	var contacts := Limb.bind(animator)
-	var hand: Limb = contacts.get("hand.R" if flank else "hand.L")
+	var hand: Limb = contacts.get("hand.R" if flank > 0.0 else "hand.L")
 	if not _check.expect(hand != null, "%s could not bind the gripping arm." % label):
 		return
-	var grip := chair.backrest_grip_point() if flank else chair.grip_point()
+	var grip := chair.grip_point() if is_zero_approx(flank) else chair.backrest_grip_point(flank)
 	var wrist := hand.skeleton.to_global(hand.skeleton.get_bone_global_pose(hand.joints.z).origin)
 	var hand_gap := wrist.distance_to(grip)
 	_check.expect(hand_gap < 0.12, "%s: wrist was %.3f m from the moving chair." % [label, hand_gap])
@@ -270,6 +342,24 @@ func _pump_text() -> void:
 		_dialogue.select_choice(0)
 	elif _dialogue.is_busy():
 		_dialogue.advance_presentation()
+
+
+func _shot_pair_detail() -> void:
+	if _output.is_empty():
+		return
+	# A closer view of the real furniture seam and the settled pose. Move the
+	# lens only; restore the gameplay camera before the next transfer.
+	var gameplay := root.get_camera_3d()
+	var review := Camera3D.new()
+	_world.add_child(review)
+	var centre := _chair.home_mark().lerp(_q_chair.home_mark(), 0.5)
+	review.global_position = centre + Vector3(0.9, 2.4, -3.6)
+	review.look_at(centre + Vector3(0, 0.7, -0.30))
+	review.fov = 39.0
+	review.make_current()
+	await _shot("04_pair_detail")
+	gameplay.make_current()
+	review.queue_free()
 
 
 func _shot(stem: String) -> void:
