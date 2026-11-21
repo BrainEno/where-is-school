@@ -76,13 +76,15 @@ in a canvas layer (layer 0) under the game UI (layer 1), so the dialogue stays l
 reads the finished frame (`hint_screen_texture`): no depth buffer, no extra viewport, nothing
 renderer-specific; it runs the same on Compatibility, Mobile and Forward+.
 
-1. A vortex sits on B's head; the script projects her face to the screen every frame.
+1. A vortex sits on B's head; the script projects her face to the screen every frame. The
+   room is wound round her in a ring; the eye of it is calm, so she stays readable.
 2. Bands: horizontal undulations far from her (Munch's sky over the fjord), rings close to
    her. The picture is pushed back and forth across them in a travelling wave and smeared
    along them in short strokes.
 3. Value is mapped onto a Scream palette (night blue, fjord blue, bile green, blood, orange,
-   sulphur) with the band position added, so the colours themselves run in stripes. 30 % of
-   the original colour stays underneath: the desks, windows, blackboard and lights are where
+   sulphur) with the band position added, so the colours themselves run in stripes. Close to
+   40 % of the original colour stays underneath (more inside the eye, where B keeps her own
+   expressionist colours): the desks, windows, blackboard and lights are where
    they were. It is the same place, in another style.
 4. Edges get a wavering ink; the corners fall into night blue.
 

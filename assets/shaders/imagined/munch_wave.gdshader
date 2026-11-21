@@ -9,14 +9,15 @@ shader_type canvas_item;
 // same place, seen through a fever.
 //
 // 1. A vortex sits on the imagined teacher's head (`vortex`, in screen UV, set every frame
-//    by the scene). The picture is wound round it, hardest at the centre.
+//    by the scene). The picture is wound round it, hardest in a ring around her; the eye
+//    itself is calm, so she stays readable.
 // 2. Bands: the contours of a field that is horizontal and undulating far from her (Munch's
 //    sky over the fjord) and rings round her up close. The picture is pushed back and forth
 //    across the bands in a travelling wave, and smeared along them in short strokes.
 // 3. Value is mapped onto a Scream palette (night blue, fjord blue, bile green, blood,
 //    orange, sulphur) with the band position added in, so the colours themselves run in
 //    stripes, and the original colour is kept underneath (`palette_mix` < 1) so a desk is
-//    still a desk.
+//    still a desk. Inside the eye she keeps most of her own colours.
 // 4. Edges get a thick, wavering ink, and the corners fall into night blue.
 //
 // `strength` and `reach` animate it in and out: the change spreads outwards from her head as
@@ -26,11 +27,11 @@ uniform sampler2D screen : hint_screen_texture, filter_linear, repeat_disable;
 uniform float strength : hint_range(0.0, 1.0) = 1.0;
 uniform float reach : hint_range(0.0, 2.5) = 2.5;
 uniform vec2 vortex = vec2(0.6, 0.4);
-uniform float swirl : hint_range(0.0, 6.0) = 2.2;
+uniform float swirl : hint_range(0.0, 6.0) = 1.1;
 uniform float band_count : hint_range(2.0, 30.0) = 9.0;
-uniform float wave_amplitude : hint_range(0.0, 0.05) = 0.011;
-uniform float smear : hint_range(0.0, 0.03) = 0.007;
-uniform float palette_mix : hint_range(0.0, 1.0) = 0.7;
+uniform float wave_amplitude : hint_range(0.0, 0.05) = 0.006;
+uniform float smear : hint_range(0.0, 0.03) = 0.005;
+uniform float palette_mix : hint_range(0.0, 1.0) = 0.62;
 uniform float ink : hint_range(0.0, 1.0) = 0.7;
 uniform float time_scale : hint_range(0.0, 4.0) = 1.0;
 
@@ -61,7 +62,7 @@ float band_field(vec2 uv, vec2 aspect, float t) {
 		+ 0.025 * sin(uv.x * 9.1 - t * 0.5 + uv.y * 3.0));
 	float r = length((uv - vortex) * aspect);
 	float rings = r * band_count * 1.7 - t * 0.25;
-	return mix(sky, rings, exp(-r * 2.2));
+	return mix(sky, rings, exp(-r * 3.2));
 }
 
 vec2 rotate(vec2 p, float a) {
@@ -78,8 +79,10 @@ void fragment() {
 	float r = length(p);
 	float mask = (1.0 - smoothstep(reach - 0.3, reach, r)) * strength;
 
-	// 1. The vortex.
-	float angle = swirl * exp(-r * 2.6) * (0.85 + 0.15 * sin(t * 0.7)) * mask;
+	// 1. The vortex. Its eye is calm: she is wound into the room, not unrecognisable, and
+	// the room is bent, not turned over.
+	float eye = smoothstep(0.06, 0.42, r);
+	float angle = swirl * eye * exp(-r * 2.4) * (0.85 + 0.15 * sin(t * 0.7)) * mask;
 	vec2 wound = vortex + rotate(p, angle) / aspect;
 
 	// 2. Push across the bands, smear along them.
@@ -89,7 +92,7 @@ void fragment() {
 		band_field(wound + e.yx, aspect, t) - field);
 	vec2 across = normalize(gradient + vec2(1.0e-6));
 	vec2 along = vec2(-across.y, across.x);
-	vec2 warped = wound + across * wave_amplitude * mask * sin(field * PI - t * 1.2);
+	vec2 warped = wound + across * wave_amplitude * mask * mix(0.4, 1.0, eye) * sin(field * PI - t * 1.2);
 	warped = clamp(warped, vec2(0.001), vec2(0.999));
 
 	vec3 painted = vec3(0.0);
@@ -106,7 +109,8 @@ void fragment() {
 	float value = luma(painted);
 	float stripes = sin(field * PI);
 	vec3 scream = scream_palette(value * 0.92 + 0.11 * stripes + 0.04);
-	vec3 colour = mix(painted, scream, palette_mix * mask);
+	// Her own expressionist colours keep the eye; the room around her takes the palette.
+	vec3 colour = mix(painted, scream, palette_mix * mask * mix(0.3, 1.0, eye));
 	colour *= 1.0 + 0.1 * stripes * mask;
 
 	// 4. Ink on the edges, night in the corners.
@@ -116,7 +120,7 @@ void fragment() {
 	float edge = smoothstep(0.06, 0.24, length(vec2(gx, gy)) * (0.8 + 0.4 * sin(field * 2.1 + t)));
 	colour = mix(colour, NIGHT, edge * ink * mask);
 	float corner = smoothstep(0.55, 1.2, length((uv - vec2(0.5)) * aspect * 1.15));
-	colour = mix(colour, NIGHT, corner * 0.6 * mask);
+	colour = mix(colour, NIGHT, corner * 0.45 * mask);
 
 	// The front of the change, while it spreads or recedes.
 	float front = exp(-pow((r - reach) / 0.025, 2.0)) * strength * (1.0 - step(2.2, reach));

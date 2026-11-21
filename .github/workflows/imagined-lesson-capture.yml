@@ -97,6 +97,8 @@ jobs:
           status=0
           if [ "${code}" -ne 0 ]; then
             echo "::error title=imagined lesson ${GROUP}::capture exited ${code}"
+            grep -E "TEST FAILURE|FAIL:|SCRIPT ERROR|TEST WATCHDOG" "${RUNNER_TEMP}/capture.log" | head -n 8 | cut -c1-600 \
+              | while IFS= read -r line; do echo "::error title=imagined lesson ${GROUP} log::${line}"; done
             tail -n 30 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
             status=1
           fi
