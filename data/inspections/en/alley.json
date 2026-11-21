@@ -28,7 +28,7 @@
     }
   },
   "alley_door": {
-    "title": "The service door",
+    "title": "Locked door",
     "prompt": "Look at the door",
     "speaker": "protagonist",
     "source": "observed",

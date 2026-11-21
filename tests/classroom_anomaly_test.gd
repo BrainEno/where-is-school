@@ -1062,6 +1062,11 @@ func _check_roof(observed: Dictionary, hurt: bool) -> void:
 		or observed.has("unlocked_during_walk"):
 		_failures.append("Roof contact, staging or input lock was wrong (injured=%s): %s" % [hurt, observed])
 	_expect_roof_view(hurt, RoofEncounter.Phase.OUTSIDE)
+	# Only the hard landing leaves the protagonist dazed (`ConcussionView`, round 7): the
+	# real contact starts the ten-minute look, and the braced drop never does.
+	var dazed := int(_game_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0))
+	if (dazed > 0) != hurt or dazed > ConcussionView.DURATION:
+		_failures.append("The landing left %d s of the dazed look (injured=%s)." % [dazed, hurt])
 	if not _player.is_physics_processing() or not _player.is_control_enabled() \
 		or not _interaction.is_enabled() or _player.camera_rig.get_frame_weight() > 0.0:
 		_failures.append("The roof choreography held onto control or the camera on recovery.")

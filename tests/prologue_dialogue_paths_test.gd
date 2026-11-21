@@ -6,7 +6,8 @@ extends SceneTree
 ## The paths follow the author's own version of the prologue (round 5): the set-square
 ## exchange with its camera looks, the accusation and N's guarded answer, a bag never
 ## searched, the ruler check after the lesson, and the rear door for a player who said
-## they would borrow a book next door - once failed, once taken (skipping class).
+## they would borrow a book next door - once failed, once taken (skipping class, alone:
+## Q does not follow).
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
@@ -68,8 +69,10 @@ func _run() -> void:
 
 
 func _square_then_bag(locale: String, succeeds: bool) -> void:
-	Harness.stage = locale + ": ruler, ask about it, look again, the lesson, place the sound, reload"
-	await _boot(locale)
+	Harness.stage = locale + ": picture B, ruler, ask about it, look again, the lesson, place the sound, reload"
+	await _boot(locale, true, true)
+	if not await _imagine():
+		return
 	await _inspect(&"set_square")
 	_entry(&"saw_set_square", NarrativeEntry.Source.OBSERVED)
 	_entry(&"recall_set_square_placed", NarrativeEntry.Source.RECALLED)
@@ -93,7 +96,7 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 	_checks.expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"Q's completed book exchange did not go back to the short studying response.")
 	_switch_at_book_choice(locale)
-	_checks.expect(_played == [&"q_after_bag", &"expected_b", &"bell_moment", &"n_class"],
+	_checks.expect(_played == [&"expected_b", &"q_after_bag", &"bell_moment", &"n_class"],
 		"Search path played the wrong sequence: %s." % str(_played))
 	if not _pick(&"textbook") or not await _lesson_ends():
 		return
@@ -155,8 +158,10 @@ func _square_then_bag(locale: String, succeeds: bool) -> void:
 
 
 func _bag_then_square(locale: String) -> void:
-	Harness.stage = locale + ": bag first, accuse, ask N about the book, late ruler"
-	await _boot(locale)
+	Harness.stage = locale + ": picture B, bag, accuse, ask N about the book, late ruler"
+	await _boot(locale, true, true)
+	if not await _imagine():
+		return
 	await _inspect(&"schoolbag")
 	if not await _menu(&"q_after_bag", &"q_ab_1"):
 		return
@@ -270,14 +275,23 @@ func _rear_door(succeeds: bool) -> void:
 		and not _flag(StoryFlags.BAG_WAIT_EXPIRED)
 		and not _played.has(&"bell_moment") and not _played.has(&"n_class"),
 		"Skipping class still ran the lesson: %s." % str(_played))
+	# The check and the exit are the protagonist's alone: Q stays at his desk (round 7).
+	var companion := _world.get_node_or_null(^"Companion") as CompanionController
+	_checks.expect(companion != null and not companion.is_joined() and not companion.is_with_player()
+		and _state.get_flag(StoryFlags.Q_COMPANION, false) != true,
+		"Q followed the protagonist out through the rear door.")
 
 
-func _boot(locale: String, fresh: bool = true) -> void:
+## `imagine`: the player chose to picture B in `q_wake` (round 7), so the imagined lesson
+## is the first step the fixture plays.
+func _boot(locale: String, fresh: bool = true, imagine: bool = false) -> void:
 	await _release()
 	if fresh:
 		Harness.clear_session_state(self)
 		_state.set_flag(StoryFlags.MET_Q, true)
 		_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
+		if imagine:
+			_state.set_flag(StoryFlags.IMAGINE_B_CHOSEN, true)
 	L10n.set_locale(locale)
 	_world = _main.instantiate()
 	_sequence = _world.get_node(^"OpeningSequence") as OpeningSequence
@@ -342,6 +356,24 @@ func _menu(conversation: StringName, node: StringName) -> bool:
 		await process_frame
 	return _checks.expect(false, "%s: timed out waiting for %s/%s (played %s)."
 		% [Harness.stage, conversation, node, str(_played)])
+
+
+## Plays the imagined lesson the fixture chose, answering B normally at every hub (the
+## first option) so it reaches the authored recollection, and waits for its beat to end.
+func _imagine() -> bool:
+	var deadline := Time.get_ticks_msec() + 30000
+	while not _flag(StoryFlags.EXPECTATION_PLAYED) or _sequence.is_beat_active():
+		if Time.get_ticks_msec() >= deadline:
+			return _checks.expect(false, "%s: the imagined lesson did not finish (played %s)."
+				% [Harness.stage, str(_played)])
+		if _dialogue.has_pending_choices():
+			_dialogue.select_choice(0)
+		elif _dialogue.is_busy():
+			_dialogue.advance_presentation()
+		await process_frame
+	return _checks.expect(_played == [&"expected_b"]
+		and _narrative.has_entry(&"recall_set_square_sound"),
+		"%s: the imagined lesson played %s or left no recollection." % [Harness.stage, str(_played)])
 
 
 func _finish() -> bool:

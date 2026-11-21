@@ -598,6 +598,11 @@ func _check_colour_system() -> void:
 		var path := _relative(node)
 		if path.begins_with("Actors/") or path.begins_with("Interactables/"):
 			continue
+		# The imagined teacher B is a character, like the actors, drawn only during the
+		# imagined exchange with its own dream shaders; tests/imagined_lesson_test.gd pins
+		# exactly which (docs/IMAGINED_LESSON.md). The room's own surfaces stay checked here.
+		if path.begins_with("ImaginedLesson/"):
+			continue
 		if path.contains("/Stationery"):
 			continue
 		var desk_model := _is_desk_model(path)

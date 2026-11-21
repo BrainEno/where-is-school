@@ -4,8 +4,9 @@ extends RefCounted
 ## they are allowed to speak on their own.
 ##
 ## The registry is a *list* of voices, and this round exists to keep it one: the
-## number of voices is data, not code. Content ships exactly one voice
-## (`orientation`); the tests load additional fictional voices from a fixture
+## number of voices is data, not code. Content ships two voices: `orientation` (路感)
+## and, from round 7, `whimsy` (异想天开), whose value is a placeholder and whose only
+## check is inside the imagined lesson; the tests load additional fictional voices from a fixture
 ## directory that never enters `data/`. Nothing here decides how many voices the
 ## game will have, what they are called, or what they are worth — those are the
 ## owner's decisions, and the voice's name, value and prose stay provisional

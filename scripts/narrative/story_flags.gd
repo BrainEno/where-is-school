@@ -34,10 +34,16 @@ const BAG_WAIT_EXPIRED: StringName = &"bag_wait_expired"
 const SAW_SET_SQUARE: StringName = &"saw_set_square"
 ## bool: the subjective expectation beat has been presented.
 const EXPECTATION_PLAYED: StringName = &"expectation_played"
-## bool: the expectation beat was passed over because the bag had not been searched
-## when its turn came. Closes the step without claiming the scene was seen. Absent
-## (false) in saves written before #144, like `bag_wait_expired`.
+## bool: the expectation beat was passed over because the player had not chosen to
+## picture B (before round 7: because the bag had not been searched) when its turn came.
+## Closes the step without claiming the scene was seen. Absent (false) in saves written
+## before #144, like `bag_wait_expired`.
 const EXPECTATION_SKIPPED: StringName = &"expectation_skipped"
+## bool: the imagined lesson ended before its recollection of the set square
+## (`expected_b`, `rec_1`): the player stepped out of the fantasy at one of B's questions.
+## Later lines that lean on that remembered sound (`q_after_dismissal`) stay closed. Absent
+## (false) in saves written before round 7, when the scene always reached it.
+const EXPECTATION_LEFT_EARLY: StringName = &"expectation_left_early"
 ## bool: the second bell has rung.
 const BELL_RUNG: StringName = &"bell_rung"
 ## bool: substitute N has reached the front of the classroom.
@@ -113,6 +119,11 @@ const CURTAIN_DRAWN: StringName = &"curtain_drawn"
 const CURTAIN_EDGE_HELD: StringName = &"curtain_edge_held"
 ## bool: the player hurt their ankle on their last landing. Written only on arrival.
 const CURTAIN_LANDING_INJURED: StringName = &"curtain_landing_injured"
+## int: whole seconds of play left on the dazed look after a hurt landing
+## (`ConcussionView`). Written as 600 at the roof contact of that landing and counted down
+## while the game runs (not while paused); 0 or absent means the protagonist sees normally
+## again. Absent in saves written before round 7.
+const CONCUSSION_SECONDS_LEFT: StringName = &"concussion_seconds_left"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -137,6 +148,10 @@ const BORROW_FROM_NEXT_CLASS: StringName = &"borrow_from_next_class"
 ## closes the rest of the prologue (bell, substitute) the way `class_dismissed` does,
 ## without claiming that N ever dismissed anyone.
 const SKIPPED_CLASS: StringName = &"skipped_class"
+## bool: after Q described B (`q_wake`, `q_b_looks`, option `imagine_b`) the protagonist
+## chose to picture her. The imagined lesson `expected_b` plays as soon as Q's talk ends;
+## without it the expectation step is closed as skipped and the scene never plays.
+const IMAGINE_B_CHOSEN: StringName = &"imagine_b_chosen"
 ## bool: the player asked the substitute about B.
 const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
 ## bool: the player asked the substitute about spare textbooks.
@@ -163,6 +178,7 @@ const ALL_FLAGS: Array[StringName] = [
 	SAW_SET_SQUARE,
 	EXPECTATION_PLAYED,
 	EXPECTATION_SKIPPED,
+	EXPECTATION_LEFT_EARLY,
 	BELL_RUNG,
 	N_ARRIVED,
 	CLASS_DISMISSED,
@@ -205,6 +221,7 @@ const ALL_FLAGS: Array[StringName] = [
 	CURTAIN_DRAWN,
 	CURTAIN_EDGE_HELD,
 	CURTAIN_LANDING_INJURED,
+	CONCUSSION_SECONDS_LEFT,
 	ASKED_Q_IDENTITY,
 	ASKED_Q_DATE,
 	STAYED_SILENT,
@@ -214,6 +231,7 @@ const ALL_FLAGS: Array[StringName] = [
 	Q_BOOK_TALK_DONE,
 	BORROW_FROM_NEXT_CLASS,
 	SKIPPED_CLASS,
+	IMAGINE_B_CHOSEN,
 	ASKED_N_ABOUT_B,
 	ASKED_N_ABOUT_TEXTBOOK,
 	STUDENT_TALKED,

@@ -27,7 +27,7 @@ extend beyond the reference and are provisional.
   current `Protagonist_Character` wrapper in views 1, 2 and 6; **M** compares B's
   matte painted finish to the GLB originals. The comparison uses the same mark,
   light and camera scale; the face view is only re-centered vertically.
-- `scenes/dev/teacher_b/teacher_b.glb` is the meter-scale **+Y / −Z** export.
+- `assets/models/teacher_b/teacher_b.glb` is the meter-scale **+Y / −Z** export.
   Crown at **1.640 m**, soles at **0**, origin on the centered ankle line. It
   carries one 57-joint armature, normalized four-influence weights, inverse binds,
   vertex paint, and two authored blink targets. There are 49,466 triangles across
@@ -37,10 +37,17 @@ extend beyond the reference and are provisional.
   The Godot import sidecar enables linear glTF vertex colors on the original
   materials; the review finish keeps those colors when it replaces materials.
 
-No production room, `BPresence`, dialogue, impression, `q_wake` or `b_on_stage`
-behavior changes. The review stages the actual classroom's backdrop and lights
-with its actor, navigation and interaction branches removed. The source and
-review directories stay outside release packs under the existing export rules.
+The review itself changes no production room, `BPresence`, dialogue, `q_wake` or
+`b_on_stage` behavior. It stages the actual classroom's backdrop and lights with
+its actor, navigation and interaction branches removed. The source and review
+directories stay outside release packs under the existing export rules.
+
+**Shipped in the imagined lesson.** The GLB, its import sidecar, the look and the
+motion library now live in `assets/models/teacher_b/` and ship: the classroom's
+imagined lesson (`expected_b`, [IMAGINED_LESSON.md](../../../docs/IMAGINED_LESSON.md))
+draws her three times with its own dream shaders instead of `teacher_b_look.tres`.
+That is a placement as a fantasy, not her entrance as an actor (`BPresence.present()`
+is unchanged) and not a visual or rights approval of the model.
 The triangle count is descriptive, not a finish criterion: review the head,
 clothing joins, gesture and readability against the **current** protagonist, not
 the retired `protagonist.glb` now used by the seated student.
@@ -55,7 +62,7 @@ height, exact bind transforms, face, clothes and walk calibration are preserved.
 
 ## B-only motion
 
-[`teacher_b_motion.tres`](../../../scenes/dev/teacher_b/teacher_b_motion.tres)
+[`teacher_b_motion.tres`](../../../assets/models/teacher_b/teacher_b_motion.tres)
 is a Godot `AnimationLibrary`, not a retarget of the lead's walk. The dev
 `AnimationPlayer` resolves the imported Skeleton3D and points native tracks
 straight to its joints. No script drives this library in the story. The GLB

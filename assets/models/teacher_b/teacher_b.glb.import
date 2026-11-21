@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dye5lw85jir8p"
-path="res://.godot/imported/teacher_b.glb-aa7febd0e916576177aded74e4dac996.scn"
+path="res://.godot/imported/teacher_b.glb-4629b91300b70b63bbb50088cc1bf5a1.scn"
 
 [deps]
 
-source_file="res://scenes/dev/teacher_b/teacher_b.glb"
-dest_files=["res://.godot/imported/teacher_b.glb-aa7febd0e916576177aded74e4dac996.scn"]
+source_file="res://assets/models/teacher_b/teacher_b.glb"
+dest_files=["res://.godot/imported/teacher_b.glb-4629b91300b70b63bbb50088cc1bf5a1.scn"]
 
 [params]
 
@@ -28,7 +28,7 @@ meshes/generate_lods=false
 meshes/create_shadow_meshes=false
 meshes/light_baking=1
 meshes/lightmap_texel_size=0.2
-meshes/force_disable_compression=true
+meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
 animation/fps=30

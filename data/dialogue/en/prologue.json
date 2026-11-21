@@ -342,7 +342,25 @@
           "id": "q_b_looks",
           "speaker": "q",
           "text": "B? She's over fifty, I guess. Short and skinny, with a flat face and a hooked nose. You can tell at a glance she's not someone to mess with. There's something petty and small-minded about her too, and she's always going on about her son at the top high school. In class she acts all kind-hearted, and you can't make out a word she says, but when she smacks your palm she doesn't hold back. Any tiny thing gets you ten or twenty, and she always acts like she's going easy on you, like hitting you is all for your own future.",
-          "next": "q_end_2"
+          "choices": [
+            {
+              "id": "imagine_b",
+              "text": "TODO · picture B",
+              "next": "q_end_2",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "imagine_b_chosen",
+                  "value": true
+                }
+              ]
+            },
+            {
+              "id": "ignore_b",
+              "text": "TODO · don't think about her",
+              "next": "q_end_2"
+            }
+          ]
         },
         {
           "id": "q_end_2",
@@ -611,7 +629,8 @@
                   "choice:q_after_dismissal:look_back_at_square"
                 ],
                 "not_flags": [
-                  "check:q_after_dismissal:ad_square_check"
+                  "check:q_after_dismissal:ad_square_check",
+                  "expectation_left_early"
                 ]
               }
             }
@@ -697,6 +716,9 @@
           "conditions": {
             "all_flags": [
               "expectation_played"
+            ],
+            "not_flags": [
+              "expectation_left_early"
             ]
           },
           "next": "q_ad_square_compare"
@@ -708,6 +730,9 @@
           "conditions": {
             "all_flags": [
               "expectation_played"
+            ],
+            "not_flags": [
+              "expectation_left_early"
             ]
           },
           "next": "q_ad_1"
@@ -833,22 +858,90 @@
         {
           "id": "b_e_1",
           "speaker": "b",
-          "text": "Stand up, you."
+          "text": "Stand up, you.",
+          "choices": [
+            {
+              "id": "normal",
+              "text": "TODO · normal response",
+              "next": "e1_n1_p"
+            },
+            {
+              "id": "absurd",
+              "text": "TODO · absurd (feigning madness)",
+              "next": "e1_a1_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
         },
         {
           "id": "b_e_2",
           "speaker": "b",
-          "text": "I'm talking to you. Didn't you hear? Do you know what you've done wrong?"
+          "text": "I'm talking to you. Didn't you hear? Do you know what you've done wrong?",
+          "choices": [
+            {
+              "id": "normal",
+              "text": "TODO · normal response",
+              "next": "e2_n1_p"
+            },
+            {
+              "id": "absurd",
+              "text": "TODO · absurd (feigning madness)",
+              "next": "e2_a1_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
         },
         {
           "id": "b_e_3",
           "speaker": "b",
-          "text": "Everyone else has opened their books. What about you? Where's your textbook? What is a student doing at school without a textbook?"
+          "text": "Everyone else has opened their books. What about you? Where's your textbook? What is a student doing at school without a textbook?",
+          "choices": [
+            {
+              "id": "normal",
+              "text": "TODO · normal response",
+              "next": "e3_n1_p"
+            },
+            {
+              "id": "absurd",
+              "text": "TODO · absurd (feigning madness)",
+              "next": "e3_a1_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
         },
         {
           "id": "b_e_4",
           "speaker": "b",
-          "text": "Come here. Take your bag and get out of my classroom. Go and play in the yard. School isn't for people like you."
+          "text": "Come here. Take your bag and get out of my classroom. Go and play in the yard. School isn't for people like you.",
+          "choices": [
+            {
+              "id": "normal",
+              "text": "TODO · normal response",
+              "next": "e4_n1_p"
+            },
+            {
+              "id": "absurd",
+              "text": "TODO · absurd (feigning madness)",
+              "next": "e4_a1_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
         },
         {
           "id": "rec_1",
@@ -869,6 +962,465 @@
           "id": "b_e_5",
           "speaker": "b",
           "text": "Don't think this is over. Go home right now and tell your parents to come to my office this afternoon for a talk.",
+          "next": null
+        },
+        {
+          "id": "e1_n1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “Stand up” · normal response · round 1 · protagonist",
+          "next": "e1_n1_b"
+        },
+        {
+          "id": "e1_n1_b",
+          "speaker": "b",
+          "text": "TODO · after “Stand up” · normal response · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e1_n2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e1_n2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “Stand up” · normal response · round 2 · protagonist",
+          "next": "e1_n2_b"
+        },
+        {
+          "id": "e1_n2_b",
+          "speaker": "b",
+          "text": "TODO · after “Stand up” · normal response · round 2 · B",
+          "next": "b_e_2"
+        },
+        {
+          "id": "e1_a1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “Stand up” · absurd (feigning madness) · round 1 · protagonist",
+          "next": "e1_a1_b"
+        },
+        {
+          "id": "e1_a1_b",
+          "speaker": "b",
+          "text": "TODO · after “Stand up” · absurd (feigning madness) · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e1_a2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e1_a2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “Stand up” · absurd (feigning madness) · round 2 · protagonist",
+          "next": "e1_a2_b"
+        },
+        {
+          "id": "e1_a2_b",
+          "speaker": "b",
+          "text": "TODO · after “Stand up” · absurd (feigning madness) · round 2 · B",
+          "next": "b_e_2"
+        },
+        {
+          "id": "e2_n1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “what you've done wrong” · normal response · round 1 · protagonist",
+          "next": "e2_n1_b"
+        },
+        {
+          "id": "e2_n1_b",
+          "speaker": "b",
+          "text": "TODO · after “what you've done wrong” · normal response · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e2_n2_p"
+            },
+            {
+              "id": "to_absurd",
+              "text": "TODO · turn absurd (feigning madness)",
+              "next": "e2_a2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e2_n2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “what you've done wrong” · normal response · round 2 · protagonist",
+          "next": "e2_n2_b"
+        },
+        {
+          "id": "e2_n2_b",
+          "speaker": "b",
+          "text": "TODO · after “what you've done wrong” · normal response · round 2 · B",
+          "next": "b_e_3"
+        },
+        {
+          "id": "e2_a1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 1 · protagonist",
+          "next": "e2_a1_b"
+        },
+        {
+          "id": "e2_a1_b",
+          "speaker": "b",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e2_a2_p"
+            },
+            {
+              "id": "to_normal",
+              "text": "TODO · turn to a normal response",
+              "next": "e2_n2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e2_a2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 2 · protagonist",
+          "next": "e2_a2_b"
+        },
+        {
+          "id": "e2_a2_b",
+          "speaker": "b",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 2 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e2_a3_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e2_a3_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 3 · protagonist",
+          "next": "e2_a3_b"
+        },
+        {
+          "id": "e2_a3_b",
+          "speaker": "b",
+          "text": "TODO · after “what you've done wrong” · absurd (feigning madness) · round 3 · B",
+          "next": "b_e_3"
+        },
+        {
+          "id": "e3_n1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · normal response · round 1 · protagonist",
+          "next": "e3_n1_b"
+        },
+        {
+          "id": "e3_n1_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · normal response · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_n2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_n2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · normal response · round 2 · protagonist",
+          "next": "e3_n2_b"
+        },
+        {
+          "id": "e3_n2_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · normal response · round 2 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_n3_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_n3_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · normal response · round 3 · protagonist",
+          "next": "e3_n3_b"
+        },
+        {
+          "id": "e3_n3_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · normal response · round 3 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_n4_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_n4_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · normal response · round 4 · protagonist",
+          "next": "e3_n4_b"
+        },
+        {
+          "id": "e3_n4_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · normal response · round 4 · B",
+          "next": "b_e_4",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "imagined_b_clue_normal",
+              "source": "imagined",
+              "speaker": "protagonist",
+              "text": "TODO · clue (only at the end of the normal response to “where's your textbook”)"
+            }
+          ]
+        },
+        {
+          "id": "e3_a1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · absurd (feigning madness) · round 1 · protagonist",
+          "next": "e3_a1_b"
+        },
+        {
+          "id": "e3_a1_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · absurd (feigning madness) · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_whimsy"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_whimsy",
+          "speaker": "voice_whimsy",
+          "text": "TODO · Flight of Fancy check",
+          "check": {
+            "ability": "whimsy",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "e3_h1_p",
+            "failure": "e3_l1_p"
+          }
+        },
+        {
+          "id": "e3_h1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 1 · protagonist",
+          "next": "e3_h1_b"
+        },
+        {
+          "id": "e3_h1_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_h2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_h2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 2 · protagonist",
+          "next": "e3_h2_b"
+        },
+        {
+          "id": "e3_h2_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 2 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e3_h3_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e3_h3_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 3 · protagonist",
+          "next": "e3_h3_b"
+        },
+        {
+          "id": "e3_h3_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 3 · B",
+          "next": "b_e_4",
+          "effects": [
+            {
+              "type": "record",
+              "entry_id": "imagined_b_clue_whimsy",
+              "source": "imagined",
+              "speaker": "protagonist",
+              "text": "TODO · clue (only at the end of the high Flight of Fancy branch)"
+            }
+          ]
+        },
+        {
+          "id": "e3_l1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, low Flight of Fancy (B's authority wins) · round 1 · protagonist",
+          "next": "e3_l1_b"
+        },
+        {
+          "id": "e3_l1_b",
+          "speaker": "b",
+          "text": "TODO · after “where's your textbook” · absurd, low Flight of Fancy (B's authority wins) · round 1 · B",
+          "next": "e3_n3_p"
+        },
+        {
+          "id": "e4_n1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “get out” · normal response · round 1 · protagonist",
+          "next": "e4_n1_b"
+        },
+        {
+          "id": "e4_n1_b",
+          "speaker": "b",
+          "text": "TODO · after “get out” · normal response · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e4_n2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e4_n2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “get out” · normal response · round 2 · protagonist",
+          "next": "e4_n2_b"
+        },
+        {
+          "id": "e4_n2_b",
+          "speaker": "b",
+          "text": "TODO · after “get out” · normal response · round 2 · B",
+          "next": "rec_1"
+        },
+        {
+          "id": "e4_a1_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “get out” · absurd (feigning madness) · round 1 · protagonist",
+          "next": "e4_a1_b"
+        },
+        {
+          "id": "e4_a1_b",
+          "speaker": "b",
+          "text": "TODO · after “get out” · absurd (feigning madness) · round 1 · B",
+          "choices": [
+            {
+              "id": "go_on",
+              "text": "TODO · keep going (same direction)",
+              "next": "e4_a2_p"
+            },
+            {
+              "id": "exit",
+              "text": "TODO · step out of the fantasy",
+              "next": "ex_1"
+            }
+          ]
+        },
+        {
+          "id": "e4_a2_p",
+          "speaker": "protagonist",
+          "text": "TODO · after “get out” · absurd (feigning madness) · round 2 · protagonist",
+          "next": "e4_a2_b"
+        },
+        {
+          "id": "e4_a2_b",
+          "speaker": "b",
+          "text": "TODO · after “get out” · absurd (feigning madness) · round 2 · B",
+          "next": "rec_1"
+        },
+        {
+          "id": "ex_1",
+          "speaker": "protagonist",
+          "text": "TODO · stepping out · he realises this is only imagined",
+          "next": "ex_2"
+        },
+        {
+          "id": "ex_2",
+          "speaker": "protagonist",
+          "text": "TODO · stepping out · back to the classroom (clues the fantasy had not reached yet are lost)",
           "next": null
         }
       ]

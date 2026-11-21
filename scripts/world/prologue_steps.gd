@@ -8,8 +8,11 @@ extends RefCounted
 ## a save are therefore the same question, and a test can ask it without a scene.
 
 ## The prologue, in order. Each step is identified by the flag that proves it is done.
+## The imagined lesson (`expectation`) comes straight after Q's talk, because it is chosen
+## inside that talk (round 7: 「去想象B」 after Q describes B) and normally plays in the Q
+## beat; the bag follows. Before, it waited for the bag search.
 const STEPS: Array[StringName] = [
-	&"wake", &"q_wake", &"bag", &"expectation", &"bell", &"substitute",
+	&"wake", &"q_wake", &"expectation", &"bag", &"bell", &"substitute",
 ]
 
 
@@ -54,8 +57,10 @@ static func is_done(step: StringName, has_flag: Callable) -> bool:
 ## This table is the prologue's only memory. Two steps share `met_q` because the
 ## wake has no flag of its own and cannot outlive Q's first line. The bag step closes
 ## either way the player can close it - the bag searched, or the fallback run out - and
-## the expectation beat is either played or skipped because the bag was not searched;
-## each of those has its own flag, so nothing the player did not do is ever claimed.
+## the expectation beat is either played or skipped because the player did not choose to
+## picture B; each of those has its own flag, so nothing the player did not do is ever
+## claimed. A searched bag (a later step) closes the expectation step too: a save made
+## before the reorder, with the bag searched and the scene not yet played, does not get it.
 ## `substitute` ends at `class_dismissed` rather than at `n_arrived`, because N arriving
 ## without the conversation that dismisses the class would leave the door locked forever.
 ## It also ends at `skipped_class`: a player who left through the rear door before the

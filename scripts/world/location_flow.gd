@@ -291,9 +291,11 @@ func _apply_arrival(location_id: StringName) -> void:
 	# Leaving the room is what starts the companion, not the dialogue choice: a player
 	# who stays at the desk and walks out ten minutes later gets the same Q.
 	# But if the arrival was from the curtain fall, Q was left behind in the classroom!
+	# Nor does Q come along through the rear door: skipping class (`skipped_class`) is the
+	# protagonist's own check and his own exit, before any dismissal, and Q stays at his desk.
 	var fell_from_curtain := StoryFlags.has_curtain_landing(_game_state)
-	if fell_from_curtain:
-		if _companion != null:
+	if fell_from_curtain or _has_flag(StoryFlags.SKIPPED_CLASS):
+		if _companion != null and (fell_from_curtain or _companion.is_joined()):
 			_companion.leave()
 	elif _companion != null and not _companion.is_joined():
 		if location_id != &"classroom" and _has_flag(StoryFlags.CLASS_DISMISSED):

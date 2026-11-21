@@ -37,6 +37,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 MASTER = "zh-CN"
+# The only abilities a subjective (imagined) conversation may roll; mirrors
+# `DialogueGraph.IMAGINATION_ABILITIES` in scripts/dialogue/dialogue_graph.gd.
+IMAGINATION_ABILITIES = ("whimsy",)
 MIRROR = "en"
 
 SOURCES = {"observed": "亲眼所见", "reported": "听人说的", "recalled": "记忆里的", "imagined": "想象中的"}
@@ -688,8 +691,8 @@ def validate_conversations(conversations: dict) -> list[str]:
             if not node.get("text") and not node.get("choices"):
                 errors.append(f"{here}: 台词是空的")
             if subjective:
-                if check:
-                    errors.append(f"{here}: 主观会话不能带检定")
+                if check and check.get("ability") not in IMAGINATION_ABILITIES:
+                    errors.append(f"{here}: 主观会话只能带「异想天开」检定")
                 effects = [e for holder in [node, *node.get("choices", [])] for e in holder.get("effects", [])]
                 for effect in effects:
                     if effect.get("type") in ("set_flag", "set_objective"):

@@ -18,6 +18,7 @@ from skinned_glb import matrix_quaternion, unit
 
 ROOT = Path(__file__).resolve().parents[3]
 DEV = ROOT / 'scenes/dev/teacher_b'
+SHIPPED = ROOT / 'assets/models/teacher_b'
 FPS = 30
 # (seconds, end of swing, anatomical side, landing distance in metres).
 STEPS = ((.20, .74, 'L', .29), (.82, 1.36, 'R', .59),
@@ -278,8 +279,8 @@ def build(rig):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--check', action='store_true', help='compare a rebuild without writing')
-    p.add_argument('--model', type=Path, default=DEV / 'teacher_b.glb')
-    p.add_argument('--output', type=Path, default=DEV / 'teacher_b_motion.tres')
+    p.add_argument('--model', type=Path, default=SHIPPED / 'teacher_b.glb')
+    p.add_argument('--output', type=Path, default=SHIPPED / 'teacher_b_motion.tres')
     args = p.parse_args()
     result = build(Rig(args.model))
     if args.check:

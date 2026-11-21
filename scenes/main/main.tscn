@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/actors/player/player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/world/location_host.gd" id="2_location_host"]
@@ -16,6 +16,13 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="14_pause_menu"]
 [ext_resource type="Script" path="res://scripts/actors/character_dialogue_animation.gd" id="15_dialogue_animation"]
 [ext_resource type="Script" path="res://scripts/audio/voice_director.gd" id="16_voice_director"]
+[ext_resource type="Script" path="res://scripts/world/concussion_view.gd" id="17_concussion_view"]
+[ext_resource type="Shader" path="res://assets/shaders/injury/concussion_collage.gdshader" id="18_concussion_collage"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_concussion"]
+shader = ExtResource("18_concussion_collage")
+shader_parameter/daze = 0.0
+shader_parameter/seed = 0.0
 
 [node name="Main" type="Node3D"]
 
@@ -40,6 +47,21 @@ script = ExtResource("12_occluder")
 
 [node name="OutlineOverlay" type="CanvasLayer" parent="."]
 script = ExtResource("13_outline")
+
+[node name="ConcussionView" type="CanvasLayer" parent="." groups=["world_filter"]]
+layer = -2
+visible = false
+script = ExtResource("17_concussion_view")
+
+[node name="Sheet" type="ColorRect" parent="ConcussionView"]
+visible = false
+material = SubResource("ShaderMaterial_concussion")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="BellAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6_bell")

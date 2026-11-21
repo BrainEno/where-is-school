@@ -108,7 +108,7 @@ TARGETS = (
 #
 # Arrows, mathematical operators, currency signs and geometric shapes used to be kept as
 # well. No shipped text used them, and together they cost about 26 KB across the two
-# subsets - space the 16 MiB pack (`tools/verify_build.py`) no longer had once the author's
+# subsets - space the then 16 MiB pack (`tools/verify_build.py`) no longer had once the author's
 # rewritten prologue needed its own new characters. Add a range back only with that budget.
 ALWAYS_INCLUDED = (
     (0x0020, 0x007E),  # ASCII printable

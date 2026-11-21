@@ -136,7 +136,10 @@ func _completed_checkpoint() -> void:
 	await _release_world()
 	if not await _boot():
 		return
-	checks.expect(_sequence.next_step() == &"bag", "Restoring the Q boundary wants to replay the introduction.")
+	# After Q comes the imagined lesson's step (round 7), which closes itself as skipped
+	# when the player did not choose to picture B; either way the introduction is behind.
+	checks.expect(_sequence.next_step() == &"expectation",
+		"Restoring the Q boundary resumes at '%s', not after the introduction." % _sequence.next_step())
 	checks.expect(ConversationRouter.select(&"q", _state.get_snapshot()) == &"q_studying",
 		"The completed/legacy MET_Q save still routes to the long introduction.")
 	await _repeat_in_both_locales()

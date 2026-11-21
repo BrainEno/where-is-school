@@ -8,9 +8,11 @@ extends SceneTree
 ## entrance as well. This test checks, on the real main scene:
 ##
 ## 1. **The real new-game order.** Wake, Q's approach and `q_wake` run as authored; the bag
-##    is tried throughout. No line spoken by `b` and no `expected_b` may start before
-##    `q_wake` has finished; `q_first_talk_done` is `false` from Q's first line until then.
-## 2. **No Q talk, no B.** A searched bag without Q's finished conversation - the approach
+##    is tried throughout, and in `q_wake` the player asks about the book and chooses to
+##    picture B when Q describes her (`imagine_b`, round 7). No line spoken by `b` and no
+##    `expected_b` may start before `q_wake` has finished; `q_first_talk_done` is `false`
+##    from Q's first line until then. The scene then starts straight away, before the bag.
+## 2. **No Q talk, no B.** A chosen scene without Q's finished conversation - the approach
 ##    could not run, or the run stopped mid-talk and was resumed - passes the scene over
 ##    (`expectation_skipped`) instead of playing it ahead of Q. An older save that only has
 ##    `met_q` (written at a checkpoint, so after the talk) keeps playing it, and is not
@@ -22,7 +24,8 @@ extends SceneTree
 ##    trigger (`present_b()`), which is refused before the talk. After it she is shown; a
 ##    re-entered room shows the one B again, and a snapshot without her entrance hides her.
 ## 5. **The wall mark is an impression, not an actor.** Only the live `expected_b`
-##    lines show it. It is gone at the end, also when skipped, and never saved.
+##    lines show it - it and the imagined lesson (docs/IMAGINED_LESSON.md). Both are gone
+##    at the end, also when skipped, and never saved.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
@@ -104,7 +107,7 @@ func _check_real_opening_order() -> void:
 				and not _flag(StoryFlags.TEXTBOOK_MISSING):
 			_interaction.request_activation(bag)
 		if _dialogue.is_busy():
-			_advance()
+			_advance_choosing([&"search", &"imagine_b"])
 		await process_frame
 	Engine.time_scale = 1.0
 	_expect(typeof(_talk_done_at_first_line) == TYPE_BOOL and not bool(_talk_done_at_first_line),
@@ -113,7 +116,10 @@ func _check_real_opening_order() -> void:
 	var q_at := _started.find(&"q_wake")
 	var b_at := _started.find(&"expected_b")
 	_expect(q_at >= 0, "Q's first conversation never played in the real opening.")
-	_expect(b_at >= 0, "The imagined scene with B never played after Q's conversation and the bag.")
+	_expect(b_at >= 0, "The imagined scene with B never played after the player chose it in q_wake.")
+	_expect(_flag(StoryFlags.IMAGINE_B_CHOSEN), "Choosing to picture B was not recorded.")
+	_expect(b_at < 0 or b_at == q_at + 1,
+		"Something played between q_wake and the chosen scene: %s." % str(_started))
 	_expect(q_at < 0 or b_at < 0 or q_at < b_at,
 		"expected_b started before q_wake: %s." % str(_started))
 	_expect(_flag(StoryFlags.Q_FIRST_TALK_DONE), "Q's finished conversation was not recorded.")
@@ -127,7 +133,7 @@ func _check_real_opening_order() -> void:
 
 func _check_gate_snapshots() -> void:
 	Harness.stage = "the expectation gate: Q never talked"
-	await _boot(false, {StoryFlags.TEXTBOOK_MISSING: true})
+	await _boot(false, {StoryFlags.IMAGINE_B_CHOSEN: true})
 	if _world != null:
 		_expect(not _sequence.is_b_introduced(), "A run where Q never talked counts B as introduced.")
 		await _sequence._beat_expectation()
@@ -142,7 +148,7 @@ func _check_gate_snapshots() -> void:
 	Harness.stage = "the expectation gate: a resumed, unfinished Q talk"
 	await _boot(false, {
 		StoryFlags.MET_Q: true, StoryFlags.Q_FIRST_TALK_DONE: false,
-		StoryFlags.TEXTBOOK_MISSING: true,
+		StoryFlags.IMAGINE_B_CHOSEN: true,
 	})
 	if _world != null:
 		_expect(not _sequence.is_b_introduced(),
@@ -323,7 +329,7 @@ func _check_impression_skip_and_resume() -> void:
 	Harness.stage = "skipping the imagined dialogue"
 	await _boot(false, {
 		StoryFlags.MET_Q: true, StoryFlags.Q_FIRST_TALK_DONE: true,
-		StoryFlags.TEXTBOOK_MISSING: true,
+		StoryFlags.IMAGINE_B_CHOSEN: true,
 	})
 	if _world == null:
 		return
@@ -338,10 +344,20 @@ func _check_impression_skip_and_resume() -> void:
 		_dialogue.get_playback().set_skip_scope(&"all")
 		_dialogue.request_skip()
 		while not _flag(StoryFlags.EXPECTATION_PLAYED) and Time.get_ticks_msec() < until:
+			# Skipping stops at the questioning's choices; the player steps out of the
+			# fantasy at the first one. Skip is a toggle, so it is pressed again only if
+			# the choice turned it off.
+			if _dialogue.is_busy() and _dialogue.has_pending_choices():
+				_advance_choosing([&"exit"])
+			elif _dialogue.is_busy() and _dialogue.get_playback().mode != DialoguePlayback.Mode.SKIP:
+				_dialogue.request_skip()
 			await process_frame
 	Engine.time_scale = 1.0
 	var completed := _finished.has(&"expected_b") and _flag(StoryFlags.EXPECTATION_PLAYED)
 	_expect(completed, "Skip did not finish the imagined dialogue and expectation beat.")
+	# It stepped out at the first hub, before the set-square recollection (round 7).
+	_expect(_flag(StoryFlags.EXPECTATION_LEFT_EARLY) or not completed,
+		"Leaving the fantasy before its recollection did not record expectation_left_early.")
 	_expect_impression(false, "after skipping the imagined dialogue")
 	if not completed:
 		await _release()
@@ -360,7 +376,7 @@ func _check_impression_skip_and_resume() -> void:
 	_narrative.clear()
 	await _open_world(false)
 	if _world != null:
-		_expect(_flag(StoryFlags.EXPECTATION_PLAYED) and _sequence.next_step() == &"bell",
+		_expect(_flag(StoryFlags.EXPECTATION_PLAYED) and _sequence.next_step() == &"bag",
 			"Continue did not restore the completed expectation from disk.")
 		_expect_impression(false, "after continuing from disk")
 	await _release()
@@ -447,6 +463,11 @@ func _expect_impression(shown: bool, when: String) -> void:
 	_expect(figure != null and figure.is_visible_in_tree() == shown,
 		"B's wall impression is not %s %s." % ["visible" if shown else "hidden", when])
 	_expect(square != null and square.is_visible_in_tree(), "The floor mark is missing %s." % when)
+	# The imagined lesson (her distorted figure and the repainted room) follows the same
+	# live exchange; it fades, so the switch is what is checked, not the pixels.
+	var lesson := room.get_node_or_null(^"ImaginedLesson") as ImaginedLesson
+	_expect(lesson != null and lesson.is_active() == shown,
+		"The imagined lesson is not %s %s." % ["active" if shown else "off", when])
 
 
 func _on_flag(flag: StringName, _previous: Variant, value: Variant) -> void:
@@ -460,6 +481,19 @@ func _advance() -> void:
 		_dialogue.select_choice(0)
 	else:
 		_dialogue.advance_presentation()
+
+
+## Picks the first offered choice whose id is in `preferred`, else the first choice.
+func _advance_choosing(preferred: Array[StringName]) -> void:
+	if not _dialogue.has_pending_choices():
+		_dialogue.advance_presentation()
+		return
+	var choices: Array = _dialogue.get_runtime().get_current_choices()
+	for choice: Dictionary in choices:
+		if StringName(choice.get("choice_id", &"")) in preferred:
+			_dialogue.select_choice(int(choice["index"]))
+			return
+	_dialogue.select_choice(0)
 
 
 func _finish_dialogue() -> void:

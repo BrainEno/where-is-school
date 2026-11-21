@@ -1,6 +1,6 @@
 extends Node3D
-## Classroom-only presentation: desk finish, the imagined teacher's wall mark, and
-## the draft on the timetable. The shared desks and the room's physics stay unchanged.
+## Classroom-only presentation: desk finish, the imagined teacher's wall mark and her
+## imagined lesson (`ImaginedLesson`), and the draft on the timetable. The shared desks and the room's physics stay unchanged.
 
 const PAPER_CYCLE := 11.7
 const PAPER_MAX_TILT := deg_to_rad(4.0)
@@ -21,6 +21,7 @@ const DESKS: Array[NodePath] = [
 ]
 
 @onready var _b_impression := get_node_or_null(^"../WallNorth/InkShadowFigure") as MeshInstance3D
+@onready var _imagined := get_node_or_null(^"../ImaginedLesson") as ImaginedLesson
 @onready var _paper: MeshInstance3D = $"../TimetableSheet"
 @onready var _clip: MeshInstance3D = $"../TimetableClip"
 @onready var _paper_rest := _paper.transform
@@ -65,7 +66,11 @@ func _process(delta: float) -> void:
 	_paper.transform = Transform3D(basis, _clip.position - basis * _paper_pin)
 
 
-## Only this painted figure changes. The floor's set-square mark remains scenery.
+## The painted figure on the wall and the imagined lesson (B in the aisle, her
+## after-images, the repainted room) follow the imagined exchange together. The floor's
+## set-square mark remains scenery.
 func set_b_impression_visible(show_impression: bool) -> void:
 	if _b_impression != null:
 		_b_impression.visible = show_impression
+	if _imagined != null:
+		_imagined.set_active(show_impression)
