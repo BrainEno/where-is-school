@@ -1,8 +1,8 @@
 # The imagined lesson (teacher B in `expected_b`)
 
 > **Status:** experiment in the shipped classroom. The art layer is done; the gameplay layer
-> (B's questioning, the protagonist's answers, nesting and the exit) waits for the author's
-> text.
+> (B's questioning, the protagonist's answers in three directions, the 「异想天开」 check and
+> the exit) is built with placeholder text that waits for the author's wording.
 > **Owner:** implementation PR author; art direction is the owner's.
 
 The owner wants the prologue's central set piece to be the scene the protagonist *imagines*
@@ -113,11 +113,31 @@ registered runtime character in `art/character_rig_audit/runtime_model_manifest.
 
 ## Not yet
 
-Waiting for the author's text, and not started:
+Round 7 built the questioning's **structure** with placeholder text (the author's lines are
+unchanged; every new line reads 「待做·…」 / "TODO · …" and waits for the author):
 
-- B's questioning options (the author has written some) and the protagonist's answers:
-  normal, or playing mad (装疯);
+- **Entry.** Q describes B (`q_wake`, `q_b_looks`); the player picks 「待做·去想象B」 or
+  「待做·不去想」. Picturing her starts the scene as soon as Q's talk ends; there is no later
+  automatic play. The scene no longer waits for the bag.
+- **Hubs.** Each of B's four authored lines (`b_e_1`–`b_e_4`) offers three directions:
+  `normal` (正常应对), `absurd` (荒诞/装疯) and `exit` (跳出幻想). Each direction is 2–4
+  rounds of protagonist/B placeholders; a B line between rounds offers `go_on` and `exit`,
+  and two of them cross over between normal and absurd. The directions rejoin B's next
+  authored line; the last hub reaches the authored recollection `rec_1` and `b_e_5`.
+- **「异想天开」.** In the absurd direction after "where's your textbook" a visible check of
+  the new inner voice `whimsy` (value 3, placeholder) splits it: high (the protagonist steers
+  the fantasy, 3 rounds) or low (B's authority wins, 1 round, then back to normal). The rules
+  were changed for it: a `whimsy` check is the only check a subjective conversation may roll
+  (`DialogueGraph.IMAGINATION_ABILITIES`), and it records only its own roll.
+- **Leaving.** `exit` goes to two placeholder lines and ends the scene; leaving before
+  `rec_1` writes `expectation_left_early`, which keeps the later lines that lean on the
+  remembered set-square sound (`q_after_dismissal`) closed.
+- **Clues.** Two placeholder imagined records mark where clues will sit:
+  `imagined_b_clue_normal` (end of the normal direction at hub 3) and
+  `imagined_b_clue_whimsy` (end of the high branch).
+
+Still waiting for the author:
+
+- all placeholder wording, the clue texts and which hub carries which clue;
 - nested imaginings: an answer that opens a further fantasy inside this one (the
-  `dream`/`reach` controls are built so a nested layer can deepen the filter);
-- the fixed "stop imagining" option, available at any line, which leaves the fantasy and
-  loses some clues.
+  `dream`/`reach` controls are built so a nested layer can deepen the filter).

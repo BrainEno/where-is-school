@@ -40,7 +40,9 @@ The language choice is written to `user://settings.cfg` and survives a restart.
 
 ~~~text
 OpeningSequence (scripts/world/opening_sequence.gd)
-  The prologue's steps: wake, Q, the bag wait, expectation, bell, substitute.
+  The prologue's steps: wake, Q, expectation, the bag wait, bell, substitute.
+  (Round 7: the imagined lesson is chosen inside Q's talk and follows it; it used to
+  wait for the bag search.)
   Each step names the story flag that proves it is done, and the director runs the
   first step whose flag is not set — so starting and resuming are the same call.
   Holds a beat lock so two authored sequences cannot overlap.
@@ -194,10 +196,14 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
    `classroom_own_desk`, `classroom_schoolbag`, `classroom_timetable_sheet`,
    `classroom_door_blocked`), each with its own text; the set square and the own
    desk also produce tagged recollections, and the blocked door explains itself.
-5. **Expectation** — begins ~1 s after the bag is found, once. Bookkeeping flag
-   `expectation_played` is written by the director, never by the subjective
-   content.
-6. **Bell** — rings ~6 s after the expectation, with a Q line; the door is
+5. **Expectation** — round 7: offered in Q's talk after Q describes B (`q_b_looks`,
+   「待做·去想象B」 / 「待做·不去想」). Choosing it (`imagine_b_chosen`) starts the imagined
+   lesson the moment Q's talk ends, inside the same beat; not choosing it closes the step as
+   skipped. Inside, each of B's four lines is a hub with three directions (normal / absurd /
+   leave the fantasy) of 2–4 placeholder rounds; see [IMAGINED_LESSON.md](IMAGINED_LESSON.md).
+   Bookkeeping flags `expectation_played` and `expectation_left_early` (left before the
+   set-square recollection) are written by the director, never by the subjective content.
+6. **Bell** — rings after the bag step, with a Q line; the door is
    readable as an exit but refuses until the class is dismissed. Its blocked text has
    the player feel someone watching, and someone is (#174): the door names its watcher
    (`ClassroomDoor.blocked_watcher_ids = [q]` - Q, the only person in the room while the

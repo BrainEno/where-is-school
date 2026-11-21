@@ -8,7 +8,8 @@ extends Node3D
 ## a player who told Q they would borrow a book next door (`borrow_from_next_class`):
 ## until the lesson is over, that player gets one visible orientation check at it. A
 ## success leaves through the door into the corridor before the lesson - skipping class,
-## so the bell and the substitute never happen (`skipped_class`, `PrologueSteps`) - and
+## so the bell and the substitute never happen (`skipped_class`, `PrologueSteps`), and
+## alone: the check is the protagonist's and Q does not follow (`LocationFlow`) - and
 ## the door stays passable for them afterwards. A failure, or any later try, is the
 ## locked door's own line. The check's line is that same authored line; nothing is added.
 

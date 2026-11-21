@@ -6,6 +6,11 @@
       "value": 3,
       "speaker": "voice_orientation",
       "max_passive": 2
+    },
+    "whimsy": {
+      "value": 3,
+      "speaker": "voice_whimsy",
+      "max_passive": 0
     }
   },
   "passives": [

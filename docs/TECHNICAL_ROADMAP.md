@@ -203,6 +203,8 @@ branch.
 ### Phase 3 — First vertical slice (delivered)
 - Classroom prologue: wake, Q, schoolbag, seven inspectables, the expectation
   beat, the substitute, the walkway exit.
+  (Round 7: the expectation beat is chosen inside Q's talk and comes before the
+  schoolbag; its questioning is a placeholder scaffold, see IMAGINED_LESSON.md.)
 - The gate and the street, the residential courtyard, and the green-animal
   observation, on the same interaction/dialogue/narrative-state boundaries.
 - Bilingual content and switching.

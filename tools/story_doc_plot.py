@@ -23,14 +23,17 @@ MASTER = "zh-CN"
 # scripts/world/prologue_steps.gd; a step missing here is still listed, just without prose.
 STEP_NOTES = {
     "wake": "醒来：从黑场淡入，主角趴在课桌上。目标条显示「先缓一缓」。没有对话。",
-    "q_wake": "Q 走过来开口（会话 q_wake）。第一句写入 met_q。",
+    "q_wake": "Q 走过来开口（会话 q_wake）。第一句写入 met_q。Q 描述 B（q_b_looks）后可选「去想象B」"
+    "（记 imagine_b_chosen）：Q 说完，想象场景 expected_b 立刻开始。",
     "bag": "翻书包：没有提醒。玩家翻了书包 → Q 问课本（q_after_bag）；"
     "一直没翻 → 计时用完，记 bag_wait_expired，不假装发生过对话。",
-    "expectation": "想象 B 进门（expected_b，主观会话，徽章「想象中的」）。没翻书包就跳过并记 expectation_skipped。",
+    "expectation": "想象 B（expected_b，主观会话，徽章「想象中的」）。B 的四句话各是一个分岔点：正常应对 / 荒诞（装疯）"
+    " / 跳出幻想；每个方向 2-4 轮，荒诞方向在「课本呢」之后有一次「异想天开」检定。没选「去想象B」就跳过并记"
+    " expectation_skipped。",
     "bell": "第二遍铃（bell_moment），目标条「第二遍铃响了」。",
     "substitute": "代课的 N 进门、点名、宣布自习（n_class）。以 class_dismissed 结束，教室门从此可出。"
     "在 q_wake 选了「去隔壁班借」的玩家，下课前可在后门做一次定向检定（classroom_rear_door_borrow），"
-    "成功即从后门进走廊、记 skipped_class，算翘课：铃声和 N 的一拍都不再发生。",
+    "成功即从后门进走廊、记 skipped_class，算翘课：铃声和 N 的一拍都不再发生。检定只属于主角，Q 不跟随。",
 }
 
 OPEN_QUESTIONS = [

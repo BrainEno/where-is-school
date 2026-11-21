@@ -28,7 +28,7 @@
     }
   },
   "alley_door": {
-    "title": "后门",
+    "title": "上锁的门",
     "prompt": "看看那扇门",
     "speaker": "protagonist",
     "source": "observed",

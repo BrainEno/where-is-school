@@ -109,7 +109,7 @@ clean checkout. Each one is either a visible fact or a `git diff` you can read.
    and whether the conversation is subjective.
 7. Node id, speaker and narrative source appear as text, not as fields, and none of them
    can be typed into. Same for the structure column.
-8. 内心声音文案 lists `orientation`, shows its value, speaker and passive rules read-only,
+8. 内心声音文案 lists `orientation` and `whimsy`, shows each value, speaker and passive rules read-only,
    and offers only 名称 and 说明 for editing.
 
 **Searching**

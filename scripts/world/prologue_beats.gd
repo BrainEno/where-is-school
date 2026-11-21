@@ -17,6 +17,8 @@ const WAKE_FADE_SECONDS := 3.0
 const WAKE_SETTLE_SECONDS := 2.0
 const EXPECTATION_LEAD_IN := 0.8
 const EXPECTATION_DISCLAIMER_SECONDS := 2.8
+## What the imagined lesson records when it reaches its recollection (`expected_b`, `rec_1`).
+const RECOLLECTION_ENTRY: StringName = &"recall_set_square_sound"
 const BELL_LEAD_IN := 6.0
 ## How much of the bell the player hears alone before Q says anything about it.
 ##
@@ -106,6 +108,13 @@ func q_wake() -> void:
 	await _director.wait_seconds(0.9)
 	if await _q_approach.run(_locations.get_current(), _player, _director):
 		await _director.play_conversation(&"q_wake")
+	# The player chose to picture B when Q described her (`q_b_looks`, `imagine_b`):
+	# the imagined lesson starts the moment Q's talk ends, inside the same beat. The choice
+	# sits in `q_wake` after Q has described B, so it already implies the #171 order; it
+	# does not wait on `q_first_talk_done`, which another listener of the same
+	# `conversation_finished` emission writes.
+	if _has_flag(StoryFlags.IMAGINE_B_CHOSEN) and not _has_flag(StoryFlags.EXPECTATION_PLAYED):
+		await _imagine_b()
 	_director.end_beat()
 
 
@@ -131,29 +140,41 @@ func bag() -> void:
 	_director.end_beat()
 
 
-## Beat E: expectation, clearly framed as imagination. Skipped when the bag was
-## never searched, which is what the fallback above produces; the skip is recorded
-## (`expectation_skipped`) so the step stays closed if the bag is searched later.
+## Beat E: expectation, clearly framed as imagination. It plays only when the player
+## chose to picture B after Q described her, and normally that already happened at the
+## end of the Q beat. This step is the fallback for a run that stopped in between (a Q talk
+## started from the room rather than the approach, or a reload): it plays the scene once
+## if it was chosen and never played. Otherwise the step is recorded as skipped
+## (`expectation_skipped`), so it stays closed for the rest of the run.
 func expectation() -> void:
 	if _has_flag(StoryFlags.EXPECTATION_PLAYED):
 		return
 	# B speaks in this scene, so it also waits for Q to have told the player about the
-	# lesson first (#171). A Q talk that never finished (its approach could not run; a
-	# searched bag routes Q to `q_after_bag` from then on) passes the scene over exactly
-	# like an unsearched bag - it is never played ahead of Q.
-	if not _has_flag(StoryFlags.TEXTBOOK_MISSING) or not _director.is_b_introduced():
+	# lesson first (#171). A Q talk that never finished passes the scene over.
+	if not _has_flag(StoryFlags.IMAGINE_B_CHOSEN) or not _director.is_b_introduced():
 		_game_state.set_flag(StoryFlags.EXPECTATION_SKIPPED, true)
 		return
 	await _director.wait_seconds(EXPECTATION_LEAD_IN)
 	await _director.begin_beat()
+	await _imagine_b()
+	_director.end_beat()
+
+
+## The imagined lesson itself, inside a beat the caller holds: the title card, the
+## subjective conversation (whose hubs always offer a way out), the disclaimer.
+func _imagine_b() -> void:
 	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
 	await _director.wait_seconds(0.7)
 	await _director.play_conversation(&"expected_b")
+	# Every hub offers a way out of the fantasy; leaving before the recollection
+	# (`rec_1`) means the set-square sound was never remembered.
+	var narrative := _director.get_node_or_null(^"/root/NarrativeState")
+	if narrative != null and not narrative.has_entry(RECOLLECTION_ENTRY):
+		_game_state.set_flag(StoryFlags.EXPECTATION_LEFT_EARLY, true)
 	_ui.overlay.show_localized_overlay("overlay.deny_title", "overlay.deny_body")
 	await _director.wait_seconds(EXPECTATION_DISCLAIMER_SECONDS)
 	await _ui.overlay.hide_overlay()
 	_game_state.set_flag(StoryFlags.EXPECTATION_PLAYED, true)
-	_director.end_beat()
 
 
 func bell() -> void:
