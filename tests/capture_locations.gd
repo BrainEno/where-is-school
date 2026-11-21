@@ -142,7 +142,7 @@ const DREAM_STANCES := [
 ]
 const DREAM_VIEWS := [
 	["escalator", Vector3(0.6, 1.9, -5.4), Vector3(-5.0, 2.0, -8.45)],
-	["ticket_counter", Vector3(-1.5, 1.55, -6.1), Vector3(1.4, 1.35, -8.45)],
+	["ticket_counter_01", Vector3(-15.48, -1.48, 11.18), Vector3(-14.24, -2.26, 13.57)],
 	["exam_floor_west", Vector3(-12.3, 5.4, -17.6), Vector3(-13.7, 4.2, -29.5)],
 	["exam_floor_north", Vector3(-5.5, 5.18, -43.58), Vector3(9.0, 4.36, -42.1)],
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],

@@ -24,6 +24,7 @@ class HeadCut:
     mouth: tuple[float, float]       # half-width and corner expression
     hair: tuple[float, float, float, float, float]  # front, temple, nape, crown, sweep
     lock: str = ""
+    mature: bool = False
 
 
 HALL_HEADS = {
@@ -134,6 +135,9 @@ class Skull:
         side, fore = math.sin(a), math.cos(a)
         x = width * side * self.look.head * (cut.jaw + (cut.cheek-cut.jaw)*cheek)
         z = depth + (front * fore**.82 if fore >= 0 else back * fore)
+        if cut.mature:
+            # The seated staff have softer lower cheeks and a fuller jaw below the cheekbone.
+            x *= 1 + .12 * spot(0, y, 0, .059, 1, .034)
         if fore > 0:
             xx = x / self.look.head
             nx = .0035 if cut.lock == "quiff" else -.0012
@@ -153,6 +157,11 @@ class Skull:
                 - .0035*spot(xx, y, .001, .073, .006, .008)
                 - .003*spot(xx, y, .003, .045, .026, .006)
             )
+            if cut.mature:
+                # Orbital fat and the soft break from the side of the nose to the mouth.
+                fold = .026 + .42*(.096-y)
+                z += (.005*spot(abs(xx), y, eye, .115, .023, .009)
+                      - .0035*spot(abs(xx), y, fold, .075, .009, .024)) * fore
         return x, y, z
 
     def surface(self, x, y, lift=0.):
@@ -209,6 +218,9 @@ def eyes(mesh, skull):
         relief(mesh, skull, iris, (ix, iy), (56, 40, 37), .0012, .0053)
         yy = .153 + (.002*s if cut.lock == "quiff" else 0.)
         almond(mesh, skull, x-.001*s, yy, w+.004, .0041, .0011, s*(tilt+.001), tint(look.hair, 18), rise=.0018)
+        if cut.mature:
+            almond(mesh, skull, x, y-.014, .016*look.head, .0010, .0013, .001*s,
+                   tint(look.skin, -23), lift=.0012, rise=.0007)
     if look.glasses:
         glasses(mesh, skull)
 
@@ -308,6 +320,10 @@ def scalp(mesh, skull):
             pigment = tint(look.hair, -8+19*t+comb*10 + max(0., side)*5)
             if cut.lock == "crop" and t == 0.:
                 pigment = tint(mix(pigment, look.skin, .20), 0)
+            if cut.mature:
+                # Ash at the temples, where the strands lift above the ears.
+                grey = max(0., abs(side)-.53) * (1-t) * (.48 + .62*max(0., comb))
+                pigment = tint(mix(pigment, (141, 129, 124), grey), 0)
             pigments.append(pigment)
         rings.append(ring)
     # The hidden cuff overlaps the skin, so no lit strips float beside the temples.
