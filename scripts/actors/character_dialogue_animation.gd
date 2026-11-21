@@ -24,25 +24,22 @@ func _on_line_presented(line: Dictionary) -> void:
 	var speaker := StringName(String(line.get("speaker_id", "")))
 	if bool(line.get("subjective", false)):
 		speaker = &""
-	_apply_speaker(speaker)
-
-
-func _on_presentation_active_changed(active: bool) -> void:
-	if not active:
-		_apply_speaker(&"")
-
-
-func _apply_speaker(speaker: StringName) -> void:
 	for node in get_tree().get_nodes_in_group("npc_actor"):
 		var actor := node as NpcActor
 		if actor == null:
 			continue
 		var animator := actor.get_character_animator()
 		if animator != null:
-			animator.set_talking(not speaker.is_empty() and actor.npc_id == speaker
-				and animator.is_visible_in_tree())
+			var visible_now := animator.is_visible_in_tree()
+			animator.present_dialogue_line(line if visible_now else {},
+				visible_now and not speaker.is_empty() and actor.npc_id == speaker)
 	for node in get_tree().get_nodes_in_group("seated_dialogue_speaker"):
 		var visual := node as CharacterVisualAnimation
 		if visual != null:
 			visual.set_talking(not speaker.is_empty() and visual.dialogue_speaker_id == speaker
 				and visual.is_visible_in_tree())
+
+
+func _on_presentation_active_changed(active: bool) -> void:
+	if not active:
+		_on_line_presented({})

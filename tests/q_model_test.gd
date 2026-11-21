@@ -16,6 +16,53 @@ var _failures: Array[String] = []
 var _notes: PackedStringArray = []
 
 
+# Sample the rendered pose before Skeleton3D restores the unmodified FK pose.
+class TextbookProbe extends RefCounted:
+	var book: Node3D
+	var rig: Skeleton3D
+	var wrists: Array[Marker3D] = []
+	var hands := PackedInt32Array()
+	var head: int
+	var rest: Basis
+	var pitch := 0.0
+	var high := Vector3(-INF, -INF, -INF)
+	var low := Vector3(INF, INF, INF)
+	var max_wrist_gap := 0.0
+	var samples := 0
+
+	func _init(q: CharacterVisualAnimation) -> void:
+		book = q.get_node_or_null(^"BiologyTextbook") as Node3D
+		rig = q.get_skeleton()
+		if book == null or rig == null:
+			return
+		wrists.assign([book.get_node(^"LeftLeaf/Wrist"), book.get_node(^"RightLeaf/Wrist")])
+		hands = PackedInt32Array([rig.find_bone("Hand_R"), rig.find_bone("Hand_L")])
+		head = rig.find_bone("Head")
+		rest = rig.get_bone_global_rest(head).basis.inverse()
+		rig.skeleton_updated.connect(_sample)
+
+	func showing() -> bool:
+		return (is_instance_valid(rig) and rig.is_inside_tree()
+			and is_instance_valid(book) and book.is_inside_tree() and book.is_visible_in_tree())
+
+	func _sample() -> void:
+		if not showing():
+			return
+		var frame := (rig.get_bone_global_pose(head).basis * rest).orthonormalized()
+		pitch = rad_to_deg(asin(clampf(-frame.z.y, -1.0, 1.0)))
+		var values := Vector3(pitch, rad_to_deg(atan2(frame.x.y, frame.x.x)), book.position.x)
+		high = high.max(values)
+		low = low.min(values)
+		samples += 1
+		for i in wrists.size():
+			var position := rig.to_global(rig.get_bone_global_pose(hands[i]).origin)
+			max_wrist_gap = maxf(max_wrist_gap, position.distance_to(wrists[i].global_position))
+
+	func sways_over_a_phrase() -> bool:
+		var travel := high - low
+		return samples >= 8 and travel.x > 7.0 and travel.y > 12.0 and travel.z > 0.025
+
+
 func _initialize() -> void:
 	Harness.arm_watchdog(self, 180.0, "q_model_test.gd")
 	call_deferred("_run")
@@ -275,12 +322,18 @@ func _check_game_integration() -> void:
 	var controller := main.get_node("DialogueController") as DialogueController
 	var bridge := main.get_node_or_null("CharacterDialogueAnimation") as CharacterDialogueAnimation
 	_expect(bridge != null, "main.tscn has no dialogue animation bridge.")
+	var book_check := TextbookProbe.new(q)
+	_expect(book_check.book != null and not book_check.showing(),
+		"Q should have a textbook ready offstage, not raised on his first line.")
+	var actor_pose := actor.transform
 	# Real dialogue, not a fabricated line dictionary: drive the same presentation
 	# API as the director/UI, then observe who is actually speaking on each line.
 	_expect(controller.play_conversation(&"q_wake"), "The real Q opening conversation did not start.")
 	await _frames(2)
 	var observed_q := false
 	var observed_other := false
+	var reached_recitation := false
+	var reached_reply := false
 	for line in 128:
 		if not controller.is_busy():
 			break
@@ -288,6 +341,13 @@ func _check_game_integration() -> void:
 		var speaking := String(current.get("speaker_id", "")) == "q" and not bool(current.get("subjective", false))
 		await _frames(2)
 		_expect(q.is_talking() == speaking, "The Q speech request disagrees with the visible dialogue speaker.")
+		match String(current.get("node_id", "")):
+			"p_ecosystem_question":
+				reached_recitation = true
+				await _check_recitation(book_check, controller)
+			"q_ecosystem":
+				reached_reply = true
+				await _check_reply(book_check, "Q's first reply over the book")
 		if speaking:
 			observed_q = true
 			_expect(q.get_current_clip() == "talk", "Q's visible dialogue did not enter its native talk clip.")
@@ -304,8 +364,11 @@ func _check_game_integration() -> void:
 			controller.advance_presentation()
 	_expect(observed_q and observed_other, "The dialogue fixture did not exercise both Q and another speaker.")
 	_expect(not controller.is_busy(), "The Q conversation did not finish within its traversal bound.")
+	_expect(reached_recitation and reached_reply, "The real opening path did not reach both textbook cues.")
+	_expect(actor.transform.is_equal_approx(actor_pose), "Reading moved or turned the body that owns Q.")
 	await _frames(2)
 	_expect(not q.is_talking() and q.get_current_clip() == "idle", "Closing dialogue stranded Q in talk.")
+	await _check_textbook_lifecycle(q, book_check, controller)
 	var companion := main.get_node("Companion") as CompanionController
 	var capsule := companion.get_node("CollisionShape3D") as CollisionShape3D
 	_expect(is_equal_approx((capsule.shape as CapsuleShape3D).height, 1.8)
@@ -319,9 +382,11 @@ func _check_game_integration() -> void:
 	_expect(companion_q.motion_profile != null and companion_q.motion_profile == q.motion_profile,
 		"Classroom and companion Q do not share the same authored motion resource.")
 	_expect(not companion_q.is_talking(), "The hidden companion animated during classroom dialogue.")
+	_expect(not companion_q.has_node(^"BiologyTextbook"), "The shared companion wrapper installed a classroom book.")
 	var player := main.get_node("Player") as PlayerController
 	_expect(host.load_location("res://scenes/locations/corridor/corridor.tscn", &"FromClassroom", player),
 		"Q speech test could not enter the actual companion location.")
+	_expect(not book_check.showing(), "The classroom book survived the room swap.")
 	await _frames(6)
 	companion.join()
 	await _frames(6)
@@ -353,6 +418,63 @@ func _check_game_integration() -> void:
 func _frames(count: int) -> void:
 	for frame in count:
 		await process_frame
+
+
+func _check_recitation(probe: TextbookProbe, controller: DialogueController) -> void:
+	if probe.book == null:
+		return
+	var settled := await Harness.wait_until(func() -> bool: return probe.showing() and probe.pitch > 29.0, 3.0)
+	_expect(settled, "Q did not bow into the book on the protagonist's reading cue.")
+	if not settled:
+		return
+	probe.samples = 0
+	probe.high = Vector3(-INF, -INF, -INF)
+	probe.low = Vector3(INF, INF, INF)
+	var locale := L10n.current
+	_expect(controller.apply_locale("en" if locale != "en" else "zh-CN"), "Cannot switch Q's cue language.")
+	_expect(String(controller.get_current_line().get("node_id", "")) == "p_ecosystem_question",
+		"Changing language replaced the reading cue rather than re-rendering it.")
+	var swept := await Harness.wait_until(probe.sways_over_a_phrase, 4.0)
+	_expect(swept and probe.low.x > 24.0, "Q did not nod, sway and carry the book in the recitation loop.")
+	controller.apply_locale(locale)
+	var span := probe.high - probe.low
+	_notes.append("real Q recitation: %.1f° pitch span, %.1f° roll span, %.3f m book sway, %.4f m max wrist gap" % [
+		span.x, span.y, span.z, probe.max_wrist_gap])
+
+
+func _check_reply(probe: TextbookProbe, context: String) -> void:
+	var lifted := await Harness.wait_until(func() -> bool: return probe.showing() and probe.pitch < 14.0, 3.0)
+	_expect(lifted, "%s did not lift his head with the book still supported." % context)
+
+
+func _check_textbook_lifecycle(q: CharacterVisualAnimation, probe: TextbookProbe, controller: DialogueController) -> void:
+	if probe.book == null:
+		return
+	var studying := func() -> bool: return probe.showing() and probe.pitch > 29.0
+	_expect(await Harness.wait_until(studying, 3.0), "Q did not go back to the book after the first talk.")
+	_expect(controller.play_conversation(&"q_studying"), "Could not recall Q to answer from his book.")
+	_expect(String(controller.get_current_line().get("node_id", "")) == "qs_call" and studying.call(),
+		"Q should still be studying while the protagonist calls him.")
+	controller.advance_presentation()
+	await _check_reply(probe, "Q's interrupted recitation")
+	controller.advance_presentation()
+	_expect(await Harness.wait_until(studying, 3.0), "Q did not resume study after the interruption.")
+
+	q.report_velocity(Vector3.RIGHT * 1.5)
+	_expect(await Harness.wait_until(func() -> bool: return not probe.showing(), 3.0),
+		"The book followed Q into his walk with no grip.")
+	_expect(q.get_current_clip() == "walk", "Study interrupted normal movement.")
+	q.clear_reported_velocity()
+	_expect(await Harness.wait_until(studying, 3.0), "Q did not pick up his study again at rest.")
+	_expect(probe.max_wrist_gap < 0.009, "At least one rendered wrist drifted away from its cover: %.4f m." % probe.max_wrist_gap)
+
+	var state := root.get_node(^"GameState")
+	var snapshot: Dictionary = state.get_snapshot()
+	state.set_flag(StoryFlags.CLASS_DISMISSED, true)
+	_expect(await Harness.wait_until(func() -> bool: return not probe.showing(), 3.0),
+		"Q kept reciting after dismissal.")
+	state.replace_snapshot(snapshot)
+	_expect(await Harness.wait_until(studying, 3.0), "The restored first-talk flag did not restore Q's book.")
 
 
 func _expect(condition: bool, message: String) -> void:
