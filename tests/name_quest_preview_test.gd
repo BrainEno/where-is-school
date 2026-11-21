@@ -71,7 +71,7 @@ func _run() -> void:
 	_save.forget_all()
 	DirAccess.remove_absolute(LIVE_READ_LOG)
 	Harness.finish(self, _check.failures,
-		"Name quest: A/B/C, one-shot door, optional Q, retriable archive lookup and isolated Continue.")
+		"Name quest: keyboard/mouse/pad responses, Q and solo archive routes, retries and isolated Continue.")
 
 
 func _branch(index: int) -> bool:
@@ -101,27 +101,28 @@ func _branch(index: int) -> bool:
 
 	if not await _settled(&"classroom"):
 		return false
-	if index == 0:
-		var landing := _host.get_current().get_spawn(&"FromCorridor").global_position
-		if not await _walk_to(landing, 18.0) or not await _use_in_reach(door):
-			return false
-	else:
-		_interaction.request_activation(door)
+	var landing := _host.get_current().get_spawn(&"FromCorridor").global_position
+	if not await _walk_to(landing, 18.0) or not await _use_in_reach(door):
+		return false
 	if not _check.expect(await _card(&"ask_title") and _room() == &"classroom"
 			and not _player.is_control_enabled() and not _q.is_joined()
 			and not _state.has_flag(QUEST.RESPONSE), "The name question did not hold the player inside the classroom."):
 		return false
 	_check.expect(_choice_count() == 3 and _body().is_empty(), "N's card must have exactly three choices and no line.")
-	_pick(index)
+	await _respond(index)
 	if not await _settled(&"corridor"):
 		return false
 	_check.expect(_state.get_flag(QUEST.RESPONSE) == reply and _q.is_joined()
 		and not _state.get_flag(StoryFlags.SKIPPED_CLASS, false)
 		and not _knowledge.has_entry(QUEST.VERIFIED), "Response gave the wrong state, invented an answer or skipped the class.")
-	if index == 2:
-		return await _board_without_q()
+	for item: Interactable in _host.get_current().get_interactables():
+		var outside := item as LocationExit
+		if outside != null and outside.destination_id not in [&"classroom", &"archive"]:
+			_check.expect(not outside.can_interact(), "Preview exposed an exit to %s." % outside.destination_id)
 	if index == 1:
 		return true
+	if index == 2:
+		return await _without_q(reply)
 
 	Harness.stage = "return through the classroom without asking twice"
 	_interaction.request_activation(_target(&"back_to_classroom"))
@@ -137,8 +138,7 @@ func _branch(index: int) -> bool:
 	var q_target := _q.get_node_or_null(^"AskAboutTheRegister") as Interactable
 	if not _check.expect(q_target != null and q_target.can_interact(), "The joined Q offers no follow-up."):
 		return false
-	_interaction.request_activation(q_target)
-	if not await _card(&"q_title"):
+	if not await _use_in_reach(q_target) or not await _card(&"q_title"):
 		return false
 	_check.expect(not _knowledge.has_entry(QUEST.Q_CLUE), "An unasked follow-up already entered the log.")
 	_pick(0)
@@ -151,22 +151,56 @@ func _branch(index: int) -> bool:
 	# Q has a solid capsule. Step into the middle of the hall before walking
 	# past him to the board, the same passing-lane rule as corridor_art_test.
 	if not await _walk_to(Vector3(0.45, 0, -5.1), 6.0) \
-			or not await _walk_to(Vector3(-0.58, 0, -2.05), 8.0) \
-			or not await _use_in_reach(_target(&"noticeboard")):
+			or not await _read_board():
 		return false
-	if not await _card(&"board_title", true):
-		return false
-	_pick(0)
 	var board_entry: NarrativeEntry = _knowledge.get_entry(QUEST.BOARD_CLUE)
 	_check.expect(board_entry != null and board_entry.source == NarrativeEntry.Source.OBSERVED
 		and q_entry != null and board_entry.text == q_entry.text, "The board cannot corroborate the class/seat report.")
+	return await _archive(reply, true)
 
-	Harness.stage = "real route downstairs, archive retries and proof gates"
+
+func _respond(index: int) -> void:
+	match index:
+		0:
+			var key := InputEventKey.new()
+			key.physical_keycode = KEY_1
+			_tap(key)
+		1:
+			var button := _panel.get_choice_buttons()[1]
+			if not _check.expect(await Harness.wait_until(func() -> bool:
+				return button.get_global_rect().size.x > 32.0, 3.0), "Response B did not lay out its button."):
+				return
+			var mouse := InputEventMouseButton.new()
+			mouse.button_index = MOUSE_BUTTON_LEFT
+			mouse.position = button.get_global_rect().get_center()
+			mouse.global_position = mouse.position
+			_tap(mouse)
+		2:
+			var pad := InputEventJoypadButton.new()
+			pad.button_index = JOY_BUTTON_DPAD_DOWN
+			for _press in 3:
+				if _panel.get_choice_cursor() == 2:
+					break
+				_tap(pad)
+			_check.expect(_panel.get_choice_cursor() == 2, "The controller could not select response C.")
+			pad.button_index = JOY_BUTTON_A
+			_tap(pad)
+
+
+func _tap(event: InputEvent) -> void:
+	for pressed: bool in [true, false]:
+		event.set(&"pressed", pressed)
+		root.push_input(event)
+
+
+func _archive(reply: String, with_q: bool) -> bool:
+	Harness.stage = "real route downstairs, archive retries and proof gates (Q: %s)" % with_q
 	if not await _walk_to_archive() or not await _use_in_reach(_target(&"to_archive")) \
 			or not await _settled(&"archive"):
 		return false
-	_q.leave()
-	_check.expect(not q_target.can_interact(), "An absent Q remains interactable.")
+	var q_target := _q.get_node(^"AskAboutTheRegister") as Interactable
+	_check.expect(_q.is_with_player() == with_q and not q_target.can_interact(),
+		"The archive changed Q's availability or offered a corridor follow-up.")
 	_check.expect(not _state.get_flag(&"annex.archive.aligned", false), "Preview wrote a production threshold result.")
 	_interaction.request_activation(_target(QUEST.ORIGINALS))
 	if not await _card(&"original_title"):
@@ -198,11 +232,10 @@ func _branch(index: int) -> bool:
 	if not await _mount() or not await _settled(&"archive"):
 		return false
 	_check.expect(_state.get_flag(QUEST.RESPONSE) == reply and _state.get_flag(QUEST.CLASS_INDEXED, false)
-		and not _state.has_flag(QUEST.REFERENCE) and _knowledge.has_entry(QUEST.Q_CLUE)
-		and _knowledge.has_entry(QUEST.BOARD_CLUE) and not _q.is_joined(),
-		"Continue discarded (or added) evidence or forced Q to join on load.")
-	_interaction.request_activation(_target(&"archive_detail"))
-	if not await _card(&"align_title"):
+		and not _state.has_flag(QUEST.REFERENCE) and _knowledge.has_entry(QUEST.Q_CLUE) == with_q
+		and _knowledge.has_entry(QUEST.BOARD_CLUE) and _q.is_joined() == with_q,
+		"Continue changed the evidence or whether Q was following.")
+	if not await _use_in_reach(_target(&"archive_detail")) or not await _card(&"align_title"):
 		return false
 	_pick(1)
 	_pick(2)
@@ -210,7 +243,7 @@ func _branch(index: int) -> bool:
 		"Alignment did not derive the matching file reference.")
 	_pick(0)
 
-	Harness.stage = "walk to the original, reject both decoys and reveal once"
+	Harness.stage = "walk to the original, reject decoys and reveal once (Q: %s)" % with_q
 	var original := _target(QUEST.ORIGINALS)
 	if not await _walk_to(Vector3(3.45, 0.0, -1.24), 10.0) or not await _use_in_reach(original) \
 			or not await _card(&"original_title"):
@@ -233,28 +266,34 @@ func _branch(index: int) -> bool:
 		return false
 	_check.expect(not _panel.visible and _knowledge.has_entry(QUEST.VERIFIED),
 		"The finished quest did not restore at rest.")
-	_interaction.request_activation(_target(QUEST.ORIGINALS))
-	if not await _card(&"reveal_title", false, true):
+	if not await _use_in_reach(_target(QUEST.ORIGINALS)) or not await _card(&"reveal_title", false, true):
 		return false
 	_check.expect(_body() == REVEAL, "Could not re-read the verified original.")
 	_pick(0)
 	return true
 
 
-func _board_without_q() -> bool:
+func _without_q(reply: String) -> bool:
 	Harness.stage = "no Q: the observed board can supply the lead on its own"
 	var q_target := _q.get_node(^"AskAboutTheRegister") as Interactable
 	_q.leave()
 	_interaction.request_activation(q_target)
 	_check.expect(not q_target.can_interact() and not _panel.visible and not _knowledge.has_entry(QUEST.Q_CLUE),
 		"A non-following Q could still be questioned.")
-	_interaction.request_activation(_target(&"noticeboard"))
-	if not await _card(&"board_title", true):
+	if not await _read_board():
+		return false
+	var board_entry: NarrativeEntry = _knowledge.get_entry(QUEST.BOARD_CLUE)
+	_check.expect(board_entry != null and board_entry.source == NarrativeEntry.Source.OBSERVED
+		and not _knowledge.has_entry(QUEST.Q_CLUE), "The solo lead required or fabricated a Q report.")
+	return await _archive(reply, false)
+
+
+func _read_board() -> bool:
+	if not await _walk_to(Vector3(-0.58, 0, -2.05), 8.0) \
+			or not await _use_in_reach(_target(&"noticeboard")) or not await _card(&"board_title", true):
 		return false
 	_pick(0)
-	var board_entry: NarrativeEntry = _knowledge.get_entry(QUEST.BOARD_CLUE)
-	return _check.expect(board_entry != null and board_entry.source == NarrativeEntry.Source.OBSERVED
-		and not _knowledge.has_entry(QUEST.Q_CLUE), "The solo lead required or fabricated a Q report.")
+	return true
 
 
 func _walk_to_archive() -> bool:
@@ -338,7 +377,9 @@ func _walk_to(feet: Vector3, limit: float) -> bool:
 
 func _use_in_reach(target: Interactable) -> bool:
 	if not _check.expect(target != null and target.can_interact() and _interaction.is_in_reach(target)
-			and _interaction.has_line_of_sight(target), "No usable target in reach (%s)." % Harness.stage):
+			and _interaction.has_line_of_sight(target), "Could not reach %s from %s (%s)." % [
+				target.interact_id if target != null else "missing target", _player.global_position, Harness.stage,
+			]):
 		return false
 	_player.face_toward(target.global_position - _player.global_position)
 	if not _check.expect(await Harness.wait_until(func() -> bool:
