@@ -309,6 +309,7 @@ def computer_room(b):
 def station_hotspots(b):
     staged = b.bind("staged", "res://scripts/interaction/staged_interactable.gd", "Script")
     control = b.bind("station_control", "res://scenes/locations/computer_room/computer_station.gd", "Script")
+    power = b.bind("power_target", "res://scenes/locations/computer_room/terminal_power_hotspot.gd", "Script")
     shot = b.bind("camera_shot", "res://scripts/world/camera_shot.gd", "Script")
     b.subs.append(f'''[sub_resource type="Resource" id="Shot_Power"]
 script = {shot}
@@ -330,7 +331,7 @@ glide_seconds = 0.42
         outline = ", ".join(f'"../../{part}"' for part in parts)
         extra = 'interaction_enabled = false\ncamera_shot = SubResource("Shot_Power")\n' if not enabled else ""
         b.nodes.append(f'''[node name="{name}" parent="Interactables" instance=ExtResource("tap_target")]
-script = {staged}
+script = {staged if enabled else power}
 position = {vec3(pos)}
 interact_id = &"{"terminal_seat" if enabled else "terminal_power"}"
 prompt_key = "{key}"

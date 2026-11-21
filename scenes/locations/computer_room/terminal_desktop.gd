@@ -43,6 +43,8 @@ var _ticks := 0.0
 func _ready() -> void:
 	_launch[0].pressed.connect(_start_mines)
 	_launch[1].pressed.connect(_start_snake)
+	for i in _launch.size():
+		_launch[i].focus_entered.connect(func() -> void: _launch_index = i)
 	$BottomBar/Power.pressed.connect(func() -> void: shutdown_requested.emit())
 	$Game/Close.pressed.connect(back)
 	$Game/Restart.pressed.connect(_restart)

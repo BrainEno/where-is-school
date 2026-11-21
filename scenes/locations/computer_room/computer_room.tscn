@@ -1,4 +1,4 @@
-[gd_scene load_steps=80 format=3]
+[gd_scene load_steps=81 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
 [ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]
 [ext_resource type="Script" path="res://scenes/locations/computer_room/computer_station.gd" id="station_control"]
+[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_power_hotspot.gd" id="power_target"]
 
 [sub_resource type="ShaderMaterial" id="Mat_plaster"]
 shader = ExtResource("paper_shader")
@@ -968,7 +969,7 @@ outline_paths = PackedStringArray("../../StationChair1/Seat", "../../StationChai
 support_paths = PackedStringArray("../../StationChair1")
 
 [node name="TerminalPower" parent="Interactables" instance=ExtResource("tap_target")]
-script = ExtResource("staged")
+script = ExtResource("power_target")
 position = Vector3(4.043, 1.056, -2.486)
 interact_id = &"terminal_power"
 prompt_key = "prompt.terminal_power"

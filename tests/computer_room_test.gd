@@ -241,7 +241,9 @@ func _sit(seat: Interactable, power: Interactable) -> bool:
 	_press_action(&"interact")
 	return _check.expect(await Harness.wait_until(func() -> bool:
 		return _player.is_seated() and not _director.is_beat_active() and _interaction.get_current_target() == power,
-		8.0), "Sitting failed or the seated player could not select power at %s." % _player.global_position)
+		8.0), "Could not select power at %s: seated=%s enabled=%s beat=%s current=%s visible=%s line=%s." % [
+			_player.global_position, _player.is_seated(), power.can_interact(), _director.is_beat_active(),
+			_interaction.get_current_target(), _interaction.is_seen_by_camera(power), _interaction.has_line_of_sight(power)])
 
 
 func _wait_panel() -> View:

@@ -3,12 +3,13 @@ extends Node
 ## OpeningInteractions.run_staged(); the world stays locked until the terminal is off.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
+const PowerTarget = preload("res://scenes/locations/computer_room/terminal_power_hotspot.gd")
 const SessionView = preload("res://scenes/locations/computer_room/terminal_session.gd")
 const SESSION_SCENE := preload("res://scenes/locations/computer_room/terminal_session.tscn")
 
 @onready var _chair: PushableChair = $"../StationChair1"
 @onready var _seat: StagedInteractable = $"../Interactables/TerminalSeat"
-@onready var _power: StagedInteractable = $"../Interactables/TerminalPower"
+@onready var _power: PowerTarget = $"../Interactables/TerminalPower"
 @onready var _raster: MeshInstance3D = $"../Station1/Right/Raster"
 @onready var _led: MeshInstance3D = $"../Station1/Right/Power"
 @onready var _glow: OmniLight3D = $"../Station1/Right/BootGlow"
@@ -41,6 +42,7 @@ func _physics_process(_delta: float) -> void:
 		return
 	if not _at_station(_player):
 		_player = null
+		_power.sitter = null
 		_seat.interaction_enabled = true
 		_power.interaction_enabled = false
 
@@ -62,6 +64,7 @@ func _sit(director: Node) -> Dictionary:
 		await _transfer(player)
 		if _at_station(player):
 			_player = player
+			_power.sitter = player
 			_seat.interaction_enabled = false
 			_power.interaction_enabled = true
 	return {}
@@ -84,6 +87,11 @@ func _boot(director: Node) -> Dictionary:
 	_set_power(false)
 	player.stand_up()
 	await _transfer(player)
+	# The moving chair is not a nav obstacle. Step clear of its pulled stop
+	# before handing back click-to-walk, like stepping out from a desk.
+	for offset: float in [0.84, -0.84]:
+		if await Motion.walk_to(player, _chair.home_mark() + _chair.global_basis.x * offset):
+			break
 	return {}
 
 
