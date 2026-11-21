@@ -103,7 +103,7 @@ func _branch(index: int) -> bool:
 		return false
 	if index == 0:
 		var landing := _host.get_current().get_spawn(&"FromCorridor").global_position
-		if not await _walk_to(landing, 18.0) or not _use_in_reach(door):
+		if not await _walk_to(landing, 18.0) or not await _use_in_reach(door):
 			return false
 	else:
 		_interaction.request_activation(door)
@@ -148,7 +148,12 @@ func _branch(index: int) -> bool:
 	var q_entry: NarrativeEntry = _knowledge.get_entry(QUEST.Q_CLUE)
 	_check.expect(q_entry != null and q_entry.source == NarrativeEntry.Source.REPORTED
 		and not q_target.can_interact(), "Q's clue is not a one-time report.")
-	_interaction.request_activation(_target(&"noticeboard"))
+	# Q has a solid capsule. Step into the middle of the hall before walking
+	# past him to the board, the same passing-lane rule as corridor_art_test.
+	if not await _walk_to(Vector3(0.45, 0, -5.1), 6.0) \
+			or not await _walk_to(Vector3(-0.58, 0, -2.05), 8.0) \
+			or not await _use_in_reach(_target(&"noticeboard")):
+		return false
 	if not await _card(&"board_title", true):
 		return false
 	_pick(0)
@@ -157,7 +162,7 @@ func _branch(index: int) -> bool:
 		and q_entry != null and board_entry.text == q_entry.text, "The board cannot corroborate the class/seat report.")
 
 	Harness.stage = "real route downstairs, archive retries and proof gates"
-	if not await _walk_to_archive() or not _use_in_reach(_target(&"to_archive")) \
+	if not await _walk_to_archive() or not await _use_in_reach(_target(&"to_archive")) \
 			or not await _settled(&"archive"):
 		return false
 	_q.leave()
@@ -169,7 +174,9 @@ func _branch(index: int) -> bool:
 	_check.expect(_choice_count() == 1 and not _knowledge.has_entry(QUEST.VERIFIED),
 		"Unindexed originals offer an answer.")
 	_pick(0)
-	_interaction.request_activation(_target(&"archive_detail"))
+	if not await _walk_to(Vector3(1.10, 0, -0.33), 10.0) \
+			or not await _use_in_reach(_target(&"archive_detail")):
+		return false
 	if not await _card(&"class_title", true):
 		return false
 	var ledger: NarrativeEntry = _knowledge.get_entry(&"saw_archive_register")
@@ -205,7 +212,7 @@ func _branch(index: int) -> bool:
 
 	Harness.stage = "walk to the original, reject both decoys and reveal once"
 	var original := _target(QUEST.ORIGINALS)
-	if not await _walk_to(Vector3(3.45, 0.0, -1.24), 10.0) or not _use_in_reach(original) \
+	if not await _walk_to(Vector3(3.45, 0.0, -1.24), 10.0) or not await _use_in_reach(original) \
 			or not await _card(&"original_title"):
 		return false
 	for decoy in [0, 1, 2]:
@@ -272,6 +279,7 @@ func _mount() -> bool:
 	_host = _main.get_node(^"LocationHost") as LocationHost
 	_player = _main.get_node(^"Player") as PlayerController
 	_interaction = _player.get_node(^"InteractionController") as InteractionController
+	_interaction.mouse_targeting = false
 	_q = _main.get_node(^"Companion") as CompanionController
 	_dialogue = _main.get_node(^"DialogueController") as DialogueController
 	_dialogue.check_resolved.connect(func(_result: Dictionary) -> void: _rolls += 1)
@@ -332,7 +340,18 @@ func _use_in_reach(target: Interactable) -> bool:
 	if not _check.expect(target != null and target.can_interact() and _interaction.is_in_reach(target)
 			and _interaction.has_line_of_sight(target), "No usable target in reach (%s)." % Harness.stage):
 		return false
-	_interaction.request_activation(target)
+	_player.face_toward(target.global_position - _player.global_position)
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		return _interaction.get_current_target() == target, 3.0),
+		"No keyboard prompt for %s from %s; got %s (%s)." % [
+			target.interact_id, _player.global_position, _interaction.get_current_target(), Harness.stage,
+		]):
+		return false
+	for pressed: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = &"interact"
+		event.pressed = pressed
+		Input.parse_input_event(event)
 	return true
 
 
