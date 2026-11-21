@@ -255,12 +255,12 @@ jobs:
             done
             echo "::notice title=$(basename "$log") measurements::$(grep '^MOTION_' "$log" | paste -sd'|' -)"
           done
-      # Each job can relay only 50 annotations. Send the new review frames first;
-      # every image, including the original pose previews, remains in the artifact.
-      - name: Preview the student's short reply
+      # Each job can relay only 50 annotations. Send the chair close-ups first;
+      # every other frame remains available in the artifact.
+      - name: Preview the student chair from behind
         if: always()
         env:
-          FRAME: 13_student_answers
+          FRAME: 15_student_chair_back
         run: &motion_preview |
           set -euo pipefail
           file="$CI_LOG_DIR/${MODE:-mouse}/$FRAME.jpg"
@@ -275,6 +275,16 @@ jobs:
           for i in "${!parts[@]}"; do
             echo "::notice title=classroom motion frame::$(basename "$file") $((i+1))/${#parts[@]} $sha ${parts[i]}"
           done
+      - name: Preview the student chair from the front
+        if: always()
+        env:
+          FRAME: 16_student_chair_front
+        run: *motion_preview
+      - name: Preview the student's short reply
+        if: always()
+        env:
+          FRAME: 13_student_answers
+        run: *motion_preview
       - name: Preview the reply at desk height
         if: always()
         env:

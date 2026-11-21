@@ -11,7 +11,8 @@ compared the two files - the spawn marker lives in one scene and the chair in an
 This check answers it from the files. It reads:
 
   - the spawn marker (`PlayerStart`) and the desk it belongs to, from the location scene;
-  - the chair's part sizes and offsets, from the prop scene;
+  - the chair's rendered part bounds and offsets, from the prop and its meshes;
+  - the imported desk wrapper's actual box, not one of the chair's mesh sizes;
   - the body's collision capsule, from the character scene.
 
 and asserts the get-up geometry: a body seated at the spawn would intersect the chair, and
@@ -118,6 +119,41 @@ def _sub_resources(text: str) -> dict[str, dict[str, str]]:
     return out
 
 
+def _external_path(text: str, reference: str) -> str:
+    match = re.fullmatch(r'ExtResource\("([^"]+)"\)', reference)
+    if match:
+        ext_id = re.escape(match[1])
+        path = re.search(rf'^\[ext_resource .*path="res://([^"]+)" id="{ext_id}"\]', text, re.M)
+        if path:
+            return path[1]
+    raise SystemExit(f"check_seat_clearance: unresolved resource {reference}")
+
+
+def _offset(props: dict[str, str]) -> tuple[float, float, float]:
+    transform = props.get("transform")
+    if transform is not None:
+        # The tested parts have translation-only transforms. Do not measure rotated
+        # boxes as if they still lay on the original floor axes.
+        *basis, x, y, z = map(float, transform.removeprefix("Transform3D(").removesuffix(")").split(","))
+        if basis != [1, 0, 0, 0, 1, 0, 0, 0, 1] or ("rotation" in props or "rotation_degrees" in props):
+            raise SystemExit("check_seat_clearance: expected a translation-only part")
+        return (x, y, z)
+    if any(key in props for key in ("rotation", "rotation_degrees", "scale")):
+        raise SystemExit("check_seat_clearance: expected a translation-only part")
+    return _vector(props.get("position"))
+
+
+def _mesh_bounds(text: str, path: str) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    # The native ArrayMesh format stores a mesh-local AABB for each surface.
+    surfaces = [tuple(map(float, entry.split(",")))
+                for entry in re.findall(r'^"aabb": AABB\(([^)]+)\)', text, re.M)]
+    if not surfaces or any(len(b) != 6 or min(b[3:]) < 0 for b in surfaces):
+        raise SystemExit(f"check_seat_clearance: {path} has no valid mesh bounds")
+    lo = tuple(min(b[i] for b in surfaces) for i in range(3))
+    hi = tuple(max(b[i] + b[i+3] for b in surfaces) for i in range(3))
+    return tuple((a+b)/2 for a, b in zip(lo, hi)), tuple(b-a for a, b in zip(lo, hi))
+
+
 # --- the three pieces ------------------------------------------------------
 
 
@@ -141,28 +177,31 @@ def chair_boxes(root: Path) -> list[tuple[str, tuple[float, float, float], tuple
     """Every mesh under the chair: (name, world offset from the desk, size)."""
     text = (root / DESK_SCENE).read_text(encoding="utf-8")
     subs = _sub_resources(text)
-    chair_offset = (0.0, 0.0, 0.0)
+    positions = {}
+    boxes = []
     for block in _blocks(text):
-        if _name(block) == "Chair":
-            chair_offset = _vector(block["props"].get("position"))
-            break
-    boxes: list[tuple[str, tuple[float, float, float], tuple[float, float, float]]] = []
-    for block in _blocks(text):
-        parent = _parent(block)
-        if parent != "Chair" and not parent.startswith("Chair/"):
+        name, parent = _name(block), _parent(block)
+        props = block["props"]
+        if name == "Chair" and parent == ".":
+            positions["Chair"] = _offset(props)
             continue
-        mesh_id = block["props"].get("mesh", "")
-        m = re.search(r'SubResource\("([^"]+)"\)', mesh_id)
-        if not m:
+        if parent not in positions:
             continue
-        size = _vector(subs.get(m.group(1), {}).get("size"))
-        pos = _vector(block["props"].get("position"))
-        offset = (
-            chair_offset[0] + pos[0],
-            chair_offset[1] + pos[1],
-            chair_offset[2] + pos[2],
-        )
-        boxes.append((_name(block), offset, size))
+        pos = tuple(a+b for a, b in zip(positions[parent], _offset(props)))
+        positions[f"{parent}/{name}"] = pos
+        ref = props.get("mesh")
+        if ref is None:
+            continue
+        match = re.fullmatch(r'SubResource\("([^"]+)"\)', ref)
+        if match:
+            size = _vector(subs.get(match[1], {}).get("size"))
+            if min(size) <= 0:
+                raise SystemExit(f"check_seat_clearance: {name} has no BoxMesh size")
+            centre = (0.0, 0.0, 0.0)
+        else:
+            path = _external_path(text, ref)
+            centre, size = _mesh_bounds((root / path).read_text(encoding="utf-8"), path)
+        boxes.append((name, tuple(a+b for a, b in zip(pos, centre)), size))
     return boxes
 
 
@@ -237,24 +276,28 @@ def push_distance(root: Path) -> float:
 
 def desk_collider(
     root: Path,
-) -> tuple[tuple[float, float, float], tuple[float, float, float]] | None:
-    """The desk's collision box in world space, or None if the prop has none.
-
-    The chair is meshes only - there is no `CollisionShape3D` under it at all - so the desk
-    is the only thing in this corner of the room that can physically hold the body. That
-    asymmetry is worth stating in the check: a stand-up that clears the chair and walks
-    into the desk is still a body stuck in the furniture.
-    """
+) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+    """The fixed desk box in world space, following the wrapper's Desk instance."""
     text = (root / DESK_SCENE).read_text(encoding="utf-8")
-    mesh = re.search(r"^size = Vector3\(([^)]*)\)", text, re.MULTILINE)
-    if not mesh:
-        return None
-    size = _vector("Vector3(" + mesh.group(1) + ")")
-    # The desk prop is instanced at the desk position; its box is authored at the prop's
-    # own origin, so the instance's position is the box's centre on the floor plane. The
-    # box's own centre is half its height up.
-    desk = desk_position(root)
-    return (desk[0], size[1] * 0.5, desk[2]), size
+    for block in _blocks(text):
+        if _name(block) != "Desk" or _parent(block) != ".":
+            continue
+        instance = re.search(r'instance=(ExtResource\("[^"]+"\))', block["header"])
+        if instance is None:
+            break
+        path = _external_path(text, instance[1])
+        instance_offset = _offset(block["props"])
+        desk_text = (root / path).read_text(encoding="utf-8")
+        for child in _blocks(desk_text):
+            if _parent(child) != "." or 'type="CollisionShape3D"' not in child["header"]:
+                continue
+            props = child["props"]
+            shape = re.fullmatch(r'SubResource\("([^"]+)"\)', props.get("shape", ""))
+            size = _vector(_sub_resources(desk_text).get(shape[1], {}).get("size")) if shape else (0, 0, 0)
+            if min(size) > 0:
+                centre = tuple(sum(axis) for axis in zip(desk_position(root), instance_offset, _offset(props)))
+                return centre, size
+    raise SystemExit(f"check_seat_clearance: {DESK_SCENE} has no readable Desk collision box")
 
 
 def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
@@ -325,15 +368,13 @@ def findings(root: Path) -> tuple[list[str], list[tuple[str, float]]]:
     #     is the gap that stays. It has to be non-negative: the body wakes up 2.7 cm from a
     #     solid box, and a spawn nudged forward would start the room with the protagonist
     #     embedded in the desk before he has moved at all.
-    desk_box = desk_collider(root)
-    if desk_box is not None:
-        centre, size = desk_box
-        gap = horizontal_gap((spawn[0], spawn[2]), capsule, centre, size)
-        if gap <= 0.0:
-            problems.append(
-                f"{DESK_SCENE}: the seated capsule is {abs(gap):.3f} m inside the desk's "
-                "collision box - the protagonist wakes embedded in the desk"
-            )
+    centre, size = desk_collider(root)
+    gap = horizontal_gap((spawn[0], spawn[2]), capsule, centre, size)
+    if gap <= 0.0:
+        problems.append(
+            f"{DESK_SCENE}: the seated capsule is {abs(gap):.3f} m inside the desk's "
+            "collision box - the protagonist wakes embedded in the desk"
+        )
 
     # 3b. The chair slides straight back, so every part leaves the capsule's column once and
     #     never comes back: the gap has to improve on every sample, per part.

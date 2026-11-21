@@ -31,7 +31,8 @@ the board stays empty; the former red pseudo-writing banner and its generation c
 keep `StandardMaterial3D` (toon diffuse, no specular). The student desks replace their
 photographic PBR surface with the classroom-owned `student_wood.tres`, referencing the
 existing environment pigment shader read-only. There is no photographic albedo/normal/ORM
-under a transparent wash anymore; the model and shared wrapper are unchanged.
+under a transparent wash anymore; the imported desk and its `school_desk.tscn` collider
+are unchanged.
 
 ## Colour system (sRGB)
 
@@ -157,6 +158,23 @@ player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on 
 is the only teacher's furniture: the low teacher's desk was taken out and its inspection
 (`front_desk` / `classroom_teacher_desk`) now sits on the lectern (`Interactables/LecternInspect`). Q/N states, inspection IDs, `Sun`,
 `WorldEnvironment` and the classroom-to-corridor transition remain in place.
+
+### Student chair
+
+All twelve desks instance the same chair through `scenes/environment/props/classroom_desk.tscn`.
+The quiet plywood pan has a rolled edge, a shallow dish and subdued grain; the curved back
+has four dull fasteners. Splayed steel legs, continuous back posts, cross-bracing and rubber
+feet leave air below the seat instead of the old solid posts. The chair uses three opaque,
+matte vertex-coloured meshes (`Seat`, `Back`, `Frame`), with no extra ink pass or image texture.
+They are first-party geometry and colour. Rebuild them with `python3 tools/build_student_chair.py`
+(`--check` compares without writing).
+
+The seat's 0.46 × 0.42 m footprint and 0.475 m top stay in place, as do its `SeatMark`, hand
+contact and the 0.65 m slide. Only the wake chair still has a collider, and only at its
+pushed stop. These meshes do not affect the navigation bake. `imported_placement_test.gd`
+checks the shipped mesh colours, seat and four floor contacts. `capture_classroom_motion.gd`
+adds front and rear review views of the actual wake chair after the stand-up; the same capture
+exercises the chair and bag with mouse and touch.
 
 ### The teacher's lectern (#172)
 
