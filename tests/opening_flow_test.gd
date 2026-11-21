@@ -456,7 +456,7 @@ func _run() -> void:
 
 
 func _on_subjective_changed(active: bool) -> void:
-	var observed := _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
+	var observed: int = _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
 	if active:
 		_saw_subjective = true
 		_observed_at_subjective_start = observed

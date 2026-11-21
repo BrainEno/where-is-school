@@ -531,10 +531,15 @@ func _check_disk_resume(searched: bool) -> void:
 
 
 func _disk_resume_body(world: Node, searched: bool, session: Node, save: Node) -> void:
+	# A run that pictured B starts at the imagined lesson; one that did not passes that step
+	# over at once (`expectation_skipped`), so by now it waits at the bag.
 	_expect(
-		_sequence.next_step() == &"expectation",
-		"%s: the run starts at '%s', not at the imagined lesson's step."
-		% [_case_label, _sequence.next_step()]
+		_sequence.next_step() == (&"expectation" if searched else &"bag"),
+		"%s: the run starts at '%s'." % [_case_label, _sequence.next_step()]
+	)
+	_expect(
+		searched or _has_flag(StoryFlags.EXPECTATION_SKIPPED),
+		"%s: the imagined lesson's step was not recorded as skipped." % _case_label
 	)
 	if searched:
 		# The chosen scene plays first; the bag can be searched once it is over.

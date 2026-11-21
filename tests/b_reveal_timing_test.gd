@@ -345,9 +345,11 @@ func _check_impression_skip_and_resume() -> void:
 		_dialogue.request_skip()
 		while not _flag(StoryFlags.EXPECTATION_PLAYED) and Time.get_ticks_msec() < until:
 			# Skipping stops at the questioning's choices; the player steps out of the
-			# fantasy at the first one and skips again.
+			# fantasy at the first one. Skip is a toggle, so it is pressed again only if
+			# the choice turned it off.
 			if _dialogue.is_busy() and _dialogue.has_pending_choices():
 				_advance_choosing([&"exit"])
+			elif _dialogue.is_busy() and _dialogue.get_playback().mode != DialoguePlayback.Mode.SKIP:
 				_dialogue.request_skip()
 			await process_frame
 	Engine.time_scale = 1.0

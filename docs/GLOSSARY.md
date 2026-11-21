@@ -67,7 +67,7 @@
 | `n` | N | N | 年轻的代课老师，最后宣布自习 |
 | `student` | 同学 | Classmate | 无名的其他学生 |
 | `voice_orientation` | 路感 | Orientation | 内心声音，见下 |
-| `voice_whimsy` | 异想天开 | Flight of Fancy | 内心声音（第 7 轮占位，数值 3、无被动），只在想象场景里检定，见下 |
+| `voice_whimsy` | 异想天开 | Flight of Fancy | 内心声音（第 7 轮占位，数值 3；还没有被动规则），只在想象场景里检定，见下 |
 
 **内心声音**（[叙事圣经](NARRATIVE_BIBLE.md#inner-voices)定稿六个，目前只实装路感）。另有第 7 轮加的「异想天开」Flight of Fancy（`whimsy`）：想象场景 `expected_b` 荒诞方向里的检定，把荒诞分成高、低两支；这是唯一允许在主观会话里掷的检定，说明文字待作者：路感 Orientation（空间、方向）、细察 Scrutiny（细节与证据）、回声 Echo（记忆与联想）、臆想 Imagination（想象与潜意识）、推演 Inference（推理与因果）、共鸣 Resonance（情绪与人际）。
 

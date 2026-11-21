@@ -115,7 +115,8 @@ void fragment() {
 
 	// Each sheet is pasted slightly off, and printed in its own manner.
 	vec2 jitter = vec2(hash(sheet * 3.1 + 7.0), hash(sheet * 4.7 + 9.0)) - 0.5;
-	vec2 offset = jitter * 2.0 * 12.0 * px * strength;
+	// The middle keeps almost all of its register, so the protagonist is never split.
+	vec2 offset = jitter * 2.0 * 12.0 * px * d * mix(0.08, 1.0, margin);
 	float manner = floor(hash(sheet * 7.7 + 13.0) * 4.0);
 	vec3 pasted = texture(screen, uv + offset).rgb;
 	vec3 plate = texture(screen, uv + offset + vec2(3.0, -2.0) * px * strength).rgb;
@@ -124,8 +125,10 @@ void fragment() {
 	vec3 collage = mix(pasted, printed, manner_weight);
 
 	// Paper edges and drop shadows along the cuts.
-	float edge = (1.0 - smoothstep(1.2, 2.6, edge_px)) * smoothstep(0.05, 0.30, d);
-	collage = mix(collage, collage * 0.72, shadow_side * smoothstep(0.08, 0.35, d) * 0.8);
+	// Cut edges fade out in the middle of the frame: no white line across the protagonist.
+	float clear_middle = smoothstep(0.07, 0.24, centre);
+	float edge = (1.0 - smoothstep(1.2, 2.6, edge_px)) * smoothstep(0.05, 0.30, d) * clear_middle;
+	collage = mix(collage, collage * 0.72, shadow_side * smoothstep(0.08, 0.35, d) * 0.8 * clear_middle);
 	collage = mix(collage, PAPER, edge * 0.92);
 
 	// --- 2. The pasted quotation: an enlarged copy of the middle, tilted, white-bordered.

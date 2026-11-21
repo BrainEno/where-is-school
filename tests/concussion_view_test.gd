@@ -148,7 +148,9 @@ func _check_shader() -> void:
 	_check.expect(
 		code.contains("shader_type canvas_item"), "The filter is not a canvas item shader."
 	)
-	var uses_time := RegEx.create_from_string("\\bTIME\\b").search(code) != null
+	# Comments may say "no TIME"; only the code counts.
+	var bare := RegEx.create_from_string("//[^\\n]*").sub(code, "", true)
+	var uses_time := RegEx.create_from_string("\\bTIME\\b").search(bare) != null
 	_check.expect(not uses_time, "The filter uses TIME: something in it moves.")
 
 

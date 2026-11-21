@@ -10,7 +10,7 @@
     "whimsy": {
       "value": 3,
       "speaker": "voice_whimsy",
-      "max_passive": 0
+      "max_passive": 1
     }
   },
   "passives": [
