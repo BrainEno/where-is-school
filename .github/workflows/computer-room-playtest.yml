@@ -1,0 +1,71 @@
+name: Computer room playtest
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/computer-room-playtest.yml'
+      - 'scenes/locations/computer_room/**'
+      - 'scenes/environment/props/computer_terminal.tscn'
+      - 'scripts/actors/player/**'
+      - 'scripts/environment/pushable_chair.gd'
+      - 'scripts/interaction/**'
+      - 'scripts/world/opening_interactions.gd'
+      - 'tests/computer_room_test.gd'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  playtest:
+    name: Sit, boot and play at the CRT
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: ./.github/actions/setup-godot
+      - name: Isolate the playtest's saves and logs
+        shell: bash
+        run: |
+          echo "CI_LOG_DIR=$RUNNER_TEMP/computer-room/logs" >> "$GITHUB_ENV"
+          echo "XDG_DATA_HOME=$RUNNER_TEMP/computer-room/user" >> "$GITHUB_ENV"
+      - name: Import and compile with the pinned engine
+        run: bash tools/ci_import_godot.sh "$CI_LOG_DIR"
+      - name: Walk and play with the Compatibility renderer
+        shell: bash
+        run: |
+          # run_check owns the parse/run/timeout verdict, not just the subprocess exit.
+          set +e
+          source tools/ci_run_check.sh
+          run_check computer_room 145 xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+            --script res://tests/computer_room_test.gd -- "capture=$RUNNER_TEMP/computer-room/frames"
+          if grep -qE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' "$CI_LOG_DIR/computer_room.log"; then
+            grep -m 6 -E '^ERROR:|ObjectDB instances leaked|resources still in use at exit' "$CI_LOG_DIR/computer_room.log" \
+              | while IFS= read -r line; do echo "::error title=computer room engine diagnostic::${line}"; done
+            status=1
+          fi
+          run_check_summary
+      - name: Preview the rendered desktop and minefield
+        if: always()
+        shell: bash
+        run: |
+          for name in 04_desktop 05_minesweeper; do
+            frame="$RUNNER_TEMP/computer-room/frames/${name}_preview.jpg"
+            if [ ! -f "$frame" ]; then continue; fi
+            data=$(base64 -w0 "$frame")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "$parts" -gt 5 ]; then continue; fi # The artifact still has the frame.
+            for i in $(seq 1 "$parts"); do
+              echo "::notice title=CRT preview $name $i/$parts::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+          done
+      - name: Upload game frames and verdict
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: computer-room-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/computer-room/frames/
+            ${{ runner.temp }}/computer-room/logs/
+          if-no-files-found: warn

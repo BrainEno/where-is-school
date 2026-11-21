@@ -175,7 +175,7 @@ const LOCATIONS := {
 	"computer_room": {
 		"scene": "res://scenes/locations/computer_room/computer_room.tscn",
 		"stage": false,
-		"interactables": 2,
+		"interactables": 4, # Original inspection and exit, plus seat and power.
 		"spawns": ["FromCorridor"],
 		"exits": {"computer_room_to_corridor": "corridor/FromComputerRoom"},
 	},

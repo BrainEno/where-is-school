@@ -1,4 +1,4 @@
-[gd_scene load_steps=76 format=3]
+[gd_scene load_steps=80 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -10,7 +10,10 @@
 [ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/computer_terminal.tscn" id="terminal"]
 [ext_resource type="Shader" path="res://assets/shaders/school/crt_register.gdshader" id="crt_shader"]
+[ext_resource type="Script" path="res://scripts/environment/pushable_chair.gd" id="chair_slide"]
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
+[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_hotspot.gd" id="station_hotspot"]
+[ext_resource type="Script" path="res://scenes/locations/computer_room/computer_station.gd" id="station_control"]
 
 [sub_resource type="ShaderMaterial" id="Mat_plaster"]
 shader = ExtResource("paper_shader")
@@ -269,6 +272,16 @@ height_scale = 1.0
 yaw_degrees = 0
 fov = 44
 glide_seconds = 0.68
+
+[sub_resource type="Resource" id="Shot_Power"]
+script = ExtResource("camera_shot")
+look_offset = Vector3(-0.32, 0, 0.23)
+subject_mix = 0.65
+distance_scale = 0.56
+height_scale = 0.92
+yaw_degrees = -16.0
+fov = 44.0
+glide_seconds = 0.42
 
 [node name="ComputerRoom" type="Node3D"]
 script = ExtResource("location")
@@ -664,13 +677,19 @@ mesh = SubResource("QuadMesh_art30")
 material_override = SubResource("Mat_phosphor2")
 cast_shadow = 0
 
-[node name="StationChair1" type="StaticBody3D" parent="."]
+[node name="StationChair1" type="Node3D" parent="."]
 position = Vector3(3.53, 0, -1.33)
-rotation_degrees = Vector3(0, 180, 0)
-collision_layer = 1
+script = ExtResource("chair_slide")
+
+[node name="Solid" type="StaticBody3D" parent="StationChair1"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 0
 collision_mask = 0
 
-[node name="SeatStop" type="CollisionShape3D" parent="StationChair1"]
+[node name="SeatMark" type="Marker3D" parent="StationChair1"]
+
+[node name="SeatStop" type="CollisionShape3D" parent="StationChair1/Solid"]
 position = Vector3(0, 0.37, 0)
 shape = SubResource("BoxShape3D_art31")
 
@@ -680,28 +699,28 @@ mesh = SubResource("BoxMesh_art32")
 material_override = SubResource("Mat_putty")
 
 [node name="Back" type="MeshInstance3D" parent="StationChair1"]
-position = Vector3(0, 0.763, -0.21)
+position = Vector3(0, 0.763, 0.21)
 mesh = SubResource("BoxMesh_art33")
 material_override = SubResource("Mat_putty")
-rotation_degrees = Vector3(-7, 0, 0)
+rotation_degrees = Vector3(7, 0, 0)
 
 [node name="Stile0" type="MeshInstance3D" parent="StationChair1"]
-position = Vector3(-0.179, 0.2105, 0.162)
+position = Vector3(-0.179, 0.2105, -0.162)
 mesh = SubResource("BoxMesh_art34")
 material_override = SubResource("Mat_edge")
 
 [node name="Stile1" type="MeshInstance3D" parent="StationChair1"]
-position = Vector3(0.179, 0.2105, 0.162)
+position = Vector3(0.179, 0.2105, -0.162)
 mesh = SubResource("BoxMesh_art34")
 material_override = SubResource("Mat_edge")
 
 [node name="Stile2" type="MeshInstance3D" parent="StationChair1"]
-position = Vector3(-0.18, 0.3985, -0.197)
+position = Vector3(-0.18, 0.3985, 0.197)
 mesh = SubResource("BoxMesh_art35")
 material_override = SubResource("Mat_edge")
 
 [node name="Stile3" type="MeshInstance3D" parent="StationChair1"]
-position = Vector3(0.18, 0.3985, -0.197)
+position = Vector3(0.18, 0.3985, 0.197)
 mesh = SubResource("BoxMesh_art35")
 material_override = SubResource("Mat_edge")
 
@@ -938,3 +957,33 @@ radius = 1.34
 outline_paths = PackedStringArray("../../Station1/Left/Bezel", "../../Station1/Left/Raster", "../../Station1/Left/Keyboard")
 support_paths = PackedStringArray("../../Station1")
 camera_shot = SubResource("Shot_Observe")
+
+[node name="TerminalSeat" parent="Interactables" instance=ExtResource("tap_target")]
+script = ExtResource("station_hotspot")
+position = Vector3(3.53, 0.58, -1.33)
+interact_id = &"terminal_seat"
+prompt_key = "prompt.sit"
+radius = 0.42
+outline_paths = PackedStringArray("../../StationChair1/Seat", "../../StationChair1/Back")
+support_paths = PackedStringArray("../../StationChair1")
+
+[node name="TerminalPower" parent="Interactables" instance=ExtResource("tap_target")]
+script = ExtResource("station_hotspot")
+position = Vector3(4.043, 1.056, -2.486)
+interact_id = &"terminal_power"
+prompt_key = "prompt.terminal_power"
+radius = 0.44
+outline_paths = PackedStringArray("../../Station1/Right/TowerPower", "../../Station1/Right/Bezel")
+support_paths = PackedStringArray("../../Station1")
+requires_sitter = true
+camera_shot = SubResource("Shot_Power")
+
+[node name="BootGlow" type="OmniLight3D" parent="Station1/Right"]
+position = Vector3(0, 0.46, 0.52)
+light_color = Color(0.565, 0.882, 0.769, 1)
+light_energy = 0.34
+omni_range = 1.7
+visible = false
+
+[node name="StationControl" type="Node" parent="."]
+script = ExtResource("station_control")

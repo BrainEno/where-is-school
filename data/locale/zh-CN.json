@@ -274,6 +274,26 @@
     "place.vacant_office": "空办公室",
     "place.principal_office": "校长室",
     "place.restroom_02": "厕所（二楼）",
-    "place.restroom_03": "厕所（三楼）"
+    "place.restroom_03": "厕所（三楼）",
+    "prompt.terminal_power": "开机",
+    "terminal.station": "校用终端 01",
+    "terminal.games": "小游戏",
+    "terminal.mines": "扫雷",
+    "terminal.snake": "贪吃蛇",
+    "terminal.shutdown": "关机并起身",
+    "terminal.restart": "重新开始",
+    "terminal.input_check": "输入检查",
+    "terminal.keyboard": "键盘",
+    "terminal.ready": "输入正常",
+    "terminal.won": "完成",
+    "terminal.lost": "本局结束",
+    "terminal.remaining": "剩余标记：{count}",
+    "terminal.score": "得分：{count}",
+    "terminal.marking": "标记模式",
+    "terminal.revealing": "翻开模式",
+    "terminal.play": "开始 / 继续",
+    "terminal.pause": "暂停",
+    "terminal.mines_hint": "点击格子；右键标记。",
+    "terminal.snake_hint": "方向键或下方按钮。"
   }
 }

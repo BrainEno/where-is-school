@@ -88,14 +88,25 @@ def table(b, name, pos, width, depth, *, top="wood_light", legs="trim", tall=.79
     return group
 
 
-def chair(b, name, pos, yaw=0, ink="wood_light"):
-    q = b.shell(name, ".", pos, (0,yaw,0))
-    b.shape("SeatStop", q, (0,.37,0), (.47,.72,.50))
+def chair(b, name, pos, yaw=0, ink="wood_light", *, playable=False):
+    # The sit animation expects local -Z forward. Mirror the existing chair
+    # around its seat rather than rotating the animation or sharing classroom art.
+    axis = -1 if playable else 1
+    if playable:
+        slide = b.bind("chair_slide", "res://scripts/environment/pushable_chair.gd", "Script")
+        b.node(name, ".", position=vec3(pos), script=slide)
+        q = name
+        body = b.shell("Solid", q, layer=0)
+        b.node("SeatMark", q, "Marker3D")
+    else:
+        q = b.shell(name, ".", pos, (0,yaw,0))
+        body = q
+    b.shape("SeatStop", body, (0,.37,0), (.47,.72,.50))
     b.box("Seat", q, (0,.431,0), (.449,.073,.455), ink, shadow=True)
-    b.box("Back", q, (0,.763,-.21), (.442,.227,.071), ink, rot=(-7,0,0), shadow=True)
+    b.box("Back", q, (0,.763,-.21*axis), (.442,.227,.071), ink, rot=(-7*axis,0,0), shadow=True)
     for i,(x,z) in enumerate(((-.179,.162),(.179,.162),(-.18,-.197),(.18,-.197))):
         h = .797 if z<0 else .421
-        b.box(f"Stile{i}", q, (x,h/2,z), (.040,h,.044), "edge", shadow=True)
+        b.box(f"Stile{i}", q, (x,h/2,z*axis), (.040,h,.044), "edge", shadow=True)
     return q
 
 
@@ -272,7 +283,7 @@ def computer_room(b):
         p=table(b,f"Station{i}",(x,0,z),w,1.38,top="wood_light")
         terminal(b,p,"Left",-.87,i%3)
         terminal(b,p,"Right",.87,(i+1)%3)
-        chair(b,f"StationChair{i}",(x+.88,0,z+1.18),180,"putty")
+        chair(b,f"StationChair{i}",(x+.88,0,z+1.18),180,"putty",playable=i==1)
     b.box("PatchPanel", "PaperAssembly", (2.17,1.20,-3.457), (2.59,.705,.17),"ink")
     for i in range(6):
         b.box(f"Jack{i}", "PaperAssembly", (1.16+i*.38,1.13,-3.35),(.099,.088,.044),"putty")
@@ -291,6 +302,45 @@ def computer_room(b):
     p = "Station1"
     read(b,"computer_room",p,(1.89,1.18,-1.87),("Left/Bezel","Left/Raster","Left/Keyboard"),
          (.61,1.00,0,44,(0,0,-.09)))
+
+    station_hotspots(b)
+
+
+def station_hotspots(b):
+    hotspot = b.bind("station_hotspot", "res://scenes/locations/computer_room/terminal_hotspot.gd", "Script")
+    control = b.bind("station_control", "res://scenes/locations/computer_room/computer_station.gd", "Script")
+    shot = b.bind("camera_shot", "res://scripts/world/camera_shot.gd", "Script")
+    b.subs.append(f'''[sub_resource type="Resource" id="Shot_Power"]
+script = {shot}
+look_offset = Vector3(-0.32, 0, 0.23)
+subject_mix = 0.65
+distance_scale = 0.56
+height_scale = 0.92
+yaw_degrees = -16.0
+fov = 44.0
+glide_seconds = 0.42
+''')
+    specs = (
+        ("TerminalSeat", "terminal_seat", "prompt.sit", (3.53,.58,-1.33), 0.42,
+         "StationChair1", ("StationChair1/Seat", "StationChair1/Back")),
+        ("TerminalPower", "terminal_power", "prompt.terminal_power", (4.043,1.056,-2.486), .44,
+         "Station1", ("Station1/Right/TowerPower", "Station1/Right/Bezel")),
+    )
+    for name, id, key, pos, radius, support, parts in specs:
+        outline = ", ".join(f'"../../{part}"' for part in parts)
+        extra = 'requires_sitter = true\ncamera_shot = SubResource("Shot_Power")\n' if id == "terminal_power" else ""
+        b.nodes.append(f'''[node name="{name}" parent="Interactables" instance=ExtResource("tap_target")]
+script = {hotspot}
+position = {vec3(pos)}
+interact_id = &"{id}"
+prompt_key = "{key}"
+radius = {radius}
+outline_paths = PackedStringArray({outline})
+support_paths = PackedStringArray("../../{support}")
+{extra}''')
+    b.node("BootGlow", "Station1/Right", "OmniLight3D", position=vec3((0,.46,.52)),
+           light_color=srgb((144,225,196)), light_energy=.34, omni_range=1.7, visible="false")
+    b.node("StationControl", ".", "Node", script=control)
 
 
 def vacant_office(b):
