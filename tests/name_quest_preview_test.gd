@@ -118,7 +118,9 @@ func _branch(index: int) -> bool:
 	_check.expect(_state.get_flag(QUEST.RESPONSE) == reply and _q.is_joined()
 		and not _state.get_flag(StoryFlags.SKIPPED_CLASS, false)
 		and not _knowledge.has_entry(QUEST.VERIFIED), "Response gave the wrong state, invented an answer or skipped the class.")
-	if index > 0:
+	if index == 2:
+		return await _board_without_q()
+	if index == 1:
 		return true
 
 	Harness.stage = "return through the classroom without asking twice"
@@ -155,8 +157,7 @@ func _branch(index: int) -> bool:
 		and q_entry != null and board_entry.text == q_entry.text, "The board cannot corroborate the class/seat report.")
 
 	Harness.stage = "real route downstairs, archive retries and proof gates"
-	var archive_landing := _host.get_current().get_spawn(&"FromArchive").global_position
-	if not await _walk_to(archive_landing, 22.0) or not _use_in_reach(_target(&"to_archive")) \
+	if not await _walk_to_archive() or not _use_in_reach(_target(&"to_archive")) \
 			or not await _settled(&"archive"):
 		return false
 	_q.leave()
@@ -233,6 +234,34 @@ func _branch(index: int) -> bool:
 	return true
 
 
+func _board_without_q() -> bool:
+	Harness.stage = "no Q: the observed board can supply the lead on its own"
+	var q_target := _q.get_node(^"AskAboutTheRegister") as Interactable
+	_q.leave()
+	_interaction.request_activation(q_target)
+	_check.expect(not q_target.can_interact() and not _panel.visible and not _knowledge.has_entry(QUEST.Q_CLUE),
+		"A non-following Q could still be questioned.")
+	_interaction.request_activation(_target(&"noticeboard"))
+	if not await _card(&"board_title", true):
+		return false
+	_pick(0)
+	var board_entry: NarrativeEntry = _knowledge.get_entry(QUEST.BOARD_CLUE)
+	return _check.expect(board_entry != null and board_entry.source == NarrativeEntry.Source.OBSERVED
+		and not _knowledge.has_entry(QUEST.Q_CLUE), "The solo lead required or fabricated a Q report.")
+
+
+func _walk_to_archive() -> bool:
+	var hall := _host.get_current()
+	var hub := hall.get_node(^"TeachingBlock/RearStair/Junction") as Node3D
+	var turn := hall.get_node(^"TeachingBlock/RearStair/DownLanding") as Node3D
+	# Walk the same staircase stances as corridor_art_test, not one click
+	# across two storeys. Keep the physics clock at normal speed on the ramps.
+	return await _walk_to(hub.global_position, 8.0) \
+		and await _walk_to(turn.global_position, 8.0) \
+		and await _walk_to(Vector3(-11.4, -3.4, 12.6), 10.0) \
+		and await _walk_to(hall.get_spawn(&"FromArchive").global_position, 6.0)
+
+
 func _mount() -> bool:
 	_preview = PREVIEW.instantiate()
 	root.add_child(_preview)
@@ -285,9 +314,18 @@ func _settled(room: StringName) -> bool:
 
 
 func _walk_to(feet: Vector3, limit: float) -> bool:
-	return _check.expect(_player.request_path_to(feet) and await Harness.wait_until(func() -> bool:
-		return not _player.is_path_active() and _player.global_position.distance_to(feet) < 0.65, limit),
-		"Could not walk to %s (%s)." % [feet, Harness.stage])
+	var scale := Engine.time_scale
+	Engine.time_scale = 1.0
+	var start := _player.global_position
+	var accepted := _player.request_path_to(feet)
+	var route := _player.get_path_legs()
+	var stopped := accepted and await Harness.wait_until(func() -> bool:
+		return not _player.is_path_active() and _player.is_on_floor(), limit)
+	Engine.time_scale = scale
+	return _check.expect(stopped and _player.global_position.distance_to(feet) < 0.65,
+		"Walk from %s to %s stopped at %s; accepted=%s; path=%s (%s)." % [
+			start, feet, _player.global_position, accepted, route, Harness.stage,
+		])
 
 
 func _use_in_reach(target: Interactable) -> bool:

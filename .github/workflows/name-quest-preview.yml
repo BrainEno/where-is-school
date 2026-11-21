@@ -27,7 +27,6 @@ jobs:
         run: |
           echo "::notice title=Preview head and engine::$(git rev-parse HEAD) / $(godot --version)"
           bash tools/ci_import_godot.sh ci-logs/name-quest
-          python3 tools/godot_sidecars.py --after-import --github
       - name: Play and reload the preview
         shell: bash
         run: |
