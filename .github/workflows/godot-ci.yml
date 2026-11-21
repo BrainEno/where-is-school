@@ -383,7 +383,7 @@ jobs:
           run_check b_reveal_timing 360 godot --headless --path . --script res://tests/b_reveal_timing_test.gd || status=1
           # The imagined lesson: teacher B's model, distorted, and the Munch screen filter, on
           # only while expected_b is on screen (docs/IMAGINED_LESSON.md).
-          run_check imagined_lesson 120 godot --headless --path . --script res://tests/imagined_lesson_test.gd || status=1
+          run_check imagined_lesson 200 godot --headless --path . --script res://tests/imagined_lesson_test.gd || status=1
           # Issue #174: the blocked classroom door turns its watcher (Q, and only Q) to look at
           # the player in the same frame as the text, follows them in the doorway, and lets go.
           run_check doorway_watch 240 godot --headless --path . --script res://tests/doorway_watch_test.gd || status=1

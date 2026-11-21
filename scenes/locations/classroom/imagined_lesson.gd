@@ -11,15 +11,15 @@ extends Node3D
 ## While it is on:
 ##
 ## - **B** (the shipped `teacher_b.glb`) stands in the aisle beside the protagonist's desk,
-##   half again her size, leaning over him, in `dream_figure.gdshader`: swollen head, drawn-out
+##   1.8 times her size, leaning over him, in `dream_figure.gdshader`: swollen head, drawn-out
 ##   body, an S-wave running up it, recoloured into expressionist fields with Munch's bands.
 ## - **Two after-images** of her stand at the front of the room, at the lectern and the
 ##   blackboard, flat ink silhouettes on a slower wave: the teacher who is everywhere.
 ## - **The room** is repainted on screen by `munch_wave.gdshader`, a Scream-like swirl centred
-##   on her head, in a canvas layer under the dialogue UI. The room's geometry is untouched:
+##   on her, in a canvas layer under the dialogue UI. The room's geometry is untouched:
 ##   the same place, in another style.
 ##
-## `set_active()` fades all of it in from her head outwards (`FADE_IN`) and back out
+## `set_active()` fades all of it in from her outwards (`FADE_IN`) and back out
 ## (`FADE_OUT`); `get_dream()` is the current amount (0 off, 1 fully imagined).
 
 const FIGURE: PackedScene = preload("res://assets/models/teacher_b/teacher_b.glb")
@@ -31,13 +31,16 @@ const LIBRARY: StringName = &"teacher_b"
 const LEAD_MOTIONS: Array[StringName] = [&"explain", &"idle", &"explain"]
 const FADE_IN := 1.6
 const FADE_OUT := 0.9
-## Where the swirl centres, in the figure's own metres (her face).
+## Her face, in the figure's own metres (before the dream stretches it).
 const HEAD := Vector3(0.0, 1.62, -0.12)
+## Where the swirl centres, in the figure's own metres: her chest, so the calm eye of the
+## vortex holds the whole figure.
+const FOCUS := Vector3(0.0, 1.15, -0.05)
 ## The wave's `reach` that covers the whole screen from any vortex.
 const FULL_REACH := 2.5
 
 ## The lead figure's scale: a seated pupil's view of a standing teacher.
-@export var lead_scale := 1.5
+@export var lead_scale := 1.8
 ## The after-images' scale: the shadows a projector throws are always larger.
 @export var echo_scale := 1.55
 
@@ -64,7 +67,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	_follow_head()
+	_follow_focus()
 
 
 ## Shows (fading in) or hides (fading out) the imagined lesson. Calling it again with the
@@ -78,7 +81,7 @@ func set_active(active: bool) -> void:
 	if active:
 		_show(true)
 		_restart_motion()
-		_follow_head()
+		_follow_focus()
 	if not is_inside_tree():
 		_set_dream(1.0 if active else 0.0)
 		return
@@ -139,11 +142,11 @@ func _build_figure(mark: Marker3D, figure_scale: float, echo: bool, phase: float
 	var material := ShaderMaterial.new()
 	material.shader = FIGURE_SHADER
 	material.set_shader_parameter(&"phase", phase)
+	material.set_shader_parameter(&"echo", 1.0 if echo else 0.0)
 	var ink := ShaderMaterial.new()
 	ink.shader = INK_SHADER
 	ink.set_shader_parameter(&"phase", phase)
 	if echo:
-		material.set_shader_parameter(&"echo", 1.0)
 		material.set_shader_parameter(&"sway_speed", 0.45)
 		material.set_shader_parameter(&"lean", 0.12)
 		material.set_shader_parameter(&"head_swell", 0.2)
@@ -198,19 +201,19 @@ func _motion_name(motion: StringName) -> StringName:
 	return StringName("%s/%s" % [LIBRARY, motion])
 
 
-## Centres the swirl on the lead figure's face, wherever the camera is.
-func _follow_head() -> void:
+## Centres the swirl on the lead figure, wherever the camera is.
+func _follow_focus() -> void:
 	var wave := get_wave_material()
 	if wave == null or _figures.is_empty() or not is_inside_tree():
 		return
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
-	var head := _figures[0].to_global(HEAD)
-	if camera.is_position_behind(head):
+	var focus := _figures[0].to_global(FOCUS)
+	if camera.is_position_behind(focus):
 		return
 	var size := get_viewport().get_visible_rect().size
 	if size.x <= 0.0 or size.y <= 0.0:
 		return
-	var screen := camera.unproject_position(head) / size
+	var screen := camera.unproject_position(focus) / size
 	wave.set_shader_parameter(&"vortex", screen.clamp(Vector2(-0.25, -0.25), Vector2(1.25, 1.25)))

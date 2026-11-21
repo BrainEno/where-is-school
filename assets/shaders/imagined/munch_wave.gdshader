@@ -8,7 +8,7 @@ shader_type canvas_item;
 // renderer-specific feature. The room's own geometry, lights and ink lines stay: it is the
 // same place, seen through a fever.
 //
-// 1. A vortex sits on the imagined teacher's head (`vortex`, in screen UV, set every frame
+// 1. A vortex sits on the imagined teacher (`vortex`, in screen UV, set every frame
 //    by the scene). The picture is wound round it, hardest in a ring around her; the eye
 //    itself is calm, so she stays readable.
 // 2. Bands: the contours of a field that is horizontal and undulating far from her (Munch's
@@ -62,7 +62,7 @@ float band_field(vec2 uv, vec2 aspect, float t) {
 		+ 0.025 * sin(uv.x * 9.1 - t * 0.5 + uv.y * 3.0));
 	float r = length((uv - vortex) * aspect);
 	float rings = r * band_count * 1.7 - t * 0.25;
-	return mix(sky, rings, exp(-r * 3.2));
+	return mix(sky, rings, 0.6 * exp(-r * 4.0));
 }
 
 vec2 rotate(vec2 p, float a) {
@@ -81,7 +81,7 @@ void fragment() {
 
 	// 1. The vortex. Its eye is calm: she is wound into the room, not unrecognisable, and
 	// the room is bent, not turned over.
-	float eye = smoothstep(0.06, 0.42, r);
+	float eye = smoothstep(0.1, 0.5, r);
 	float angle = swirl * eye * exp(-r * 2.4) * (0.85 + 0.15 * sin(t * 0.7)) * mask;
 	vec2 wound = vortex + rotate(p, angle) / aspect;
 
@@ -107,7 +107,7 @@ void fragment() {
 
 	// 3. The Scream palette, banded.
 	float value = luma(painted);
-	float stripes = sin(field * PI);
+	float stripes = sin(field * PI) * mix(0.25, 1.0, eye);
 	vec3 scream = scream_palette(value * 0.92 + 0.11 * stripes + 0.04);
 	// Her own expressionist colours keep the eye; the room around her takes the palette.
 	vec3 colour = mix(painted, scream, palette_mix * mask * mix(0.3, 1.0, eye));

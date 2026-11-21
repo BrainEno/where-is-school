@@ -41,7 +41,7 @@ in `classroom.tscn` as `ImaginedLesson`.
 ### B, distorted
 
 Her shipped GLB (`assets/models/teacher_b/teacher_b.glb`, moved out of `scenes/dev/`, which
-exports exclude) stands in the aisle beside the protagonist's desk, facing his seat, at 1.5×
+exports exclude) stands in the aisle beside the protagonist's desk, facing his seat, at 1.8×
 her size: a seated pupil's view of a teacher who has just said 「你给我站起来」. She plays her
 own `explain` and `idle` from `teacher_b_motion.tres`.
 
@@ -76,8 +76,9 @@ in a canvas layer (layer 0) under the game UI (layer 1), so the dialogue stays l
 reads the finished frame (`hint_screen_texture`): no depth buffer, no extra viewport, nothing
 renderer-specific; it runs the same on Compatibility, Mobile and Forward+.
 
-1. A vortex sits on B's head; the script projects her face to the screen every frame. The
-   room is wound round her in a ring; the eye of it is calm, so she stays readable.
+1. A vortex sits on B; the script projects her chest to the screen every frame. The room
+   is wound round her in a ring; the eye of it is calm and holds her whole figure, so she
+   stays readable.
 2. Bands: horizontal undulations far from her (Munch's sky over the fjord), rings close to
    her. The picture is pushed back and forth across them in a travelling wave and smeared
    along them in short strokes.
@@ -88,7 +89,7 @@ renderer-specific; it runs the same on Compatibility, Mobile and Forward+.
    they were. It is the same place, in another style.
 4. Edges get a wavering ink; the corners fall into night blue.
 
-`set_active()` spreads the change outwards from her head as an orange ring (1.6 s) and draws
+`set_active()` spreads the change outwards from her as an orange ring (1.6 s) and draws
 it back (0.9 s). The room's geometry, materials and lights are never touched.
 
 ## Cost

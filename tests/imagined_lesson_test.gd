@@ -34,13 +34,17 @@ const MOTION := "res://assets/models/teacher_b/teacher_b_motion.tres"
 const CAMERA_OFFSET := Vector3(3.4, 6.4, 3.4)
 const PROTAGONIST := "res://scenes/environment/characters/protagonist.tscn"
 const OUT := "res://builds/imagined-lesson"
+## Real seconds to wait for a fade. The fades are 1.6 s and 0.9 s of game time, but a
+## software Vulkan renderer compiles the shaders on the first frames and draws a few
+## frames per second, so the wait is generous.
+const FADE_LIMIT := 40.0
 
 var _check := Harness.Checker.new()
 var _room: Node3D = null
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 120.0, "imagined_lesson_test.gd")
+	Harness.arm_watchdog(self, 180.0, "imagined_lesson_test.gd")
 	call_deferred("_run")
 
 
@@ -113,21 +117,24 @@ func _run() -> void:
 	_check.expect(
 		(lesson.get_node(^"Wave") as CanvasLayer).visible, "The screen filter's layer is not shown."
 	)
-	await Harness.wait_until(
-		func() -> bool: return lesson.get_dream() >= 1.0, ImaginedLesson.FADE_IN + 2.0
-	)
+	await Harness.wait_until(func() -> bool: return lesson.get_dream() >= 1.0, FADE_LIMIT)
 	_check.expect(
 		is_equal_approx(lesson.get_dream(), 1.0),
 		"The dream did not reach 1 (%.2f)." % lesson.get_dream()
 	)
 	var wave := lesson.get_wave_material()
 	_check.expect(
-		is_equal_approx(float(wave.get_shader_parameter(&"strength")), 1.0),
-		"The filter is not at full strength."
+		is_equal_approx(_param(wave, &"strength"), 1.0), "The filter is not at full strength."
 	)
-	var vortex: Vector2 = wave.get_shader_parameter(&"vortex")
+	var vortex: Variant = wave.get_shader_parameter(&"vortex")
 	_check.expect(
-		vortex.x > 0.0 and vortex.x < 1.0 and vortex.y >= -0.25 and vortex.y < 1.0,
+		(
+			vortex is Vector2
+			and vortex.x > 0.0
+			and vortex.x < 1.0
+			and vortex.y >= -0.25
+			and vortex.y < 1.0
+		),
 		"The swirl is not centred on her (%s): she is out of the game camera's view." % str(vortex)
 	)
 	for figure in lesson.get_figures():
@@ -138,8 +145,7 @@ func _run() -> void:
 		)
 	for material in _figure_materials(lesson):
 		_check.expect(
-			is_equal_approx(float(material.get_shader_parameter(&"dream")), 1.0),
-			"A figure is not fully dreamed."
+			is_equal_approx(_param(material, &"dream"), 1.0), "A figure is not fully dreamed."
 		)
 
 	if capture:
@@ -162,9 +168,7 @@ func _run() -> void:
 	Harness.stage = "fade out"
 	presentation.call("set_b_impression_visible", false)
 	_check.expect(not lesson.is_active(), "Hiding the impression did not end the imagined lesson.")
-	await Harness.wait_until(
-		func() -> bool: return not lesson.visible, ImaginedLesson.FADE_OUT + 2.0
-	)
+	await Harness.wait_until(func() -> bool: return not lesson.visible, FADE_LIMIT)
 	_expect_off(lesson, "after the imagined exchange")
 
 	Harness.finish(
@@ -206,6 +210,12 @@ func _changed(a: Image, b: Image) -> float:
 			if absf(p.r - q.r) + absf(p.g - q.g) + absf(p.b - q.b) > 0.09:
 				changed += 1
 	return float(changed) / float(maxi(total, 1))
+
+
+## A float shader parameter, or NAN when the material does not report it.
+func _param(material: ShaderMaterial, parameter: StringName) -> float:
+	var value: Variant = material.get_shader_parameter(parameter) if material != null else null
+	return float(value) if value is float or value is int else NAN
 
 
 func _expect_off(lesson: ImaginedLesson, when: String) -> void:
@@ -267,9 +277,7 @@ func _check_figures(lesson: ImaginedLesson, seat: Vector3) -> void:
 			if material == null:
 				continue
 			_check.expect(
-				is_equal_approx(
-					float(material.get_shader_parameter(&"echo")), 1.0 if echo else 0.0
-				),
+				is_equal_approx(_param(material, &"echo"), 1.0 if echo else 0.0),
 				"Figure %d's %s has the wrong echo setting." % [index, mesh.name]
 			)
 			_check.expect(
