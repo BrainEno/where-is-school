@@ -224,3 +224,21 @@ inspection or the story's decision to uncover the cut. The clock still reads nin
 post-pull recoil under the live Compatibility renderer. `classroom-motion-<head>` carries
 still/lift and recoil/rest frames. The same capture exercises the regular mouse and touch
 approach to the A1 student from the aisle.
+
+### Q's biology textbook
+
+[`biology_textbook.tscn`](../../scenes/environment/props/classroom_art/biology_textbook.tscn)
+is a first-party, hand-authored Godot prop: a spruce cloth cover, warm page blocks,
+and a two-page leaf/food-chain spread (about 0.35 × 0.24 m open). There are no
+external meshes, textures or source images. Its two printed titles reuse the
+project's Noto Sans SC subset under the existing [OFL](../../assets/fonts/OFL.txt).
+The two `Wrist` markers travel with the leaves. Q's pose uses them for two-hand
+contact after the base animation; the prop has no collision or pickup.
+
+The classroom incarnation raises it during the biology exchange and sways it as
+he recites. He lifts his head to answer, tilts the open spread towards the listener
+when showing his writing, and returns to his pages. Walking, staged actions and
+dismissal put it away; the companion does not instance it. The approved Q model,
+the dialogue and the room placement are unchanged. `q_model_test.gd` samples the
+rendered bones and their prop contacts; the after leg of Q model migration evidence
+captures the game view, a close view and `textbook.mp4` from the live dialogue.
