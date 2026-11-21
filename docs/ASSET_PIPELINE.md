@@ -257,9 +257,9 @@ is a model, not a scene.
 | other | 256 KiB | 2 MiB | project settings, pack stubs, imported banners; something over 256 KiB here is something nobody classified |
 
 **No hard limit is above 2 MiB.** That was the old flat per-file rule, so this table can
-only tighten it. The pack total keeps its **16 MiB hard limit** and gains an **8 MiB
-warning line**: the baseline is 1.37 MiB, so the hard limit leaves room for roughly eleven
-times today's content, while a release that doubles gets a warning before it doubles again.
+only tighten it. The pack total has a **24 MiB hard limit** and an **8 MiB warning line**.
+The limit was 16 MiB (the old flat check's number) until the release reached 15.97 MiB; the
+owner raised it to 24 MiB when teacher B's model joined the build for the imagined lesson.
 
 **A warning does not fail the release; a hard limit does.** Warnings are printed and
 attached to the workflow run as annotations, which is where a build that has grown should

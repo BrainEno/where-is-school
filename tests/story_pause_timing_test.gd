@@ -6,7 +6,7 @@ extends SceneTree
 ## **true**: the timer keeps counting through a pause. The fades never noticed (they are
 ## node tweens, which stop with the tree), but the beats did. A player who sat in the
 ## pause menu or the settings during the bag step came back to a step that had timed out
-## behind the menu; the expectation beat needs the bag to have been searched, so it was
+## behind the menu; the expectation beat then needed the bag to have been searched, so it was
 ## skipped for the rest of the run. A beat whose lead-in ran out under the menu took the
 ## player lock and opened its conversation while the menu was still up.
 ##
@@ -163,9 +163,10 @@ func _check_flag_wait() -> void:
 
 
 func _check_expectation_beat() -> void:
-	# Q's first conversation is over: B's imagined scene is only played after it (#171).
+	# Q's first conversation is over: B's imagined scene is only played after it (#171),
+	# and only when the player chose to picture her there (round 7).
 	_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
-	_game_state.set_flag(StoryFlags.TEXTBOOK_MISSING, true)
+	_game_state.set_flag(StoryFlags.IMAGINE_B_CHOSEN, true)
 	_game_state.set_flag(StoryFlags.EXPECTATION_PLAYED, false)
 	_expect(not _sequence.is_beat_active(), "A beat was already active before the check.")
 	_expect(not _dialogue.is_busy(), "A conversation was already open before the check.")

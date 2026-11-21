@@ -16,6 +16,8 @@ const INLINE_SIZE := Vector2i(480, 270)
 const INLINE_BYTES := 12000
 const EXPECTED_SHOTS := 21
 const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
+## Game time per real second while the braced drop plays (see the drop in `_run`).
+const BRACE_TIME_SCALE := 0.1
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -31,7 +33,7 @@ var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 240.0, "capture_classroom_anomalies.gd")
+	Harness.arm_watchdog(self, 300.0, "capture_classroom_anomalies.gd")
 	call_deferred("_run")
 
 
@@ -86,10 +88,17 @@ func _run() -> void:
 		return
 	await _shot("04-edge-held.png")
 	_activate(&"curtain")
+	# The braced drop is a 0.84 s clip that starts as the yard is first drawn. On software
+	# Forward+ that first draw can stall one frame for longer than the clip's remaining
+	# window (the tween then jumps to its end), so the drop plays in slow time until the
+	# frame is taken. The wait below counts real time, hence the longer limit.
+	Engine.time_scale = BRACE_TIME_SCALE
 	if not await _choose(&"step"):
+		Engine.time_scale = 1.0
 		_finish(["Couldn't choose to drop after a passed check."])
 		return
-	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png")
+	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png", -INF, INF, 60.0)
+	Engine.time_scale = 1.0
 	await _capture_resident("19-collector-unfiltered.png", &"on_threshold")
 	await _settle()
 	await _stand(COURT_COMPARE, Vector3.LEFT)
@@ -192,7 +201,9 @@ func _choose(id: StringName) -> bool:
 	return true
 
 
-func _capture_pose(clip: String, progress: float, name: String, low: float = -INF, high: float = INF) -> void:
+func _capture_pose(
+	clip: String, progress: float, name: String, low: float = -INF, high: float = INF, limit: float = 20.0
+) -> void:
 	var animator := _player.get_character_animator()
 	if not await Harness.wait_until(func() -> bool:
 		if animator.get_current_clip() == clip and animator.get_action_progress() >= progress \
@@ -201,7 +212,7 @@ func _capture_pose(clip: String, progress: float, name: String, low: float = -IN
 		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
 			_dialogue.advance_presentation()
 		return false
-	, 20.0):
+	, limit):
 		_failures.append("The game did not reach '%s' for %s." % [clip, name])
 		return
 	await _shot(name)

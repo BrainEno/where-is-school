@@ -37,7 +37,13 @@ var _game_state: Node = null
 var _narrative: Node = null
 var _started_at_msec: int = 0
 var _saw_subjective := false
-var _observed_during_expectation := 0
+## Observed entries added while a subjective presentation was on screen; must stay 0.
+var _observed_during_subjective := 0
+var _observed_at_subjective_start := -1
+## Choice ids the API path picks over the first option. In `q_wake` the player asks
+## about the book and chooses to picture B when Q describes her (round 7), which is what
+## starts the imagined lesson; cleared after it so the rest of the run picks as before.
+var _preferred_choices: Array[StringName] = [&"search", &"imagine_b"]
 ## From the street on, the controller drives the run.
 var _pad_mode := false
 var _pad_presses := 0
@@ -100,7 +106,8 @@ func _run() -> void:
 			_failures.append("The real new-game opening did not keep the protagonist seated when Q began talking.")
 		# met_q is set by the conversation's first line, so the flags below only
 		# exist once the director has handed control back.
-		await _settle(90.0, "Q's opening conversation to finish")
+		# The imagined lesson the player chose in `q_wake` plays inside the same beat.
+		await _settle(180.0, "Q's opening conversation and the imagined lesson to finish")
 		if wake_animator == null or not wake_animator.is_seated():
 			_failures.append("The protagonist stood up during Q's first conversation instead of remaining seated.")
 		if not bool(_game_state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
@@ -109,6 +116,29 @@ func _run() -> void:
 			_failures.append("The bag objective was not set after Q's conversation.")
 		if not _player.is_control_enabled():
 			_failures.append("Control did not return after the opening lines.")
+
+	# --- Beat E: the imagined lesson, chosen in q_wake, stays subjective ---
+	if await _pump_until(
+		func() -> bool: return bool(_game_state.get_flag(StoryFlags.EXPECTATION_PLAYED, false)),
+		60.0, "the expectation beat"
+	):
+		if not bool(_game_state.get_flag(StoryFlags.IMAGINE_B_CHOSEN, false)):
+			_failures.append("The imagined lesson played without the player choosing it.")
+		if bool(_game_state.get_flag(StoryFlags.TEXTBOOK_MISSING, false)):
+			_failures.append("The bag was searched before the imagined lesson; it should come first.")
+		if not _saw_subjective:
+			_failures.append("The expectation beat never presented itself as subjective.")
+		if _observed_during_subjective != 0:
+			_failures.append(
+				"The imagined beat added %d observed entries." % _observed_during_subjective
+			)
+		if not _narrative.has_entry(&"recall_set_square_sound"):
+			_failures.append("The half-remembered set square entry was not recorded.")
+		elif _entry_source(&"recall_set_square_sound") != NarrativeEntry.Source.RECALLED:
+			_failures.append("The half-remembered set square was not stored as a recollection.")
+		if _ui.overlay.visible:
+			_failures.append("The imagination overlay is still on screen after the beat.")
+	_preferred_choices.clear()
 
 	# --- Interaction targeting: every authored prompt must be reachable ----
 	await _check_targeting()
@@ -148,24 +178,6 @@ func _run() -> void:
 			_failures.append("Searching the bag recorded no observed knowledge entry.")
 		elif _narrative.get_entry(&"bag_missing_textbook").source != NarrativeEntry.Source.OBSERVED:
 			_failures.append("The bag discovery was not recorded as observed.")
-
-	# --- Beat E: expectation beat must stay subjective ---------------------
-	_observed_during_expectation = _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
-	if await _pump_until(
-		func() -> bool: return bool(_game_state.get_flag(StoryFlags.EXPECTATION_PLAYED, false)),
-		60.0, "the expectation beat"
-	):
-		if not _saw_subjective:
-			_failures.append("The expectation beat never presented itself as subjective.")
-		if _narrative.count_for_source(NarrativeEntry.Source.OBSERVED) != \
-				_observed_during_expectation:
-			_failures.append("The imagined beat added observed knowledge.")
-		if not _narrative.has_entry(&"recall_set_square_sound"):
-			_failures.append("The half-remembered set square entry was not recorded.")
-		elif _entry_source(&"recall_set_square_sound") != NarrativeEntry.Source.RECALLED:
-			_failures.append("The half-remembered set square was not stored as a recollection.")
-		if _ui.overlay.visible:
-			_failures.append("The imagination overlay is still on screen after the beat.")
 
 	# --- Beat F: bell, no B, substitute N takes the lesson ----------------
 	await _pump_until(
@@ -444,8 +456,13 @@ func _run() -> void:
 
 
 func _on_subjective_changed(active: bool) -> void:
+	var observed: int = _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
 	if active:
 		_saw_subjective = true
+		_observed_at_subjective_start = observed
+	elif _observed_at_subjective_start >= 0:
+		_observed_during_subjective += observed - _observed_at_subjective_start
+		_observed_at_subjective_start = -1
 
 
 # --- Helpers ----------------------------------------------------------------
@@ -494,9 +511,20 @@ func _advance_presentation() -> void:
 	if _pad_mode:
 		_api_fallbacks += 1
 	if _dialogue.has_pending_choices():
-		_dialogue.select_choice(0)
+		_dialogue.select_choice(_preferred_choice_index())
 	else:
 		_dialogue.advance_presentation()
+
+
+## Index of the first offered choice listed in `_preferred_choices`, else 0.
+func _preferred_choice_index() -> int:
+	var runtime := _dialogue.get_runtime()
+	if runtime == null or _preferred_choices.is_empty():
+		return 0
+	for choice: Dictionary in runtime.get_current_choices():
+		if StringName(choice.get("choice_id", &"")) in _preferred_choices:
+			return int(choice["index"])
+	return 0
 
 
 ## One real controller button, down and up, through the viewport.

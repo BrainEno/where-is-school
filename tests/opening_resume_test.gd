@@ -36,8 +36,9 @@ extends SceneTree
 ##
 ## And the prologue's progress survives a real save file (issue #144):
 ##
-## 8. **Both ways through the bag step finish the prologue** — searching the bag, and never
-##    searching it so the 95 s fallback closes the step. After N dismisses the class nothing
+## 8. **Both ways through the bag step finish the prologue** — picturing B in `q_wake` and
+##    searching the bag, and neither, so the imagined lesson is skipped and the 95 s fallback
+##    closes the bag step. After N dismisses the class nothing
 ##    is pending, `Session.is_at_rest()` agrees, and Save and quit writes the file. Neither
 ##    path is given a discovery, a record or an imagined scene the player did not have.
 ## 9. **The file brings the world back without replaying it**, in the classroom and on the
@@ -241,8 +242,10 @@ func _scenarios() -> Array:
 			"expect_not_played": [],
 		},
 		{
-			"label": "Q has spoken and the bag has been searched",
-			"flags": [StoryFlags.MET_Q, StoryFlags.TEXTBOOK_MISSING],
+			# The talk stopped at its end with the imagined lesson chosen (`imagine_b`) and
+			# not played; the step after Q plays it, and the bag fallback follows.
+			"label": "Q has spoken and the player chose to picture B",
+			"flags": [StoryFlags.MET_Q, StoryFlags.Q_FIRST_TALK_DONE, StoryFlags.IMAGINE_B_CHOSEN],
 			"expect_next": &"expectation",
 			"run": true,
 			"expect_played": [&"expected_b"],
@@ -494,7 +497,9 @@ func _has_flag(flag: StringName) -> bool:
 ## calls the pause menu and the title screen make: what is on disk is what a player would
 ## have, and what comes back is only what was on disk.
 func _check_disk_resume(searched: bool) -> void:
-	_case_label = "disk resume (%s)" % ("bag searched" if searched else "bag never searched")
+	_case_label = "disk resume (%s)" % (
+		"pictured B, bag searched" if searched else "B not pictured, bag never searched"
+	)
 	Harness.stage = _case_label
 	var session := root.get_node_or_null(^"Session")
 	var save := root.get_node_or_null(^"Save")
@@ -505,9 +510,13 @@ func _check_disk_resume(searched: bool) -> void:
 	_probe = ErrorProbe.new()
 	OS.add_logger(_probe)
 
-	# Q has spoken; the bag step is next. Flags first, because the director reads them
-	# in `_ready()`, then the world enters the way Continue enters it.
+	# Q has spoken; the imagined lesson's step is next, then the bag. `searched` is also
+	# the run that chose to picture B in `q_wake`. Flags first, because the director reads
+	# them in `_ready()`, then the world enters the way Continue enters it.
 	_game_state.set_flag(StoryFlags.MET_Q, true)
+	if searched:
+		_game_state.set_flag(StoryFlags.Q_FIRST_TALK_DONE, true)
+		_game_state.set_flag(StoryFlags.IMAGINE_B_CHOSEN, true)
 	_game_state.set_flag(StoryFlags.OBJECTIVE_KEY, "objective.check_bag")
 	_played.clear()
 	Engine.time_scale = TIME_SCALE
@@ -522,11 +531,27 @@ func _check_disk_resume(searched: bool) -> void:
 
 
 func _disk_resume_body(world: Node, searched: bool, session: Node, save: Node) -> void:
+	# A run that pictured B starts at the imagined lesson; one that did not passes that step
+	# over at once (`expectation_skipped`), so by now it waits at the bag.
 	_expect(
-		_sequence.next_step() == &"bag",
-		"%s: the run starts at '%s', not at the bag step." % [_case_label, _sequence.next_step()]
+		_sequence.next_step() == (&"expectation" if searched else &"bag"),
+		"%s: the run starts at '%s'." % [_case_label, _sequence.next_step()]
+	)
+	_expect(
+		searched or _has_flag(StoryFlags.EXPECTATION_SKIPPED),
+		"%s: the imagined lesson's step was not recorded as skipped." % _case_label
 	)
 	if searched:
+		# The chosen scene plays first; the bag can be searched once it is over.
+		if not await _play_until(
+			func() -> bool: return _has_flag(StoryFlags.EXPECTATION_PLAYED) and _settled(), false
+		):
+			return
+		_expect(
+			_sequence.next_step() == &"bag",
+			"%s: after the imagined lesson the run is at '%s', not at the bag step."
+			% [_case_label, _sequence.next_step()]
+		)
 		var bag := _current_location(world).find_interactable(&"schoolbag")
 		_expect(bag != null, "%s: the classroom has no schoolbag." % _case_label)
 		if bag != null:
@@ -548,9 +573,9 @@ func _disk_resume_body(world: Node, searched: bool, session: Node, save: Node) -
 		)
 	_expect(
 		_played.has(&"expected_b") == searched,
-		"%s: the expectation beat %s although the bag was %s." % [
+		"%s: the expectation beat %s although B was %s." % [
 			_case_label, "played" if _played.has(&"expected_b") else "did not play",
-			"searched" if searched else "never searched",
+			"pictured" if searched else "not pictured",
 		]
 	)
 	_expect_progress(world, searched, "after the dismissal")

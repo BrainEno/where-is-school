@@ -15,6 +15,8 @@ const Q_WAKE_HUBS := {
 	&"p_zero": [&"blank", &"absent", &"none"],
 	&"q_topic_ask": [&"ask", &"silent", &"search"],
 	&"q_ecosystem": [&"grab_book", &"keep_searching", &"borrow", &"quiet"],
+	# Round 7: after Q describes B, whether to picture her (placeholder options).
+	&"q_b_looks": [&"imagine_b", &"ignore_b"],
 }
 
 var _failures: Array[String] = []
@@ -332,6 +334,19 @@ func _check_q_branch(
 		var expected_hubs: Array[StringName] = [&"q_3", &"q_who_look", &"p_zero", &"q_topic_ask"]
 		if picks[3] == 0:
 			expected_hubs.append(&"q_ecosystem")
+		# q_b_looks follows Q's description of B, which only the branches that go on
+		# looking for the book reach (`search`, or `ask` then `keep_searching`); there the
+		# answer alternates so both are walked. Elsewhere nothing offers the imagined scene.
+		var describes_b: bool = picks[3] == 2 or (picks[3] == 0 and picks[4] == 1)
+		var imagine_pick := 1
+		if describes_b:
+			expected_hubs.append(&"q_b_looks")
+			imagine_pick = 0
+			for pick: int in picks:
+				imagine_pick += pick
+			imagine_pick %= 2
+		var answers := picks.duplicate()
+		answers.append(imagine_pick)
 		while runtime.is_active() and steps < 100:
 			if runtime.is_awaiting_choice():
 				var node_id := runtime.get_current_node_id()
@@ -339,7 +354,7 @@ func _check_q_branch(
 						or runtime.get_available_choice_ids() != Q_WAKE_HUBS[node_id]:
 					_failures.append("%s: choice hub %d (%s) lost its options." % [label, hubs, node_id])
 					break
-				runtime.choose(int(picks[hubs]))
+				runtime.choose(int(answers[hubs]))
 				hubs += 1
 			else:
 				runtime.advance()
@@ -361,6 +376,8 @@ func _check_q_branch(
 				or (flag == StoryFlags.BORROW_FROM_NEXT_CLASS and borrowed)
 			if bool(state.get_flag(flag, false)) != want:
 				_failures.append("%s: consequence '%s' does not match the chosen branch." % [label, flag])
+		if bool(state.get_flag(StoryFlags.IMAGINE_B_CHOSEN, false)) != (imagine_pick == 0):
+			_failures.append("%s: picturing B does not match the q_b_looks choice." % label)
 		if String(state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
 			_failures.append("%s lost the schoolbag objective." % label)
 	state.free()

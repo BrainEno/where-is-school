@@ -1,7 +1,8 @@
 extends SceneTree
 ## Proves the inner-voice system supports more than one voice, on fixtures only.
 ##
-## The shipped content has one voice and this test does not change that: the two voices
+## The shipped content has its own voices (`orientation`, `whimsy`) and this test does not
+## touch them: the two voices
 ## below (`probe_a`, `probe_b`) exist in `user://` for the length of the run and are
 ## written through the same loaders the game uses. Nothing here is added to
 ## `data/abilities/` or `data/characters/`, and no prose written here is canon.

@@ -203,10 +203,12 @@ CATEGORIES = (
 # The whole pack. The baseline is 1.37 MiB of 256 files, so the hard limit leaves room for
 # roughly eleven more times the content the game has today — several more locations with
 # furniture, textures and sound — while 8 MiB is an early signal that a release doubled.
-# The number the old check used (16 MiB) is kept as the hard limit: nothing is loosened, and
-# the warning is new.
+# The number the old check used (16 MiB) was the hard limit until the release reached 15.97 MiB
+# with the cast still incomplete. The owner raised it to 24 MiB when teacher B's model (about
+# 1 MiB packed) joined the build for the imagined lesson; the 8 MiB warning line is unchanged,
+# so every release still says it is past it.
 PACK_WARN_BYTES = 8 * MiB
-MAX_PACK_BYTES = 16 * MiB
+MAX_PACK_BYTES = 24 * MiB
 
 BY_NAME = {category.name: category for category in CATEGORIES}
 

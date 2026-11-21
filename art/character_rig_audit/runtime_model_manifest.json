@@ -1,7 +1,7 @@
 {
   "schema": "where-is-school/runtime-model-manifest",
   "schema_version": 1,
-  "description": "The structural record of the three rigged models the game instantiates at run time. tools/model_library.py --check compares every registered model against it on every run; a difference fails the check and the manifest is updated on purpose, by tools/model_library.py --update-manifest, so the change shows up in review.",
+  "description": "The structural record of the rigged models the game instantiates at run time. tools/model_library.py --check compares every registered model against it on every run; a difference fails the check and the manifest is updated on purpose, by tools/model_library.py --update-manifest, so the change shows up in review.",
   "scope": "Runtime characters only. art/character_rigging/ (Blender working files and the unrigged Q source), scenes/dev/animation_retarget_test/ (a development retarget asset) and art/character_rig_audit/*_rig_audit.json (Blender-side audits of other stages) are deliberately not covered: they are different stages of the same character, and mixing them is how a manifest starts describing a file nobody ships.",
   "measured_from": "The .glb files as committed, read by tools/model_library.py. Not the Blender sources, not the rig audits.",
   "models": [
@@ -6174,6 +6174,658 @@
           ]
         }
       ]
+    },
+    {
+      "path": "assets/models/teacher_b/teacher_b.glb",
+      "wrapper": "scenes/locations/classroom/imagined_lesson.tscn",
+      "note": "Biology teacher B, built by art/character_models/teacher_b/build_teacher_b.py (README there). 13 vertex-coloured meshes on one skin, no images and no embedded animation: the motion is the separate AnimationLibrary assets/models/teacher_b/teacher_b_motion.tres (idle, walk, explain), bound to the skeleton by whoever plays it. Shipped since the imagined lesson (docs/IMAGINED_LESSON.md), which instantiates it three times in the classroom and draws it with assets/shaders/imagined/dream_figure.gdshader instead of its look resource; scenes/dev/teacher_b/teacher_b_review.tscn is the development review of the same file with teacher_b_look.tres.",
+      "counts": {
+        "nodes": 70,
+        "meshes": 13,
+        "primitives": 13,
+        "materials": 12,
+        "skins": 1,
+        "joints": 57,
+        "animations": 0,
+        "animation_channels": 0
+      },
+      "scene_roots": [
+        "Face and neck",
+        "Root",
+        "b_brass",
+        "b_brows_and_crease",
+        "b_charcoal_wool",
+        "b_eye",
+        "b_leather",
+        "b_olive_blouse",
+        "b_optical_glass",
+        "b_rubber_and_horn",
+        "b_skin",
+        "b_swept_silver",
+        "b_tortoiseshell",
+        "b_twill"
+      ],
+      "nodes": [
+        {
+          "path": "Face and neck",
+          "name": "Face and neck",
+          "mesh": "Face and neck",
+          "skin": 0
+        },
+        {
+          "path": "Root",
+          "name": "Root",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips",
+          "name": "Hips",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine",
+          "name": "Spine",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01",
+          "name": "Spine_01",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02",
+          "name": "Spine_02",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest",
+          "name": "Chest",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck",
+          "name": "Neck",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+          "name": "Head",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+          "name": "Eye_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+          "name": "Eye_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Jaw",
+          "name": "Jaw",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L",
+          "name": "Shoulder_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L",
+          "name": "UpperArm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L",
+          "name": "Forearm_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L",
+          "name": "Hand_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L",
+          "name": "Index01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L/Index02_L",
+          "name": "Index02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L/Index02_L/Index03_L",
+          "name": "Index03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L",
+          "name": "Little01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L/Little02_L",
+          "name": "Little02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L/Little02_L/Little03_L",
+          "name": "Little03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L",
+          "name": "Middle01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L/Middle02_L",
+          "name": "Middle02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L/Middle02_L/Middle03_L",
+          "name": "Middle03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L",
+          "name": "Ring01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L/Ring02_L",
+          "name": "Ring02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L/Ring02_L/Ring03_L",
+          "name": "Ring03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L",
+          "name": "Thumb01_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L/Thumb02_L",
+          "name": "Thumb02_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L/Thumb02_L/Thumb03_L",
+          "name": "Thumb03_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R",
+          "name": "Shoulder_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R",
+          "name": "UpperArm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R",
+          "name": "Forearm_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R",
+          "name": "Hand_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R",
+          "name": "Index01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R/Index02_R",
+          "name": "Index02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R/Index02_R/Index03_R",
+          "name": "Index03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R",
+          "name": "Little01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R/Little02_R",
+          "name": "Little02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R/Little02_R/Little03_R",
+          "name": "Little03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R",
+          "name": "Middle01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R/Middle02_R",
+          "name": "Middle02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R/Middle02_R/Middle03_R",
+          "name": "Middle03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R",
+          "name": "Ring01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R/Ring02_R",
+          "name": "Ring02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R/Ring02_R/Ring03_R",
+          "name": "Ring03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R",
+          "name": "Thumb01_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R/Thumb02_R",
+          "name": "Thumb02_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R/Thumb02_R/Thumb03_R",
+          "name": "Thumb03_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_L",
+          "name": "Thigh_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_L/LowerLeg_L",
+          "name": "LowerLeg_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_L/LowerLeg_L/Foot_L",
+          "name": "Foot_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_L/LowerLeg_L/Foot_L/Toes_L",
+          "name": "Toes_L",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_R",
+          "name": "Thigh_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_R/LowerLeg_R",
+          "name": "LowerLeg_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_R/LowerLeg_R/Foot_R",
+          "name": "Foot_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "Root/Hips/Thigh_R/LowerLeg_R/Foot_R/Toes_R",
+          "name": "Toes_R",
+          "mesh": null,
+          "skin": null
+        },
+        {
+          "path": "b_brass",
+          "name": "b_brass",
+          "mesh": "b_brass",
+          "skin": 0
+        },
+        {
+          "path": "b_brows_and_crease",
+          "name": "b_brows_and_crease",
+          "mesh": "b_brows_and_crease",
+          "skin": 0
+        },
+        {
+          "path": "b_charcoal_wool",
+          "name": "b_charcoal_wool",
+          "mesh": "b_charcoal_wool",
+          "skin": 0
+        },
+        {
+          "path": "b_eye",
+          "name": "b_eye",
+          "mesh": "b_eye",
+          "skin": 0
+        },
+        {
+          "path": "b_leather",
+          "name": "b_leather",
+          "mesh": "b_leather",
+          "skin": 0
+        },
+        {
+          "path": "b_olive_blouse",
+          "name": "b_olive_blouse",
+          "mesh": "b_olive_blouse",
+          "skin": 0
+        },
+        {
+          "path": "b_optical_glass",
+          "name": "b_optical_glass",
+          "mesh": "b_optical_glass",
+          "skin": 0
+        },
+        {
+          "path": "b_rubber_and_horn",
+          "name": "b_rubber_and_horn",
+          "mesh": "b_rubber_and_horn",
+          "skin": 0
+        },
+        {
+          "path": "b_skin",
+          "name": "b_skin",
+          "mesh": "b_skin",
+          "skin": 0
+        },
+        {
+          "path": "b_swept_silver",
+          "name": "b_swept_silver",
+          "mesh": "b_swept_silver",
+          "skin": 0
+        },
+        {
+          "path": "b_tortoiseshell",
+          "name": "b_tortoiseshell",
+          "mesh": "b_tortoiseshell",
+          "skin": 0
+        },
+        {
+          "path": "b_twill",
+          "name": "b_twill",
+          "mesh": "b_twill",
+          "skin": 0
+        }
+      ],
+      "meshes": [
+        {
+          "name": "Face and neck",
+          "primitives": [
+            {
+              "material": "b_skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_brass",
+          "primitives": [
+            {
+              "material": "b_brass",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_brows_and_crease",
+          "primitives": [
+            {
+              "material": "b_brows_and_crease",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_charcoal_wool",
+          "primitives": [
+            {
+              "material": "b_charcoal_wool",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_eye",
+          "primitives": [
+            {
+              "material": "b_eye",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_leather",
+          "primitives": [
+            {
+              "material": "b_leather",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_olive_blouse",
+          "primitives": [
+            {
+              "material": "b_olive_blouse",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_optical_glass",
+          "primitives": [
+            {
+              "material": "b_optical_glass",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_rubber_and_horn",
+          "primitives": [
+            {
+              "material": "b_rubber_and_horn",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_skin",
+          "primitives": [
+            {
+              "material": "b_skin",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_swept_silver",
+          "primitives": [
+            {
+              "material": "b_swept_silver",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_tortoiseshell",
+          "primitives": [
+            {
+              "material": "b_tortoiseshell",
+              "skinned": true
+            }
+          ]
+        },
+        {
+          "name": "b_twill",
+          "primitives": [
+            {
+              "material": "b_twill",
+              "skinned": true
+            }
+          ]
+        }
+      ],
+      "materials": [
+        "b_brass",
+        "b_brows_and_crease",
+        "b_charcoal_wool",
+        "b_eye",
+        "b_leather",
+        "b_olive_blouse",
+        "b_optical_glass",
+        "b_rubber_and_horn",
+        "b_skin",
+        "b_swept_silver",
+        "b_tortoiseshell",
+        "b_twill"
+      ],
+      "skins": [
+        {
+          "name": "Teacher B deform rig",
+          "skeleton": "Root",
+          "joints": [
+            "Root",
+            "Root/Hips",
+            "Root/Hips/Spine",
+            "Root/Hips/Spine/Spine_01",
+            "Root/Hips/Spine/Spine_01/Spine_02",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Jaw",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L/Thumb02_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Thumb01_L/Thumb02_L/Thumb03_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L/Index02_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Index01_L/Index02_L/Index03_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L/Middle02_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Middle01_L/Middle02_L/Middle03_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L/Ring02_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Ring01_L/Ring02_L/Ring03_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L/Little02_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_L/UpperArm_L/Forearm_L/Hand_L/Little01_L/Little02_L/Little03_L",
+            "Root/Hips/Thigh_L",
+            "Root/Hips/Thigh_L/LowerLeg_L",
+            "Root/Hips/Thigh_L/LowerLeg_L/Foot_L",
+            "Root/Hips/Thigh_L/LowerLeg_L/Foot_L/Toes_L",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Neck/Head/Eye_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R/Thumb02_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Thumb01_R/Thumb02_R/Thumb03_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R/Index02_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Index01_R/Index02_R/Index03_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R/Middle02_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Middle01_R/Middle02_R/Middle03_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R/Ring02_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Ring01_R/Ring02_R/Ring03_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R/Little02_R",
+            "Root/Hips/Spine/Spine_01/Spine_02/Chest/Shoulder_R/UpperArm_R/Forearm_R/Hand_R/Little01_R/Little02_R/Little03_R",
+            "Root/Hips/Thigh_R",
+            "Root/Hips/Thigh_R/LowerLeg_R",
+            "Root/Hips/Thigh_R/LowerLeg_R/Foot_R",
+            "Root/Hips/Thigh_R/LowerLeg_R/Foot_R/Toes_R"
+          ]
+        }
+      ],
+      "animations": []
     }
   ]
 }

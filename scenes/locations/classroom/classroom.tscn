@@ -1,4 +1,4 @@
-[gd_scene load_steps=120 format=3]
+[gd_scene load_steps=121 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -41,6 +41,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/back_board.tscn" id="c_back_board"]
 
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_presentation.gd" id="c_presentation"]
+[ext_resource type="PackedScene" path="res://scenes/locations/classroom/imagined_lesson.tscn" id="c_imagined_lesson"]
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_anomalies.gd" id="c_anomalies"]
 [ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="c_staged"]
 [ext_resource type="Script" path="res://scripts/interaction/seated_chair_interactable.gd" id="c_seat_sit"]
@@ -937,6 +938,8 @@ stream = ExtResource("19_room_tone_classroom")
 volume_db = -14.0
 script = ExtResource("20_ambience_player")
 target_db = -20.0
+
+[node name="ImaginedLesson" parent="." instance=ExtResource("c_imagined_lesson")]
 
 [node name="ClassroomPresentation" type="Node3D" parent="."]
 script = ExtResource("c_presentation")

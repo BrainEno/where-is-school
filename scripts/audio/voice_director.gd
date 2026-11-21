@@ -48,6 +48,11 @@ const SPEAKER_PROFILES: Dictionary = {
 		"gain_db": 1.0,
 		"description": "Inner directional voice, resonant internal timbre.",
 	},
+	&"voice_whimsy": {
+		"pitch_scale": 1.06,
+		"gain_db": 0.5,
+		"description": "Inner voice of fancy, light and quick, a little too sure of itself.",
+	},
 }
 
 @export var controller_path: NodePath = ^"../DialogueController"

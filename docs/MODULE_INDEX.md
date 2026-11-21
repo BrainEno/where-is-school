@@ -166,6 +166,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `CameraRig` | [`scripts/world/camera_rig.gd`](../scripts/world/camera_rig.gd) | Own follow framing, default movement axes, roll, framed points and composable focus layers. |
 | `CameraShot` | [`scripts/world/camera_shot.gd`](../scripts/world/camera_shot.gd) | Relative interaction framing resource (center mix, distance, yaw, lens and glide times). |
 | `CompanionController` | [`scripts/world/companion_controller.gd`](../scripts/world/companion_controller.gd) | Persistent Q follow/wait/resume body using the location navigation map; hides when the location authors its own Q. |
+| `ConcussionView` | [`scripts/world/concussion_view.gd`](../scripts/world/concussion_view.gd) | Main-scene world filter for the dazed look after the hurt curtain landing: a static postmodern paste-up shader that fades over ten minutes of play, counted in `concussion_seconds_left`. See [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md). |
 | `ExitWatch` | [`scripts/world/exit_watch.gd`](../scripts/world/exit_watch.gd) | The blocked-exit staged watch and camera framing; use the host beat lifecycle. |
 | `InnerVoiceDirector` | [`scripts/world/inner_voice_director.gd`](../scripts/world/inner_voice_director.gd) | Schedule passive voices under rule/session caps and silence/beat constraints; CheckResolver owns dice. |
 | `LocationCatalog` | [`scripts/world/location_catalog.gd`](../scripts/world/location_catalog.gd) | Load location/start/arrival metadata from data/story/locations.json, not a new hard-coded location switch. |
@@ -209,6 +210,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `ClassroomAnomalies` | [`scenes/locations/classroom/classroom_anomalies.gd`](../scenes/locations/classroom/classroom_anomalies.gd) | Classroom-specific curtain/void/paper staging and restoration; use its authored props and story flags. |
 | `ClassroomScreenControl` | [`scenes/locations/classroom/classroom_screen_control.gd`](../scenes/locations/classroom/classroom_screen_control.gd) | Classroom-specific staged projection-screen toggle; leaves story/save state unchanged. |
 | `ClassroomChairControl` | [`scenes/locations/classroom/classroom_chair_control.gd`](../scenes/locations/classroom/classroom_chair_control.gd) | Classroom-specific staged sit/stand on the chair the protagonist wakes in; keeps the prompt in step with the body and leaves story/save state unchanged. |
+| `ImaginedLesson` | [`scenes/locations/classroom/imagined_lesson.gd`](../scenes/locations/classroom/imagined_lesson.gd) | Classroom-only presentation of the imagined teacher B during `expected_b` (distorted figure, after-images, Munch screen filter); switched by `ClassroomPresentation`, never an actor and never saved. See [IMAGINED_LESSON.md](IMAGINED_LESSON.md). |
 
 <!-- class-name-index:end -->
 

@@ -51,7 +51,7 @@
 | 铁门 / 小铁门 | metal gate / the small gate | | 作者改稿（06）：巷子尽头通往球场、学生平时进出的那扇小门（`alley_to_playground`）；`objective.alley`「尽头有一道小铁门」 |
 | 栅栏门 / 铁栅门 | alley gate | estate gate | 作者改稿（06）：小铁门旁边那扇更大的伸缩式栅栏门，几乎从不对学生开放 |
 | 防火门 | fire door | | 操场回教学楼的门，与「小铁门」不同 |
-| （待作者命名）| service door | | 小巷里挂着坏 U 形锁的那扇（`alley_service_door` / `alley_door`）。它的检视文字仍叫「铁门」，与作者现在说的「小铁门」撞名；新名字由作者决定 |
+| 上锁的门 | locked door | 后门、service door | 作者定名（第 7 轮）：小巷里挂着坏 U 形锁的那扇（`alley_service_door` / `alley_door`）。只改检视标题；检视正文和日志记录仍按作者原句写「铁门」，不与「小铁门」混用 |
 | 交还牌 | return plate | | 街边、巷口的小牌子 |
 | 交还板 | return board | | 操场上那块板，与交还牌是不同物件 |
 | 篮筐 | hoop | | 与「篮板」（backboard）不同 |
@@ -67,8 +67,9 @@
 | `n` | N | N | 年轻的代课老师，最后宣布自习 |
 | `student` | 同学 | Classmate | 无名的其他学生 |
 | `voice_orientation` | 路感 | Orientation | 内心声音，见下 |
+| `voice_whimsy` | 异想天开 | Flight of Fancy | 内心声音（第 7 轮占位，数值 3；还没有被动规则），只在想象场景里检定，见下 |
 
-**内心声音**（[叙事圣经](NARRATIVE_BIBLE.md#inner-voices)定稿六个，目前只实装路感）：路感 Orientation（空间、方向）、细察 Scrutiny（细节与证据）、回声 Echo（记忆与联想）、臆想 Imagination（想象与潜意识）、推演 Inference（推理与因果）、共鸣 Resonance（情绪与人际）。
+**内心声音**（[叙事圣经](NARRATIVE_BIBLE.md#inner-voices)定稿六个，目前只实装路感）。另有第 7 轮加的「异想天开」Flight of Fancy（`whimsy`）：想象场景 `expected_b` 荒诞方向里的检定，把荒诞分成高、低两支；这是唯一允许在主观会话里掷的检定，说明文字待作者：路感 Orientation（空间、方向）、细察 Scrutiny（细节与证据）、回声 Echo（记忆与联想）、臆想 Imagination（想象与潜意识）、推演 Inference（推理与因果）、共鸣 Resonance（情绪与人际）。
 
 **知识来源与徽章：**
 
@@ -116,9 +117,10 @@
 | 术语 | 含义 | 出处 |
 |---|---|---|
 | **beat** | 一段被编排的场景节拍：`begin_beat()` 到 `end_beat()` 之间，房间归这一拍所有。不是「关卡」。 | `scripts/world/opening_sequence.gd` |
-| **step** | 序章的一步（`wake`、`q_wake`、`bag`、`expectation`、`bell`、`substitute`），每步由一个 flag 证明已完成，读档从第一个未完成的步继续。 | `scripts/world/prologue_steps.gd` |
+| **step** | 序章的一步（`wake`、`q_wake`、`expectation`、`bag`、`bell`、`substitute`；第 7 轮起想象场景在 Q 的对话里选择进入，排在翻书包之前），每步由一个 flag 证明已完成，读档从第一个未完成的步继续。 | `scripts/world/prologue_steps.gd` |
 | **Source** | 一条知识的来路，见第 3 节徽章表。 | `data/dialogue_schema/README.md` |
-| **subjective** | 主观会话（想象、回忆）：不能设 flag、不能检定、不能有 `once` 选项，只能记录 `recalled` / `imagined`。 | 同上 |
+| **subjective** | 主观会话（想象、回忆）：不能设 flag、不能有 `once` 选项，只能记录 `recalled` / `imagined`；检定只允许「异想天开」（`whimsy`，第 7 轮），其余能力的检定一律拒绝。 | 同上 |
+| **恍惚 / 拼贴滤镜** | 序章摔伤（`curtain_landing_injured`）落到集装箱顶那一刻起的画面风格：静止的后现代拼贴，十分钟游戏时间内淡出，`concussion_seconds_left` 记剩余秒数。只是美术，不晃不动。 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) |
 | **flag** | 一个剧情布尔（少数带值），存在 `GameState` 里。常量表在 `scripts/narrative/story_flags.gd`。**该文件是文档索引，不是白名单**：`set_flag()` 只拒绝空名，不校验常量表。 | `scripts/autoload/game_state.gd` |
 | **`seen:<inspection>`** | 看过某个检视物的落盘键，由检视自动写入，可以在 conditions 与检定加值里读。 | `scripts/narrative/story_flags.gd` |
 | **`check:<conversation>:<node>`** | 一次检定结果的落盘键。非 `repeatable` 的检定会写入它，所以同一尝试不会被重掷。conditions 里出现这种键是正常内容，不是待注册的 flag。 | `data/dialogue_schema/README.md` |

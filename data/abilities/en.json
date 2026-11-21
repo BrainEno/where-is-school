@@ -5,6 +5,10 @@
     "orientation": {
       "name": "Orientation",
       "description": "A sense of where things are in relation to each other: heights, seams, what lines up and what does not. It is confident about shapes and has nothing to say about people. One voice, still provisional."
+    },
+    "whimsy": {
+      "name": "Flight of Fancy",
+      "description": "TODO: what Flight of Fancy is (to be written by the author)."
     }
   }
 }

@@ -11,6 +11,7 @@ on:
       - 'assets/shaders/characters/**'
       - 'scenes/dev/classmates/**'
       - 'scenes/dev/teacher_b/**'
+      - 'assets/models/teacher_b/**'
       - 'scripts/actors/character_look*.gd'
       - 'tests/classmates_*_test.*'
   workflow_dispatch:

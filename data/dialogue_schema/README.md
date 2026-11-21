@@ -117,7 +117,7 @@ chapter list comes from the chapter files, and it warns if that disagrees with
 | `locale` | Must match the directory. |
 | `chapter` | Free-text label; one file per chapter. |
 | `default_source` | Narrative category inherited by every node: `observed`, `reported`, `recalled`, `imagined`. |
-| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, record observed/reported knowledge, carry a `check`, or mark a choice `once`. The last two are refused because both write story state (the dice record and the "already taken" record); see the notes under Checks and Choices. |
+| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, record observed/reported knowledge, carry a `check` (except a 「异想天开」 `whimsy` check, see Checks), or mark a choice `once`. The last two are refused because both write story state (the dice record and the "already taken" record); see the notes under Checks and Choices. |
 | `start` | Node id the conversation opens on. |
 
 ### Nodes
@@ -125,7 +125,7 @@ chapter list comes from the chapter files, and it warns if that disagrees with
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | yes | Stable, unique inside the conversation. Used by tests, parity and `next`. |
-| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `student`) or an inner voice (`voice_orientation`). There is no narrator: narration is a `protagonist` line. |
+| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `student`) or an inner voice (`voice_orientation`, `voice_whimsy`). There is no narrator: narration is a `protagonist` line. |
 | `text` | yes | The line. May not be empty; a node with only choices may omit it. |
 | `source` | no | Overrides `default_source` for this line. |
 | `next` | no | Id of the next node. **Absent** = fall through to the next node in file order. **`null`** = the conversation ends here. |
@@ -152,13 +152,17 @@ otherwise the end of the file is ambiguous and the build fails.
 
 A node may carry a `check` block. It is refused inside a `subjective` conversation:
 the resolved result is stored so it cannot be re-rolled, and that record is story
-state. The runtime rolls a check when the node is entered,
+state. The one exception is 「异想天开」 (`whimsy`, Flight of Fancy): it measures how
+far the protagonist steers his own fantasy, so it is rolled *inside* the imagined scene
+(`DialogueGraph.IMAGINATION_ABILITIES`, mirrored in `tools/story_doc.py`). It records
+its result under `check:<conversation>:<node>` like any check, so replaying the fantasy
+cannot buy a better roll, and that record is the only story state it writes. The runtime rolls a check when the node is entered,
 shows the line, and then continues to one of two branches. A check node never has
 `next` and never has `choices`.
 
 | Field | Required | Meaning |
 |---|---|---|
-| `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. Shipping today: `orientation`. Its value is added to the die. |
+| `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. Shipping today: `orientation` (路感) and `whimsy` (异想天开, value provisional, only used inside `expected_b`). Its value is added to the die. |
 | `difficulty` | yes | 1..30. The total needed. Typical values are 8-12. |
 | `kind` | yes | `visible` = the player sees the voice, the die, the difficulty and the outcome. `hidden` = only the resulting line is shown. Use `visible` when the player chose the attempt, `hidden` when a voice speaks up on its own. |
 | `success` | yes | Node id to continue to on success, or explicit `null` to end the conversation. |
@@ -317,7 +321,8 @@ the content test check, in CI, that:
 - every node has text or choices, and every choice has text, an id and a `next`;
 - speakers exist in `data/characters/`, and objective keys exist in every locale;
 - a subjective conversation writes no flags, no objective, and no observed or
-  reported knowledge (this is refused while parsing, before any line is shown);
+  reported knowledge, and rolls no check other than `whimsy` (this is refused while
+  parsing, before any line is shown);
 - both languages define the same conversations, node ids, order, branches and
   effects, and no inspection is left with an empty translation;
 - the inner-voice registry has the types it says it has: `once` is a JSON boolean,

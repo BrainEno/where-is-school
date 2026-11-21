@@ -26,6 +26,12 @@ const EFFECT_TYPES: Array[String] = ["set_flag", "set_objective", "record", "cam
 ## Sources that describe what actually happened. A subjective conversation may
 ## never record these, and never write flags or the objective.
 const FACTUAL_SOURCES: Array[String] = ["observed", "reported"]
+## The only abilities whose check may be rolled inside a subjective conversation.
+## 「异想天开」 (`whimsy`, Flight of Fancy) measures how far the protagonist steers his own
+## fantasy, so its die belongs in the imagined scene (owner's decision, round 7). The result
+## is still recorded under `check:<conversation>:<node>`, so replaying the fantasy cannot
+## buy a better roll; that record is the one piece of story state such a scene may write.
+const IMAGINATION_ABILITIES: Array[StringName] = [&"whimsy"]
 
 
 class DialogueChoice extends RefCounted:
@@ -599,6 +605,12 @@ func _check_last_node_terminates(conversation: Conversation, label: String) -> v
 		)
 
 
+## True when `check` rolls one of `IMAGINATION_ABILITIES`, the only checks a subjective
+## conversation may carry.
+static func is_imagination_check(check: Dictionary) -> bool:
+	return StringName(String(check.get("ability", ""))) in IMAGINATION_ABILITIES
+
+
 ## Statically refuse the effects a subjective conversation is not allowed to
 ## have. The runtime also refuses them at play time; this makes the mistake
 ## visible while editing instead of as a warning in a log.
@@ -619,10 +631,13 @@ func _validate_subjective_node(node: DialogueNode, node_label: String) -> void:
 	# A check records its result in story state (so it cannot be rerolled) and a
 	# `once` choice records that it was taken. Both are objective bookkeeping, so
 	# neither belongs in a conversation the protagonist is only imagining.
-	if not node.check.is_empty():
+	if not node.check.is_empty() and not is_imagination_check(node.check):
 		errors.append(
-			"%s: subjective conversations cannot carry a check; its result would be written to story state."
-			% node_label
+			(
+				"%s: subjective conversations cannot carry a check; its result would be written"
+				+ " to story state. Only %s may be rolled inside an imagined scene."
+			)
+			% [node_label, str(IMAGINATION_ABILITIES)]
 		)
 	for choice: DialogueChoice in node.choices:
 		if choice.once:
