@@ -1,0 +1,37 @@
+name: Name quest preview
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/name-quest-preview.yml'
+      - '.godot-version'
+      - 'scenes/dev/name_quest/**'
+      - 'scripts/dev/name_quest/**'
+      - 'tests/name_quest_preview_test.gd'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  name-quest:
+    name: Play the isolated name quest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-godot
+      - name: Import the exact head
+        run: |
+          echo "::notice title=Preview head and engine::$(git rev-parse HEAD) / $(godot --version)"
+          bash tools/ci_import_godot.sh ci-logs/name-quest
+          python3 tools/godot_sidecars.py --after-import --github
+      - name: Play and reload the preview
+        shell: bash
+        run: |
+          export XDG_DATA_HOME="$(mktemp -d)"
+          source tools/ci_run_check.sh
+          run_check name_quest_preview 155 godot --headless --path . --script res://tests/name_quest_preview_test.gd || status=1
+          run_check_summary
