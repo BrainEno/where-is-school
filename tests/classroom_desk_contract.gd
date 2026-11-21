@@ -1,6 +1,6 @@
 extends RefCounted
 ## Expected layout shared by the placement, visual and playthrough checks.
-## Keep the original twelve desk anchors. Each has exactly one companion 0.75 m away.
+## The twelve desk anchors each have exactly one companion 0.75 m away.
 
 const ANCHORS := {
 	"DeskA1": Vector3(-4.8, 0.0, -0.8),
@@ -11,7 +11,8 @@ const ANCHORS := {
 	"DeskB2": Vector3(-1.6, 0.0, 1.3),
 	"DeskB3": Vector3(1.6, 0.0, 1.3),
 	"DeskB4": Vector3(4.8, 0.0, 1.3),
-	"DeskC1": Vector3(-4.8, 0.0, 3.4),
+	# Pull the rear-left pair off the wall without closing the aisle toward Q.
+	"DeskC1": Vector3(-4.375, 0.0, 3.4),
 	"DeskC2": Vector3(-1.6, 0.0, 3.4),
 	"DeskC3": Vector3(1.6, 0.0, 3.4),
 	"DeskC4": Vector3(4.8, 0.0, 3.4),

@@ -284,17 +284,18 @@ func _shot(file_name: String) -> void:
 
 func _write_preview(image: Image, path: String) -> void:
 	# Delivery only. The hashed 1600×900 PNGs remain the evidence of record.
-	var thumbnail := image.duplicate() as Image
-	thumbnail.resize(480, 270, Image.INTERPOLATE_LANCZOS)
-	for quality: float in [0.66, 0.54, 0.44, 0.34]:
-		var data := thumbnail.save_jpg_to_buffer(quality)
-		if data.is_empty() or data.size() > 11000:
-			continue
-		var file := FileAccess.open(path, FileAccess.WRITE)
-		if file != null:
-			file.store_buffer(data)
-			_note("preview=%s bytes=%d" % [path.get_file(), data.size()])
-			return
+	for size: Vector2i in [Vector2i(480, 270), Vector2i(400, 225), Vector2i(320, 180)]:
+		var thumbnail := image.duplicate() as Image
+		thumbnail.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
+		for quality: float in [0.66, 0.54, 0.44, 0.34]:
+			var data := thumbnail.save_jpg_to_buffer(quality)
+			if data.is_empty() or data.size() > 11000:
+				continue
+			var file := FileAccess.open(path, FileAccess.WRITE)
+			if file != null:
+				file.store_buffer(data)
+				_note("preview=%s size=%s bytes=%d" % [path.get_file(), size, data.size()])
+				return
 	_note("preview unavailable: %s" % path.get_file())
 
 

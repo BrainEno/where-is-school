@@ -157,9 +157,10 @@ The player wakes in the chair (`PlayerStart`), and
 Q starts a little way down the aisle and walks to `QOpeningTalk` just outside the left
 chair, before the first line (the opening's Q beat, #160). At the bell he returns to
 `DeskQ`, 0.75 m left of `DeskB2` with a 3.8 cm seam between the tops. The other eleven
-positions each use the same spacing without moving the original desks or closing the bag
-aisle. The front-left mate sits on the inside to leave room at the ordinary window;
-the other mates sit to the left. The stage and its step are actual
+positions each use the same spacing, leaving the bag aisle open. The front-left mate sits
+on the inside to leave room at the ordinary window; the other mates sit to the left.
+The rear-left pair is shifted 0.425 m inward so both its wall-side and Q-side aisles bake.
+All other original desks keep their positions. The stage and its step are actual
 colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage
 is the only teacher's furniture: the low teacher's desk was taken out and its inspection

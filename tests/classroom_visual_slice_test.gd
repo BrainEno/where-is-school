@@ -181,6 +181,7 @@ const DESK_REACH := 1.0
 const AISLE_POINTS := {
 	"left of Q": Vector3(-3.575, 0, 1.3),
 	"west aisle behind Q": Vector3(-3.575, 0, 3.4),
+	"aisle outside the rear-left pair": Vector3(-6.125, 0, 3.55),
 	"centre aisle at the front row": Vector3(-0.375, 0, -0.8),
 	"centre aisle beside the bag": Vector3(-0.375, 0, 1.3),
 	"centre aisle at the back row": Vector3(-0.375, 0, 3.4),

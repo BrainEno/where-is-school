@@ -23,7 +23,7 @@ extends SceneTree
 ## So this test loads the real scenes — `classroom.tscn`, `player.tscn`,
 ## `companion.tscn`, `npc_actor.tscn` — and checks what the player sees and bumps into.
 ## It does not photograph anything (that is `capture_playthrough.gd`) and it is not a
-## scale rework: the twelve original desk positions stay put, with a seat beside each.
+## scale rework: every desk still fits its bay and has a matching seat beside it.
 ##
 ## Where a number could be read off the thing being tested, it is read rather than
 ## copied: the desk's top is measured on the instantiated desk, and the character's feet
