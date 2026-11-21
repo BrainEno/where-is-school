@@ -1063,7 +1063,7 @@ func _check_roof(observed: Dictionary, hurt: bool) -> void:
 		_failures.append("Roof contact, staging or input lock was wrong (injured=%s): %s" % [hurt, observed])
 	_expect_roof_view(hurt, RoofEncounter.Phase.OUTSIDE)
 	# Only the hard landing leaves the protagonist dazed (`ConcussionView`, round 7): the
-	# real contact starts the ten-minute look, and the braced drop never does.
+	# real contact starts the four-minute look, and the braced drop never does.
 	var dazed := int(_game_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0))
 	if (dazed > 0) != hurt or dazed > ConcussionView.DURATION:
 		_failures.append("The landing left %d s of the dazed look (injured=%s)." % [dazed, hurt])
@@ -1164,6 +1164,9 @@ func _check_ladder(hurt: bool) -> void:
 		return
 	var started := Time.get_ticks_msec()
 	await _interact_key()
+	# With the resident in his doorway the ladder asks first (round 8): take the ladder.
+	if not await _choose(&"ladder", "the way down from the roof"):
+		return
 	var clips := {}
 	var levels := {}
 	var planted := {}
@@ -1174,7 +1177,7 @@ func _check_ladder(hurt: bool) -> void:
 	var clear_view := false
 	var drop := 0.0
 	var previous := _player.global_position.y
-	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 15000:
+	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 30000:
 		var clip := _clip()
 		var pos := _player.global_position
 		clips[clip] = true
@@ -1189,9 +1192,17 @@ func _check_ladder(hurt: bool) -> void:
 				_failures.append("The player slid away from the rungs mid-descent.")
 		drop = maxf(drop, previous - pos.y)
 		previous = pos.y
+		# At the bottom he tells the protagonist to stop; read through those lines.
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
+			_dialogue.advance_presentation()
 		await process_frame
 	if not await Harness.wait_until(func() -> bool: return _player.is_control_enabled() and _player.is_on_floor(), 5.0):
 		_failures.append("The ladder didn't return grounded control.")
+	var stage := _room().get_node_or_null(^"RoofEncounter") as RoofEncounter
+	if not _conversations.has(&"pg_collector_stop") or stage == null \
+		or not (stage.get_node(^"Collector") as NpcActor).is_watching() \
+		or String(_game_state.get_flag(StoryFlags.ROOF_WAY_DOWN, "")) != "ladder":
+		_failures.append("Climbing down in front of the resident did not end with him stopping the protagonist.")
 	if levels.size() < 6 or drop > 0.32 or not clips.has("ladder_mount") \
 		or not clips.has("ladder_dismount") or not clips.has("ladder_left") or not clips.has("ladder_right"):
 		_failures.append("The ladder did not move rung by rung (%s, max drop %.2f m)." % [str(clips), drop])

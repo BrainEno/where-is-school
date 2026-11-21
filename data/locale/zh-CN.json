@@ -214,6 +214,8 @@
     "key.click": "单击",
     "name.student": "同学",
     "role.student": "同学",
+    "name.roof_collector": "箱里的人",
+    "role.roof_collector": "住在操场集装箱里",
     "prompt.curtain": "看看窗帘",
     "prompt.curtain_retry": "再试着拉开窗帘",
     "prompt.curtain_drawn": "看看开口",

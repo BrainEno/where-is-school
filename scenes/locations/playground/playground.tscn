@@ -1,4 +1,4 @@
-[gd_scene load_steps=229 format=3]
+[gd_scene load_steps=230 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -16,6 +16,7 @@
 [ext_resource type="Resource" path="res://assets/camera/shots/playground_tap.tres" id="shot_3"]
 [ext_resource type="Resource" path="res://assets/camera/shots/container_cabin.tres" id="shot_4"]
 [ext_resource type="Resource" path="res://assets/camera/shots/container_papers.tres" id="shot_5"]
+[ext_resource type="Script" path="res://scenes/locations/playground/yard_tap.gd" id="staged_0"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/scenery.scn" id="yard_scenery"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/backboard.tres" id="art_backboard"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ball.tres" id="art_ball"]
@@ -1708,6 +1709,7 @@ radius = 1.25
 outline_paths = PackedStringArray("../../PlaygroundArt/ChalkGuide/Caddy")
 
 [node name="TapLook" parent="Interactables" instance=ExtResource("12_interactable")]
+script = ExtResource("staged_0")
 position = Vector3(-5.58, 1.08, 14.0)
 interact_id = &"pg_tap"
 inspection_id = &"pg_tap"

@@ -2,8 +2,14 @@ extends StaticBody3D
 ## The roof ladder is a staged route, not a slope in the navigation mesh. The player
 ## turns to the steel, backs onto the top rung, places alternate feet, then steps down.
 ## All marks are local to the prop, so moving the whole container keeps the route intact.
+##
+## While the woken resident stands in his doorway, the ladder first asks how to get down
+## (`RoofWayDown`): this slow descent in front of him, which ends with him stopping the
+## protagonist, or a drop off the open end to hide behind the north door leaf.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
+const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
+const RoofWayDown = preload("res://scenes/locations/playground/roof_way_down.gd")
 
 @onready var _use: StagedInteractable = $LadderUse
 @onready var _roof: Marker3D = $Ladder/RoofMark
@@ -20,7 +26,22 @@ func _descend(director: Node) -> Dictionary:
 	var player: PlayerController = director.get_player()
 	if absf(player.global_position.y - _roof.global_position.y) > 0.19:
 		return {}
-	var style := get_node_or_null(^"/root/GameState")
+	var state := get_node_or_null(^"/root/GameState")
+	var encounter := get_parent().get_node_or_null(^"RoofEncounter") as RoofEncounter
+	var watched := encounter != null and encounter.phase == RoofEncounter.Phase.OUTSIDE
+	if watched:
+		var way: StringName = await RoofWayDown.ask(director, state)
+		if way == RoofWayDown.STAY:
+			return {}
+		if way == RoofWayDown.JUMP:
+			return await RoofWayDown.jump(self, encounter, director)
+	var request: Dictionary = await _climb(player, state)
+	if watched and not request.is_empty():
+		await RoofWayDown.stopped(director, encounter, player)
+	return request
+
+
+func _climb(player: PlayerController, style: Node) -> Dictionary:
 	var hurt: bool = style != null and style.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, false) == true
 	var duration_scale := 1.24 if hurt else 1.0
 	var physics := player.is_physics_processing()

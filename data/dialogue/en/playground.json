@@ -496,6 +496,201 @@
           "next": null
         }
       ]
+    },
+    "pg_roof_way_down": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "prw_1",
+      "nodes": [
+        {
+          "id": "prw_1",
+          "speaker": "protagonist",
+          "text": "The man is still standing in his doorway, looking up at the roof. The ladder is at your feet. At the other end the doors are open; the north leaf stands half open, and behind it there is a dark corner.",
+          "choices": [
+            {
+              "id": "ladder",
+              "text": "Climb down the ladder, slowly.",
+              "next": "prw_ladder",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "ladder"
+                }
+              ]
+            },
+            {
+              "id": "jump",
+              "text": "Drop off the open end and hide behind the door leaf.",
+              "next": "prw_jump",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "jump"
+                }
+              ]
+            },
+            {
+              "id": "stay",
+              "text": "Wait a little longer.",
+              "next": "prw_stay",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "stay"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prw_ladder",
+          "speaker": "protagonist",
+          "text": "You turn round and feel for the first rung with your foot.",
+          "next": null
+        },
+        {
+          "id": "prw_jump",
+          "speaker": "protagonist",
+          "text": "You cross to the other end of the roof. Below is concrete.",
+          "next": null
+        },
+        {
+          "id": "prw_stay",
+          "speaker": "protagonist",
+          "text": "You stay where you are, crouched on the roof.",
+          "next": null
+        }
+      ]
+    },
+    "pg_collector_stop": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pcs_1",
+      "nodes": [
+        {
+          "id": "pcs_1",
+          "speaker": "roof_collector",
+          "text": "Stop right there."
+        },
+        {
+          "id": "pcs_2",
+          "speaker": "roof_collector",
+          "text": "TODO · what he says once he has stopped you"
+        },
+        {
+          "id": "pcs_3",
+          "speaker": "protagonist",
+          "text": "TODO · your answer",
+          "next": null
+        }
+      ]
+    },
+    "pg_roof_jump": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "prj_1",
+      "nodes": [
+        {
+          "id": "prj_1",
+          "speaker": "protagonist",
+          "text": "The concrete comes up hard, from your soles to the back of your head."
+        },
+        {
+          "id": "prj_check",
+          "speaker": "voice_orientation",
+          "text": "The leaf is on your right, he is at the door. Keep still. Get into the dark behind the leaf.",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "prj_hidden",
+            "failure": "prj_heard"
+          }
+        },
+        {
+          "id": "prj_hidden",
+          "speaker": "protagonist",
+          "text": "You fold yourself in behind the leaf, one hand on the ground. You keep your breathing low.",
+          "next": null
+        },
+        {
+          "id": "prj_heard",
+          "speaker": "protagonist",
+          "text": "A shoe scrapes on the concrete. The man in the doorway turns his head.",
+          "next": null
+        }
+      ]
+    },
+    "pg_tap_use": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ptu_1",
+      "nodes": [
+        {
+          "id": "ptu_1",
+          "speaker": "protagonist",
+          "text": "The red handle turns. The pipe gurgles, and the water comes.",
+          "choices": [
+            {
+              "id": "drink",
+              "text": "Take a mouthful.",
+              "next": "ptu_drink",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "drink"
+                }
+              ]
+            },
+            {
+              "id": "wash",
+              "text": "Wash your face.",
+              "next": "ptu_wash",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "wash"
+                }
+              ]
+            },
+            {
+              "id": "leave",
+              "text": "Leave it.",
+              "next": "ptu_leave",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "leave"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ptu_drink",
+          "speaker": "protagonist",
+          "text": "It tastes of rust and is cold enough to hurt. The layer over everything thins a little.",
+          "next": null
+        },
+        {
+          "id": "ptu_wash",
+          "speaker": "protagonist",
+          "text": "Cold water on your face. Everything is suddenly clear: concrete is concrete, a wall is a wall.",
+          "next": null
+        },
+        {
+          "id": "ptu_leave",
+          "speaker": "protagonist",
+          "text": "You turn the tap off again.",
+          "next": null
+        }
+      ]
     }
   }
 }

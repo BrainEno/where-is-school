@@ -120,10 +120,17 @@ const CURTAIN_EDGE_HELD: StringName = &"curtain_edge_held"
 ## bool: the player hurt their ankle on their last landing. Written only on arrival.
 const CURTAIN_LANDING_INJURED: StringName = &"curtain_landing_injured"
 ## int: whole seconds of play left on the dazed look after a hurt landing
-## (`ConcussionView`). Written as 600 at the roof contact of that landing and counted down
-## while the game runs (not while paused); 0 or absent means the protagonist sees normally
-## again. Absent in saves written before round 7.
+## (`ConcussionView`). Written as `ConcussionView.DURATION` at the roof contact of that
+## landing (more after a second fall off the container) and counted down while the game
+## runs (not while paused); the yard tap lowers or clears it. 0 or absent means the
+## protagonist sees normally again. Absent in saves written before round 7.
 const CONCUSSION_SECONDS_LEFT: StringName = &"concussion_seconds_left"
+## String: how the protagonist chose to get off the container roof while the resident
+## stood in his doorway (`roof_way_down.gd`): "ladder", "jump", or "stay" (not yet).
+const ROOF_WAY_DOWN: StringName = &"roof_way_down"
+## String: the last use of the yard tap while dazed (`yard_tap.gd`): "drink", "wash" or
+## "leave". Written by the tap's choice; the tap applies it as it is written.
+const TAP_USE: StringName = &"tap_use"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -222,6 +229,8 @@ const ALL_FLAGS: Array[StringName] = [
 	CURTAIN_EDGE_HELD,
 	CURTAIN_LANDING_INJURED,
 	CONCUSSION_SECONDS_LEFT,
+	ROOF_WAY_DOWN,
+	TAP_USE,
 	ASKED_Q_IDENTITY,
 	ASKED_Q_DATE,
 	STAYED_SILENT,

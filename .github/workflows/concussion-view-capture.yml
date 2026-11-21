@@ -2,9 +2,10 @@ name: Concussion view capture
 
 # Frames of the dazed look after a hurt landing (docs/CONCUSSION_VIEW.md): the world as a
 # static postmodern paste-up (assets/shaders/injury/concussion_collage.gdshader), strongest
-# at the landing and fading over ten minutes of play. `tests/concussion_view_test.gd --
-# --capture` takes them from the game camera in the yard and the alley: clear, at the
-# landing (600 s left), halfway (300 s) and a minute before the end (60 s). Run on all three
+# at the landing and fading over four minutes of play, fast first. `tests/concussion_view_test.gd
+# -- --capture` takes them from the game camera in the yard and the alley: clear, after a
+# second fall (300 s left, the heavier look), at the landing (240 s), a minute later (180 s)
+# and a minute before the end (60 s). Run on all three
 # renderers the game ships on, which is also the check that the shader compiles there (a
 # SHADER ERROR in the log fails the job).
 #
@@ -36,19 +37,19 @@ jobs:
           - group: compatibility-a
             driver: opengl3
             method: ""
-            publish: "yard_clear yard_600"
+            publish: "yard_clear yard_240"
           - group: compatibility-b
             driver: opengl3
             method: ""
-            publish: "yard_300 alley_600"
+            publish: "yard_300 alley_240"
           - group: forward-plus
             driver: vulkan
             method: "forward_plus"
-            publish: "alley_600 alley_060"
+            publish: "alley_240 alley_180"
           - group: mobile
             driver: vulkan
             method: "mobile"
-            publish: "yard_600 alley_300"
+            publish: "yard_240 yard_180"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:

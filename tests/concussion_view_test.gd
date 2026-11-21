@@ -1,6 +1,7 @@
 extends SceneTree
 ## The dazed look after a hurt landing (docs/CONCUSSION_VIEW.md): a static postmodern
-## paste-up of the world that is strongest at the landing and gone after ten minutes of play.
+## paste-up of the world that is strongest at the landing and gone after four minutes of play,
+## heavier after a second fall, and relieved by the yard tap.
 ##
 ## On the real main scene:
 ##
@@ -8,7 +9,8 @@ extends SceneTree
 ##    sheet are hidden. It is a world filter: group `world_filter`, layer under the outline
 ##    overlay (and so under the UI), and it never takes the mouse.
 ## 2. **The landing starts it.** `ConcussionView.begin()` (called by the hurt landing at roof
-##    contact) writes 600; the look arrives within a fraction of a second at full strength.
+##    contact) writes `DURATION` (240); the look arrives within a fraction of a second at full
+##    strength. It falls fast, then slowly: about half of it is gone after the first minute.
 ## 3. **Counted in play time.** The remaining time falls with the game clock, the flag holds
 ##    the whole seconds, and the strength falls with it - never rises.
 ## 4. **A paused game does not heal.** While the tree is paused nothing changes.
@@ -17,6 +19,10 @@ extends SceneTree
 ## 7. **An art style, not motion.** The shader reads the screen texture (every renderer has
 ##    it for a canvas item) and has no `TIME`: nothing in it moves.
 ## 8. **Each room its own paste-up**, changed on entry (behind the black of the change).
+## 9. **A second fall is heavier.** `begin(from, true)` writes `HEAVY_SECONDS` and the strength
+##    drawn goes above the landing's.
+## 10. **Water.** `relieve()` takes a third of the strength left, eased rather than cut;
+##    `clear()` ends the look at once: the flag is 0 and the view eases out and stops.
 ##
 ## With `-- --capture` (a rendered window; `.github/workflows/concussion-view-capture.yml`)
 ## it photographs the yard and the alley from the game camera, clear and at several points of
@@ -29,6 +35,9 @@ const SHADER := "res://assets/shaders/injury/concussion_collage.gdshader"
 const YARD := "res://scenes/locations/playground/playground.tscn"
 const ALLEY := "res://scenes/locations/alley/alley.tscn"
 const OUT := "res://builds/concussion-view"
+## The frames taken per room: after a second fall, at the landing, a minute later, and a
+## minute before the end.
+const CAPTURE_SECONDS: Array[int] = [300, 240, 180, 60]
 
 var _check := Harness.Checker.new()
 var _state: Node = null
@@ -76,6 +85,7 @@ func _run() -> void:
 		await _check_pause()
 		await _check_save()
 		await _check_end()
+		await _check_heavier_and_water()
 		await _check_reseed()
 
 	Engine.time_scale = 1.0
@@ -132,8 +142,27 @@ func _check_curve() -> void:
 		var daze := ConcussionView.daze_for(float(step))
 		_check.expect(daze <= last, "The look gets stronger as it heals (%d s left)." % step)
 		last = daze
+	var minute := ConcussionView.daze_for(ConcussionView.DURATION - 60.0)
+	_check.expect(
+		minute > 0.4 and minute < 0.6, "A minute after the landing the look is at %.2f." % minute
+	)
 	var halfway := ConcussionView.daze_for(ConcussionView.DURATION / 2.0)
-	_check.expect(halfway > 0.5 and halfway < 0.8, "Halfway through the look is at %.2f." % halfway)
+	_check.expect(halfway < 0.35, "Halfway through the look is still at %.2f." % halfway)
+	_check.expect(
+		(
+			is_equal_approx(
+				ConcussionView.daze_for(ConcussionView.HEAVY_SECONDS), ConcussionView.HEAVY_DAZE
+			)
+			and ConcussionView.HEAVY_DAZE > 1.0
+		),
+		"A second fall is not drawn heavier than the landing."
+	)
+	for seconds: float in [12.0, 60.0, 150.0, 239.0, 270.0]:
+		var back := ConcussionView.seconds_for(ConcussionView.daze_for(seconds))
+		_check.expect(
+			absf(back - seconds) < 0.5,
+			"seconds_for() is not daze_for() reversed at %.0f s." % seconds
+		)
 
 
 func _check_shader() -> void:
@@ -240,6 +269,51 @@ func _check_end() -> void:
 	_check.expect(not _view.is_processing(), "The view still processes with nothing to count.")
 
 
+func _check_heavier_and_water() -> void:
+	Harness.stage = "a second fall, a mouthful of water, a wash"
+	ConcussionView.begin(_world)
+	await Harness.wait_until(func() -> bool: return _view.get_daze() > 0.97, 3.0)
+	ConcussionView.begin(_world, true)
+	_check.expect(
+		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == ConcussionView.HEAVY_SECONDS,
+		"A second fall did not write %d seconds." % ConcussionView.HEAVY_SECONDS
+	)
+	var heavier := await Harness.wait_until(func() -> bool: return _view.get_daze() > 1.2, 3.0)
+	_check.expect(heavier, "The second fall is not heavier (%.2f)." % _view.get_daze())
+
+	var before := _view.get_daze()
+	var seconds := ConcussionView.relieve(_world)
+	_check.expect(
+		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == seconds,
+		"relieve() did not write the seconds it returned."
+	)
+	var after := ConcussionView.daze_for(seconds)
+	_check.expect(
+		absf(after - before * 2.0 / 3.0) < 0.03,
+		"A mouthful took %.2f -> %.2f, not a third." % [before, after]
+	)
+	await process_frame
+	_check.expect(_view.get_daze() > before * 0.8, "The relief was a cut, not eased.")
+	var settled := await Harness.wait_until(
+		func() -> bool: return _view.get_daze() < before * 0.7, ConcussionView.RELIEF_SECONDS + 2.0
+	)
+	_check.expect(settled, "The relief never settled (%.2f)." % _view.get_daze())
+
+	ConcussionView.clear(_world)
+	_check.expect(
+		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, -1)) == 0,
+		"Washing did not clear the flag."
+	)
+	await process_frame
+	_check.expect(_view.visible, "The wash was a cut: the view vanished on the same frame.")
+	var washed := await Harness.wait_until(
+		func() -> bool: return not _view.visible, ConcussionView.RELIEF_SECONDS + 2.0
+	)
+	_check.expect(washed, "The view never eased out after the wash.")
+	_check_off("after the wash")
+	_check.expect(not _view.is_processing(), "The view still processes after the wash.")
+
+
 func _check_reseed() -> void:
 	Harness.stage = "a room change"
 	var material := (_view.get_node(^"Sheet") as ColorRect).material as ShaderMaterial
@@ -277,13 +351,13 @@ func _capture() -> void:
 		await _frames(30)
 		var clear := await _photograph("%s_clear" % room[3])
 		var shots: Dictionary = {}
-		for seconds: int in [600, 300, 60]:
+		for seconds: int in CAPTURE_SECONDS:
 			_state.replace_snapshot({StoryFlags.CONCUSSION_SECONDS_LEFT: seconds})
 			# Hold the clock so each picture is the moment it is named for.
 			_view.set_process(false)
 			await _frames(6)
 			shots[seconds] = await _photograph("%s_%03d" % [room[3], seconds])
-		var full := _changed(clear, shots[600])
+		var full := _changed(clear, shots[ConcussionView.DURATION])
 		var late := _changed(clear, shots[60])
 		print(
 			"%s: changed %.2f at the landing, %.2f a minute before the end" % [room[3], full, late]

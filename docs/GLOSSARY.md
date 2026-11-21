@@ -120,7 +120,7 @@
 | **step** | 序章的一步（`wake`、`q_wake`、`expectation`、`bag`、`bell`、`substitute`；第 7 轮起想象场景在 Q 的对话里选择进入，排在翻书包之前），每步由一个 flag 证明已完成，读档从第一个未完成的步继续。 | `scripts/world/prologue_steps.gd` |
 | **Source** | 一条知识的来路，见第 3 节徽章表。 | `data/dialogue_schema/README.md` |
 | **subjective** | 主观会话（想象、回忆）：不能设 flag、不能有 `once` 选项，只能记录 `recalled` / `imagined`；检定只允许「异想天开」（`whimsy`，第 7 轮），其余能力的检定一律拒绝。 | 同上 |
-| **恍惚 / 拼贴滤镜** | 序章摔伤（`curtain_landing_injured`）落到集装箱顶那一刻起的画面风格：静止的后现代拼贴，十分钟游戏时间内淡出，`concussion_seconds_left` 记剩余秒数。只是美术，不晃不动。 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) |
+| **恍惚 / 拼贴滤镜** | 序章摔伤（`curtain_landing_injured`）落到集装箱顶那一刻起的画面风格：静止的后现代拼贴，约四分钟游戏时间内淡出（先快后慢）；从集装箱顶跳下会再摔一次、滤镜更重；操场水龙头喝一口减轻三分之一，洗脸立刻清醒。`concussion_seconds_left` 记剩余秒数。只是美术，不晃不动。 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) |
 | **flag** | 一个剧情布尔（少数带值），存在 `GameState` 里。常量表在 `scripts/narrative/story_flags.gd`。**该文件是文档索引，不是白名单**：`set_flag()` 只拒绝空名，不校验常量表。 | `scripts/autoload/game_state.gd` |
 | **`seen:<inspection>`** | 看过某个检视物的落盘键，由检视自动写入，可以在 conditions 与检定加值里读。 | `scripts/narrative/story_flags.gd` |
 | **`check:<conversation>:<node>`** | 一次检定结果的落盘键。非 `repeatable` 的检定会写入它，所以同一尝试不会被重掷。conditions 里出现这种键是正常内容，不是待注册的 flag。 | `data/dialogue_schema/README.md` |

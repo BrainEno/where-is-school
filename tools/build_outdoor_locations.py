@@ -111,6 +111,15 @@ class Scene:
                 shot_ids[shot] = f"shot_{len(shot_ids)}"
                 ext.append(('Resource', shot, shot_ids[shot]))
 
+        # An interactable whose use is staged by its own script (a StagedInteractable
+        # subclass that sets its handler) keeps the shared scene and swaps the script.
+        script_ids = {}
+        for item in self.interactables:
+            script = item.get("script")
+            if script and script not in script_ids:
+                script_ids[script] = f"staged_{len(script_ids)}"
+                ext.append(('Script', script, script_ids[script]))
+
         mat_res = {mat: f'{i + 2}_{mat}' for i, mat in enumerate(used)}
 
         # sub resources: one shape + one mesh per box
@@ -214,6 +223,8 @@ class Scene:
             lines.append('')
         for item in self.interactables:
             lines.append(f'[node name="{item["name"]}" parent="Interactables" instance=ExtResource("{base}_interactable")]')
+            if item.get('script'):
+                lines.append(f'script = ExtResource("{script_ids[item["script"]]}")')
             lines.append('position = %s' % v3(item['pos']))
             lines.append(f'interact_id = &"{item["id"]}"')
             if item.get('prompt_key'):
@@ -896,6 +907,7 @@ def build_playground(for_courtyard_view: bool = False):
          "outline": ("PlaygroundArt/ChalkGuide/Caddy",)},
         {"name": "TapLook", "pos": (-5.58, 1.08, 14.0), "id": "pg_tap",
          "inspection": "pg_tap", "radius": 1.3,
+         "script": "res://scenes/locations/playground/yard_tap.gd",
          "shot": "res://assets/camera/shots/playground_tap.tres",
          "outline": ("PlaygroundArt/TapDetail/Standpipe", "PlaygroundArt/TapDetail/Bib",
                      "PlaygroundArt/TapDetail/Wheel/Rim", "PlaygroundArt/TapDetail/Cap")},
