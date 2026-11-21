@@ -1126,12 +1126,25 @@ def main():
               (LOC / "dream_annex.tscn", annex()),
               (LOC / "courtyard_view.tscn", courtyard_view()),
               (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()))
-    for path, generated in scenes:
-        text = generated.emit()
+    outputs = [(path, generated.emit()) for path, generated in scenes]
+    # The stink stable's shaped meshes are files of their own (tools/dream_stable.py).
+    from dream_stable import STABLE_DIR  # noqa: E402
+    stable = ROOT / STABLE_DIR
+    files = scenes[1][1].stable_files
+    outputs += [(stable / name, text) for name, text in sorted(files.items())]
+    for old in sorted(stable.glob("*.tres")) if stable.exists() else ():
+        if old.name in files:
+            continue
+        if args.check:
+            stale.append(str(old.relative_to(ROOT)) + " (no longer generated)")
+        else:
+            old.unlink()
+    for path, text in outputs:
         if args.check:
             if not path.exists() or path.read_text(encoding="utf-8") != text:
                 stale.append(str(path.relative_to(ROOT)))
         else:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8", newline="\n")
     if stale:
         sys.exit("Teaching block needs regeneration: " + ", ".join(stale))

@@ -11,6 +11,9 @@ extends SceneTree
 ## 2. Nothing in it acts: no script, actor, sound or interactable under the annex.
 ## 3. The stable yard is walkable; the stair still climbs 02 -> 03 and spawns stay clear.
 ## 4. The 03 figures have real tinted silhouettes, planted feet and readable posing beats.
+## 5. The stink stable's smell filter (`StenchHaze`, in the corridor beside the annex) is a
+##    world filter under the outline, off until the protagonist nears the stalls, and gone
+##    again on the far side of the yard and on the other floors.
 
 const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
@@ -44,6 +47,14 @@ const WAITING_CROWD := {
 	^"Clique0/Person2": [&"Listen", 2.72, ^"Body/Head", ^""],
 	^"Clique1/Person0": [&"Revise", 2.78, ^"Body/ForearmR", ^"Body/ForearmL/Notes"],
 	^"Clique1/Person1": [&"CheckSlip", 4.5, ^"Body/Head", ^"Body/ForearmR/AdmissionSlip"],
+}
+const STENCH_SHADER := "res://assets/shaders/school/stench_haze.gdshader"
+const STENCH_POINTS := {
+	"the muck heap": [Vector3(-31.6, -3.4, 5.6), 0.99, 1.01],
+	"the yard": [Vector3(-31.0, -3.4, 13.4), 0.5, 0.95],
+	"the glass entrance": [Vector3(-20.0, -3.4, 18.2), -0.01, 0.01],
+	"the 01 gallery": [Vector3(-11.4, -3.4, 12.6), -0.01, 0.01],
+	"02 above the stalls": [Vector3(-31.6, 0.0, 5.6), -0.01, 0.01],
 }
 const YARD_POINTS := {
 	"the yard": Vector3(-31.0, -3.4, 13.4),
@@ -81,6 +92,7 @@ func _run() -> void:
 			_check_candidates(exam, EXAM_CROWD, true)
 			_check.expect(exam.find_children("*", "CollisionObject3D", true, false).is_empty(),
 				"An exam vignette adds a collider to the 03 lane.")
+	await _check_stench(corridor)
 	var nav := corridor.get_node_or_null(^"Navigation") as LocationNavigation
 	if _check.expect(nav != null, "The corridor lost its navigation.") and _check.expect(
 		await _wait_for_bake(nav), "The corridor's navigation never baked."):
@@ -108,6 +120,40 @@ func _run() -> void:
 	for _frame in 4:
 		await physics_frame
 	Harness.finish(self, _check.failures, "the exam dream draws, never acts, opens the stable yard and moves nothing.")
+
+
+func _check_stench(corridor: Node) -> void:
+	var haze := corridor.get_node_or_null(^"StenchHaze") as CanvasLayer
+	if not _check.expect(haze != null, "The corridor lost the stink stable's StenchHaze filter."):
+		return
+	_check.expect(haze.is_in_group(&"world_filter") and haze.layer < 0,
+		"StenchHaze is not a world filter under the outline overlay.")
+	var sheet := haze.get_node_or_null(^"Sheet") as ColorRect
+	var material: ShaderMaterial = null
+	if sheet != null:
+		material = sheet.material as ShaderMaterial
+	if not _check.expect(material != null and material.shader != null and material.shader.resource_path == STENCH_SHADER,
+			"StenchHaze lost its sheet or its shader."):
+		return
+	_check.expect(sheet.mouse_filter == Control.MOUSE_FILTER_IGNORE, "StenchHaze takes the mouse.")
+	_check.expect(not haze.visible, "StenchHaze draws with nobody near the stable.")
+	for label: String in STENCH_POINTS:
+		var spec: Array = STENCH_POINTS[label]
+		var strength: float = haze.call(&"stench_at", spec[0])
+		_check.expect(strength >= spec[1] and strength <= spec[2],
+			"The stench at %s is %.2f, outside %.2f..%.2f." % [label, strength, spec[1], spec[2]])
+	var walker := Node3D.new()
+	walker.add_to_group(&"protagonist")
+	corridor.add_child(walker)
+	walker.global_position = (STENCH_POINTS["the muck heap"] as Array)[0]
+	for _frame in 30:
+		await process_frame
+	var near: float = haze.call(&"get_strength")
+	var drawn: Variant = material.get_shader_parameter(&"stench")
+	_check.expect(haze.visible and near > 0.0 and drawn is float and is_equal_approx(drawn as float, near),
+		"Standing at the muck heap does not bring the stench filter up.")
+	corridor.remove_child(walker)
+	walker.free()
 
 
 func _check_pieces(holder: Node, where: String) -> void:
