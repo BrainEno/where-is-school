@@ -221,6 +221,28 @@ jobs:
           mkdir -p "$inline" "${RUNNER_TEMP}/frames"
           cp "${frames[@]}" "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
           cp "${views[@]}" "$inline/"
+          if [ "${LOCATION}/${SIDE}" = dream_annex/after ]; then
+            tickets="${RUNNER_TEMP}/tickets"
+            xvfb-run -a --server-args="-screen 0 1600x900x24" \
+              godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+              --script res://tests/ticket_counter_test.gd -- "capture=${tickets}" \
+              > "${RUNNER_TEMP}/tickets.log" 2>&1
+            ticket_code=$?
+            ticket_shots=("$tickets/"ticket_shot_detail_*.jpg)
+            if [ "$ticket_code" -ne 0 ] || [ "${#ticket_shots[@]}" -ne 4 ] || \
+                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/tickets.log" || \
+                ! grep -q '^PASS:' "${RUNNER_TEMP}/tickets.log"; then
+              tail -n 45 "${RUNNER_TEMP}/tickets.log"
+              awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)/ {print; if (++count == 6) exit}' \
+                "${RUNNER_TEMP}/tickets.log" | while read -r issue; do
+                  echo "::error title=ticket counter::$issue"
+                done
+              exit 1
+            fi
+            cp "${ticket_shots[@]}" "${RUNNER_TEMP}/tickets.log" "${RUNNER_TEMP}/frames/"
+            cp "$tickets/review/"*.jpg "$inline/"
+            echo "::notice title=ticket counter::4 game-camera frames from a real doorway approach and three face clicks"
+          fi
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
