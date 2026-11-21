@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bases="$(PYTHONPATH=tools .venv/bin/python -c 'from character_sculpt import BASE, REVIEW_BASE, Q_CLOSEUP_BASE; print(BASE, REVIEW_BASE, Q_CLOSEUP_BASE)')"
+          bases="$(PYTHONPATH=tools .venv/bin/python -c 'from character_sculpt import BASE, REVIEW_BASE, Q_CLOSEUP_BASE, BQ_POLISH_BASE; print(BASE, REVIEW_BASE, Q_CLOSEUP_BASE, BQ_POLISH_BASE)')"
           for sculpt_base in $bases; do
             if ! git cat-file -e "${sculpt_base}^{commit}" 2>/dev/null; then
               git fetch --no-tags --no-recurse-submodules --depth=1 origin "$sculpt_base"
