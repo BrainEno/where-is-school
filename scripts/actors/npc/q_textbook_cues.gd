@@ -1,4 +1,4 @@
-extends CharacterVisualAnimation
+extends Node
 ## Q's textbook performance is cued by presented node IDs, not translated words.
 ## It belongs to the room's Q; the following Q uses this wrapper's ordinary clips.
 
@@ -18,11 +18,20 @@ var _speaking := false
 
 
 func _ready() -> void:
-	super._ready()
-	if not is_bound() or not _is_classroom_q():
+	var animator := get_parent() as CharacterVisualAnimation
+	if animator == null:
+		push_error("Q's textbook cues must sit under his CharacterVisualAnimation.")
+		return
+	if _is_classroom_q(animator):
+		# The parent has to bind the common animation library before we add a pose.
+		animator.ready.connect(_install.bind(animator), CONNECT_ONE_SHOT)
+
+
+func _install(animator: CharacterVisualAnimation) -> void:
+	if not animator.is_bound():
 		return
 	_study = TextbookPose.new()
-	if not _study.install(self, textbook_scene):
+	if not _study.install(animator, textbook_scene):
 		_study.free()
 		_study = null
 		return
@@ -30,11 +39,12 @@ func _ready() -> void:
 	if _story != null:
 		_story.story_state_replaced.connect(_restore_book)
 		_story.story_flag_changed.connect(_on_story_flag_changed)
+	animator.dialogue_line_presented.connect(_on_dialogue_line)
 	_restore_book()
 
 
-func _is_classroom_q() -> bool:
-	var actor := get_parent() as NpcActor
+func _is_classroom_q(animator: CharacterVisualAnimation) -> bool:
+	var actor := animator.get_parent() as NpcActor
 	if actor == null or actor.npc_id != &"q":
 		return false
 	var ancestor := actor.get_parent()
@@ -45,10 +55,7 @@ func _is_classroom_q() -> bool:
 	return false
 
 
-func present_dialogue_line(line: Dictionary, speaking: bool) -> void:
-	super.present_dialogue_line(line, speaking)
-	if _study == null:
-		return
+func _on_dialogue_line(line: Dictionary, speaking: bool) -> void:
 	_subjective = bool(line.get("subjective", false))
 	_conversation = StringName(line.get("conversation_id", &""))
 	_line_id = StringName(line.get("node_id", &""))

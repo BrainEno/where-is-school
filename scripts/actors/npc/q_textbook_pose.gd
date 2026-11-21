@@ -167,10 +167,15 @@ func _chest_frame(rig: Skeleton3D) -> Transform3D:
 
 
 func _place_book() -> void:
+	# A deferred skeleton update can arrive while LocationHost detaches the room.
+	if not is_inside_tree() or not is_instance_valid(_book) or not _book.is_inside_tree():
+		return
+	var rig := get_skeleton()
+	if rig == null or not rig.is_inside_tree():
+		return
 	if _lift < GRIP_READY:
 		_book.hide()
 		return
-	var rig := get_skeleton()
 	_book.global_transform = rig.global_transform * _chest_frame(rig) * _book_offset
 	_book.show()
 

@@ -169,10 +169,22 @@ jobs:
             test -f "$folder/textbook_frames/frame_071.jpg"
             ffmpeg -hide_banner -loglevel error -framerate 24 -i "$folder/textbook_frames/frame_%03d.jpg" \
               -frames:v 72 -c:v libx264 -pix_fmt yuv420p -crf 19 "$folder/textbook.mp4"
-            count=$(ffprobe -v error -count_frames -select_streams v:0 \
-              -show_entries stream=nb_read_frames -of csv=p=0 "$folder/textbook.mp4")
-            test "$count" = 72
-            sha256sum "$folder/textbook.mp4"
+            ffprobe -v error -count_frames -select_streams v:0 \
+              -show_entries stream=width,height,r_frame_rate,nb_read_frames -of json \
+              "$folder/textbook.mp4" > "$folder/textbook_video.json"
+            python3 - "$folder" <<'PY'
+          import hashlib, json, sys
+          from pathlib import Path
+          folder = Path(sys.argv[1])
+          report = folder / 'textbook_video.json'
+          stream = json.loads(report.read_text())['streams'][0]
+          assert int(stream['nb_read_frames']) == 72, stream
+          assert stream['r_frame_rate'] == '24/1', stream
+          stream['file'] = 'textbook.mp4'
+          stream['sha256'] = hashlib.sha256((folder / stream['file']).read_bytes()).hexdigest()
+          report.write_text(json.dumps(stream, indent=2) + '\n')
+          print(f"::notice title=Q textbook video after::{stream}")
+          PY
           fi
 
       - name: Check the production Q rig, dialogue cues, and wrist contacts
@@ -184,8 +196,14 @@ jobs:
           set -uo pipefail
           export CI_LOG_DIR="$GITHUB_WORKSPACE/build/q-model-migration/after/regression"
           source "$PROJECT/tools/ci_run_check.sh"
-          if run_check q_model 220 godot --headless --resolution 1600x900 \
-            --path "$PROJECT" --script res://tests/q_model_test.gd; then
+          run_check q_model 220 godot --headless --resolution 1600x900 \
+            --path "$PROJECT" --script res://tests/q_model_test.gd || true
+          if grep -q '^ERROR:' "$CI_LOG_DIR/q_model.log"; then
+            summary=$(grep '^ERROR:' "$CI_LOG_DIR/q_model.log" | head -n 8 | tr '\n' '|' | cut -c1-3000)
+            echo "::error title=Q 测试引擎错误::$summary"
+            status=1
+          fi
+          if [ "$status" -eq 0 ]; then
             metrics=$(grep '^Q_MODEL_NOTE: real Q recitation:' "$CI_LOG_DIR/q_model.log")
             echo "::notice title=Q 课本动作采样::$metrics"
           fi

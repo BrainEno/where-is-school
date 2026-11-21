@@ -30,6 +30,7 @@ extends Node3D
 ## facing (`VisualPivot` for the player, the actor's own rotation for an NPC) and the wake
 ## beat's slump stay exactly where the controller put them.
 
+signal dialogue_line_presented(line: Dictionary, speaking: bool)
 signal locomotion_changed(state: StringName)
 ## Emitted after a one-shot has reached its last pose and handed back to locomotion.
 signal action_finished(clip_name: StringName)
@@ -254,8 +255,9 @@ func is_seated() -> bool:
 
 ## Visible NPC presentations can carry a staged reaction even on someone else's line.
 ## Ordinary visuals only need the speaker request. An empty line clears the presentation.
-func present_dialogue_line(_line: Dictionary, speaking: bool) -> void:
+func present_dialogue_line(line: Dictionary, speaking: bool) -> void:
 	set_talking(speaking)
+	dialogue_line_presented.emit(line, speaking)
 
 
 ## A request from presentation, not an action lock. The current posture decides how

@@ -11,6 +11,9 @@ var _source_sha := "unrecorded-local-worktree"
 var _records: Array[Dictionary] = []
 var _previews: Array[Dictionary] = []
 
+const TEXTBOOK_PREVIEWS := ["23_q_reading_game_camera", "24_q_reciting_close", "25_q_replying_close"]
+const TEXTBOOK_PREVIEW_PARTS := 6
+
 
 func _run() -> void:
 	for argument in OS.get_cmdline_user_args():
@@ -323,17 +326,22 @@ func _save_image(tag: String, image: Image) -> void:
 		"sha256": FileAccess.get_sha256(path), "clip": String(_q.get_animation_player().current_animation)})
 	if int(tag.get_slice("_", 0)) <= 12 or tag in ["16_authored_head_turn", "17_gesturing_fingers",
 		"18_supplied_pose_preview", "19_supplied_rest_shoulders",
-		"21_companion_game_camera", "22_companion_live_dialogue", "24_q_reciting_close", "25_q_replying_close"]:
+		"21_companion_game_camera", "22_companion_live_dialogue"] or tag in TEXTBOOK_PREVIEWS:
 		_previews.append({"name": tag, "image": image})
 
 
 func _finish_migration() -> void:
-	# Original frames are untouched; small *labelled previews* fit the API notice
-	# budget. The artifact retains full-size screenshots and original video frames.
-	# Allocate whole annotation parts to stay under the workflow's 40-part ceiling.
-	var share := mini(144000 / maxi(_previews.size(), 1),
-		(40 / maxi(_previews.size(), 1)) * 4000)
+	# Original frames are untouched. Reserve whole annotation parts for the book
+	# so its small details remain legible without exceeding the 40-part ceiling.
+	var book_count := 0
 	for entry: Dictionary in _previews:
+		if String(entry["name"]) in TEXTBOOK_PREVIEWS:
+			book_count += 1
+	var other_count := maxi(_previews.size() - book_count, 1)
+	var other_share := mini(144000 / other_count,
+		((40 - book_count * TEXTBOOK_PREVIEW_PARTS) / other_count) * 4000)
+	for entry: Dictionary in _previews:
+		var share := TEXTBOOK_PREVIEW_PARTS * 4000 if String(entry["name"]) in TEXTBOOK_PREVIEWS else other_share
 		var image := (entry["image"] as Image).duplicate() as Image
 		image.resize(640, 360, Image.INTERPOLATE_LANCZOS)
 		var encoded := ""

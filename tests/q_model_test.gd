@@ -42,7 +42,8 @@ class TextbookProbe extends RefCounted:
 		rig.skeleton_updated.connect(_sample)
 
 	func showing() -> bool:
-		return is_instance_valid(book) and book.is_visible_in_tree()
+		return (is_instance_valid(rig) and rig.is_inside_tree()
+			and is_instance_valid(book) and book.is_inside_tree() and book.is_visible_in_tree())
 
 	func _sample() -> void:
 		if not showing():
@@ -385,6 +386,7 @@ func _check_game_integration() -> void:
 	var player := main.get_node("Player") as PlayerController
 	_expect(host.load_location("res://scenes/locations/corridor/corridor.tscn", &"FromClassroom", player),
 		"Q speech test could not enter the actual companion location.")
+	_expect(not book_check.showing(), "The classroom book survived the room swap.")
 	await _frames(6)
 	companion.join()
 	await _frames(6)
