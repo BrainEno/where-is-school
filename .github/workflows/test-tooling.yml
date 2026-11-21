@@ -131,7 +131,7 @@ jobs:
           # and export verifiers need real capture/build inputs and are not fabricated here.
           for tool in \
             build_app_icon build_laboratory build_music_loop build_roof_collector build_sample_models \
-            build_teaching_block check_agent_docs check_scene_order check_story_flags check_test_registration godot_sidecars \
+            build_student_chair build_teaching_block check_agent_docs check_scene_order check_story_flags check_test_registration godot_sidecars \
             model_library prepare_classroom_student prepare_portraits prepare_q prepare_teacher_n repo_size \
             screenshot_evidence stamp_release_version subset_font
           do

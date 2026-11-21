@@ -73,8 +73,24 @@ position = Vector3(-1.6, 0, {spawn_z})
 """
 
 
-DESK_SCENE = """\
+FIXED_DESK = "scenes/environment/props/school_desk.tscn"
+FIXED_DESK_SCENE = """\
 [gd_scene format=3]
+
+[sub_resource type="BoxShape3D" id="desk_box"]
+size = Vector3(0.7118, 0.8826, 0.546)
+
+[node name="SchoolDesk" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4408, 0)
+shape = SubResource("desk_box")
+"""
+
+DESK_SCENE = f"""\
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://{FIXED_DESK}" id="desk_model"]
 
 [sub_resource type="BoxMesh" id="seat"]
 size = Vector3(0.46, 0.05, 0.42)
@@ -84,7 +100,7 @@ size = Vector3(0.46, 0.34, 0.05)
 
 [node name="ClassroomDesk" type="Node3D"]
 
-size = Vector3(0.7118, 0.8826, 0.546)
+[node name="Desk" parent="." instance=ExtResource("desk_model")]
 
 [node name="Chair" type="Node3D" parent="."]
 position = Vector3(0, 0, 0.58)
@@ -138,6 +154,7 @@ def fixture(
         {
             seat.LOCATION_SCENE: location_scene(spawn_z),
             seat.DESK_SCENE: DESK_SCENE,
+            FIXED_DESK: FIXED_DESK_SCENE,
             seat.CHARACTER_SCENE: CHARACTER_SCENE,
             seat.CHAIR_SCRIPT: chair_script(clearance),
         }
@@ -207,14 +224,11 @@ def a_spawn_outside_the_chair_fails() -> None:
 
 
 def the_desk_is_checked_and_not_only_the_chair() -> None:
-    """Only the desk has a collision shape; the chair has none at all.
-
-    That asymmetry is the reason a stand-up can clear the chair and still trap the body, so
-    the desk's box is measured separately and must be clear at the end of the step.
-    """
+    """Clearing the visual chair doesn't prove that the fixed desk clears the body."""
     root = fixture()
-    box = seat.desk_collider(root)
-    check(box is not None, "the desk's collision box must be readable from props")
+    centre, size = seat.desk_collider(root)
+    check(centre == (-1.6, 0.4408, DESK_Z) and size == (0.7118, 0.8826, 0.546),
+          f"the desk wrapper must supply the real box, got {centre}, {size}")
     found = problems(root)
     check(
         not any("desk's collision box" in entry for entry in found),
@@ -229,13 +243,39 @@ def waking_inside_the_desk_fails() -> None:
     is a check on the *opening* rather than on the stand-up: if the spawn drifts towards the
     desk, the protagonist wakes up inside it and no amount of chair-moving helps.
     """
-    root = fixture(spawn_z=DESK_Z)
+    # This nudge hits the real desk box but not a seat-size box centred at the desk.
+    root = fixture(spawn_z=DESK_Z + 0.59)
     found = problems(root)
     check(bool(found), "a spawn inside the desk's box must be a failure")
     check(
         any("desk" in entry for entry in found),
         f"the failure must name the desk, got {found}",
     )
+
+
+def a_protruding_array_mesh_gets_measured() -> None:
+    """The rendered shape has a local offset; dropping it would hide a 3 cm collision."""
+    root = fixture()
+    path = "chair_seat.tres"
+    wrapper = DESK_SCENE.replace(
+        '[sub_resource type="BoxMesh" id="seat"]',
+        f'[ext_resource type="ArrayMesh" path="res://{path}" id="built_seat"]\n\n'
+        '[sub_resource type="BoxMesh" id="seat"]',
+    ).replace('mesh = SubResource("seat")', 'mesh = ExtResource("built_seat")')
+    (root / seat.DESK_SCENE).write_text(wrapper, encoding="utf-8")
+    mesh = root / path
+    mesh.write_text('"aabb": AABB(-0.23, -0.025, -0.26, 0.46, 0.05, 0.47)\n', encoding="utf-8")
+    found, gaps = seat.findings(root)
+    check(any("intersects the chair's Seat" in entry for entry in found),
+          f"a protruding rounded seat must fail the clearance check, got {found}")
+    check(abs(dict(gaps)["Seat"] + 0.03) < 0.0001, "mesh AABB centre offset was discarded")
+    mesh.write_text('[gd_resource type="ArrayMesh" format=3]\n', encoding="utf-8")
+    try:
+        seat.findings(root)
+    except SystemExit as error:
+        check(path in str(error), f"invalid mesh bounds must name their resource, got {error}")
+    else:
+        check(False, "a mesh without readable bounds must not vanish from the check")
 
 
 def a_missing_push_distance_fails() -> None:
@@ -322,6 +362,7 @@ def main() -> int:
     a_spawn_outside_the_chair_fails()
     the_desk_is_checked_and_not_only_the_chair()
     waking_inside_the_desk_fails()
+    a_protruding_array_mesh_gets_measured()
     a_missing_push_distance_fails()
     a_passing_fixture_says_so()
     a_failing_fixture_exits_one()

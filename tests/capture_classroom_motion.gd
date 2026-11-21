@@ -131,6 +131,7 @@ func _run_desktop() -> void:
 	await _wait(func() -> bool: return not _player.is_getting_up(), "stand-up to finish")
 	await _wait(func() -> bool: return _chair_solid().collision_layer == PushableChair.SOLID_LAYER, "solid pushed stop")
 	_check.expect(_player.global_position.distance_to(_chair.home_mark()) < 0.02, "Rising moved the capsule before input.")
+	await _capture_chair_details()
 
 	# Isolate the approach direction, not the seat pose. The rest of the action is
 	# played by the same endpoint that clicks, taps and E use.
@@ -180,6 +181,23 @@ func _run_desktop() -> void:
 		await _shot("05_rummaging")
 	_game_camera.current = true
 	await _finish_search()
+
+
+func _capture_chair_details() -> void:
+	# The actual wake chair, at its pushed stop: leave the desk and its bag in the
+	# frame for scale. Review cameras only; the interaction camera is unchanged.
+	var old_transform := _review.global_transform
+	var old_fov := _review.fov
+	var focus := _chair.to_global(Vector3(0, 0.42, 0.01))
+	_review.fov = 43.0
+	_review.global_position = _chair.to_global(Vector3(1.08, 1.02, 0.98))
+	_review.look_at(focus)
+	await _shot("15_student_chair_back")
+	_review.global_position = _chair.to_global(Vector3(-1.12, 1.06, -0.68))
+	_review.look_at(focus)
+	await _shot("16_student_chair_front")
+	_review.global_transform = old_transform
+	_review.fov = old_fov
 
 
 func _run_touch() -> void:

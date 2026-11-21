@@ -299,7 +299,7 @@ func _under_chair(desk: Node, node: Node) -> bool:
 	return false
 
 
-## The chair is still the blockout and still at a desk.
+## The detailed chair keeps the original seat and collision boundary.
 ##
 ## The one chair that *does* collide - the one the protagonist wakes in - gets its body from
 ## the classroom scene, not from this shared prop, precisely so that the eleven desks nobody
@@ -341,9 +341,10 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 	var seat_height := seat.global_position.y - desk.global_position.y
 	if absf(seat_height - SEAT_HEIGHT) > SEAT_HEIGHT_TOLERANCE:
 		_failures.append(
-			"'%s' seat plane is at %.3f m, the blockout has always been %.3f m."
+			"'%s' seat pivot is at %.3f m, expected %.3f m."
 			% [desk_name, seat_height, SEAT_HEIGHT]
 		)
+	_check_chair_visuals(desk_name, chair, seat)
 	if model == null:
 		return
 	# The seat has to sit at the desk's back edge: not under the middle of it, and not a
@@ -358,6 +359,50 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			+ "expected %.2f-%.2f m for a chair someone sits on."
 			% [SEAT_GAP_MIN, SEAT_GAP_MAX]
 		)
+
+
+func _check_chair_visuals(desk_name: String, chair: Node3D, seat: MeshInstance3D) -> void:
+	if seat.mesh == null:
+		_failures.append("'%s' has an empty seat mesh." % desk_name)
+		return
+	var pan := seat.get_aabb()
+	if not is_equal_approx(pan.size.x, 0.46) or not is_equal_approx(pan.size.z, 0.42) \
+		or not is_equal_approx(seat.position.y + pan.end.y, 0.475):
+		_failures.append("'%s' chair changed the sit/stand contact envelope." % desk_name)
+	for path: NodePath in [^"Seat", ^"Back", ^"Frame"]:
+		var part := chair.get_node_or_null(path) as MeshInstance3D
+		var mesh := part.mesh as ArrayMesh if part != null else null
+		var paint := part.material_override as StandardMaterial3D if part != null else null
+		if mesh == null or mesh.get_surface_count() != 1 or paint == null \
+			or not paint.vertex_color_use_as_albedo or paint.next_pass != null \
+			or paint.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+			_failures.append("'%s/%s' must have one opaque vertex-coloured surface." % [desk_name, path])
+			continue
+		var arrays := mesh.surface_get_arrays(0)
+		if not arrays[Mesh.ARRAY_COLOR] is PackedColorArray:
+			_failures.append("'%s/%s' lost its painted vertex colours." % [desk_name, path])
+			continue
+		var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		if colors.is_empty():
+			_failures.append("'%s/%s' has no painted vertices." % [desk_name, path])
+		for color: Color in colors:
+			var chroma := maxf(color.r, maxf(color.g, color.b)) - minf(color.r, minf(color.g, color.b))
+			if chroma > 0.14 or not is_equal_approx(color.a, 1.0):
+				_failures.append("'%s/%s' colours exceed the quiet, opaque chair palette." % [desk_name, path])
+				break
+		if path == ^"Frame":
+			var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			_check_chair_feet(desk_name, part, vertices)
+
+
+func _check_chair_feet(desk_name: String, frame: MeshInstance3D, vertices: PackedVector3Array) -> void:
+	var feet := {}
+	for vertex: Vector3 in vertices:
+		var point := frame.transform * vertex
+		if absf(point.y) <= 0.001 and absf(point.x) >= 0.17 and absf(point.z) >= 0.14:
+			feet[Vector2(signf(point.x), signf(point.z))] = true
+	if feet.size() != 4 or absf((frame.transform * frame.get_aabb()).position.y) > 0.001:
+		_failures.append("'%s' chair must stand on all four feet, without sinking." % desk_name)
 
 
 ## The low teacher's desk was taken out of the classroom (its set square lies on the
