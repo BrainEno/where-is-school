@@ -89,7 +89,7 @@ func _run() -> void:
 		_check_spawns(corridor, annex)
 		var exam := annex.get_node_or_null(^"ExamFloor")
 		if _check.expect(exam != null, "The annex has no ExamFloor."):
-			_check_candidates(exam, EXAM_CROWD)
+			_check_candidates(exam, EXAM_CROWD, true)
 			_check.expect(exam.find_children("*", "CollisionObject3D", true, false).is_empty(),
 				"An exam vignette adds a collider to the 03 lane.")
 	await _check_stench(corridor)
@@ -186,9 +186,10 @@ func _check_pieces(holder: Node, where: String) -> void:
 	_check.expect(meshes > 60 and moving > 20, "%s: only %d pieces, %d moving." % [where, meshes, moving])
 
 
-func _check_candidates(floor: Node, specs: Dictionary) -> void:
+func _check_candidates(floor: Node, specs: Dictionary, sculpted := false) -> void:
 	var heights: Array[float] = []
 	var tailoring: Dictionary = {}
+	var proportions: Dictionary = {}
 	for path: NodePath in specs:
 		var spec: Array = specs[path]
 		var person := floor.get_node_or_null(path) as Node3D
@@ -201,6 +202,13 @@ func _check_candidates(floor: Node, specs: Dictionary) -> void:
 			continue
 		heights.append((face.global_transform * face.get_aabb()).end.y - person.global_position.y)
 		tailoring[coat.mesh] = true
+		if sculpted:
+			var size := face.get_aabb().size
+			if _check.expect(size.y > 0.2 and size.x > 0.16 and size.z > 0.16,
+					"%s has no full-sized, three-dimensional head sculpt." % path):
+				# Compare proportions, so tint and uniform rescaling cannot make clones pass.
+				var shape := Vector2(size.x, size.z) / size.y
+				proportions[shape.snapped(Vector2(0.01, 0.01))] = true
 		_check.expect(absf((feet.global_transform * feet.get_aabb()).position.y - person.global_position.y) < 0.005,
 			"The soles of %s no longer meet the floor." % path)
 		var pieces := person.find_children("*", "MeshInstance3D", true, false)
@@ -217,6 +225,8 @@ func _check_candidates(floor: Node, specs: Dictionary) -> void:
 		_check.expect(indices > 0 and indices <= 6300, "%s exceeds the 2100-triangle dressing budget." % path)
 		_check_beat(person, feet, spec)
 	_check.expect(tailoring.size() == specs.size(), "%s reused a costume mesh across candidates." % floor.name)
+	if sculpted:
+		_check.expect(proportions.size() == specs.size(), "The seven hall head silhouettes must be distinct.")
 	_check.expect(not heights.is_empty() and heights.max() - heights.min() > 0.22,
 		"%s lost its range of heights." % floor.name)
 

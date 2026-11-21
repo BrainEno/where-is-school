@@ -14,6 +14,7 @@ from dressing_geometry import rotate
 from exam_crowd_forms import (
     INK, LOOKS, PAPER, RULE, PigmentMesh, add, head, legs, mix, scale, sub, tint, torso, unit,
 )
+from exam_hall_heads import HALL_HEADS, sculpt_head
 
 
 @dataclass(frozen=True)
@@ -117,17 +118,27 @@ def visible(b, name, parent, mesh, origin=(0, 0, 0), *, shadow=True):
     b.flat(name, parent, b.mesh("ArrayMesh", _surfaces=mesh.surface()), "exam_pigment", (0, 0, 0), shadow=shadow)
 
 
-def upper_sleeve(mesh, look, shoulder, elbow):
+def upper_sleeve(mesh, look, shoulder, elbow, *, fitted=False):
     cloth = look.trim if look.cut == "varsity" else look.cloth
     end = add(elbow, scale(unit(sub(elbow, shoulder)), .020))
+    if fitted:
+        # Bury the top of the sleeve inside the shoulder instead of leaving a
+        # round end cap on the silhouette. A shirt seam eases less than a jacket.
+        ease = 1.05 if look.cut in ("varsity", "hoodie") else .94 if look.cut == "shirt" else 1.
+        shoulder = (shoulder[0]*.84, shoulder[1]+.011, shoulder[2]-.007)
+        mesh.sweep([(shoulder, .070, .073), (mix(shoulder, elbow, .37), .078*ease, .086*ease),
+                    (mix(shoulder, elbow, .80), .066*ease, .069*ease), (end, .061, .063)],
+                   [cloth, tint(cloth, 4), look.trim if look.cut == "shirt" else tint(cloth, -11)])
+        return
     mesh.sweep([(shoulder, .070, .073), (mix(shoulder, elbow, .34), .083, .083),
                 (mix(shoulder, elbow, .79), .067, .067), (end, .060, .063)],
                [tint(cloth, 5), cloth, look.trim if look.cut == "shirt" else tint(cloth, -12)])
 
 
-def hand(mesh, arm, skin):
+def hand(mesh, arm, skin, *, fitted=False):
     wrist, aim = arm.wrist, unit(arm.aim)
-    length = .094 if arm.grip == "open" else .076
+    open_hand = arm.grip == "open"
+    length = (.066 if fitted else .094) if open_hand else .076
     point = lambda distance: add(wrist, scale(aim, distance))
     mesh.sweep([(point(-.013), .031, .033), (point(.029), .043, .027),
                 (point(length*.76), .037, .023), (point(length), .026, .014)],
@@ -137,26 +148,40 @@ def hand(mesh, arm, skin):
     thumb = add(point(.046), (side*.041, .005, .006))
     mesh.sweep([(point(.021), .019, .020), (thumb, .016, .014),
                 (add(thumb, scale(aim, .024)), .012, .010)], [tint(skin, 3), tint(skin, 12)], 6)
-    if arm.grip == "open":
+    if open_hand and fitted:
+        across = unit(sub((1., 0., 0.), scale(aim, aim[0])))
+        # Spread the four tapered tips beyond the palm, not beyond the old
+        # gesture envelope. None of these hands grips a prop.
+        for i, end in enumerate((.104, .112, .105, .094)):
+            offset = (.021-i*.014)*side
+            start = add(point(.045), scale(across, offset))
+            tip = add(point(end), scale(across, offset*1.38))
+            mesh.sweep([(start, .0089, .008), (mix(start, tip, .68), .0073, .0065),
+                        (tip, .004, .004)], [skin, tint(skin, 7)], 4)
+    elif open_hand:
         across = (side*.014, .007, 0)
         mesh.sweep([(add(point(.059), across), .017, .015), (add(point(.106), across), .013, .009)],
                    [tint(skin, 8)], 6)
 
 
-def forearm(look, arm):
+def forearm(look, arm, *, fitted=False):
     m = PigmentMesh()
     elbow, wrist = arm.elbow, arm.wrist
     axis = unit(sub(wrist, elbow))
     at = lambda d: add(wrist, scale(axis, d))
     cutoff = -.146 if look.cut == "shirt" else -.010
     cloth = look.skin if look.cut == "shirt" else look.trim if look.cut == "varsity" else look.cloth
-    m.sweep([(sub(elbow, scale(axis, .029)), .060, .061), (mix(elbow, at(cutoff), .47), .058, .058),
+    if fitted and look.cut == "shirt":
+        cloth = look.cloth
+    cuff = look.trim if look.cut in ("knit", "varsity") else tint(cloth, -15)
+    fullness = 1.10 if fitted and look.cut == "hoodie" else 1.
+    m.sweep([(sub(elbow, scale(axis, .029)), .060, .061), (mix(elbow, at(cutoff), .47), .058*fullness, .058*fullness),
              (at(cutoff-.029), .048, .046), (at(cutoff), .039, .040)],
-            [tint(cloth, -8), cloth, look.trim if look.cut in ("knit", "varsity") else tint(cloth, -15)])
+            [tint(cloth, -8), cloth, cuff])
     if look.cut == "shirt":
         m.sweep([(at(cutoff-.014), .048, .045), (at(-.077), .043, .040),
                  (at(.005), .032, .033)], [tint(look.skin, -7), look.skin])
-    hand(m, arm, look.skin)
+    hand(m, arm, look.skin, fitted=fitted)
     return m
 
 
@@ -204,25 +229,27 @@ PROPS = {"Revise": ("Notes", "Pencil"), "CheckSlip": (None, "AdmissionSlip"), "O
 
 def student(b, parent, name, pos, yaw, outfit, action, *, step=.035, seated=False):
     look = LOOKS[outfit]
+    cut = HALL_HEADS.get(outfit)
+    fitted = outfit if cut else ""
     figure = child_path(parent, name)
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
-    visible(b, "PlantedFeet", figure, legs(look, step, seated))
+    visible(b, "PlantedFeet", figure, legs(look, step, seated, fitted=fitted))
 
     body = child_path(figure, "Body")
     hip = .516 if seated else look.hip
     b.node("Body", figure, position=vec3((0, hip, 0)), scale=vec3((1, look.torso, 1)))
-    chest = torso(look)
+    chest = torso(look, fitted=fitted)
     for side, s, arm, prop in zip("LR", (-1, 1), ARMS[action], PROPS.get(action, (None, None))):
-        upper_sleeve(chest, look, (s*look.frame*.91, .421, .009), arm.elbow)
+        upper_sleeve(chest, look, (s*look.frame*.91, .421, .009), arm.elbow, fitted=bool(cut))
         name = "Forearm" + side
         b.node(name, body, position=vec3(arm.elbow))
         fore = child_path(body, name)
-        visible(b, "SleeveAndHand", fore, forearm(look, arm), arm.elbow)
+        visible(b, "SleeveAndHand", fore, forearm(look, arm, fitted=bool(cut)), arm.elbow)
         if prop:
             visible(b, prop, fore, paper_piece(prop), arm.elbow, shadow=False)
     visible(b, "Tailoring", body, chest)
     b.node("Head", body, position=vec3((.006, .536, .017)))
-    visible(b, "FaceAndHair", child_path(body, "Head"), head(look))
+    visible(b, "FaceAndHair", child_path(body, "Head"), sculpt_head(look, cut) if cut else head(look))
     keyframes(b, figure, action)
 
 

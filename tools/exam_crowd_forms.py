@@ -199,7 +199,56 @@ def badge(mesh, profile, color, x, y, radius):
     applique(mesh, profile, color, [(x+radius*math.cos(a), y+radius*math.sin(a)) for a in angles(7)])
 
 
-def torso(look):
+def draped_applique(mesh, profile, color, polygon, lift=.003):
+    """Fit trim to the actual triangles of the front of a 12-sided garment.
+
+    A long straight polygon chord can go *inside* a loft's chest or waist even
+    with every corner lifted. Clip convex trim to each face before lifting it.
+    """
+    def turn(a, b, p):
+        return (b[0]-a[0])*(p[1]-a[1]) - (b[1]-a[1])*(p[0]-a[0])
+
+    def clip(poly, a, b):
+        result = []
+        for p, q in zip(poly, poly[1:]+poly[:1]):
+            u, v = turn(a, b, p), turn(a, b, q)
+            if u <= 0.:
+                result.append(p)
+            if (u < 0 < v) or (v < 0 < u):
+                result.append(mix(p, q, u/(u-v)))
+        return result
+
+    rings = [ring(row, 12) for row in profile]
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(6):
+            for a, b, c in ((lo[i], lo[i+1], hi[i+1]), (lo[i], hi[i+1], hi[i])):
+                clipped = clip(clip(clip(list(polygon), a, b), b, c), c, a)
+                if len(clipped) < 3:
+                    continue
+                den = turn(a, b, c)
+                def raised(p):
+                    va, vb = turn(b, c, p)/den, turn(c, a, p)/den
+                    return p[0], p[1], va*a[2] + vb*b[2] + (1-va-vb)*c[2] + lift
+                start = clipped[0]
+                for p, q in zip(clipped[1:], clipped[2:]):
+                    if abs(turn(start, p, q)) > 1e-8:
+                        mesh.panel(color, [raised(v) for v in (start, p, q)], (0, 0, -.4))
+
+
+# Separate hem, waist, chest and shoulder ease. The narrow coat and the roomy
+# varsity jacket are different patterns, not taller/shorter copies of one torso.
+HALL_FIT = {
+    "knit": (.95, .94, .99, .97, .95),
+    "varsity": (.98, .94, 1.06, 1.06, 1.06),
+    "shirt": (.96, .94, .97, .98, .91),
+    "hoodie": (1.03, 1.17, 1.03, 1.04, 1.09),
+    "coat": (1.00, .94, 1.00, .99, 1.01),
+    "windbreaker": (1.02, 1.02, 1.02, 1.01, 1.02),
+    "workshirt": (1.05, 1.10, 1.00, 1.00, .95),
+}
+
+
+def torso(look, *, fitted=""):
     f, cloth, trim = look.frame, look.cloth, look.trim
     cut = look.cut
     hem = {"coat": -.248, "knit": -.062, "varsity": -.118, "zip": -.086, "shirt": -.158, "hoodie": -.097}[cut]
@@ -212,11 +261,37 @@ def torso(look):
                (.10, f*.82, .106, -.009, .002),
                (.322, f*.99, .123, .003, .010), (.429, f, .104, .008, .003),
                (.503, f*.54, .076, .007, .006), (.531, .070, .061, .006, .007)]
+    if fitted:
+        hem_ease, waist, chest, shoulder, depth = HALL_FIT[fitted]
+        # Slight torsion through the hem, plus the transition from a fuller chest
+        # to a dropped shoulder. The arm and head sockets are not moved.
+        ease = (hem_ease, hem_ease, waist, chest, shoulder, 1., 1.)
+        profile = [(y, rx*e, rz*(depth if i < 5 else 1.), x+(.008 if i == 0 else 0), z)
+                   for i, ((y, rx, rz, x, z), e) in enumerate(zip(profile, ease))]
     edge = tint(cloth, -21)
     body = PigmentMesh().form(profile, [edge, cloth, tint(cloth, 4), cloth, tint(cloth, 10), edge], 12)
-    mark = lambda color, points, lift=.005: applique(body, profile, color, points, relief=lift)
+    if fitted:
+        mark = lambda color, points, lift=.005: draped_applique(body, profile, color, points, .002+lift*.3)
+    else:
+        mark = lambda color, points, lift=.005: applique(body, profile, color, points, relief=lift)
     body.form([(.516, .056, .051, .005, .007), (.592, .049, .044, .006, .017)], look.skin, 9)
-    if cut in ("coat", "shirt"):
+    if fitted in ("shirt", "workshirt"):
+        # A light button-up and a boxier overshirt: pointed collar versus
+        # stand collar, small breast patch versus roomy flap pockets.
+        for s in (-1, 1):
+            collar = ((.044, .504), (.102, .446), (.071, .425), (.018, .481)) if fitted == "shirt" else (
+                (.054, .507), (.088, .465), (.031, .451), (.016, .488))
+            mark(tint(cloth, 18), [(s*x, y) for x, y in collar], .009)
+        mark(tint(cloth, -16), ((-.006, hem+.025), (.009, hem+.025), (.016, .467), (.001, .467)))
+        for y in (.090, .207, .332):
+            badge(body, profile, trim, .010, y, .0058)
+        for s in (-1, 1) if fitted == "workshirt" else (-1,):
+            mark(tint(cloth, -10), [(s*x, y) for x, y in ((.056, .235), (.132, .241),
+                                                        (.128, .324), (.064, .318))])
+            if fitted == "workshirt":
+                mark(tint(cloth, 16), [(s*x, y) for x, y in ((.055, .316), (.132, .319),
+                                                           (.130, .332), (.062, .333))], .010)
+    elif cut in ("coat", "shirt"):
         # Open V, overlapping lapels and a facing (not a second torso-shaped shell).
         mark(tint(trim, -16), ((-.072, .506), (.074, .503), (.035, .254), (-.019, .254)), .010)
         for s in (-1, 1):
@@ -246,12 +321,17 @@ def torso(look):
     if cut == "knit":
         body.form([(.504, .085, .066, .004, .008), (.526, .085, .066, .004, .008),
                    (.541, .065, .061, .004, .006)], [trim, tint(cloth, -10)])
-        for x in (-.128, -.082, -.035, .035, .082, .128):
-            mark(tint(cloth, -13), ((x, .044), (x+.008, .049), (x+.012, .340), (x+.004, .353)))
+        if fitted:
+            for s in (-1, 1):
+                mark(tint(cloth, -13), [(s*x, y) for x, y in ((.072, .074), (.130, .107),
+                                                                           (.136, .116), (.097, .096))])
+        else:
+            for x in (-.128, -.082, -.035, .035, .082, .128):
+                mark(tint(cloth, -13), ((x, .044), (x+.008, .049), (x+.012, .340), (x+.004, .353)))
     if cut == "hoodie":
         # The dropped hood makes the back and profile distinct; only the tips of the cords are light.
         body.form([(.338, .092, .056, -.003, -.083), (.399, .128, .083, .0, -.079),
-                   (.481, .121, .072, .0, -.058), (.528, .082, .050, .0, -.024)], [edge, cloth, trim], 11)
+                   (.481, .121, .072, .0, -.058), (.528, .082, .050, .0, -.024)], [edge, cloth, trim], 9 if fitted else 11)
         mark(tint(cloth, -13), ((-.100, .015), (.107, .017), (.128, .090), (.074, .135), (-.068, .137), (-.123, .094)))
         for x, end in ((-.038, .322), (.059, .283)):
             mark(PAPER, ((x, end), (x+.009, end), (x-.004, .499), (x-.011, .502)), .009)
@@ -323,7 +403,47 @@ def hair(m, look):
                [look.trim, tint(rgb, 13), rgb], 8)
 
 
-def legs(look, stride, seated=False):
+# Ankle, knee and thigh ease, cut of the shoe. All are local to the original
+# stance; moving the silhouettes must not move the actors' planted foot roots.
+HALL_LEGS = {
+    "knit": (.88, .90, .92, "flat"),
+    "varsity": (1.06, 1.12, 1.08, "trainer"),
+    "shirt": (.89, .91, .98, "loafer"),
+    "hoodie": (1.05, 1.15, 1.11, "canvas"),
+    "coat": (.89, .94, .97, "boot"),
+    "windbreaker": (.91, 1.02, 1.00, "trainer"),
+    "workshirt": (1.01, 1.06, 1.07, "loafer"),
+}
+
+
+def hall_shoe(mesh, look, x, z, side, style):
+    # Broader at the ball than the heel, with a rounded toe and planted sole.
+    # The cut determines the collar and the amount of visible outsole, not just paint.
+    height, length, width, sole = {
+        "flat": (.089, .111, .062, .012), "trainer": (.106, .134, .067, .023),
+        "loafer": (.097, .132, .065, .018), "canvas": (.114, .120, .068, .022),
+        "boot": (.138, .129, .061, .025),
+    }[style]
+    upper = {"flat": tint(look.legs, -28), "trainer": tint(look.cloth, -18), "loafer": (61, 53, 49),
+             "canvas": (87, 78, 72), "boot": (70, 52, 52)}[style]
+    sole_color = tint(look.trim, -10) if style in ("trainer", "canvas") else tint(upper, -16)
+    profile = [(0, width*.94, length*.96, 0, .039), (sole, width, length, 0, .039),
+               (height*.49, width*.94, length*.84, 0, .030), (height, width*.74, .056, 0, -.001)]
+    at = lambda p: add((x, 0, z), rotate(p, (0, side*10, 0)))
+    rings = [[at(p) for p in ring(row, 8)] for row in profile]
+    mesh.bands(rings, [sole_color, upper, tint(upper, 4)])
+    straps = (.72,) if style in ("flat", "loafer") else (.66, .78)
+    for station in straps:
+        yy = height*station
+        for sign in (-1, 1):
+            # Break the shallow applique at the centre ridge, following the two
+            # facets instead of cutting through the toe.
+            mark = [(sign*dx, yy+dy) for dx, dy in ((0, 0), (.025, .0015), (.025, .006), (0, .005))]
+            mesh.panel(tint(upper, 21) if len(straps) == 1 else tint(look.trim, 13),
+                       [at((dx, y, on_front(profile, dx, y, 8)+.0025)) for dx, y in mark], (x, 0, z))
+
+
+def legs(look, stride, seated=False, *, fitted=""):
     m = PigmentMesh()
     h = .516 if seated else look.hip
     skirt = look.cut == "knit"
@@ -335,16 +455,28 @@ def legs(look, stride, seated=False):
         knee_y = .454 if seated else h*.54
         cloth = tint(look.legs, -28) if skirt else look.legs
         ankle, knee = ((.041, .055) if skirt else (.058, .075))
-        m.form([(.072, ankle, .055, x, foot_z), (.143, ankle+.004, .062, x, foot_z-.012),
-                (knee_y-.095, knee*.90, .071, x, knee_z-.024),
-                (knee_y, knee, .079, x-s*.014, knee_z), (h-.115, .079 if not skirt else .066, .090, x*.84, step*.4),
-                (h+.035, .062 if not skirt else .056, .070, x*.64, 0)] if not seated else [(.072, ankle, .060, x, foot_z),
-                 (.180, ankle+.009, .064, x, foot_z-.015), (.363, knee*.88, .074, x, knee_z),
-                 (.430, knee, .088, x, knee_z-.005), (.508, knee, .071, x, knee_z-.009)],
-               [tint(cloth, -14), cloth, tint(cloth, 7), cloth] + ([] if seated else [tint(cloth, -6)]), 9)
+        stations = [(.072, ankle, .055, x, foot_z), (.143, ankle+.004, .062, x, foot_z-.012),
+                    (knee_y-.095, knee*.90, .071, x, knee_z-.024),
+                    (knee_y, knee, .079, x-s*.014, knee_z), (h-.115, .079 if not skirt else .066, .090, x*.84, step*.4),
+                    (h+.035, .062 if not skirt else .056, .070, x*.64, 0)] if not seated else [
+                    (.072, ankle, .060, x, foot_z), (.180, ankle+.009, .064, x, foot_z-.015),
+                    (.363, knee*.88, .074, x, knee_z), (.430, knee, .088, x, knee_z-.005),
+                    (.508, knee, .071, x, knee_z-.009)]
+        if fitted:
+            ankle_ease, knee_ease, thigh_ease, shoe_cut = HALL_LEGS[fitted]
+            ease = (ankle_ease, ankle_ease, knee_ease, knee_ease, thigh_ease, thigh_ease)
+            # Pressed trousers carry a leaner shin; the wider cotton folds push
+            # out at the knee. Both cuffs still meet the top of the same shoe.
+            stations = [(y, rx*e, rz*e, cx+(.006*s if i == 1 else 0), cz)
+                        for i, ((y, rx, rz, cx, cz), e) in enumerate(zip(stations, ease))]
+        m.form(stations, [tint(cloth, -14), cloth, tint(cloth, 7), cloth] + ([] if seated else [tint(cloth, -6)]),
+               8 if fitted else 9)
         if seated:
             m.sweep([((x, h-.042, knee_z), .071, .075), ((x-s*.010, h-.011, .218), .079, .083),
                      ((x-s*.02, h+.006, -.021), .105, .082)], [tint(cloth, 7), cloth], 8)
+        if fitted:
+            hall_shoe(m, look, x, foot_z, s, shoe_cut)
+            continue
         # Angled toes, painted sole, and two off-white lace marks on the vamp.
         shoe = tint(INK, 0 if s < 0 else 6)
         rings = []
