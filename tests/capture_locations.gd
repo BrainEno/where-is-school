@@ -320,7 +320,7 @@ func _run() -> void:
 		await _capture_views(out_dir, "playground", site, SITE_STANCES, SITE_VIEWS)
 		var yard := _host.get_current()
 		if yard != null:
-			await _capture_focus(yard, out_dir, &"pg_site_look", SITE_SHOT_STANCE, "playground_site_shot_building")
+			await _capture_focus(yard, out_dir, &"pg_site_look", SITE_SHOT_STANCE, "playground_site_shot_detail_building")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:
