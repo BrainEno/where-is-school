@@ -44,6 +44,12 @@ jobs:
           if grep -nE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' "$CI_LOG_DIR"/bell_seating*.log; then
             status=1
           fi
+          if [ "$status" != 0 ]; then
+            # Action logs may be behind a signed attachment. Keep file:line next
+            # to the parse/runtime failure in the PR check itself.
+            grep -m 8 -A 1 'SCRIPT ERROR' "$CI_LOG_DIR/bell_seating.log" \
+              | while IFS= read -r line; do echo "::notice title=Bell test script diagnostic::${line}"; done
+          fi
           run_check_summary
       - name: Preview the live frames
         if: always()

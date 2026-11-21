@@ -113,7 +113,8 @@ func _through_bell(already_seated: bool) -> void:
 	while not _n.visible and Time.get_ticks_msec() < deadline:
 		var q_slide := _q_chair.global_position.distance_to(q_chair_home)
 		var q_arrived := _q.global_position.distance_to(_q_chair.home_mark()) < 0.03
-		var player_clip := _player.get_character_animator().get_current_clip()
+		var player_animation := _player.get_character_animator()
+		var player_clip := player_animation.get_current_clip()
 		if q_slide > 0.15 and q_slide < 0.47 and not q_arrived and not q_pulling:
 			q_pulling = true
 			_check.expect(_sequence.is_beat_active() and not _player.is_control_enabled()
@@ -122,7 +123,7 @@ func _through_bell(already_seated: bool) -> void:
 				await _shot("01_q_pulls_chair")
 		if q_slide > 0.15 and q_slide < 0.47 and q_arrived:
 			q_sitting = true
-		if player_clip == "classroom_sit" and not player_sitting:
+		if player_clip == "classroom_sit" and player_animation.get_action_progress() >= 0.53 and not player_sitting:
 			player_sitting = true
 			if not already_seated:
 				await _shot("02_player_sits")
@@ -158,8 +159,7 @@ func _after_bell() -> void:
 		return
 	# No post-lesson move or actor state is serialized. A fresh instance derives Q's
 	# place from the bell and leaves the player's saved/arrival pose alone.
-	if not _check.expect(await _drive_until(func() -> bool: return not _sequence.is_beat_active()
-			and bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false))), "The lesson did not dismiss normally."):
+	if not _check.expect(bool(_state.get_flag(StoryFlags.CLASS_DISMISSED, false)), "The lesson did not dismiss normally."):
 		return
 	var previous := _q.get_instance_id()
 	if _check.expect(_host.load_location(CLASSROOM, &"FromCorridor", _player, &"classroom"),
