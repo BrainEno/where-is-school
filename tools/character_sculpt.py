@@ -35,7 +35,15 @@ RUNTIME = {
     'court': 'assets/models/classmates/court_classmate.glb',
     'b': 'assets/models/teacher_b/teacher_b.glb',
 }
+# Where each GLB was at BASE and REVIEW_BASE, when it has moved since: B's shipped with the
+# imagined lesson and left scenes/dev/ (excluded from exports) with its bytes unchanged.
+HISTORIC_PATHS = {'b': 'scenes/dev/teacher_b/teacher_b.glb'}
 REMESH = {'q': 'Q_Hair'}
+
+
+def historic_path(role):
+    """The repository path of `role`'s GLB at BASE and REVIEW_BASE."""
+    return HISTORIC_PATHS.get(role, RUNTIME[role])
 
 
 def primitives(document):

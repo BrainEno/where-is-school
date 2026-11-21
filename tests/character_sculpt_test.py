@@ -63,10 +63,11 @@ def read(doc, data, index):
 class HeadSculpts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.bases = {role: subprocess.check_output(['git','show',f'{sculpt.BASE}:{path}'],cwd=ROOT)
-                     for role,path in sculpt.RUNTIME.items()}
-        cls.review_bases = {role: subprocess.check_output(['git','show',f'{sculpt.REVIEW_BASE}:{path}'],cwd=ROOT)
-                            for role,path in sculpt.RUNTIME.items()}
+        cls.bases = {role: subprocess.check_output(['git','show',f'{sculpt.BASE}:{sculpt.historic_path(role)}'],cwd=ROOT)
+                     for role in sculpt.RUNTIME}
+        cls.review_bases = {role: subprocess.check_output(
+                                ['git','show',f'{sculpt.REVIEW_BASE}:{sculpt.historic_path(role)}'],cwd=ROOT)
+                            for role in sculpt.RUNTIME}
         cls.outputs = {role:(ROOT/path).read_bytes() for role,path in sculpt.RUNTIME.items()}
         cls.layers = sculpt.read_layers()
 
