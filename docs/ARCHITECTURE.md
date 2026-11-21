@@ -1180,8 +1180,9 @@ below are from that tool, and the per-category policy is written in
   and the student backpack mesh (134 KiB).
 - **Budgets are per kind of file** — model, font, texture, audio, scene, text, other — each
   with a warning line and a hard limit. No category's hard limit is above the 2 MiB ceiling
-  every single file already had, so the table only tightens the rule. The pack total keeps
-  its 16 MiB hard limit and adds an 8 MiB warning line.
+  every single file already had, so the table only tightens the rule. The pack total has
+  an 8 MiB warning line and a hard limit of 16 MiB, raised by the owner to 24 MiB when
+  teacher B's model joined the build.
 - **Excluded from the build, and checked as excluded:** `docs/` (documents and captured
   screenshots), `tests/` (the test suite and its capture scripts), `tools/` (build and
   content scripts), `art/` (the editable `.blend` sources), `addons/` (the narrative editor

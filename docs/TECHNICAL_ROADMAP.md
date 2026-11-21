@@ -424,7 +424,7 @@ pretending. See [IMPLEMENTATION_NOTES_NAVIGATION.md](IMPLEMENTATION_NOTES_NAVIGA
 **The build has a budget per kind of asset.** `tools/verify_build.py` classifies every
 packed file as a model, font, texture, audio, scene, text or other, and measures it against
 that kind's warning line and hard limit; no hard limit is looser than the old flat 2 MiB, the
-pack total keeps its 16 MiB hard limit and gains an 8 MiB warning line. The tables and the
+pack total has an 8 MiB warning line and a hard limit (16 MiB, later raised to 24 MiB by the owner). The tables and the
 reasoning are in [ASSET_PIPELINE.md](ASSET_PIPELINE.md) §9, and
 `tests/verify_build_test.py` (75 boundary checks, in CI) tests both sides of every limit and
 the pack reader itself.

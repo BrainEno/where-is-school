@@ -99,7 +99,7 @@ pack back out of the finished executable and checks both directions:
 - **the game is in it**: `scenes/main/main.tscn`, the theme, `data/dialogue/{en,zh-CN}/`,
   `data/inspections/en/`, at least one audio file;
 - **the repository is not**: nothing under `tests/`, `tools/`, `docs/`, `art/`, `.github/`;
-  the font is under 1 MiB; the whole pack is under 16 MiB.
+  the font is under 1 MiB; the whole pack is under 24 MiB.
 
 It also prints the largest entries, so a build that suddenly doubles explains itself in the
 log instead of in a bug report. This is the check that makes "all resources" trustworthy: if
@@ -144,7 +144,7 @@ now workflow artifacts), and this section is the rule for the rest.
 
 | Where | What it may hold | Ceiling | Checked by |
 |---|---|---|---|
-| `assets/**` | what the engine imports | 2 MiB per shipped file, 16 MiB per pack | `tools/verify_build.py`, on the export |
+| `assets/**` | what the engine imports | 2 MiB per shipped file, 24 MiB per pack | `tools/verify_build.py`, on the export |
 | `art/**`, `scenes/dev/**`, `docs/**` | sources, scratch, evidence | 12 MiB per file | `tools/repo_size.py --check` |
 | anywhere | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
 
