@@ -763,10 +763,10 @@ func _check_refused_state_on_disk() -> void:
 
 
 func _continue_from_disk(save: Node, session: Node) -> bool:
-	var old_world := _main
+	var old_world: WeakRef = weakref(_main)
 	_sequence.autosave_enabled = false
-	old_world.queue_free()
-	if not await Harness.wait_until(func() -> bool: return not is_instance_valid(old_world), 5.0):
+	_main.queue_free()
+	if not await Harness.wait_until(func() -> bool: return old_world.get_ref() == null, 5.0):
 		_failures.append("The old world survived Continue.")
 		return false
 	save.unbind_world()
@@ -1109,19 +1109,25 @@ func _check_roof_restore(hurt: bool) -> void:
 		_failures.append("Continue moved the player or replayed the roof arrival.")
 	_expect_roof_view(hurt, RoofEncounter.Phase.OUTSIDE)
 	# An ordinary entry reconstructs the person, not the print, even if injured.
-	if not _host.load_location(PLAYGROUND, &"FromCorridor", _player):
-		_failures.append("The ordinary approach to the container stopped working.")
-		return
-	_expect_roof_view(false, RoofEncounter.Phase.OUTSIDE)
+	await _check_ordinary_yard(&"FromCorridor", RoofEncounter.Phase.OUTSIDE)
 	var saved_flags: Dictionary = _game_state.get_snapshot()
 	_game_state.clear()
-	if _host.load_location(PLAYGROUND, &"FromAlley", _player):
-		_expect_roof_view(false, RoofEncounter.Phase.ASLEEP)
-	else:
-		_failures.append("The alley approach to the yard stopped working.")
+	await _check_ordinary_yard(&"FromAlley", RoofEncounter.Phase.ASLEEP)
 	_game_state.replace_snapshot(saved_flags)
 	_notes.append("%s roof visit: grounded wake and exit, saved pose, normal entrances unchanged"
 		% ("injured" if hurt else "braced"))
+
+
+func _check_ordinary_yard(spawn: StringName, pose: RoofEncounter.Phase) -> void:
+	if not _host.load_location(PLAYGROUND, spawn, _player):
+		_failures.append("The ordinary yard entrance %s stopped working." % spawn)
+		return
+	_expect_roof_view(false, pose)
+	# Visit the room, rather than swapping it straight out in the same frame:
+	# the region's deferred geometry bake needs its room still in the tree.
+	var navigation := _room().get_node_or_null(^"Navigation") as LocationNavigation
+	if navigation == null or not await Harness.wait_until(navigation.is_baked, 5.0):
+		_failures.append("The yard at %s did not finish its navigation bake." % spawn)
 
 
 func _check_ladder(hurt: bool) -> void:
