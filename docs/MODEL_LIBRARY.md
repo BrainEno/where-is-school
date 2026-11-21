@@ -89,8 +89,8 @@ because no scene in this project ever needs "all the wood" or "all the metal". I
 | `playground_sports_duffel` | 22.3 | 364 | 5 | — | 1 × 0.69 × 0.45 | +0.008 | +0.697 |
 | `playground_tyre_stack` | 136.4 | 4016 | 2 | — | 1.84 × 0.77 × 1.06 | +0.030 | +0.799 |
 
-The 16 models are 2.4 MiB and 60,908 triangles together — 15 % of the 16 MiB release
-budget (§9 of the pipeline document) if a scene ever placed all of them at once. One file,
+The 16 models are 2.4 MiB and 60,908 triangles together — 15 % of the then 16 MiB release
+budget (24 MiB since the imagined lesson) (§9 of the pipeline document) if a scene ever placed all of them at once. One file,
 `classroom_window_curtains` at 482.6 KiB, is over the model category's 384 KiB warning
 line, and that is the only note `--check` prints about this set.
 
@@ -233,14 +233,15 @@ instead of passing it.
 
 ## 5. The runtime character manifest
 
-The four rigged models the game instantiates at run time —
+The five rigged models the game instantiates at run time —
 `assets/models/protagonist/Protagonist_Character.glb` (the player since PR #118),
 `assets/models/protagonist/protagonist.glb` (the former protagonist, now the seated
-classroom student), `assets/models/q/new-Q.glb` and `assets/models/teacher-n/teacher-n.glb`
-(substitute teacher N) — are also checked against a written-down structure,
-`art/character_rig_audit/runtime_model_manifest.json`. `tools/model_library.py --check`
-reads it on every run and fails when a registered model does not match it; the other 22
-models in the library keep the checks in §4 and are not registered.
+classroom student), `assets/models/q/new-Q.glb`, `assets/models/teacher-n/teacher-n.glb`
+(substitute teacher N) and `assets/models/teacher_b/teacher_b.glb` (biology teacher B,
+shipped since the imagined lesson, [IMAGINED_LESSON.md](IMAGINED_LESSON.md)) — are also
+checked against a written-down structure, `art/character_rig_audit/runtime_model_manifest.json`.
+`tools/model_library.py --check` reads it on every run and fails when a registered model does
+not match it; the other models in the library keep the checks in §4 and are not registered.
 
 The rest of this library is judged by rules (no scale, no camera, inside the budget). A rig
 cannot be: a character whose hand bone was renamed, whose mesh was split, whose joint list
@@ -357,7 +358,8 @@ by overwriting it with whatever a run happened to generate.
 two reviewed edits: add its path to `REQUIRED_RUNTIME_MODELS` in `tools/model_library.py`,
 and add its entry, whose structural fields are exactly what `describe_model()` reads from
 the committed `.glb` (with a human-written `wrapper` and `note`). That is how
-`Protagonist_Character.glb` was registered in PR #118 and `teacher-n.glb` after it; the
+`Protagonist_Character.glb` was registered in PR #118, `teacher-n.glb` after it and
+`teacher_b.glb` with the imagined lesson; the
 `--check` that follows compares the file against that entry like any other, and
 `--update-manifest` run straight after reports no difference.
 
@@ -369,8 +371,9 @@ called by both `--check` and `--update-manifest`):
 
 - **Every runtime character, once each, and nothing else.** The manifest registers
   `assets/models/protagonist/protagonist.glb`, `assets/models/q/new-Q.glb`,
-  `assets/models/protagonist/Protagonist_Character.glb` and
-  `assets/models/teacher-n/teacher-n.glb`. A missing entry, a duplicated
+  `assets/models/protagonist/Protagonist_Character.glb`,
+  `assets/models/teacher-n/teacher-n.glb` and `assets/models/teacher_b/teacher_b.glb`. A
+  missing entry, a duplicated
   entry, an entry for any other model and an empty `models` are all failures. "At least one
   model" was the old rule and it was not enough: deleting Q's entry used to leave a file that
   was valid, plausible and had quietly stopped checking Q.

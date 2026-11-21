@@ -209,6 +209,7 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `ClassroomAnomalies` | [`scenes/locations/classroom/classroom_anomalies.gd`](../scenes/locations/classroom/classroom_anomalies.gd) | Classroom-specific curtain/void/paper staging and restoration; use its authored props and story flags. |
 | `ClassroomScreenControl` | [`scenes/locations/classroom/classroom_screen_control.gd`](../scenes/locations/classroom/classroom_screen_control.gd) | Classroom-specific staged projection-screen toggle; leaves story/save state unchanged. |
 | `ClassroomChairControl` | [`scenes/locations/classroom/classroom_chair_control.gd`](../scenes/locations/classroom/classroom_chair_control.gd) | Classroom-specific staged sit/stand on the chair the protagonist wakes in; keeps the prompt in step with the body and leaves story/save state unchanged. |
+| `ImaginedLesson` | [`scenes/locations/classroom/imagined_lesson.gd`](../scenes/locations/classroom/imagined_lesson.gd) | Classroom-only presentation of the imagined teacher B during `expected_b` (distorted figure, after-images, Munch screen filter); switched by `ClassroomPresentation`, never an actor and never saved. See [IMAGINED_LESSON.md](IMAGINED_LESSON.md). |
 
 <!-- class-name-index:end -->
 
