@@ -40,7 +40,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import construction_site
 import yard_details
 
 HERE = Path(__file__).resolve().parent
@@ -55,8 +54,6 @@ SCENERY_FILE = "scenery.scn"
 # These overrides belong only to the static yard scenery. Shared wall, prop and
 # distant-row colours stay addressable by path; do not ship these ones twice.
 SCENERY_MATERIALS = {
-    "site_earth", "site_compacted", "hoarding", "hoard_fold", "sand_glare", "sand_wet",
-    "cold_water", "water_glint", "slab", "site_yellow", "site_steel", "site_glass",
     "bench_patch", "hoop_patch", "pour_b", "seam", "sky_floor", "fence_far", "tap_runoff",
 }
 
@@ -178,29 +175,6 @@ MATERIALS: dict[str, dict] = {
     "row_tower": {"color": DISTANT, "texture": tex("row_tower"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_chimney": {"color": DISTANT, "texture": tex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
-    # The construction plot shares the yard's painted tiles. Lambert shading keeps
-    # gradual curvature on sand and concrete instead of a toon step on each ring.
-    "site_earth": {"color": (237, 199, 174), "texture": tex("ground_tile"),
-                   "triplanar": "world", "scale": (0.40, 0.40, 0.40)},
-    "site_compacted": {"color": (194, 168, 146), "texture": tex("ground_tile"),
-                       "triplanar": "world", "scale": (0.53, 0.53, 0.53)},
-    "hoarding": {"color": (81, 119, 156), "texture": tex("metal_tile"),
-                  "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
-    "hoard_fold": {"color": (70, 97, 123), "texture": tex("metal_tile"),
-                   "triplanar": "world", "scale": (0.60, 0.60, 0.60)},
-    "sand_glare": {"color": (239, 216, 173), "texture": tex("plaster_tile"), "diffuse": 1,
-                   "triplanar": "world", "scale": (0.78, 0.78, 0.78)},
-    "sand_wet": {"color": (130, 105, 80), "texture": tex("plaster_tile"), "diffuse": 1,
-                 "triplanar": "world", "scale": (0.92, 0.92, 0.92)},
-    "cold_water": {"color": (59, 78, 79), "unshaded": True},
-    "water_glint": {"color": (117, 143, 139), "unshaded": True},
-    "slab": {"color": (181, 177, 166), "texture": tex("plaster_tile"), "diffuse": 1,
-             "triplanar": "world", "scale": (0.33, 0.33, 0.33)},
-    "site_yellow": {"color": (218, 163, 69), "texture": tex("metal_tile"), "diffuse": 1,
-                    "triplanar": "world", "scale": (0.62, 0.62, 0.62), "roughness": 0.82},
-    "site_steel": {"color": (72, 74, 73), "texture": tex("metal_tile"), "diffuse": 1,
-                   "triplanar": "world", "scale": (0.77, 0.77, 0.77)},
-    "site_glass": {"color": (62, 82, 88), "roughness": 0.7},
     # One panel tile per 3 x 2 m quad so its rails stay put as the fence sinks.
     "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
@@ -630,7 +604,6 @@ def build_nodes() -> Builder:
     b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
     school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
     _yard_return_details(b, A)
-    construction_site.build(b, A)
     return b
 
 
@@ -868,7 +841,6 @@ def bake_scenery(text: str, engine: str) -> None:
         # Isolate the generated imports from the editor's main asset cache.
         write_materials(staged_art / "materials", MATERIALS)
         shutil.copytree(ART / "textures", staged_art / "textures")
-        construction_site.write_assets(staged_art, RES)
         yard_details.write_detail_meshes(staged_art, RES)
         (stage / "project.godot").write_text('''config_version=5
 
@@ -909,14 +881,19 @@ def finish(text: str, used: set[str], b: Builder) -> str:
         return match.group(0) if f'ExtResource("{rid}")' in text else ""
 
     text = re.sub(r'\[ext_resource type="StandardMaterial3D" path="res://assets/materials/[^"]+" id="([^"]+)"\]\n', keep, text)
-    ext = [f'[ext_resource type="PackedScene" path="{RES}/{SCENERY_FILE}" id="yard_scenery"]']
+    ext = [f'[ext_resource type="PackedScene" path="{RES}/{SCENERY_FILE}" id="yard_scenery"]',
+           f'[ext_resource type="PackedScene" path="{RES}/construction_site.tscn" id="building_site"]']
     new_ext = "\n".join(ext + material_resources(used) + b.mesh_resources()) + "\n"
     first_sub = text.index("\n\n[sub_resource")
     text = text[: first_sub + 1] + new_ext + text[first_sub + 1 :]
     first_node = text.index('\n[node name="Playground"')
     text = text[: first_node + 1] + "\n".join(b.subs) + "\n" + text[first_node + 1 :]
+    # The building under construction is its own text scene (source/construction_site.py),
+    # instanced into the art layer rather than baked into it.
+    site = '[node name="BuildingSite" parent="PlaygroundArt" instance=ExtResource("building_site")]\n'
+    nodes = [b.nodes[0], site, *b.nodes[1:]]
     anchor = text.index('\n[node name="Interactables"')
-    text = text[: anchor + 1] + "\n".join(b.nodes) + "\n" + text[anchor + 1 :]
+    text = text[: anchor + 1] + "\n".join(nodes) + "\n" + text[anchor + 1 :]
     steps = len(re.findall(r"^\[(ext|sub)_resource", text, re.M)) + 1
     text = re.sub(r"^\[gd_scene load_steps=\d+", f"[gd_scene load_steps={steps}", text, count=1, flags=re.M)
     return text

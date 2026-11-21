@@ -90,6 +90,7 @@ func snap() -> void:
 	var anchor := _target.global_position
 	var camera_offset := offset
 	var lens := fov
+	var aim := target_height
 	var total := 0.0
 	for layer: Dictionary in _focus_layers:
 		total += float(layer["weight"])
@@ -109,12 +110,14 @@ func snap() -> void:
 			anchor += (centre - base_anchor) * weight
 			camera_offset += (eye_offset - offset) * weight
 			lens += (shot.fov - fov) * weight
+			if shot.look_height >= 0.0:
+				aim += (shot.look_height - target_height) * weight
 	if _frame_weight > 0.0:
 		anchor = anchor.lerp(_frame_point, _frame_weight)
 	global_position = anchor
 	camera.position = camera_offset
 	camera.fov = lens
-	camera.look_at(anchor + Vector3(0.0, target_height, 0.0), Vector3.UP)
+	camera.look_at(anchor + Vector3(0.0, aim, 0.0), Vector3.UP)
 	if not is_zero_approx(_roll_degrees):
 		camera.rotate_object_local(Vector3(0.0, 0.0, 1.0), deg_to_rad(_roll_degrees))
 

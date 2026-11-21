@@ -122,8 +122,9 @@ const LOCATIONS := {
 		"stage": false,
 		# Includes deferred outline pick shapes, not only the yard's bodies. The optional
 		# paper has an anchor and a pick box; tap and bench now trace their final meshes.
-		"shapes": 98,
-		"interactables": 16, # The new paper read is separate from the view through the doorway.
+		# The look at the building under construction picks by its two gate leaves.
+		"shapes": 101,
+		"interactables": 17, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",

@@ -92,6 +92,7 @@ const INTERACTABLES := {
 	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
 	"pg_chalk_guide": Vector3(-12.4, 0.53, -9.6), "pg_tap": Vector3(-5.58, 1.08, 14.0),
+	"pg_site_look": Vector3(-22.6, 1.0, 13.2),
 }
 ## [position, destination scene, destination spawn, milestone end].
 const EXITS := {
@@ -473,7 +474,7 @@ func _check_dressing() -> void:
 
 
 func _check_construction_site() -> void:
-	var site := _yard.get_node_or_null(^"PlaygroundArt/ConstructionSite") as Node3D
+	var site := _yard.get_node_or_null(^"PlaygroundArt/BuildingSite") as Node3D
 	if site == null:
 		_failures.append("The construction site is missing from the schoolyard.")
 		return

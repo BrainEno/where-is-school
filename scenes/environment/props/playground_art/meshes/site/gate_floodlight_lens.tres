@@ -1,0 +1,12 @@
+[gd_resource type="ArrayMesh" format=3]
+
+[resource]
+_surfaces = [{
+"aabb": AABB(0.29637, 4.18123, -0.17000, 0.12327, 0.21754, 0.34000),
+"format": 34359742471,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
+"primitive": 3,
+"vertex_count": 24,
+"vertex_data": PackedByteArray("QL2XPsj6hUB7FC6+ASqdPqLMhUB7FC6+TtrWPpSUjEB7FC6+jG3RPrrCjEB7FC6+ASqdPqLMhUB7FC6+ASqdPqLMhUB7FC4+TtrWPpSUjEB7FC4+TtrWPpSUjEB7FC6+ASqdPqLMhUB7FC4+QL2XPsj6hUB7FC4+jG3RPrrCjEB7FC4+TtrWPpSUjEB7FC4+QL2XPsj6hUB7FC4+QL2XPsj6hUB7FC6+jG3RPrrCjEB7FC6+jG3RPrrCjEB7FC4+QL2XPsj6hUB7FC4+ASqdPqLMhUB7FC4+ASqdPqLMhUB7FC6+QL2XPsj6hUB7FC6+jG3RPrrCjEB7FC6+TtrWPpSUjEB7FC6+TtrWPpSUjEB7FC4+jG3RPrrCjEB7FC4+/////////7//////////v/////////+//////////7+Q05BT/3//v5DTkFP/f/+/kNOQU/9//7+Q05BT/3//v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+/bixurP////9uLG6s/////24sbqz/////bixurP////+QU24s/////5BTbiz/////kFNuLP////+QU24s/////26skNP/f/+/bqyQ0/9//79urJDT/3//v26skNP/f/+/")
+}]

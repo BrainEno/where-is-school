@@ -1,0 +1,694 @@
+[gd_scene load_steps=89 format=3]
+
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/plot.tres" id="mesh_0"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_earth.tres" id="m_site_earth"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/puddles.tres" id="mesh_1"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/cold_water.tres" id="m_cold_water"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_panel_0.tres" id="mesh_2"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_panel_1.tres" id="mesh_3"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_panel_2.tres" id="mesh_4"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/hoarding.tres" id="m_hoarding"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_posts.tres" id="mesh_5"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_steel.tres" id="m_site_steel"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_ballast.tres" id="mesh_6"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/slab.tres" id="m_slab"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_couplers.tres" id="mesh_7"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_bright.tres" id="m_site_bright"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/hoarding_capping.tres" id="mesh_8"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_pale.tres" id="m_site_pale"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_posts.tres" id="mesh_9"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_shoes.tres" id="mesh_10"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_leaf_frame.tres" id="mesh_11"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_leaf_bars.tres" id="mesh_12"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_name_plate_rim.tres" id="mesh_13"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_name_plate.tres" id="mesh_14"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_hazard_boards.tres" id="mesh_15"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_paint.tres" id="m_site_paint"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_hazard_stripes.tres" id="mesh_16"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_ink.tres" id="m_site_ink"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_gate_chain.tres" id="mesh_17"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_padlock_scale_gate_lock.tres" id="mesh_18"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_brass.tres" id="m_site_brass"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_padlock_scale_lock_shackle.tres" id="mesh_19"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_padlock_scale_keyway.tres" id="mesh_20"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_floodlight_pole.tres" id="mesh_21"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_floodlight_head.tres" id="mesh_22"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/gate_floodlight_lens.tres" id="mesh_23"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_lamp.tres" id="m_site_lamp"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_pile_north_body.tres" id="mesh_24"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_sand.tres" id="m_site_sand"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_pile_middle_body.tres" id="mesh_25"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_pile_middle_shovel_shaft.tres" id="mesh_26"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_timber.tres" id="m_site_timber"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_pile_middle_shovel_blade.tres" id="mesh_27"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_pile_south_body.tres" id="mesh_28"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_wheelbarrow_tub.tres" id="mesh_29"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_blue.tres" id="m_site_blue"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_wheelbarrow_frame.tres" id="mesh_30"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_wheelbarrow_tyre.tres" id="mesh_31"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/sand_spoil_mound.tres" id="mesh_32"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_body.tres" id="mesh_33"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_yellow.tres" id="m_site_yellow"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_undercarriage.tres" id="mesh_34"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_hydraulics.tres" id="mesh_35"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_rods.tres" id="mesh_36"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_glazing.tres" id="mesh_37"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_glass.tres" id="m_site_glass"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_hoses.tres" id="mesh_38"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_lamps.tres" id="mesh_39"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/excavator_bucket_load.tres" id="mesh_40"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_cast_shell.tres" id="mesh_41"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_tie_holes.tres" id="mesh_42"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_formwork.tres" id="mesh_43"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_edge_protection.tres" id="mesh_44"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_toe_board.tres" id="mesh_45"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_ply.tres" id="m_site_ply"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_starter_bars.tres" id="mesh_46"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/site_rust.tres" id="m_site_rust"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_drain_pipes.tres" id="mesh_47"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_drain_clamps.tres" id="mesh_48"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_chalk.tres" id="mesh_49"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/marble.tres" id="mesh_50"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/marble_red.tres" id="m_marble_red"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/marble_amber.tres" id="m_marble_amber"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/marble_green.tres" id="m_marble_green"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/marble_blue.tres" id="m_marble_blue"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_porch.tres" id="mesh_51"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_frame.tres" id="mesh_52"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_door.tres" id="mesh_53"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/site/hoard_fold.tres" id="m_hoard_fold"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_vision_panel.tres" id="mesh_54"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_ironmongery.tres" id="mesh_55"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_lamp.tres" id="mesh_56"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_site_board.tres" id="mesh_57"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_fittings.tres" id="mesh_58"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_hazard.tres" id="mesh_59"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/ellipsoid_building_entrance_hazard_stripes.tres" id="mesh_60"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/rebar_bundle_bars.tres" id="mesh_61"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/rebar_bundle_bearers.tres" id="mesh_62"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/block_pallet_pallet.tres" id="mesh_63"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/site/block_pallet_blocks.tres" id="mesh_64"]
+
+[node name="ConstructionSite" type="Node3D"]
+
+[node name="Plot" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_0")
+material_override = ExtResource("m_site_earth")
+cast_shadow = 0
+
+[node name="Puddles" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_1")
+material_override = ExtResource("m_cold_water")
+cast_shadow = 0
+
+[node name="Hoarding" type="Node3D" parent="."]
+position = Vector3(0, 0, 0)
+
+[node name="HoardEastNorthPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-26.6, -0.015, 8.29)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1.0638, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardEastNorthPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-26.6, -0.015, 10.27)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1.0638, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardEastSouthPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-26.6, -0.015, 16.23)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1.1719, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardEastSouthPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-26.6, -0.015, 18.41)
+rotation_degrees = Vector3(0, 90, 0)
+scale = Vector3(1.1719, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardNorthPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-34.295, -0.015, 7.3)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.9178, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardNorthPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-32.585, -0.015, 7.3)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.9178, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardNorthPanel2" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-30.875, -0.015, 7.3)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.9178, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardNorthPanel3" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-29.165, -0.015, 7.3)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.9178, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardNorthPanel4" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-27.455, -0.015, 7.3)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.9178, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 8.1714)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 9.9143)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel2" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 11.6571)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel3" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 13.4)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel4" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 15.1429)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel5" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 16.8857)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardWestPanel6" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-35.15, -0.015, 18.6286)
+rotation_degrees = Vector3(0, -90, 0)
+scale = Vector3(0.9356, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardSouthWestPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-34.45, -0.015, 19.5)
+rotation_degrees = Vector3(0, 0, 0)
+scale = Vector3(0.7503, 1, 1)
+mesh = ExtResource("mesh_4")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardSouthWestPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-33.05, -0.015, 19.5)
+rotation_degrees = Vector3(0, 0, 0)
+scale = Vector3(0.7503, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardSouthPanel0" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-29.3375, -0.015, 19.5)
+rotation_degrees = Vector3(0, 0, 0)
+scale = Vector3(0.98, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="HoardSouthPanel1" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-27.5125, -0.015, 19.5)
+rotation_degrees = Vector3(0, 0, 0)
+scale = Vector3(0.98, 1, 1)
+mesh = ExtResource("mesh_2")
+material_override = ExtResource("m_hoarding")
+
+[node name="Posts" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_5")
+material_override = ExtResource("m_site_steel")
+
+[node name="Ballast" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_6")
+material_override = ExtResource("m_slab")
+
+[node name="Couplers" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_7")
+material_override = ExtResource("m_site_bright")
+cast_shadow = 0
+
+[node name="Capping" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_8")
+material_override = ExtResource("m_site_pale")
+
+[node name="FallenPanel" type="MeshInstance3D" parent="Hoarding"]
+position = Vector3(-31.3, 0.02, 19.38)
+rotation_degrees = Vector3(-88, -9, 2.5)
+scale = Vector3(1.1, 1, 1)
+mesh = ExtResource("mesh_3")
+material_override = ExtResource("m_hoarding")
+
+[node name="Gate" type="Node3D" parent="."]
+position = Vector3(-26.6, -0.015, 0)
+
+[node name="Posts" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_9")
+material_override = ExtResource("m_site_steel")
+
+[node name="Shoes" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_10")
+material_override = ExtResource("m_slab")
+
+[node name="LeafNorth" type="Node3D" parent="Gate"]
+position = Vector3(0, 0, 11.48)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="Frame" type="MeshInstance3D" parent="Gate/LeafNorth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_11")
+material_override = ExtResource("m_site_steel")
+
+[node name="Bars" type="MeshInstance3D" parent="Gate/LeafNorth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_12")
+material_override = ExtResource("m_site_steel")
+
+[node name="LeafSouth" type="Node3D" parent="Gate"]
+position = Vector3(0, 0, 14.92)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="Frame" type="MeshInstance3D" parent="Gate/LeafSouth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_11")
+material_override = ExtResource("m_site_steel")
+
+[node name="Bars" type="MeshInstance3D" parent="Gate/LeafSouth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_12")
+material_override = ExtResource("m_site_steel")
+
+[node name="NamePlateRim" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 3.25, 13.2)
+mesh = ExtResource("mesh_13")
+material_override = ExtResource("m_site_steel")
+
+[node name="NamePlate" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0.06, 3.25, 13.2)
+mesh = ExtResource("mesh_14")
+material_override = ExtResource("m_site_pale")
+
+[node name="HazardBoards" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_15")
+material_override = ExtResource("m_site_paint")
+cast_shadow = 0
+
+[node name="HazardStripes" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_16")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="GateChain" type="MeshInstance3D" parent="Gate"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_17")
+material_override = ExtResource("m_site_bright")
+cast_shadow = 0
+
+[node name="Padlock" type="Node3D" parent="Gate"]
+position = Vector3(0.085, 0.91, 13.2)
+
+[node name="Scale" type="Node3D" parent="Gate/Padlock"]
+position = Vector3(0, 0, 0)
+scale = Vector3(1.35, 1.35, 1.35)
+
+[node name="GateLock" type="MeshInstance3D" parent="Gate/Padlock/Scale"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_18")
+material_override = ExtResource("m_site_brass")
+cast_shadow = 0
+
+[node name="LockShackle" type="MeshInstance3D" parent="Gate/Padlock/Scale"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_19")
+material_override = ExtResource("m_site_bright")
+cast_shadow = 0
+
+[node name="Keyway" type="MeshInstance3D" parent="Gate/Padlock/Scale"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_20")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="Floodlight" type="Node3D" parent="Gate"]
+position = Vector3(-0.3, 0, 9.7)
+
+[node name="Pole" type="MeshInstance3D" parent="Gate/Floodlight"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_21")
+material_override = ExtResource("m_site_steel")
+
+[node name="Head" type="MeshInstance3D" parent="Gate/Floodlight"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_22")
+material_override = ExtResource("m_site_steel")
+cast_shadow = 0
+
+[node name="Lens" type="MeshInstance3D" parent="Gate/Floodlight"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_23")
+material_override = ExtResource("m_site_lamp")
+cast_shadow = 0
+
+[node name="Sand" type="Node3D" parent="."]
+position = Vector3(0, 0, 0)
+
+[node name="PileNorth" type="Node3D" parent="Sand"]
+position = Vector3(-24.75, -0.015, 11.85)
+
+[node name="Body" type="MeshInstance3D" parent="Sand/PileNorth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_24")
+material_override = ExtResource("m_site_sand")
+
+[node name="PileMiddle" type="Node3D" parent="Sand"]
+position = Vector3(-24.85, -0.015, 14.55)
+
+[node name="Body" type="MeshInstance3D" parent="Sand/PileMiddle"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_25")
+material_override = ExtResource("m_site_sand")
+
+[node name="Shovel" type="Node3D" parent="Sand/PileMiddle"]
+position = Vector3(-0.35, 0.3885, -0.4)
+rotation_degrees = Vector3(14, 35, -22)
+
+[node name="Shaft" type="MeshInstance3D" parent="Sand/PileMiddle/Shovel"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_26")
+material_override = ExtResource("m_site_timber")
+cast_shadow = 0
+
+[node name="Blade" type="MeshInstance3D" parent="Sand/PileMiddle/Shovel"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_27")
+material_override = ExtResource("m_site_steel")
+cast_shadow = 0
+
+[node name="PileSouth" type="Node3D" parent="Sand"]
+position = Vector3(-24.55, -0.015, 17.05)
+
+[node name="Body" type="MeshInstance3D" parent="Sand/PileSouth"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_28")
+material_override = ExtResource("m_site_sand")
+
+[node name="Wheelbarrow" type="Node3D" parent="Sand"]
+position = Vector3(-23.95, -0.015, 19)
+rotation_degrees = Vector3(0, 96, -1)
+
+[node name="Tub" type="MeshInstance3D" parent="Sand/Wheelbarrow"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_29")
+material_override = ExtResource("m_site_blue")
+
+[node name="Frame" type="MeshInstance3D" parent="Sand/Wheelbarrow"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_30")
+material_override = ExtResource("m_site_steel")
+cast_shadow = 0
+
+[node name="Tyre" type="MeshInstance3D" parent="Sand/Wheelbarrow"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_31")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="SpoilMound" type="MeshInstance3D" parent="Sand"]
+position = Vector3(-33.9, -0.015, 13.4)
+rotation_degrees = Vector3(0, 30, 0)
+mesh = ExtResource("mesh_32")
+material_override = ExtResource("m_site_earth")
+
+[node name="Excavator" type="Node3D" parent="."]
+position = Vector3(-29.7, -0.015, 17)
+
+[node name="Body" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_33")
+material_override = ExtResource("m_site_yellow")
+
+[node name="Undercarriage" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_34")
+material_override = ExtResource("m_site_steel")
+
+[node name="Hydraulics" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_35")
+material_override = ExtResource("m_site_ink")
+
+[node name="Rods" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_36")
+material_override = ExtResource("m_site_bright")
+cast_shadow = 0
+
+[node name="Glazing" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_37")
+material_override = ExtResource("m_site_glass")
+cast_shadow = 0
+
+[node name="Hoses" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_38")
+material_override = ExtResource("m_site_ink")
+
+[node name="Lamps" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_39")
+material_override = ExtResource("m_site_lamp")
+cast_shadow = 0
+
+[node name="BucketLoad" type="MeshInstance3D" parent="Excavator"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_40")
+material_override = ExtResource("m_site_sand")
+cast_shadow = 0
+
+[node name="EllipsoidBuilding" type="Node3D" parent="."]
+position = Vector3(-31.6, -0.015, 11.6)
+
+[node name="CastShell" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_41")
+material_override = ExtResource("m_slab")
+
+[node name="TieHoles" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_42")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="Formwork" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_43")
+material_override = ExtResource("m_site_timber")
+
+[node name="EdgeProtection" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_44")
+material_override = ExtResource("m_site_paint")
+
+[node name="ToeBoard" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_45")
+material_override = ExtResource("m_site_ply")
+cast_shadow = 0
+
+[node name="StarterBars" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_46")
+material_override = ExtResource("m_site_rust")
+cast_shadow = 0
+
+[node name="DrainPipes" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_47")
+material_override = ExtResource("m_site_bright")
+
+[node name="DrainClamps" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_48")
+material_override = ExtResource("m_site_steel")
+cast_shadow = 0
+
+[node name="Chalk" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_49")
+material_override = ExtResource("m_site_pale")
+cast_shadow = 0
+
+[node name="Marble_0" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0.68, 10.324, 0)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_marble_red")
+cast_shadow = 0
+
+[node name="Marble_1" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0.1508, 10.324, 0.6631)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_marble_amber")
+cast_shadow = 0
+
+[node name="Marble_2" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(-0.34, 10.324, 0.5889)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_marble_green")
+cast_shadow = 0
+
+[node name="Marble_3" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(-0.6496, 10.324, -0.201)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_site_blue")
+cast_shadow = 0
+
+[node name="Marble_4" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(-0.34, 10.324, -0.5889)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_marble_blue")
+cast_shadow = 0
+
+[node name="Marble_5" type="MeshInstance3D" parent="EllipsoidBuilding"]
+position = Vector3(0.4988, 10.324, -0.4621)
+mesh = ExtResource("mesh_50")
+material_override = ExtResource("m_site_brass")
+cast_shadow = 0
+
+[node name="Entrance" type="Node3D" parent="EllipsoidBuilding"]
+position = Vector3(3.15, 0, 0)
+
+[node name="Porch" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_51")
+material_override = ExtResource("m_site_ply")
+
+[node name="Frame" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_52")
+material_override = ExtResource("m_site_steel")
+
+[node name="Door" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_53")
+material_override = ExtResource("m_hoard_fold")
+cast_shadow = 0
+
+[node name="VisionPanel" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_54")
+material_override = ExtResource("m_site_glass")
+cast_shadow = 0
+
+[node name="Ironmongery" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_55")
+material_override = ExtResource("m_site_bright")
+cast_shadow = 0
+
+[node name="Lamp" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_56")
+material_override = ExtResource("m_site_lamp")
+cast_shadow = 0
+
+[node name="SiteBoard" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_57")
+material_override = ExtResource("m_site_pale")
+cast_shadow = 0
+
+[node name="Fittings" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_58")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="Hazard" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0.025, 2.32, 0)
+mesh = ExtResource("mesh_59")
+material_override = ExtResource("m_site_paint")
+cast_shadow = 0
+
+[node name="HazardStripes" type="MeshInstance3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0.025, 2.32, 0)
+mesh = ExtResource("mesh_60")
+material_override = ExtResource("m_site_ink")
+cast_shadow = 0
+
+[node name="DoorLight" type="OmniLight3D" parent="EllipsoidBuilding/Entrance"]
+position = Vector3(0.35, 2.2, 0)
+light_color = Color(1, 0.78, 0.52, 1)
+light_energy = 0.9
+omni_range = 3.4
+omni_attenuation = 1.6
+
+[node name="RebarBundle" type="Node3D" parent="."]
+position = Vector3(-33.4, -0.015, 16.2)
+rotation_degrees = Vector3(0, 78, 0)
+
+[node name="Bars" type="MeshInstance3D" parent="RebarBundle"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_61")
+material_override = ExtResource("m_site_rust")
+cast_shadow = 0
+
+[node name="Bearers" type="MeshInstance3D" parent="RebarBundle"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_62")
+material_override = ExtResource("m_site_timber")
+cast_shadow = 0
+
+[node name="BlockPallet" type="Node3D" parent="."]
+position = Vector3(-33.7, -0.015, 9)
+rotation_degrees = Vector3(0, 12, 0)
+
+[node name="Pallet" type="MeshInstance3D" parent="BlockPallet"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_63")
+material_override = ExtResource("m_site_timber")
+cast_shadow = 0
+
+[node name="Blocks" type="MeshInstance3D" parent="BlockPallet"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_64")
+material_override = ExtResource("m_slab")
