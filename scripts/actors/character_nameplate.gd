@@ -28,6 +28,8 @@ const SETTING := "ui/nameplates/show_development_nameplates"
 ## Height of the label above the character's origin.
 @export var label_height: float = 1.92
 
+var _hidden_for_insert := false
+
 
 func _ready() -> void:
 	_configure()
@@ -71,7 +73,17 @@ func _project_theme() -> Theme:
 ## Re-reads the name. Called on a language switch and by the tests.
 func refresh() -> void:
 	text = _resolve_name()
-	visible = is_enabled() and not text.is_empty()
+	_sync_visibility()
+
+
+## A face insert can suppress the local debug label, including across a language switch.
+func set_hidden_for_insert(hidden: bool) -> void:
+	_hidden_for_insert = hidden
+	_sync_visibility()
+
+
+func _sync_visibility() -> void:
+	visible = not _hidden_for_insert and is_enabled() and not text.is_empty()
 
 
 func is_enabled() -> bool:

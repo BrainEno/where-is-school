@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CameraShot" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="1_shot"]
+
+[resource]
+script = ExtResource("1_shot")
+fov = 36.0
+glide_seconds = 0.38
+release_seconds = 0.55
+insert_anchor_path = NodePath("../../Actors/Q/Visual")
+insert_aim = Vector3(0.0, 1.624, 0.08)
+insert_eye_offset = Vector3(0.254, 0.055, 0.58)
+insert_bone = &"Head"
+insert_nameplate_path = NodePath("../../Actors/Q/Nameplate")
