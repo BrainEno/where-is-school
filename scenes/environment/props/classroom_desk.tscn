@@ -6,13 +6,7 @@
 [ext_resource type="ArrayMesh" path="res://scenes/environment/props/classroom_art/student_chair_seat.tres" id="6_seat"]
 [ext_resource type="ArrayMesh" path="res://scenes/environment/props/classroom_art/student_chair_back.tres" id="7_back"]
 [ext_resource type="ArrayMesh" path="res://scenes/environment/props/classroom_art/student_chair_frame.tres" id="8_frame"]
-
-[sub_resource type="StandardMaterial3D" id="ChairPigments"]
-vertex_color_use_as_albedo = true
-vertex_color_is_srgb = true
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
+[ext_resource type="Material" path="res://assets/materials/classroom/student_chair_pigments.tres" id="9_pigments"]
 
 [node name="ClassroomDesk" type="Node3D"]
 script = ExtResource("4_ink")
@@ -29,13 +23,13 @@ position = Vector3(0, 0, 0.07)
 [node name="Seat" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.45, 0)
 mesh = ExtResource("6_seat")
-material_override = SubResource("ChairPigments")
+material_override = ExtResource("9_pigments")
 
 [node name="Back" type="MeshInstance3D" parent="Chair"]
 position = Vector3(0, 0.66, 0.2)
 mesh = ExtResource("7_back")
-material_override = SubResource("ChairPigments")
+material_override = ExtResource("9_pigments")
 
 [node name="Frame" type="MeshInstance3D" parent="Chair"]
 mesh = ExtResource("8_frame")
-material_override = SubResource("ChairPigments")
+material_override = ExtResource("9_pigments")
