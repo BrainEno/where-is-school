@@ -7,7 +7,7 @@ const Board = preload("res://scenes/locations/computer_room/terminal_board.gd")
 const SNAKE_TICK := 0.16
 const BOOT_SECONDS := 2.15
 const CHECK_SECONDS := 4.45
-const CHECK_KEYS := ["[   ]    [   ]    [   ]", "[ → ]    [   ]    [   ]", "[ → ]    [ ↓ ]    [   ]", "[ → ]    [ ↓ ]    [ ↵ ]"]
+const CHECK_KEYS := ["[   ]    [   ]    [   ]", "[ → ]    [   ]    [   ]", "[ → ]    [ ↓ ]    [   ]", "[ → ]    [ ↓ ]    [ENT]"]
 const ARROWS := [Vector2i.UP, Vector2i.LEFT, Vector2i.DOWN, Vector2i.RIGHT]
 const MOVE_ACTIONS := [&"move_forward", &"move_left", &"move_back", &"move_right"]
 

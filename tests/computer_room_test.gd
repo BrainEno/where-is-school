@@ -163,7 +163,7 @@ func _try_station() -> void:
 	await _frame("02_boot_logo")
 	_check.expect(await Harness.wait_until(func() -> bool: return input_check.visible, 4.0), "First boot skipped the key check.")
 	var keys := desktop.get_node(^"Startup/InputCheck/Keys") as Label
-	_check.expect(await Harness.wait_until(func() -> bool: return keys.text.ends_with("[ ↵ ]"), 4.0),
+	_check.expect(await Harness.wait_until(func() -> bool: return keys.text.ends_with("[ENT]"), 4.0),
 		"The protagonist's input sequence did not complete.")
 	await _frame("03_input_check")
 	if not _check.expect(await Harness.wait_until(func() -> bool: return desktop.page == Desktop.Page.DESKTOP, 5.0),
