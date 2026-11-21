@@ -78,12 +78,21 @@ func come_out(rig: CameraRig) -> void:
 	for mark: Marker3D in _route.get_children():
 		points.append(mark.global_position)
 	await _collector.walk_along(points)
-	_stand_in_doorway()
+	_figure.stand()
+	var entry_yaw := _collector.rotation.y
+	_collector.face_towards(global_position)
+	var turn_yaw := entry_yaw + angle_difference(entry_yaw, _collector.rotation.y)
+	_collector.rotation.y = entry_yaw
+	var turn := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	turn.tween_property(_collector, "rotation:y", turn_yaw, 0.34)
+	turn.tween_method(_figure.raise_gaze, 0.0, 1.0, 0.34)
+	await turn.finished
+	phase = Phase.OUTSIDE
 	await get_tree().create_timer(0.42, false).timeout
 
 
 func _stand_in_doorway() -> void:
-	_collector.place_at(_doorstep.global_position, to_global(Vector3(0.0, 2.6, 0.0)))
+	_collector.place_at(_doorstep.global_position, global_position)
 	_figure.stand(true)
 	phase = Phase.OUTSIDE
 

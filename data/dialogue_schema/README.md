@@ -377,7 +377,7 @@ the repository depends on their content.
 ### Container resident — lines and choices not yet in the game
 
 The roof impact wakes the resident, who collects scrap and sleeps on the existing
-bedding. The scene stops at him coming to the doorway and looking up;
+bedding. The scene stops at him stepping outside and looking up;
 `classroom_fall_landing` is unchanged. No new portrait, interaction prompt, spoken
 line or choice text is in either locale.
 

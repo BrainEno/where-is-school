@@ -14,8 +14,8 @@ const INLINE_SIZE := Vector2i(480, 270)
 ## Four 4000-character parts per frame, even with textured walls. The full PNG is
 ## not affected. The workflow prioritizes the last (yard detail) frames inline.
 const INLINE_BYTES := 12000
-const EXPECTED_SHOTS := 19
-const COURT_COMPARE := Vector3(4.8, 0.03, 7.4)
+const EXPECTED_SHOTS := 21
+const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -90,7 +90,7 @@ func _run() -> void:
 		_finish(["Couldn't choose to drop after a passed check."])
 		return
 	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png")
-	await _capture_resident("19-collector-unfiltered.png", true)
+	await _capture_resident("19-collector-unfiltered.png", &"on_threshold")
 	await _settle()
 	await _stand(COURT_COMPARE, Vector3.LEFT)
 	await _shot("15-court-normal.png")
@@ -107,8 +107,10 @@ func _run() -> void:
 		return
 	await _capture_pose("void_slip", 0.45, "06-slip.png")
 	await _capture_pose("roof_impact", 0.27, "07-roof-impact.png")
-	await _capture_resident("17-resident-wakes.png", false)
-	await _capture_resident("18-resident-steps-out.png", true)
+	await _capture_resident("20-bedding-reaction.png", &"reclined")
+	await _capture_resident("17-resident-wakes.png", &"sitting_up")
+	await _capture_resident("18-resident-steps-out.png", &"on_threshold")
+	await _capture_resident("21-resident-looks-up.png", &"outside")
 	await _settle()
 	var container := _host.get_current().get_node_or_null(^"ContainerBody") as Node3D
 	if container == null or not _state.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, false):
@@ -205,19 +207,30 @@ func _capture_pose(clip: String, progress: float, name: String, low: float = -IN
 	await _shot(name)
 
 
-func _capture_resident(name: String, walking: bool) -> void:
+func _capture_resident(name: String, moment: StringName) -> void:
 	if not await Harness.wait_until(func() -> bool:
 		var stage := _host.get_current().get_node_or_null(^"RoofEncounter") as RoofEncounter
-		if stage == null:
+		if stage == null or _player.camera_rig.get_focus_subject() != stage.get_node(^"WakeFrame") \
+			or _player.camera_rig.get_frame_weight() < 0.96:
 			return false
 		var actor := stage.get_node(^"Collector") as NpcActor
 		var head := actor.get_node(^"Visual/Hip/Trunk/Head") as Node3D
-		var visible_in_frame := _player.camera_rig.camera.is_position_in_frustum(head.global_position)
-		if walking:
-			return visible_in_frame and stage.phase == RoofEncounter.Phase.WALKING_OUT \
-				and actor.position.x >= 3.18 and actor.position.x <= 3.80
-		return visible_in_frame and stage.phase == RoofEncounter.Phase.WAKING \
-			and head.global_position.y > 0.99 and head.global_position.y < 1.39
+		var camera := _player.camera_rig.camera
+		if not camera.is_position_in_frustum(head.global_position) \
+			or not camera.is_position_in_frustum(actor.global_position):
+			return false
+		match moment:
+			&"reclined":
+				return stage.phase == RoofEncounter.Phase.WAKING and head.global_position.y < 0.67
+			&"sitting_up":
+				return stage.phase == RoofEncounter.Phase.WAKING \
+					and head.global_position.y > 0.99 and head.global_position.y < 1.39
+			&"on_threshold":
+				return stage.phase == RoofEncounter.Phase.WALKING_OUT \
+					and actor.position.x >= 3.18 and actor.position.x <= 3.72
+			&"outside":
+				return stage.phase == RoofEncounter.Phase.OUTSIDE
+		return false
 	, 12.0):
 		_failures.append("The resident's motion wasn't in frame for %s." % name)
 		return

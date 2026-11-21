@@ -91,10 +91,14 @@ func stand(look_up: bool = false) -> void:
 	set_process(false)
 	_hip.position = Vector3(0.0, HIP_HEIGHT, 0.0)
 	_trunk.rotation_degrees = Vector3(-5.0, 0.0, -1.0)
-	_head.rotation_degrees = Vector3(31.0 if look_up else 4.0, -5.0, 1.0)
+	raise_gaze(1.0 if look_up else 0.0)
 	for side in 2:
 		_arm(side, 2.0, -8.0 if side == 0 else 8.0, 13.0)
 		_leg(side, 0.0, 0.0, 0.0)
+
+
+func raise_gaze(weight: float) -> void:
+	_head.rotation_degrees = Vector3(lerpf(4.0, 31.0, weight), -5.0, 1.0)
 
 
 func start_walking() -> void:
@@ -107,15 +111,27 @@ func start_walking() -> void:
 func _process(_delta: float) -> void:
 	var travel := global_position - _last_position
 	_last_position = global_position
-	_phase = fposmod(_phase + Vector2(travel.x, travel.z).length() * TAU / STRIDE, TAU)
+	var horizontal := Vector2(travel.x, travel.z).length()
+	_phase = fposmod(_phase + horizontal * TAU / STRIDE, TAU)
 	var swing := sin(_phase)
-	_hip.position.y = HIP_HEIGHT - (0.5 + 0.5 * cos(2.0 * _phase)) * 0.027
+	_hip.position.y = HIP_HEIGHT
 	_trunk.rotation_degrees = Vector3(-7.0, swing * 4.0, swing * 2.0)
 	for side in 2:
 		var cycle := _phase + PI * side
 		var stride := sin(cycle)
 		_leg(side, stride * 25.0, -maxf(0.0, cos(cycle)) * 36.0, 5.0 * stride)
 		_arm(side, -stride * 17.0, -8.0 if side == 0 else 8.0, 17.0 + 5.0 * stride)
+	# Match the height of the bearing foot to the route plane. As each leg
+	# swings the other heel or toe bears the weight; the pelvis doesn't float.
+	var floor_normal := Vector3.UP
+	if horizontal > 0.0001:
+		var grade := clampf(travel.y / horizontal, -0.34, 0.34)
+		floor_normal -= Vector3(travel.x, 0.0, travel.z) * (grade / horizontal)
+	var support := INF
+	for foot in _boots:
+		for at: float in [-0.16, 0.072]:
+			support = minf(support, (foot.to_global(Vector3(0.0, -SOLE, at)) - global_position).dot(floor_normal))
+	_hip.position.y -= support
 
 
 func _arm(side: int, pitch: float, spread: float, bend: float) -> void:

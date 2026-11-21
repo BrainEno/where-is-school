@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1_shot")
 subject_mix = 0.0
-distance_scale = 0.83
-height_scale = 0.50
-yaw_degrees = 38.0
-fov = 43.0
+distance_scale = 0.94
+height_scale = 0.48
+yaw_degrees = 36.0
+fov = 48.0
 glide_seconds = 0.36
 release_seconds = 0.48

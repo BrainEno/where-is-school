@@ -12,7 +12,7 @@ float value(vec3 c) {
 }
 
 float red_ink(vec3 c) {
-	return smoothstep(0.035, 0.28, c.r - max(c.g, c.b)) * smoothstep(0.17, 0.48, c.r);
+	return smoothstep(0.038, 0.21, c.r - max(c.g, c.b)) * smoothstep(0.12, 0.42, c.r);
 }
 
 void fragment() {
@@ -30,22 +30,27 @@ void fragment() {
 	float edge = max(abs(grey - value(texture(world_print, uv - vec2(1.7, 0.0) * pixel).rgb)),
 		abs(grey - value(texture(world_print, uv - vec2(0.0, 1.7) * pixel).rgb)));
 
-	// Off-white stock, slate midtone, blue-black pressure marks. Blend rather
-	// than clip the bands so feet, rails and chalk routes still read.
-	float band = floor(grey * 6.0 + 0.5) / 6.0;
-	float density = mix(grey, band, 0.69);
-	vec3 dry_blue = mix(vec3(0.12, 0.16, 0.23), vec3(0.49, 0.61, 0.65),
-		smoothstep(0.04, 0.58, density));
-	vec3 print = mix(dry_blue, vec3(0.93, 0.88, 0.76), smoothstep(0.51, 0.99, density));
-	float vermilion = max(red_ink(original) * 0.56, red_ink(red_plate));
-	vec3 red = mix(vec3(0.43, 0.16, 0.18), vec3(0.93, 0.53, 0.35), density);
-	print = mix(print, red, vermilion * 0.91);
-	print = mix(print, vec3(0.12, 0.15, 0.21), smoothstep(0.063, 0.29, edge) * 0.79);
+	// Open the dusk shadows onto slate ink and ivory stock. Blending with the
+	// original value between bands keeps thin rails and the chalk lines readable.
+	float lift = sqrt(max(0.0, grey));
+	float band = floor(lift * 5.0 + 0.5) * 0.2;
+	float density = mix(lift, band, 0.78);
+	vec3 slate = mix(vec3(0.08, 0.11, 0.17), vec3(0.42, 0.56, 0.60),
+		smoothstep(0.03, 0.64, density));
+	vec3 print = mix(slate, vec3(0.92, 0.88, 0.77), smoothstep(0.50, 0.94, density));
+	float vermilion = max(red_ink(original) * 0.43, red_ink(red_plate));
+	vec3 red = mix(vec3(0.41, 0.20, 0.23), vec3(0.90, 0.47, 0.31),
+		smoothstep(0.16, 0.88, density));
+	print = mix(print, red, vermilion * 0.94);
+	print = mix(print, vec3(0.11, 0.15, 0.21), smoothstep(0.062, 0.28, edge) * 0.78);
 
-	// A still, fine paper tooth and sparse slant of dry ink in the darker values.
-	// Screen-height units keep those marks small on wide or resized windows.
+	// Static angled halftone dots are larger in the midtones. No temporal noise
+	// or scene judder; this is printed on a sheet, rather than projected in the yard.
+	vec2 raster = fract(mat2(vec2(0.91, -0.414), vec2(0.414, 0.91)) * paper / 5.8) - 0.5;
+	float radius = mix(0.36, 0.10, density);
+	float dot_ink = 1.0 - smoothstep(radius - 0.065, radius + 0.065, length(raster));
+	float halftone = smoothstep(0.13, 0.28, density) * (1.0 - smoothstep(0.68, 0.95, density));
 	float tooth = fract(dot(floor(paper * vec2(0.74, 0.41)), vec2(0.754877, 0.56984))) - 0.5;
-	float stroke = 1.0 - smoothstep(0.08, 0.24, abs(fract(dot(paper, vec2(0.18, -0.12))) - 0.5));
-	print += tooth * 0.048 - stroke * (1.0 - smoothstep(0.15, 0.51, grey)) * 0.035;
+	print += tooth * 0.046 - dot_ink * halftone * 0.10;
 	COLOR = vec4(mix(original, clamp(print, vec3(0.0), vec3(1.0)), impression), 1.0);
 }

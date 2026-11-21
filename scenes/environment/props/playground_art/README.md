@@ -67,8 +67,8 @@ Rebuild the native figure with `python3 tools/build_roof_collector.py` (or use
 route and camera marks. There is no external model, image or animation to import.
 
 A hard landing changes the live 3D view into a slate and vermilion misprint:
-ink density bands, sparse paper tooth and a second, slightly misregistered red
-plate. This adapts the medium change of [#196](https://github.com/BrainEno/where-is-school/pull/196)
+ink density bands, angled halftone dots, paper tooth and a second, slightly
+misregistered red plate. This adapts the medium change of [#196](https://github.com/BrainEno/where-is-school/pull/196)
 and paper/red separation of [#200](https://github.com/BrainEno/where-is-school/pull/200),
 not their experimental scenes. The print starts at contact on the hard route
 only, draws behind the UI and outlines, and ends when you leave the yard. Continue
