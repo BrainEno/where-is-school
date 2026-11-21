@@ -94,21 +94,28 @@ def build():
         "varnish": f"{MATERIALS}/varnish_pale.tres",
         "tape": f"{MATERIALS}/tape_browned.tres",
         "ink": f"{MATERIALS}/metal_ink.tres",
-    }, pigments={"end_grain": (107, 73, 46), "grip": (231, 208, 166),
-                 "worn_lacquer": (246, 225, 188), "grain": (189, 148, 103)})
-    # The film has no visible thickness at this scale. Its exposed, slightly
-    # torn edge is seen from either side, including the underside of the wrap.
-    b.mat("tape_overlap", albedo_color="Color(0.749, 0.588, 0.310, 1)", cull_mode=2)
+        "pigments": f"{MATERIALS}/set_square_pigments.tres",
+    })
+
+    def painted(name, mesh, rgb, *, shadow=False):
+        # Share a classroom-owned surface. Pigment is per facet, not an embedded
+        # material: these details don't get the wood plank's raised ink outline.
+        rgba = bytes((*rgb, 255)) * len(mesh.points)
+        b.flat(name, ".", b.mesh("ArrayMesh", _surfaces=mesh.surface(rgba)),
+               "pigments", (0, 0, 0), shadow=shadow)
+
     main, main_cut = plank([(z, LEFT, x) for x, z in SPLIT] + [(BACK, LEFT, LEFT)], 1)
     tip_rows = [(z, x + GAP, slope_x(z) + GAP) for x, z in SPLIT[:-1]]
     x, z = SPLIT[-1]
     tip, tip_cut = plank(tip_rows + [(z, x + GAP, x + GAP)], 0)
-    for name, mesh, mat, shadow in (("Board", main, "varnish", True),
-            ("BrokenTip", tip, "varnish", True), ("ExposedGrain", main_cut, "end_grain", True),
-            ("TipGrain", tip_cut, "end_grain", True),
-            ("TapeRepair", tape(0.048, 0.079, 0.054, 0.002), "tape", False),
-            ("TapeOverlap", tape(0.082, 0.106, 0.044, 0.004), "tape_overlap", False)):
-        b.detail(name, ".", (0, 0, 0), mesh, mat, shadow=shadow)
+    b.detail("Board", ".", (0, 0, 0), main, "varnish", shadow=True)
+    b.detail("BrokenTip", ".", (0, 0, 0), tip, "varnish", shadow=True)
+    painted("ExposedGrain", main_cut, (107, 73, 46), shadow=True)
+    painted("TipGrain", tip_cut, (107, 73, 46), shadow=True)
+    # Two continuous passes wrap around the wood; the upper pass sits over the
+    # edge of the lower one and is seen from both sides at the exposed lap.
+    b.detail("TapeRepair", ".", (0, 0, 0), tape(0.048, 0.079, 0.054, 0.002), "tape")
+    painted("TapeOverlap", tape(0.082, 0.106, 0.044, 0.004), (191, 150, 79))
 
     marks = Batch()
     # Worn handhold in the varnish and a few lengthwise broken grain strokes.
@@ -135,6 +142,9 @@ def build():
         z = 0.169 - i * 0.020
         marks.strip("ink", [(-0.269, z), (-0.241 if i % 5 == 0 else -0.256, z)],
                     0.0032, THICKNESS + 0.001)
+    for pigment, color in (("grain", (189, 148, 103)), ("grip", (231, 208, 166)),
+                           ("worn_lacquer", (246, 225, 188))):
+        painted(f"Face_{pigment}", marks.meshes.pop(pigment), color)
     marks.emit(b, "Face", ".")
     scene = b.emit()
     header, rest = scene.split("\n\n", 1)

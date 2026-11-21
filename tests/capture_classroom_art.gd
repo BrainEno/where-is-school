@@ -28,6 +28,7 @@ var _rig: CameraRig = null
 var _out := "res://build/classroom-evidence/after"
 var _expect_renderer := ""
 var _expect_driver := ""
+var _previews := false
 var _lines: Array[String] = []
 var _failures: Array[String] = []
 
@@ -41,6 +42,8 @@ func _initialize() -> void:
 			_expect_renderer = argument.trim_prefix("--expect-renderer=")
 		elif argument.begins_with("--expect-driver="):
 			_expect_driver = argument.trim_prefix("--expect-driver=")
+		elif argument == "--prop-previews":
+			_previews = true
 	call_deferred("_run")
 
 
@@ -176,6 +179,8 @@ func _run() -> void:
 	else:
 		_rig.focus_on(window, window.camera_shot)
 		if await Harness.wait_until(func() -> bool: return _rig.get_focus_weight() >= 0.995, 9.0):
+			if not _rig.camera.is_position_in_frustum(glass.global_position):
+				_failures.append("The front window is outside its own inspection shot.")
 			await _shot("18_front_window_focus.png")
 		else:
 			_failures.append("The front window's authored shot did not settle.")
@@ -262,22 +267,24 @@ func _shot(file_name: String) -> void:
 		_failures.append("%s: %s" % [path, error_string(error)])
 	else:
 		_note("shot=%s sha256=%s" % [file_name, FileAccess.get_sha256(path)])
-		if OS.get_environment("GITHUB_ACTIONS") == "true" and file_name in PREVIEW_SHOTS:
+		if _previews and file_name in PREVIEW_SHOTS:
 			_write_preview(image, path.get_basename() + ".jpg")
 
 
 func _write_preview(image: Image, path: String) -> void:
-	# These delivery previews are only downscaled/compressed. The hashed 1600×900
-	# PNGs above remain the evidence of record.
+	# Delivery only. The hashed 1600×900 PNGs remain the evidence of record.
 	var thumbnail := image.duplicate() as Image
-	for width: int in [540, 470, 400, 330]:
-		thumbnail.resize(width, roundi(float(width) * 9.0 / 16.0), Image.INTERPOLATE_LANCZOS)
-		var data := thumbnail.save_jpg_to_buffer(0.74)
-		if not data.is_empty() and data.size() <= 5500:
-			var file := FileAccess.open(path, FileAccess.WRITE)
-			if file != null:
-				file.store_buffer(data)
+	thumbnail.resize(480, 270, Image.INTERPOLATE_LANCZOS)
+	for quality: float in [0.66, 0.54, 0.44, 0.34]:
+		var data := thumbnail.save_jpg_to_buffer(quality)
+		if data.is_empty() or data.size() > 11000:
+			continue
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_buffer(data)
+			_note("preview=%s bytes=%d" % [path.get_file(), data.size()])
 			return
+	_note("preview unavailable: %s" % path.get_file())
 
 
 func _frames(count: int) -> void:

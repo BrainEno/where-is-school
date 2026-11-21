@@ -59,12 +59,8 @@ size = Vector3(0.006, 0.022, 0.134)
 [sub_resource type="BoxMesh" id="BoxMesh_chalk_box_end"]
 size = Vector3(0.066, 0.022, 0.006)
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_chalk"]
-top_radius = 0.007
-bottom_radius = 0.008
-height = 0.079
-radial_segments = 7
-rings = 0
+[sub_resource type="BoxMesh" id="BoxMesh_chalk"]
+size = Vector3(0.014, 0.014, 0.079)
 
 [node name="TeacherLectern" type="Node3D"]
 
@@ -197,15 +193,15 @@ material_override = ExtResource("4_lacquer")
 
 [node name="Chalk" type="MeshInstance3D" parent="Body/ChalkBox"]
 position = Vector3(-0.011, 0.016, 0.004)
-rotation_degrees = Vector3(90, 0, -9)
-mesh = SubResource("CylinderMesh_chalk")
+rotation_degrees = Vector3(0, -9, 0)
+mesh = SubResource("BoxMesh_chalk")
 material_override = ExtResource("6_paper")
 
 [node name="ChalkStub" type="MeshInstance3D" parent="Body/ChalkBox"]
 position = Vector3(0.014, 0.016, -0.018)
-rotation_degrees = Vector3(90, 0, 12)
-scale = Vector3(1, 0.52, 1)
-mesh = SubResource("CylinderMesh_chalk")
+rotation_degrees = Vector3(0, 12, 0)
+scale = Vector3(1, 1, 0.52)
+mesh = SubResource("BoxMesh_chalk")
 material_override = ExtResource("6_paper")
 
 [node name="TeacherStand" type="Marker3D" parent="."]

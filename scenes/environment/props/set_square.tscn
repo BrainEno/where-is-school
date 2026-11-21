@@ -1,41 +1,11 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=15 format=3]
 
 ; Rebuild with python3 art/classroom/build_set_square.py
 
 [ext_resource type="Material" path="res://assets/materials/classroom/varnish_pale.tres" id="mat_varnish"]
+[ext_resource type="Material" path="res://assets/materials/classroom/set_square_pigments.tres" id="mat_pigments"]
 [ext_resource type="Material" path="res://assets/materials/classroom/tape_browned.tres" id="mat_tape"]
 [ext_resource type="Material" path="res://assets/materials/classroom/metal_ink.tres" id="mat_ink"]
-
-[sub_resource type="StandardMaterial3D" id="Mat_tape_overlap"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.749, 0.588, 0.310, 1)
-cull_mode = 2
-
-[sub_resource type="StandardMaterial3D" id="Mat_end_grain"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.42, 0.286, 0.18, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_grain"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.741, 0.58, 0.404, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_grip"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.906, 0.816, 0.651, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_worn_lacquer"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.965, 0.882, 0.737, 1)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_art1"]
 _surfaces = [{
@@ -62,7 +32,8 @@ _surfaces = [{
 [sub_resource type="ArrayMesh" id="ArrayMesh_art3"]
 _surfaces = [{
 "aabb": AABB(0.0960000, 0.0000000, 0.0733091, 0.0490000, 0.0280000, 0.1366909),
-"format": 34359742471,
+"format": 34359742479,
+"attribute_data": PackedByteArray("a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv8="),
 "index_count": 48,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8A"),
 "primitive": 3,
@@ -73,7 +44,8 @@ _surfaces = [{
 [sub_resource type="ArrayMesh" id="ArrayMesh_art4"]
 _surfaces = [{
 "aabb": AABB(0.1100000, 0.0000000, 0.0733091, 0.0490000, 0.0280000, 0.1366909),
-"format": 34359742471,
+"format": 34359742479,
+"attribute_data": PackedByteArray("a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv9rSS7/a0ku/2tJLv8="),
 "index_count": 48,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8A"),
 "primitive": 3,
@@ -95,7 +67,8 @@ _surfaces = [{
 [sub_resource type="ArrayMesh" id="ArrayMesh_art6"]
 _surfaces = [{
 "aabb": AABB(0.0570000, -0.0040000, 0.0601455, 0.0710000, 0.0360000, 0.1538545),
-"format": 34359742471,
+"format": 34359742479,
+"attribute_data": PackedByteArray("v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//v5ZP/7+WT/+/lk//"),
 "index_count": 144,
 "index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGwAcAB0AHgAfACAAIQAiACMAJAAlACYAJwAoACkAKgArACwALQAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsAPAA9AD4APwBAAEEAQgBDAEQARQBGAEcASABJAEoASwBMAE0ATgBPAFAAUQBSAFMAVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8A"),
 "primitive": 3,
@@ -106,7 +79,8 @@ _surfaces = [{
 [sub_resource type="ArrayMesh" id="ArrayMesh_art7"]
 _surfaces = [{
 "aabb": AABB(-0.2390691, 0.0285000, -0.0813933, 0.4264755, 0.0000000, 0.2587926),
-"format": 34359742471,
+"format": 34359742479,
+"attribute_data": PackedByteArray("vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/+9lGf/vZRn/72UZ/8="),
 "index_count": 84,
 "index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZABoAGAAaABsAHAAdAB4AHAAeAB8AIAAhACIAIAAiACMAJAAlACYAJAAmACcAKAApACoAKAAqACsALAAtAC4ALAAuAC8AMAAxADIAMAAyADMANAA1ADYANAA2ADcA"),
 "primitive": 3,
@@ -117,7 +91,8 @@ _surfaces = [{
 [sub_resource type="ArrayMesh" id="ArrayMesh_art8"]
 _surfaces = [{
 "aabb": AABB(-0.2270000, 0.0285000, 0.0980000, 0.1600000, 0.0000000, 0.0620000),
-"format": 34359742471,
+"format": 34359742479,
+"attribute_data": PackedByteArray("59Cm/+fQpv/n0Kb/59Cm/+fQpv/n0Kb/"),
 "index_count": 12,
 "index_data": PackedByteArray("AAABAAIAAAACAAMAAAADAAQAAAAEAAUA"),
 "primitive": 3,
@@ -127,6 +102,18 @@ _surfaces = [{
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_art9"]
 _surfaces = [{
+"aabb": AABB(-0.2110000, 0.0290000, 0.1110000, 0.1180000, 0.0000000, 0.0390000),
+"format": 34359742479,
+"attribute_data": PackedByteArray("9uG8//bhvP/24bz/9uG8//bhvP8="),
+"index_count": 9,
+"index_data": PackedByteArray("AAABAAIAAAACAAMAAAADAAQA"),
+"primitive": 3,
+"vertex_count": 5,
+"vertex_data": PackedByteArray("YhBYvmiR7TxKDAI+w/UovmiR7Tz4U+M9yXa+vWiR7Ty4HgU+c2gRvmiR7TxQjRc+O99PvmiR7TyamRk+/3///////7//f///////v/9///////+//3///////7//f///////vw==")
+}]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_art10"]
+_surfaces = [{
 "aabb": AABB(-0.2690000, 0.0290000, -0.1526000, 0.5046000, 0.0000000, 0.3576000),
 "format": 34359742471,
 "index_count": 216,
@@ -134,17 +121,6 @@ _surfaces = [{
 "primitive": 3,
 "vertex_count": 144,
 "vertex_data": PackedByteArray("24p9vmiR7TyF61E+24p9vmiR7Tx9PzU+/kN6vmiR7Tx9PzU+/kN6vmiR7TyF61E++Q9pvmiR7TyF61E++Q9pvmiR7Tymm0Q+HcllvmiR7Tymm0Q+HcllvmiR7TyF61E+GJVUvmiR7TyF61E+GJVUvmiR7Tymm0Q+PE5RvmiR7Tymm0Q+PE5RvmiR7TyF61E+NxpAvmiR7TyF61E+NxpAvmiR7Tymm0Q+W9M8vmiR7Tymm0Q+W9M8vmiR7TyF61E+Vp8rvmiR7TyF61E+Vp8rvmiR7Tymm0Q+eVgovmiR7Tymm0Q+eVgovmiR7TyF61E+dCQXvmiR7TyF61E+dCQXvmiR7Tx9PzU+mN0TvmiR7Tx9PzU+mN0TvmiR7TyF61E+k6kCvmiR7TyF61E+k6kCvmiR7Tymm0Q+bcX+vWiR7Tymm0Q+bcX+vWiR7TyF61E+ZF3cvWiR7TyF61E+ZF3cvWiR7Tymm0Q+q8/VvWiR7Tymm0Q+q8/VvWiR7TyF61E+oWezvWiR7TyF61E+oWezvWiR7Tymm0Q+6NmsvWiR7Tymm0Q+6NmsvWiR7TyF61E+3nGKvWiR7TyF61E+3nGKvWiR7Tymm0Q+JuSDvWiR7Tymm0Q+JuSDvWiR7TyF61E+OPhCvWiR7TyF61E+OPhCvWiR7Tx9PzU+xtw1vWiR7Tx9PzU+xtw1vWiR7TyF61E+ZRnivGiR7TyF61E+ZRnivGiR7Tymm0Q+guLHvGiR7Tymm0Q+guLHvGiR7TyF61E+bAn5u2iR7TyF61E+bAn5u2iR7Tymm0Q+4C2Qu2iR7Tymm0Q+4C2Qu2iR7TyF61E+XylLPGiR7TyF61E+XylLPGiR7Tymm0Q+JJd/PGiR7Tymm0Q+JJd/PGiR7TyF61E+vw4cPmiR7TyF61E+vw4cPmiR7Tx9PzU+m1UfPmiR7Tx9PzU+m1UfPmiR7TyF61E+oIkwPmiR7TyF61E+oIkwPmiR7Tymm0Q+fdAzPmiR7Tymm0Q+fdAzPmiR7TyF61E+gQRFPmiR7TyF61E+gQRFPmiR7Tymm0Q+XktIPmiR7Tymm0Q+XktIPmiR7TyF61E+Y39ZPmiR7TyF61E+Y39ZPmiR7Tymm0Q+P8ZcPmiR7Tymm0Q+P8ZcPmiR7TyF61E+RPptPmiR7TyF61E+RPptPmiR7Tymm0Q+IEFxPmiR7Tymm0Q+IEFxPmiR7TyF61E+XrqJvmiR7Tzoais+tMh2vmiR7Tzoais+tMh2vmiR7TzEsS4+XrqJvmiR7TzEsS4+XrqJvmiR7TwH8BY+bxKDvmiR7TwH8BY+bxKDvmiR7TzjNho+XrqJvmiR7TzjNho+XrqJvmiR7TwldQI+bxKDvmiR7TwldQI+bxKDvmiR7TwCvAU+XrqJvmiR7TwCvAU+XrqJvmiR7TyI9Ns9bxKDvmiR7TyI9Ns9bxKDvmiR7TxBguI9XrqJvmiR7TxBguI9XrqJvmiR7TzF/rI9bxKDvmiR7TzF/rI9bxKDvmiR7Tx+jLk9XrqJvmiR7Tx+jLk9XrqJvmiR7TwDCYo9tMh2vmiR7TwDCYo9tMh2vmiR7Ty8lpA9XrqJvmiR7Ty8lpA9XrqJvmiR7TyBJkI9bxKDvmiR7TyBJkI9bxKDvmiR7TzyQU89XrqJvmiR7TzyQU89XrqJvmiR7Tz3deA8bxKDvmiR7Tz3deA8bxKDvmiR7TzarPo8XrqJvmiR7TzarPo8XrqJvmiR7Tyze/I7bxKDvmiR7Tyze/I7bxKDvmiR7Tyfqy08XrqJvmiR7Tyfqy08XrqJvmiR7Tw7cE68bxKDvmiR7Tw7cE68bxKDvmiR7Tx1Ahq8XrqJvmiR7Tx1Ahq8XrqJvmiR7TyUhwW9tMh2vmiR7TyUhwW9tMh2vmiR7TxF2PC8XrqJvmiR7TxF2PC8XrqJvmiR7TwZc1e9bxKDvmiR7TwZc1e9bxKDvmiR7TyoV0q9XrqJvmiR7TyoV0q9XrqJvmiR7TxPr5S9bxKDvmiR7TxPr5S9bxKDvmiR7TyWIY69XrqJvmiR7TyWIY69XrqJvmiR7TwSpb29bxKDvmiR7TwSpb29bxKDvmiR7TxZF7e9XrqJvmiR7TxZF7e9XrqJvmiR7TzUmua9bxKDvmiR7TzUmua9bxKDvmiR7TwbDeC9XrqJvmiR7TwbDeC9XrqJvmiR7TxLyAe+tMh2vmiR7TxLyAe+tMh2vmiR7TxvgQS+XrqJvmiR7TxvgQS+XrqJvmiR7TwtQxy+bxKDvmiR7TwtQxy+bxKDvmiR7TxQ/Bi+XrqJvmiR7TxQ/Bi+/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
-}]
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_art10"]
-_surfaces = [{
-"aabb": AABB(-0.2110000, 0.0290000, 0.1110000, 0.1180000, 0.0000000, 0.0390000),
-"format": 34359742471,
-"index_count": 9,
-"index_data": PackedByteArray("AAABAAIAAAACAAMAAAADAAQA"),
-"primitive": 3,
-"vertex_count": 5,
-"vertex_data": PackedByteArray("YhBYvmiR7TxKDAI+w/UovmiR7Tz4U+M9yXa+vWiR7Ty4HgU+c2gRvmiR7TxQjRc+O99PvmiR7TyamRk+/3///////7//f///////v/9///////+//3///////7//f///////vw==")
 }]
 
 [node name="SetSquare" type="Node3D"]
@@ -162,12 +138,12 @@ material_override = ExtResource("mat_varnish")
 [node name="ExposedGrain" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art3")
-material_override = SubResource("Mat_end_grain")
+material_override = ExtResource("mat_pigments")
 
 [node name="TipGrain" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art4")
-material_override = SubResource("Mat_end_grain")
+material_override = ExtResource("mat_pigments")
 
 [node name="TapeRepair" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
@@ -178,29 +154,29 @@ cast_shadow = 0
 [node name="TapeOverlap" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art6")
-material_override = SubResource("Mat_tape_overlap")
+material_override = ExtResource("mat_pigments")
 cast_shadow = 0
 
 [node name="Face_grain" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art7")
-material_override = SubResource("Mat_grain")
+material_override = ExtResource("mat_pigments")
 cast_shadow = 0
 
 [node name="Face_grip" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art8")
-material_override = SubResource("Mat_grip")
-cast_shadow = 0
-
-[node name="Face_ink" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0, 0)
-mesh = SubResource("ArrayMesh_art9")
-material_override = ExtResource("mat_ink")
+material_override = ExtResource("mat_pigments")
 cast_shadow = 0
 
 [node name="Face_worn_lacquer" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0, 0)
+mesh = SubResource("ArrayMesh_art9")
+material_override = ExtResource("mat_pigments")
+cast_shadow = 0
+
+[node name="Face_ink" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
 mesh = SubResource("ArrayMesh_art10")
-material_override = SubResource("Mat_worn_lacquer")
+material_override = ExtResource("mat_ink")
 cast_shadow = 0

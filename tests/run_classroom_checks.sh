@@ -37,15 +37,17 @@ esac
 
 "${godot}" --version | tee "${CI_LOG_DIR}/ENGINE.txt"
 
-# Delivery only. At most four previews, two 3800-character chunks apiece;
-# keep within Actions' per-step notice limit and leave the full PNGs untouched.
+# Delivery only: two views per renderer, up to four 3700-character chunks each.
+# The two jobs relay different views but both artifacts carry all full PNGs.
 relay_prop_previews () {
-  local folder="$1" file sha index=0 part
+  local folder="$1"; shift
+  local file sha index part
   local -a parts
-  for file in "${folder}"/1[5-8]_*.jpg; do
+  for file in "$@"; do
+    file="${folder}/${file}"
     [ -f "${file}" ] || continue
-    mapfile -t parts < <(base64 -w 3800 "${file}")
-    [ "${#parts[@]}" -le 2 ] || continue
+    mapfile -t parts < <(base64 -w 3700 "${file}")
+    [ "${#parts[@]}" -le 4 ] || continue
     sha=$(sha256sum "${file}" | cut -d' ' -f1)
     index=0
     for part in "${parts[@]}"; do
@@ -97,14 +99,20 @@ if [ "${render}" -eq 1 ]; then
       --script res://tests/classroom_wall_render_test.gd \
       -- "--output=${CI_LOG_DIR}/pixels-${method}" \
       "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
+    preview_args=()
+    if [ "${GITHUB_ACTIONS:-}" = true ]; then preview_args+=(--prop-previews); fi
     run_check "classroom_capture_${method}" "${capture_limit}" "${godot}" --path . \
       --audio-driver Dummy --resolution 1600x900 \
       --rendering-method "${method}" --rendering-driver "${driver}" \
       --script res://tests/capture_classroom_art.gd \
       -- "--output=${CI_LOG_DIR}/capture-${method}" \
-      "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
+      "--expect-renderer=${method}" "--expect-driver=${driver}" "${preview_args[@]}" || status=1
     if [ "${GITHUB_ACTIONS:-}" = true ] && [ "${status}" -eq 0 ]; then
-      relay_prop_previews "${CI_LOG_DIR}/capture-${method}"
+      if [ "${method}" = forward_plus ]; then
+        relay_prop_previews "${CI_LOG_DIR}/capture-${method}" 15_set_square_detail.jpg 18_front_window_focus.jpg
+      else
+        relay_prop_previews "${CI_LOG_DIR}/capture-${method}" 16_front_window_detail.jpg 17_curtain_closed.jpg
+      fi
     fi
     run_check "classroom_clock_${method}" "${clock_limit}" "${godot}" --path . \
       --audio-driver Dummy --resolution 1600x900 \
