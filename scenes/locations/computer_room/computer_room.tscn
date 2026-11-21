@@ -1,4 +1,4 @@
-[gd_scene load_steps=81 format=3]
+[gd_scene load_steps=80 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -12,9 +12,8 @@
 [ext_resource type="Shader" path="res://assets/shaders/school/crt_register.gdshader" id="crt_shader"]
 [ext_resource type="Script" path="res://scripts/environment/pushable_chair.gd" id="chair_slide"]
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
-[ext_resource type="Script" path="res://scripts/interaction/staged_interactable.gd" id="staged"]
+[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_hotspot.gd" id="station_hotspot"]
 [ext_resource type="Script" path="res://scenes/locations/computer_room/computer_station.gd" id="station_control"]
-[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_power_hotspot.gd" id="power_target"]
 
 [sub_resource type="ShaderMaterial" id="Mat_plaster"]
 shader = ExtResource("paper_shader")
@@ -960,7 +959,7 @@ support_paths = PackedStringArray("../../Station1")
 camera_shot = SubResource("Shot_Observe")
 
 [node name="TerminalSeat" parent="Interactables" instance=ExtResource("tap_target")]
-script = ExtResource("staged")
+script = ExtResource("station_hotspot")
 position = Vector3(3.53, 0.58, -1.33)
 interact_id = &"terminal_seat"
 prompt_key = "prompt.sit"
@@ -969,14 +968,14 @@ outline_paths = PackedStringArray("../../StationChair1/Seat", "../../StationChai
 support_paths = PackedStringArray("../../StationChair1")
 
 [node name="TerminalPower" parent="Interactables" instance=ExtResource("tap_target")]
-script = ExtResource("power_target")
+script = ExtResource("station_hotspot")
 position = Vector3(4.043, 1.056, -2.486)
 interact_id = &"terminal_power"
 prompt_key = "prompt.terminal_power"
 radius = 0.44
 outline_paths = PackedStringArray("../../Station1/Right/TowerPower", "../../Station1/Right/Bezel")
 support_paths = PackedStringArray("../../Station1")
-interaction_enabled = false
+requires_sitter = true
 camera_shot = SubResource("Shot_Power")
 
 [node name="BootGlow" type="OmniLight3D" parent="Station1/Right"]

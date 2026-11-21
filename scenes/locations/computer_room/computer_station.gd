@@ -3,18 +3,17 @@ extends Node
 ## OpeningInteractions.run_staged(); the world stays locked until the terminal is off.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
-const PowerTarget = preload("res://scenes/locations/computer_room/terminal_power_hotspot.gd")
+const Hotspot = preload("res://scenes/locations/computer_room/terminal_hotspot.gd")
 const SessionView = preload("res://scenes/locations/computer_room/terminal_session.gd")
 const SESSION_SCENE := preload("res://scenes/locations/computer_room/terminal_session.tscn")
 
 @onready var _chair: PushableChair = $"../StationChair1"
-@onready var _seat: StagedInteractable = $"../Interactables/TerminalSeat"
-@onready var _power: PowerTarget = $"../Interactables/TerminalPower"
+@onready var _seat: Hotspot = $"../Interactables/TerminalSeat"
+@onready var _power: Hotspot = $"../Interactables/TerminalPower"
 @onready var _raster: MeshInstance3D = $"../Station1/Right/Raster"
 @onready var _led: MeshInstance3D = $"../Station1/Right/Power"
 @onready var _glow: OmniLight3D = $"../Station1/Right/BootGlow"
 
-var _player: PlayerController
 var _panel: SessionView
 var _introduced := false
 var _black := StandardMaterial3D.new()
@@ -30,25 +29,11 @@ func _ready() -> void:
 	_lamp.albedo_color = Color("93e3af")
 	_chair.bind_pick_target(_seat)
 	_chair.snap_back()
+	_seat.chair = _chair
+	_power.chair = _chair
 	_seat.stage_handler = _sit
 	_power.stage_handler = _boot
 	_set_power(false)
-
-
-func _physics_process(_delta: float) -> void:
-	# Movement/click-to-walk can stand up without powering on. Restore the offer
-	# after that transfer; a destination change never carries a seated player over.
-	if _player == null or _player.is_seat_transition_active():
-		return
-	if not _at_station(_player):
-		_player = null
-		_power.sitter = null
-		_seat.interaction_enabled = true
-		_power.interaction_enabled = false
-
-
-func _at_station(player: PlayerController) -> bool:
-	return player.is_seated() and player.global_position.distance_to(_chair.home_mark()) < 0.09
 
 
 func _sit(director: Node) -> Dictionary:
@@ -62,17 +47,14 @@ func _sit(director: Node) -> Dictionary:
 	await Motion.turn_to(player, -_chair.global_basis.z)
 	if player.sit_down(_chair):
 		await _transfer(player)
-		if _at_station(player):
-			_player = player
-			_power.sitter = player
-			_seat.interaction_enabled = false
-			_power.interaction_enabled = true
+		_seat.sitter = player
+		_power.sitter = player
 	return {}
 
 
 func _boot(director: Node) -> Dictionary:
 	var player: PlayerController = director.get_player()
-	if player != _player or not _at_station(player):
+	if player != _power.sitter or not _power.is_station_occupied():
 		return {}
 	if _panel == null:
 		_panel = SESSION_SCENE.instantiate() as SessionView

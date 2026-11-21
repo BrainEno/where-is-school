@@ -307,9 +307,8 @@ def computer_room(b):
 
 
 def station_hotspots(b):
-    staged = b.bind("staged", "res://scripts/interaction/staged_interactable.gd", "Script")
+    hotspot = b.bind("station_hotspot", "res://scenes/locations/computer_room/terminal_hotspot.gd", "Script")
     control = b.bind("station_control", "res://scenes/locations/computer_room/computer_station.gd", "Script")
-    power = b.bind("power_target", "res://scenes/locations/computer_room/terminal_power_hotspot.gd", "Script")
     shot = b.bind("camera_shot", "res://scripts/world/camera_shot.gd", "Script")
     b.subs.append(f'''[sub_resource type="Resource" id="Shot_Power"]
 script = {shot}
@@ -322,18 +321,18 @@ fov = 44.0
 glide_seconds = 0.42
 ''')
     specs = (
-        ("TerminalSeat", "prompt.sit", (3.53,.58,-1.33), 0.42, "StationChair1",
-         ("StationChair1/Seat", "StationChair1/Back"), True),
-        ("TerminalPower", "prompt.terminal_power", (4.043,1.056,-2.486), .44, "Station1",
-         ("Station1/Right/TowerPower", "Station1/Right/Bezel"), False),
+        ("TerminalSeat", "terminal_seat", "prompt.sit", (3.53,.58,-1.33), 0.42,
+         "StationChair1", ("StationChair1/Seat", "StationChair1/Back")),
+        ("TerminalPower", "terminal_power", "prompt.terminal_power", (4.043,1.056,-2.486), .44,
+         "Station1", ("Station1/Right/TowerPower", "Station1/Right/Bezel")),
     )
-    for name, key, pos, radius, support, parts, enabled in specs:
+    for name, id, key, pos, radius, support, parts in specs:
         outline = ", ".join(f'"../../{part}"' for part in parts)
-        extra = 'interaction_enabled = false\ncamera_shot = SubResource("Shot_Power")\n' if not enabled else ""
+        extra = 'requires_sitter = true\ncamera_shot = SubResource("Shot_Power")\n' if id == "terminal_power" else ""
         b.nodes.append(f'''[node name="{name}" parent="Interactables" instance=ExtResource("tap_target")]
-script = {staged if enabled else power}
+script = {hotspot}
 position = {vec3(pos)}
-interact_id = &"{"terminal_seat" if enabled else "terminal_power"}"
+interact_id = &"{id}"
 prompt_key = "{key}"
 radius = {radius}
 outline_paths = PackedStringArray({outline})
