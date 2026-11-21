@@ -98,6 +98,20 @@ static func carry_talk(location: LocationRoot, actor: NpcActor, from: Vector3) -
 	talk.rebuild_pick_shapes()
 
 
+## Run the room's seating performance under the director's lock. Like the intro
+## approach, this carries Q's talk target only once the movement has ended.
+func return_to_classroom_seats(player: PlayerController) -> void:
+	var location := _current()
+	var chairs := ClassroomChairControl.in_room(location)
+	if chairs == null:
+		return
+	var actor := find_actor()
+	var before := actor.global_position if actor != null else Vector3.ZERO
+	await chairs.seat_for_class(player, actor)
+	if actor != null and not actor.global_position.is_equal_approx(before):
+		carry_talk(location, actor, before)
+
+
 ## Makes a rebuilt Q match the story: at his desk after the bell, or at the talk
 ## marker after his introduction. Returns true when it moved him.
 func sync() -> bool:

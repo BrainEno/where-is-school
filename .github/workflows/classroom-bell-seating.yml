@@ -13,6 +13,7 @@ on:
       - 'scripts/world/prologue_beats.gd'
       - 'scripts/world/q_presence.gd'
       - 'tests/classroom_bell_seating_test.gd'
+      - 'tests/q_presence_test.gd'
   workflow_dispatch:
 
 permissions:
@@ -31,17 +32,22 @@ jobs:
           echo "CI_LOG_DIR=$RUNNER_TEMP/bell-seating/logs" >> "$GITHUB_ENV"
           echo "XDG_DATA_HOME=$RUNNER_TEMP/bell-seating/user" >> "$GITHUB_ENV"
       - name: Import and compile
-        run: bash tools/ci_import_godot.sh "$CI_LOG_DIR"
+        run: |
+          echo "::notice title=Bell seating revision::checkout $(git rev-parse HEAD), tree $(git rev-parse 'HEAD^{tree}'), Godot $(godot --version)"
+          bash tools/ci_import_godot.sh "$CI_LOG_DIR"
       - name: Verify the real bell and record the transfers
         shell: bash
         run: |
           set +e
           source tools/ci_run_check.sh
           run_check bell_seating 180 godot --headless --path . --script res://tests/classroom_bell_seating_test.gd
-          run_check bell_seating_render 180 xvfb-run -a --server-args='-screen 0 1440x900x24' \
-            godot --path . --resolution 1440x900 --rendering-driver opengl3 --audio-driver Dummy \
+          run_check q_presence 180 godot --headless --path . --script res://tests/q_presence_test.gd
+          run_check bell_seating_render 180 xvfb-run -a --server-args='-screen 0 1280x720x24' \
+            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --resolution 1120x630 --fixed-fps 36 \
+            --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/classroom_bell_seating_test.gd -- "capture=$RUNNER_TEMP/bell-seating/frames"
-          if grep -nE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' "$CI_LOG_DIR"/bell_seating*.log; then
+          if grep -nE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' \
+            "$CI_LOG_DIR"/bell_seating*.log "$CI_LOG_DIR/q_presence.log"; then
             status=1
           fi
           if [ "$status" != 0 ]; then

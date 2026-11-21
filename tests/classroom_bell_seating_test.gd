@@ -35,23 +35,28 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_state = Harness.ensure_state_autoloads(self)["game_state"]
-	if not _output.is_empty():
+	var capture := not _output.is_empty()
+	if capture:
 		DirAccess.make_dir_recursive_absolute(_output)
 		_check.expect(DisplayServer.get_name() != "headless", "Capture needs a rendered window.")
-	Engine.time_scale = 3.0 if _output.is_empty() else 1.0
+		print("::notice title=Bell seating renderer::%s, %s" % [
+			RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
+	Engine.time_scale = 2.0 if capture else 3.0
 	await _through_bell(false)
 	await _free_world()
-	Engine.time_scale = 3.0
-	await _through_bell(true)
-	await _free_world()
-	await _after_bell()
-	await _free_world()
+	if not capture:
+		# These two cases run in full headless CI. Only the moving pair needs
+		# real pixels; avoid three complete software-rendered lessons.
+		await _through_bell(true)
+		await _free_world()
+		await _after_bell()
+		await _free_world()
 	Engine.time_scale = 1.0
 	Harness.clear_session_state(self)
-	if not _output.is_empty():
+	if capture:
 		_check.expect(_saved_frames == 3, "Expected all three live frames; saved %d." % _saved_frames)
-	Harness.finish(self, _check.failures,
-		"bell seating: two chair transfers before N, already-seated player, lesson handoff and post-bell restore.")
+	Harness.finish(self, _check.failures, "bell seating: two real chair transfers and lesson handoff."
+		if capture else "bell seating: moving pair, already-seated player, lesson handoff and post-bell restore.")
 
 
 func _boot(after_bell: bool) -> bool:
@@ -119,17 +124,22 @@ func _through_bell(already_seated: bool) -> void:
 			q_pulling = true
 			_check.expect(_sequence.is_beat_active() and not _player.is_control_enabled()
 				and _q.get_character_animator().is_playing_action(), "Q slid the chair without a locked performance.")
+			_expect_support(_q.get_character_animator(), _q_chair, true, "Q pulls B1")
 			if not already_seated:
 				await _shot("01_q_pulls_chair")
-		if q_slide > 0.15 and q_slide < 0.47 and q_arrived:
+		if q_slide > 0.15 and q_slide < 0.47 and q_arrived and not q_sitting:
 			q_sitting = true
+			_expect_support(_q.get_character_animator(), _q_chair, false, "Q sits")
 		if player_clip == "classroom_sit" and player_animation.get_action_progress() >= 0.53 and not player_sitting:
 			player_sitting = true
+			_expect_support(player_animation, _chair, false, "Player sits")
 			if not already_seated:
 				await _shot("02_player_sits")
 		player_moved = player_moved or _player.global_position.distance_to(player_start) > 0.03
 		_pump_text()
-		await process_frame
+		# Contact and chair progress are sampled in physics, not at the runner's
+		# render rate. A slow software frame must not skip over the loaded pose.
+		await physics_frame
 	if not _check.expect(_n.visible, "N never reached the entrance after the bell."):
 		return
 	_check.expect(_q.global_position.distance_to(q_start) > 0.8 and q_pulling and q_sitting,
@@ -154,7 +164,16 @@ func _after_bell() -> void:
 	_check.expect(_q.get_character_animator().is_seated() and not _q_chair.is_pushed_back(),
 		"A rebuilt Q did not start seated without replaying the bell.")
 	_player.teleport(Transform3D(Basis.IDENTITY, FRONT_AISLE))
+	# A standing save elsewhere in the room has a tucked chair. Exercise that
+	# pull too, not just the chair left out by a prior get-up.
+	_chair.snap_home()
+	var tucked := _chair.global_position
 	_sequence.start()
+	if _check.expect(await _drive_until(func() -> bool:
+			var offset := _chair.global_position.distance_to(tucked)
+			return offset > 0.15 and offset < 0.47 and not _chair.is_pushed_back()),
+			"Continue did not pull out the protagonist's tucked chair."):
+		_expect_support(_player.get_character_animator(), _chair, true, "Player pulls B2")
 	if not await _expect_lesson():
 		return
 	# No post-lesson move or actor state is serialized. A fresh instance derives Q's
@@ -202,6 +221,27 @@ func _expect_seated(body: Node3D, animator: CharacterVisualAnimation, chair: Pus
 		_check.expect(height > 0.033 and height < 0.095,
 			"%s is floating above or inside the seat (hip relative to wood: %.3f m)." % [body.name, height])
 		print("BELL_SEAT %s thigh_gap=%.3f" % [body.name, height])
+
+
+func _expect_support(animator: CharacterVisualAnimation, chair: PushableChair, flank: bool, label: String) -> void:
+	var contacts := Limb.bind(animator)
+	var hand: Limb = contacts.get("hand.R" if flank else "hand.L")
+	if not _check.expect(hand != null, "%s could not bind the gripping arm." % label):
+		return
+	var grip := chair.backrest_grip_point() if flank else chair.grip_point()
+	var wrist := hand.skeleton.to_global(hand.skeleton.get_bone_global_pose(hand.joints.z).origin)
+	var hand_gap := wrist.distance_to(grip)
+	_check.expect(hand_gap < 0.12, "%s: wrist was %.3f m from the moving chair." % [label, hand_gap])
+	var boot_gap := 0.0
+	for side: String in ["foot.L", "foot.R"]:
+		var leg: Limb = contacts.get(side)
+		if not _check.expect(leg != null, "%s has no %s contact." % [label, side]):
+			continue
+		var ankle := leg.skeleton.to_global(leg.skeleton.get_bone_global_pose(leg.joints.z).origin)
+		var expected := chair.home_mark().y + leg.rest_end.origin.y * leg.skeleton.global_basis.y.length()
+		boot_gap = maxf(boot_gap, absf(ankle.y - expected))
+	_check.expect(boot_gap < 0.03, "%s: an ankle was %.3f m off its planted height." % [label, boot_gap])
+	print("::notice title=Bell seating contact::%s | wrist %.3f m | boot height error %.3f m" % [label, hand_gap, boot_gap])
 
 
 func _expect_q_talk() -> void:

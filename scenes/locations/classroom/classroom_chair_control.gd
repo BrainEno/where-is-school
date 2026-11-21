@@ -12,7 +12,8 @@ const Bag = preload("res://scenes/environment/props/schoolbag.gd")
 ## rather than trading a visibly shorter slide for a body inside the chair.
 const CLASSROOM_SLIDE := 0.64
 const PULL_FLANK := 0.67
-const PULL_BEHIND := 0.12
+# Halfway along the backrest's travel; the wrist can reach both stops.
+const PULL_BEHIND := 0.44
 const PERSON_GAP := 0.65
 
 @export var player_group: StringName = &"protagonist"

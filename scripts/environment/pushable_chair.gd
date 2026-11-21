@@ -73,6 +73,13 @@ func grip_point() -> Vector3:
 	return _seat.to_global(Vector3(0.218, 0.073, -0.197))
 
 
+## A standing pull uses the top of the back, not the much lower seated brace.
+func backrest_grip_point() -> Vector3:
+	var back: MeshInstance3D = $Back
+	var rim := back.get_aabb()
+	return back.to_global(Vector3(rim.end.x - 0.04, rim.end.y + 0.02, rim.get_center().z))
+
+
 func start_slide() -> void:
 	_cue_pending = true
 	_set_solid(false)
