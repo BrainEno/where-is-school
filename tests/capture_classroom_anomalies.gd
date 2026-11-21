@@ -130,6 +130,10 @@ func _run() -> void:
 	var mark := container.get_node(^"Ladder/RoofMark") as Marker3D
 	await _stand(mark.global_position, Vector3.BACK)
 	_activate(&"pg_container_ladder")
+	# The resident is in his doorway, so the ladder asks first (round 8): take the ladder.
+	if not await _choose(&"ladder"):
+		_finish(["The roof ladder did not offer the ladder while the resident watched."])
+		return
 	await _capture_pose("ladder_left", 0.72, "08-ladder.png", 1.35, 1.88)
 	await _settle()
 	if _player.global_position.y > 0.10:
@@ -152,6 +156,9 @@ func _run() -> void:
 
 
 func _focus_shot(id: StringName, frame: String) -> void:
+	# Still dazed from the hurt landing, the tap offers water (round 8): wash, and
+	# photograph the clear yard after it.
+	var dazed := id == &"pg_tap" and int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) > 0
 	_activate(id)
 	var rig := _player.camera_rig
 	if not await Harness.wait_until(func() -> bool:
@@ -165,7 +172,13 @@ func _focus_shot(id: StringName, frame: String) -> void:
 	if id == &"pg_shed_door" and not await _choose(&"leave"):
 		_failures.append("The shed inspection did not offer its unchanged leave choice.")
 		return
+	if dazed and not await _choose(&"wash"):
+		_failures.append("The dazed tap did not offer a wash.")
+		return
 	await _settle()
+	if dazed:
+		await create_timer(ConcussionView.RELIEF_SECONDS + 0.4).timeout
+		await _shot("13b-tap-washed.png")
 
 
 func _seed_balance(passed: bool) -> bool:
