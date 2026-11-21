@@ -274,6 +274,26 @@
     "place.vacant_office": "Empty staff room",
     "place.principal_office": "Principal’s office",
     "place.restroom_02": "Restroom (02)",
-    "place.restroom_03": "Restroom (03)"
+    "place.restroom_03": "Restroom (03)",
+    "prompt.terminal_power": "Power on",
+    "terminal.station": "School terminal 01",
+    "terminal.games": "Games",
+    "terminal.mines": "Minesweeper",
+    "terminal.snake": "Snake",
+    "terminal.shutdown": "Power off & stand",
+    "terminal.restart": "Restart",
+    "terminal.input_check": "Input check",
+    "terminal.keyboard": "Keyboard",
+    "terminal.ready": "Input OK",
+    "terminal.won": "Complete",
+    "terminal.lost": "Game over",
+    "terminal.remaining": "Flags left: {count}",
+    "terminal.score": "Score: {count}",
+    "terminal.marking": "Mode: Flag",
+    "terminal.revealing": "Mode: Reveal",
+    "terminal.play": "Play / Resume",
+    "terminal.pause": "Pause",
+    "terminal.mines_hint": "Click to reveal; right-click to flag.",
+    "terminal.snake_hint": "Arrow keys or buttons below."
   }
 }

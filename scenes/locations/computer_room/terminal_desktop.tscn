@@ -1,0 +1,498 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_desktop.gd" id="desktop"]
+[ext_resource type="Script" path="res://scenes/locations/computer_room/terminal_board.gd" id="board"]
+[ext_resource type="Shader" path="res://scenes/locations/computer_room/terminal_wallpaper.gdshader" id="wallpaper"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="font"]
+
+[sub_resource type="ShaderMaterial" id="Wallpaper"]
+shader = ExtResource("wallpaper")
+
+[sub_resource type="StyleBoxFlat" id="Face"]
+bg_color = Color(0.82, 0.79, 0.76, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.41, 0.36, 0.44, 1)
+shadow_color = Color(0.98, 0.93, 0.87, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="StyleBoxFlat" id="Button"]
+bg_color = Color(0.88, 0.84, 0.82, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.47, 0.4, 0.51, 1)
+shadow_color = Color(1, 0.96, 0.9, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+bg_color = Color(0.9, 0.86, 0.97, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.36, 0.73, 1)
+shadow_color = Color(1, 0.97, 0.92, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="StyleBoxFlat" id="Pressed"]
+bg_color = Color(0.76, 0.7, 0.87, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.43, 0.31, 0.56, 1)
+shadow_color = Color(0.91, 0.83, 0.98, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+bg_color = Color(0.71, 0.63, 0.99, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.31, 0.83, 1)
+shadow_color = Color(0.71, 0.63, 0.99, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+draw_center = false
+
+[sub_resource type="StyleBoxFlat" id="MeterWell"]
+bg_color = Color(0.12, 0.11, 0.21, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.31, 0.27, 0.41, 1)
+shadow_color = Color(0.15, 0.13, 0.25, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="StyleBoxFlat" id="MeterFill"]
+bg_color = Color(0.58, 0.89, 0.73, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.34, 0.62, 0.51, 1)
+shadow_color = Color(0.75, 0.92, 0.75, 1)
+shadow_size = 1
+shadow_offset = Vector2(-1, -1)
+
+[sub_resource type="Theme" id="TerminalTheme"]
+default_font = ExtResource("font")
+default_font_size = 20
+Label/colors/font_color = Color(0.105, 0.078, 0.17, 1)
+Button/colors/font_color = Color(0.105, 0.078, 0.17, 1)
+Button/colors/font_focus_color = Color(0.105, 0.078, 0.17, 1)
+Button/colors/font_hover_color = Color(0.105, 0.078, 0.17, 1)
+Button/colors/font_pressed_color = Color(0.105, 0.078, 0.17, 1)
+Button/colors/font_disabled_color = Color(0.37, 0.31, 0.4, 1)
+Button/styles/normal = SubResource("Button")
+Button/styles/hover = SubResource("Hover")
+Button/styles/pressed = SubResource("Pressed")
+Button/styles/disabled = SubResource("Face")
+Button/styles/focus = SubResource("Focus")
+Panel/styles/panel = SubResource("Face")
+ProgressBar/styles/background = SubResource("MeterWell")
+ProgressBar/styles/fill = SubResource("MeterFill")
+
+[node name="Desktop" type="Control"]
+offset_right = 640.0
+offset_bottom = 480.0
+mouse_filter = 2
+theme = SubResource("TerminalTheme")
+script = ExtResource("desktop")
+
+[node name="Wallpaper" type="ColorRect" parent="."]
+offset_right = 640.0
+offset_bottom = 480.0
+color = Color(1, 1, 1, 1)
+mouse_filter = 2
+material = SubResource("Wallpaper")
+
+[node name="DesktopLauncher" type="Control" parent="."]
+offset_right = 640.0
+offset_bottom = 422.0
+mouse_filter = 2
+
+[node name="LaunchPanel" type="ColorRect" parent="DesktopLauncher"]
+offset_left = 36.0
+offset_top = 58.0
+offset_right = 284.0
+offset_bottom = 363.0
+color = Color(0.13, 0.083, 0.25, 0.95)
+mouse_filter = 2
+
+[node name="PanelBorder" type="ColorRect" parent="DesktopLauncher"]
+offset_left = 36.0
+offset_top = 58.0
+offset_right = 284.0
+offset_bottom = 62.0
+color = Color(0.71, 0.58, 0.84, 1)
+mouse_filter = 2
+
+[node name="Brand" type="Label" parent="DesktopLauncher"]
+offset_left = 58.0
+offset_top = 77.0
+offset_right = 262.0
+offset_bottom = 103.0
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+text = "REGISTER / 01"
+theme_override_colors/font_color = Color(0.68, 0.94, 0.81, 1)
+
+[node name="Label" type="Label" parent="DesktopLauncher"]
+offset_left = 56.0
+offset_top = 106.0
+offset_right = 262.0
+offset_bottom = 165.0
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.99, 0.92, 0.8, 1)
+
+[node name="Rule" type="ColorRect" parent="DesktopLauncher"]
+offset_left = 58.0
+offset_top = 172.0
+offset_right = 262.0
+offset_bottom = 174.0
+color = Color(0.56, 0.46, 0.66, 1)
+mouse_filter = 2
+
+[node name="Mines" type="Button" parent="DesktopLauncher"]
+offset_left = 56.0
+offset_top = 191.0
+offset_right = 264.0
+offset_bottom = 247.0
+focus_mode = 2
+theme_override_font_sizes/font_size = 22
+
+[node name="Snake" type="Button" parent="DesktopLauncher"]
+offset_left = 56.0
+offset_top = 269.0
+offset_right = 264.0
+offset_bottom = 325.0
+focus_mode = 2
+theme_override_font_sizes/font_size = 22
+
+[node name="MineMark" type="Polygon2D" parent="DesktopLauncher/Mines"]
+position = Vector2(17, 15)
+color = Color(0.48, 0.16, 0.34, 1)
+polygon = PackedVector2Array(0, 0, 18, 8, 0, 16)
+
+[node name="SnakeMark" type="Polygon2D" parent="DesktopLauncher/Snake"]
+position = Vector2(17, 18)
+color = Color(0.14, 0.34, 0.25, 1)
+polygon = PackedVector2Array(0, 0, 18, 0, 18, 17, 11, 17, 11, 6, 0, 6)
+
+[node name="FlagPole" type="Polygon2D" parent="DesktopLauncher/Mines"]
+position = Vector2(17, 15)
+color = Color(0.22, 0.13, 0.31, 1)
+polygon = PackedVector2Array(0, 0, 3, 0, 3, 25, 0, 25)
+
+[node name="Game" type="Control" parent="."]
+offset_right = 640.0
+offset_bottom = 416.0
+mouse_filter = 2
+
+[node name="Window" type="Panel" parent="Game"]
+offset_left = 18.0
+offset_top = 14.0
+offset_right = 622.0
+offset_bottom = 414.0
+mouse_filter = 2
+
+[node name="Title" type="ColorRect" parent="Game"]
+offset_left = 23.0
+offset_top = 19.0
+offset_right = 617.0
+offset_bottom = 59.0
+color = Color(0.28, 0.19, 0.45, 1)
+mouse_filter = 2
+
+[node name="Heading" type="Label" parent="Game"]
+offset_left = 36.0
+offset_top = 21.0
+offset_right = 470.0
+offset_bottom = 57.0
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.99, 0.92, 0.8, 1)
+
+[node name="Close" type="Button" parent="Game"]
+offset_left = 566.0
+offset_top = 22.0
+offset_right = 612.0
+offset_bottom = 55.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "×"
+
+[node name="Board" type="Control" parent="Game"]
+offset_left = 36.0
+offset_top = 70.0
+offset_right = 342.0
+offset_bottom = 397.0
+script = ExtResource("board")
+
+[node name="Status" type="Label" parent="Game"]
+offset_left = 366.0
+offset_top = 81.0
+offset_right = 596.0
+offset_bottom = 118.0
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Result" type="Label" parent="Game"]
+offset_left = 366.0
+offset_top = 119.0
+offset_right = 596.0
+offset_bottom = 151.0
+theme_override_font_sizes/font_size = 21
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Mode" type="Button" parent="Game"]
+offset_left = 366.0
+offset_top = 162.0
+offset_right = 596.0
+offset_bottom = 205.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+
+[node name="Restart" type="Button" parent="Game"]
+offset_left = 366.0
+offset_top = 215.0
+offset_right = 596.0
+offset_bottom = 258.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+
+[node name="Pad" type="Control" parent="Game"]
+offset_left = 388.0
+offset_top = 294.0
+offset_right = 573.0
+offset_bottom = 373.0
+mouse_filter = 2
+
+[node name="Up" type="Button" parent="Game/Pad"]
+offset_left = 65.0
+offset_right = 120.0
+offset_bottom = 39.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "↑"
+
+[node name="Left" type="Button" parent="Game/Pad"]
+offset_left = 4.0
+offset_top = 43.0
+offset_right = 59.0
+offset_bottom = 82.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "←"
+
+[node name="Down" type="Button" parent="Game/Pad"]
+offset_left = 65.0
+offset_top = 43.0
+offset_right = 120.0
+offset_bottom = 82.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "↓"
+
+[node name="Right" type="Button" parent="Game/Pad"]
+offset_left = 126.0
+offset_top = 43.0
+offset_right = 181.0
+offset_bottom = 82.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "→"
+
+[node name="Hint" type="Label" parent="Game"]
+offset_left = 366.0
+offset_top = 261.0
+offset_right = 601.0
+offset_bottom = 291.0
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+autowrap_mode = 2
+
+[node name="Startup" type="Control" parent="."]
+offset_right = 640.0
+offset_bottom = 480.0
+mouse_filter = 2
+
+[node name="Black" type="ColorRect" parent="Startup"]
+offset_right = 640.0
+offset_bottom = 480.0
+color = Color(0.05, 0.046, 0.105, 1)
+mouse_filter = 2
+
+[node name="Beam" type="ColorRect" parent="Startup"]
+offset_top = 238.0
+offset_right = 640.0
+offset_bottom = 241.0
+color = Color(0.68, 0.94, 0.81, 1)
+mouse_filter = 2
+pivot_offset = Vector2(320, 1.5)
+
+[node name="Post" type="Label" parent="Startup"]
+offset_left = 37.0
+offset_top = 31.0
+offset_right = 320.0
+offset_bottom = 143.0
+theme_override_font_sizes/font_size = 21
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.68, 0.94, 0.81, 1)
+
+[node name="Logo" type="Control" parent="Startup"]
+offset_right = 640.0
+offset_bottom = 420.0
+mouse_filter = 2
+
+[node name="Trace" type="Polygon2D" parent="Startup/Logo"]
+position = Vector2(262, 125)
+color = Color(0.68, 0.94, 0.81, 1)
+polygon = PackedVector2Array(0, 34, 32, 34, 32, 18, 63, 18, 63, 0, 116, 0, 116, 13, 77, 13, 77, 30, 46, 30, 46, 48, 0, 48)
+
+[node name="Offset" type="Polygon2D" parent="Startup/Logo"]
+position = Vector2(277, 180)
+color = Color(0.98, 0.61, 0.55, 1)
+polygon = PackedVector2Array(0, 0, 44, 0, 44, 10, 0, 10)
+
+[node name="Wordmark" type="Label" parent="Startup/Logo"]
+offset_top = 218.0
+offset_right = 640.0
+offset_bottom = 261.0
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+text = "R E G I S T E R"
+theme_override_colors/font_color = Color(0.99, 0.92, 0.8, 1)
+
+[node name="Version" type="Label" parent="Startup/Logo"]
+offset_top = 265.0
+offset_right = 640.0
+offset_bottom = 298.0
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+text = "V1.04   /   32 MB"
+theme_override_colors/font_color = Color(0.68, 0.94, 0.81, 1)
+
+[node name="Progress" type="ProgressBar" parent="Startup"]
+offset_left = 237.0
+offset_top = 325.0
+offset_right = 403.0
+offset_bottom = 337.0
+max_value = 1.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="InputCheck" type="Panel" parent="Startup"]
+offset_left = 115.0
+offset_top = 133.0
+offset_right = 525.0
+offset_bottom = 325.0
+mouse_filter = 2
+
+[node name="Title" type="ColorRect" parent="Startup/InputCheck"]
+offset_left = 5.0
+offset_top = 5.0
+offset_right = 405.0
+offset_bottom = 43.0
+color = Color(0.28, 0.19, 0.45, 1)
+mouse_filter = 2
+
+[node name="Heading" type="Label" parent="Startup/InputCheck"]
+offset_left = 20.0
+offset_top = 7.0
+offset_right = 390.0
+offset_bottom = 42.0
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.99, 0.92, 0.8, 1)
+
+[node name="State" type="Label" parent="Startup/InputCheck"]
+offset_left = 28.0
+offset_top = 62.0
+offset_right = 382.0
+offset_bottom = 103.0
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Keys" type="Label" parent="Startup/InputCheck"]
+offset_left = 28.0
+offset_top = 109.0
+offset_right = 382.0
+offset_bottom = 165.0
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="BottomBar" type="Control" parent="."]
+offset_right = 640.0
+offset_bottom = 480.0
+mouse_filter = 2
+
+[node name="Rule" type="ColorRect" parent="BottomBar"]
+offset_top = 431.0
+offset_right = 640.0
+offset_bottom = 434.0
+color = Color(0.97, 0.89, 0.83, 1)
+mouse_filter = 2
+
+[node name="Bar" type="ColorRect" parent="BottomBar"]
+offset_top = 434.0
+offset_right = 640.0
+offset_bottom = 480.0
+color = Color(0.77, 0.71, 0.78, 1)
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="BottomBar"]
+offset_left = 24.0
+offset_top = 437.0
+offset_right = 450.0
+offset_bottom = 476.0
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 0
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Power" type="Button" parent="BottomBar"]
+offset_left = 467.0
+offset_top = 440.0
+offset_right = 621.0
+offset_bottom = 474.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 17

@@ -395,6 +395,16 @@ outcomes, and decides where a normal exchange or an argument ends. Once approved
 use the existing conversation conditions and choices. Test both attitudes after
 both landings, and do not treat an ordinary gate arrival as an impact encounter.
 
+### Computer room — unwritten recollection and discovery
+
+`terminal_seat` and the first completed `terminal_power` stage the two moments:
+seated at the familiar cabinet before the power goes on, then a hesitant first
+key followed by a fluent input check. The CRT's labels are equipment and game
+controls, not the protagonist's thoughts. No dialogue/inspection records or
+story flags were added. The author can supply what the student remembers at the
+seat and what he notices at the desk; neither moment asserts an explanation or
+adds the computer teacher, later update sequence or programmer reveal.
+
 Working through this list is what the editor dock is for: both languages of one line are
 in front of you, the structure they have to keep is shown read-only beside them, and a
 save refuses to write a file that breaks it.
