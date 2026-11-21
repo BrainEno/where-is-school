@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/dev/name_quest/preview.gd" id="1_preview"]
+
+[node name="NameQuestPreview" type="Node"]
+script = ExtResource("1_preview")
+
+[node name="PreviewHUD" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Progress" type="Label" parent="PreviewHUD"]
+offset_left = 54.0
+offset_top = 40.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.97, 0.89, 0.73, 1)
+theme_override_colors/font_outline_color = Color(0.13, 0.10, 0.14, 1)
+theme_override_constants/outline_size = 6
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 19
