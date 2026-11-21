@@ -1513,7 +1513,7 @@ func _capture_click_navigation() -> void:
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	# Which way an automatic walk ends: a finish or a cancel. A walk that stops without
 	# travelling has to say which of the two ended it.
-	var endings := [0, 0]
+	var endings: Array[int] = [0, 0]
 	_player.path_finished.connect(func() -> void: endings[0] += 1)
 	_player.path_cancelled.connect(func() -> void: endings[1] += 1)
 	var start := _player.global_position
@@ -1665,11 +1665,10 @@ func _capture_click_navigation() -> void:
 		_note("cue audio: no CueAudio autoload in this run; the cues were silent")
 
 
-## The first click can finish by a wall with no usable floor in view. The keyboard
-## takeover is a separate case: a single real click down the middle aisle, then a key
-## while that exact route is active. A stale floor pixel and a cancelled walk are not
-## the same result.
-func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array) -> void:
+## The first click can finish by a wall where a second floor pick is sensitive to
+## the camera position. Test takeover separately: one real click down the middle
+## aisle, then a key while that exact route is active.
+func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array[int]) -> void:
 	var rig := _main.get_node_or_null(^"CameraRig") as CameraRig
 	if navigator == null or rig == null:
 		_failures.append("The interruption shot needs the real pointer navigator and camera rig.")
@@ -1702,12 +1701,13 @@ func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array) -> 
 			navigator.get_last_rejection(), str(_player.get_path_target()),
 		])
 		return
-	var before_key := endings.duplicate()
+	var finished_before: int = endings[0]
+	var cancelled_before: int = endings[1]
 	Input.action_press("move_forward")
 	await _wait(0.4)
 	Input.action_release("move_forward")
-	var cancelled := not _player.is_path_active() and endings[1] == before_key[1] + 1 \
-		and endings[0] == before_key[0] and _player.is_control_enabled() and not _dialogue.is_busy()
+	var cancelled: bool = not _player.is_path_active() and endings[1] == cancelled_before + 1 \
+		and endings[0] == finished_before and _player.is_control_enabled() and not _dialogue.is_busy()
 	_note("middle aisle walk: started by one click at %s; cancelled by WASD=%s" % [str(goal), cancelled])
 	if not cancelled:
 		_failures.append("Holding a movement key did not cancel the active middle-aisle walk exactly once.")
