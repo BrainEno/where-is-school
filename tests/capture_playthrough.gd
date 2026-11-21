@@ -1675,8 +1675,9 @@ func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array[int]
 		return
 	if not await _wait_for_free(45.0):
 		return
-	var start := Vector3(-0.375, 0.0, 2.5)
-	var goal := Vector3(-0.375, 0.0, -2.25)
+	# Use the level aisle, not the teaching step at z = -2.23.
+	var start := Vector3(-0.375, 0.0, 3.55)
+	var goal := Vector3(-0.375, 0.0, -0.7)
 	_teleport(start, 0.0)
 	if not await _poll(func() -> bool:
 		return rig.camera == root.get_camera_3d() and is_zero_approx(rig.get_focus_weight()) \
@@ -1685,20 +1686,24 @@ func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array[int]
 		return
 	var screen := rig.camera.unproject_position(goal)
 	var hit: Variant = navigator.get_ground_point_at(screen)
-	if not root.get_visible_rect().has_point(screen) or not hit is Vector3 \
-			or goal.distance_to(hit) > 0.25 or not _reaches(hit) \
-			or _interaction.get_target_at_screen_position(screen, false) != null:
-		_failures.append("The interruption click cannot see routed floor at %s from %s (hit %s)." % [
-			str(goal), str(start), str(hit),
-		])
+	if not root.get_visible_rect().has_point(screen) or not hit is Vector3:
+		_failures.append("The interruption click found no routed floor at %s from %s." % [str(goal), str(start)])
+		return
+	# The pick snaps to the baked mesh, whose voxel height differs from the rendered
+	# floor. Check the intended floor position in plan, then match the actual path
+	# against the routed point, not against the drawn surface height.
+	var routed_goal: Vector3 = hit
+	if Vector2(routed_goal.x - goal.x, routed_goal.z - goal.z).length() > 0.25 \
+			or not _reaches(routed_goal) or _interaction.get_target_at_screen_position(screen, false) != null:
+		_failures.append("The interruption click picked %s, not the clear aisle at %s." % [str(routed_goal), str(goal)])
 		return
 	var clicks := navigator.get_click_count()
 	await _click_at_screen(screen)
 	var walking := await _poll(func() -> bool: return _player.is_path_active(), 2.0)
-	if not walking or navigator.get_click_count() != clicks + 1 \
-			or goal.distance_to(_player.get_path_target()) > 0.25:
-		_failures.append("The interruption click did not start the middle-aisle walk: %s; target %s." % [
-			navigator.get_last_rejection(), str(_player.get_path_target()),
+	if not walking or navigator.get_click_count() != clicks + 1 or not navigator.was_last_click_accepted() \
+			or routed_goal.distance_to(_player.get_path_target()) > 0.25:
+		_failures.append("The interruption click did not start the middle-aisle walk: %s; target %s, wanted %s." % [
+			navigator.get_last_rejection(), str(_player.get_path_target()), str(routed_goal),
 		])
 		return
 	var finished_before: int = endings[0]
