@@ -5,7 +5,7 @@
 project: metres, +Y up, faces -Z, no node scale, no cameras, no lights. §3 says where a
 model file lives. Until now both were prose: nothing in CI had ever looked inside a
 `.glb`, so a model could arrive with a camera in it, a 2x node scale that throws off every
-collision shape written against it, or 4K textures that blow the 16 MiB pack budget on
+collision shape written against it, or 4K textures that blow the 24 MiB pack budget on
 their own, and the first time anyone found out was a red export job weeks later.
 
 This tool is the reader. `--check` walks every `assets/models/**/*.glb` and fails on the
@@ -494,9 +494,10 @@ MANIFEST_SCHEMA = "where-is-school/runtime-model-manifest"
 MANIFEST_SCHEMA_VERSION = 1
 MANIFEST_PARTS = ("art", "character_rig_audit", "runtime_model_manifest.json")
 
-# The four rigged characters the game actually instantiates, exactly as the manifest must
-# spell them: the former protagonist (now the seated classroom student), Q, the player's
-# protagonist and substitute teacher N. The manifest registers *these*, once each, and
+# The rigged characters the game actually instantiates, exactly as the manifest must spell
+# them: the former protagonist (now the seated classroom student), Q, the player's
+# protagonist, substitute teacher N and biology teacher B (the imagined lesson,
+# scenes/locations/classroom/imagined_lesson.tscn). The manifest registers *these*, once each, and
 # nothing else. "At least one model" is not the contract: deleting Q's entry would leave the
 # file valid, plausible and silently unchecked, which is the failure this list exists to
 # make impossible. Each new character is appended, so the earlier ones keep the indices the
@@ -506,6 +507,7 @@ REQUIRED_RUNTIME_MODELS = (
     "assets/models/q/new-Q.glb",
     "assets/models/protagonist/Protagonist_Character.glb",
     "assets/models/teacher-n/teacher-n.glb",
+    "assets/models/teacher_b/teacher_b.glb",
 )
 
 # The fields `describe_model` generates. `--update-manifest` replaces exactly these and
