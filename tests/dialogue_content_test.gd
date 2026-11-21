@@ -334,12 +334,17 @@ func _check_q_branch(
 		var expected_hubs: Array[StringName] = [&"q_3", &"q_who_look", &"p_zero", &"q_topic_ask"]
 		if picks[3] == 0:
 			expected_hubs.append(&"q_ecosystem")
-		# Every branch ends at q_b_looks; alternate the answer so both are walked.
-		expected_hubs.append(&"q_b_looks")
-		var imagine_pick := 0
-		for pick: int in picks:
-			imagine_pick += pick
-		imagine_pick %= 2
+		# q_b_looks follows Q's description of B, which only the branches that go on
+		# looking for the book reach (`search`, or `ask` then `keep_searching`); there the
+		# answer alternates so both are walked. Elsewhere nothing offers the imagined scene.
+		var describes_b: bool = picks[3] == 2 or (picks[3] == 0 and picks[4] == 1)
+		var imagine_pick := 1
+		if describes_b:
+			expected_hubs.append(&"q_b_looks")
+			imagine_pick = 0
+			for pick: int in picks:
+				imagine_pick += pick
+			imagine_pick %= 2
 		var answers := picks.duplicate()
 		answers.append(imagine_pick)
 		while runtime.is_active() and steps < 100:

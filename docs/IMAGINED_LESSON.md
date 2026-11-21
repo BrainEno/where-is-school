@@ -119,6 +119,9 @@ unchanged; every new line reads 「待做·…」 / "TODO · …" and waits for 
 - **Entry.** Q describes B (`q_wake`, `q_b_looks`); the player picks 「待做·去想象B」 or
   「待做·不去想」. Picturing her starts the scene as soon as Q's talk ends; there is no later
   automatic play. The scene no longer waits for the bag.
+  Q describes B only on the author's branches that go on looking for the book (`search`, or
+  `ask` then `keep_searching`); a talk that ends in silence, the grabbed book or the borrow
+  plan never offers the choice, and the scene is passed over.
 - **Hubs.** Each of B's four authored lines (`b_e_1`–`b_e_4`) offers three directions:
   `normal` (正常应对), `absurd` (荒诞/装疯) and `exit` (跳出幻想). Each direction is 2–4
   rounds of protagonist/B placeholders; a B line between rounds offers `go_on` and `exit`,
