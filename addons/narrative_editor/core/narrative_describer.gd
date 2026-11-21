@@ -479,6 +479,8 @@ func _describe_effects(raw: Variant) -> String:
 				parts.append(
 					"记录 %s（%s）" % [String(data.get("entry_id", "")), String(data.get("source", ""))]
 				)
+			"camera_focus":
+				parts.append("聚焦 → %s" % String(data.get("target", "")))
 			_:
 				parts.append(JSON.stringify(data))
 	return "；".join(PackedStringArray(parts))

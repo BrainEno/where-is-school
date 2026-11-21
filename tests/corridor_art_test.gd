@@ -289,7 +289,10 @@ func _check_biology_thresholds(location: LocationRoot, wall: Node3D, inside: boo
 	if not _check.expect(through != null and locked != null and front != null and rear != null and spawn != null,
 		"%s has no matching front threshold and rear-door inspection." % location.name):
 		return
-	_check.expect(not (locked is LocationExit or locked is StagedInteractable) and locked.inspection_id == &"classroom_rear_door",
+	# Inside, the door is staged for its one borrow attempt (ClassroomAnomalies) and
+	# otherwise reads the same locked line; it is never an exit.
+	_check.expect(not locked is LocationExit and (inside or not locked is StagedInteractable)
+		and locked.inspection_id == &"classroom_rear_door",
 		"The rear door is not an inspection-only target in %s." % location.name)
 	if inside:
 		var exits := location.get_interactables().filter(func(target: Interactable) -> bool: return target is LocationExit)

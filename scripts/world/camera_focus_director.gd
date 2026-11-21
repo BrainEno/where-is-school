@@ -13,12 +13,29 @@ extends RefCounted
 ## change here. An activation that never ends up locking the player (refused, or an error
 ## path) is released on the next frame instead of hanging on. A location change drops the
 ## shot at once (`clear`), alongside `release_frame`.
+##
+## A conversation can also ask for a short look of its own (`glance`, from a dialogue
+## `camera_focus` effect): the camera turns to an object of the room while the next line
+## is read, then goes back to what the conversation was framed on. Nothing is stored; a
+## glance never outlives the conversation that asked for it.
+
+## Glide and framing for a glance at an object that carries no `CameraShot` of its own.
+const GLANCE_SUBJECT_MIX := 0.72
+const GLANCE_DISTANCE_SCALE := 0.72
+const GLANCE_FOV := 46.0
+## Lines a glance holds for: the one shown when it starts, then it lets go as the next
+## one appears.
+const GLANCE_LINES := 1
 
 var _rig: CameraRig = null
 var _subject: Interactable = null
 ## Whether the player has been locked since the shot was engaged; only then does an
 ## unlock mean "the interaction is over".
 var _lock_seen := false
+## The interactable a conversation asked to look at, and how many lines have been shown
+## since. Null when no glance is held.
+var _glance: Interactable = null
+var _glance_lines := 0
 
 
 func _init(rig: CameraRig) -> void:
@@ -41,7 +58,7 @@ func engage(interactable: Interactable) -> void:
 
 ## Called whenever the player's lock is recomputed.
 func on_lock_changed(locked: bool) -> void:
-	if _subject == null:
+	if _subject == null and _glance == null:
 		return
 	if locked:
 		_lock_seen = true
@@ -52,6 +69,7 @@ func on_lock_changed(locked: bool) -> void:
 ## Glides back to the default framing.
 func release() -> void:
 	_subject = null
+	_glance = null
 	_lock_seen = false
 	if _rig != null:
 		_rig.release_focus()
@@ -60,9 +78,62 @@ func release() -> void:
 ## Back to the default framing at once (location change).
 func clear() -> void:
 	_subject = null
+	_glance = null
 	_lock_seen = false
 	if _rig != null:
 		_rig.clear_focus()
+
+
+## Looks at `subject` for the line that is about to be shown (a dialogue `camera_focus`
+## effect). Only called while a conversation holds the player, so the end of that
+## conversation is the latest moment the glance is let go. `shot` defaults to the
+## subject's own, or to `glance_shot()` when it has none.
+func glance(subject: Interactable, shot: CameraShot = null) -> void:
+	if _rig == null or subject == null:
+		return
+	if shot == null:
+		shot = subject.camera_shot if subject.camera_shot != null else glance_shot()
+	_glance = subject
+	_glance_lines = 0
+	_lock_seen = true
+	_rig.focus_on(subject, shot)
+
+
+## Called for every dialogue line that reaches the screen; ends a glance once the line it
+## was asked for has been read.
+func on_line_presented() -> void:
+	if _glance == null:
+		return
+	_glance_lines += 1
+	if _glance_lines > GLANCE_LINES:
+		end_glance()
+
+
+## Gives the framing back to the interaction's own shot, or to the default.
+func end_glance() -> void:
+	if _glance == null:
+		return
+	_glance = null
+	if _rig == null:
+		return
+	if _subject != null and _subject.camera_shot != null:
+		_rig.focus_on(_subject, _subject.camera_shot)
+	else:
+		_rig.release_focus()
+
+
+## The interactable a glance is held on, or null.
+func get_glance() -> Interactable:
+	return _glance
+
+
+## The framing for a glance at an object without a shot of its own.
+static func glance_shot() -> CameraShot:
+	var shot := CameraShot.new()
+	shot.subject_mix = GLANCE_SUBJECT_MIX
+	shot.distance_scale = GLANCE_DISTANCE_SCALE
+	shot.fov = GLANCE_FOV
+	return shot
 
 
 ## The interactable whose shot is held, or null.

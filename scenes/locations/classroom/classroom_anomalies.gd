@@ -3,6 +3,14 @@ extends Node3D
 ## Owns the back curtain and the route through the cut in the west wall. The darkness
 ## is the room's world background, not a surface, and the temporary stop that keeps a
 ## closed curtain from being walked through is taken out of physics when it opens.
+##
+## Also owns the rear door. It is locked and says so (`classroom_rear_door`), except for
+## a player who told Q they would borrow a book next door (`borrow_from_next_class`):
+## until the lesson is over, that player gets one visible orientation check at it. A
+## success leaves through the door into the corridor before the lesson - skipping class,
+## so the bell and the substitute never happen (`skipped_class`, `PrologueSteps`) - and
+## the door stays passable for them afterwards. A failure, or any later try, is the
+## locked door's own line. The check's line is that same authored line; nothing is added.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
 const Landing = preload("res://scenes/locations/playground/container_landing.gd")
@@ -16,21 +24,30 @@ const BALANCE_CHECK := &"cv_balance_check"
 const CURTAIN_DRAWN_PROMPT := "prompt.curtain_drawn"
 const CURTAIN_RETRY_PROMPT := "prompt.curtain_retry"
 const CURTAIN_STEP_PROMPT := "prompt.curtain_step"
+const REAR_DOOR_CONVERSATION := &"classroom_rear_door_borrow"
+const REAR_DOOR_CHECK := &"rdb_check"
+const REAR_DOOR_INSPECTION := &"classroom_rear_door"
+const CORRIDOR_SCENE := "res://scenes/locations/corridor/corridor.tscn"
+const CORRIDOR_SPAWN := &"FromClassroomRear"
+const CORRIDOR_DESTINATION := &"corridor"
 
 @export var curtain_path: NodePath = ^"BackCurtain"
 @export var void_path: NodePath = ^"VoidOpening"
 @export var curtain_interactable_path: NodePath = ^"../Interactables/CurtainDraw"
+@export var rear_door_interactable_path: NodePath = ^"../Interactables/RearDoorTry"
 
 @onready var _curtain := get_node(curtain_path) as WindowCurtain
 @onready var _void := get_node(void_path) as Node3D
 @onready var _approach: Marker3D = $VoidApproach
 @onready var _curtain_interactable := get_node(curtain_interactable_path) as StagedInteractable
+@onready var _rear_door_interactable := get_node(rear_door_interactable_path) as StagedInteractable
 @onready var _closed_stop: CollisionShape3D = $"../WallWest/ClosedCurtainStop"
 @onready var _step_trigger: Area3D = $"../VoidStep"
 
 
 func _ready() -> void:
 	_curtain_interactable.stage_handler = _stage_curtain
+	_rear_door_interactable.stage_handler = _stage_rear_door
 	_step_trigger.body_entered.connect(_on_step)
 	_apply_story_state()
 
@@ -148,6 +165,49 @@ func _stage_curtain(director: Node) -> Dictionary:
 
 	player.set_physics_process(physics)
 	return _fall_request(player, true, started_at, facing, false)
+
+
+## True while the rear door offers its one attempt: the player said they would borrow a
+## book next door, the lesson is not over, and the attempt has not been made.
+func can_try_rear_door() -> bool:
+	return _flag(StoryFlags.BORROW_FROM_NEXT_CLASS) and not _flag(StoryFlags.CLASS_DISMISSED) \
+		and _rear_door_record().is_empty()
+
+
+func _stage_rear_door(director: Node) -> Dictionary:
+	if _rear_door_record().get("success", false) == true:
+		return _rear_door_exit()
+	if not can_try_rear_door():
+		return {"inspection": REAR_DOOR_INSPECTION}
+	await director.play_conversation(REAR_DOOR_CONVERSATION)
+	if _rear_door_record().get("success", false) == true:
+		return _rear_door_exit()
+	return {}
+
+
+## The recorded result of the rear-door check, or an empty Dictionary before it.
+func _rear_door_record() -> Dictionary:
+	var state := _state()
+	if state == null:
+		return {}
+	var record: Variant = state.get_flag(
+		StoryFlags.check_record_flag(REAR_DOOR_CONVERSATION, REAR_DOOR_CHECK), null
+	)
+	if record is Dictionary:
+		return record as Dictionary
+	return {}
+
+
+func _rear_door_exit() -> Dictionary:
+	return {
+		"transition": {
+			"scene": CORRIDOR_SCENE,
+			"spawn": CORRIDOR_SPAWN,
+			"id": CORRIDOR_DESTINATION,
+			"label": "the classroom's rear door",
+			"arrival_flags": {StoryFlags.SKIPPED_CLASS: true},
+		}
+	}
 
 
 func _fall_request(

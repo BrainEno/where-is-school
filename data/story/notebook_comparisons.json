@@ -2,11 +2,6 @@
   "format_version": 1,
   "comparisons": [
     {
-      "id": "set_square",
-      "left": "saw_set_square",
-      "right": "q_set_square_use"
-    },
-    {
       "id": "duty_sheets",
       "left": "saw_staff_office_rota",
       "right": "pg_rota_read"

@@ -11,7 +11,7 @@
         {
           "id": "vn_1",
           "speaker": "voice_orientation",
-          "text": "Wait. Something here is not quite right.",
+          "text": "Wait. Something here doesn't feel quite right.",
           "check": {
             "ability": "orientation",
             "difficulty": 8,
@@ -23,19 +23,19 @@
         {
           "id": "vn_ok",
           "speaker": "voice_orientation",
-          "text": "The notices are pinned at the same height except one. That one sits higher, and the tape behind it is clean where the old tape was. Someone moved it up to be read.",
+          "text": "The notices are almost all at the same height, except one. That one is higher, and crooked, and the tape at its corners is messy. It doesn't look like school staff put it up.",
           "next": null
         },
         {
           "id": "vn_bad",
           "speaker": "voice_orientation",
-          "text": "A board with a few sheets pinned to it. What else is there to see?",
+          "text": "A noticeboard with a few sheets on it. What else?",
           "next": "vn_bad_2"
         },
         {
           "id": "vn_bad_2",
           "speaker": "protagonist",
-          "text": "You read the top two: a room wanted, a piano for sale. The third has been turned face-in. It has not been taken down.",
+          "text": "You read the top two: wanted to rent, one flat in the school catchment area; and lost property: 'Found yesterday afternoon at break in front of the school storeroom, one packet of instant noodle snacks. If it's yours, call 142676530.' The third has been turned over and stuck down, but it hasn't been torn off.",
           "next": null
         }
       ]
@@ -48,7 +48,7 @@
         {
           "id": "va_1",
           "speaker": "voice_orientation",
-          "text": "The yard is long and fairly narrow. The path comes in at one corner.",
+          "text": "This yard is the same as ever: small, run-down, the ground all cracked. But it has plenty of shortcuts you'd never expect.",
           "check": {
             "ability": "orientation",
             "difficulty": 9,
@@ -60,19 +60,19 @@
         {
           "id": "va_ok",
           "speaker": "voice_orientation",
-          "text": "There is a seam down the middle of the concrete, where two pours meet. It runs all the way across. The main gate, though, is at the short end.",
+          "text": "There's a seam down the middle of the concrete, so the yard was poured in two goes. The seam runs all the way to the other end, yet the main gate happens to open on this side.",
           "next": null
         },
         {
           "id": "va_bad",
           "speaker": "voice_orientation",
-          "text": "A yard. Two hoops, a shed, a bench.",
+          "text": "A yard. Two hoops, a shed, a bench. Wait! Why is one of the hoops facing away from the court?",
           "next": "va_bad_2"
         },
         {
           "id": "va_bad_2",
           "speaker": "protagonist",
-          "text": "You have seen a yard like this before. Or perhaps schoolyards just tend to look alike.",
+          "text": "You've seen this yard before. Or maybe every school yard looks about the same. No, hardly any school has a yard this run-down. You vaguely remember that the yard was always redone just before graduation.",
           "next": null
         }
       ]
@@ -97,19 +97,19 @@
         {
           "id": "vh_ok",
           "speaker": "voice_orientation",
-          "text": "The concrete around the pole is newer than the rest of the yard. There are old bolt holes in the wall too, filled in and painted over. The hoop must have stood somewhere else.",
+          "text": "The concrete around the pole is newer than the rest of the yard, and the backboard looks a bit odd. There are a few old bolt holes in the ground too, for fixing an iron pole, also painted over in dark blue. The hoop must have stood somewhere else before. There should be a base.",
           "next": null
         },
         {
           "id": "vh_bad",
           "speaker": "voice_orientation",
-          "text": "The rim looks to be at an ordinary height.",
+          "text": "The rim's height looks fine. It's just facing the wrong way.",
           "next": "vh_bad_2"
         },
         {
           "id": "vh_bad_2",
           "speaker": "protagonist",
-          "text": "You couldn't say how high a hoop is meant to be. But the concrete around the base is a different colour, and the net looks newer than the rim.",
+          "text": "You couldn't say how high a normal hoop is meant to be. But the concrete around the base is a different colour, and the net looks newer than the rim. And this hoop is no use at all. It's been put in facing the wrong way.",
           "next": null
         }
       ]

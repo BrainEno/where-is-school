@@ -11,12 +11,12 @@
         {
           "id": "aa_1",
           "speaker": "protagonist",
-          "text": "A narrow gap between the cars. Once you’re past them the way is there; you just couldn’t see it from the other end."
+          "text": "The gap between the two cars is barely wide enough to squeeze through sideways, and you still have to be careful not to rub against the dust of bodywork that has been parked here for years. Once you're through, you realise the way isn't actually that narrow, and it doesn't just end here either. From the end you came in, it's easy to take it for a dead end."
         },
         {
           "id": "aa_2",
           "speaker": "protagonist",
-          "text": "White court lines carry on past the fence. You don’t see there’s another school gate until you’re up to it.",
+          "text": "The court lines run right up to this iron gate. Only when you get close do you realise there's a small gate here for getting in and out of the school. Beside it is a much bigger sliding barrier gate under an impressive porch, but that main gate is almost never opened for students. Everyone has to use this small one.",
           "effects": [
             {
               "type": "set_flag",
@@ -32,14 +32,14 @@
               "entry_id": "alley_arrived",
               "source": "observed",
               "speaker": "protagonist",
-              "text": "Through the alley gate you can see a court marked with white lines."
+              "text": "The iron gate at the end of the alley opens onto a court marked with white lines."
             }
           ]
         },
         {
           "id": "aa_3",
           "speaker": "protagonist",
-          "text": "No school name on this side. Try the handle.",
+          "text": "There's no lock on the gate on this side. Try to see if it will open.",
           "next": null
         }
       ]

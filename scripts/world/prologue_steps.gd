@@ -58,6 +58,9 @@ static func is_done(step: StringName, has_flag: Callable) -> bool:
 ## each of those has its own flag, so nothing the player did not do is ever claimed.
 ## `substitute` ends at `class_dismissed` rather than at `n_arrived`, because N arriving
 ## without the conversation that dismisses the class would leave the door locked forever.
+## It also ends at `skipped_class`: a player who left through the rear door before the
+## lesson (`ClassroomAnomalies`) skipped the bell and the substitute, and by the rule above
+## everything before them.
 static func is_proved(step: StringName, has_flag: Callable) -> bool:
 	match step:
 		&"wake", &"q_wake":
@@ -71,5 +74,6 @@ static func is_proved(step: StringName, has_flag: Callable) -> bool:
 		&"bell":
 			return bool(has_flag.call(StoryFlags.BELL_RUNG))
 		&"substitute":
-			return bool(has_flag.call(StoryFlags.CLASS_DISMISSED))
+			return bool(has_flag.call(StoryFlags.CLASS_DISMISSED)) \
+				or bool(has_flag.call(StoryFlags.SKIPPED_CLASS))
 	return true

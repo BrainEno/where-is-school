@@ -1,7 +1,7 @@
 # 术语表：游戏文字用词、玩家称呼、代码 id 与 autoload 对照
 
 > **状态：** 现行
-> **最后核对：** 2026-11-19
+> **最后核对：** 2026-11-21
 > **负责人：** 文档 Agent
 > **取代者：** 无；本页是 #230 要求的对照表，与 [README.md](README.md)、[ARCHITECTURE.md](ARCHITECTURE.md) 互补
 
@@ -22,13 +22,13 @@
 | `alley` | 小巷 | Alley | 居民楼后面，尽头是通往操场的栅栏门 |
 | `playground` | 操场 | Playground | 旧文档写作 schoolyard；台词里英文多用 the yard |
 | `laboratory` | —（无 `place.` 文案） | — | 尚不可达的开发切片 |
-| `staff_office` | 教师办公室 | Staff office | |
+| `staff_office` | 办公室 | Staff office | 作者改稿用「办公室」（`place.staff_office`） |
 | `restroom` | 厕所 | Restroom | 一楼 |
 | `restroom_02` | 厕所（二楼） | Restroom (02) | |
 | `restroom_03` | 厕所（三楼） | Restroom (03) | |
 | `archive` | 档案室 | Archive | 走廊两端的附属房间之一 |
 | `plan_room` | 图纸室 | Plan room | 同上 |
-| `projection_room` | 投影准备室 | Projection room | 同上 |
+| `projection_room` | 投影教室 | Projection room | 同上；作者改稿用「投影教室」（`place.projection_room`） |
 | `computer_room` | 计算机教室 | Computer lab | 同上 |
 | `vacant_office` | 空办公室 | Empty staff room | 同上 |
 | `principal_office` | 校长室 | Principal’s office | 同上 |
@@ -41,16 +41,17 @@
 
 | 中文 | 英文 | 不要再写 | 说明 |
 |---|---|---|---|
-| 器材棚 | shed | 器材室、工具棚、小屋 | 操场边那间锁着的绿门小棚 |
+| 器材棚 / 杂物室 | shed | 器材室、工具棚、小屋 | 操场边那间锁着的绿门小棚；作者在结尾卡（`end.slice.body`）里叫它「杂物室」，两种叫法都保留 |
 | 操场 | yard / playground | 场子 | 整块场地；`place.playground` 是 Playground |
 | 球场 | court | 院子、院里 | 地上画了白线、两头有篮筐的那一块 |
 | 居民院 | courtyard | 院子（指居民楼时） | 居民楼之间的院子 |
 | 居民楼 | the flats | 小区、estate | 也用于「居民楼后面的空地」 |
 | 走廊 | corridor | walkway | |
 | 生物课本 | textbook / biology textbook | 生物书 | 主角书包里缺的那本；Q 的口语里说「生物书」保留 |
-| 栅栏门 / 铁栅门 | alley gate | estate gate | 小巷与操场之间的同一道门 |
-| 防火门 | fire door | | 操场回教学楼的门，与「铁门」不同 |
-| 铁门 | metal door / service door | | 小巷里挂着坏 U 形锁的那扇，与栅栏门不同 |
+| 铁门 / 小铁门 | metal gate / the small gate | | 作者改稿（06）：巷子尽头通往球场、学生平时进出的那扇小门（`alley_to_playground`）；`objective.alley`「尽头有一道小铁门」 |
+| 栅栏门 / 铁栅门 | alley gate | estate gate | 作者改稿（06）：小铁门旁边那扇更大的伸缩式栅栏门，几乎从不对学生开放 |
+| 防火门 | fire door | | 操场回教学楼的门，与「小铁门」不同 |
+| （待作者命名）| service door | | 小巷里挂着坏 U 形锁的那扇（`alley_service_door` / `alley_door`）。它的检视文字仍叫「铁门」，与作者现在说的「小铁门」撞名；新名字由作者决定 |
 | 交还牌 | return plate | | 街边、巷口的小牌子 |
 | 交还板 | return board | | 操场上那块板，与交还牌是不同物件 |
 | 篮筐 | hoop | | 与「篮板」（backboard）不同 |

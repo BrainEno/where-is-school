@@ -5,6 +5,7 @@
 > - **负责人：** 仓库所有者（设计取舍）、叙事与工程 Agent（后续验证）
 > - **取代者：** 无；不取代[产品简报](PRODUCT_BRIEF.md)、[叙事圣经](NARRATIVE_BIBLE.md)或[运行时架构](ARCHITECTURE.md)。
 > - **原评审与分支基线：** [`76c5e77979b3755b3d01e9d827cdd3c3b0884d18`](https://github.com/BrainEno/where-is-school/tree/76c5e77979b3755b3d01e9d827cdd3c3b0884d18)，含 #265。项目固定 Godot 4.7.2 Stable。
+> - **作者改稿后的变动（第 5 轮）：** 作者亲手改写了序章。点名、合看课本（`q_book_pact`、`n_class/share_with_q`）、`n_roll_response` 的三种答法与 Q 的课后复述、`q_claims_blank_exam` 都已被作者删除，下文提到它们的地方只是当时的评审记录，不是现状；以作者稿为准（见 `AGENTS.md`「作者文本」）。
 > - **补充来源：** 所有者提供的《全面代码审查与工程质量审计报告》，重点取其第 6 章的 G-01–G-09 与相关验收方法。报告基线为 [`b8524c6`](https://github.com/BrainEno/where-is-school/tree/b8524c69f0b14e614685baef16ed783777e7ad06)；另选核 [#271 合入后的 `main@e143990`](https://github.com/BrainEno/where-is-school/tree/e143990be54e5085c5c972f78943825c86ab0787)。报告的引擎实测属于该报告，本次补充没有重跑 Godot 或真人试玩。
 
 ## 先看结论

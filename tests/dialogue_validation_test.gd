@@ -29,6 +29,7 @@ func _run() -> void:
 	_expect_error("literal objective", _literal_objective(), ["objective_text", "text"])
 	_expect_error("unknown effect", _unknown_effect(), ["bad_effect", "x1"])
 	_expect_error("wrong locale", _wrong_locale(), ["de-DE"])
+	_expect_error("camera_focus without a target", _focus_without_target(), ["no_focus_target", "f1", "target"])
 	# Issue #20: a line parked after a choice hub or a check was treated as reachable
 	# because the walk added a sequence edge the runtime never takes. Both must fail.
 	_expect_error("orphan after a choice hub", _orphan_after_choice(), ["orphan_after_choice", "orphan"])
@@ -39,6 +40,9 @@ func _run() -> void:
 	_expect_valid("a check with two ending branches", _valid_check_branches())
 	_expect_valid("an ordinary next chain", _valid_sequence())
 	_expect_valid("a choice hub whose branches share a node", _valid_shared_hub())
+	# The rear-door attempt is a single check whose both outcomes end the conversation.
+	_expect_valid("a check as the last node with both outcomes ending", _valid_final_check())
+	_expect_valid("camera_focus on a line and on a choice", _valid_camera_focus())
 
 	_check_locale_parity()
 	_check_real_content()
@@ -176,6 +180,33 @@ func _valid_sequence() -> Dictionary:
 		{"id": "n1", "speaker": "q", "text": "Fixture one.", "next": "n2"},
 		{"id": "n2", "speaker": "q", "text": "Fixture two.", "next": "n3"},
 		{"id": "n3", "speaker": "q", "text": "Fixture three.", "next": null},
+	])
+
+
+func _focus_without_target() -> Dictionary:
+	return _graph("no_focus_target", [
+		{"id": "f1", "speaker": "q", "text": "Fixture line.",
+		 "effects": [{"type": "camera_focus"}], "next": null},
+	])
+
+
+func _valid_final_check() -> Dictionary:
+	return _graph("valid_final_check", [
+		{"id": "fc1", "speaker": "q", "text": "Fixture roll.",
+		 "check": {"ability": "orientation", "difficulty": 10, "kind": "visible",
+				   "success": null, "failure": null}},
+	])
+
+
+func _valid_camera_focus() -> Dictionary:
+	return _graph("valid_camera_focus", [
+		{"id": "v1", "speaker": "q", "text": "Fixture hub.",
+		 "effects": [{"type": "camera_focus", "target": "fixture_prop"}],
+		 "choices": [
+			{"id": "a", "text": "Fixture A", "next": "v2",
+			 "effects": [{"type": "camera_focus", "target": "fixture_other"}]},
+		 ]},
+		{"id": "v2", "speaker": "q", "text": "Fixture end.", "next": null},
 	])
 
 

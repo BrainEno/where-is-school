@@ -307,7 +307,7 @@ func _measure_journal(menu: PauseMenu, viewport: Vector2, tag: String) -> void:
 	journal.set_filter(JournalPage.COMPARE)
 	await _frames(4)
 	_expect(journal.get_row_ids().size() == catalog.get_comparisons().size() * 2
-		and journal.get_row_ids().size() >= 6, "%s: Compare does not show both sides of every pair." % tag)
+		and journal.get_row_ids().size() >= 4, "%s: Compare does not show both sides of every pair." % tag)
 	_expect(scroll.size.y > 0.0, "%s: the Compare tabs and headers leave no room for the notes." % tag)
 	_expect_controls_fit(journal, viewport, tag + ", Compare")
 	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)

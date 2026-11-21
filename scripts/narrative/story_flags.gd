@@ -129,12 +129,14 @@ const TOLD_Q_ABOUT_TEXTBOOK: StringName = &"told_q_about_textbook"
 const ACCUSED_Q: StringName = &"accused_q"
 ## bool: Q already asked what the protagonist found in the bag.
 const Q_BOOK_TALK_DONE: StringName = &"q_book_talk_done"
-## bool: Q agreed to share his biology book if the lesson uses it.
-const Q_BOOK_PACT: StringName = &"q_book_pact"
-## String: how the protagonist handled N's roll (answered_self, asked_q, silent).
-const N_ROLL_RESPONSE: StringName = &"n_roll_response"
-## bool: Q has given his first reply to the roll call and suggested where to look.
-const Q_ROLL_DEBRIEFED: StringName = &"q_roll_debriefed"
+## bool: the protagonist told Q they would borrow a book from the class next door
+## (`q_wake`, option `borrow`). Until the lesson is over it turns the classroom's rear
+## door from a locked door into a one-off orientation check (`classroom_anomalies.gd`).
+const BORROW_FROM_NEXT_CLASS: StringName = &"borrow_from_next_class"
+## bool: the rear-door check succeeded and the protagonist left before the lesson. It
+## closes the rest of the prologue (bell, substitute) the way `class_dismissed` does,
+## without claiming that N ever dismissed anyone.
+const SKIPPED_CLASS: StringName = &"skipped_class"
 ## bool: the player asked the substitute about B.
 const ASKED_N_ABOUT_B: StringName = &"asked_n_about_b"
 ## bool: the player asked the substitute about spare textbooks.
@@ -210,9 +212,8 @@ const ALL_FLAGS: Array[StringName] = [
 	TOLD_Q_ABOUT_TEXTBOOK,
 	ACCUSED_Q,
 	Q_BOOK_TALK_DONE,
-	Q_BOOK_PACT,
-	N_ROLL_RESPONSE,
-	Q_ROLL_DEBRIEFED,
+	BORROW_FROM_NEXT_CLASS,
+	SKIPPED_CLASS,
 	ASKED_N_ABOUT_B,
 	ASKED_N_ABOUT_TEXTBOOK,
 	STUDENT_TALKED,

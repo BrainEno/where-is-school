@@ -610,10 +610,10 @@ func _check_comparison_catalog(dialogue: DialogueLibrary, inspections: Inspectio
 		_failures.append("F: could not write the comparison validation fixture.")
 		return
 	fixture.store_string(JSON.stringify({"format_version": 1, "comparisons": [
-		{"id": "set_square", "left": "saw_set_square", "right": "q_set_square_use"},
-		{"id": "reverse", "left": "q_set_square_use", "right": "saw_set_square"},
-		{"id": "duty_sheets", "left": "saw_staff_office_rota", "right": "not_an_entry"},
-		{"id": "animal_picture", "left": "animal_bill_seen", "right": "animal_bill_seen"},
+		{"id": "duty_sheets", "left": "saw_staff_office_rota", "right": "pg_rota_read"},
+		{"id": "reverse", "left": "pg_rota_read", "right": "saw_staff_office_rota"},
+		{"id": "animal_picture", "left": "animal_bill_seen", "right": "not_an_entry"},
+		{"id": "same_note", "left": "animal_bill_seen", "right": "animal_bill_seen"},
 		{"id": "no_title", "left": "animal_bill_seen", "right": "animal_recall"},
 	]}))
 	fixture.close()
@@ -629,7 +629,7 @@ func _check_comparison_catalog(dialogue: DialogueLibrary, inspections: Inspectio
 func _check_comparison_page() -> void:
 	Harness.stage = "F. comparison page"
 	var pairs := _catalog.get_comparisons()
-	_expect(pairs.size() >= 3, "F: there are fewer than three authored comparisons.")
+	_expect(pairs.size() >= 2, "F: there are fewer than two authored comparisons.")
 	var entries: Array[NarrativeEntry] = []
 	for pair: Dictionary in pairs:
 		entries.append(_stored_entry(pair["right"]))
@@ -669,7 +669,7 @@ func _check_comparison_page() -> void:
 func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
 	Harness.stage = "F. comparison panel"
 	_narrative.clear()
-	_record(&"saw_set_square")
+	_record(&"saw_staff_office_rota")
 	var game_state := root.get_node(^"GameState")
 	var story_before: Dictionary = game_state.call("get_snapshot")
 	await _key(KEY_N)
@@ -682,10 +682,10 @@ func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
 		"F: keyboard did not open an empty Compare tab.")
 	_expect(journal.get_empty_text() == L10n.t("journal.empty_compare"),
 		"F: Compare did not explain what is missing without naming a clue.")
-	_record(&"q_set_square_use")
+	_record(&"pg_rota_read")
 	var snapshot: Dictionary = _narrative.call("to_snapshot")
-	_record(&"q_set_square_use")
-	var expected: Array[StringName] = [&"saw_set_square", &"q_set_square_use"]
+	_record(&"pg_rota_read")
+	var expected: Array[StringName] = [&"saw_staff_office_rota", &"pg_rota_read"]
 	_expect(await Harness.wait_until(func() -> bool: return journal.get_row_ids() == expected, 2.0),
 		"F: recording the other half did not reveal exactly two rows.")
 	for locale: String in L10n.LOCALES:
@@ -693,14 +693,15 @@ func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
 		await _frames(2)
 		_expect(journal.get_row_ids() == expected and compare.has_focus(),
 			"F: a language switch lost the pair or its focus.")
-		var card := journal.find_child("Comparison_set_square", true, false)
+		var card := journal.find_child("Comparison_duty_sheets", true, false)
 		var question := card.find_child("Question", true, false) as Label if card != null else null
-		_expect(question != null and question.text == L10n.t("journal.comparison.set_square.question"),
+		_expect(question != null and question.text == L10n.t("journal.comparison.duty_sheets.question"),
 			"F: the question was not rendered in %s." % locale)
 		var headers := journal.get_row_headers()
 		_expect(headers.size() == 2 and headers[0].contains(L10n.t("badge.observed"))
-			and headers[1].contains(L10n.t("badge.reported")) and headers[1].contains(L10n.t("name.q"))
-			and headers[0].contains(L10n.t("place.classroom")),
+			and headers[1].contains(L10n.t("badge.observed"))
+			and headers[0].contains(L10n.t(_catalog.place_key_for(&"saw_staff_office_rota")))
+			and headers[1].contains(L10n.t(_catalog.place_key_for(&"pg_rota_read"))),
 			"F: the drawn rows lost their source, speaker or place in %s." % locale)
 		_expect(compare.text == L10n.t("journal.filter_count", {"label": L10n.t("journal.filter.compare"), "count": 1}),
 			"F: the drawn tab does not count the complete pair in %s." % locale)

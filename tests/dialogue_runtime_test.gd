@@ -70,6 +70,26 @@ const FIXTURE := {
 				{"id": "o2", "speaker": "q", "text": "Fixture repeat.", "next": "o1"},
 				{"id": "o3", "speaker": "q", "text": "Fixture end.", "next": null}
 			]
+		},
+		## `camera_focus` is presentation only: it is allowed in a subjective
+		## conversation, asks for one look per effect, and writes nothing.
+		"fixture_focus": {
+			"default_source": "imagined",
+			"subjective": true,
+			"start": "c1",
+			"nodes": [
+				{
+					"id": "c1",
+					"speaker": "protagonist",
+					"text": "Fixture look hub.",
+					"choices": [
+						{"id": "look", "text": "Fixture look", "next": "c2",
+						 "effects": [{"type": "camera_focus", "target": "fixture_prop"}]}
+					]
+				},
+				{"id": "c2", "speaker": "protagonist", "text": "Fixture looked.",
+				 "effects": [{"type": "camera_focus", "target": "fixture_other"}], "next": null}
+			]
 		}
 	}
 }
@@ -126,6 +146,7 @@ func _run() -> void:
 	_test_subjective_boundaries(game_state, narrative, characters)
 	_test_once_choice(game_state, narrative, characters)
 	_test_hub_without_options(game_state, narrative, characters)
+	_test_camera_focus(game_state, narrative, characters)
 
 	game_state.free()
 	narrative.free()
@@ -188,11 +209,8 @@ func _test_opening_conversation(
 	if String(game_state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
 		_failures.append("The conversation did not set the bag objective.")
 
-	var exam_claim: NarrativeEntry = narrative.get_entry(&"q_claims_blank_exam")
-	if exam_claim == null:
-		_failures.append("Q's exam claim was not recorded.")
-	elif exam_claim.source != NarrativeEntry.Source.REPORTED:
-		_failures.append("Q's claim was not recorded as reported knowledge.")
+	if bool(game_state.get_flag(StoryFlags.BORROW_FROM_NEXT_CLASS, false)):
+		_failures.append("The first option of every hub still promised to borrow a book next door.")
 
 
 func _test_subjective_boundaries(
@@ -326,6 +344,41 @@ func _test_hub_without_options(
 		_failures.append("A hub with nothing to offer fell through into the line after it.")
 	if not shown.has("n1"):
 		_failures.append("The no-options hub never showed its own line.")
+
+
+## A `camera_focus` effect, on a choice or on a node, asks for that target before the
+## line it leads to is shown. A subjective conversation may use it (the graph loading
+## at all proves it), because it writes no story state.
+func _test_camera_focus(
+	game_state: Node, narrative: Node, characters: CharacterDirectory
+) -> void:
+	var graph := DialogueGraph.load_from_file(FIXTURE_PATH)
+	if not graph.is_valid():
+		_failures.append(graph.describe_errors())
+		return
+	var runtime := _new_runtime(game_state, narrative, characters)
+	var events: Array[String] = []
+	runtime.camera_focus_requested.connect(
+		func(target: StringName) -> void:
+			events.append("focus:%s" % target)
+	)
+	runtime.line_changed.connect(
+		func(line: Dictionary) -> void:
+			events.append("line:%s" % String(line.get("node_id", "")))
+	)
+	runtime.effect_rejected.connect(
+		func(reason: String) -> void:
+			_failures.append("camera_focus was rejected: %s" % reason)
+	)
+	if not runtime.start(graph, &"fixture_focus"):
+		_failures.append("The camera-focus fixture would not start.")
+		return
+	runtime.choose(0)
+	var expected: Array[String] = [
+		"line:c1", "focus:fixture_prop", "focus:fixture_other", "line:c2"
+	]
+	if events != expected:
+		_failures.append("camera_focus order: expected %s, got %s." % [expected, events])
 
 
 func _write_fixture() -> void:

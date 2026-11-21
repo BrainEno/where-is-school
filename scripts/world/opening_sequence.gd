@@ -85,6 +85,8 @@ func _ready() -> void:
 	if not _resolve_nodes():
 		return
 	_dialogue.presentation_active_changed.connect(_on_presentation_active_changed)
+	_dialogue.camera_focus_requested.connect(_on_camera_focus_requested)
+	_dialogue.line_presented.connect(_on_line_presented)
 	_game_state().story_flag_changed.connect(_on_story_flag_changed)
 	_interaction.activation_requested.connect(_on_activation_requested)
 	_interaction.target_changed.connect(_on_target_changed)
@@ -522,6 +524,25 @@ func sync_player_locks() -> void:
 		_hud.clear_prompt()
 	if _focus != null:
 		_focus.on_lock_changed(locked)
+
+
+## A conversation's `camera_focus` effect: glance at that interactable of the current
+## room while the next line is read. A target the room does not have is an authoring
+## mistake; the line still plays, just without the look.
+func _on_camera_focus_requested(target: StringName) -> void:
+	if _focus == null or _locations == null:
+		return
+	var location := _locations.get_current()
+	var subject: Interactable = location.find_interactable(target) if location != null else null
+	if subject == null:
+		push_warning("OpeningSequence: camera_focus target '%s' is not in this room." % target)
+		return
+	_focus.glance(subject)
+
+
+func _on_line_presented(_line: Dictionary) -> void:
+	if _focus != null:
+		_focus.on_line_presented()
 
 
 ## The camera focus director (tests and location changes use it).

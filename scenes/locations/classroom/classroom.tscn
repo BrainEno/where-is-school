@@ -904,6 +904,7 @@ radius = 1.0
 camera_shot = ExtResource("c_shot_curtain")
 
 [node name="RearDoorTry" parent="Interactables" instance=ExtResource("17_interactable")]
+script = ExtResource("c_staged")
 position = Vector3(6.35, 0.6, 3.55)
 interact_id = &"rear_door"
 outline_paths = PackedStringArray("../../WallEast/RearDoor")

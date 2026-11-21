@@ -7,6 +7,15 @@ extends SceneTree
 
 const Harness = preload("res://tests/test_harness.gd")
 const OPENING_CONVERSATION := &"q_wake"
+## The author's choice hubs in `q_wake`, by node, with their options in order. The
+## ecosystem hub is only reached by asking what an ecosystem is.
+const Q_WAKE_HUBS := {
+	&"q_3": [&"who", &"day", &"silent"],
+	&"q_who_look": [&"look_square", &"watch_q"],
+	&"p_zero": [&"blank", &"absent", &"none"],
+	&"q_topic_ask": [&"ask", &"silent", &"search"],
+	&"q_ecosystem": [&"grab_book", &"keep_searching", &"borrow", &"quiet"],
+}
 
 var _failures: Array[String] = []
 
@@ -244,7 +253,7 @@ func _check_free_period_gate(library: DialogueLibrary) -> void:
 
 
 ## #160: the meeting flag means Q has spoken, not that every later interaction is
-## another wake-up. Exhaust every existing combination of the three choice hubs in
+## another wake-up. Exhaust every existing combination of the choice hubs in
 ## both locales, through the real runtime, so no branch can lose the shared ending or
 ## its own consequences while the first/last lines are edited.
 func _check_q_studying(library: DialogueLibrary, characters: CharacterDirectory) -> void:
@@ -268,11 +277,11 @@ func _check_q_studying(library: DialogueLibrary, characters: CharacterDirectory)
 		var opening := library.get_conversation(OPENING_CONVERSATION)
 		var first: DialogueGraph.DialogueNode = opening.nodes[&"q_1"]
 		var ending: DialogueGraph.DialogueNode = opening.nodes[&"q_end_2"]
-		if (locale == "zh-CN" and not first.text.contains("睡得")) \
+		if (locale == "zh-CN" and not first.text.contains("睡")) \
 				or (locale == "en" and not first.text.to_lower().contains("nap")):
 			_failures.append("%s: Q's first line is not the familiar teasing greeting (#160)." % locale)
 		if (locale == "zh-CN" and not ending.text.contains("知识点")) \
-				or (locale == "en" and not ending.text.to_lower().contains("biology")):
+				or (locale == "en" and not ending.text.to_lower().contains("points")):
 			_failures.append("%s: Q does not end by returning to biology revision." % locale)
 		var busy := library.get_conversation(&"q_studying")
 		if busy == null:
@@ -280,15 +289,29 @@ func _check_q_studying(library: DialogueLibrary, characters: CharacterDirectory)
 		else:
 			if busy.order.is_empty() or busy.order.size() > 2:
 				_failures.append("%s: q_studying is not a short response." % locale)
+			# The author's version opens with one line of the protagonist calling Q over.
+			var q_replies := 0
 			for node: DialogueGraph.DialogueNode in busy.nodes.values():
-				if node.speaker_id != &"q" or not node.choices.is_empty() or not node.effects.is_empty():
+				if node.speaker_id == &"q":
+					q_replies += 1
+				if not node.choices.is_empty() or not node.effects.is_empty() \
+						or not [&"q", &"protagonist"].has(node.speaker_id):
 					_failures.append("%s: q_studying changes state or is not Q's short reply." % locale)
 				if node.text.contains("醒") or node.text.to_lower().contains("wake"):
 					_failures.append("%s: q_studying repeats the wake-up greeting." % locale)
+			if q_replies != 1:
+				_failures.append("%s: q_studying has %d replies from Q, not one." % [locale, q_replies])
 		for identity in 3:
-			for exam in 3:
-				for topic in 3:
-					_check_q_branch(library, characters, locale, [identity, exam, topic])
+			for look in 2:
+				for exam in 3:
+					for topic in 3:
+						if topic != 0:
+							_check_q_branch(library, characters, locale, [identity, look, exam, topic])
+							continue
+						for reply in 4:
+							_check_q_branch(
+								library, characters, locale, [identity, look, exam, topic, reply]
+							)
 	library.set_locale(L10n.DEFAULT_LOCALE)
 
 
@@ -306,35 +329,39 @@ func _check_q_branch(
 	else:
 		var hubs := 0
 		var steps := 0
+		var expected_hubs: Array[StringName] = [&"q_3", &"q_who_look", &"p_zero", &"q_topic_ask"]
+		if picks[3] == 0:
+			expected_hubs.append(&"q_ecosystem")
 		while runtime.is_active() and steps < 100:
 			if runtime.is_awaiting_choice():
-				var expected := [
-					[&"who", &"day", &"silent"], [&"blank", &"absent", &"none"],
-					[&"ask", &"silent", &"search"],
-				]
-				if hubs >= picks.size() or runtime.get_available_choice_ids() != expected[hubs]:
-					_failures.append("%s: choice hub %d lost its original options." % [label, hubs])
+				var node_id := runtime.get_current_node_id()
+				if hubs >= expected_hubs.size() or node_id != expected_hubs[hubs] \
+						or runtime.get_available_choice_ids() != Q_WAKE_HUBS[node_id]:
+					_failures.append("%s: choice hub %d (%s) lost its options." % [label, hubs, node_id])
 					break
 				runtime.choose(int(picks[hubs]))
 				hubs += 1
 			else:
 				runtime.advance()
 			steps += 1
-		if runtime.is_active() or hubs != 3 or seen.is_empty() or seen[-1] != &"q_end_2":
-			_failures.append("%s did not reach the shared closing node (hubs=%d, steps=%d)." % [label, hubs, steps])
+		if runtime.is_active() or hubs != expected_hubs.size() or seen.is_empty() \
+				or seen[-1] != &"q_end_grin" or not seen.has(&"q_end_2"):
+			_failures.append("%s did not reach the shared closing nodes (hubs=%d, steps=%d)." % [label, hubs, steps])
 		if not bool(state.get_flag(StoryFlags.MET_Q, false)) \
 				or not bool(state.get_flag(StoryFlags.ASKED_Q_IDENTITY, false)):
 			_failures.append("%s lost the meeting/identity flags." % label)
-		for flag: StringName in [StoryFlags.ASKED_Q_DATE, StoryFlags.STAYED_SILENT, StoryFlags.DENIED_EXAM_MEMORY]:
+		var borrowed: bool = picks.size() > 4 and picks[4] == 2
+		for flag: StringName in [
+			StoryFlags.ASKED_Q_DATE, StoryFlags.STAYED_SILENT, StoryFlags.DENIED_EXAM_MEMORY,
+			StoryFlags.BORROW_FROM_NEXT_CLASS,
+		]:
 			var want: bool = (flag == StoryFlags.ASKED_Q_DATE and picks[0] == 1) \
 				or (flag == StoryFlags.STAYED_SILENT and picks[0] == 2) \
-				or (flag == StoryFlags.DENIED_EXAM_MEMORY and picks[1] == 2)
+				or (flag == StoryFlags.DENIED_EXAM_MEMORY and picks[2] == 2) \
+				or (flag == StoryFlags.BORROW_FROM_NEXT_CLASS and borrowed)
 			if bool(state.get_flag(flag, false)) != want:
 				_failures.append("%s: consequence '%s' does not match the chosen branch." % [label, flag])
 		if String(state.get_flag(StoryFlags.OBJECTIVE_KEY, "")) != "objective.check_bag":
 			_failures.append("%s lost the schoolbag objective." % label)
-		var entry: NarrativeEntry = narrative.get_entry(&"q_claims_blank_exam")
-		if entry == null or entry.source != NarrativeEntry.Source.REPORTED:
-			_failures.append("%s lost Q's uncertain exam account or made it fact." % label)
 	state.free()
 	narrative.free()

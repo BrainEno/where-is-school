@@ -257,6 +257,7 @@ not declare anything — its text is the source.
 | Set a story flag | `{"type": "set_flag", "flag": "textbook_missing", "value": true}` | Flag names live in `scripts/narrative/story_flags.gd`. |
 | Change the objective | `{"type": "set_objective", "key": "objective.check_bag"}` | `key` only — literal text is rejected, because it could not be translated. |
 | Record knowledge | `{"type": "record", "entry_id": "...", "source": "observed", "speaker": "protagonist", "text": "..."}` | `source` is one of the four categories below; `text` is what the player later sees in the recollection list, so it is translated like any other line. |
+| Look at something | `{"type": "camera_focus", "target": "set_square"}` | Presentation only: the camera turns to the interactable with that `interact_id` in the current room while the next line is read, then goes back. Writes no state, so a `subjective` conversation may use it. In the story docs it is 「效果：聚焦 set_square」. |
 
 ### Narrative sources
 
@@ -353,6 +354,9 @@ file's `name` field, so the hint is never hard-coded.
 
 ## Lines pending author review
 
+Lines the author has edited by hand (see "Author's text" in `AGENTS.md`) are not on
+this list: they are final until the author changes them, and agents do not rewrite them.
+
 These placeholder lines encode a story choice that only the author can settle.
 They exist so the level is playable; they are not proposals, and nothing else in
 the repository depends on their content.
@@ -364,9 +368,11 @@ the repository depends on their content.
 | `street.json`, `street_wall` (`w_2`) | Whether the camera that watches an empty strip of grass is a motif worth keeping. |
 | `street.json`, `street_notice` (`n_2`) | Whether the mismatched notice on the pole is worth keeping. |
 | `inspections/*/residential.json`, `res_stain` | Whether the repeated stain belongs to the same wall, and whether the game should ever say so. |
-| `prologue.json`, `q_wake` (whole conversation) | Q's register and how much the protagonist says out loud. |
 | `prologue.json`, `expected_b` | Which half-remembered details of the imagined confrontation are allowed to survive. |
-| All `zh-CN` files | Every simplified-Chinese line is a placeholder written for this build, pending the author's own voice. |
+| `zh-CN` lines the author has not edited yet | Every other simplified-Chinese line is a placeholder written for this build, pending the author's own voice. |
+| `prologue.json`, `classroom_rear_door_borrow` (`rdb_check`) | The line shown before the rear-door check. It is the locked door's own line for now; the author will write the check's line. |
+| `notebook_comparisons.json` | The "wooden set square" pair was removed with its right half (`q_set_square_use`). The author may add a new set-square pair once a new note exists. |
+| `prologue.json` options without a reply (`q_wake` `q_who_look`, `q_ecosystem`; `q_after_bag` `q_sq_2`; `n_class` `n_8` `ecosystem`/`zygote`) | The author wrote the options but not yet what follows them. Until then each keeps only its mechanics (a camera look, a branch, the rear-door attempt) and continues to the author's next line; no reply is written for them. |
 
 Working through this list is what the editor dock is for: both languages of one line are
 in front of you, the structure they have to keep is shown read-only beside them, and a
