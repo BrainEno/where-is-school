@@ -38,15 +38,16 @@ the village.
 - **Modern against municipal.** The exam floor uses hard colour fields, steel and rubber,
   and black-and-white wayfinding. It reads as a metro station or a test centre and
   contrasts with the indigo-and-lavender 03 ledger underneath. The yard uses earth, lime,
-  timber and saturated quilt prints. Both layers stay matte and toon-lit (`diffuse_toon`,
-  no specular).
+  timber and saturated quilt prints. The dressing stays matte: toon diffuse for the
+  boxes and wrapped diffuse on 03's rounded people, with no specular.
 - **Repetition is the absurdity.** The three clerks share a pose and a phase. Half the door
   numbers say `07`. The footprints reverse. The escalator runs down under people walking up.
 - **03 is human; 02 is mechanical.** Twelve candidates vary in shoe-to-head height,
   shoulder width, dress, hairline and stance. Rounded, tapered profiles and cloth/skin
   pigment planes hold up at walking distance. Collars, cuffs, pleats, glasses and laced
   shoes are secondary to the silhouettes. Each moving form uses one opaque painted
-  surface. `AnimationPlayer` drives torso, head and forearm poses, with anchored shoes
+  surface, with indexed vertices on curved forms to keep the scene size down.
+  `AnimationPlayer` drives torso, head and forearm poses, with anchored shoes
   and a prop attached to the same joint as its gripping hand; no runtime code or dialogue.
 - **Motion without behaviour, elsewhere.** A vertex offset or a turn about a shared pivot
   in `dream_motion.gdshader` moves unrotated box assemblies as one piece. The builder

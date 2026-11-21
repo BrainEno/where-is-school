@@ -73,14 +73,37 @@ class PigmentMesh(Facets):
         face_out(self, points, inside)
 
     def bands(self, rings, colors):
-        """Corresponding perimeter samples. Colour changes at a seam, not a new draw."""
-        centres = [tuple(sum(axis)/len(r) for axis in zip(*r)) for r in rings]
+        """Index the round surfaces; split the vertices only across pigment seams/caps."""
+        sides = len(rings[0])
+        centres = [tuple(sum(axis)/sides for axis in zip(*r)) for r in rings]
+        faces = []
+        normals = [[(0, 0, 0) for _ in ring] for ring in rings]
         for band, (a, b) in enumerate(zip(rings, rings[1:])):
             inside = mix(centres[band], centres[band + 1], .5)
-            for i in range(len(a)):
-                j = (i + 1) % len(a)
-                shade = (-9, -3, 2, 5, -2, -5)[i * 6 // len(a)]
-                self.panel(tint(colors[band], shade), (a[i], a[j], b[j], b[i]), inside)
+            for i in range(sides):
+                j = (i + 1) % sides
+                corners = ((band, i), (band, j), (band+1, j), (band+1, i))
+                normal = unit(cross(sub(b[j], a[i]), sub(a[j], a[i])))
+                if sum(x*y for x, y in zip(normal, sub(mix(a[i], b[j], .5), inside))) < 0:
+                    corners = corners[::-1]
+                    normal = scale(normal, -1)
+                faces.append((colors[band], corners))
+                for row, col in corners:
+                    normals[row][col] = add(normals[row][col], normal)
+        shared = {}
+        for pigment, corners in faces:
+            indices = []
+            for row, col in corners:
+                key = row, col, pigment
+                if key not in shared:
+                    shared[key] = len(self.points)
+                    self.points.append(rings[row][col])
+                    self.normals.append(unit(normals[row][col]))
+                    shade = (-9, -3, 2, 5, -2, -5)[col*6//sides]
+                    self.colors.extend((*tint(pigment, shade), 255))
+                indices.append(shared[key])
+            a, b, c, d = indices
+            self.indices.extend((a, b, c, a, c, d))
         self.panel(tint(colors[0], -10), rings[0], centres[1])
         self.panel(colors[-1], rings[-1], centres[-2])
         return self
@@ -180,8 +203,13 @@ def torso(look):
     f, cloth, trim = look.frame, look.cloth, look.trim
     cut = look.cut
     hem = {"coat": -.248, "knit": -.062, "varsity": -.118, "zip": -.086, "shirt": -.158, "hoodie": -.097}[cut]
-    profile = [(hem, f*(1.08 if cut == "coat" else .83), .106, -.007, -.005),
-               (hem+.035, f*.93, .116, -.009, -.007), (.10, f*.80, .106, -.009, .002),
+    skirt = cut == "knit"
+    # Give the hems room over the thigh lofts, including at the ends of a lean.
+    width = 1.26 if cut == "coat" else 1.06
+    depth = .153 if cut in ("coat", "shirt") else .133
+    profile = [(hem, f*(.87 if skirt else width), depth, -.004, -.002),
+               (hem+.035, f*(.96 if skirt else width-.015), depth-.004, -.005, -.002),
+               (.10, f*.82, .106, -.009, .002),
                (.322, f*.99, .123, .003, .010), (.429, f, .104, .008, .003),
                (.503, f*.54, .076, .007, .006), (.531, .070, .061, .006, .007)]
     edge = tint(cloth, -21)
@@ -309,11 +337,11 @@ def legs(look, stride, seated=False):
         ankle, knee = ((.041, .055) if skirt else (.058, .075))
         m.form([(.072, ankle, .055, x, foot_z), (.143, ankle+.004, .062, x, foot_z-.012),
                 (knee_y-.095, knee*.90, .071, x, knee_z-.024),
-                (knee_y, knee, .079, x-s*.014, knee_z), (h+.034, .100 if not skirt else .078,
-                 .108, x-s*.028, 0)] if not seated else [(.072, ankle, .060, x, foot_z),
+                (knee_y, knee, .079, x-s*.014, knee_z), (h-.115, .079 if not skirt else .066, .090, x*.84, step*.4),
+                (h+.035, .062 if not skirt else .056, .070, x*.64, 0)] if not seated else [(.072, ankle, .060, x, foot_z),
                  (.180, ankle+.009, .064, x, foot_z-.015), (.363, knee*.88, .074, x, knee_z),
                  (.430, knee, .088, x, knee_z-.005), (.508, knee, .071, x, knee_z-.009)],
-               [tint(cloth, -14), cloth, tint(cloth, 7), cloth], 9)
+               [tint(cloth, -14), cloth, tint(cloth, 7), cloth] + ([] if seated else [tint(cloth, -6)]), 9)
         if seated:
             m.sweep([((x, h-.042, knee_z), .071, .075), ((x-s*.010, h-.011, .218), .079, .083),
                      ((x-s*.02, h+.006, -.021), .105, .082)], [tint(cloth, 7), cloth], 8)

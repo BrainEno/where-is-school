@@ -144,13 +144,13 @@ const DREAM_VIEWS := [
 	["escalator", Vector3(0.6, 1.9, -5.4), Vector3(-5.0, 2.0, -8.45)],
 	["ticket_counter", Vector3(-1.5, 1.55, -6.1), Vector3(1.4, 1.35, -8.45)],
 	["exam_floor_west", Vector3(-12.3, 5.4, -17.6), Vector3(-13.7, 4.2, -29.5)],
-	["exam_floor_north", Vector3(-5.5, 5.5, -40.4), Vector3(9.0, 4.2, -43.6)],
+	["exam_floor_north", Vector3(-5.5, 5.18, -43.58), Vector3(9.0, 4.36, -42.1)],
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],
 	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-33.0, -1.0, 7.0)],
 	["exam_conversation", Vector3(-2.76, 5.24, -43.83), Vector3(-1.49, 4.53, -41.38), 2.10],
 	["exam_revision", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 1.50],
 	["exam_revision_next", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 2.78],
-	["exam_plaster_pair", Vector3(-10.98, 5.18, -27.9), Vector3(-13.38, 4.50, -29.17), 1.54],
+	["exam_plaster_pair", Vector3(-13.67, 5.12, -26.52), Vector3(-13.40, 4.52, -29.05), 1.54],
 ]
 const WAITING_VIEWS := [
 	["waiting_conversation", Vector3(2.52, 1.66, -1.04), Vector3(1.45, .89, 1.36), 2.2],

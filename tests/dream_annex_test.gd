@@ -159,13 +159,16 @@ func _check_candidates(floor: Node, specs: Dictionary) -> void:
 			"The soles of %s no longer meet the floor." % path)
 		var pieces := person.find_children("*", "MeshInstance3D", true, false)
 		_check.expect(pieces.size() <= 7, "%s has more than one draw per moving form/prop." % path)
+		var indices := 0
 		for piece: MeshInstance3D in pieces:
 			var mesh := piece.mesh as ArrayMesh
 			var paint := piece.material_override as StandardMaterial3D
-			_check.expect(mesh != null and mesh.get_surface_count() == 1
-				and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
-				and paint != null and paint.vertex_color_use_as_albedo,
-				"%s has lost a tinted, non-box silhouette: %s." % [path, piece.name])
+			if _check.expect(mesh != null and mesh.get_surface_count() == 1
+					and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
+					and paint != null and paint.vertex_color_use_as_albedo,
+					"%s has lost a tinted, non-box silhouette: %s." % [path, piece.name]):
+				indices += mesh.surface_get_array_index_len(0)
+		_check.expect(indices > 0 and indices <= 6300, "%s exceeds the 2100-triangle dressing budget." % path)
 		_check_beat(person, feet, spec)
 	_check.expect(tailoring.size() == specs.size(), "%s reused a costume mesh across candidates." % floor.name)
 	_check.expect(not heights.is_empty() and heights.max() - heights.min() > 0.22,

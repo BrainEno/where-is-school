@@ -35,8 +35,8 @@ ARMS = {
     "Revise": (Arm((-.216, .165, .041), (-.152, .226, .269), "grip", (-.20, .32, .93)),
                Arm((.235, .194, .028), (.133, .309, .236), "grip", (-.68, -.13, .72))),
     "OfferSnacks": (POCKET, Arm((.222, .170, .033), (.139, .207, .244), "grip", (.22, .45, .86))),
-    "RapOnPlaster": (POCKET, Arm((.191, .265, .236), (.018, .365, .422), "fist", (-.31, -.07, .95))),
-    "Steady": (Arm((-.227, .205, .122), (-.106, .282, .317), "open", (.16, .35, .92)), LOOSE_R),
+    "RapOnPlaster": (POCKET, Arm((.191, .265, .236), (.018, .365, .466), "fist", (-.31, -.07, .95))),
+    "Steady": (Arm((-.227, .220, .156), (-.087, .337, .417), "open", (-.06, .12, .99)), LOOSE_R),
 }
 
 # Each column is (seconds, degrees). Pauses and accents, not constant oscillation.
@@ -176,7 +176,7 @@ def paper_piece(name):
                        (.039, .075), (.034, .076))], at)
     elif name == "Pencil":
         # Tip reaches the right-hand page on the low strokes; the recovery lifts clear.
-        tip, tail = (.071, .274, .378), (.157, .337, .241)
+        tip, tail = (.071, .274, .378), (.136, .324, .241)
         stations = [(tip, .001, .001), (mix(tip, tail, .13), .0058, .0058),
                     (mix(tip, tail, .88), .0058, .0058), (tail, .006, .006)]
         mesh.sweep(stations, [(194, 164, 115), (221, 162, 72), (173, 103, 89)], 6)
@@ -248,7 +248,7 @@ def exam_candidates(b, parent, rise):
     b.node("Troublemaker", parent, position=vec3((-13.55, rise, -29.2)))
     p = child_path(parent, "Troublemaker")
     student(b, p, "Ranter", (0, 0, 0), -90, "windbreaker", "RapOnPlaster", step=.079)
-    student(b, p, "Accomplice", (.51, 0, .43), -142, "workshirt", "Steady", step=-.060)
+    student(b, p, "Accomplice", (.51, 0, .56), -129, "workshirt", "Steady", step=-.060)
     return p
 
 
