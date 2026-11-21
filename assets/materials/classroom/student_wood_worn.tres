@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/painterly/environment_surface.gdshader" id="1_surface"]
+
+[resource]
+resource_name = "Classroom student wood — worn umber finish"
+shader = ExtResource("1_surface")
+shader_parameter/base_color = Color(0.58, 0.47, 0.36, 1)
+shader_parameter/shadow_pigment = Color(0.31, 0.32, 0.40, 1)
+shader_parameter/highlight_pigment = Color(0.75, 0.65, 0.49, 1)
+shader_parameter/brush_pigment = Color(0.39, 0.34, 0.36, 1)
+shader_parameter/use_base_texture = false
+shader_parameter/style_level = 2
+shader_parameter/patch_scale = 2.2
+shader_parameter/patch_strength = 0.31
+shader_parameter/brush_scale = 8.5
+shader_parameter/brush_strength = 0.19

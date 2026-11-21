@@ -23,13 +23,14 @@ extends SceneTree
 ## So this test loads the real scenes — `classroom.tscn`, `player.tscn`,
 ## `companion.tscn`, `npc_actor.tscn` — and checks what the player sees and bumps into.
 ## It does not photograph anything (that is `capture_playthrough.gd`) and it is not a
-## layout rework: the twelve original desks stay put, with one new seat for Q.
+## scale rework: the twelve original desk positions stay put, with a seat beside each.
 ##
 ## Where a number could be read off the thing being tested, it is read rather than
 ## copied: the desk's top is measured on the instantiated desk, and the character's feet
 ## are measured on the instantiated character.
 
 const Harness = preload("res://tests/test_harness.gd")
+const DeskContract = preload("res://tests/classroom_desk_contract.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const PLAYER := "res://scenes/actors/player/player.tscn"
@@ -43,23 +44,6 @@ const Q_CHARACTER := "res://scenes/environment/characters/q.tscn"
 const N_CHARACTER := "res://scenes/environment/characters/teacher_n.tscn"
 const NPC_ACTOR := "res://scenes/actors/npc/npc_actor.tscn"
 
-## The original grid and Q’s new desk. Each uses the same imported model and one
-## desk collider, so adding a seat does not change the scale of the furniture.
-const DESKS := {
-	"DeskA1": Vector3(-4.8, 0, -0.8),
-	"DeskA2": Vector3(-1.6, 0, -0.8),
-	"DeskA3": Vector3(1.6, 0, -0.8),
-	"DeskA4": Vector3(4.8, 0, -0.8),
-	"DeskB1": Vector3(-4.8, 0, 1.3),
-	"DeskQ": Vector3(-2.35, 0, 1.3),
-	"DeskB2": Vector3(-1.6, 0, 1.3),
-	"DeskB3": Vector3(1.6, 0, 1.3),
-	"DeskB4": Vector3(4.8, 0, 1.3),
-	"DeskC1": Vector3(-4.8, 0, 3.4),
-	"DeskC2": Vector3(-1.6, 0, 3.4),
-	"DeskC3": Vector3(1.6, 0, 3.4),
-	"DeskC4": Vector3(4.8, 0, 3.4),
-}
 ## The player's own desk, and therefore the one desk that carries the stationery.
 const OWN_DESK := "DeskB2"
 ## How far off its surface a prop may sit before it is floating or sunk.
@@ -128,7 +112,7 @@ func _run() -> void:
 
 	Harness.finish(
 		self, _failures,
-		"thirteen imported desks with one desk collider each, a narrow seam at the paired desks, the "
+		"24 imported desks and chairs in 12 pairs, with one collider per desk and a narrow seam per pair; "
 		+ "stationery sits on the player's own desk, the player and Q both wear their "
 		+ "authored models with their feet on the floor, the grayboxes are retired, and "
 		+ "N keeps his."
@@ -152,7 +136,7 @@ func _check_classroom(holder: Node3D) -> void:
 	await process_frame
 
 	_check_student_desks(location)
-	_check_desk_pair(location)
+	_check_desk_pairs(location)
 	_check_teacher_desk(location)
 	_check_stationery(location)
 
@@ -165,24 +149,24 @@ func _check_student_desks(location: Node3D) -> void:
 	if furniture == null:
 		_failures.append("The classroom has no Furniture node.")
 		return
+	var expected_positions := DeskContract.positions()
 	var student_desk_count := 0
 	for child: Node in furniture.get_children():
-		if String(child.name).begins_with("Desk") and child is Node3D:
+		if child.scene_file_path == CLASSROOM_DESK or String(child.name).begins_with("Desk"):
 			student_desk_count += 1
-	if student_desk_count != DESKS.size():
+	if student_desk_count != 24:
 		_failures.append(
-			"The expanded classroom has %d student desks; exactly %d are required."
-			% [student_desk_count, DESKS.size()]
+			"The expanded classroom has %d student desks; exactly 24 are required." % student_desk_count
 		)
-	for desk_name: String in DESKS:
+	for desk_name: String in expected_positions:
 		var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
 		if desk == null:
 			_failures.append("The classroom has no desk named '%s'." % desk_name)
 			continue
-		var expected: Vector3 = DESKS[desk_name]
+		var expected: Vector3 = expected_positions[desk_name]
 		if not desk.position.is_equal_approx(expected):
 			_failures.append(
-				"'%s' stands at %s; its row is %s. Swapping a model is not a layout change."
+				"'%s' stands at %s; its authored position is %s."
 				% [desk_name, str(desk.position), str(expected)]
 			)
 		if desk.scene_file_path != CLASSROOM_DESK:
@@ -197,18 +181,29 @@ func _check_student_desks(location: Node3D) -> void:
 
 
 ## A measured seam: not touching, but not an aisle. Both desk tops are in the same row.
-func _check_desk_pair(location: Node3D) -> void:
-	var left := location.get_node_or_null(^"Furniture/DeskQ/Desk")
-	var right := location.get_node_or_null(^"Furniture/DeskB2/Desk")
-	if left == null or right == null:
-		return  # _check_student_desks reports the missing model.
-	var a := _subtree_aabb(left)
-	var b := _subtree_aabb(right)
-	var seam := b.position.x - a.end.x
-	if seam < 0.015 or seam > 0.06 or not is_equal_approx(a.position.z, b.position.z) \
-			or not is_equal_approx(a.end.y, b.end.y):
-		_failures.append("Q and the protagonist need parallel, level desktops with a small seam (%.3f m)." % seam)
-	print("DESKMATES desktop_seam=%.3f m" % seam)
+func _check_desk_pairs(location: Node3D) -> void:
+	var seam_min := INF
+	var seam_max := 0.0
+	var pairs := 0
+	for anchor: String in DeskContract.ANCHORS:
+		var mate := DeskContract.mate_of(anchor)
+		var first := location.get_node_or_null(NodePath("Furniture/%s/Desk" % anchor)) as Node3D
+		var second := location.get_node_or_null(NodePath("Furniture/%s/Desk" % mate)) as Node3D
+		if first == null or second == null:
+			continue  # _check_student_desks reports the missing model.
+		var a := _subtree_aabb(first)
+		var b := _subtree_aabb(second)
+		var seam := maxf(a.position.x, b.position.x) - minf(a.end.x, b.end.x)
+		if seam < 0.015 or seam > 0.06 or not is_equal_approx(a.position.z, b.position.z) \
+				or not is_equal_approx(a.end.z, b.end.z) or not is_equal_approx(a.end.y, b.end.y) \
+				or not first.global_basis.is_equal_approx(second.global_basis):
+			_failures.append(
+				"%s and %s need parallel, level desktops with a small seam (%.3f m)." % [anchor, mate, seam]
+			)
+		pairs += 1
+		seam_min = minf(seam_min, seam)
+		seam_max = maxf(seam_max, seam)
+	print("::notice title=classroom desk pairs::count=%d desktop_seam_range=%.3f–%.3f m" % [pairs, seam_min, seam_max])
 
 
 ## The desk the classroom draws is the imported model, and the only solid part of the
@@ -257,6 +252,8 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			+ "two obstacles out of one desk."
 		)
 		return
+	if bodies.size() != 1:
+		return
 
 	var body := bodies[0] as StaticBody3D
 	if body == null or body != model:
@@ -271,6 +268,8 @@ func _check_desk_body(desk_name: String, desk: Node3D, model: Node3D) -> void:
 		)
 
 	var shape_node := shapes[0] as CollisionShape3D
+	if shape_node.disabled:
+		_failures.append("'%s' has a disabled desk collider." % desk_name)
 	var box := shape_node.shape as BoxShape3D
 	if box == null:
 		_failures.append("'%s' does not collide with a box; the desk is a box." % desk_name)
@@ -319,7 +318,7 @@ func _under_chair(desk: Node, node: Node) -> bool:
 ## The detailed chair keeps the original seat and collision boundary.
 ##
 ## Only the desk mates' chairs get colliders, authored by the room and not the
-## shared prop. The eleven other chairs keep their existing walk routes.
+## shared prop. The other 22 chairs remain decorative.
 func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 	var chair := desk.get_node_or_null(^"Chair") as Node3D
 	if chair == null:
@@ -346,6 +345,9 @@ func _check_chair(desk_name: String, desk: Node3D, model: Node3D) -> void:
 			% [desk_name, node.name]
 		)
 		break
+	if not chair.position.is_equal_approx(Vector3(0.0, 0.0, 0.58)) \
+			or not chair.basis.is_equal_approx(Basis.IDENTITY):
+		_failures.append("'%s' chair is not centred and aligned behind its desk." % desk_name)
 	var seat := chair.get_node_or_null(^"Seat") as MeshInstance3D
 	if seat == null:
 		_failures.append("'%s/Chair' has no Seat." % desk_name)

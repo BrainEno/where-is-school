@@ -14,6 +14,7 @@ extends SceneTree
 ## the log.
 
 const Harness = preload("res://tests/test_harness.gd")
+const DeskContract = preload("res://tests/classroom_desk_contract.gd")
 const EvidenceContract = preload("res://tests/evidence_contract.gd")
 const SHOT_DIR := "res://docs/screenshots"
 const LOG_PATH := "res://docs/screenshots/PLAYTHROUGH.log"
@@ -761,7 +762,7 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 
 ## The four imported models, in the room the player is standing in.
 ##
-## The classroom's thirteen student desks, the stationery on the player's own desk, the
+## The classroom's 24 paired student desks, the stationery on the player's own desk, the
 ## player's own model and Q. These are frames of the running game — the same window, the
 ## same light, the same baked navigation as every other frame in this run — from a camera
 ## the capture places for the purpose, because the player's own camera is nailed to the
@@ -781,22 +782,19 @@ func _capture_imported_models() -> void:
 	# The scene the frames are supposed to show, checked before it is photographed: a
 	# missing model is a defect in the build, not a bad camera angle.
 	var furniture := classroom.get_node_or_null(^"Furniture")
-	var desk_names: Array[String] = [
-		"DeskA1", "DeskA2", "DeskA3", "DeskA4",
-		"DeskB1", "DeskQ", "DeskB2", "DeskB3", "DeskB4",
-		"DeskC1", "DeskC2", "DeskC3", "DeskC4",
-	]
+	var expected := DeskContract.positions()
 	var with_models := 0
 	if furniture != null:
-		for desk_name: String in desk_names:
+		for desk_name: String in expected:
 			var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
-			if desk != null and desk.get_node_or_null(^"Desk") != null:
+			if desk != null and desk.get_node_or_null(^"Desk") != null \
+					and desk.get_node_or_null(^"Chair/Seat") != null:
 				with_models += 1
-	_note("classroom desks with the imported model: %d of %d" % [with_models, desk_names.size()])
-	if with_models != desk_names.size():
+	_note("classroom desk and chair models present: %d of %d" % [with_models, expected.size()])
+	if with_models != expected.size():
 		_failures.append(
-			"Only %d of the classroom's %d desks have the school desk model."
-			% [with_models, desk_names.size()]
+			"Only %d of the classroom's %d sets have both the desk and chair models."
+			% [with_models, expected.size()]
 		)
 	var stationery := classroom.get_node_or_null(^"Furniture/DeskB2/Stationery") as Node3D
 	if stationery == null:
@@ -812,18 +810,17 @@ func _capture_imported_models() -> void:
 
 	# 1. A high rear view takes in all three rows without staging or moving the furniture.
 	await _shot_from_camera(
-		Vector3(0.0, 5.5, 8.4), Vector3(0.0, 0.6, 0.1),
+		Vector3(0.0, 9.0, 4.6), Vector3(0.0, 0.35, 1.25),
 		"03h_classroom_desks",
-		"The classroom: all thirteen desks and chairs, including Q beside the protagonist."
+		"The classroom: 12 pairs of desks and chairs, including Q beside the protagonist."
 	)
 
 	# 2. The player's own desk, close enough to see what is on it.
-	# From the front of the room looking back over the desk, so a player standing behind
-	# the desk cannot be between the camera and what it is photographing.
+	# Look across the protagonist's right aisle, clear of the new front-row desks.
 	await _shot_from_camera(
-		Vector3(-0.55, 1.55, -1.15), Vector3(0.0, 0.95, 0.15),
+		Vector3(-0.22, 1.63, 1.08), Vector3(-1.60, 0.89, 1.32),
 		"03i_own_desk_stationery",
-		"The player's own desk (DeskB2) from the sitting side: the stationery set on the top."
+		"The player's own desk (DeskB2) from the aisle: the stationery set on the top."
 	)
 
 	# 3. The player's own model, head to feet. Taken in the open floor in front of the
@@ -1251,7 +1248,7 @@ func _capture_cue_candidates() -> void:
 	if not await _wait_for_free(45.0):
 		_note("the candidate frames could not be taken: the player never got control back")
 		return
-	_teleport(Vector3(0.55, 0.0, 1.7), 0.0)
+	_teleport(Vector3(-0.375, 0.0, 1.7), 0.0)
 	await _wait(0.4)
 	var ahead := -_player.global_transform.basis.z
 	var centre := _player.global_position + ahead * 2.4

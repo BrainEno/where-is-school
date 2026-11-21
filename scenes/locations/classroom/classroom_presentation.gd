@@ -5,22 +5,14 @@ extends Node3D
 const PAPER_CYCLE := 11.7
 const PAPER_MAX_TILT := deg_to_rad(4.0)
 const DESK_SURFACE: Material = preload("res://assets/materials/classroom/student_wood.tres")
-const DESKS: Array[NodePath] = [
-	^"../Furniture/DeskA1/Desk",
-	^"../Furniture/DeskA2/Desk",
-	^"../Furniture/DeskA3/Desk",
-	^"../Furniture/DeskA4/Desk",
-	^"../Furniture/DeskB1/Desk",
-	^"../Furniture/DeskQ/Desk",
-	^"../Furniture/DeskB2/Desk",
-	^"../Furniture/DeskB3/Desk",
-	^"../Furniture/DeskB4/Desk",
-	^"../Furniture/DeskC1/Desk",
-	^"../Furniture/DeskC2/Desk",
-	^"../Furniture/DeskC3/Desk",
-	^"../Furniture/DeskC4/Desk",
-]
+const RECENT_SURFACE: Material = preload("res://assets/materials/classroom/student_wood_recent.tres")
+const WORN_SURFACE: Material = preload("res://assets/materials/classroom/student_wood_worn.tres")
 
+## Authored names, not random wear: the same desk keeps its finish on every visit.
+@export var recent_desks: Array[StringName] = []
+@export var worn_desks: Array[StringName] = []
+
+@onready var _furniture: Node3D = $"../Furniture"
 @onready var _b_impression := get_node_or_null(^"../WallNorth/InkShadowFigure") as MeshInstance3D
 @onready var _imagined := get_node_or_null(^"../ImaginedLesson") as ImaginedLesson
 @onready var _paper: MeshInstance3D = $"../TimetableSheet"
@@ -35,17 +27,21 @@ var _paper_tilt := 0.0
 func _ready() -> void:
 	# The room is drawn before anyone has imagined the teacher, even on a revisit.
 	set_b_impression_visible(false)
-	for path in DESKS:
-		var desk := get_node_or_null(path)
+	for fixture: Node in _furniture.get_children():
+		var desk := fixture.get_node_or_null(^"Desk")
 		if desk == null:
-			push_error("ClassroomPresentation: missing desk at '%s'." % path)
 			continue
 		var meshes := desk.find_children("*", "MeshInstance3D", true, false)
 		if meshes.is_empty():
-			push_error("ClassroomPresentation: '%s' has no imported mesh to style." % path)
+			push_error("ClassroomPresentation: '%s' has no imported mesh to style." % fixture.name)
+		var surface := DESK_SURFACE
+		if fixture.name in recent_desks:
+			surface = RECENT_SURFACE
+		elif fixture.name in worn_desks:
+			surface = WORN_SURFACE
 		for node in meshes:
 			var mesh := node as MeshInstance3D
-			mesh.material_override = DESK_SURFACE
+			mesh.material_override = surface
 			# Remove the wash, not just its opacity. The imported hard-normal mesh
 			# cannot grow a clean inverted hull; leave its silhouette to geometry.
 			mesh.material_overlay = null
