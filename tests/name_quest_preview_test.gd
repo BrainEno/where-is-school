@@ -135,6 +135,11 @@ func _branch(index: int) -> bool:
 		"Returning to the classroom asked for a new response.")
 
 	Harness.stage = "Q lead and independent announcement-board observation"
+	# Q is solid, and the return door owns the prompt at its own threshold.
+	# Step out beside him in the middle of the hall before turning to talk.
+	if not await _walk_to(Vector3(0.45, 0, -5.1), 6.0) \
+			or not await _walk_to(Vector3(0.45, 0, -3.0), 6.0):
+		return false
 	var q_target := _q.get_node_or_null(^"AskAboutTheRegister") as Interactable
 	if not _check.expect(q_target != null and q_target.can_interact(), "The joined Q offers no follow-up."):
 		return false
@@ -148,10 +153,7 @@ func _branch(index: int) -> bool:
 	var q_entry: NarrativeEntry = _knowledge.get_entry(QUEST.Q_CLUE)
 	_check.expect(q_entry != null and q_entry.source == NarrativeEntry.Source.REPORTED
 		and not q_target.can_interact(), "Q's clue is not a one-time report.")
-	# Q has a solid capsule. Step into the middle of the hall before walking
-	# past him to the board, the same passing-lane rule as corridor_art_test.
-	if not await _walk_to(Vector3(0.45, 0, -5.1), 6.0) \
-			or not await _read_board():
+	if not await _read_board():
 		return false
 	var board_entry: NarrativeEntry = _knowledge.get_entry(QUEST.BOARD_CLUE)
 	_check.expect(board_entry != null and board_entry.source == NarrativeEntry.Source.OBSERVED
