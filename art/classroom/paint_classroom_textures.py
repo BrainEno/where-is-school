@@ -679,8 +679,8 @@ def window_view() -> Image.Image:
         c.paint(PLUM_DARK if k % 2 else (72, 82, 84), body, 0.95)
         lid = c.rect_mask(s0 - 0.015, 0.16 + h, s0 + w + 0.015, 0.16 + h + 0.035, rough=0.2, cell_m=0.01)
         c.paint(PLUM_DARK, lid, 1.0)
-    # Wet concrete, as the window's inspection text has it: dark, with the orange light
-    # dragged down into it in short vertical reflections under each lit shape.
+    # Concrete: dark, with the orange light dragged down into it in short vertical
+    # reflections under each lit shape.
     ground = c.rect_mask(-0.1, -0.1, 4.6, 0.2, rough=0.2, cell_m=0.03)
     c.paint((96, 78, 74), ground, 1.0)
     streaks = [([(s, 0.19), (s + rng.uniform(-0.01, 0.01), rng.uniform(0.03, 0.1))], rng.uniform(0.03, 0.07), {"bristles": 6, "dryness": 0.45, "wobble_m": 0.003}) for s in rng.uniform(0.0, 4.5, 18)]
@@ -728,26 +728,54 @@ def window_view() -> Image.Image:
     for peg in (3.14, 3.33, 3.53, 3.75, 3.87, 3.96, 4.13, 4.31):
         y = on_line(peg)
         c.paint(PLUM_DARK, c.rect_mask(peg - 0.008, y - 0.03, peg + 0.008, y + 0.012, rough=0.1, cell_m=0.005), 0.9)
+
+    # Foreground plane of the exterior sill, not part of the interior teal frame.
+    # Only the ordinary window sees this end of the stage flat. Leave gaps between
+    # chips so they read as flaking plaster on dusty concrete, not a white seam.
+    sill = [(2.98, 0.112), (4.52, 0.102), (4.55, -0.03), (2.95, -0.03)]
+    c.paint((123, 119, 118), c.polygon_mask(sill, rough=0.13, cell_m=0.024, blur_m=0.004))
+    c.ink_line(sill[:2], width_m=0.007, wobble_m=0.002, color=(73, 64, 67), opacity=0.9, taper=False)
+    for x, y, width in ((3.25, 0.058, 0.37), (3.81, 0.066, 0.21), (4.25, 0.044, 0.32)):
+        c.brush((162, 151, 145), [([(x - width / 2, y), (x + width / 2, y - 0.008)],
+                                   0.036, {"bristles": 10, "dryness": 0.55, "wobble_m": 0.003})], opacity=0.65)
+    for x, y, w in ((3.12, .060, .020), (3.21, .048, .029), (3.25, .066, .016),
+                    (3.40, .056, .010), (3.61, .053, .023), (3.69, .068, .017),
+                    (3.95, .053, .028), (4.10, .067, .015), (4.16, .049, .026),
+                    (4.28, .060, .043), (4.33, .046, .018), (4.42, .070, .014)):
+        chip = [(x - w * .53, y - .004), (x - w * .22, y + .008),
+                (x + w * .31, y + .009), (x + w * .50, y - .002), (x + w * .13, y - .008)]
+        c.paint((216, 208, 194), c.polygon_mask(chip, rough=0.16, cell_m=0.005, blur_m=0.003), 0.9)
     return c.image(32)
 
 
-def glass(cracked: bool, seed: int) -> Image.Image:
-    """The glass over one window (1.5 x 1.3 m, two panes): mostly clear, a reflection
-    streak, and - on the window that has it - the crack and its strip of clear tape."""
+def glass(muddy: bool, seed: int) -> Image.Image:
+    """A clear reflection with dry, irregular splatter on the two front panes.
+
+    The marks are composited on the glazing, separate from the painted exterior.
+    Most of both panes stays clear; the heavier spots sit low, with smaller drops
+    in each pane. No cracked lines or repair tape on the glass.
+    """
     c = Canvas(1.5, 1.3, 200.0, (255, 255, 255), seed=seed, alpha=0.0)
     streak = c.polygon_mask([(0.08, 1.25), (0.3, 1.25), (0.62, 0.05), (0.45, 0.05)], rough=0.3, cell_m=0.05, blur_m=0.03)
     c.paint_alpha((255, 244, 226), streak, 0.18)
-    if cracked:
-        # The crack sits in the pane nearer the room's middle (the right-hand pane).
-        cx, cy = 1.12, 0.62
-        for ang in (0.3, 1.6, 2.7, 3.9, 5.1):
-            length = c.rng.uniform(0.18, 0.42)
-            mid = (cx + math.cos(ang) * length * 0.5 + c.rng.normal(0, 0.02), cy + math.sin(ang) * length * 0.5)
-            end = (cx + math.cos(ang) * length, cy + math.sin(ang) * length)
-            c.ink_line([(cx, cy), mid, end], width_m=0.006, wobble_m=0.004, color=(250, 248, 240), opacity=0.9, alpha_canvas=True)
-        tape = c.polygon_mask([(0.88, 0.92), (0.95, 0.98), (1.38, 0.34), (1.31, 0.28)], rough=0.15, cell_m=0.02, blur_m=0.004)
-        c.paint_alpha((236, 228, 200), tape, 0.35)
-        c.ink_line([(0.88, 0.92), (1.31, 0.28)], width_m=0.004, wobble_m=0.001, color=(250, 248, 240), opacity=0.55, alpha_canvas=True)
+    if muddy:
+        spots = [(.15, .44, .023), (.23, .26, .035), (.29, .30, .011), (.31, .19, .016),
+                 (.36, .38, .019), (.43, .54, .032), (.49, .63, .013), (.53, .40, .015),
+                 (.56, .22, .025), (.61, .26, .013), (.59, .78, .014), (.28, .81, .015),
+                 (.90, .25, .018), (.97, .31, .027), (1.01, .36, .011), (1.06, .56, .023),
+                 (1.11, .66, .012), (1.17, .55, .046), (1.23, .46, .015), (1.26, .35, .020),
+                 (1.34, .57, .017), (1.37, .29, .030), (1.27, .83, .019)]
+        for x, y, r in spots:
+            phase = c.rng.uniform(0, math.tau)
+            width = c.rng.uniform(.73, 1.24)
+            points = []
+            for i in range(10):
+                a = phase + i * math.tau / 10
+                d = r * c.rng.uniform(.66, 1.22)
+                points.append((x + math.cos(a) * d * width, y + math.sin(a) * d))
+            c.paint_alpha((109, 76, 53), c.polygon_mask(points, rough=.38, cell_m=.010, blur_m=.004), 0.55)
+            centre = [(x + (s - x) * .73, y + (t - y) * .70) for s, t in points]
+            c.paint_alpha((73, 51, 40), c.polygon_mask(centre, rough=.32, cell_m=.008, blur_m=.003), 0.62)
     return c.image(24, alpha="blend")
 
 
@@ -1033,6 +1061,7 @@ def main() -> None:
     save(board_front(), "board_front.png")
     save(board_back(), "board_back.png")
     save(window_view(), "window_view.png")
+    # Keep the production front pane's bound texture path; only its painted content changes.
     save(glass(True, 1313), "glass_cracked.png")
     save(glass(False, 1414), "glass_clean.png")
     save(tile_noise_texture(HONEY, HONEY_PALE, (110, 114, 95), 1515, (256, 128), "h", 20), "wood_honey.png")

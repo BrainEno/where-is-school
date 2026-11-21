@@ -83,6 +83,10 @@ CAPTURE_SHOTS = (
     "12_lectern_side.png",
     "13_lectern_teacher_side.png",
     "14_lectern_gameplay.png",
+    "15_set_square_detail.png",
+    "16_front_window_detail.png",
+    "17_curtain_closed.png",
+    "18_front_window_focus.png",
 )
 # The clock capture (#173): tests/capture_classroom_clock.gd reads the time off each frame.
 CLOCK_SHOTS = (
