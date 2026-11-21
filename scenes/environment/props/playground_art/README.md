@@ -18,7 +18,8 @@ involved.
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
 | `materials/*.tres` | `source/build_playground_art.py` | Shared `StandardMaterial3D` palette: toon and a shared ink outline. The overrides used only by the scenery are embedded there. |
 | `meshes/*.mesh`, `noodle_wrapper.tscn` | `source/yard_details.py`, `source/build_playground_art.py` | Shaped bedding, paper and wrapper film in native compressed `ArrayMesh` resources. Their UVs, surfaces and node paths are unchanged. |
-| `scenery.scn` | `source/construction_site.py`, `source/site_meshes.py`, and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals, site meshes and scenery-only materials. The cast shell, sand basins, folded sheets and machine parts use the existing paint tiles. No external download or new paint tile. |
+| `scenery.scn` | `source/build_playground_art.py` and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals and scenery-only materials. Still carries the round-8 construction site, hidden by `playground.tscn` until the next bake drops it. No external download or new paint tile. |
+| `construction_site.tscn`, `materials/site/*.tres` | `source/construction_site.py` (layout), `source/site_meshes.py` (parts), `source/site_mesh.py` (mesh kit) | The building under construction as a text scene of generated `ArrayMesh` resources with vertex colours (grime, rust, wet sand). Rebuilds with plain Python, no engine: `python3 scenes/environment/props/playground_art/source/construction_site.py`. The materials reuse the yard's ground, metal and plaster tiles. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
 The distribution/source record is in [ASSET_PROVENANCE.md](../../../../docs/ASSET_PROVENANCE.md).
@@ -95,24 +96,33 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
   - chimney
   - pylon and trees
   - All are unlit, cast no shadows and never sit between the camera and the player.
-- **The building under construction** (`PlaygroundArt/ConstructionSite`, built by
-  `source/construction_site.py`). The plot still meets the yard at the same edge; it is
-  a backdrop, not a walkable extension.
-  - The ellipsoid building has a closed, opaque, 360° concrete shell. Shallow cold joints
-    mark the pours without cuts through the wall. Two pipes follow the curved face. The
-    unfinished silhouette comes from the top: exposed timber formwork, projecting rebar,
-    chalk and marbles. The shell does not fade or have an open backside.
-  - The three sand piles have irregular shoulders and real recessed walls beneath the lip.
-    Dark wet sand and shaded water sit below the opening, rather than on top of a solid cap.
-  - Ribbed blue panels keep their pale top edge and one fallen panel. The two gate leaves
-    have bars, hinge sleeves, a short chain and padlock, and the nameplate remains blank.
-  - The yellow excavator keeps its reach over the fence. Its cab frames, track shoes and
-    rollers, hydraulic cylinders and open toothed bucket describe how the separate parts fit.
-  - `site_meshes.py` bakes the closed shell, sand and reusable parts offline. The sheet ribs,
-    gate bars and tread shoes are grouped in their respective meshes. Materials reuse the
-    yard's ground, metal and plaster tiles. All geometry is at x ≤ −23.05 m (walkable yard
-    ends near −22.5); no new collision, navigation or interaction. The pinned camera test
-    now also checks the shell's opacity and triangle coverage from eight bearings.
+- **The building under construction** (`PlaygroundArt/BuildingSite`, the instanced
+  `construction_site.tscn`, written by `source/construction_site.py`). The plot meets the
+  yard at the same edge; it is a backdrop, not a walkable extension. Round 9 rebuilt every
+  part as generated geometry (about 68k triangles) instead of primitives and lofts:
+  - The ellipsoid building has a closed, opaque, 360° concrete shell with recessed cold
+    joints, pour-to-pour tone, rain streaks under the deck and splashback at the foot, a
+    grid of formwork tie holes and two downpipes on stand-off clamps. The deck carries
+    timber formwork, yellow edge protection with toe boards, starter bars, chalk and the six
+    marbles. A plywood porch with a steel door, a vision panel, a site board and a lamp
+    faces the gate: the future way in.
+  - Three tipped sand piles with slumped, rilled flanks, a bitten face where the shovel
+    went in, pebbles and a damp skirt. A smaller spoil mound, a wheelbarrow, a rebar bundle
+    and a pallet of blocks sit inside.
+  - Trapezoid-ribbed hoarding panels (three variants) with mud splash and rust runs, posts,
+    ballast blocks, couplers and a pale capping rail. The gate has two barred leaves on
+    hinge posts, hazard boards, a blank name board, a chain round both stiles and a brass
+    padlock; one panel lies fallen inside the south run.
+  - The excavator keeps its reach over the fence: tracks with shoes, rollers and idlers,
+    a counterweighted house, glazed cab, boom and stick with hydraulic cylinders and hoses,
+    and a toothed bucket holding sand.
+  - The ground has machine ruts, sand spill and puddles, flattened to the yard's level along
+    the shared edge.
+  - All geometry is at x ≤ −23.05 m (the walkable yard ends near −22.5) and the script
+    refuses to write anything past it; no collision or navigation. `SiteLook` (an
+    inspection at the yard edge in front of the gate) carries the `building_site` camera
+    shot, which backs the camera off and lifts its aim (`CameraShot.look_height`) so the
+    whole building is in frame.
 - **Ground.** Two pours of low-value concrete: the stage floor stays dark so the court,
   the props and the pale HUD text carry the light. The older pour is warm sand; the newer
   pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up

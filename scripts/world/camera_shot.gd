@@ -15,7 +15,8 @@ extends Resource
 ##   height) toward that centre;
 ## * **orientation**: the camera swings `yaw_degrees` round the view centre (it always
 ##   looks at the centre);
-## * **lens**: `fov` degrees.
+## * **lens**: `fov` degrees;
+## * **aim**: `look_height` metres above the floor, for a subject taller than the player.
 ##
 ## Movement keys are read against the default framing, not the shot, so a swing never
 ## turns the controls under the player's hands.
@@ -26,10 +27,15 @@ extends Resource
 @export var look_offset: Vector3 = Vector3.ZERO
 ## 0 = the view stays on the player, 1 = it centres on the look point.
 @export_range(0.0, 1.0, 0.01) var subject_mix: float = 0.55
-## The camera's distance from the view centre, as a fraction of the default.
-@export_range(0.4, 1.2, 0.01) var distance_scale: float = 0.8
+## The camera's distance from the view centre, as a fraction of the default. Above 1 the
+## camera backs off, for something too big to frame from the usual distance.
+@export_range(0.4, 2.0, 0.01) var distance_scale: float = 0.8
 ## The camera's height above the view centre, as a fraction of the (scaled) default.
-@export_range(0.5, 1.3, 0.01) var height_scale: float = 1.0
+@export_range(0.3, 1.3, 0.01) var height_scale: float = 1.0
+## Height above the player's floor the camera aims at, metres; below 0 keeps the rig's
+## usual eye height. A tall subject (the building under construction) lifts the aim so
+## its top comes into the frame.
+@export_range(-1.0, 8.0, 0.1) var look_height: float = -1.0
 ## Swing round the view centre, degrees (positive = counter-clockwise seen from above).
 @export_range(-40.0, 40.0, 0.5) var yaw_degrees: float = 0.0
 ## The field of view while the shot holds.

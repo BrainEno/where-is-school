@@ -925,6 +925,13 @@ def build_playground(for_courtyard_view: bool = False):
          # hidden meshes are skipped, so listing both keeps the outline right either way.
          "outline": tuple(f"PlaygroundArt/Equipment/Tyre_{i}" for i in range(3))
                     + ("PlaygroundArt/Equipment/TyreLoose",)},
+        # The building under construction stands too tall for the default framing; this
+        # shot backs the camera off and lifts its aim until the whole shell is in view.
+        {"name": "SiteLook", "pos": (-22.6, 1.0, 13.2), "id": "pg_site_look",
+         "inspection": "pg_site", "radius": 1.4,
+         "shot": "res://assets/camera/shots/building_site.tres",
+         "outline": ("PlaygroundArt/BuildingSite/Gate/LeafNorth/Frame",
+                     "PlaygroundArt/BuildingSite/Gate/LeafSouth/Frame")},
     ]
     s.exits = [
         {"name": "BackToAlley", "pos": (0.0, 0.9, 18.2), "id": "pg_back_to_alley",

@@ -174,10 +174,11 @@ jobs:
               ;;
             playground_site)
               # The building under construction past the yard's south-west corner
-              # One gameplay stance, matched exterior views, and two detail views.
+              # One gameplay stance, matched exterior views, four detail views and the
+              # gameplay shot that frames the whole building from the yard edge.
               detail=(construction-site review_width=500)
               width=1280
-              expect=7
+              expect=10
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

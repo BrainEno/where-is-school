@@ -130,5 +130,12 @@
       "source": "observed",
       "text": "蓝箱里有张旧报纸缺了一角，日期断在缺口。"
     }
+  },
+  "pg_site": {
+    "title": "建造中的大楼",
+    "prompt": "看看那栋楼",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·隔着挡板看那栋楼"
   }
 }

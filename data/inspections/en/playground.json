@@ -130,5 +130,12 @@
       "source": "observed",
       "text": "One old newspaper in the blue container has a corner clipped off, leaving only part of the date."
     }
+  },
+  "pg_site": {
+    "title": "The building under construction",
+    "prompt": "Look at the building",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the building, seen over the hoarding"
   }
 }

@@ -175,7 +175,11 @@ const SITE_VIEWS := [
 	["site_overview", Vector3(-23.6, 15.0, 29.0), Vector3(-29.5, 3.5, 13.0)],
 	["sand_basins", Vector3(-22.5, 4.3, 16.9), Vector3(-25.2, 1.22, 14.4)],
 	["excavator_tracks", Vector3(-26.2, 5.6, 22.3), Vector3(-28.93, 1.6, 16.98)],
+	["gate_lock", Vector3(-23.3, 1.45, 13.75), Vector3(-26.5, 0.95, 13.2)],
+	["site_entrance", Vector3(-24.2, 2.9, 8.6), Vector3(-28.4, 1.4, 11.6)],
 ]
+## The gameplay shot that backs the camera off the yard edge to show the whole building.
+const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
 const RETURN_SPOTS := {
 	"street": [
@@ -312,8 +316,11 @@ func _run() -> void:
 		await _capture_views(out_dir, "corridor", ^"TeachingBlock", ROOM_THRESHOLD_STANCES,
 			ROOM_THRESHOLD_VIEWS, "annex_thresholds")
 	elif _construction_site:
-		var site := ^"PlaygroundArt/ConstructionSite/EllipsoidBuilding/CastShell"
+		var site := ^"PlaygroundArt/BuildingSite/EllipsoidBuilding/CastShell"
 		await _capture_views(out_dir, "playground", site, SITE_STANCES, SITE_VIEWS)
+		var yard := _host.get_current()
+		if yard != null:
+			await _capture_focus(yard, out_dir, &"pg_site_look", SITE_SHOT_STANCE, "playground_site_shot_building")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

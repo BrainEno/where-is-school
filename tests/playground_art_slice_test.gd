@@ -473,7 +473,7 @@ func _check_dressing() -> void:
 
 
 func _check_construction_site() -> void:
-	var site := _yard.get_node_or_null(^"PlaygroundArt/ConstructionSite") as Node3D
+	var site := _yard.get_node_or_null(^"PlaygroundArt/BuildingSite") as Node3D
 	if site == null:
 		_failures.append("The construction site is missing from the schoolyard.")
 		return

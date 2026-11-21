@@ -40,11 +40,14 @@ Conventions kept from the earlier outdoor work:
   for people and events later.
 
 The building under construction (glossary 建造中的大楼, later the 椭球大楼) is not in
-that table. It is art-pass dressing outside the walkable ground, past the south-west
-corner: `scenes/environment/props/playground_art/source/construction_site.py`, applied by
-`build_playground_art.py` after the generator (see the art README). It has no anchor yet.
-To make it inspectable, add a collider on the yard side, then update the yard's solids,
-navigation and shape counts deliberately. Its review frames come from
+that table. It is a text scene outside the walkable ground, past the south-west corner:
+`scenes/environment/props/playground_art/construction_site.tscn`, written by
+`source/construction_site.py` and instanced in `playground.tscn` as
+`PlaygroundArt/BuildingSite` (see the art README). Its one anchor is `SiteLook`
+(`pg_site_look`, inspection `pg_site`, text still a 「待做」 placeholder) at the yard edge
+in front of the gate; its camera shot frames the whole building. The site itself has no
+collider; a way in (and the lock on the gate) will be added as exits and interactables
+on the yard side. Its review frames come from
 `tests/capture_locations.gd -- construction-site` (the `playground_site` capture job).
 
 Adding an anchor means: add the geometry and the `Interactables` entry in
