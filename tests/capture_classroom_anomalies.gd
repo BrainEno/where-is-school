@@ -1,11 +1,12 @@
 extends SceneTree
-## Captures the real curtain, drop, impact, ladder and yard inspection shots, with
-## the HUD hidden for art review. The fixture places the player near each route's start;
-## the game drives character travel, body poses, lighting and camera. `classroom_anomaly_test`
-## separately exercises both routes with ground/roof movement input and checks state.
-## Run with Xvfb/OpenGL as in .github/workflows/classroom-anomaly-capture.yml.
+## Captures the real curtain, both roof outcomes, resident, ladder and yard shots.
+## HUD hidden for art review. Fixtures place the player near each starting mark;
+## the game drives the transition, character motion, camera and impression shader.
+## `classroom_anomaly_test` separately exercises both routes with movement input.
+## Run under Xvfb as in .github/workflows/classroom-anomaly-capture.yml.
 
 const Harness = preload("res://tests/test_harness.gd")
+const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const OUT_DIR := "res://docs/screenshots/classroom_anomalies"
 const LOG_PATH := "res://docs/screenshots/classroom_anomalies/CAPTURE.log"
@@ -13,10 +14,12 @@ const INLINE_SIZE := Vector2i(480, 270)
 ## Four 4000-character parts per frame, even with textured walls. The full PNG is
 ## not affected. The workflow prioritizes the last (yard detail) frames inline.
 const INLINE_BYTES := 12000
-const EXPECTED_SHOTS := 14
+const EXPECTED_SHOTS := 21
+const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
+var _normal_court: Image
 var _main: Node = null
 var _host: LocationHost = null
 var _player: PlayerController = null
@@ -38,6 +41,13 @@ func _run() -> void:
 	Harness.clear_session_state(self)
 	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
+	var renderer := "%s/%s" % [RenderingServer.get_current_rendering_method(),
+		RenderingServer.get_current_rendering_driver_name()]
+	var args := OS.get_cmdline_user_args()
+	if not args.is_empty() and args[0] != renderer:
+		_finish(["Expected renderer %s, got %s instead." % [args[0], renderer]])
+		return
+	print("RENDERER: %s" % renderer)
 	var packed: PackedScene = load("res://scenes/main/main.tscn")
 	_main = packed.instantiate()
 	_sequence = _main.get_node(^"OpeningSequence") as OpeningSequence
@@ -80,7 +90,10 @@ func _run() -> void:
 		_finish(["Couldn't choose to drop after a passed check."])
 		return
 	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png")
+	await _capture_resident("19-collector-unfiltered.png", &"on_threshold")
 	await _settle()
+	await _stand(COURT_COMPARE, Vector3.LEFT)
+	await _shot("15-court-normal.png")
 	_state.clear()
 	_state.set_flag(StoryFlags.CURRENT_LOCATION, &"classroom")
 	_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
@@ -94,11 +107,17 @@ func _run() -> void:
 		return
 	await _capture_pose("void_slip", 0.45, "06-slip.png")
 	await _capture_pose("roof_impact", 0.27, "07-roof-impact.png")
+	await _capture_resident("20-bedding-reaction.png", &"reclined")
+	await _capture_resident("17-resident-wakes.png", &"sitting_up")
+	await _capture_resident("18-resident-steps-out.png", &"on_threshold")
+	await _capture_resident("21-resident-looks-up.png", &"outside")
 	await _settle()
 	var container := _host.get_current().get_node_or_null(^"ContainerBody") as Node3D
 	if container == null or not _state.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, false):
 		_finish(["The failed check didn't produce an injured landing."])
 		return
+	await _stand(COURT_COMPARE, Vector3.LEFT)
+	await _shot("16-court-misprint.png")
 	var mark := container.get_node(^"Ladder/RoofMark") as Marker3D
 	await _stand(mark.global_position, Vector3.BACK)
 	_activate(&"pg_container_ladder")
@@ -188,6 +207,36 @@ func _capture_pose(clip: String, progress: float, name: String, low: float = -IN
 	await _shot(name)
 
 
+func _capture_resident(name: String, moment: StringName) -> void:
+	if not await Harness.wait_until(func() -> bool:
+		var stage := _host.get_current().get_node_or_null(^"RoofEncounter") as RoofEncounter
+		if stage == null or _player.camera_rig.get_focus_subject() != stage.get_node(^"WakeFrame") \
+			or _player.camera_rig.get_frame_weight() < 0.96:
+			return false
+		var actor := stage.get_node(^"Collector") as NpcActor
+		var head := actor.get_node(^"Visual/Hip/Trunk/Head") as Node3D
+		var camera := _player.camera_rig.camera
+		if not camera.is_position_in_frustum(head.global_position) \
+			or not camera.is_position_in_frustum(actor.global_position):
+			return false
+		match moment:
+			&"reclined":
+				return stage.phase == RoofEncounter.Phase.WAKING and head.global_position.y < 0.67
+			&"sitting_up":
+				return stage.phase == RoofEncounter.Phase.WAKING \
+					and head.global_position.y > 0.99 and head.global_position.y < 1.39
+			&"on_threshold":
+				return stage.phase == RoofEncounter.Phase.WALKING_OUT \
+					and actor.position.x >= 3.18 and actor.position.x <= 3.72
+			&"outside":
+				return stage.phase == RoofEncounter.Phase.OUTSIDE
+		return false
+	, 12.0):
+		_failures.append("The resident's motion wasn't in frame for %s." % name)
+		return
+	await _shot(name)
+
+
 func _stand(where: Vector3, facing: Vector3) -> void:
 	_player.teleport(Transform3D(Basis(), where))
 	_player.face_toward(facing)
@@ -216,6 +265,8 @@ func _shot(name: String) -> void:
 		_failures.append("Could not write %s (error %d)." % [path, error])
 		return
 	_shots.append(name)
+	if name in ["15-court-normal.png", "16-court-misprint.png"]:
+		_compare_court(image, name)
 	var small := image.duplicate() as Image
 	small.convert(Image.FORMAT_RGB8)
 	small.resize(INLINE_SIZE.x, INLINE_SIZE.y, Image.INTERPOLATE_BILINEAR)
@@ -241,6 +292,35 @@ func _shot(name: String) -> void:
 	var encoded := Marshalls.raw_to_base64(jpeg)
 	print("CROP: %s %s" % [name.get_basename() + ".jpg", encoded])
 	print("SHOT %s %dx%d" % [name, image.get_width(), image.get_height()])
+
+
+## A valid shader resource isn't proof it rendered. Measure the changed pixels
+## looking across the same real court, not a synthetic full-screen test pattern.
+func _compare_court(image: Image, name: String) -> void:
+	var sample := image.duplicate() as Image
+	sample.resize(128, 72, Image.INTERPOLATE_BILINEAR)
+	if name == "15-court-normal.png":
+		_normal_court = sample
+		return
+	if _normal_court == null:
+		_failures.append("No clean court frame for the same-angle comparison.")
+		return
+	var changed := 0
+	var total := 0.0
+	for y in sample.get_height():
+		for x in sample.get_width():
+			var a := _normal_court.get_pixel(x, y)
+			var b := sample.get_pixel(x, y)
+			var delta := (absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)) / 3.0
+			total += delta
+			if delta > 0.05:
+				changed += 1
+	var count := float(sample.get_width() * sample.get_height())
+	var coverage := changed / count
+	var mean := total / count
+	print("COURT_PRINT: delta %.3f across frame, %.1f%% affected" % [mean, coverage * 100.0])
+	if coverage < 0.50 or mean < 0.07:
+		_failures.append("The injury did not change the medium across the live court.")
 
 
 func _finish(failures: Array) -> void:

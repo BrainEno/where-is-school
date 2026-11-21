@@ -1,7 +1,7 @@
 name: Classroom anomaly capture
 
-# Photographs the two windows, the opened cut, both landings, the roof ladder and the
-# cabin and the yard fittings in a real game window. `tests/capture_classroom_anomalies.gd` drives the beats.
+# Photographs the windows, both landings, the resident's wake and walk, the normal/printed
+# court, the roof ladder, cabin and fittings. The test drives the real beats in both renderers.
 # Same publishing as `Location art capture`: the frames are an artifact, and each one is
 # also printed as a small JPEG, base64 split into numbered notice annotations (an
 # annotation holds about 4 KB; concatenate the parts of one file in order and decode).
@@ -19,6 +19,8 @@ on:
       - "scripts/actors/**"
       - "scripts/environment/**"
       - "assets/materials/classroom/**"
+      - "assets/shaders/playground/**"
+      - "scenes/environment/characters/roof_collector*"
       - "assets/camera/shots/container_*.tres"
       - "assets/camera/shots/playground_*.tres"
       - "data/inspections/*/playground.json"
@@ -31,9 +33,13 @@ permissions:
 
 jobs:
   capture:
-    name: classroom anomalies
+    name: classroom anomalies (${{ matrix.renderer }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        renderer: [compatibility, forward-plus]
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
@@ -50,17 +56,35 @@ jobs:
             exit 1
           fi
 
+      - name: Install software Vulkan for Forward+
+        if: matrix.renderer == 'forward-plus'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers
+
       - name: Capture
         shell: bash
+        env:
+          RENDERER: ${{ matrix.renderer }}
         run: |
           set +e -uo pipefail
           log="${RUNNER_TEMP}/capture.log"
+          method=gl_compatibility
+          driver=opengl3
+          if [ "${RENDERER}" = forward-plus ]; then
+            method=forward_plus
+            driver=vulkan
+          fi
           # Xvfb has no sound device; exercise the real video renderer, not the runner's ALSA.
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
-            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
-            --script res://tests/capture_classroom_anomalies.gd > "${log}" 2>&1
+            godot --path . --resolution 1600x900 --audio-driver Dummy \
+            --rendering-method "${method}" --rendering-driver "${driver}" \
+            --script res://tests/capture_classroom_anomalies.gd -- "${method}/${driver}" > "${log}" 2>&1
           code=$?
-          grep -E "SHOT|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${log}" | grep -v "^CROP" | head -n 60
+          grep -E "SHOT|COURT_PRINT:|PASS|FAILURE|SCRIPT ERROR|ERROR:" "${log}" | grep -v "^CROP" | head -n 65
+          grep '^COURT_PRINT:' "${log}" | while IFS= read -r line; do
+            echo "::notice title=same-angle court print::${line}"
+          done
           out="docs/screenshots/classroom_anomalies"
           mkdir -p "${RUNNER_TEMP}/frames"
           cp "${out}"/*.png "${out}/CAPTURE.log" "${RUNNER_TEMP}/frames/" 2>/dev/null || true
@@ -109,7 +133,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: classroom-anomaly-frames-${{ github.run_attempt }}
+          name: classroom-anomaly-frames-${{ matrix.renderer }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/frames/
             ${{ runner.temp }}/capture.log

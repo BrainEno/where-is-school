@@ -235,6 +235,7 @@ policy. See [ARCHITECTURE.md](ARCHITECTURE.md) for the dependency/lifecycle boun
 | `Session` | [scripts/ui/game_session.gd](../scripts/ui/game_session.gd) | Title/new-game/save-and-quit transactions; menus do not delete saves themselves. |
 | Display mode scene script | [scripts/ui/display_mode.gd](../scripts/ui/display_mode.gd) | Shared window size/fullscreen state and guard; not a world controller. |
 | Speaker cue scene script | [scripts/world/speaker_cue.gd](../scripts/world/speaker_cue.gd) | Prop-local conversation-triggered sound; not global music or dialogue logic. |
+| `Landing` / `RoofEncounter` (local preload aliases) | [container_landing.gd](../scenes/locations/playground/container_landing.gd), [roof_encounter.gd](../scenes/locations/playground/roof_encounter.gd) | The arrival hook cues the yard-owned actor and print at real contact. The encounter restores only its visit's presentation; no separate dialogue, save writes or controls. |
 
 Example of the **existing** test-only import (the alias is not a `class_name`):
 

@@ -3,11 +3,18 @@ extends RefCounted
 ## be freed. Show shoe/roof contact before handing off to the landing dialogue.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
+const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
 const METAL_IMPACT := preload("res://assets/audio/wake_thud.wav")
 const ROOF_SHOT := preload("res://assets/camera/shots/container_roof.tres")
+const SPAWN := RoofEncounter.ROOF_SPAWN
 
 
-static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
+static func present(player: PlayerController, fade: Object, hurt: bool, host: LocationHost) -> void:
+	# Look up the committed destination, not a node in the departing classroom.
+	var yard := host.get_current() if is_instance_valid(host) else null
+	var encounter := yard.get_node_or_null(^"RoofEncounter") as RoofEncounter if yard != null else null
+	if encounter != null:
+		encounter.prepare_drop()
 	var roof := player.global_position
 	var physics := player.is_physics_processing()
 	player.set_physics_process(false)
@@ -40,6 +47,8 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 		if not sound_played[0]:
 			sound_played[0] = true
 			_impact_sound(player, hurt)
+			if encounter != null:
+				encounter.roof_contact(hurt)
 		var hit := clampf((t - touch) / (0.14 if hurt else 0.18), 0.0, 1.0)
 		var rise := clampf((t - touch - (0.24 if hurt else 0.18)) / (0.62 if hurt else 0.36), 0.0, 1.0)
 		var weight := smoothstep(0.0, 1.0, hit) * (1.0 - smoothstep(0.0, 1.0, rise))
@@ -58,10 +67,12 @@ static func present(player: PlayerController, fade: Object, hurt: bool) -> void:
 			palm.hold_at(support, right + Vector3.BACK * 0.28, weight)
 	)
 	Motion.reset_pose(player)
-	player.set_physics_process(physics)
+	if encounter != null:
+		await encounter.come_out(rig)
 	if rig != null:
 		rig.release_focus()
-		rig.release_frame(0.4)
+		await rig.release_frame(0.4)
+	player.set_physics_process(physics)
 
 
 static func _impact_sound(player: PlayerController, hurt: bool) -> void:

@@ -53,6 +53,33 @@ The script also fails if a graybox mesh retains a shared `assets/materials/`
 material, a generated material goes unused, or a scenery-only override is also
 referenced by one of the playable yard fittings or props.
 
+## Roof visit and resident
+
+`RoofEncounter` is a sibling of the container at its origin, so it is not part of
+`scenery.scn` and does not fade with the shell. On either window route, roof contact
+wakes the resident on the existing sheet. After the landing pose the door shot
+follows his rise and walk across the threshold. No furniture or collisions are
+added; the ladder and the existing inspections still use the same nodes.
+
+Rebuild the native figure with `python3 tools/build_roof_collector.py` (or use
+`--check` to check its output). Its profile and paint data are in the builder;
+`roof_collector_pose.gd` moves the joints, and `roof_encounter.tscn` owns the bed,
+route and camera marks. There is no external model, image or animation to import.
+
+A hard landing changes the live 3D view into a slate and vermilion misprint:
+ink density bands, angled halftone dots, paper tooth and a second, slightly
+misregistered red plate. This adapts the medium change of [#196](https://github.com/BrainEno/where-is-school/pull/196)
+and paper/red separation of [#200](https://github.com/BrainEno/where-is-school/pull/200),
+not their experimental scenes. The print starts at contact on the hard route
+only, draws behind the UI and outlines, and ends when you leave the yard. Continue
+on the same roof visit restores the final state, without replaying the impact or
+the walk. The ordinary entrances never apply the print.
+
+`Classroom anomaly capture` records the two landings, both door shots and the
+same court angle on both routes. The playable state and Continue are covered by
+`tests/classroom_anomaly_test.gd`; art approval still depends on seeing the motion.
+The exchange with the resident is [pending the author's text](../../../../data/dialogue_schema/README.md#container-resident--lines-and-choices-not-yet-in-the-game).
+
 ## Composition
 
 The yard is a stage that is waiting, so its middle stays empty: it is kept for people

@@ -24,6 +24,8 @@ extends SceneTree
 ##    Success allows walking away and later crossing the lip for a braced landing. On a miss
 ##    the player crosses the open lip without a second choice and injures a foot on the roof.
 ##    Both routes use FromSchool, the right landing line and a level camera on recovery.
+##    Roof contact wakes the resident on both routes, but only the hard landing prints
+##    the yard. The resident crosses the open end before the existing landing line.
 ## 4b. **A route down.** Walk to the ladder, press interact and ride the actual rungs
 ##    on both branches. On the ground, walk to the open end and see the cot through it.
 ## 5. **The room remembers.** Walking back into the classroom finds the curtain open on the
@@ -43,8 +45,10 @@ extends SceneTree
 ##    route - and from there the real curtain falls into the yard, once.
 
 const Harness = preload("res://tests/test_harness.gd")
+const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
+const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
 ## The rear door never opens, so the registry no longer declares a flag for it (#292). The
 ## old name is kept here so the test still proves nothing records the door as opened.
 const REAR_DOOR_OPENED := &"rear_door_opened"
@@ -743,20 +747,7 @@ func _check_refused_state_on_disk() -> void:
 	var info: Dictionary = save.peek_save()
 	if StringName(String(info.get("location_id", ""))) != &"classroom":
 		_failures.append("The save on disk does not describe the classroom: %s" % str(info))
-	var old_world := _main
-	_sequence.set("autosave_enabled", false)
-	old_world.queue_free()
-	await _frames(3)
-	save.unbind_world()
-	_game_state.clear()
-	_narrative.clear()
-	if is_instance_valid(old_world):
-		_failures.append("The world with the refused fall was not freed.")
-	var result: Dictionary = session.continue_game()
-	if not bool(result.get("ok", false)):
-		_failures.append("Continue failed: %s" % str(result))
-		return
-	if not await _adopt_current_world():
+	if not await _continue_from_disk(save, session):
 		return
 	await _settle(40.0, "the continued classroom")
 	var label := "after Continue"
@@ -769,6 +760,24 @@ func _check_refused_state_on_disk() -> void:
 		_failures.append("%s: the rest of the story did not come back." % label)
 	_player.teleport(Transform3D(Basis(Vector3.UP, PI * 0.5), CURTAIN_SPOT))
 	await _frames(4)
+
+
+func _continue_from_disk(save: Node, session: Node) -> bool:
+	var old_world: WeakRef = weakref(_main)
+	_sequence.autosave_enabled = false
+	_main.queue_free()
+	if not await Harness.wait_until(func() -> bool: return old_world.get_ref() == null, 5.0):
+		_failures.append("The old world survived Continue.")
+		return false
+	save.unbind_world()
+	_game_state.clear()
+	_narrative.clear()
+	_conversations.clear()
+	var result: Dictionary = session.continue_game()
+	if not bool(result.get("ok", false)):
+		_failures.append("Continue failed: %s" % str(result))
+		return false
+	return await _adopt_current_world()
 
 
 ## Points this test at the world Continue made (the current scene).
@@ -824,9 +833,11 @@ func _check_fall() -> void:
 	# The fall: the void is shown, the room goes, the yard comes.
 	var saw_void := false
 	var observed_clips := {}
+	var roof_phases := {}
 	var started := Time.get_ticks_msec()
 	while Time.get_ticks_msec() - started < 60000:
 		observed_clips[_clip()] = true
+		_sample_roof(roof_phases)
 		var room := _room()
 		if (
 			room != null
@@ -908,7 +919,9 @@ func _check_fall() -> void:
 	if not observed_clips.has("roof_impact") or not _flag(StoryFlags.CURTAIN_LANDING_INJURED) \
 		or not _narrative.has_entry(&"hurt_ankle_at_container"):
 		_failures.append("The hard landing did not produce an impact, an injury and a record.")
+	_check_roof(roof_phases, true)
 	await _check_ladder(true)
+	await _check_roof_restore(true)
 
 
 # --- 5. the room remembers ----------------------------------------------------------
@@ -987,7 +1000,9 @@ func _check_safe_drop() -> void:
 		_failures.append("Walking off the open lip didn't begin the deliberate drop.")
 		return
 	var observed := {}
+	var roof_phases := {}
 	if not await Harness.wait_until(func() -> bool:
+		_sample_roof(roof_phases)
 		if _clip() == "roof_brace":
 			observed["brace"] = true
 		if _clip() == "void_step":
@@ -1005,7 +1020,114 @@ func _check_safe_drop() -> void:
 		or _narrative.has_entry(&"hurt_ankle_at_container") or _flag(StoryFlags.CURTAIN_EDGE_HELD):
 		_failures.append("The optional drop reused the slip/hard impact, hurt the player or kept the edge held.")
 	if await _settle(20.0, "the optional landing and yard arrival voice"):
+		_check_roof(roof_phases, false)
 		await _check_ladder(false)
+		await _check_roof_restore(false)
+
+
+## Observe the *real* contact, wake and walk. Neither the route nor the filter is
+## started by the test; both real curtain outcomes have to cause these states.
+func _sample_roof(observed: Dictionary) -> void:
+	var stage := _room().get_node_or_null(^"RoofEncounter") as RoofEncounter
+	if stage == null:
+		return
+	var actor := stage.get_node(^"Collector") as NpcActor
+	var sheet := stage.get_node(^"WorldPrint/Sheet") as ColorRect
+	var roof := _room().get_spawn(RoofEncounter.ROOF_SPAWN).global_position
+	if _player.global_position.y > roof.y + 0.04:
+		observed["above_roof"] = true
+		if sheet.visible or stage.phase != RoofEncounter.Phase.ASLEEP:
+			observed["premature_contact"] = true
+	if stage.phase == RoofEncounter.Phase.WAKING and actor.position.x < 2.0:
+		observed["woke_inside"] = true
+	if stage.phase == RoofEncounter.Phase.WALKING_OUT:
+		if actor.position.x > 2.99 and actor.position.x < 3.60 \
+			and actor.position.y < 0.222 and actor.position.y > 0.014:
+			observed["walked_down_plate"] = true
+		if not _sequence.is_beat_active() or _player.is_control_enabled() \
+			or _interaction.is_enabled() or _player.is_physics_processing() \
+			or not _player.global_position.is_equal_approx(roof):
+			observed["unlocked_during_walk"] = true
+	if sheet.visible:
+		observed["printed"] = true
+	if _dialogue.get_runtime().get_active_conversation_id() == &"classroom_fall_landing" \
+		and stage.phase != RoofEncounter.Phase.OUTSIDE:
+		observed["line_before_exit"] = true
+
+
+func _check_roof(observed: Dictionary, hurt: bool) -> void:
+	if not observed.has("above_roof") or not observed.has("woke_inside") \
+		or not observed.has("walked_down_plate") or observed.has("printed") != hurt \
+		or observed.has("premature_contact") or observed.has("line_before_exit") \
+		or observed.has("unlocked_during_walk"):
+		_failures.append("Roof contact, staging or input lock was wrong (injured=%s): %s" % [hurt, observed])
+	_expect_roof_view(hurt, RoofEncounter.Phase.OUTSIDE)
+	if not _player.is_physics_processing() or not _player.is_control_enabled() \
+		or not _interaction.is_enabled() or _player.camera_rig.get_frame_weight() > 0.0:
+		_failures.append("The roof choreography held onto control or the camera on recovery.")
+
+
+func _expect_roof_view(printed: bool, pose: RoofEncounter.Phase) -> void:
+	var stage := _room().get_node_or_null(^"RoofEncounter") as RoofEncounter
+	if stage == null:
+		_failures.append("The yard has no roof encounter.")
+		return
+	var actor := _room().find_actor(&"roof_collector")
+	var path := ^"ExitRoute/Doorstep" if pose == RoofEncounter.Phase.OUTSIDE else ^"Bed"
+	var mark := stage.get_node(path) as Marker3D
+	var sheet := stage.get_node(^"WorldPrint/Sheet") as ColorRect
+	var print_layer := sheet.get_parent() as CanvasLayer
+	var mat := sheet.material as ShaderMaterial
+	if actor == null or not actor.visible or not actor.global_position.is_equal_approx(mark.global_position) \
+		or stage.phase != pose:
+		_failures.append("The collector didn't settle at the expected staging mark.")
+	if sheet.visible != printed or mat == null \
+		or not is_equal_approx(float(mat.get_shader_parameter(&"impression")), 1.0 if printed else 0.0) \
+		or print_layer.layer >= 0 or sheet.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		_failures.append("The court print has the wrong visit, layer, weight or input behavior.")
+
+
+func _check_roof_restore(hurt: bool) -> void:
+	var save := root.get_node_or_null(^"Save")
+	var session := root.get_node_or_null(^"Session")
+	if save == null or session == null or _game_state.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, null) != hurt:
+		_failures.append("No roof visit to restore (injured=%s)." % hurt)
+		return
+	# Same visit even after using the ladder. Save the player's actual ground pose,
+	# then re-enter through the title screen's Continue transaction.
+	var at := _player.global_position
+	var saved: Dictionary = save.save_game()
+	if saved.get("ok", false) != true:
+		_failures.append("Couldn't save the visit after climbing down: %s" % saved)
+		return
+	if not await _continue_from_disk(save, session):
+		return
+	if not await _settle(25.0, "restoring the landed visit"):
+		return
+	if _host.get_current_spawn() != RoofEncounter.ROOF_SPAWN or _player.global_position.distance_to(at) > 0.12 \
+		or _conversations.has(&"classroom_fall_landing"):
+		_failures.append("Continue moved the player or replayed the roof arrival.")
+	_expect_roof_view(hurt, RoofEncounter.Phase.OUTSIDE)
+	# An ordinary entry reconstructs the person, not the print, even if injured.
+	await _check_ordinary_yard(&"FromCorridor", RoofEncounter.Phase.OUTSIDE)
+	var saved_flags: Dictionary = _game_state.get_snapshot()
+	_game_state.clear()
+	await _check_ordinary_yard(&"FromAlley", RoofEncounter.Phase.ASLEEP)
+	_game_state.replace_snapshot(saved_flags)
+	_notes.append("%s roof visit: grounded wake and exit, saved pose, normal entrances unchanged"
+		% ("injured" if hurt else "braced"))
+
+
+func _check_ordinary_yard(spawn: StringName, pose: RoofEncounter.Phase) -> void:
+	if not _host.load_location(PLAYGROUND, spawn, _player):
+		_failures.append("The ordinary yard entrance %s stopped working." % spawn)
+		return
+	_expect_roof_view(false, pose)
+	# Visit the room, rather than swapping it straight out in the same frame:
+	# the region's deferred geometry bake needs its room still in the tree.
+	var navigation := _room().get_node_or_null(^"Navigation") as LocationNavigation
+	if navigation == null or not await Harness.wait_until(navigation.is_baked, 5.0):
+		_failures.append("The yard at %s did not finish its navigation bake." % spawn)
 
 
 func _check_ladder(hurt: bool) -> void:

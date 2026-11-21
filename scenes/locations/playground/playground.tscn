@@ -1,4 +1,4 @@
-[gd_scene load_steps=228 format=3]
+[gd_scene load_steps=229 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_bench.tscn" id="18_prop"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/noodle_wrapper.tscn" id="19_prop"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/container.tscn" id="20_prop"]
+[ext_resource type="PackedScene" path="res://scenes/locations/playground/roof_encounter.tscn" id="21_prop"]
 [ext_resource type="Resource" path="res://assets/camera/shots/playground_bench.tres" id="shot_0"]
 [ext_resource type="Resource" path="res://assets/camera/shots/playground_shed.tres" id="shot_1"]
 [ext_resource type="Resource" path="res://assets/camera/shots/return_board.tres" id="shot_2"]
@@ -1239,6 +1240,9 @@ position = Vector3(10.99, 0.51, 3.74)
 rotation = Vector3(0, -0.244346, 0)
 
 [node name="ContainerBody" parent="." instance=ExtResource("20_prop")]
+position = Vector3(12, 0, -15.5)
+
+[node name="RoofEncounter" parent="." instance=ExtResource("21_prop")]
 position = Vector3(12, 0, -15.5)
 
 [node name="PlaygroundArt" parent="." instance=ExtResource("yard_scenery")]

@@ -15,7 +15,7 @@ extends Node3D
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
 const Landing = preload("res://scenes/locations/playground/container_landing.gd")
 const FALL_SCENE := "res://scenes/locations/playground/playground.tscn"
-const FALL_SPAWN := &"FromSchool"
+const FALL_SPAWN := Landing.SPAWN
 const FALL_DESTINATION := &"playground"
 const CURTAIN_ROUTE := &"classroom_curtain"
 const VOID_CONVERSATION := &"classroom_curtain_void"
@@ -213,6 +213,7 @@ func _rear_door_exit() -> Dictionary:
 func _fall_request(
 	player: PlayerController, hurt: bool, recover_at: Vector3, facing: Vector3, was_open: bool
 ) -> Dictionary:
+	var host := get_parent().get_parent() as LocationHost
 	return {
 		"transition": {
 			"scene": FALL_SCENE,
@@ -221,7 +222,7 @@ func _fall_request(
 			"label": "the back-window curtain",
 			"departure": _drop.bind(player, hurt),
 			"fade_out": 0.32,
-			"arrival": Landing.present.bind(hurt),
+			"arrival": Landing.present.bind(hurt, host),
 			"arrival_conversation": LANDING_CONVERSATION,
 			"arrival_flags": {
 				StoryFlags.CURTAIN_FALL_PENDING: false,

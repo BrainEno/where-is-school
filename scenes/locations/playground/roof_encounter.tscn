@@ -1,0 +1,57 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/locations/playground/roof_encounter.gd" id="stage"]
+[ext_resource type="Script" path="res://scripts/actors/npc/npc_actor.gd" id="actor"]
+[ext_resource type="PackedScene" path="res://scenes/environment/characters/roof_collector.tscn" id="figure"]
+[ext_resource type="Shader" path="res://assets/shaders/playground/impact_misprint.gdshader" id="print"]
+
+[sub_resource type="ShaderMaterial" id="PrintMaterial"]
+resource_local_to_scene = true
+shader = ExtResource("print")
+shader_parameter/impression = 0.0
+
+[node name="RoofEncounter" type="Node3D"]
+script = ExtResource("stage")
+
+[node name="Bed" type="Marker3D" parent="."]
+position = Vector3(1.5, 0.252, -0.56)
+
+[node name="ExitRoute" type="Node3D" parent="."]
+
+[node name="Aisle" type="Marker3D" parent="ExitRoute"]
+position = Vector3(2.49, 0.222, -0.22)
+
+[node name="DeckLip" type="Marker3D" parent="ExitRoute"]
+position = Vector3(2.98, 0.222, -0.18)
+
+[node name="Apron" type="Marker3D" parent="ExitRoute"]
+position = Vector3(3.62, 0.014, -0.18)
+
+[node name="Doorstep" type="Marker3D" parent="ExitRoute"]
+position = Vector3(4.18, 0.014, -0.68)
+
+[node name="WakeFrame" type="Marker3D" parent="."]
+position = Vector3(2.62, 0.12, -0.19)
+
+[node name="Collector" type="Node3D" parent="."]
+script = ExtResource("actor")
+npc_id = &"roof_collector"
+visual_scene = ExtResource("figure")
+visual_yaw_degrees = 0.0
+walk_speed = 1.29
+
+[node name="Body" type="MeshInstance3D" parent="Collector"]
+visible = false
+
+[node name="WorldPrint" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Sheet" type="ColorRect" parent="WorldPrint"]
+visible = false
+material = SubResource("PrintMaterial")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
