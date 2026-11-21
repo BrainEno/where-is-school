@@ -1,7 +1,7 @@
 extends SceneTree
-## Q stays where the opening left him - at `QOpeningTalk`, turned to the protagonist's seat,
-## with `q_talk` on him - through leaving and re-entering the classroom and a continued
-## save, and is still at his authored spot before the opening has walked him over.
+## Q stays where the story left him: at his authored start before the first talk, at
+## `QOpeningTalk` after it, and at his own desk after the bell. The `q_talk` hotspot
+## follows through room re-entry and a continued save.
 ##
 ## Every location is a fresh instance of its scene, and the classroom authors Q at his
 ## starting spot because the opening walks him to the aisle. Before `QPresence`, a room
@@ -14,9 +14,9 @@ extends SceneTree
 ## 1. **Before.** A fresh classroom: Q and `q_talk` at their authored spots.
 ## 2. **The beat.** The real Q beat walks him to the landing and his talk begins; the end
 ##    of that walk is the reference every later check is held to.
-## 3. **Re-entering, twice.** The door (opened by the story flag) frees the room and the
-##    walkway leads back: a new Q, at the reference, facing the seat, hotspot on him, its
-##    pointer boxes around him, exactly one visible Q - and a talk with him still opens.
+## 3. **Re-entering after class, twice.** The open door frees the room and the walkway
+##    leads back: one new Q, seated at B1 facing the front, with his hotspot and pointer
+##    boxes still on him. The after-dismissal talk still opens from his new position.
 ## 4. **No double carry.** The room being re-announced and the flags being replaced leave
 ##    Q and the hotspot exactly where they are.
 ## 5. **Continue.** A save written in the classroom after the intro, loaded into a fresh
@@ -87,7 +87,7 @@ func _run() -> void:
 	print("::notice title=Q presence::%s" % " | ".join(_notes))
 	Harness.finish(
 		self, _failures,
-		"Q stays at his talk spot once the opening has walked him there: re-entry and continued saves."
+		"Q keeps his intro landing before the bell and his seat after class: re-entry, hotspots and continued saves."
 	)
 
 
@@ -157,19 +157,15 @@ func _check_play_through() -> void:
 			_failures.append("%s: the classroom has no Q." % label)
 			return
 		_expect(q.get_instance_id() != first_q_id, "%s: the classroom was not built again." % label)
-		_expect_at_landing(q, label)
+		_expect_at_desk(q, label)
 		_expect_talk_on(q, label)
 		_expect(_visible_q_count() == 1, "%s: %d Qs are visible, not one." % [label, _visible_q_count()])
 		await _frames(3)
 		_expect_pick_boxes_on(q, label)
 		await _seconds(0.5)
-		_expect_at_landing(q, "%s, half a second later" % label)
-		if visit == 1:
-			_notes.append("re-entry: Q %.3f m from the beat's spot, facing dot %.3f" % [
-				_flat(q.global_position - _beat_point), q.get_facing_direction().dot(_beat_facing)
-			])
+		_expect_at_desk(q, "%s, half a second later" % label)
 
-	# ...and a talk with him still opens, from where he now stands.
+	# ...and a talk with him still opens from his seat.
 	var talk := _host.get_current().find_interactable(&"q_talk")
 	if talk != null:
 		_interaction.request_activation(talk)
@@ -426,6 +422,15 @@ func _expect_at_landing(q: NpcActor, label: String) -> void:
 			)
 		if q.get_facing_direction().dot(_beat_facing) < FACING_DOT:
 			_failures.append("%s: Q faces another way than the beat left him." % label)
+
+
+func _expect_at_desk(q: NpcActor, label: String) -> void:
+	var chair := _host.get_current().get_node(^"Furniture/DeskB1/Chair") as PushableChair
+	var gap := q.global_position.distance_to(chair.home_mark())
+	var facing := q.get_facing_direction().dot(-chair.global_basis.z)
+	_expect(gap < 0.03 and facing > FACING_DOT, "%s: Q is %.3f m from B1, facing dot %.3f." % [label, gap, facing])
+	_expect(q.get_character_animator().is_seated() and not chair.is_pushed_back(),
+		"%s: Q is standing or his chair is still out." % label)
 
 
 func _expect_talk_on(q: NpcActor, label: String) -> void:
