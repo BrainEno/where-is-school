@@ -15,6 +15,7 @@ may reach past the yard's west edge, x = -23.05 (tests/playground_art_slice_test
 from __future__ import annotations
 
 import math
+import re
 from pathlib import Path
 
 import site_meshes as sm
@@ -48,6 +49,7 @@ EXCAVATOR = (-29.7, 17.0)
 
 TEX = f"{RES}/textures"
 MAT_DIR = ART / "materials/site"
+MESH_DIR = ART / "meshes/site"
 # The site's own paint: the yard's tiles under per-vertex grime, rust and wet. Every one
 # multiplies its vertex colours in (vertex_color_use_as_albedo), so the same panel reads
 # clean at the top and muddy at the foot without another texture. Lambert, not toon:
@@ -125,7 +127,7 @@ def _v3(values) -> str:
 class _Scene:
     def __init__(self, root: str):
         self.ext: dict[str, str] = {}
-        self.subs: list[str] = []
+        self.files: dict[str, str] = {}
         self.nodes: list[str] = [f'[node name="{root}" type="Node3D"]\n']
         self.triangles = 0
         self.used: set[str] = set()
@@ -142,9 +144,15 @@ class _Scene:
         self.ext[key] = f'[ext_resource type="Material" path="{RES}/materials/site/{name}.tres" id="{key}"]'
         return f'ExtResource("{key}")'
 
-    def mesh(self, mesh: Mesh) -> str:
-        rid = f"Mesh_{len(self.subs)}"
-        self.subs.append(f'[sub_resource type="ArrayMesh" id="{rid}"]\n_surfaces = {mesh.surface()}\n')
+    def mesh(self, mesh: Mesh, name: str) -> str:
+        """Each mesh is its own resource file: one scene holding them all would pack past
+        the release's 1 MiB budget for a scene (tools/verify_build.py)."""
+        file_name = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name.replace("/", "_")).lower() + ".tres"
+        if file_name in self.files:
+            raise SystemExit(f"two site meshes would share {file_name}")
+        rid = f"mesh_{len(self.files)}"
+        self.files[file_name] = f"[gd_resource type=\"ArrayMesh\" format=3]\n\n[resource]\n_surfaces = {mesh.surface()}\n"
+        self.ext[rid] = f'[ext_resource type="ArrayMesh" path="{RES}/meshes/site/{file_name}" id="{rid}"]'
         self.triangles += mesh.triangles()
         self.bounds[rid] = mesh.bounds()
         return rid
@@ -181,14 +189,14 @@ class _Scene:
         if isinstance(mesh, Mesh):
             if not mesh.indices:
                 return None
-            mesh = self.mesh(mesh)
+            mesh = self.mesh(mesh, parent.lstrip("./") + "/" + name if parent != "." else name)
         props = {"position": _v3(pos)}
         lo, hi = self.bounds[mesh]
         if rot:
             props["rotation_degrees"] = _v3(rot)
         if scale:
             props["scale"] = _v3(scale)
-        props["mesh"] = f'SubResource("{mesh}")'
+        props["mesh"] = f'ExtResource("{mesh}")'
         props["material_override"] = self.mat(mat)
         if not shadow:
             props["cast_shadow"] = "0"
@@ -198,9 +206,8 @@ class _Scene:
         return path
 
     def emit(self) -> str:
-        steps = 1 + len(self.ext) + len(self.subs)
-        return (f"[gd_scene load_steps={steps} format=3]\n\n" + "\n".join(self.ext.values()) + "\n\n"
-                + "\n".join(self.subs) + "\n" + "\n".join(self.nodes))
+        steps = 1 + len(self.ext)
+        return f"[gd_scene load_steps={steps} format=3]\n\n" + "\n".join(self.ext.values()) + "\n\n" + "\n".join(self.nodes)
 
 
 def radius_at(y):
@@ -246,7 +253,7 @@ def _hoarding_runs():
 def _hoarding(s: _Scene) -> None:
     top = PLOT["top"]
     p = s.group("Hoarding", ".")
-    variants = [s.mesh(sm.hoarding_panel(v)) for v in range(3)]
+    variants = [s.mesh(sm.hoarding_panel(v), f"hoarding_panel_{v}") for v in range(3)]
     runs = _hoarding_runs()
     cap = Mesh()
     for name, start, end, outward, yaw in runs:
@@ -287,7 +294,7 @@ def _gate(s: _Scene) -> None:
     s.put("Shoes", g, shoes, "slab")
     leaf = (z1 - z0) / 2 - 0.1
     frame, infill = sm.gate_leaf(leaf)
-    frame_id, infill_id = s.mesh(frame), s.mesh(infill)
+    frame_id, infill_id = s.mesh(frame, "gate_leaf_frame"), s.mesh(infill, "gate_leaf_bars")
     for name, z, yaw in (("LeafNorth", z0 + 0.08, 0), ("LeafSouth", z1 - 0.08, 180)):
         q = s.group(name, g, (0, 0, z), (0, yaw, 0))
         s.put("Frame", q, frame_id, "site_steel")
@@ -399,7 +406,7 @@ def _tower(s: _Scene) -> None:
         for j, start in enumerate(tips):
             chalk.merge(sm.tube([start, tips[(j + 1) % 3]], 0.014, 5))
     s.put("Chalk", q, chalk, "pale", shadow=False)
-    marble = s.mesh(sm.marble())
+    marble = s.mesh(sm.marble(), "marble")
     for i, mat in enumerate(("marble_red", "marble_amber", "marble_green", "site_blue", "marble_blue", "site_brass")):
         angle = i * math.tau / 6 + 0.3 * (i % 2)
         s.put(f"Marble_{i}", q, marble, mat, (0.68 * math.cos(angle), deck_y + 0.07, 0.68 * math.sin(angle)),
@@ -456,6 +463,11 @@ def write() -> int:
         old.unlink()
     for name in sorted(MATERIALS):
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, MATERIALS[name]))
+    MESH_DIR.mkdir(parents=True, exist_ok=True)
+    for old in MESH_DIR.glob("*.tres"):
+        old.unlink()
+    for file_name, text in s.files.items():
+        (MESH_DIR / file_name).write_text(text)
     SCENE.write_text(s.emit())
     return s.triangles
 

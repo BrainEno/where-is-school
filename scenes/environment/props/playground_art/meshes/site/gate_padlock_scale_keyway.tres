@@ -1,0 +1,12 @@
+[gd_resource type="ArrayMesh" format=3]
+
+[resource]
+_surfaces = [{
+"aabb": AABB(0.01650, -0.03500, -0.00571, 0.00400, 0.02900, 0.01141),
+"format": 34359742471,
+"index_count": 144,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcAGAAZACMAGAAjACIAGQAaACQAGQAkACMAGgAbACUAGgAlACQAGwAcACYAGwAmACUAHAAdACcAHAAnACYAHQAeACgAHQAoACcAHgAfACkAHgApACgAHwAgACoAHwAqACkAIAAhACsAIAArACoAIQAYACIAIQAiACsALAAtAC4ALAAuAC8ALAAvADAALAAwADEALAAxADIALAAyADMALAAzADQALAA0ADUANgA3ADgANgA4ADkANgA5ADoANgA6ADsANgA7ADwANgA8AD0ANgA9AD4ANgA+AD8A"),
+"primitive": 3,
+"vertex_count": 64,
+"vertex_data": PackedByteArray("AiuHPClcD72mm0S7nu+nPClcD72mm0S7nu+nPPT9VLymm0S7AiuHPPT9VLymm0S7nu+nPClcD72mm0S7nu+nPClcD72mm0Q7nu+nPPT9VLymm0Q7nu+nPPT9VLymm0S7nu+nPClcD72mm0Q7AiuHPClcD72mm0Q7AiuHPPT9VLymm0Q7nu+nPPT9VLymm0Q7AiuHPClcD72mm0Q7AiuHPClcD72mm0S7AiuHPPT9VLymm0S7AiuHPPT9VLymm0Q7AiuHPClcD72mm0Q7nu+nPClcD72mm0Q7nu+nPClcD72mm0S7AiuHPClcD72mm0S7AiuHPPT9VLymm0S7nu+nPPT9VLymm0S7nu+nPPT9VLymm0Q7AiuHPPT9VLymm0Q7AiuHPLx0k7wAAAAAAiuHPJ0RirxnIGc7AiuHPFH8Yrw+/Lo7AiuHPPs6Jrw+/Lo7AiuHPCMo6rtnIGc7AiuHPKabxLsE31ghAiuHPCMo6rtnIGe7AiuHPPs6Jrw+/Lq7AiuHPFH8Yrw+/Lq7AiuHPJ0RirxnIGe7nu+nPLx0k7wAAAAAnu+nPJ0RirxnIGc7nu+nPFH8Yrw+/Lo7nu+nPPs6Jrw+/Lo7nu+nPCMo6rtnIGc7nu+nPKabxLsE31ghnu+nPCMo6rtnIGe7nu+nPPs6Jrw+/Lq7nu+nPFH8Yrw+/Lq7nu+nPJ0RirxnIGe7AiuHPJ0RirxnIGe7AiuHPFH8Yrw+/Lq7AiuHPPs6Jrw+/Lq7AiuHPCMo6rtnIGe7AiuHPKabxLsE31ghAiuHPCMo6rtnIGc7AiuHPPs6Jrw+/Lo7AiuHPFH8Yrw+/Lo7AiuHPJ0RirxnIGc7AiuHPLx0k7wAAAAAnu+nPLx0k7wAAAAAnu+nPJ0RirxnIGc7nu+nPFH8Yrw+/Lo7nu+nPPs6Jrw+/Lo7nu+nPCMo6rtnIGc7nu+nPKabxLsE31ghnu+nPCMo6rtnIGe7nu+nPPs6Jrw+/Lq7nu+nPFH8Yrw+/Lq7nu+nPJ0RirxnIGe7/////////7//////////v/////////+//////////7////9//3//v////3//f/+/////f/9//7////9//3//v/9//38AAP+//3//fwAA/7//f/9/AAD/v/9//38AAP+/AAD/f/////8AAP9//////wAA/3//////AAD/f///////fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9///////+//3///////7//f///////v/9///////+//3+CDAAA/7//f9k8AAD/v/9/2WkAAP+//3+ppwAA/7//f1zRAAD/v31z//////+/JkP//////78mFv//////v1TYAAD///+/oa4AAP///7+BjAAAAAD/v/9/oi4AAP+//39VWAAA/7//fyWWAAD/v/9/JcMAAP+//3988////79dUf//////v6on//////+/2OkAAP///7/YvAAA////vwAA/3//////AAD/f/////8AAP9//////wAA/3//////AAD/f/////8AAP9//////wAA/3//////AAD/f/////8AAP9//////wAA/3//////////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//78=")
+}]

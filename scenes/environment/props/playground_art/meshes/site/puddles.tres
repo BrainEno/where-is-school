@@ -1,0 +1,12 @@
+[gd_resource type="ArrayMesh" format=3]
+
+[resource]
+_surfaces = [{
+"aabb": AABB(-28.87735, -0.05100, 11.84084, 1.39497, 0.00000, 3.71394),
+"format": 34359742471,
+"index_count": 162,
+"index_data": PackedByteArray("AAABAAIAAAACAAMAAAADAAQAAAAEAAUAAAAFAAYAAAAGAAcAAAAHAAgAAAAIAAkAAAAJAAoAAAAKAAsAAAALAAwAAAAMAA0AAAANAA4AAAAOAA8AAAAPABAAAAAQABEAAAARABIAAAASABMAFAAVABYAFAAWABcAFAAXABgAFAAYABkAFAAZABoAFAAaABsAFAAbABwAFAAcAB0AFAAdAB4AFAAeAB8AFAAfACAAFAAgACEAFAAhACIAFAAiACMAFAAjACQAFAAkACUAFAAlACYAFAAmACcAKAApACoAKAAqACsAKAArACwAKAAsAC0AKAAtAC4AKAAuAC8AKAAvADAAKAAwADEAKAAxADIAKAAyADMAKAAzADQAKAA0ADUAKAA1ADYAKAA2ADcAKAA3ADgAKAA4ADkAKAA5ADoAKAA6ADsA"),
+"primitive": 3,
+"vertex_count": 60,
+"vertex_data": PackedByteArray("ggnhwWDlUL2amXVBmGLhwWDlUL09sHZBlvThwWDlUL3NkndBQZ3iwWDlUL24VHhBvXvjwWDlUL0QvHhBZmbkwWDlUL1j4HhBm0HlwWDlUL00h3hBodHlwWDlUL0XxXdBoVXmwWDlUL1iKXdB0OHmwWDlUL3/fnZBZf7mwWDlUL2amXVB0QTnwWDlUL2Rp3RBgvfmwWDlUL0jh3NB9EbmwWDlUL2uunJBJWHlwWDlUL0lQHJBZmbkwWDlUL0q1HFBEGzjwWDlUL2IQXJBlLLiwWDlUL0Y/3JB2BriwWDlUL1Jv3NBSYHhwWDlUL0LjnRB7dvbwWDlUL3NzGBB6d7bwWDlUL02l2FBI0LcwWDlUL0EP2JBUMbcwWDlUL08umJB1EvdwWDlUL2GRmNBAADewWDlUL1CrGNBiszewWDlUL08nGNBhpLfwWDlUL35RWNB/RrgwWDlUL1XjGJB7zDgwWDlUL0YnWFBThjgwWDlUL3NzGBBi97fwWDlUL0ZG2BBFGffwWDlUL2lol9B0g3fwWDlUL1eJF9Bq6DewWDlUL2ul15BAADewWDlUL2/U15BE1vdwWDlUL2ziF5BvNHcwWDlUL1W8V5Bq1jcwWDlUL1LbV9BgerbwWDlUL2xBmBBSkrdwWDlUL0AAEBB0yndwWDlUL3+v0BBlmbdwWDlUL1Ge0FBNfHdwWDlUL1H9kFBcobewWDlUL2UWkJBMzPfwWDlUL0Jk0JBnNvfwWDlUL1sS0JBW2HgwWDlUL1U10FBgengwWDlUL3oaEFB42DhwWDlUL1dzUBBiH7hwWDlUL0AAEBBfIXhwWDlUL0pJT9BukzhwWDlUL1kRT5B9q/gwWDlUL0Nrj1BGe7fwWDlUL0YdD1BMzPfwWDlUL3rdT1BHIrewWDlUL01sj1BrQvewWDlUL0DMz5BY5vdwWDlUL0zsD5B0lbdwWDlUL2UUD9B/3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+//3///////7//f///////v/9///////+/")
+}]
