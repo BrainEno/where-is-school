@@ -1,6 +1,6 @@
 # 八位角色：Blender 头部精修
 
-第一轮（#311）做整体头部轮廓。本轮恢复主角的刺猬头，另外七位只修五官，按各自的脸型和表情做不同处理。正式角色仍走原包装，三位同学和 B 仍限审看。不改肖像、衣服、材质、放置、骨架、表情偏移和嵌入动作。主角步行摆臂另由现有 `protagonist_motion.tres` 调整，不写进 GLB 动作。
+第一轮（#311）做整体头部轮廓，随后一轮恢复主角的刺猬头并精修其余七位的五官。下表是这个历史版本的分工。现在只有三位同学仍限审看；B 的正式 GLB 已用于现有想象段落。本页的头部编辑不改肖像、衣服、材质、放置、骨架、表情偏移和嵌入动作。
 
 | Blender 集合 | 角色 / 用途 | 本轮几何 |
 | --- | --- | --- |
@@ -19,9 +19,18 @@
 
 正式教室 `QTalk.dialogue_shot` 跟随运行中 `Head` 骨骼的姿态瞄准脸，`SetSquareInspect.dialogue_shot` 锁定讲桌原尺的断口和叠胶。两者只由现有 `camera_focus` 效果触发，不替代普通互动镜头。手动新开游戏，分别选择 `look_square` 与 `watch_q`，停在下一行观察，继续对白确认回到原构图。书包对话里的 `square_again` 复用断口镜头。
 
+## 毕老师和 Q：保留原型的局部精修
+
+以已合入 #329 的 `0230efb4e1124537046d37f248bfb268ef1a63d5` 为对照。`refine_bq.py` 是这一轮的局部雕刻配方，在先前的脸部与近景修整之后运行。
+
+- **毕老师：** 收紧侧梳银发的两鬓和低髻，略提高额前分线的高侧；压低过高的眉弧，保留眉眼不对称和外眼角纹，让薄唇与颊部对比更自然。眼球、眨眼缝、镜框、镜腿和冠顶高度不动。同一层也烘焙进分件版 `teacher_b.blend`。
+- **Q：** 参考现有肖像的短发轮廓，把额前长鼓包改成轻微偏斜、碎短的发梢，两鬓贴头。眼球各层与眼皮岛一起入座，眉片随脸贴合，保留厚眼睑和嘴角的笑意；不改肖像本身。保持发壳原索引、封闭性和头骨刚性绑定。
+
+只替换两人的指定头部位置和法线。其他六位运行模型、两人的衣着、骨架、形变增量、动作、材质、对白、镜头与想象呈现均不变。
+
 ## 打开、编辑、烘焙
 
-1. 在 **Blender 4.5 LTS** 打开 [`Head_Studies.blend`](Head_Studies.blend)（制作及复烘用 **4.5.3**）。在 Outliner 只显示一位角色；局部对象按 Hair / Face / Eye / Ear 分组。角色在编辑视图内对齐眼高，不改变 GLB 的原点或尺寸。
+1. 在 **Blender 4.5 LTS** 打开 [`Head_Studies.blend`](Head_Studies.blend)（制作及复烘用 **4.5.3**）。在 Outliner 只显示一位角色（本轮为 `B` 或 `Q`）；局部对象按 Hair / Face / Eye / Ear 分组。角色在编辑视图内对齐眼高，不改变 GLB 的原点或尺寸。
 2. 保留 `Basis`；选 `Sculpt` 键，值设为 1，在网格上编辑。设为 0 看最初基网格，不是本轮评审基线。其余表情键相对 `Basis`，预览原表情偏移。只有 Q 的独立发壳直接编辑网格，其隐藏对象 `| original` 可显示对照；主角的原刺束有可编辑的 `Sculpt`，不再用连续发壳。除 Q 发壳外不改顶点次序、三角形或对象标识。
 3. 本文件是头部编辑源，不是完整绑定场景。四个审看角色的完整 `.blend` 在 [`classmates`](../classmates/) 和 [`teacher_b`](../teacher_b/)，沿用原重建指令。分件映射回同一雕刻层，不再从 Blender 重新导出全身 GLB。
 
@@ -63,6 +72,8 @@ blender -b -t 2 --python-exit-code 1 -P art/character_models/sculpt/render_revie
   --bases build/sculpt/previous --out build/sculpt/frames --close --expressions
 python3 tests/character_sculpt_test.py
 ```
+
+本轮只复拍 B、Q：从 `0230efb4e1124537046d37f248bfb268ef1a63d5` 提取两份 `RUNTIME` 路径下的 GLB，分别命名 `b.glb`、`q.glb` 放入 `build/sculpt/bq-before/`。以上命令换成相应的 `--comparison-base` 与 `--bases build/sculpt/bq-before`，并加 `--roles b q`。
 
 每位角色的两版共用机位、灯光、焦距和帧，`--close` 放大五官；彩色使用原 GLB 材质，棚拍降低非玻璃高光，不改游戏着色。`--expressions` 只拍现成的闭眼、张口、松唇、笑或抬眉（以各模型支持为准）。`LipRelease` 是松唇，不是口型；N 与坐姿学生没有源表情键，B 只有闭眼。`MANIFEST.json` 记录两版 GLB 的 SHA-256 与实际启用的键。棚拍不入 Git，也不当作 Godot 画面。用原教室、同学和 B 审看场景另看运行时面孔；主角从侧面按住方向键走路，和小跑、坐下、起身区分开验收。
 

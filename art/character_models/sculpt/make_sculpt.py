@@ -20,6 +20,8 @@ from character_geometry import teacher_bob
 from glb_io import accessor, decode
 from forms import (LANDMARKS, components, ease, face, facial_details, hairline,
                    lead_spikes, other_hair, q_closeup_planes, shell_relief)
+from refine_bq import (b_brows_and_folds, b_cheek_and_mouth, b_chignon, q_brows,
+                       q_cheek_and_mouth, q_cropped_fringe, q_cropped_relief, seat_q_orbit)
 
 # The prepared seated GLB retains these node IDs for the two inset nostrils.
 STUDENT_NOSTRILS = {'Sphere.019', 'Sphere.020'}
@@ -90,14 +92,14 @@ def new_mesh(name, p, f):
     return mesh
 
 
-def fitted_shell(role, skull):
+def fitted_shell(role, skull, *, line=None, shape=None):
     """Closed, smooth crown built by casting an authored hem onto the actual skull."""
     _,_,eye,ze,_ = LANDMARKS[role]
     pivot = np.array([0.,eye+.033,ze-.086])
     slices, rings = (88, 37) if role=='lead' else (96, 37)
     azimuth = np.arange(slices)*2*np.pi/slices
     a,t = np.meshgrid(azimuth,np.linspace(1/rings,1.,rings))
-    theta = t*hairline(role,a)
+    theta = t*(hairline(role,a) if line is None else line(a))
     rays = np.stack((np.sin(a)*np.sin(theta),np.cos(theta),np.cos(a)*np.sin(theta)),axis=-1)
     radii = np.empty(rays.shape[:2])
     for i,v in enumerate(rays.reshape(-1,3)):
@@ -112,7 +114,7 @@ def fitted_shell(role, skull):
         along = radii.copy(); along[1:-1] = .5*(radii[:-2]+radii[2:])
         radii = np.maximum(envelope-.0006, .45*radii+.35*across+.20*along)
     rest = pivot + rays*radii[...,None]
-    relief, drift = shell_relief(role,rest,a,t)
+    relief, drift = shell_relief(role,rest,a,t) if shape is None else shape(rest,a,t)
     p = rest + rays*relief[...,None]
     p[...,0] += drift
     # Displace the hem just enough to bury a thin return under the skin, and
@@ -164,6 +166,70 @@ def keep_deforming_lids(surface, original, edited):
     edited[frozen] = original[frozen]
 
 
+def lid_islands(role, p, triangles):
+    _, ex, ey, _, _ = LANDMARKS[role]
+    lids = [ids for ids in components(p, triangles)
+            if len(ids) == 88 and abs(abs(p[ids, 0].mean()) - ex) < .007
+            and abs(p[ids, 1].mean() - ey) < .018]
+    if len(lids) != 4:
+        raise ValueError(f'{role}: expected four moving lid islands')
+    return lids
+
+
+def refit_marks(before, edited, skin_before, skin_after, triangles, *, relief=1.):
+    """Follow the sculpted skin, optionally reducing a mark's old relief."""
+    def depths(skin, marks):
+        head = BVHTree.FromPolygons(skin.tolist(), triangles.tolist(), all_triangles=True)
+        values = []
+        for x, y, _ in marks:
+            loc, _, _, _ = head.ray_cast(Vector((x, y, .30)), Vector((0., 0., -1.)), .25)
+            if loc is None:
+                raise ValueError('Brow or crease missed its fitted face')
+            values.append(loc.z)
+        return np.asarray(values)
+    edited[:, 2] = depths(skin_after, edited) + relief * (edited[:, 2] - depths(skin_before, before))
+
+
+def polish_bq(role, parts, skull):
+    if role == 'q':
+        skin = next(s for s in parts if s.mat['name'] == 'Q_Mat_Skin')
+        skin_before = skin.output
+        skin.output = q_cheek_and_mouth(skin_before)
+        for ids in lid_islands(role, skin_before, skin.triangles):
+            skin.output[ids] = seat_q_orbit(skin_before[ids])
+        for s in parts:
+            if s.node == 'Q_Hair':
+                p, faces = fitted_shell('q', skull, line=q_cropped_fringe, shape=q_cropped_relief)
+                if not np.array_equal(faces, s.remesh):
+                    raise ValueError('Q fringe edit must keep the existing shell indices')
+                peak = p[:, 1].max()
+                p[:, 1] += (s.output[:, 1].max() - peak) * ease(peak - .07, peak, p[:, 1])
+                s.output = p
+            elif s.node == 'Q_Eyes':
+                s.output = seat_q_orbit(s.output)
+            elif s.mat['name'] == 'Q_Mat_MouthInner':
+                s.output = q_cheek_and_mouth(s.output)
+            elif s.mat['name'] == 'Q_Mat_Hair':
+                marks = q_brows(s.output)
+                refit_marks(s.output, marks, skin_before, skin.output, skin.triangles, relief=.82)
+                s.output = marks
+    elif role == 'b':
+        flip = np.array([1., 1., -1.])
+        skin = next(s for s in parts if s.node == 'Face and neck')
+        skin_before = skin.output * flip
+        skin_after = b_cheek_and_mouth(skin_before)
+        keep_deforming_lids(skin, skin_before, skin_after)
+        skin.output = skin_after * flip
+        for s in parts:
+            if s.mat['name'] == 'b_swept_silver':
+                s.output = b_chignon(s.output * flip, s.output[:, 1].max()) * flip
+            elif s.mat['name'] == 'b_brows_and_crease':
+                before = s.output * flip
+                marks = b_brows_and_folds(before)
+                refit_marks(before, marks, skin_before, skin_after, skin.triangles)
+                s.output = marks * flip
+
+
 def sculpt(role, parts):
     sign = LANDMARKS[role][0]
     skull = None
@@ -193,13 +259,7 @@ def sculpt(role, parts):
             # Inset student nostrils were not part of the first broad pass.
             q = p.copy() if role == 'seated' and s.node in STUDENT_NOSTRILS else face(role,p,kind,density)
             if role in ('lead','q') and s.mat['name'].endswith('_Mat_Skin'):
-                _,ex,ey,_,_ = LANDMARKS[role]
-                lids = [ids for ids in components(p,s.triangles)
-                        if len(ids)==88 and abs(abs(p[ids,0].mean())-ex)<.007
-                        and abs(p[ids,1].mean()-ey)<.018]
-                if len(lids)!=4:
-                    raise ValueError(f'{role}: could not identify four moving lid islands')
-                for ids in lids:
+                for ids in lid_islands(role, p, s.triangles):
                     q[ids] = face(role,p[ids],'eye')
             elif role in ('thin','gentle','court','b'):
                 keep_deforming_lids(s,p,q)
@@ -234,6 +294,7 @@ def sculpt(role, parts):
                 keep_deforming_lids(s,p,q)
             q[:,2] *= sign
             s.output = q
+    polish_bq(role, parts, skull)
 
 
 def material(s):
