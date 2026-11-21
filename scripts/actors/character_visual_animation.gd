@@ -252,6 +252,12 @@ func is_seated() -> bool:
 	return _seated
 
 
+## Visible NPC presentations can carry a staged reaction even on someone else's line.
+## Ordinary visuals only need the speaker request. An empty line clears the presentation.
+func present_dialogue_line(_line: Dictionary, speaking: bool) -> void:
+	set_talking(speaking)
+
+
 ## A request from presentation, not an action lock. The current posture decides how
 ## to answer; a seated performance must not lift the actor off the chair to speak.
 func set_talking(talking: bool) -> void:

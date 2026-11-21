@@ -138,7 +138,7 @@ jobs:
             exit 1
           fi
 
-      - name: Encode actual walk frames
+      - name: Encode actual walk and textbook frames
         if: always() && steps.capture.outcome != 'skipped'
         shell: bash
         env:
@@ -164,6 +164,15 @@ jobs:
           (folder / 'walk_video.json').write_text(json.dumps(metadata, indent=2) + '\n')
           print(f"::notice title=Q walking video {os.environ['PHASE']}::{metadata}")
           PY
+          if [ "$PHASE" = after ]; then
+            test -f "$folder/textbook_frames/frame_071.jpg"
+            ffmpeg -hide_banner -loglevel error -framerate 24 -i "$folder/textbook_frames/frame_%03d.jpg" \
+              -frames:v 72 -c:v libx264 -pix_fmt yuv420p -crf 19 "$folder/textbook.mp4"
+            count=$(ffprobe -v error -count_frames -select_streams v:0 \
+              -show_entries stream=nb_read_frames -of csv=p=0 "$folder/textbook.mp4")
+            test "$count" = 72
+            sha256sum "$folder/textbook.mp4"
+          fi
 
       - name: Attribute the unchanged click-marker regression
         if: always() && steps.project.outputs.path != ''

@@ -25,6 +25,8 @@ func _run() -> void:
 	if not await _boot():
 		await _finish_migration()
 		return
+	if _phase == "after":
+		await _textbook_capture()
 	# Stand by the real player's existing API; no protagonist asset/material edit.
 	_player.set_wake_pose(0.0)
 	_protagonist.set_seated(false)
@@ -78,6 +80,71 @@ func _run() -> void:
 	await _dialogue_capture()
 	await _companion_capture()
 	await _finish_migration()
+
+
+## Q is still at the real opening landing. Re-present the shipped branch here so
+## the opening's camera and placement are unchanged. The close camera is review-only.
+func _textbook_capture() -> void:
+	var book := _q.get_node_or_null(^"BiologyTextbook") as Node3D
+	if book == null or not _dialogue.play_conversation(&"q_wake"):
+		_failures.append("Could not start real textbook capture from the classroom's Q.")
+		return
+	for attempt in 64:
+		if not _dialogue.is_busy() or _textbook_line() == &"p_ecosystem_question":
+			break
+		if _dialogue.has_pending_choices():
+			_dialogue.select_choice(0)
+		else:
+			_dialogue.advance_presentation()
+		await process_frame
+	if _textbook_line() != &"p_ecosystem_question":
+		_failures.append("The live opening did not reach Q's reading cue.")
+		await _close_conversation()
+		return
+	# Keep the real game camera, but hide the text for these visual review frames.
+	var panel_visible := _panel.visible
+	_panel.hide()
+	await _wait(0.55)
+	_save_image("23_q_reading_game_camera", root.get_texture().get_image())
+	var gameplay_camera := root.get_camera_3d()
+	var focus := _q.global_position + Vector3.UP * 1.37
+	var forward := _forward(_q)
+	var sideways := Vector3.UP.cross(forward)
+	var camera := Camera3D.new()
+	camera.fov = 33.0
+	_main.add_child(camera)
+	camera.global_position = focus + forward * 1.22 + sideways * 0.86 + Vector3.UP * 0.76
+	camera.look_at(focus)
+	camera.current = true
+	var frames_dir := "%s/textbook_frames" % _output
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(frames_dir))
+	# This workflow runs at 24 fps: just over one full recitation and a raised reply.
+	for frame in 72:
+		if frame == 56:
+			_dialogue.advance_presentation()
+			if _textbook_line() != &"q_ecosystem":
+				_failures.append("Q's real answer did not follow the reading cue.")
+		await process_frame
+		if not book.is_visible_in_tree():
+			_failures.append("Q lost the book during recitation/reply frame %d." % frame)
+			break
+		RenderingServer.force_draw(true)
+		var image := root.get_texture().get_image()
+		if image == null or image.is_empty() or image.save_jpg("%s/frame_%03d.jpg" % [frames_dir, frame], 0.9) != OK:
+			_failures.append("The textbook frame %d was not rendered and saved." % frame)
+			break
+		if frame == 24:
+			_save_image("24_q_reciting_close", image)
+		elif frame == 71:
+			_save_image("25_q_replying_close", image)
+	camera.queue_free()
+	gameplay_camera.make_current()
+	_panel.visible = panel_visible
+	await _close_conversation()
+
+
+func _textbook_line() -> StringName:
+	return StringName(_dialogue.get_current_line().get("node_id", &""))
 
 
 ## The inherited capture spot predates the classroom's 4-column desk grid. Use the
@@ -255,15 +322,14 @@ func _save_image(tag: String, image: Image) -> void:
 		"sha256": FileAccess.get_sha256(path), "clip": String(_q.get_animation_player().current_animation)})
 	if int(tag.get_slice("_", 0)) <= 12 or tag in ["16_authored_head_turn", "17_gesturing_fingers",
 		"18_supplied_pose_preview", "19_supplied_rest_shoulders",
-		"21_companion_game_camera", "22_companion_live_dialogue"]:
+		"21_companion_game_camera", "22_companion_live_dialogue", "24_q_reciting_close", "25_q_replying_close"]:
 		_previews.append({"name": tag, "image": image})
 
 
 func _finish_migration() -> void:
 	# Original frames are untouched; small *labelled previews* fit the API notice
-	# budget. The artifact retains full-size frames and 48 real walking frames.
-	# Allocate whole annotation parts: 18 images × at most 2 parts fits the same
-	# 40-part ceiling. A fractional per-image budget could round to 48 parts.
+	# budget. The artifact retains full-size screenshots and original video frames.
+	# Allocate whole annotation parts to stay under the workflow's 40-part ceiling.
 	var share := mini(144000 / maxi(_previews.size(), 1),
 		(40 / maxi(_previews.size(), 1)) * 4000)
 	for entry: Dictionary in _previews:

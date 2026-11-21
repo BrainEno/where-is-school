@@ -161,3 +161,16 @@ headless 画面会被拒绝。`Classroom visual evidence` PR 工作流用 Godot 
 
 `tests/capture_classroom_motion.gd` 在真实 Compatibility 渲染下检查课表的固定点、幕布遮挡和拉开后的余摆，
 `classroom-motion-<head>` 工件内有课表静止/起翘、幕布余摆/归位的画面。同一套捕获也会用正常鼠标和触摸从过道走近 A1 的学生搭话。
+
+### Q 的生物课本
+
+[`biology_textbook.tscn`](../../scenes/environment/props/classroom_art/biology_textbook.tscn)
+是本项目手工搭建的 Godot 原生道具，打开约 0.35 × 0.24 m：灰绿布面书皮、暖色纸页，跨页是植物与食物链插图。
+没有外部网格、贴图或参考图。封面与页眉的书名使用项目已有的 Noto Sans SC 子集，沿用其
+[OFL 许可](../../assets/fonts/OFL.txt)。两个 `Wrist` 标记随书页移动，Q 在基础动画上以它们定位双手；
+书不参加碰撞，也不是可拾取物。
+
+教室里的 Q 在聊到生物课时举起课本，低头默背时头和书一起晃动，答话时抬头，展示笔迹时稍微把书朝外翻，
+随后回到默背。走路、剧情动作和下课时收书，随行的 Q 不实例化课本。不改已批准的 Q 模型、台词和教室站位。
+`q_model_test.gd` 采样渲染用骨骼和双手接触点；Q 模型迁移实拍的 after 工件保留游戏镜头、近景和
+用原对白触发的 `textbook.mp4`。

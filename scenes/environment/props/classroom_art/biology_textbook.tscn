@@ -1,0 +1,244 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="Font"]
+
+[sub_resource type="StandardMaterial3D" id="Cover"]
+resource_name = "Faded spruce book cloth"
+albedo_color = Color(0.23, 0.34, 0.29, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Spine"]
+albedo_color = Color(0.18, 0.24, 0.22, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="PaperEdge"]
+albedo_color = Color(0.66, 0.58, 0.43, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Paper"]
+albedo_color = Color(0.87, 0.83, 0.68, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Print"]
+albedo_color = Color(0.31, 0.40, 0.32, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="PrintOchre"]
+albedo_color = Color(0.62, 0.38, 0.23, 1)
+roughness = 0.95
+diffuse_mode = 3
+specular_mode = 2
+
+[sub_resource type="BoxMesh" id="Board"]
+material = SubResource("Cover")
+size = Vector3(0.174, 0.006, 0.235)
+
+[sub_resource type="BoxMesh" id="Backing"]
+material = SubResource("Spine")
+size = Vector3(0.021, 0.012, 0.238)
+
+[sub_resource type="BoxMesh" id="Leaves"]
+material = SubResource("PaperEdge")
+size = Vector3(0.164, 0.013, 0.224)
+
+[sub_resource type="BoxMesh" id="Spread"]
+material = SubResource("Paper")
+size = Vector3(0.166, 0.004, 0.226)
+
+[sub_resource type="BoxMesh" id="EdgeTape"]
+material = SubResource("PrintOchre")
+size = Vector3(0.028, 0.003, 0.035)
+
+[sub_resource type="BoxMesh" id="Rule"]
+material = SubResource("Print")
+size = Vector3(0.086, 0.001, 0.003)
+
+[sub_resource type="BoxMesh" id="Stem"]
+material = SubResource("Print")
+size = Vector3(0.004, 0.001, 0.101)
+
+[sub_resource type="SphereMesh" id="LeafInk"]
+material = SubResource("Print")
+radius = 0.5
+height = 1.0
+radial_segments = 10
+rings = 3
+
+[sub_resource type="PrismMesh" id="Arrow"]
+material = SubResource("PrintOchre")
+size = Vector3(0.017, 0.011, 0.001)
+
+[sub_resource type="BoxMesh" id="Margin"]
+material = SubResource("PrintOchre")
+size = Vector3(0.093, 0.001, 0.005)
+
+[sub_resource type="BoxMesh" id="Bookplate"]
+material = SubResource("PaperEdge")
+size = Vector3(0.10, 0.001, 0.057)
+
+[node name="BiologyTextbook" type="Node3D"]
+
+[node name="ClothSpine" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.012, 0)
+mesh = SubResource("Backing")
+
+[node name="LeftLeaf" type="Node3D" parent="."]
+rotation_degrees = Vector3(0, 0, -9)
+
+[node name="Cover" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.087, -0.012, 0)
+mesh = SubResource("Board")
+
+[node name="PageBlock" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.083, -0.004, 0)
+mesh = SubResource("Leaves")
+
+[node name="PrintedLeaf" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.083, 0.0045, 0)
+mesh = SubResource("Spread")
+
+[node name="Chapter" type="Label3D" parent="LeftLeaf"]
+position = Vector3(-0.093, 0.0075, 0.083)
+rotation_degrees = Vector3(-90, 180, 0)
+text = "生物"
+font = ExtResource("Font")
+font_size = 52
+pixel_size = 0.00065
+outline_size = 0
+modulate = Color(0.25, 0.32, 0.26, 1)
+
+[node name="Stem" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.089, 0.007, -0.013)
+rotation_degrees = Vector3(0, -17, 0)
+mesh = SubResource("Stem")
+cast_shadow = 0
+
+[node name="Leaf1" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.109, 0.007, 0.013)
+rotation_degrees = Vector3(0, -25, 0)
+scale = Vector3(0.054, 0.0012, 0.027)
+mesh = SubResource("LeafInk")
+cast_shadow = 0
+
+[node name="Leaf2" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.059, 0.007, -0.003)
+rotation_degrees = Vector3(0, 27, 0)
+scale = Vector3(0.052, 0.0012, 0.024)
+mesh = SubResource("LeafInk")
+cast_shadow = 0
+
+[node name="Leaf3" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.097, 0.007, -0.032)
+rotation_degrees = Vector3(0, -36, 0)
+scale = Vector3(0.038, 0.0012, 0.019)
+mesh = SubResource("LeafInk")
+cast_shadow = 0
+
+[node name="CaptionRule" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.083, 0.007, -0.077)
+mesh = SubResource("Rule")
+cast_shadow = 0
+
+[node name="CaptionRuleShort" type="MeshInstance3D" parent="LeftLeaf"]
+position = Vector3(-0.10, 0.007, -0.091)
+scale = Vector3(0.62, 1, 1)
+mesh = SubResource("Rule")
+cast_shadow = 0
+
+[node name="Wrist" type="Marker3D" parent="LeftLeaf"]
+position = Vector3(-0.133, -0.038, -0.166)
+
+[node name="RightLeaf" type="Node3D" parent="."]
+rotation_degrees = Vector3(0, 0, 7)
+
+[node name="Cover" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.087, -0.012, 0)
+mesh = SubResource("Board")
+
+[node name="PageBlock" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.083, -0.004, 0)
+mesh = SubResource("Leaves")
+
+[node name="PrintedLeaf" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.083, 0.0045, 0)
+mesh = SubResource("Spread")
+
+[node name="MarginBar" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.087, 0.007, 0.085)
+mesh = SubResource("Margin")
+cast_shadow = 0
+
+[node name="FishLarge" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.092, 0.007, 0.043)
+scale = Vector3(0.069, 0.0012, 0.033)
+mesh = SubResource("LeafInk")
+cast_shadow = 0
+
+[node name="TailLarge" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.052, 0.007, 0.043)
+rotation_degrees = Vector3(90, 0, -90)
+scale = Vector3(1.4, 1.4, 1)
+mesh = SubResource("Arrow")
+cast_shadow = 0
+
+[node name="FishSmall" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.075, 0.007, -0.04)
+scale = Vector3(0.043, 0.0012, 0.022)
+mesh = SubResource("LeafInk")
+cast_shadow = 0
+
+[node name="TailSmall" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.05, 0.007, -0.04)
+rotation_degrees = Vector3(90, 0, -90)
+mesh = SubResource("Arrow")
+cast_shadow = 0
+
+[node name="ChainArrow" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.089, 0.007, -0.003)
+rotation_degrees = Vector3(90, 0, 180)
+mesh = SubResource("Arrow")
+cast_shadow = 0
+
+[node name="CaptionRule" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.085, 0.007, -0.081)
+mesh = SubResource("Rule")
+cast_shadow = 0
+
+[node name="CoverLabel" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.091, -0.0156, 0.037)
+mesh = SubResource("Bookplate")
+cast_shadow = 0
+
+[node name="CoverTitle" type="Label3D" parent="RightLeaf"]
+position = Vector3(0.091, -0.0168, 0.043)
+rotation_degrees = Vector3(90, 0, 0)
+text = "生物"
+font = ExtResource("Font")
+font_size = 64
+pixel_size = 0.00060
+outline_size = 0
+modulate = Color(0.19, 0.28, 0.21, 1)
+
+[node name="CoverStripe" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.091, -0.0164, 0.016)
+mesh = SubResource("Margin")
+cast_shadow = 0
+
+[node name="RepairTape" type="MeshInstance3D" parent="RightLeaf"]
+position = Vector3(0.016, -0.015, -0.098)
+rotation_degrees = Vector3(0, 9, 0)
+mesh = SubResource("EdgeTape")
+cast_shadow = 0
+
+[node name="Wrist" type="Marker3D" parent="RightLeaf"]
+position = Vector3(0.133, -0.038, -0.166)
