@@ -57,6 +57,7 @@
 | [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 发布流程见 [RELEASE.md](RELEASE.md) |
 | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) | 产品意图与范围 | 现行 | 仓库所有者 | 2026-11-17 | 叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |
 | [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) | 序章美术迁移与证据记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行截图证据说明见 [screenshots/README.md](screenshots/README.md) |
+| [PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md](PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md) | 生物老师 B 的主观幻想、异想天开、交织分支与人物刻板印象设计补充 | 提案/待所有者 | 仓库所有者 | 2026-11-21 | 不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md)；具体作者文本留白，待后续定稿 |
 | [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) | 首个可玩垂直切片验收范围 | 现行 | 仓库所有者 | 2026-11-17 | 人工验收见 [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) |
 | [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [RELEASE.md](RELEASE.md) | 双平台发布与导出验证流程 | 现行 | 工程 Agent | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
