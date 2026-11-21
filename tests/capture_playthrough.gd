@@ -1604,94 +1604,7 @@ func _capture_click_navigation() -> void:
 			]
 		)
 
-	# The keys take over mid-walk.
-	_ground_search_log.clear()
-	var second := _find_ground_click_screen(3.0, 6.0)
-	if second == Vector2.ZERO:
-		second = _find_ground_click_screen(2.0, 5.0)
-	if second == Vector2.ZERO:
-		second = _find_ground_click_screen(4.0, 8.0)
-	if second == Vector2.ZERO:
-		# The first walk ends wherever the click sent it, and one of those places is a
-		# corner of the room. From there the camera has two walls in frame and a 0.4 m
-		# strip of floor, so no distance band can contain a click point - measured, not
-		# guessed: 123 of 144 screen points had no ground under them and the nearest floor
-		# was 0.4 m away. That is a fact about where the player stood, not about the keys
-		# taking over a walk, so the shot stands somewhere the room is in frame, says so,
-		# and gives the same three bands one more go. The assertion below is unchanged.
-		_note(
-			"the interruption shot had no floor in view from %s; stepping into the open"
-			% str(_player.global_position)
-		)
-		_teleport(Vector3(0.4, 0.0, 2.6), 0.0)
-		await _wait(0.5)
-		await _unstick()
-		_ground_search_log.clear()
-		second = _find_ground_click_screen(3.0, 6.0)
-		if second == Vector2.ZERO:
-			second = _find_ground_click_screen(2.0, 5.0)
-		if second == Vector2.ZERO:
-			second = _find_ground_click_screen(4.0, 8.0)
-	if second != Vector2.ZERO:
-		# The same two retries the first walk gets, for the same two reasons: a click can
-		# be swallowed by something on screen before the navigator sees it, and a click
-		# the navigator refuses starts no walk. Neither is "the keys did not take over",
-		# so neither should be reported as it.
-		var was_walking := false
-		var clicks_seen := 0
-		for _attempt in 2:
-			var clicks_before := navigator.get_click_count() if navigator != null else 0
-			await _click_at_screen(second)
-			# A click becomes a route on the controller's own cadence, and the route can
-			# start a third of a second after the press. Waiting a fixed 0.25 s measured
-			# that delay instead of the thing the shot is about: the key has to take over
-			# from a walk that is *already running*, so wait for it to run.
-			was_walking = await _poll(
-				func() -> bool: return _player.is_path_active(), 2.0
-			)
-			clicks_seen = (navigator.get_click_count() if navigator != null else 0) - clicks_before
-			if was_walking:
-				break
-			_note("the interruption click started no walk; %d click(s) were accepted" % clicks_seen)
-			if clicks_seen <= 0:
-				_note("the interruption click never reached the world; trying another point")
-				second = _find_ground_click_screen(3.0, 6.0)
-				if second == Vector2.ZERO:
-					second = _find_ground_click_screen(2.0, 5.0)
-				if second == Vector2.ZERO:
-					second = _find_ground_click_screen(4.0, 8.0)
-				if second == Vector2.ZERO:
-					break
-				continue
-			# The navigator saw the click and accepted no walk: another point would be a
-			# different question, so this is the moment to stop asking it.
-			break
-		Input.action_press("move_forward")
-		await _wait(0.4)
-		Input.action_release("move_forward")
-		await _wait(0.2)
-		var stopped := not _player.is_path_active()
-		await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
-		_note("walk before WASD=%s, walk after WASD=%s" % [was_walking, stopped])
-		if not was_walking or not stopped:
-			_failures.append(
-				"Holding a movement key did not take over from the automatic walk "
-				+ "(walk before=%s, walk after=%s, clicks accepted=%d, %s, control=%s, "
-				% [
-					was_walking, stopped, clicks_seen,
-					navigator.get_last_rejection() if navigator != null else "no navigator",
-					str(_player.is_control_enabled()),
-				]
-				+ "dialogue=%s, player at %s)."
-				% [str(_dialogue.is_busy()), str(_player.global_position)]
-			)
-	else:
-		# The three bands and their numbers travel with the failure: "nothing was
-		# clickable" is four different problems depending on which test rejected what.
-		_failures.append(
-			"No second floor point was clickable for the interruption shot (%s)."
-			% ("; ".join(_ground_search_log) if not _ground_search_log.is_empty() else "no search ran")
-		)
+	await _capture_keyboard_takeover(navigator, endings)
 
 	# A click on a prop: the inspection, reached by the mouse only.
 	var sheet := _host.get_current().find_interactable(&"timetable")
@@ -1750,6 +1663,55 @@ func _capture_click_navigation() -> void:
 		_note("cue audio after the mouse shots: %s" % str(audio.get_counts()))
 	else:
 		_note("cue audio: no CueAudio autoload in this run; the cues were silent")
+
+
+## The first click can finish by a wall with no usable floor in view. The keyboard
+## takeover is a separate case: a single real click down the middle aisle, then a key
+## while that exact route is active. A stale floor pixel and a cancelled walk are not
+## the same result.
+func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array) -> void:
+	var rig := _main.get_node_or_null(^"CameraRig") as CameraRig
+	if navigator == null or rig == null:
+		_failures.append("The interruption shot needs the real pointer navigator and camera rig.")
+		return
+	if not await _wait_for_free(45.0):
+		return
+	var start := Vector3(-0.375, 0.0, 2.5)
+	var goal := Vector3(-0.375, 0.0, -2.25)
+	_teleport(start, 0.0)
+	if not await _poll(func() -> bool:
+		return rig.camera == root.get_camera_3d() and is_zero_approx(rig.get_focus_weight()) \
+			and rig.global_position.distance_to(_player.global_position) < 0.02, 5.0):
+		_failures.append("The interruption shot did not return to the gameplay camera in the middle aisle.")
+		return
+	var screen := rig.camera.unproject_position(goal)
+	var hit: Variant = navigator.get_ground_point_at(screen)
+	if not root.get_visible_rect().has_point(screen) or not hit is Vector3 \
+			or goal.distance_to(hit) > 0.25 or not _reaches(hit) \
+			or _interaction.get_target_at_screen_position(screen, false) != null:
+		_failures.append("The interruption click cannot see routed floor at %s from %s (hit %s)." % [
+			str(goal), str(start), str(hit),
+		])
+		return
+	var clicks := navigator.get_click_count()
+	await _click_at_screen(screen)
+	var walking := await _poll(func() -> bool: return _player.is_path_active(), 2.0)
+	if not walking or navigator.get_click_count() != clicks + 1 \
+			or goal.distance_to(_player.get_path_target()) > 0.25:
+		_failures.append("The interruption click did not start the middle-aisle walk: %s; target %s." % [
+			navigator.get_last_rejection(), str(_player.get_path_target()),
+		])
+		return
+	var before_key := endings.duplicate()
+	Input.action_press("move_forward")
+	await _wait(0.4)
+	Input.action_release("move_forward")
+	var cancelled := not _player.is_path_active() and endings[1] == before_key[1] + 1 \
+		and endings[0] == before_key[0] and _player.is_control_enabled() and not _dialogue.is_busy()
+	_note("middle aisle walk: started by one click at %s; cancelled by WASD=%s" % [str(goal), cancelled])
+	if not cancelled:
+		_failures.append("Holding a movement key did not cancel the active middle-aisle walk exactly once.")
+	await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
 
 
 ## A click the world refuses: the cue has to say "no" somewhere the player is looking, and
