@@ -385,7 +385,28 @@ func _beat_expectation() -> void:
 
 
 func _beat_bell() -> void:
+	if is_step_done(&"bell"):
+		return
 	await _beats.bell()
+	# Q finishes his bell lines before moving back to his desk. Settle the room
+	# before the director saves the bell checkpoint or starts N's entrance.
+	await begin_beat()
+	await _seat_classroom_for_lesson()
+	end_beat()
+
+
+func _seat_classroom_for_lesson() -> void:
+	if not _has_flag(StoryFlags.BELL_RUNG) or is_step_done(&"substitute"):
+		return
+	var location := _locations.get_current()
+	var chairs := ClassroomChairControl.in_room(location)
+	if chairs == null:
+		return
+	var q := location.find_actor(QPresence.ACTOR_ID)
+	var before := q.global_position if q != null else Vector3.ZERO
+	await chairs.seat_for_class(_player, q)
+	if q != null and not q.global_position.is_equal_approx(before):
+		QPresence.carry_talk(location, q, before)
 
 
 ## N walks in and dismisses the class.
@@ -443,6 +464,10 @@ func _handle_exit(exit: LocationExit) -> void:
 
 
 func play_conversation(conversation_id: StringName) -> void:
+	# N's walk leaves the player in control (including the rear-door route). Check
+	# the seats once more under the lesson lock, also for older post-bell saves.
+	if conversation_id == &"n_class" and _beat_active:
+		await _seat_classroom_for_lesson()
 	if not _dialogue.play_conversation(conversation_id):
 		return
 	# `DialogueRuntime.start()` walks the graph before it returns, and three of its

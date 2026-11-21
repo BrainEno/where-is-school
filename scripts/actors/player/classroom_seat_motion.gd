@@ -1,12 +1,13 @@
 extends RefCounted
-## One timeline for the wake chair's bones, pivot, wrist, boots and slide. The capsule
-## stays on the seat's floor mark throughout the transfer. No changes to shared clips.
+## One timeline for the rig's pivot, wrist, boots and chair slide. The actor's feet
+## remain on the seat mark during the transfer; reach for a tucked chair from the side first.
 
 const Limb = preload("res://scripts/actors/character_limb_contact.gd")
 const STAND := "classroom_rise"
 const SIT := "classroom_sit"
 const STAND_SECONDS := 0.94
 const SIT_SECONDS := 0.99
+const PULL_SECONDS := 0.78
 const CUSHION_TO_THIGH := 0.061
 
 var chair: PushableChair
@@ -70,8 +71,41 @@ func sample_stand(t: float) -> void:
 	_hold_chair(smoothstep(0.03, 0.20, t) * (1.0 - smoothstep(0.43, 0.66, t)))
 
 
+## A standing actor reaches from the flank, not from inside the tucked chair.
+## Use the early brace of the existing sit with the feet planted on this mark.
+func pull_out(actor: Node3D) -> void:
+	chair.start_slide()
+	var feet := actor.global_position
+	var tween := actor.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_method(_sample_pull.bind(feet), 0.0, 1.0, PULL_SECONDS)
+	await tween.finished
+	chair.snap_back()
+	_animator.release_sampled_action()
+
+
+func _sample_pull(t: float, feet: Vector3) -> void:
+	var reach := smoothstep(0.0, 0.23, t) * (1.0 - smoothstep(0.73, 1.0, t))
+	if _animator.prologue_actions:
+		_animator.sample_action(SIT, 0.23 * reach)
+	else:
+		_animator.sample_action("get_up", 1.0 - 0.32 * reach)
+	_visual.position = Vector3.UP * (_standing - 0.19 * reach)
+	chair.sample_slide(smoothstep(0.23, 0.73, t))
+	for side: String in [".L", ".R"]:
+		var leg: Limb = _joints.get("foot" + side)
+		if leg != null:
+			var stance := (leg.skeleton.global_basis * leg.rest_end.origin).slide(Vector3.UP)
+			leg.plant_flat(feet + stance, -chair.global_basis.z, reach)
+	_hold_chair(reach)
+
+
 func sample_sit(t: float) -> void:
-	_animator.sample_action(SIT, t)
+	if _animator.prologue_actions:
+		_animator.sample_action(SIT, t)
+	else:
+		# Q's rig already has the shared get-up. Reuse its rotations in reverse,
+		# with the same chair, pelvis and IK timeline rather than moving his root.
+		_animator.sample_action("get_up", 1.0 - t)
 	# A shallow brace leaves clearance while the chair travels in. Only once the
 	# front edge is underneath the thighs does the body settle its last centimetres.
 	var down := 0.78 * smoothstep(0.08, 0.38, t) + 0.22 * smoothstep(0.59, 0.93, t)

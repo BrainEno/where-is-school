@@ -12,12 +12,10 @@ extends ActorPresence
 ## the classroom came back with Q at his authored spot - about 1.3 m from where the player
 ## last saw him - and his hotspot with him. Nothing read `met_q` to undo that.
 ##
-## `met_q` is the only memory, as for N (`NPresence`) and B (`BPresence`), and ADR 0005 §3
-## stays as it is: no NPC is serialised. Whenever a room is entered, and when the flags are
-## replaced, the room's Q - if it has one, and the room authors a `QOpeningTalk` - is
-## placed on that marker, facing the protagonist's seat (`PlayerStart`), and `q_talk` moves
-## by the same offset. Both points are read from the room's own markers every time, so a
-## later change to the classroom's composition (#159) moves this with it.
+## No NPC is serialised (ADR 0005 §3). On entry or flag replacement, the room's own
+## QOpeningTalk and PlayerStart restore the opening composition after `met_q`. After
+## `bell_rung`, the classroom's chair controller places Q back at his desk instead.
+## In both cases `q_talk` moves with him; a rebuilt room does not replay a performance.
 ##
 ## What this deliberately does not do:
 ##
@@ -100,14 +98,21 @@ static func carry_talk(location: LocationRoot, actor: NpcActor, from: Vector3) -
 	talk.rebuild_pick_shapes()
 
 
-## Makes the room's Q (if it has one) match the story: on the landing, facing the seat,
-## once Q's first talk has begun. Returns true when it moved him.
+## Makes a rebuilt Q match the story: at his desk after the bell, or at the talk
+## marker after his introduction. Returns true when it moved him.
 func sync() -> bool:
-	if not has_met():
-		return false
 	var location := _current()
 	var actor := find_actor()
 	if location == null or actor == null:
+		return false
+	var chairs := ClassroomChairControl.in_room(location)
+	if chairs != null and _flag(StoryFlags.BELL_RUNG) and not _flag(StoryFlags.SKIPPED_CLASS):
+		var before := actor.global_position
+		if not chairs.restore_q_seat(actor):
+			return false
+		carry_talk(location, actor, before)
+		return true
+	if not has_met():
 		return false
 	var landing := landing_in(location)
 	if landing.is_empty():

@@ -32,6 +32,23 @@ func bind_pick_target(target: Interactable) -> void:
 	_pick_offset = global_transform.affine_inverse() * target.global_transform
 
 
+## A room may calibrate its stop once, before any transfers. Other uses keep the
+## default clearance, including the computer-room station.
+func set_slide_distance(metres: float) -> void:
+	_pushed_position = _home_position + basis.z * metres
+
+
+## Live mesh envelope: some chairs are only visible geometry and never enter the
+## navigation bake. A staged approach can still keep its capsule outside them.
+func mesh_bounds() -> AABB:
+	var bounds := _seat.global_transform * _seat.get_aabb()
+	for child in get_children():
+		var mesh := child as MeshInstance3D
+		if mesh != null and mesh != _seat:
+			bounds = bounds.merge(mesh.global_transform * mesh.get_aabb())
+	return bounds
+
+
 func is_seatable() -> bool:
 	return seat_mark != null and is_instance_valid(_pick_target)
 

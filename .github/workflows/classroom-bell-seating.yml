@@ -1,0 +1,68 @@
+name: Classroom bell seating
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/classroom-bell-seating.yml'
+      - 'scenes/locations/classroom/**'
+      - 'scenes/environment/props/classroom_desk.tscn'
+      - 'scenes/environment/props/classroom_art/student_chair_*.tres'
+      - 'scripts/actors/player/**'
+      - 'scripts/environment/pushable_chair.gd'
+      - 'scripts/world/opening_sequence.gd'
+      - 'scripts/world/prologue_beats.gd'
+      - 'scripts/world/q_presence.gd'
+      - 'tests/classroom_bell_seating_test.gd'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seating:
+    name: Return to both desks before the lesson
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: ./.github/actions/setup-godot
+      - name: Isolate saves and logs
+        run: |
+          echo "CI_LOG_DIR=$RUNNER_TEMP/bell-seating/logs" >> "$GITHUB_ENV"
+          echo "XDG_DATA_HOME=$RUNNER_TEMP/bell-seating/user" >> "$GITHUB_ENV"
+      - name: Import and compile
+        run: bash tools/ci_import_godot.sh "$CI_LOG_DIR"
+      - name: Verify the real bell and record the transfers
+        shell: bash
+        run: |
+          set +e
+          source tools/ci_run_check.sh
+          run_check bell_seating 180 godot --headless --path . --script res://tests/classroom_bell_seating_test.gd
+          run_check bell_seating_render 180 xvfb-run -a --server-args='-screen 0 1440x900x24' \
+            godot --path . --resolution 1440x900 --rendering-driver opengl3 --audio-driver Dummy \
+            --script res://tests/classroom_bell_seating_test.gd -- "capture=$RUNNER_TEMP/bell-seating/frames"
+          if grep -nE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' "$CI_LOG_DIR"/bell_seating*.log; then
+            status=1
+          fi
+          run_check_summary
+      - name: Preview the live frames
+        if: always()
+        shell: bash
+        run: |
+          for name in 01_q_pulls_chair 02_player_sits 03_seated_before_lesson; do
+            frame="$RUNNER_TEMP/bell-seating/frames/${name}_preview.jpg"
+            if [ ! -f "$frame" ]; then continue; fi
+            data=$(base64 -w0 "$frame")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "$parts" -gt 5 ]; then continue; fi
+            for i in $(seq 1 "$parts"); do
+              echo "::notice title=Bell seating preview $name $i/$parts::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+          done
+      - name: Upload live frames and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: classroom-bell-seating-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bell-seating/
+          if-no-files-found: warn
