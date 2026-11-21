@@ -19,6 +19,8 @@ const PERSON_GAP := 0.65
 # Route around the desktop seam via the cross-aisle between rows A and B.
 const FRONT_CROSS_AISLE := 1.4
 const FAR_AISLE_FLANK := 1.52
+# Just past the opening talker's footprint, still short of the rear desks.
+const RETREAT_DEPTH := 0.81
 
 @export var player_group: StringName = &"protagonist"
 @export var chair_path: NodePath = ^"../Furniture/DeskB2/Chair"
@@ -251,7 +253,7 @@ func _stop(player: PlayerController) -> void:
 	player.velocity.z = 0.0
 
 
-func _approach(player: PlayerController, target: Vector3, blockers: Array[AABB] = []) -> bool:
+func _approach(player: PlayerController, target: Vector3, blockers: Array[AABB]) -> bool:
 	var route := _clear_route(player, _chair, player.global_position, target, blockers)
 	if route.is_empty():
 		return false
@@ -297,6 +299,14 @@ func _clear_route(player: PlayerController, chair: PushableChair, start: Vector3
 		var along_flank := PackedVector3Array([far + forward * forward.dot(start - far)])
 		along_flank.append_array(around)
 		routes.append(along_flank)
+		if forward.dot(start - origin) < 0.0:
+			# From just behind a tucked chair, the classmate can block even the
+			# exit to the far aisle. Step back first, then go the same way round.
+			var far_rear := far - forward * RETREAT_DEPTH
+			var retreat := start + forward * forward.dot(far_rear - start)
+			var via_rear := PackedVector3Array([retreat, far_rear])
+			via_rear.append_array(around)
+			routes.append(via_rear)
 	var best := PackedVector3Array()
 	var best_length := INF
 	for route in routes:

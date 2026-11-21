@@ -99,7 +99,7 @@ func _through_bell(start: BellStart) -> void:
 	if not await _boot(false):
 		return
 	_expect_pair_geometry()
-	var already_seated := start == BellStart.SEATED or start == BellStart.Q_CHAIR_OUT
+	var already_seated := start == BellStart.SEATED
 	var q_already_pulled := start == BellStart.Q_CHAIR_OUT
 	var q_chair_home := _q_chair.global_position
 	var player_chair_home := _chair.global_position
@@ -120,7 +120,7 @@ func _through_bell(start: BellStart) -> void:
 		_expect_pushed_clearance(_chair, player_chair_home)
 		# There is floor behind the tucked chair, but this point lies in the full
 		# sweep. Q must let the protagonist go around the desks and sit first.
-		var from := _q_chair.home_mark() + Vector3.BACK * 0.81 if start == BellStart.IN_Q_TRACK else RIGHT_AISLE
+		var from := _q_chair.home_mark() + Vector3.BACK * 0.60 if start == BellStart.IN_Q_TRACK else RIGHT_AISLE
 		_player.teleport(Transform3D(Basis.IDENTITY, from))
 
 	var player_start := _player.global_position
@@ -177,7 +177,7 @@ func _through_bell(start: BellStart) -> void:
 		"The player did not return with the sit clip, or re-animated the already settled seat.")
 	_expect_both_seated()
 	await _shot("03_seated_before_lesson")
-	await _shot_pair_detail()
+	await _shot_pair_detail("04_pair_detail", Vector3(0.9, 2.4, -3.6))
 	# Do not remove the short free window during N's walk. If the player deliberately
 	# stands there, Q stays seated and the lesson waits for the whole transfer.
 	if start == BellStart.SEATED or not _output.is_empty():
@@ -190,7 +190,7 @@ func _through_bell(start: BellStart) -> void:
 			_expect_support(_player.get_character_animator(), _chair, 0.0, "Player pushes beside Q")
 			_expect_seated(_q, _q.get_character_animator(), _q_chair)
 			_check.expect(_neighbour_chair_gap() >= 0.009, "A chair crossed into its neighbour during the stand.")
-			await _shot("05_player_rises_beside_q")
+			await _shot_pair_detail("05_player_rises_beside_q", Vector3(1.7, 2.15, 2.65))
 	await _expect_lesson()
 
 
@@ -344,20 +344,20 @@ func _pump_text() -> void:
 		_dialogue.advance_presentation()
 
 
-func _shot_pair_detail() -> void:
+func _shot_pair_detail(stem: String, lens_offset: Vector3) -> void:
 	if _output.is_empty():
 		return
-	# A closer view of the real furniture seam and the settled pose. Move the
-	# lens only; restore the gameplay camera before the next transfer.
+	# A closer view of the real furniture and live performance. Move the lens
+	# only; restore the gameplay camera before the next transfer.
 	var gameplay := root.get_camera_3d()
 	var review := Camera3D.new()
 	_world.add_child(review)
 	var centre := _chair.home_mark().lerp(_q_chair.home_mark(), 0.5)
-	review.global_position = centre + Vector3(0.9, 2.4, -3.6)
+	review.global_position = centre + lens_offset
 	review.look_at(centre + Vector3(0, 0.7, -0.30))
 	review.fov = 39.0
 	review.make_current()
-	await _shot("04_pair_detail")
+	await _shot(stem)
 	gameplay.make_current()
 	review.queue_free()
 

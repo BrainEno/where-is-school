@@ -11,7 +11,7 @@ extends SceneTree
 ##    and exits.
 ##    The blackboard wall is one unbroken wall; the schoolbag hangs off the aisle side of your desk.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
-##    door openings and the back window included), platform/step, twelve desk wrappers,
+##    door openings and the back window included), platform/step, thirteen desk wrappers,
 ##    and the lectern are the only scene-owned collision bodies (the low teacher's desk was
 ##    taken out; its set square lies on the lectern).
 ## 3. **Its own colour system.** Every surface of the room draws a material from
@@ -119,6 +119,9 @@ const SOLIDS: Array[String] = [
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
 	"Stage/Lectern/Body",
 ]
+## Only the desk mates' chairs carry a body, and only in this room. Authoring it in
+## the shared desk scene would make all eleven decorative chairs collide too.
+const SLIDING_CHAIR_SOLIDS := ["Furniture/DeskB2/Chair/Solid", "Furniture/DeskQ/Chair/Solid"]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
 	"WallNorth": "wall_north.tres",
@@ -530,11 +533,6 @@ func _expect_at(path: String, expected: Vector3) -> void:
 
 
 # --- 2. collision -------------------------------------------------------------------
-
-
-## Only the desk mates' chairs carry a body, and only in this room. Authoring it in
-## the shared desk scene would make all eleven decorative chairs collide too.
-const SLIDING_CHAIR_SOLIDS := ["Furniture/DeskB2/Chair/Solid", "Furniture/DeskQ/Chair/Solid"]
 
 
 func _check_collision() -> void:

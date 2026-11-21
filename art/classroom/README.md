@@ -173,7 +173,7 @@ They are first-party geometry and colour. Rebuild them with `python3 tools/build
 (`--check` compares without writing).
 
 The seat's 0.46 × 0.42 m footprint and 0.475 m top stay in place, as do its `SeatMark`, hand
-contact. The two desk mates use the same 0.64 m slide and collar-height backrest grip:
+contact. The two desk mates use the same 0.64 m slide and backrest grip:
 Q uses the outside −X corner and the player uses +X. Sit and rise keep their original
 seat brace. If the other student is in a chair's sweep, the transfer waits for a clear
 route; the front cross-aisle lets the player go around the pair rather than through it.
