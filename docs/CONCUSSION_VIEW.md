@@ -1,7 +1,7 @@
 # The dazed look after a hurt landing (`ConcussionView`)
 
 > **状态：** 实验 · 只做美术，待所有者实机验收
-> **最后核对：** 2026-11-11
+> **最后核对：** 2026-11-21
 > **负责人：** 实现 PR 作者
 
 The owner's brief (round 7): after the prologue's fall from the classroom, if the
@@ -22,7 +22,9 @@ with Memphis marks - drawn by `assets/shaders/injury/concussion_collage.gdshader
    copy of the middle of the frame - the protagonist quoting himself - in newsprint.
 3. **Memphis marks** in the margins: a squiggle, a dot field, a ring.
 4. **The middle stays legible.** Every treatment is weaker towards the centre of the frame,
-   so the protagonist, the path and the outline cue read as before.
+   so the protagonist, the path and the outline cue read as before. The cut lines, their
+   shadows and the sheet offsets themselves fade out before the middle (`clear_middle`), so
+   no seam or doubled edge ever crosses the protagonist.
 
 As the look fades its pieces leave in order: the quotation (below ~0.32), the marks (~0.18),
 the printing manners (~0.12), and last a faint misregistration of the sheets.
