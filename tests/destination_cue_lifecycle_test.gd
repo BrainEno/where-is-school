@@ -318,9 +318,18 @@ func _check_consecutive_clicks_leave_one_mark() -> void:
 func _check_click_where_standing_leaves_no_mark() -> void:
 	Harness.stage = "click where standing"
 	await _reset_to_start()
-	# Walk somewhere first: where a walk ends is, by definition, on the navigation mesh
-	# and within arrival distance of a point the map hands out, which START need not be.
-	if not await _start_floor_walk("click where standing", 1.8, 4.0):
+	# This case needs two actual floor clicks. The first hit from START does not
+	# guarantee a second hit when the camera has followed the walk (the rear wall
+	# can block that ray). Use the open centre aisle for the walk to this fixture.
+	var camera := _player.get_viewport().get_camera_3d()
+	var goal := START + Vector3.FORWARD * 2.25
+	var screen_to_aisle := camera.unproject_position(goal)
+	var floor_hit: Variant = _navigator.get_ground_point_at(screen_to_aisle)
+	if floor_hit == null or _flat_distance(floor_hit as Vector3, goal) > 0.15 \
+			or _interaction.get_target_at_screen_position(screen_to_aisle, false) != null:
+		_failures.append("click where standing: no walkable floor at the centre aisle fixture.")
+		return
+	if not await _walk_to_ground_screen(screen_to_aisle, "click where standing"):
 		return
 	if not await _wait_until(func() -> bool: return not _player.is_path_active(), WALK_LIMIT_SECONDS):
 		_failures.append("click where standing: the walk there never arrived.")
@@ -630,6 +639,10 @@ func _start_floor_walk(label: String, min_distance: float, max_distance: float) 
 	if screen == null:
 		_failures.append("%s: no floor point %.1f-%.1f m away was clickable." % [label, min_distance, max_distance])
 		return false
+	return await _walk_to_ground_screen(screen, label)
+
+
+func _walk_to_ground_screen(screen: Vector2, label: String) -> bool:
 	_navigator.click_at_screen_position(screen)
 	await _physics_frames(2)
 	if not _player.is_path_active():
