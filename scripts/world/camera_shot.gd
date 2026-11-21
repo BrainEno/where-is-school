@@ -3,11 +3,10 @@ extends Resource
 ## How the game camera frames one important interaction (the prologue's camera focus).
 ##
 ## An `Interactable` that carries a shot (`Interactable.camera_shot`) pulls the camera to
-## it while the player stands at it and while the conversation it starts is running;
-## everything without one keeps the default framing. `CameraFocusDirector` decides when,
-## `CameraRig` glides there and back. A shot describes where the camera ends up, relative
-## to the default framing, never an absolute camera pose - so it works from whichever side
-## the player walked up, and the view always still contains the player:
+## it during the interaction. An authored `camera_focus` effect can instead borrow a
+## short close-up (`Interactable.dialogue_shot`) for the next line. The director decides
+## when; `CameraRig` glides there and back. A regular shot describes where the camera ends up
+## relative to the default framing, so it works from whichever side the player walked up:
 ##
 ## * **position**: the view centre moves `subject_mix` of the way from the player to the
 ##   look point (the interactable's position plus `look_offset`, on the player's floor);
@@ -38,3 +37,16 @@ extends Resource
 @export_range(0.2, 3.0, 0.05) var glide_seconds: float = 0.9
 ## Seconds to give the framing back.
 @export_range(0.2, 3.0, 0.05) var release_seconds: float = 0.8
+
+@export_group("Insert")
+## Nonempty only for a subject-space close-up. Relative to the interactable, not the room.
+## The wide framing fields above are not used by such an insert; the lens and glide are.
+@export var insert_anchor_path: NodePath
+## Aim in the anchor's rest space, in metres. Unlike look_offset this includes height.
+@export var insert_aim: Vector3 = Vector3.ZERO
+## Eye relative to the aim, in the anchor's axes. Keeps the angle even if a bone nods.
+@export var insert_eye_offset: Vector3 = Vector3.ZERO
+## Optional bone of an animated anchor; the aim then follows the live pose of that bone.
+@export var insert_bone: StringName = &""
+## Optional development nameplate to hide only while this dialogue insert is held.
+@export var insert_nameplate_path: NodePath

@@ -52,6 +52,9 @@ const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 ## How the camera frames this interaction while it runs (null = the default framing).
 ## Only important moments carry one; see `CameraShot` and `CameraFocusDirector`.
 @export var camera_shot: CameraShot = null
+## Optional close-up used only when an authored dialogue effect looks at this interaction.
+## A normal activation still uses camera_shot (or the default view).
+@export var dialogue_shot: CameraShot = null
 @export var interaction_enabled: bool = true:
 	set(value):
 		interaction_enabled = value

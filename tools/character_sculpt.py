@@ -25,6 +25,8 @@ LAYERS = ART / 'layers.json.gz'
 BASE = '25c3410c90a1825337f671648d42c344dbeb1416'
 # First sculpt pass as it actually shipped, for revision-specific regression and review.
 REVIEW_BASE = 'fd11c183249ef43730fc2fdf36be77cf10669974'
+# The integrated Q immediately before the dialogue-insert geometry pass.
+Q_CLOSEUP_BASE = '0ac97d77f7a3407c8ca7bc6298d4a011186b8608'
 RUNTIME = {
     'lead': 'assets/models/protagonist/Protagonist_Character.glb',
     'q': 'assets/models/q/new-Q.glb',

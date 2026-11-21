@@ -225,6 +225,53 @@ def facial_details(role, p, kind):
     return out
 
 
+def q_closeup_planes(p, triangles, skin):
+    """Refine the existing Q face for a near lens, in the model's rest metres.
+
+    Work in depth, not by changing the head width or moving the expression hinges.
+    The eyes and hair shell are separate meshes and never receive this brush.
+    """
+    _, eye_x, eye_y, _, mouth = LANDMARKS['q']
+    x, y, z = p.T
+    ax = abs(x)
+    out = p.copy()
+    front = ease(.069, .100, z)
+
+    # Roll the fuller cheek into the lower socket, rather than cutting a hard
+    # crease through the round face. Leave the moving edge of the eye untouched.
+    socket = oval(ax, y, eye_x + .006, eye_y - .019, .030, .013)
+    cheek = oval(ax, y, .049, 1.623, .033, .026)
+    depth = 3.5 * cheek - 2.0 * socket
+
+    # A broad bridge turns into a softened tip, with two small alar planes.
+    bridge = oval(x, y, 0., 1.637, .013, .028)
+    tip = oval(x, y, 0., 1.612, .015, .011)
+    wing = oval(ax, y, .013, 1.609, .010, .009)
+    depth += 2.7 * bridge - 2.5 * tip + 2.0 * wing
+
+    # Give the lower lip a plane that catches the room light and a shallow
+    # crease below it. The shared field keeps the mouth insert in register.
+    seam = mouth + .0025 * np.minimum(1., (x / .024)**2)
+    lip_lobes = oval(ax, y - seam, .007, .0045, .014, .0075)
+    lip_roll = oval(x, y - seam, 0., -.0046, .024, .0085)
+    chin_fold = oval(x, y - seam, 0., -.015, .027, .009)
+    depth += 1.7 * lip_lobes + 2.75 * lip_roll - 2.6 * chin_fold
+    out[:, 2] += .001 * front * depth
+
+    if skin:
+        # Each upper and lower lid is an 88-point deforming island. Round only
+        # its outer shoulder; inner edge, canthi and blink offsets stay where they were.
+        lids = [ids for ids in components(p, triangles) if len(ids) == 88
+                and abs(abs(x[ids].mean()) - eye_x) < .007 and abs(y[ids].mean() - eye_y) < .018]
+        if len(lids) != 4:
+            raise ValueError('Q close-up: expected four moving eyelid islands')
+        for ids in lids:
+            outer = ease(.0035, .011, abs(y[ids] - eye_y))
+            roll = oval(ax[ids], y[ids], eye_x, y[ids].mean(), .016, .017)
+            out[ids, 2] = z[ids] + .0019 * outer * roll
+    return out
+
+
 def lead_spikes(p, triangles):
     """Loosen the archived spike silhouette on the original indexed hair."""
     out = p.copy()

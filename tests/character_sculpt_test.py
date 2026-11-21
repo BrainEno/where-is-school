@@ -195,6 +195,35 @@ class HeadSculpts(unittest.TestCase):
                             np.testing.assert_array_equal(before[crown], after[crown])
                 self.assertEqual(changed, DETAIL_MESHES[role])
 
+    def test_q_closeup_refines_only_face_depth_on_the_integrated_model(self):
+        old = subprocess.check_output(['git', 'show', f'{sculpt.Q_CLOSEUP_BASE}:{sculpt.RUNTIME["q"]}'], cwd=ROOT)
+        a, ab = decode(old)
+        b, bb = decode(self.outputs['q'])
+        self.assertEqual({k: v for k, v in a.items() if k != 'accessors'},
+                         {k: v for k, v in b.items() if k != 'accessors'})
+        face_streams = []
+        for slot, name, p in sculpt.primitives(a):
+            if slot not in {(5, 0), (5, 2)}:
+                continue
+            self.assertEqual(name, 'Q_Head')
+            points = p['attributes']['POSITION']
+            x, y = read(a, ab, points), read(b, bb, points)
+            np.testing.assert_array_equal(x[:, :2], y[:, :2])
+            self.assertLess(np.max(abs(y[:, 2] - x[:, 2])), .004)
+            self.assertGreater(np.max(abs(y[:, 2] - x[:, 2])), .0015)
+            face_streams.extend(p['attributes'][k] for k in ('POSITION', 'NORMAL'))
+        self.assertEqual(len(face_streams), 4)
+        # Removing just those four streams must make the whole BIN chunk identical.
+        # This includes the hair, pupils, brow, skin, colours, bindings, morphs and clips.
+        masked = bytearray(bb)
+        for idx in face_streams:
+            start, end = sculpt.span(a, idx)
+            masked[start:end] = ab[start:end]
+        self.assertEqual(ab, masked)
+        for idx, (x, y) in enumerate(zip(a['accessors'], b['accessors'], strict=True)):
+            if idx not in face_streams:
+                self.assertEqual(x, y)
+
     def test_details_keep_every_supported_expression_on_the_previous_rig(self):
         for role, base in self.review_bases.items():
             if role == 'lead':

@@ -36,6 +36,7 @@ var _lock_seen := false
 ## since. Null when no glance is held.
 var _glance: Interactable = null
 var _glance_lines := 0
+var _glance_nameplate: CharacterNameplate = null
 
 
 func _init(rig: CameraRig) -> void:
@@ -69,7 +70,7 @@ func on_lock_changed(locked: bool) -> void:
 ## Glides back to the default framing.
 func release() -> void:
 	_subject = null
-	_glance = null
+	_drop_glance()
 	_lock_seen = false
 	if _rig != null:
 		_rig.release_focus()
@@ -78,25 +79,30 @@ func release() -> void:
 ## Back to the default framing at once (location change).
 func clear() -> void:
 	_subject = null
-	_glance = null
+	_drop_glance()
 	_lock_seen = false
 	if _rig != null:
 		_rig.clear_focus()
 
 
 ## Looks at `subject` for the line that is about to be shown (a dialogue `camera_focus`
-## effect). Only called while a conversation holds the player, so the end of that
-## conversation is the latest moment the glance is let go. `shot` defaults to the
-## subject's own, or to `glance_shot()` when it has none.
+## effect). Prefer an authored insert for this room and subject; ordinary activation still
+## uses the wide interaction shot. A missing insert cannot stop or prolong the dialogue.
 func glance(subject: Interactable, shot: CameraShot = null) -> void:
 	if _rig == null or subject == null:
 		return
-	if shot == null:
-		shot = subject.camera_shot if subject.camera_shot != null else glance_shot()
+	_drop_glance()
+	var insert := shot if shot != null else subject.dialogue_shot
+	if insert != null and _rig.focus_on(subject, insert):
+		if not insert.insert_nameplate_path.is_empty():
+			_glance_nameplate = subject.get_node_or_null(insert.insert_nameplate_path) as CharacterNameplate
+			if _glance_nameplate != null:
+				_glance_nameplate.set_hidden_for_insert(true)
+	else:
+		var fallback := subject.camera_shot if subject.camera_shot != null else glance_shot()
+		_rig.focus_on(subject, fallback)
 	_glance = subject
-	_glance_lines = 0
 	_lock_seen = true
-	_rig.focus_on(subject, shot)
 
 
 ## Called for every dialogue line that reaches the screen; ends a glance once the line it
@@ -113,13 +119,21 @@ func on_line_presented() -> void:
 func end_glance() -> void:
 	if _glance == null:
 		return
-	_glance = null
+	_drop_glance()
 	if _rig == null:
 		return
-	if _subject != null and _subject.camera_shot != null:
+	if is_instance_valid(_subject) and _subject.camera_shot != null:
 		_rig.focus_on(_subject, _subject.camera_shot)
 	else:
 		_rig.release_focus()
+
+
+func _drop_glance() -> void:
+	if is_instance_valid(_glance_nameplate):
+		_glance_nameplate.set_hidden_for_insert(false)
+	_glance_nameplate = null
+	_glance = null
+	_glance_lines = 0
 
 
 ## The interactable a glance is held on, or null.

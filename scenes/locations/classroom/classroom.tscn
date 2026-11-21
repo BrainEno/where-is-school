@@ -1,4 +1,4 @@
-[gd_scene load_steps=121 format=3]
+[gd_scene load_steps=123 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -58,6 +58,8 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/classroom_art/ceiling_projector.tscn" id="c_projector"]
 [ext_resource type="Script" path="res://scenes/locations/classroom/classroom_screen_control.gd" id="c_screen_control"]
 [ext_resource type="Resource" path="res://assets/camera/shots/q_talk.tres" id="c_shot_q"]
+[ext_resource type="Resource" path="res://assets/camera/shots/q_face.tres" id="c_insert_q"]
+[ext_resource type="Resource" path="res://assets/camera/shots/set_square_repair.tres" id="c_insert_square"]
 [ext_resource type="Resource" path="res://assets/camera/shots/student_talk.tres" id="c_shot_student"]
 [ext_resource type="Resource" path="res://assets/camera/shots/curtain.tres" id="c_shot_curtain"]
 [ext_resource type="Resource" path="res://assets/camera/shots/window.tres" id="c_shot_window"]
@@ -825,6 +827,7 @@ support_paths = PackedStringArray("../../Stage/Lectern")
 prompt_text = "Look at the set square"
 inspection_id = &"classroom_set_square"
 radius = 0.8
+dialogue_shot = ExtResource("c_insert_square")
 
 [node name="LecternInspect" parent="Interactables" instance=ExtResource("17_interactable")]
 position = Vector3(1.05, 0.5, -3.65)
@@ -888,6 +891,7 @@ speaker_id = &"q"
 conversation_route = &"q"
 radius = 1.1
 camera_shot = ExtResource("c_shot_q")
+dialogue_shot = ExtResource("c_insert_q")
 
 [node name="ClassroomDoor" parent="Interactables" instance=ExtResource("18_location_exit")]
 position = Vector3(6.35, 0.6, -3.55)

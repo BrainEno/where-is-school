@@ -19,7 +19,7 @@ import character_sculpt as io
 from character_geometry import teacher_bob
 from glb_io import accessor, decode
 from forms import (LANDMARKS, components, ease, face, facial_details, hairline,
-                   lead_spikes, other_hair, shell_relief)
+                   lead_spikes, other_hair, q_closeup_planes, shell_relief)
 
 # The prepared seated GLB retains these node IDs for the two inset nostrils.
 STUDENT_NOSTRILS = {'Sphere.019', 'Sphere.020'}
@@ -228,6 +228,8 @@ def sculpt(role, parts):
         elif kind in ('face','eye'):
             p = s.output.copy(); p[:,2] *= sign
             q = facial_details(role,p,kind)
+            if role == 'q' and kind == 'face':
+                q = q_closeup_planes(q, s.triangles, s.mat['name'] == 'Q_Mat_Skin')
             if role in ('thin','gentle','court','b'):
                 keep_deforming_lids(s,p,q)
             q[:,2] *= sign

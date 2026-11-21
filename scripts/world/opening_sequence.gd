@@ -522,7 +522,11 @@ func _on_player_recovered() -> void:
 	sync_player_locks()
 
 
-func _on_presentation_active_changed(_active: bool) -> void:
+func _on_presentation_active_changed(active: bool) -> void:
+	if not active and _focus != null:
+		# The beat can still hold the player (e.g. the bell after the last line).
+		# A dialogue glance ends with the presentation, not with that larger lock.
+		_focus.end_glance()
 	sync_player_locks()
 
 

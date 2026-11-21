@@ -29,7 +29,8 @@ extends Node3D
 ##
 ## **Focus on important interactions** (`focus_on` / `release_focus` / `clear_focus`,
 ## driven by `CameraFocusDirector`): a `CameraShot` moves the view centre toward the
-## subject, brings the camera closer, swings it a little and narrows the lens. Each shot is
+## subject, brings the camera closer, swings it a little and narrows the lens. A dialogue
+## insert can aim in 3D at the prop or a posed bone instead. Each shot is
 ## a layer with a weight that glides by a critically damped spring - it eases in, never
 ## overshoots, and keeps its velocity when a new target arrives mid-glide, so walking from
 ## one important point straight to the next cross-fades the two shots instead of dipping
@@ -58,8 +59,9 @@ var _roll_degrees: float = 0.0
 var _frame_point := Vector3.ZERO
 var _frame_weight := 0.0
 var _frame_tween: Tween = null
-## Focus layers: {"subject": Node3D (may be freed), "shot": CameraShot, "point": Vector3
-## (the last known look point), "weight": float, "velocity": float, "target": 0.0 or 1.0}.
+## Each layer holds a subject, shot, last look point and spring state. Inserts also keep
+## their resolved anchor, optional bone binding and last eye offset, so a removed subject
+## fades from the last pose instead of snapping to the interaction sphere.
 var _focus_layers: Array[Dictionary] = []
 
 
@@ -101,8 +103,11 @@ func snap() -> void:
 				continue
 			var shot := layer["shot"] as CameraShot
 			var point := _focus_point(layer, base_anchor)
-			anchor += (base_anchor.lerp(point, shot.subject_mix) - base_anchor) * weight
-			camera_offset += (_shot_offset(shot) - offset) * weight
+			var insert := layer.has("insert_anchor")
+			var centre := point if insert else base_anchor.lerp(point, shot.subject_mix)
+			var eye_offset: Vector3 = layer["insert_offset"] if insert else _shot_offset(shot)
+			anchor += (centre - base_anchor) * weight
+			camera_offset += (eye_offset - offset) * weight
 			lens += (shot.fov - fov) * weight
 	if _frame_weight > 0.0:
 		anchor = anchor.lerp(_frame_point, _frame_weight)
@@ -213,29 +218,53 @@ func _default_basis() -> Basis:
 # --- Focus on important interactions ---------------------------------------------------
 
 
-## Glides the view to `shot` of `subject` (an interactable). Any other shot fades out at
-## the same time, from wherever it is. Calling it again for the subject already in focus
-## changes nothing.
-func focus_on(subject: Node3D, shot: CameraShot) -> void:
-	if subject == null or shot == null:
+## Glides to a shot and cross-fades any other layers. A missing insert anchor leaves the
+## current shot alone and returns false, so the director can use the ordinary framing.
+func focus_on(subject: Node3D, shot: CameraShot) -> bool:
+	if not is_instance_valid(subject) or shot == null:
 		release_focus()
-		return
-	var found := false
+		return false
+	if not subject.is_inside_tree():
+		return false
+	var requested: Dictionary = {}
 	for layer: Dictionary in _focus_layers:
-		if layer["subject"] == subject and layer["shot"] == shot:
-			layer["target"] = 1.0
-			found = true
-		else:
-			layer["target"] = 0.0
-	if not found:
-		_focus_layers.append({
-			"subject": subject,
-			"shot": shot,
-			"point": subject.global_position,
-			"weight": 0.0,
-			"velocity": 0.0,
-			"target": 1.0,
-		})
+		if layer["subject"] == subject and layer["shot"] == shot and _has_live_subject(layer):
+			requested = layer
+			break
+	if requested.is_empty():
+		requested = {"subject": subject, "shot": shot, "point": subject.global_position,
+			"weight": 0.0, "velocity": 0.0, "target": 1.0}
+		if not shot.insert_anchor_path.is_empty() and not _bind_insert(requested, subject, shot):
+			push_warning("CameraRig: could not bind insert '%s' on '%s'." % [shot.resource_path, subject.name])
+			return false
+		_focus_layers.append(requested)
+	for layer: Dictionary in _focus_layers:
+		layer["target"] = 1.0 if is_same(layer, requested) else 0.0
+	return true
+
+
+## Resolve the bone once when the shot is requested, not by walking the model every tick.
+## Its local aim is derived from the model-space rest point, so head axes don't have to be
+## guessed in a shot resource and the point follows rotations as well as translations.
+func _bind_insert(layer: Dictionary, subject: Node3D, shot: CameraShot) -> bool:
+	var anchor := subject.get_node_or_null(shot.insert_anchor_path) as Node3D
+	if anchor == null or not anchor.is_visible_in_tree() or shot.insert_eye_offset.length() <= 0.08:
+		return false
+	layer["insert_anchor"] = anchor
+	if not shot.insert_bone.is_empty():
+		var skeletons := CharacterAnimation.skeletons_in(anchor)
+		if skeletons.size() != 1:
+			return false
+		var skeleton := skeletons[0]
+		var bone := skeleton.find_bone(shot.insert_bone)
+		if bone < 0:
+			return false
+		layer["insert_skeleton"] = skeleton
+		layer["insert_bone"] = bone
+		var rest_point := skeleton.to_local(anchor.to_global(shot.insert_aim))
+		layer["insert_rest_point"] = skeleton.get_bone_global_rest(bone).affine_inverse() * rest_point
+	_sample_insert(layer, shot)
+	return true
 
 
 ## Glides the view back to the default framing.
@@ -312,19 +341,44 @@ static func _smooth_damp(current: float, target: float, velocity: float, seconds
 
 
 func _has_live_subject(layer: Dictionary) -> bool:
-	return is_instance_valid(layer["subject"]) and layer["subject"].is_inside_tree()
+	if not is_instance_valid(layer["subject"]) or not layer["subject"].is_inside_tree():
+		return false
+	if layer.has("insert_anchor"):
+		if not is_instance_valid(layer["insert_anchor"]) or not layer["insert_anchor"].is_visible_in_tree():
+			return false
+		if layer.has("insert_skeleton"):
+			return is_instance_valid(layer["insert_skeleton"]) and layer["insert_skeleton"].is_inside_tree()
+	return true
 
 
-## Where a layer looks, on the target's floor: the subject's position plus the shot's
-## offset (remembered so a detached subject leaves the view where it was).
+## A regular shot rests on the player's floor. An insert aims at its full 3D point.
+## Remember the pose so a released or detached subject can glide back without a jump.
 func _focus_point(layer: Dictionary, base_anchor: Vector3) -> Vector3:
 	var shot := layer["shot"] as CameraShot
+	if layer.has("insert_anchor"):
+		if _has_live_subject(layer):
+			_sample_insert(layer, shot)
+		return layer["point"]
 	if _has_live_subject(layer):
 		var subject := layer["subject"] as Node3D
 		layer["point"] = subject.global_position + shot.look_offset
 	var point: Vector3 = layer["point"]
 	point.y = base_anchor.y
 	return point
+
+
+func _sample_insert(layer: Dictionary, shot: CameraShot) -> void:
+	var anchor := layer["insert_anchor"] as Node3D
+	var aim := anchor.to_global(shot.insert_aim)
+	if layer.has("insert_skeleton"):
+		var skeleton := layer["insert_skeleton"] as Skeleton3D
+		var pose := skeleton.get_bone_global_pose(layer["insert_bone"])
+		aim = skeleton.to_global(pose * layer["insert_rest_point"])
+	# Both wide shots and inserts give snap() a centre and an eye offset. Evade the
+	# normal eye-height lift here so the lens really looks at the local aim point.
+	var height := Vector3.UP * target_height
+	layer["point"] = aim - height
+	layer["insert_offset"] = anchor.global_basis.orthonormalized() * shot.insert_eye_offset + height
 
 
 ## The camera's offset from the view centre under a shot.

@@ -14,7 +14,9 @@ Owner 已明确确认：**new-Q 是 ChatGPT 为本项目生成的原创 Q，并�
 |---|---:|---|
 | `art/character_models/q/new-Q_source.glb`（原始批准文件，父级 `.gdignore` 排除导入/导出） | 1,187,664 | `4d2d7d5939840bdfcc8b94f111f864e1d080a715380969ec335a7e1e60509f45` |
 | 迁移时的无损整理基准（`prepare_base()`） | 1,004,268 | `be670a4056f51db612653a868bff6d701a968d4b1ab19d85cafad55de92b46f1` |
-| `assets/models/q/new-Q.glb`（独立头部精修后） | 992,760 | `28c9279e45ffce7e895ae00aadb036bcfa99105c9063d3927bda73122fd01293` |
+| 首次独立头部精修（历史） | 992,760 | `28c9279e45ffce7e895ae00aadb036bcfa99105c9063d3927bda73122fd01293` |
+| 序章近景精修前（`0ac97d7`） | 992,760 | `c290e795e2a48e4bdb8fff78c65b0b12d34b4b93aeb9ed22e7962cb5e784d250` |
+| `assets/models/q/new-Q.glb`（序章近景精修） | 992,764 | `274a2da481523189723ee808490295174e11c654e979c6f24a57a5c5987247cc` |
 
 源上传 commit `f9aa19d4fa8ad56b0e4d2e46c48c799d10ffbb42`，blob
 `0d71fcf65cf76fa7abe7124cba7f74fbfa02efb9`。初始开发基线为
