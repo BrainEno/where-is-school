@@ -22,7 +22,8 @@ extends SceneTree
 ##    trigger (`present_b()`), which is refused before the talk. After it she is shown; a
 ##    re-entered room shows the one B again, and a snapshot without her entrance hides her.
 ## 5. **The wall mark is an impression, not an actor.** Only the live `expected_b`
-##    lines show it. It is gone at the end, also when skipped, and never saved.
+##    lines show it - it and the imagined lesson (docs/IMAGINED_LESSON.md). Both are gone
+##    at the end, also when skipped, and never saved.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := "res://scenes/main/main.tscn"
@@ -447,6 +448,11 @@ func _expect_impression(shown: bool, when: String) -> void:
 	_expect(figure != null and figure.is_visible_in_tree() == shown,
 		"B's wall impression is not %s %s." % ["visible" if shown else "hidden", when])
 	_expect(square != null and square.is_visible_in_tree(), "The floor mark is missing %s." % when)
+	# The imagined lesson (her distorted figure and the repainted room) follows the same
+	# live exchange; it fades, so the switch is what is checked, not the pixels.
+	var lesson := room.get_node_or_null(^"ImaginedLesson") as ImaginedLesson
+	_expect(lesson != null and lesson.is_active() == shown,
+		"The imagined lesson is not %s %s." % ["active" if shown else "off", when])
 
 
 func _on_flag(flag: StringName, _previous: Variant, value: Variant) -> void:

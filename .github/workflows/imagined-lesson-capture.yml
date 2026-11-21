@@ -1,0 +1,155 @@
+name: Imagined lesson capture
+
+# Frames of the imagined lesson (docs/IMAGINED_LESSON.md): teacher B as the protagonist
+# pictures her during `expected_b` - her shipped model distorted by
+# assets/shaders/imagined/dream_figure.gdshader, and the classroom repainted by the Munch
+# screen filter (munch_wave.gdshader). `tests/imagined_lesson_test.gd -- --capture` takes
+# them from the game camera: the plain room, the dream twice a second apart, and a closer
+# shot of her. Run on all three renderers the game ships on, which is also the check that
+# the shaders compile there (a SHADER ERROR in the log fails the job).
+#
+# Frames are published as base64 `::notice` annotations (40 parts per job), so they can be
+# read through the REST API where the artifact store cannot be reached; every job also
+# uploads the full-size PNGs.
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/imagined-lesson-capture.yml"
+      - "assets/shaders/imagined/**"
+      - "assets/models/teacher_b/**"
+      - "scenes/locations/classroom/imagined_lesson.*"
+      - "scenes/locations/classroom/classroom_presentation.gd"
+      - "tests/imagined_lesson_test.gd"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frames:
+    name: frames (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: compatibility-a
+            driver: opengl3
+            method: ""
+            publish: "before dream"
+          - group: compatibility-b
+            driver: opengl3
+            method: ""
+            publish: "dream_later dream_close"
+          - group: forward-plus
+            driver: vulkan
+            method: "forward_plus"
+            publish: "dream dream_close"
+          - group: mobile
+            driver: vulkan
+            method: "mobile"
+            publish: "dream dream_close"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./.github/actions/setup-godot
+
+      - name: Install a software Vulkan driver
+        if: matrix.driver == 'vulkan'
+        shell: bash
+        run: |
+          # The runner has no GPU. Forward+ and Mobile need Vulkan; lavapipe renders both.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mesa-vulkan-drivers vulkan-tools
+          vulkaninfo --summary 2>&1 | head -n 20 || true
+
+      - name: Import
+        shell: bash
+        run: |
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log" | head -n 20 || true
+
+      - name: Capture
+        shell: bash
+        env:
+          DRIVER: ${{ matrix.driver }}
+          METHOD: ${{ matrix.method }}
+          PUBLISH: ${{ matrix.publish }}
+          GROUP: ${{ matrix.group }}
+        run: |
+          set +e -uo pipefail
+          method_args=()
+          if [ -n "${METHOD}" ]; then
+            method_args=(--rendering-method "${METHOD}")
+          fi
+          export LIBGL_ALWAYS_SOFTWARE=1
+          xvfb-run -a --server-args="-screen 0 1280x720x24" \
+            godot --path . --resolution 1280x720 --rendering-driver "${DRIVER}" "${method_args[@]}" \
+            --script res://tests/imagined_lesson_test.gd -- --capture \
+            > "${RUNNER_TEMP}/capture.log" 2>&1
+          code=$?
+          grep -E "PASS|FAIL|TEST FAILURE|SCRIPT ERROR|SHADER ERROR|ERROR:|^[a-z_]+: [0-9]+x[0-9]+" "${RUNNER_TEMP}/capture.log" | head -n 60
+          status=0
+          if [ "${code}" -ne 0 ]; then
+            echo "::error title=imagined lesson ${GROUP}::capture exited ${code}"
+            tail -n 30 "${RUNNER_TEMP}/capture.log" | cut -c1-400 || true
+            status=1
+          fi
+          if grep -q 'SHADER ERROR' "${RUNNER_TEMP}/capture.log"; then
+            grep -m3 -A6 'SHADER ERROR' "${RUNNER_TEMP}/capture.log"
+            echo "::error title=imagined lesson ${GROUP}::Shader compile error; see the capture log."
+            status=1
+          fi
+          out=builds/imagined-lesson
+          mkdir -p "${RUNNER_TEMP}/frames"
+          cp "${out}"/*.png "${RUNNER_TEMP}/frames/" 2>/dev/null || true
+          queue="${RUNNER_TEMP}/queue.txt"
+          : > "${queue}"
+          for id in ${PUBLISH}; do
+            file="${out}/${id}.jpg"
+            [ -s "${file}" ] || { echo "::warning title=imagined lesson ${GROUP}::no ${id}.jpg"; continue; }
+            data=$(base64 -w0 "${file}")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            for i in $(seq 1 "${parts}"); do
+              echo "${GROUP}_${id}.jpg ${i}/${parts} ${data:$(( (i - 1) * 4000 )):4000}" >> "${queue}"
+            done
+          done
+          echo "queued $(wc -l < "${queue}") annotation part(s)"
+          exit "${status}"
+
+      - name: Publish frames 1/4
+        if: always()
+        shell: bash
+        run: sed -n '1,10p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 2/4
+        if: always()
+        shell: bash
+        run: sed -n '11,20p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 3/4
+        if: always()
+        shell: bash
+        run: sed -n '21,30p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+      - name: Publish frames 4/4
+        if: always()
+        shell: bash
+        run: |
+          sed -n '31,40p' "${RUNNER_TEMP}/queue.txt" 2>/dev/null | while read -r file part data; do echo "::notice title=frame ${file} part ${part}::${data}"; done
+          total=$(wc -l < "${RUNNER_TEMP}/queue.txt" 2>/dev/null || echo 0)
+          if [ "${total}" -gt 40 ]; then
+            echo "${total} parts queued, 40 published; the rest are only in the artifact"
+          fi
+
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: imagined-lesson-${{ matrix.group }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/frames/
+            ${{ runner.temp }}/capture.log
+          if-no-files-found: warn
