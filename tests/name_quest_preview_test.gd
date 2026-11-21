@@ -200,9 +200,13 @@ func _archive(reply: String, with_q: bool) -> bool:
 	if not await _walk_to_archive() or not await _use_in_reach(_target(&"to_archive")) \
 			or not await _settled(&"archive"):
 		return false
+	if not with_q:
+		# The normal arrival rule joins Q after dismissal. Detach him for
+		# this fixture too, without giving the absence a canonical reason.
+		_q.leave()
 	var q_target := _q.get_node(^"AskAboutTheRegister") as Interactable
 	_check.expect(_q.is_with_player() == with_q and not q_target.can_interact(),
-		"The archive changed Q's availability or offered a corridor follow-up.")
+		"Wrong presence for Q in the archive (expected present: %s), or corridor follow-up exposed." % with_q)
 	_check.expect(not _state.get_flag(&"annex.archive.aligned", false), "Preview wrote a production threshold result.")
 	_interaction.request_activation(_target(QUEST.ORIGINALS))
 	if not await _card(&"original_title"):
@@ -236,7 +240,7 @@ func _archive(reply: String, with_q: bool) -> bool:
 	_check.expect(_state.get_flag(QUEST.RESPONSE) == reply and _state.get_flag(QUEST.CLASS_INDEXED, false)
 		and not _state.has_flag(QUEST.REFERENCE) and _knowledge.has_entry(QUEST.Q_CLUE) == with_q
 		and _knowledge.has_entry(QUEST.BOARD_CLUE) and _q.is_joined() == with_q,
-		"Continue changed the evidence or whether Q was following.")
+		"Continue changed the evidence or whether Q was following (expected present: %s)." % with_q)
 	if not await _use_in_reach(_target(&"archive_detail")) or not await _card(&"align_title"):
 		return false
 	_pick(1)
