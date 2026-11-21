@@ -29,6 +29,36 @@ position = Vector3(3.62, 0.014, -0.18)
 
 [node name="Doorstep" type="Marker3D" parent="ExitRoute"]
 position = Vector3(4.18, 0.014, -0.68)
+metadata/pause_back = 4.0
+metadata/look = Vector3(3.3, 1.1, -1.75)
+
+[node name="SearchRoute" type="Node3D" parent="."]
+
+[node name="Corner" type="Marker3D" parent="SearchRoute"]
+position = Vector3(4.55, 0.014, 0.6)
+metadata/pause = 2.5
+metadata/look = Vector3(9.0, 1.2, 3.5)
+
+[node name="SouthSide" type="Marker3D" parent="SearchRoute"]
+position = Vector3(3.3, 0.014, 2.5)
+metadata/pause_back = 1.5
+metadata/look = Vector3(3.3, 1.2, 6.0)
+
+[node name="UnderLadder" type="Marker3D" parent="SearchRoute"]
+position = Vector3(1.45, 0.014, 2.6)
+metadata/pause = 6.0
+metadata/pause_back = 1.5
+metadata/look = Vector3(1.39, 2.9, 0.9)
+
+[node name="RearCorner" type="Marker3D" parent="SearchRoute"]
+position = Vector3(-3.55, 0.014, 2.5)
+metadata/pause = 1.5
+metadata/look = Vector3(-6.0, 1.2, 4.5)
+
+[node name="Rear" type="Marker3D" parent="SearchRoute"]
+position = Vector3(-3.75, 0.014, 0.9)
+metadata/pause = 5.0
+metadata/look = Vector3(-8.0, 1.2, 0.9)
 
 [node name="WakeFrame" type="Marker3D" parent="."]
 position = Vector3(2.62, 0.12, -0.19)

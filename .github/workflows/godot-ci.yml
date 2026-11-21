@@ -385,7 +385,7 @@ jobs:
           # only while expected_b is on screen (docs/IMAGINED_LESSON.md).
           run_check imagined_lesson 200 godot --headless --path . --script res://tests/imagined_lesson_test.gd || status=1
           # The dazed look after a hurt landing: a static paste-up of the world that starts at
-          # the roof contact and fades over ten minutes of play (docs/CONCUSSION_VIEW.md).
+          # the roof contact and fades over about four minutes of play (docs/CONCUSSION_VIEW.md).
           run_check concussion_view 200 godot --headless --path . --script res://tests/concussion_view_test.gd || status=1
           # Issue #174: the blocked classroom door turns its watcher (Q, and only Q) to look at
           # the player in the same frame as the text, follows them in the doorway, and lets go.
@@ -461,6 +461,9 @@ jobs:
           # The biology classroom's anomalies: the curtained window that opens on nothing and drops the
           # player into the yard, and the rear door that puts an unsupported staircase in the room.
           run_check classroom_anomaly 300 godot --headless --path . --script res://tests/classroom_anomaly_test.gd || status=1
+          # Getting off the container roof while the resident watches (round 8): the choice, the
+          # jump behind the north leaf searched for or stopped, and the yard tap's water.
+          run_check roof_way_down 300 godot --headless --path . --script res://tests/roof_way_down_test.gd || status=1
           # The prologue's art migration in the real game: the classroom's concrete and paper
           # shaders compiled for real (Xvfb), nothing in the game naming the experiment, the
           # cut open floor to wall top with the blank sheet in it, the paper anomaly local and

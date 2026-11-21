@@ -50,7 +50,7 @@ static func present(player: PlayerController, fade: Object, hurt: bool, host: Lo
 			if encounter != null:
 				encounter.roof_contact(hurt)
 			# The hard landing leaves the protagonist dazed: from this contact the
-			# world is a paste-up that thins out over ten minutes of play.
+			# world is a paste-up that thins out over four minutes of play.
 			if hurt:
 				ConcussionView.begin(player)
 		var hit := clampf((t - touch) / (0.14 if hurt else 0.18), 0.0, 1.0)

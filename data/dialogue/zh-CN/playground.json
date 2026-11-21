@@ -496,6 +496,201 @@
           "next": null
         }
       ]
+    },
+    "pg_roof_way_down": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "prw_1",
+      "nodes": [
+        {
+          "id": "prw_1",
+          "speaker": "protagonist",
+          "text": "门口那个人还站着，仰头朝箱顶看。梯子就在你脚边。另一头的门开着，北边那扇门板斜着半开，门板背后是一块暗角。",
+          "choices": [
+            {
+              "id": "ladder",
+              "text": "顺着梯子慢慢爬下去。",
+              "next": "prw_ladder",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "ladder"
+                }
+              ]
+            },
+            {
+              "id": "jump",
+              "text": "从开门那头跳下去，躲到门板后面。",
+              "next": "prw_jump",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "jump"
+                }
+              ]
+            },
+            {
+              "id": "stay",
+              "text": "再等等。",
+              "next": "prw_stay",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "roof_way_down",
+                  "value": "stay"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prw_ladder",
+          "speaker": "protagonist",
+          "text": "你转过身，脚去够第一根横档。",
+          "next": null
+        },
+        {
+          "id": "prw_jump",
+          "speaker": "protagonist",
+          "text": "你走到箱顶另一边。下面是水泥地。",
+          "next": null
+        },
+        {
+          "id": "prw_stay",
+          "speaker": "protagonist",
+          "text": "你没动，蹲在箱顶上。",
+          "next": null
+        }
+      ]
+    },
+    "pg_collector_stop": {
+      "default_source": "reported",
+      "subjective": false,
+      "start": "pcs_1",
+      "nodes": [
+        {
+          "id": "pcs_1",
+          "speaker": "roof_collector",
+          "text": "站住。"
+        },
+        {
+          "id": "pcs_2",
+          "speaker": "roof_collector",
+          "text": "待做·住户叫住你之后的话"
+        },
+        {
+          "id": "pcs_3",
+          "speaker": "protagonist",
+          "text": "待做·你的回答",
+          "next": null
+        }
+      ]
+    },
+    "pg_roof_jump": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "prj_1",
+      "nodes": [
+        {
+          "id": "prj_1",
+          "speaker": "protagonist",
+          "text": "水泥地往上撞了一下，从脚底一直撞到后脑。"
+        },
+        {
+          "id": "prj_check",
+          "speaker": "voice_orientation",
+          "text": "门板在你右边，他在门口。别动。往门板后面的暗处缩。",
+          "check": {
+            "ability": "orientation",
+            "difficulty": 10,
+            "kind": "visible",
+            "success": "prj_hidden",
+            "failure": "prj_heard"
+          }
+        },
+        {
+          "id": "prj_hidden",
+          "speaker": "protagonist",
+          "text": "你缩到门板背后，一只手撑着地。呼吸压得很低。",
+          "next": null
+        },
+        {
+          "id": "prj_heard",
+          "speaker": "protagonist",
+          "text": "鞋底在水泥上擦了一声。门口那个人转过头来。",
+          "next": null
+        }
+      ]
+    },
+    "pg_tap_use": {
+      "default_source": "observed",
+      "subjective": false,
+      "start": "ptu_1",
+      "nodes": [
+        {
+          "id": "ptu_1",
+          "speaker": "protagonist",
+          "text": "龙头的红把手拧得动，管子里咕噜了一声，水下来了。",
+          "choices": [
+            {
+              "id": "drink",
+              "text": "喝一口。",
+              "next": "ptu_drink",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "drink"
+                }
+              ]
+            },
+            {
+              "id": "wash",
+              "text": "捧水洗把脸。",
+              "next": "ptu_wash",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "wash"
+                }
+              ]
+            },
+            {
+              "id": "leave",
+              "text": "算了。",
+              "next": "ptu_leave",
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "tap_use",
+                  "value": "leave"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ptu_drink",
+          "speaker": "protagonist",
+          "text": "水有股铁锈味，凉得发紧。脑子里那层东西薄了一点。",
+          "next": null
+        },
+        {
+          "id": "ptu_wash",
+          "speaker": "protagonist",
+          "text": "冷水拍到脸上。眼前一下子清楚了，水泥就是水泥，墙就是墙。",
+          "next": null
+        },
+        {
+          "id": "ptu_leave",
+          "speaker": "protagonist",
+          "text": "你把龙头拧了回去。",
+          "next": null
+        }
+      ]
     }
   }
 }

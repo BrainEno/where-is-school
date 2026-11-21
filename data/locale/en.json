@@ -214,6 +214,8 @@
     "key.click": "Click",
     "name.student": "Classmate",
     "role.student": "classmate",
+    "name.roof_collector": "The man in the container",
+    "role.roof_collector": "lives in the yard container",
     "prompt.curtain": "Look at the curtain",
     "prompt.curtain_retry": "Try the curtain again",
     "prompt.curtain_drawn": "Look into the opening",
