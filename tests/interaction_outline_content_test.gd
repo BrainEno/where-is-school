@@ -21,6 +21,7 @@ extends SceneTree
 ##    dialogue box.
 
 const Harness = preload("res://tests/test_harness.gd")
+const WORLD_FILTER_GROUP := &"world_filter"
 
 const LOCATIONS := [
 	"res://scenes/locations/classroom/classroom.tscn",
@@ -173,6 +174,15 @@ func _check_overlay_under_ui() -> void:
 	for node: Node in _main.find_children("*", "CanvasLayer", true, false):
 		var layer := node as CanvasLayer
 		if layer == overlay or layer.get_parent() == overlay:
+			continue
+		if layer.is_in_group(WORLD_FILTER_GROUP):
+			# A full-screen filter over the 3D world (the imagined lesson's wave) belongs
+			# under the outline: the cue is drawn crisp on top of the warped room.
+			if layer.layer >= overlay.layer:
+				_failures.append(
+					"main: world filter '%s' (layer %d) is not under the outline (layer %d)."
+					% [String(_main.get_path_to(layer)), layer.layer, overlay.layer]
+				)
 			continue
 		if layer.layer <= overlay.layer:
 			_failures.append(

@@ -443,7 +443,8 @@ together:
   shown the way Disco Elysium shows it: its own contour, traced. `HoverCue` asks the
   interactable for `get_outline_meshes()` (the nodes named in `outline_paths`, plus any mesh
   parented under the interactable) and hands them to `OutlineOverlay`, a `CanvasLayer` in
-  `scenes/main/main.tscn` (layer 0, under every UI layer). The overlay renders a silhouette
+  `scenes/main/main.tscn` (layer 0, under every UI layer and above any full-screen world
+  filter in the `world_filter` group, such as the imagined lesson's wave at -1). The overlay renders a silhouette
   mask into a `SubViewport` from a camera that copies the player's camera every frame, and
   runs `assets/shaders/interaction/highlight_outline.gdshader` over it: a 2 px warm line just
   outside the silhouette (scaled with the window height), a dark rim outside that, and a

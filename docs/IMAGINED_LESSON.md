@@ -72,7 +72,8 @@ who is everywhere in the room at once. They cast no shadow.
 ### The room, repainted
 
 `assets/shaders/imagined/munch_wave.gdshader` is a canvas-item filter on a full-screen rect
-in a canvas layer (layer 0) under the game UI (layer 1), so the dialogue stays legible. It
+in a canvas layer (layer -1, group `world_filter`) under the interaction outline (layer 0)
+and the game UI (layer 1), so the outline cue and the dialogue stay crisp and legible. It
 reads the finished frame (`hint_screen_texture`): no depth buffer, no extra viewport, nothing
 renderer-specific; it runs the same on Compatibility, Mobile and Forward+.
 

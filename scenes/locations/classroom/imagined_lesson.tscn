@@ -24,8 +24,8 @@ position = Vector3(0.7, 0.12, -4.3)
 [node name="EchoBlackboard" type="Marker3D" parent="."]
 position = Vector3(-2.45, 0.12, -4.45)
 
-[node name="Wave" type="CanvasLayer" parent="."]
-layer = 0
+[node name="Wave" type="CanvasLayer" parent="." groups=["world_filter"]]
+layer = -1
 visible = false
 
 [node name="Filter" type="ColorRect" parent="Wave"]

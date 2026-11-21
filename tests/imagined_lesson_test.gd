@@ -312,7 +312,11 @@ func _check_filter(lesson: ImaginedLesson) -> void:
 	if layer == null or filter == null:
 		return
 	_check.expect(
-		layer.layer < 1, "The filter's layer (%d) is not under the game UI's (1)." % layer.layer
+		layer.layer < 0,
+		"The filter's layer (%d) is not under the outline overlay's (0)." % layer.layer
+	)
+	_check.expect(
+		layer.is_in_group(&"world_filter"), "The filter is not in the world_filter group."
 	)
 	_check.expect(
 		filter.mouse_filter == Control.MOUSE_FILTER_IGNORE, "The filter would take mouse input."
