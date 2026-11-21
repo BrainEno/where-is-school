@@ -425,7 +425,7 @@ func _expect_at_landing(q: NpcActor, label: String) -> void:
 
 
 func _expect_at_desk(q: NpcActor, label: String) -> void:
-	var chair := _host.get_current().get_node(^"Furniture/DeskB1/Chair") as PushableChair
+	var chair := _host.get_current().get_node(^"Furniture/DeskQ/Chair") as PushableChair
 	var gap := q.global_position.distance_to(chair.home_mark())
 	var facing := q.get_facing_direction().dot(-chair.global_basis.z)
 	_expect(gap < 0.03 and facing > FACING_DOT, "%s: Q is %.3f m from B1, facing dot %.3f." % [label, gap, facing])

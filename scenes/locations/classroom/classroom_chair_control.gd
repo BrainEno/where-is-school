@@ -14,11 +14,17 @@ const CLASSROOM_SLIDE := 0.64
 const PULL_FLANK := 0.67
 # Halfway along the backrest's travel; the wrist can reach both stops.
 const PULL_BEHIND := 0.44
+const SEAT_FLANK := 0.81
 const PERSON_GAP := 0.65
+# Route around the desktop seam via the cross-aisle between rows A and B.
+const FRONT_CROSS_AISLE := 1.4
+const FAR_AISLE_FLANK := 1.52
+# Just past the opening talker's footprint, still short of the rear desks.
+const RETREAT_DEPTH := 0.81
 
 @export var player_group: StringName = &"protagonist"
 @export var chair_path: NodePath = ^"../Furniture/DeskB2/Chair"
-@export var q_chair_path: NodePath = ^"../Furniture/DeskB1/Chair"
+@export var q_chair_path: NodePath = ^"../Furniture/DeskQ/Chair"
 @export var seat_interactable_path: NodePath = ^"../Interactables/ChairSit"
 @export var bag_path: NodePath = ^"../Furniture/DeskB2/Schoolbag"
 @export var bag_interactable_path: NodePath = ^"../Interactables/SchoolbagInspect"
@@ -78,13 +84,10 @@ func _stage_sit(director: Node) -> Dictionary:
 	var player: PlayerController = director.get_player()
 	if player.is_seated():
 		player.stand_up()
+		await _seat_transfer(player)
 	else:
 		_stop(player)
-		if not await _approach(player, _chair.home_mark()):
-			return {}
-		await Motion.turn_to(player, -_chair.global_basis.z)
-		player.sit_down(_chair)
-	await _seat_transfer(player)
+		await _return_player(player, _classmate())
 	return {}
 
 
@@ -113,13 +116,16 @@ func restore_q_seat(q: NpcActor) -> bool:
 func _return_player(player: PlayerController, q: NpcActor) -> bool:
 	if player.is_seated():
 		return true
+	if not _sweep_clear(_chair, q, player.navigation_agent.radius):
+		return false
 	if not _chair.is_pushed_back():
 		var animator := player.get_character_animator()
-		if animator == null or not await _approach(player, _pull_mark(_chair), _seat_blockers(q)):
+		var flank := _outside_flank(_chair, _q_chair)
+		if animator == null or not await _approach(player, _pull_mark(_chair, flank), _seat_blockers(q)):
 			return false
 		await Motion.turn_to(player, -_chair.global_basis.z)
 		var motion := SeatMotion.new(_chair, player.visual, animator, PlayerController.STANDING_HIP_HEIGHT)
-		await motion.pull_out(player)
+		await motion.pull_out(player, flank)
 	if not await _approach(player, _chair.home_mark(), _seat_blockers(q)):
 		return false
 	await Motion.turn_to(player, -_chair.global_basis.z)
@@ -137,16 +143,20 @@ func _return_q(player: PlayerController, q: NpcActor) -> bool:
 		return false
 	if animator.is_seated():
 		return true
+	# If the player is still standing in this chair's track, let them sit first.
+	if not _sweep_clear(_q_chair, player, player.navigation_agent.radius):
+		return false
 	var motion := SeatMotion.new(_q_chair, animator, animator, animator.position.y)
-	var blockers := _seat_blockers(player)
 	if not _q_chair.is_pushed_back():
-		var pull_route := _clear_route(player, _q_chair, q.global_position, _pull_mark(_q_chair), blockers)
+		var flank := _outside_flank(_q_chair, _chair)
+		var pull_mark := _pull_mark(_q_chair, flank)
+		var pull_route := _clear_route(player, _q_chair, q.global_position, pull_mark, _seat_blockers(player))
 		if pull_route.is_empty():
 			return false
 		q.stop_watching()
 		await q.walk_along(Array(pull_route))
 		await _turn_q_to_chair(q)
-		await motion.pull_out(q)
+		await motion.pull_out(q, flank)
 	var route := _clear_route(player, _q_chair, q.global_position, _q_chair.home_mark(), _seat_blockers(player))
 	if route.is_empty():
 		return false
@@ -187,8 +197,20 @@ func _plant_q_feet() -> void:
 		_q_motion.plant_seated()
 
 
-func _pull_mark(chair: PushableChair) -> Vector3:
-	return chair.home_mark() + chair.global_basis * Vector3(PULL_FLANK, 0.0, PULL_BEHIND)
+func _outside_flank(chair: PushableChair, neighbour: PushableChair) -> float:
+	return signf(chair.global_basis.x.dot(chair.home_mark() - neighbour.home_mark()))
+
+
+func _pull_mark(chair: PushableChair, flank: float) -> Vector3:
+	return chair.home_mark() + chair.global_basis * Vector3(PULL_FLANK * flank, 0.0, PULL_BEHIND)
+
+
+func _sweep_clear(chair: PushableChair, other: Node3D, radius: float) -> bool:
+	if other == null or not other.is_visible_in_tree():
+		return true
+	var sweep := chair.sweep_bounds().grow(radius)
+	var feet := other.global_position
+	return not sweep.has_point(Vector3(feet.x, sweep.get_center().y, feet.z))
 
 
 func _seat_blockers(other: Node3D) -> Array[AABB]:
@@ -197,10 +219,14 @@ func _seat_blockers(other: Node3D) -> Array[AABB]:
 		var chair := node as PushableChair
 		if chair != null and get_parent().is_ancestor_of(chair):
 			boxes.append(chair.mesh_bounds().grow(0.35))
-	if other != null:
+	if other != null and other.is_visible_in_tree():
 		var half := Vector3(PERSON_GAP, 0.45, PERSON_GAP)
 		boxes.append(AABB(other.global_position - half, half * 2.0))
 	return boxes
+
+
+func _classmate() -> NpcActor:
+	return (get_parent() as LocationRoot).find_actor(&"q")
 
 
 func _stage_search(director: Node) -> Dictionary:
@@ -211,7 +237,7 @@ func _stage_search(director: Node) -> Dictionary:
 	_stop(player)
 	# Keep the original inspection usable if scenery is obstructed (including legacy
 	# saves). Do not drag the body through the obstruction just to reach a mark.
-	if await _approach(player, _bag.search_position()):
+	if await _approach(player, _bag.search_position(), _seat_blockers(_classmate())):
 		await Motion.turn_to(player, -_bag.global_basis.z)
 		await _bag.rummage(player)
 	return {"inspection": _inspect.inspection_id}
@@ -227,7 +253,7 @@ func _stop(player: PlayerController) -> void:
 	player.velocity.z = 0.0
 
 
-func _approach(player: PlayerController, target: Vector3, blockers: Array[AABB] = []) -> bool:
+func _approach(player: PlayerController, target: Vector3, blockers: Array[AABB]) -> bool:
 	var route := _clear_route(player, _chair, player.global_position, target, blockers)
 	if route.is_empty():
 		return false
@@ -246,20 +272,41 @@ func _clear_route(player: PlayerController, chair: PushableChair, start: Vector3
 	var right := chair.global_basis.x
 	var forward := -chair.global_basis.z
 	var routes: Array[PackedVector3Array] = [PackedVector3Array([target])]
-	for sign_side: float in [1.0, -1.0]:
-		var flank := origin + right * sign_side * 0.81
+	var neighbour := _q_chair if chair == _chair else _chair
+	var outside := _outside_flank(chair, neighbour)
+	var outside_mark := origin + right * outside * SEAT_FLANK
+	for sign_side: float in [outside, -outside]:
+		var flank := origin + right * sign_side * SEAT_FLANK
 		var same_row := flank + forward * forward.dot(start - flank)
 		routes.append(PackedVector3Array([flank, target]))
 		routes.append(PackedVector3Array([same_row, flank, target]))
 		if target.distance_to(origin) > 0.1:
 			# Bag at the other corner: cross the gap in front of the chair first.
-			routes.append(PackedVector3Array([same_row, flank, origin + right * 0.81, target]))
+			routes.append(PackedVector3Array([same_row, flank, outside_mark, target]))
 		if not blockers.is_empty() and _navigation != null and _navigation.is_synchronized():
 			var map := _navigation.get_navigation_map()
 			var detour := NavigationServer3D.map_get_path(map, start, flank, true)
 			if detour.size() > 1:
 				detour.append_array(PackedVector3Array([flank, target]))
 				routes.append(detour)
+	if not blockers.is_empty():
+		# The bake can route between the chairs because it only sees the desks. If
+		# that route is occupied, go around the pair via the front cross-aisle.
+		var far := neighbour.home_mark() - right * outside * FAR_AISLE_FLANK
+		var across := forward * FRONT_CROSS_AISLE
+		var around := PackedVector3Array([far + across, outside_mark + across, outside_mark, target])
+		routes.append(around)
+		var along_flank := PackedVector3Array([far + forward * forward.dot(start - far)])
+		along_flank.append_array(around)
+		routes.append(along_flank)
+		if forward.dot(start - origin) < 0.0:
+			# From just behind a tucked chair, the classmate can block even the
+			# exit to the far aisle. Step back first, then go the same way round.
+			var far_rear := far - forward * RETREAT_DEPTH
+			var retreat := start + forward * forward.dot(far_rear - start)
+			var via_rear := PackedVector3Array([retreat, far_rear])
+			via_rear.append_array(around)
+			routes.append(via_rear)
 	var best := PackedVector3Array()
 	var best_length := INF
 	for route in routes:

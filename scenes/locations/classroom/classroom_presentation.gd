@@ -11,6 +11,7 @@ const DESKS: Array[NodePath] = [
 	^"../Furniture/DeskA3/Desk",
 	^"../Furniture/DeskA4/Desk",
 	^"../Furniture/DeskB1/Desk",
+	^"../Furniture/DeskQ/Desk",
 	^"../Furniture/DeskB2/Desk",
 	^"../Furniture/DeskB3/Desk",
 	^"../Furniture/DeskB4/Desk",

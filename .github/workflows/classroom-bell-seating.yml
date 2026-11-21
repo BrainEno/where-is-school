@@ -57,11 +57,16 @@ jobs:
               | while IFS= read -r line; do echo "::notice title=Bell test script diagnostic::${line}"; done
           fi
           run_check_summary
+      - name: Report every chair-start case
+        if: always()
+        run: grep '^::notice title=Desk mate clearance::' "$CI_LOG_DIR/bell_seating.log" || true
       - name: Preview the live frames
         if: always()
         shell: bash
         run: |
-          for name in 01_q_pulls_chair 02_player_sits 03_seated_before_lesson; do
+          # The check UI caps the annotations; relay the pair and stand before the
+          # wide gameplay shots. Full frames and logs are in the artifact below.
+          for name in 04_pair_detail 05_player_rises_beside_q 01_q_pulls_chair 02_player_sits 03_seated_before_lesson; do
             frame="$RUNNER_TEMP/bell-seating/frames/${name}_preview.jpg"
             if [ ! -f "$frame" ]; then continue; fi
             data=$(base64 -w0 "$frame")

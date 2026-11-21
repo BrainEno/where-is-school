@@ -5,7 +5,8 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const APPROACH := Vector3(-0.75, 0, 2.15)
-const OTHER_AISLE := Vector3(-2.43, 0, 2.83)
+# Start in the open left aisle, outside Q's desk and chair, not in the desktop seam.
+const OTHER_AISLE := Vector3(-3.77, 0, 2.20)
 const STUDENT_AISLE := Vector3(-1.6, 0, 0.33)
 const CAMERA_AT := Vector3(0.65, 1.46, 2.48)
 const LOOK_AT := Vector3(-1.53, 0.84, 1.95)
@@ -245,7 +246,7 @@ func _capture_dressing() -> void:
 	if await _wait(func() -> bool: return absf(paper.rotation.x) < 0.0001, "the paper's rest"):
 		var rest := paper.to_global(bottom)
 		await _shot("09_timetable_still")
-		if await _wait(func() -> bool: return paper.rotation_degrees.x > 3.2, "a draft at the timetable", 13.0):
+		if await _wait_for_draft(func() -> bool: return paper.rotation_degrees.x > 3.2, "the timetable"):
 			var travel := rest.z - paper.to_global(bottom).z
 			_check.expect(travel > 0.035 and travel < 0.055, "Timetable lift is not a bounded lift into the room.")
 			_check.expect(paper.to_global(pin).distance_to(clip.global_position) < 0.001,
@@ -261,7 +262,7 @@ func _capture_dressing() -> void:
 	var right := panels[1].get_parent() as Node3D
 	var rail_left := left.position
 	var stop := _room.get_node(^"WallWest/ClosedCurtainStop") as CollisionShape3D
-	if await _wait(func() -> bool: return absf(left.rotation_degrees.x) > 0.35, "a draft at the curtain", 13.0):
+	if await _wait_for_draft(func() -> bool: return absf(left.rotation_degrees.x) > 0.35, "the curtain"):
 		_check.expect(not stop.disabled and is_zero_approx(curtain.get_open_amount())
 			and is_equal_approx(left.rotation.x, right.rotation.x), "The closed curtain draft uncovered the seam.")
 		var fabric := curtain.get_fabric_aabb()
@@ -606,6 +607,17 @@ func _phase(clip: String, phase: float) -> bool:
 
 func _wait(predicate: Callable, what: String, timeout: float = 9.0) -> bool:
 	return _check.expect(await Harness.wait_until(predicate, timeout), "Timed out waiting for %s." % what)
+
+
+func _wait_for_draft(predicate: Callable, prop: String) -> bool:
+	# Both periodic drafts follow the game clock. Advance it without asking the
+	# software renderer to draw on every idle tick. Restore drawing before the
+	# pixel capture and input probes; the game still produces the motion itself.
+	var was_rendering := RenderingServer.render_loop_enabled
+	RenderingServer.render_loop_enabled = false
+	var arrived := await _wait(predicate, "a draft at %s" % prop, 13.0)
+	RenderingServer.render_loop_enabled = was_rendering
+	return arrived
 
 
 func _shot(file_name: String) -> void:

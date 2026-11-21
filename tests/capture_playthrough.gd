@@ -761,7 +761,7 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 
 ## The four imported models, in the room the player is standing in.
 ##
-## The classroom's twelve student desks, the stationery on the player's own desk, the
+## The classroom's thirteen student desks, the stationery on the player's own desk, the
 ## player's own model and Q. These are frames of the running game — the same window, the
 ## same light, the same baked navigation as every other frame in this run — from a camera
 ## the capture places for the purpose, because the player's own camera is nailed to the
@@ -783,7 +783,7 @@ func _capture_imported_models() -> void:
 	var furniture := classroom.get_node_or_null(^"Furniture")
 	var desk_names: Array[String] = [
 		"DeskA1", "DeskA2", "DeskA3", "DeskA4",
-		"DeskB1", "DeskB2", "DeskB3", "DeskB4",
+		"DeskB1", "DeskQ", "DeskB2", "DeskB3", "DeskB4",
 		"DeskC1", "DeskC2", "DeskC3", "DeskC4",
 	]
 	var with_models := 0
@@ -814,7 +814,7 @@ func _capture_imported_models() -> void:
 	await _shot_from_camera(
 		Vector3(0.0, 5.5, 8.4), Vector3(0.0, 0.6, 0.1),
 		"03h_classroom_desks",
-		"The expanded classroom: all twelve student desks and chairs across three rows."
+		"The classroom: all thirteen desks and chairs, including Q beside the protagonist."
 	)
 
 	# 2. The player's own desk, close enough to see what is on it.

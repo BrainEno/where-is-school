@@ -1,6 +1,6 @@
 class_name PushableChair
 extends Node3D
-## The wake chair is solid only at the pushed stop, while nobody is using it. Its
+## A chair with an authored collider is solid only at its unoccupied, pushed stop. Its
 ## layer (3) blocks the capsule, not the nav bake or picking. The performance owns
 ## the progress of the slide; the prop owns both stops and the collision boundary.
 
@@ -49,6 +49,15 @@ func mesh_bounds() -> AABB:
 	return bounds
 
 
+## The full world-space envelope from tucked to pulled out, even mid-slide.
+func sweep_bounds() -> AABB:
+	var world_basis := get_parent_node_3d().global_basis
+	var live := mesh_bounds()
+	var home := AABB(live.position + world_basis * (_home_position - position), live.size)
+	var back := AABB(live.position + world_basis * (_pushed_position - position), live.size)
+	return home.merge(back)
+
+
 func is_seatable() -> bool:
 	return seat_mark != null and is_instance_valid(_pick_target)
 
@@ -73,11 +82,12 @@ func grip_point() -> Vector3:
 	return _seat.to_global(Vector3(0.218, 0.073, -0.197))
 
 
-## A standing pull uses the top of the back, not the much lower seated brace.
-func backrest_grip_point() -> Vector3:
+## A standing pull uses the near corner of the back, not the lower seated brace.
+func backrest_grip_point(flank: float) -> Vector3:
 	var back: MeshInstance3D = $Back
 	var rim := back.get_aabb()
-	return back.to_global(Vector3(rim.end.x - 0.04, rim.end.y + 0.02, rim.get_center().z))
+	var x := rim.end.x - 0.04 if flank > 0.0 else rim.position.x + 0.04
+	return back.to_global(Vector3(x, rim.end.y + 0.02, rim.get_center().z))
 
 
 func start_slide() -> void:

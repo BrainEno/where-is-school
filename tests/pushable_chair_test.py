@@ -126,28 +126,25 @@ def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
     """
     chair = source()
     check("const SOLID_LAYER := 4" in chair, "the chair must collide on layer 3 (value 4)")
-    # The body lives in the room, not in the shared prop: every desk instances
-    # `classroom_desk.tscn`, so a collision authored there is twelve colliding chairs, eleven
-    # of which nobody ever sits in.
+    # The room authors the sliding pair's bodies. The shared prop must not make
+    # the eleven other chairs collide and change their walk routes.
     prop = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
     check(
         "CollisionObject3D" not in prop and 'type="StaticBody3D"' not in prop,
-        "the shared desk prop must carry no collision: the room instances it twelve times",
+        "the shared desk prop must carry no chair collision",
     )
     room = (ROOT / "scenes/locations/classroom/classroom.tscn").read_text(encoding="utf-8")
-    check(
-        re.search(
-            r'name="Solid" type="StaticBody3D" parent="Furniture/DeskB2/Chair".*?collision_layer = 4',
-            room,
-            re.S,
-        )
-        is not None,
-        "the wake-up chair's Solid body must be authored in the room, on layer 3",
+    bodies = re.findall(
+        r'^\[node name="Solid" type="StaticBody3D" parent="Furniture/(Desk[^/"]+)/Chair"[^\n]*\]'
+        r'\ncollision_layer = (\d+)\ncollision_mask = (\d+)',
+        room,
+        re.M,
     )
-    check(
-        room.count('parent="Furniture/DeskB2/Chair/Solid"') == 1,
-        "exactly one chair in the classroom may collide",
-    )
+    check(sorted(bodies) == [("DeskB2", "4", "0"), ("DeskQ", "4", "0")],
+          "only the two desk mates' chairs should have a layer-3 Solid body")
+    for desk, _, _ in bodies:
+        check(room.count(f'parent="Furniture/{desk}/Chair/Solid"') == 1,
+              f"{desk} needs exactly one chair collider")
     nav = (ROOT / "scripts/world/location_navigation.gd").read_text(encoding="utf-8")
     bake = int(re.search(r"geometry_collision_mask: int = (\d+)", nav).group(1))
     check(bake & 4 == 0, f"the navigation bake's mask ({bake}) must not include layer 3")

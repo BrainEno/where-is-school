@@ -5,13 +5,13 @@ extends SceneTree
 ## system of its own, restyled board, windows and teacher's desk - and none of that is
 ## allowed to cost the room anything a player relies on. The claims under test:
 ##
-## 1. **A larger room.** A 14 x 10 m shell contains twelve desks, two doors on the east
+## 1. **A larger room.** A 14 x 10 m shell contains thirteen desks, two doors on the east
 ##    wall (issue #159), a roll-down screen over the board, a ceiling projector, a
 ##    step-up concrete platform, a boxed teacher's lectern (#172), the original story props
 ##    and exits.
 ##    The blackboard wall is one unbroken wall; the schoolbag hangs off the aisle side of your desk.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
-##    door openings and the back window included), platform/step, twelve desk wrappers,
+##    door openings and the back window included), platform/step, thirteen desk wrappers,
 ##    and the lectern are the only scene-owned collision bodies (the low teacher's desk was
 ##    taken out; its set square lies on the lectern).
 ## 3. **Its own colour system.** Every surface of the room draws a material from
@@ -70,6 +70,7 @@ const DESKS := {
 	"DeskA3": Vector3(1.6, 0.0, -0.8),
 	"DeskA4": Vector3(4.8, 0.0, -0.8),
 	"DeskB1": Vector3(-4.8, 0.0, 1.3),
+	"DeskQ": Vector3(-2.35, 0.0, 1.3),
 	"DeskB2": Vector3(-1.6, 0.0, 1.3),
 	"DeskB3": Vector3(1.6, 0.0, 1.3),
 	"DeskB4": Vector3(4.8, 0.0, 1.3),
@@ -85,7 +86,7 @@ const PROPS := {
 	"Furniture/DeskB2/Schoolbag": Vector3(0.49, 0.415, 0.072),
 	"Actors/Q": Vector3(-3.3, 0.0, 3.1),
 	# Where Q walks to before the first line (OpeningSequence, #160): the aisle at your left.
-	"QOpeningTalk": Vector3(-2.75, 0.0, 1.95),
+	"QOpeningTalk": Vector3(-3.02, 0.0, 2.04),
 	"Actors/N": Vector3(3.2, 0.0, 4.2),
 	"SpawnPoints/PlayerStart": Vector3(-1.6, 0.0, 1.95),
 	"SpawnPoints/FromCorridor": Vector3(6.25, 0.0, -3.55),
@@ -114,10 +115,13 @@ const SOLIDS: Array[String] = [
 	"Floor", "WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight",
 	"Stage",
 	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
-	"Furniture/DeskB1/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
+	"Furniture/DeskB1/Desk", "Furniture/DeskQ/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
 	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
 	"Stage/Lectern/Body",
 ]
+## Only the desk mates' chairs carry a body, and only in this room. Authoring it in
+## the shared desk scene would make all eleven decorative chairs collide too.
+const SLIDING_CHAIR_SOLIDS := ["Furniture/DeskB2/Chair/Solid", "Furniture/DeskQ/Chair/Solid"]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
 	"WallNorth": "wall_north.tres",
@@ -159,7 +163,7 @@ const BACKGROUND_PLANES: Array[String] = [
 	"wall_north", "wall_west", "wall_east", "wall_south_left", "floor_concrete",
 ]
 const BACKGROUND_CHROMA_MAX := 0.2
-## Twelve chairs must not be louder than the one schoolbag.
+## The chairs must not be louder than the one schoolbag.
 const CHAIR_MATERIAL := "wood_worn"
 const FOCUS_OVER_CHAIRS := "canvas_indigo"
 
@@ -320,8 +324,8 @@ func _check_layout() -> void:
 	var glass0 := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
 	if glass0 == null or not is_equal_approx(glass0.position.x, -6.74):
 		_failures.append("The front west-wall window must remain in the room shell.")
-	if DESKS.size() < 12:
-		_failures.append("The layout has only %d authored student desks; twelve are required." % DESKS.size())
+	if DESKS.size() != 13:
+		_failures.append("The layout needs the twelve original desks and Q's desk; listed %d." % DESKS.size())
 	var normal_door := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
 	if normal_door == null or normal_door.interact_id != &"classroom_door":
 		_failures.append("The normal exit lost its classroom_door ID.")
@@ -531,16 +535,6 @@ func _expect_at(path: String, expected: Vector3) -> void:
 # --- 2. collision -------------------------------------------------------------------
 
 
-## True for the `Solid` body under the one chair the protagonist wakes in - and only that one.
-##
-## Every desk in this room instances the same `classroom_desk.tscn`, so a collision authored in
-## that prop would be twelve chairs colliding, eleven of which nobody will ever sit in. The body
-## therefore lives in this scene, under `DeskB2/Chair`, on layer 3 (see `pushable_chair.gd` for
-## why layer 3 and not layer 1).
-func _is_chair_solid(path: String) -> bool:
-	return path == "Furniture/DeskB2/Chair/Solid"
-
-
 func _check_collision() -> void:
 	var found := {}
 	for node in _descendants(_room):
@@ -556,30 +550,21 @@ func _check_collision() -> void:
 				_failures.append("VoidStep must start inert and sense the player only, never block a ray or body.")
 			continue
 		if not SOLIDS.has(path):
-			# The one exception, and it is narrow: the chair the protagonist wakes in carries
-			# a body on layer 3, which is solid to the body but enters neither the navigation
-			# bake nor the interaction rays. Anything on layer 1 is still the old failure.
-			# Layer 3, not layer 1: see `pushable_chair.gd`. The bake's mask is 25 and the
-			# interaction rays' is 9, and neither includes it, so the two reasons this rule
-			# exists - carving the navmesh, blocking rays - do not apply to this body.
-			# The layer is 0 here, not 3: the chair opens its own collision in `_ready` (the
-			# opening has the protagonist asleep inside it), so by the time this room is built
-			# the body is genuinely not colliding. What `_is_chair_solid` pins is the *authored*
-			# path; `pushable_chair_test.py` pins the authored layer in the scene file, because
-			# a body whose layer the script resets cannot be judged by its runtime value.
+			# The room-built pair starts non-solid. `pushable_chair_test.py` pins the
+			# authored layer (3), which neither carves the navmesh nor blocks picking.
 			var body := node as CollisionObject3D
-			if body != null and body.collision_layer == 0 and _is_chair_solid(path):
+			if body != null and body.collision_layer == 0 and path in SLIDING_CHAIR_SOLIDS:
 				found[path] = true
 				continue
 			_failures.append(
 				"'%s' collides. Classroom decoration carries no collision: it would carve the "
 				% path
 				+ "navigation mesh and block interaction rays. (Layer-3 collisions are the one "
-				+ "exception, and only on the wake-up chair's `Solid` body.)"
+				+ "exception, and only on the two sliding chairs.)"
 			)
 			continue
 		found[path] = true
-	for path: String in SOLIDS:
+	for path: String in SOLIDS + SLIDING_CHAIR_SOLIDS:
 		if not found.has(path):
 			_failures.append("'%s' no longer collides; the room's solids changed." % path)
 	_notes.append("solids %d" % found.size())
@@ -1033,7 +1018,8 @@ func _check_navigation() -> LocationNavigation:
 				% [String(child.get("interact_id")), gap, radius]
 			)
 	_notes.append(
-		"nav polygons %d, twelve desks, step %.2f m, worst desk reach %.2f m" % [navigation.get_polygon_count(), stage_gap, worst]
+		"nav polygons %d, %d desks, step %.2f m, worst desk reach %.2f m" % [
+			navigation.get_polygon_count(), DESKS.size(), stage_gap, worst]
 	)
 	return navigation
 

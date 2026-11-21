@@ -109,20 +109,23 @@
 `Interactables/ProjectorScreenPull` 可以把它拉下、再卷上去，其状态不会存档。
 深蓝帆布书包挂在主角的桌侧钩上（`Furniture/DeskB2/Schoolbag`），命中区与滑动的椅子分开。
 `python3 art/classroom/build_schoolbag.py` 可重建缝合网格和织纹，`--check` 校验运行资产。
-玩家在椅子上醒来（`PlayerStart`），Q 从过道稍远处出发，在第一句台词前走到玩家左手边的 `QOpeningTalk`（开场 Q 段落，#160）。讲台和台阶都有真实碰撞体：
+玩家在椅子上醒来（`PlayerStart`），Q 从过道稍远处出发，在第一句台词前走到左椅外侧的 `QOpeningTalk`（开场 Q 段落，#160）。
+铃响后 Q 回第十三套桌椅 `DeskQ`：中心在 `DeskB2` 左侧 0.75 米，桌面之间留 3.8 厘米缝隙。原有十二套桌椅和主角右侧翻包空间不动。
+讲台和台阶都有真实碰撞体：
 抬高 0.12 米，低于玩家 0.25 米步高和导航网格 0.25 米爬升上限。低矮的普通教师桌已从教室移除，讲台上的站立式讲桌是唯一的教师家具；原教师桌检视（`front_desk` / `classroom_teacher_desk`）移到讲桌上（`Interactables/LecternInspect`），三角尺放在讲桌的倾斜阅读面上。
 Q/N 状态、检视 ID、`Sun`、`WorldEnvironment` 和教室到走廊的转场均保留。
 
 ### 学生椅
 
-十二张课桌都通过 `scenes/environment/props/classroom_desk.tscn` 复用这把椅子。胶合板坐面有圆卷边、
+十三张课桌都通过 `scenes/environment/props/classroom_desk.tscn` 复用这把椅子。胶合板坐面有圆卷边、
 浅凹面和低调的木纹，弧形靠背上有四颗不反光的铆钉。外撇钢腿、延伸到靠背的后立管、横撑和橡胶脚套
 把原来塞满椅子底部的板状椅腿换成了能看穿的细钢架。坐板、靠背、钢架分别用一个不透明的哑光顶点色
 网格（`Seat`、`Back`、`Frame`），不另加墨线描边或贴图。几何与配色均为项目自制。
 用 `python3 tools/build_student_chair.py` 重生；`--check` 只对照、不写文件。
 
-0.46 × 0.42 米的坐板占地、0.475 米座面、`SeatMark`、扶手落点和 0.65 米滑程均保留。
-仍然只有主角的椅子滑到后端才挡住角色，不影响导航烘焙。`imported_placement_test.gd` 检查实际网格的
+0.46 × 0.42 米的坐板占地、0.475 米座面、`SeatMark` 和落座起身时的支撑点均保留。
+同桌两椅共用 0.64 米滑程；Q 从 −X 外侧、主角从 +X 外侧握靠背。另一人挡住椅子的滑动范围时先让开，
+可经桌前横过道绕过并桌，不从桌缝穿过。只有同桌两椅滑到后端才挡住角色，不影响导航烘焙。`imported_placement_test.gd` 检查实际网格的
 配色、座高和四脚落地；`capture_classroom_motion.gd` 增加起身后同一把椅子的正反两面特写，
 并沿用原来的鼠标和触摸测试检查椅子和书包。
 
