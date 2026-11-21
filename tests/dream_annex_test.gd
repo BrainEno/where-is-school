@@ -5,15 +5,12 @@ extends SceneTree
 ##
 ## `tools/build_dream_annex.py` writes `scenes/locations/corridor/dream_annex.tscn` (the
 ## corridor instances it beside the teaching block) and the waiting room inside the staff
-## office. Its moving people, horses, hens, belts and smells are shader motion only. This
-## checks what would break play if that stopped being true:
+## office. The 03 crowd uses native pose loops; the rest of the dream uses shader motion.
 ##
 ## 1. Every piece draws: a material on each mesh, and a shader behind each ShaderMaterial.
 ## 2. Nothing in it acts: no script, actor, sound or interactable under the annex.
-## 3. The stable yard is a place: the lane and yard bake into the corridor's navigation,
-##    reachable from the glass entrance, as far as the strip by the corner doorway.
-## 4. Nothing moved: the stair under the escalator still climbs 02 -> 03, the 01 gallery
-##    and every spawn marker stay clear of the annex's colliders.
+## 3. The stable yard is walkable; the stair still climbs 02 -> 03 and spawns stay clear.
+## 4. The 03 figures have real tinted silhouettes, planted feet and readable posing beats.
 
 const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
@@ -31,6 +28,23 @@ const REQUIRED: Array[NodePath] = [
 	^"DreamAnnex/StableYard/Flies0",
 	^"DreamAnnex/StableYard/Smell0",
 ]
+# Pose sample, driven joint and (where present) the prop carried by that figure.
+const EXAM_CROWD := {
+	^"Clique0/Person0": [&"Listen", 2.72, ^"Body/Head", ^""],
+	^"Clique0/Person1": [&"Converse", 2.1, ^"Body/ForearmR", ^""],
+	^"Clique0/Person2": [&"CheckSlip", 4.5, ^"Body/Head", ^"Body/ForearmR/AdmissionSlip"],
+	^"Clique1/Person0": [&"Revise", 2.78, ^"Body/ForearmR", ^"Body/ForearmL/Notes"],
+	^"Clique1/Person1": [&"CheckSlip", 4.5, ^"Body/Head", ^"Body/ForearmR/AdmissionSlip"],
+	^"Troublemaker/Ranter": [&"RapOnPlaster", 1.54, ^"Body/ForearmR", ^""],
+	^"Troublemaker/Accomplice": [&"Steady", 3.45, ^"Body/Head", ^""],
+}
+const WAITING_CROWD := {
+	^"Clique0/Person0": [&"OfferSnacks", 2.2, ^"Body/ForearmR", ^"Body/ForearmR/SnackPouch"],
+	^"Clique0/Person1": [&"Converse", 2.1, ^"Body/ForearmR", ^""],
+	^"Clique0/Person2": [&"Listen", 2.72, ^"Body/Head", ^""],
+	^"Clique1/Person0": [&"Revise", 2.78, ^"Body/ForearmR", ^"Body/ForearmL/Notes"],
+	^"Clique1/Person1": [&"CheckSlip", 4.5, ^"Body/Head", ^"Body/ForearmR/AdmissionSlip"],
+}
 const YARD_POINTS := {
 	"the yard": Vector3(-31.0, -3.4, 13.4),
 	"the strip by the corner doorway": Vector3(-38.6, -3.4, 11.15),
@@ -62,6 +76,11 @@ func _run() -> void:
 	if _check.expect(annex != null, "The corridor does not instance dream_annex.tscn."):
 		_check_pieces(annex, "corridor")
 		_check_spawns(corridor, annex)
+		var exam := annex.get_node_or_null(^"ExamFloor")
+		if _check.expect(exam != null, "The annex has no ExamFloor."):
+			_check_candidates(exam, EXAM_CROWD)
+			_check.expect(exam.find_children("*", "CollisionObject3D", true, false).is_empty(),
+				"An exam vignette adds a collider to the 03 lane.")
 	var nav := corridor.get_node_or_null(^"Navigation") as LocationNavigation
 	if _check.expect(nav != null, "The corridor lost its navigation.") and _check.expect(
 		await _wait_for_bake(nav), "The corridor's navigation never baked."):
@@ -75,6 +94,13 @@ func _run() -> void:
 	var waiting := office.get_node_or_null(^"WaitingRoom")
 	if _check.expect(waiting != null, "The staff office has no WaitingRoom."):
 		_check_pieces(waiting, "staff office")
+		_check_candidates(waiting, WAITING_CROWD)
+		var seat := waiting.get_node_or_null(^"Clique1/StudyStool") as MeshInstance3D
+		var sitter := waiting.get_node_or_null(^"Clique1/Person0/Body") as Node3D
+		if _check.expect(seat != null and sitter != null, "The waiting room lost its seated reader."):
+			var seat_top := seat.global_position.y + seat.get_aabb().end.y
+			_check.expect(sitter.global_position.y - seat_top > 0.03 and sitter.global_position.y - seat_top < 0.09,
+				"The reader's hips no longer rest just above the stool.")
 		_check.expect(waiting.find_children("*", "CollisionObject3D", true, false).is_empty(),
 			"The waiting room added a collider to the office's inspection routes.")
 	root.remove_child(office)
@@ -112,6 +138,71 @@ func _check_pieces(holder: Node, where: String) -> void:
 				_check.expect(not shaded.shader.code.contains("instance uniform "),
 					"%s: %s uses the instance shader buffer." % [where, shaded.shader.resource_path])
 	_check.expect(meshes > 60 and moving > 20, "%s: only %d pieces, %d moving." % [where, meshes, moving])
+
+
+func _check_candidates(floor: Node, specs: Dictionary) -> void:
+	var heights: Array[float] = []
+	var tailoring: Dictionary = {}
+	for path: NodePath in specs:
+		var spec: Array = specs[path]
+		var person := floor.get_node_or_null(path) as Node3D
+		if not _check.expect(person != null, "Missing exam candidate %s." % path):
+			continue
+		var feet := person.get_node_or_null(^"PlantedFeet") as MeshInstance3D
+		var face := person.get_node_or_null(^"Body/Head/FaceAndHair") as MeshInstance3D
+		var coat := person.get_node_or_null(^"Body/Tailoring") as MeshInstance3D
+		if not _check.expect(feet != null and face != null and coat != null, "%s lost its main volumes." % path):
+			continue
+		heights.append((face.global_transform * face.get_aabb()).end.y - person.global_position.y)
+		tailoring[coat.mesh] = true
+		_check.expect(absf((feet.global_transform * feet.get_aabb()).position.y - person.global_position.y) < 0.005,
+			"The soles of %s no longer meet the floor." % path)
+		var pieces := person.find_children("*", "MeshInstance3D", true, false)
+		_check.expect(pieces.size() <= 7, "%s has more than one draw per moving form/prop." % path)
+		for piece: MeshInstance3D in pieces:
+			var mesh := piece.mesh as ArrayMesh
+			var paint := piece.material_override as StandardMaterial3D
+			_check.expect(mesh != null and mesh.get_surface_count() == 1
+				and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
+				and paint != null and paint.vertex_color_use_as_albedo,
+				"%s has lost a tinted, non-box silhouette: %s." % [path, piece.name])
+		_check_beat(person, feet, spec)
+	_check.expect(tailoring.size() == specs.size(), "%s reused a costume mesh across candidates." % floor.name)
+	_check.expect(not heights.is_empty() and heights.max() - heights.min() > 0.22,
+		"%s lost its range of heights." % floor.name)
+
+
+func _check_beat(person: Node3D, feet: MeshInstance3D, spec: Array) -> void:
+	var motion := person.get_node_or_null(^"Motion") as AnimationPlayer
+	var joint := person.get_node_or_null(spec[2]) as Node3D
+	var beat: StringName = spec[0]
+	if not _check.expect(joint != null and motion != null and motion.is_playing() and motion.current_animation == beat,
+			"%s does not autoplay %s." % [person.get_path(), beat]):
+		return
+	var clip := motion.get_animation(beat)
+	_check.expect(clip.loop_mode == Animation.LOOP_LINEAR, "%s no longer loops." % beat)
+	for i in clip.get_track_count():
+		var path := clip.track_get_path(i)
+		_check.expect(String(path).begins_with("Body") and path.get_concatenated_subnames() == &"rotation_degrees",
+			"%s animates something other than a visual pivot: %s." % [beat, path])
+	var prop: MeshInstance3D
+	var grip_to_prop := Transform3D.IDENTITY
+	if not (spec[3] as NodePath).is_empty():
+		prop = person.get_node_or_null(spec[3]) as MeshInstance3D
+		if _check.expect(prop != null and String(prop.get_parent().name).begins_with("Forearm"),
+				"%s lost its handheld prop or detached it from the grip." % beat):
+			grip_to_prop = (prop.get_parent() as Node3D).global_transform.affine_inverse() * prop.global_transform
+	if beat == &"Revise":
+		_check.expect(person.has_node(^"Body/ForearmR/Pencil"), "Revision lost its pencil.")
+	var planted := feet.global_transform
+	motion.seek(0.0, true)
+	var rest := joint.rotation_degrees
+	motion.seek(spec[1], true)
+	_check.expect(rest.distance_to(joint.rotation_degrees) > 7.0, "%s has no readable gesture." % beat)
+	_check.expect(feet.global_transform.is_equal_approx(planted), "%s moves its planted shoes." % beat)
+	if prop != null:
+		var moved := (prop.get_parent() as Node3D).global_transform.affine_inverse() * prop.global_transform
+		_check.expect(moved.is_equal_approx(grip_to_prop), "%s slides the prop out of its grip." % beat)
 
 
 func _check_spawns(corridor: Node3D, annex: Node) -> void:

@@ -21,6 +21,7 @@ from build_teaching_block import (
     child_path, plane, quad, slab, srgb, vec3,
 )
 from dream_figures import PEOPLE, figure, hen, horse, motion_material, part, shader_material, swivel_chair
+from exam_crowd import exam_candidates, waiting_candidates
 from fixture_geometry import FixtureBuild
 
 G = GROUND_Y
@@ -204,24 +205,8 @@ def exam_floor(b):
                                     ((-13.66, RISE, -25.6), -97), ((10.2, RISE, -44.35), 180),
                                     ((12.0, RISE, -44.3), 172), ((-5.2, RISE, -44.35), 190))):
         swivel_chair(b, e, f"TurnedChair{i}", pos, yaw, i * .17)
-    # Two small cliques by the south glass, sharing a bag of something.
-    for c, (x, people) in enumerate(((-1.5, 3), (14.4, 2))):
-        b.node(f"Clique{c}", e, position=vec3((x, RISE, -41.25)))
-        q = child_path(e, f"Clique{c}")
-        for k in range(people):
-            angle = math.tau * k / people + .4
-            px, pz = .42 * math.cos(angle), .3 * math.sin(angle)
-            yaw = math.degrees(math.atan2(-px, -pz))
-            look = {"coat": ("coat_grey", "coat_navy", "coat_olive", "coat_cream")[(c + k) % 4],
-                    "hair": "hair" if k else "hair_grey"}
-            figure(b, q, f"Person{k}", (px, 0, pz), yaw, look, body="nod", phase=k * .31 + c)
-        b.box("Snacks", q, (0, 1.05, 0), (.16, .2, .1), "vermilion")
-    # The troublemaker, held up by an accomplice, punching the plaster.
-    b.node("Troublemaker", e, position=vec3((-13.55, RISE, -29.2)))
-    t = child_path(e, "Troublemaker")
-    figure(b, t, "Ranter", (0, 0, 0), -90, {"coat": "coat_ink", "hair": "hair", "droop": True}, hand="punch")
-    figure(b, t, "Accomplice", (.45, 0, .42), -120, {"coat": "coat_rust", "hair": "hair"}, pose="bowed")
-    b.box("HoldingArm", t, (.24, 1.16, .2), (.38, .09, .09), "coat_rust", rot=(0, 40, 0))
+    # Chat and revision by the glass, and the pair at the dented plaster.
+    t = exam_candidates(b, e, RISE)
     for k, (dz, dy, w) in enumerate(((0, 1.3, .18), (.1, 1.22, .07), (-.08, 1.38, .09), (.05, 1.45, .05))):
         b.box(f"Dent{k}", t, (-.597, dy, dz), (.006, w, w * .8), "graphite")
     # Now serving: nobody.
@@ -499,20 +484,12 @@ def waiting_room(b):
                                     ((-3.85, 0, 1.25), -90))):
         # Round 2 (2026-11-20): postmodern upholstery, still turning away on the lift.
         swivel_chair(b, w, f"TurnedChair{i}", pos, yaw, i * .23, look=WAITING_LOOKS[i])
-    for c, (centre, people) in enumerate((((1.35, 1.15), 3), ((-3.7, 2.45), 2))):
-        b.node(f"Clique{c}", w, position=vec3((centre[0], 0, centre[1])))
-        q = child_path(w, f"Clique{c}")
-        for k in range(people):
-            angle = math.tau * k / people + .9
-            px, pz = .4 * math.cos(angle), .3 * math.sin(angle)
-            look = {"coat": ("coat_cream", "coat_rust", "coat_navy")[(k + c) % 3], "hair": ("hair", "hair_grey")[k % 2]}
-            figure(b, q, f"Person{k}", (px, 0, pz), math.degrees(math.atan2(-px, -pz)), look, body="nod",
-                   phase=k * .27 + c * .5)
-        b.box("Snacks", q, (0, 1.04, 0), (.15, .2, .09), "vermilion")
-        rng = random.Random(40 + c)
-        for k in range(14):
-            b.box(f"Shell{k}", q, (rng.uniform(-.6, .6), .004, rng.uniform(-.5, .5)), (.02, .004, .012), "paper",
-                  rot=(0, rng.uniform(0, 180), 0))
+    waiting_candidates(b, w)
+    q = child_path(w, "Clique0")
+    rng = random.Random(40)
+    for k in range(14):
+        b.box(f"Shell{k}", q, (rng.uniform(-.6, .6), .004, rng.uniform(-.5, .5)), (.02, .004, .012), "paper",
+              rot=(0, rng.uniform(0, 180), 0))
     b.node("Number", w, position=vec3((-.4, 1.95, -2.99)))
     b.box("Card", "WaitingRoom/Number", (0, 0, 0), (.62, .4, .01), "paper")
     label(b, "Text", "WaitingRoom/Number", (0, .07, .007), "WAITING ROOM", .0012, ink=(36, 38, 44))

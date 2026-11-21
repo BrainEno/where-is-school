@@ -167,10 +167,10 @@ jobs:
               expect=7
               ;;
             dream_annex)
-              # Exam-dream dressing on the live corridor (docs/EXAM_DREAM_ART.md).
-              detail=(dream-annex review_width=360)
+              # Two live locations: preserve the overview and add authored 03 pose plates.
+              detail=(dream-annex review_width=440)
               width=1280
-              expect=8
+              expect=14
               ;;
             playground_site)
               # The building under construction past the yard's south-west corner
@@ -268,10 +268,15 @@ jobs:
           # the inline annotation budget.
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
-          # Mechanism evidence goes first; the artifact still holds every old view.
-          priority=("$inline"/service_*.jpg)
+          # Mechanisms and crowd poses go first; the artifact still holds every view.
+          priority=("$inline"/service_*.jpg "$inline"/*_detail_exam_conversation.jpg
+                    "$inline"/*_detail_exam_revision*.jpg "$inline"/*_detail_waiting_*.jpg
+                    "$inline"/*_detail_exam_plaster_pair.jpg)
           for path in "$inline"/*.jpg; do
-            if [[ "${path##*/}" != service_* ]]; then priority+=("$path"); fi
+            case "${path##*/}" in
+              service_*|*_detail_exam_conversation.jpg|*_detail_exam_revision*.jpg|*_detail_waiting_*.jpg|*_detail_exam_plaster_pair.jpg) ;;
+              *) priority+=("$path") ;;
+            esac
           done
           for path in "${priority[@]}"; do
             file=${path##*/}
