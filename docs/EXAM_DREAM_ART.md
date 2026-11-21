@@ -3,7 +3,8 @@
 > **Status:** experimental (2026-11-20). Owner art review pending.
 > **Owner:** implementation PR author.
 > **Source:** `tools/build_dream_annex.py`, the shader-driven `tools/dream_figures.py`, and
-> `tools/exam_crowd.py` / `tools/exam_crowd_forms.py` for the 03 crowd.
+> `tools/exam_crowd.py` / `tools/exam_crowd_forms.py` for the 03 crowd;
+> `tools/exam_hall_heads.py` sculpts the seven figures standing outside the exam rooms.
 
 This pass restyles the teaching block from a dream fragment the owner supplied: an exam
 in another school, with a waiting room in that school's teachers' office. You reach the
@@ -85,6 +86,31 @@ the village.
   seated reader. For a manual pass, climb the west stair from 02, turn along 03 past
   the glass and watch each group for a full loop (about eight seconds). Continue to the
   staff office and check that the study stool stays out of the entrance and inspection routes.
+
+## The seven 03 corridor sculpts
+
+This is the model-only pass on `ExamFloor/{Clique0,Clique1,Troublemaker}`. Shoulder,
+waist, trouser and shoe profiles are cut separately, and the eyes, continuous nasal
+bridge, mouth and jaw have depth in the mesh. Trim follows the cloth triangles so the
+plackets and pockets do not slice through the surface. Hand tips are shaped on the
+open gestures; the original grips and their paper, booklet and pencil stay attached.
+
+| Figure | Standout model details | Rest height to crown |
+|---|---|---:|
+| `Clique0/Person0` | Swept ponytail, round chin, knit top, pleated skirt, low flats | 1.53 m |
+| `Clique0/Person1` | Tapered crop, squared jaw, broad varsity jacket and trainers | 1.84 m |
+| `Clique0/Person2` | Neat part, narrow bridge and wire glasses, short-sleeved button-up and loafers | 1.68 m |
+| `Clique1/Person0` | Cheek-length bob, full cheeks, dropped-hood sweatshirt, loose trousers | 1.61 m |
+| `Clique1/Person1` | Low knot, narrow chin, long layered coat, boots | 1.76 m |
+| `Troublemaker/Ranter` | Lifted asymmetric quiff, crooked nasal profile, striped windbreaker | 1.75 m |
+| `Troublemaker/Accomplice` | Short layered cut, straight brow, roomier cuffed work shirt | 1.59 m |
+
+Rebuild with `python3 tools/build_teaching_block.py`, then run it with `--check`.
+No character is added, and no pose key, pivot, spawn, prop or dialogue is changed.
+The waiting room, synchronized clerks and stable yard keep their own models. Each
+candidate still fits the 2,100-triangle limit (including props) and uses the same
+five to seven painted meshes. In `dream_annex_test.gd` the width and depth of each
+head, measured relative to its height, also distinguish the seven silhouettes.
 
 ## Known limits
 
