@@ -102,7 +102,8 @@ def loft(mesh, rings, colors, *, bottom=True, crown=None):
     triangles = list(loft_indices(len(rings), cols))
     for cap in ([0, -1] if bottom else [-1]):
         ring = rings[cap]
-        centre = crown if cap and crown is not None else tuple(sum(axis)/cols for axis in zip(*ring))
+        # Keep the packed cap centroid identical across Python's float sum changes.
+        centre = crown if cap and crown is not None else tuple(math.fsum(axis)/cols for axis in zip(*ring))
         start = len(points)-cols if cap else 0
         pole = len(points)
         points.append(centre)
