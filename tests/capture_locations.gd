@@ -21,9 +21,9 @@ extends SceneTree
 ## `school-details` uses matched hall, lab and fitted-room stances.
 ## Add `school-focus` for authored CameraShots, including the updated wet bench.
 ## `review_width=400` additionally writes compact copies for inline CI review.
-## `dream-annex` frames the exam-dream dressing (docs/EXAM_DREAM_ART.md) on the live
-## corridor: two follow-camera stances, then fixed views of the escalator, the ticket
-## counter, the 03 exam floor and the stable yard behind 01.
+## `dream-annex` frames the live corridor's escalator, ticket counter, 03 exam floor
+## and stable yard, then the staff office. It includes two follow-camera stances and
+## fixed views of the 03 crowd's conversation and revision at authored keyframes.
 ## `annex-thresholds` compares the new door approaches on the real hall floor.
 ## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
@@ -144,9 +144,17 @@ const DREAM_VIEWS := [
 	["escalator", Vector3(0.6, 1.9, -5.4), Vector3(-5.0, 2.0, -8.45)],
 	["ticket_counter", Vector3(-1.5, 1.55, -6.1), Vector3(1.4, 1.35, -8.45)],
 	["exam_floor_west", Vector3(-12.3, 5.4, -17.6), Vector3(-13.7, 4.2, -29.5)],
-	["exam_floor_north", Vector3(-5.5, 5.5, -40.4), Vector3(9.0, 4.2, -43.6)],
+	["exam_floor_north", Vector3(-5.5, 5.18, -43.58), Vector3(9.0, 4.36, -42.1)],
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-34.0, -1.6, 8.6)],
 	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-33.0, -1.0, 7.0)],
+	["exam_conversation", Vector3(-2.76, 5.24, -43.83), Vector3(-1.49, 4.53, -41.38), 2.10],
+	["exam_revision", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 1.50],
+	["exam_revision_next", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 2.78],
+	["exam_plaster_pair", Vector3(-13.67, 5.12, -26.52), Vector3(-13.40, 4.52, -29.05), 1.54],
+]
+const WAITING_VIEWS := [
+	["waiting_conversation", Vector3(2.52, 1.66, -1.04), Vector3(1.45, .89, 1.36), 2.2],
+	["waiting_revision", Vector3(-2.04, 1.58, .36), Vector3(-3.55, .86, 2.36), 2.78],
 ]
 const ROOM_THRESHOLD_STANCES := [
 	["recess_aperture_01", Vector3(-24.75, -3.4, 8.82)],
@@ -299,6 +307,7 @@ func _run() -> void:
 	_lines.append("")
 	if _dream_annex:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", DREAM_STANCES, DREAM_VIEWS)
+		await _capture_views(out_dir, "staff_office", ^"WaitingRoom", [], WAITING_VIEWS, "dream_annex_waiting")
 	elif _annex_thresholds:
 		await _capture_views(out_dir, "corridor", ^"TeachingBlock", ROOM_THRESHOLD_STANCES,
 			ROOM_THRESHOLD_VIEWS, "annex_thresholds")
@@ -392,7 +401,7 @@ func _capture_views(out_dir: String, location_id: String, marker: NodePath, stan
 		await _stances_and_views(current, out_dir, subject, stances, views)
 
 
-## Follow-camera stances ([name, feet]) first, then fixed views ([name, eye, target]).
+## Follow-camera stances ([name, feet]), then fixed views ([name, eye, target, optional pose time]).
 func _stances_and_views(current: Node, out_dir: String, subject: String, stances: Array, views: Array) -> void:
 	var nav := current.get_node(^"Navigation") as LocationNavigation
 	_lines.append("## %s" % subject)
@@ -417,13 +426,34 @@ func _stances_and_views(current: Node, out_dir: String, subject: String, stances
 		camera.global_position = view[1]
 		camera.look_at(view[2], Vector3.UP)
 		camera.make_current()
+		var held: Array[AnimationPlayer] = []
+		var timing := ""
+		if view.size() == 4:
+			var at: float = view[3]
+			held = _hold_crowd_pose(current, at)
+			timing = " at the %.2f s pose" % at
 		await _wait(0.5)
 		var shot := "%s_%02d_detail_%s" % [subject, index, view[0]]
 		_save(out_dir, shot)
-		_lines.append("- `%s.jpg` (fixed view, not gameplay) from %s" % [shot, str(view[1])])
+		_lines.append("- `%s.jpg` (fixed view, not gameplay) from %s%s" % [shot, str(view[1]), timing])
+		for motion in held:
+			motion.play()
 		index += 1
 	camera.queue_free()
 	await _wait(0.1)
+
+
+func _hold_crowd_pose(current: Node, seconds: float) -> Array[AnimationPlayer]:
+	var held: Array[AnimationPlayer] = []
+	for motion: AnimationPlayer in current.find_children("Motion", "AnimationPlayer", true, false):
+		if motion.is_playing() and motion.current_animation_length > 0.0:
+			var time := fposmod(seconds, motion.current_animation_length)
+			motion.pause()
+			motion.seek(time, true)
+			held.append(motion)
+	if held.is_empty():
+		_failures.append("%s has no playing exam poses to capture." % current.name)
+	return held
 
 
 ## This is not a gameplay shot: the low matched plate makes the old unsupported

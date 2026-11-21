@@ -2,7 +2,8 @@
 
 > **Status:** experimental (2026-11-20). Owner art review pending.
 > **Owner:** implementation PR author.
-> **Source:** `tools/build_dream_annex.py`, `tools/dream_figures.py`, and three shaders in `assets/shaders/school/`.
+> **Source:** `tools/build_dream_annex.py`, the shader-driven `tools/dream_figures.py`, and
+> `tools/exam_crowd.py` / `tools/exam_crowd_forms.py` for the 03 crowd.
 
 This pass restyles the teaching block from a dream fragment the owner supplied: an exam
 in another school, with a waiting room in that school's teachers' office. You reach the
@@ -12,8 +13,9 @@ south-west corner, and you keep missing it. Old women dry grain and quilts in fr
 The stable smell is everywhere.
 
 The pass is an *addition*. It moves no wall, exit, spawn or interaction and resolves
-nothing in the story. Each element below is built from primitive boxes and shader motion.
-None of it uses a script, actor, sound or texture.
+nothing in the story. The 03 crowd uses shaped, vertex-painted meshes and native pose
+loops; the original stair, counter, chairs and yard still use primitives and shader motion.
+None of it uses a script, actor, sound or new texture.
 
 ## What is where
 
@@ -22,9 +24,9 @@ None of it uses a script, actor, sound or texture.
 | 02 -> 03 west stair | Subway-scale escalator "toward an invisible direction". **The steps run down**: anyone climbing is walking up a down escalator, the "hidden slide back" of the closing feeling. | `dream_escalator.gdshader` paints a moving step belt over the existing treads. The player still walks on the teaching block's ramp collider. Steel skirts, rubber handrails, comb plates, a light-bar canopy and a metro totem reading `03 / EXAM ↑`. |
 | 02, opposite the stair foot | Ticket counter: "the exam costs money". Its sellers ignore you, stare at the escalator, mouths drooping, hands moving like machines. | A cobalt booth labelled `EXAM FEE · TICKETS` with three identical clerks in one pose. All three stamp in exact step (one `phase`). The mechanical snap comes from `mechanical = 1`. A queue lane waits for a queue that never forms. |
 | 03 corridor (west run and north turn) | Empty corridor; paper on every door says EXAM ROOM; inside, messy desks "finished or not yet started". | A taped paper notice on every bay door, with exam-room numbers that disagree (`07`, `07`, `13`, `00` …). Dropped papers and a tipped chair sit behind the high slit. A seating plan is painted on the corridor floor, slightly off-square. Hard vermilion, cobalt and lemon colour fields cover the walls, with a red floor rule leading to the office. |
-| 03 toward the staff office | The waiting room is the teachers' office. | Queue footprints run to the office door, and the last three pairs face backwards. Office chairs turned to the wall drift on their gas lifts (`swivel`). Two small cliques nod over a red bag of snacks. A `NOW SERVING — — —` screen. |
-| 03 west wall | The troublemaker who rants and punches the corridor wall as his accomplice holds him up. | `Troublemaker/Ranter` (droop mouth, `punch`) beside `Accomplice` (bowed), with four dents in the plaster. No dialogue: he is set dressing, not a character. |
-| Staff office (`WaitingRoom`) | Chairs turning away, cliques of 2–3 sharing gossip and snacks. | Four turned chairs, two nodding cliques with snack bags and seed shells, and a `WAITING ROOM / EXAM — —` card. Visual only: the rota, trays and key-board inspections are unchanged. |
+| 03 toward the staff office | In the gaps along the glass: a brief conversation, then two candidates absorbed in exam prep. | A varsity-jacket speaker gestures palm-up; a shorter student in a pleated skirt nods back. Further along, a hooded reader traces a page with a pencil while a student in a long coat checks an admission slip. The backward footprints, turned chairs and `NOW SERVING — — —` screen stay in place. |
+| 03 west wall | The troublemaker and accomplice by the damaged plaster. | `Troublemaker/Ranter` pauses between sharp forearm movements toward the dents. `Accomplice` leans in with an open hand. No dialogue or reaction to the player. |
+| Staff office (`WaitingRoom`) | Chairs turning away; a small conversation and a quiet study corner. | One person offers a held snack pouch. Opposite the group, a reader and a student with a slip wait beside the south wall; the reader has a low stool. The rota, trays and key-board inspections are unchanged. |
 | Behind 01, west of the glass entrance | The approach "through the horse shed"; circling the village to the inconspicuous doorway; grain and quilts that block the view; the smell. | A walkable **stable yard** opens off the forecourt's west side: an earth lane and a yard with dung and straw, low mud walls, and village houses beyond. Its centre is a two-storey **DreamHouse**. 1F is three open stalls with two grazing horses. 2F is one lit slice of window where three silhouettes stamp in step under a `TICKETS · EXAM 2F →` sign. The only door is a small dark opening at the **south-west corner**, numbered `1`, behind a line of quilts. Old women squat and rake grain mats. There are hens, a coop, a dung heap with flies, and smell drawn as rising, bending dithered ribbons (`dream_odor.gdshader`). |
 | Above the DreamHouse roof | "A crowd that is never seen outside suddenly gathers, then vanishes up the escalator", heads bowed, their voices fading smoothly. | An outdoor glass escalator leaves the roof and stops in mid-air at a black void in a lit frame. Seven bowed riders loop up it (`travel`) and dither out at both ends (`fade_edge`), which is how they vanish. |
 
@@ -36,16 +38,21 @@ the village.
 - **Modern against municipal.** The exam floor uses hard colour fields, steel and rubber,
   and black-and-white wayfinding. It reads as a metro station or a test centre and
   contrasts with the indigo-and-lavender 03 ledger underneath. The yard uses earth, lime,
-  timber and saturated quilt prints. Both layers stay matte and toon-lit (`diffuse_toon`,
-  no specular).
+  timber and saturated quilt prints. The dressing stays matte: toon diffuse for the
+  boxes and wrapped diffuse on 03's rounded people, with no specular.
 - **Repetition is the absurdity.** The three clerks share a pose and a phase. Half the door
   numbers say `07`. The footprints reverse. The escalator runs down under people walking up.
-- **Motion without behaviour.** Every movement is a vertex offset or a turn about a shared
-  pivot in `dream_motion.gdshader`. Every part of an assembly is an unrotated box with the
-  same `phase`, so the assembly moves as one piece. The builder stores phases and pivots
-  in shared material variants, not per-instance uniforms. This keeps a corridor reload
-  from exhausting Compatibility's shared uniform buffer while both instances exist.
-  Fades are dithered discards, not alpha, so nothing sorts against the cutaway glass.
+- **03 is human; 02 is mechanical.** Twelve candidates vary in shoe-to-head height,
+  shoulder width, dress, hairline and stance. Rounded, tapered profiles and cloth/skin
+  pigment planes hold up at walking distance. Collars, cuffs, pleats, glasses and laced
+  shoes are secondary to the silhouettes. Each moving form uses one opaque painted
+  surface, with indexed vertices on curved forms to keep the scene size down.
+  `AnimationPlayer` drives torso, head and forearm poses, with anchored shoes
+  and a prop attached to the same joint as its gripping hand; no runtime code or dialogue.
+- **Motion without behaviour, elsewhere.** A vertex offset or a turn about a shared pivot
+  in `dream_motion.gdshader` moves unrotated box assemblies as one piece. The builder
+  stores phases and pivots in material variants, not per-instance uniforms, so a corridor
+  reload won't exhaust Compatibility's shared slots. Fades are dithered, not alpha.
 - **No resolution.** No new text, dialogue, flag or exit. The doorway and the sky
   escalator lead nowhere.
 
@@ -66,18 +73,23 @@ the village.
   - the stair under the escalator still climbs 02 -> 03 directly, and the 01 gallery stays
     walkable;
   - no annex collider crowds a spawn marker;
-  - the office's waiting room adds no collider.
+  - the exam-floor and office vignettes add no collider;
+  - the crowd keeps its varied heights, native posed joints, planted shoes and held props.
 
   `corridor_art_test.gd`, `location_art_test.gd` and `school_rooms_test.gd` keep their
   contracts unchanged.
-- The `Location art capture` workflow has a `dream_annex (after)` job that runs
-  `tests/capture_locations.gd -- dream-annex`. It takes two follow-camera stances (the
-  yard and the 03 lane) and six fixed views: the escalator, the ticket counter, the 03
-  west run, the 03 north turn, the yard, and the yard from the air.
+- The `Location art capture` workflow's `dream_annex (after)` job runs
+  `tests/capture_locations.gd -- dream-annex`. It keeps the two gameplay stances and
+  six overviews, adding six timed review frames: the conversation, booklet and pencil
+  at two points of the revision loop, plaster pair, waiting-room conversation, and
+  seated reader. For a manual pass, climb the west stair from 02, turn along 03 past
+  the glass and watch each group for a full loop (about eight seconds). Continue to the
+  staff office and check that the study stool stays out of the entrance and inspection routes.
 
 ## Known limits
 
 - The escalator belt paints over the treads. Its steps do not carry the player.
 - Shader motion is per mesh, so a turned chair keeps its pivot only because its parts are
-  unrotated boxes. Do not add rotated parts to a moving assembly.
-- The fixed capture views are review frames, not gameplay shots.
+  unrotated boxes. Do not add rotated parts to a shader-driven assembly.
+- The crowd is noninteractive. These are short ambient loops, not dialogue, lip sync or pathfinding.
+  The fixed capture views are review frames, not gameplay shots.
