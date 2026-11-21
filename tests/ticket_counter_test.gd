@@ -65,7 +65,7 @@ func _run() -> void:
 
 func _enter_hall() -> bool:
 	Harness.stage = "ticket counter: through the real 01 door"
-	_world = (load(MAIN) as PackedScene).instantiate()
+	_world = MAIN.instantiate()
 	_director = _world.get_node(^"OpeningSequence") as OpeningSequence
 	_director.autostart = false
 	root.add_child(_world)
