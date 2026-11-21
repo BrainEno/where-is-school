@@ -21,12 +21,14 @@ jobs:
     name: Sit, boot and play at the CRT
     runs-on: ubuntu-latest
     timeout-minutes: 12
-    env:
-      CI_LOG_DIR: ${{ runner.temp }}/computer-room/logs
-      XDG_DATA_HOME: ${{ runner.temp }}/computer-room/user
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - uses: ./.github/actions/setup-godot
+      - name: Isolate the playtest's saves and logs
+        shell: bash
+        run: |
+          echo "CI_LOG_DIR=$RUNNER_TEMP/computer-room/logs" >> "$GITHUB_ENV"
+          echo "XDG_DATA_HOME=$RUNNER_TEMP/computer-room/user" >> "$GITHUB_ENV"
       - name: Import and compile with the pinned engine
         run: bash tools/ci_import_godot.sh "$CI_LOG_DIR"
       - name: Walk and play with the Compatibility renderer
