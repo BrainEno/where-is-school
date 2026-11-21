@@ -43,7 +43,7 @@ jobs:
           run_check bell_seating 180 godot --headless --path . --script res://tests/classroom_bell_seating_test.gd
           run_check q_presence 180 godot --headless --path . --script res://tests/q_presence_test.gd
           run_check bell_seating_render 180 xvfb-run -a --server-args='-screen 0 1280x720x24' \
-            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --resolution 1120x630 --fixed-fps 36 \
+            env LIBGL_ALWAYS_SOFTWARE=1 godot --path . --resolution 1120x630 \
             --rendering-method gl_compatibility --rendering-driver opengl3 --audio-driver Dummy \
             --script res://tests/classroom_bell_seating_test.gd -- "capture=$RUNNER_TEMP/bell-seating/frames"
           if grep -nE '^ERROR:|ObjectDB instances leaked|resources still in use at exit' \

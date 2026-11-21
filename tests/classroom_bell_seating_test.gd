@@ -41,7 +41,10 @@ func _run() -> void:
 		_check.expect(DisplayServer.get_name() != "headless", "Capture needs a rendered window.")
 		print("::notice title=Bell seating renderer::%s, %s" % [
 			RenderingServer.get_current_rendering_method(), RenderingServer.get_video_adapter_name()])
-	Engine.time_scale = 2.0 if capture else 3.0
+		# Drive the real scene at its normal physics rate and draw on demand. A
+		# software renderer warming up the room must not stall the transfer clock.
+		RenderingServer.render_loop_enabled = false
+	Engine.time_scale = 3.0
 	await _through_bell(false)
 	await _free_world()
 	if not capture:
@@ -97,8 +100,11 @@ func _through_bell(already_seated: bool) -> void:
 	var player_chair_home := _chair.global_position
 	if not already_seated:
 		_player.stand_up()
-		if not _check.expect(await Harness.wait_until(func() -> bool: return not _player.is_seat_transition_active(), 5.0),
-				"The existing rise never finished."):
+		var ticks := Engine.get_physics_frames()
+		var rose := await Harness.wait_until(func() -> bool: return not _player.is_seat_transition_active(), 5.0)
+		var animation := _player.get_character_animator()
+		if not _check.expect(rose, "The existing rise never finished (%d physics ticks, paused=%s, clip=%s at %.2f)." % [
+				Engine.get_physics_frames() - ticks, str(paused), animation.get_current_clip(), animation.get_action_progress()]):
 			return
 		var pushed := _chair.global_position.distance_to(player_chair_home)
 		var gap := _chair.mesh_bounds().position.z - _chair.home_mark().z - _player.navigation_agent.radius
@@ -270,14 +276,16 @@ func _shot(stem: String) -> void:
 	if _output.is_empty() or DisplayServer.get_name() == "headless":
 		return
 	paused = true
-	await RenderingServer.frame_post_draw
+	# Leave the physics callback before asking the real gameplay camera to draw.
+	await process_frame
+	RenderingServer.force_draw()
 	var image := root.get_texture().get_image()
 	paused = false
-	if _check.expect(image != null and image.save_jpg(_output.path_join(stem + ".jpg"), 0.9) == OK,
-			"Could not save %s." % stem):
+	if _check.expect(image != null and not image.is_empty()
+			and image.save_jpg(_output.path_join(stem + ".jpg"), 0.9) == OK, "Could not save %s." % stem):
 		_saved_frames += 1
 		image.resize(400, roundi(image.get_height() * 400.0 / image.get_width()), Image.INTERPOLATE_LANCZOS)
-		image.save_jpg(_output.path_join(stem + "_preview.jpg"), 0.62)
+		image.save_jpg(_output.path_join(stem + "_preview.jpg"), 0.51)
 
 
 func _free_world() -> void:
