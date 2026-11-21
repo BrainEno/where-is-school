@@ -14,7 +14,7 @@ const INLINE_SIZE := Vector2i(480, 270)
 ## Four 4000-character parts per frame, even with textured walls. The full PNG is
 ## not affected. The workflow prioritizes the last (yard detail) frames inline.
 const INLINE_BYTES := 12000
-const EXPECTED_SHOTS := 21
+const EXPECTED_SHOTS := 22
 const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 ## Game time per real second while the braced drop plays (see the drop in `_run`).
 const BRACE_TIME_SCALE := 0.1
