@@ -162,6 +162,9 @@ func _try_station() -> void:
 	_check.expect(await Harness.wait_until(func() -> bool: return logo.visible, 4.0), "Boot skipped the logo.")
 	await _frame("02_boot_logo")
 	_check.expect(await Harness.wait_until(func() -> bool: return input_check.visible, 4.0), "First boot skipped the key check.")
+	var keys := desktop.get_node(^"Startup/InputCheck/Keys") as Label
+	_check.expect(await Harness.wait_until(func() -> bool: return keys.text.ends_with("[ ↵ ]"), 4.0),
+		"The protagonist's input sequence did not complete.")
 	await _frame("03_input_check")
 	if not _check.expect(await Harness.wait_until(func() -> bool: return desktop.page == Desktop.Page.DESKTOP, 5.0),
 			"Boot did not give way to the launcher."):
@@ -184,9 +187,10 @@ func _try_station() -> void:
 	if await _restored(panel, glow) and await _walk(Vector3(3.45, 0, 2.33)):
 		var exit := _room.find_interactable(&"computer_room_to_corridor")
 		if _check.expect(exit != null and _interaction.is_in_reach(exit), "The corridor exit is no longer reachable."):
+			var panel_id := panel.get_instance_id()
 			_interaction.request_activation(exit)
 			_check.expect(await Harness.wait_until(func() -> bool:
-				return not is_instance_valid(panel) and not _director.is_beat_active() \
+				return not is_instance_id_valid(panel_id) and not _director.is_beat_active() \
 					and _host.get_current().location_id == &"corridor" and _host.get_current_spawn() == &"FromComputerRoom",
 				12.0), "Leaving did not free the terminal and return to the same hallway threshold.")
 
@@ -202,7 +206,7 @@ func _play(panel: View) -> void:
 	if DisplayServer.get_name() == "headless":
 		_key(KEY_SPACE)
 	else:
-		# In the 640×480 desktop these are the centre and top left cells. Push events
+		# Aim at the centre cell in the 640×480 desktop. Push events
 		# in the fitted screen's actual coordinates, through SubViewportContainer.
 		_click(panel, Vector2(188, 232), MOUSE_BUTTON_LEFT)
 	_check.expect(await Harness.wait_until(func() -> bool: return board.minefield.opened > 1, 3.0),
@@ -212,6 +216,10 @@ func _play(panel: View) -> void:
 	_key(KEY_F)
 	await process_frame
 	_check.expect(board.minefield.opened == 0 and board.minefield.flags == 1, "Restart or keyboard flag did not work.")
+	if DisplayServer.get_name() != "headless":
+		_click(panel, Vector2(64, 109), MOUSE_BUTTON_RIGHT)
+		_check.expect(await Harness.wait_until(func() -> bool: return board.minefield.flags == 2, 3.0),
+			"Right-click did not mark the top-left tile.")
 	_press_action(&"pause")
 	await process_frame
 	_check.expect(desktop.page == Desktop.Page.DESKTOP and panel.is_open() and _director.is_beat_active(),
@@ -308,3 +316,6 @@ func _frame(title: String) -> void:
 		if _check.expect(image.save_jpg(_path.path_join(title + ".jpg"), 0.87) == OK,
 				"Could not save frame %s." % title):
 			_frames += 1
+			if title in ["04_desktop", "05_minesweeper"]:
+				image.resize(400, roundi(image.get_height() * 400.0 / image.get_width()), Image.INTERPOLATE_LANCZOS)
+				image.save_jpg(_path.path_join(title + "_preview.jpg"), 0.62)

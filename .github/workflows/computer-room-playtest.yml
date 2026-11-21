@@ -46,6 +46,20 @@ jobs:
             status=1
           fi
           run_check_summary
+      - name: Preview the rendered desktop and minefield
+        if: always()
+        shell: bash
+        run: |
+          for name in 04_desktop 05_minesweeper; do
+            frame="$RUNNER_TEMP/computer-room/frames/${name}_preview.jpg"
+            if [ ! -f "$frame" ]; then continue; fi
+            data=$(base64 -w0 "$frame")
+            parts=$(( (${#data} + 3999) / 4000 ))
+            if [ "$parts" -gt 5 ]; then continue; fi # The artifact still has the frame.
+            for i in $(seq 1 "$parts"); do
+              echo "::notice title=CRT preview $name $i/$parts::${data:$(( (i - 1) * 4000 )):4000}"
+            done
+          done
       - name: Upload game frames and verdict
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
