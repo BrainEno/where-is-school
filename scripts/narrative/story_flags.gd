@@ -119,6 +119,11 @@ const CURTAIN_DRAWN: StringName = &"curtain_drawn"
 const CURTAIN_EDGE_HELD: StringName = &"curtain_edge_held"
 ## bool: the player hurt their ankle on their last landing. Written only on arrival.
 const CURTAIN_LANDING_INJURED: StringName = &"curtain_landing_injured"
+## int: whole seconds of play left on the dazed look after a hurt landing
+## (`ConcussionView`). Written as 600 at the roof contact of that landing and counted down
+## while the game runs (not while paused); 0 or absent means the protagonist sees normally
+## again. Absent in saves written before round 7.
+const CONCUSSION_SECONDS_LEFT: StringName = &"concussion_seconds_left"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -216,6 +221,7 @@ const ALL_FLAGS: Array[StringName] = [
 	CURTAIN_DRAWN,
 	CURTAIN_EDGE_HELD,
 	CURTAIN_LANDING_INJURED,
+	CONCUSSION_SECONDS_LEFT,
 	ASKED_Q_IDENTITY,
 	ASKED_Q_DATE,
 	STAYED_SILENT,

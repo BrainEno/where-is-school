@@ -1,0 +1,333 @@
+extends SceneTree
+## The dazed look after a hurt landing (docs/CONCUSSION_VIEW.md): a static postmodern
+## paste-up of the world that is strongest at the landing and gone after ten minutes of play.
+##
+## On the real main scene:
+##
+## 1. **Off by default.** A new game has no `concussion_seconds_left`; the view's layer and
+##    sheet are hidden. It is a world filter: group `world_filter`, layer under the outline
+##    overlay (and so under the UI), and it never takes the mouse.
+## 2. **The landing starts it.** `ConcussionView.begin()` (called by the hurt landing at roof
+##    contact) writes 600; the look arrives within a fraction of a second at full strength.
+## 3. **Counted in play time.** The remaining time falls with the game clock, the flag holds
+##    the whole seconds, and the strength falls with it - never rises.
+## 4. **A paused game does not heal.** While the tree is paused nothing changes.
+## 5. **Saved like any flag.** Save, clear, load: the same remaining time and the same look.
+## 6. **It ends.** At 0 the flag is 0 and nothing is drawn or processed.
+## 7. **An art style, not motion.** The shader reads the screen texture (every renderer has
+##    it for a canvas item) and has no `TIME`: nothing in it moves.
+## 8. **Each room its own paste-up**, changed on entry (behind the black of the change).
+##
+## With `-- --capture` (a rendered window; `.github/workflows/concussion-view-capture.yml`)
+## it photographs the yard and the alley from the game camera, clear and at several points of
+## the fade, into `builds/concussion-view/`, and checks the look changes the picture and
+## thins out as it fades.
+
+const Harness = preload("res://tests/test_harness.gd")
+const MAIN := "res://scenes/main/main.tscn"
+const SHADER := "res://assets/shaders/injury/concussion_collage.gdshader"
+const YARD := "res://scenes/locations/playground/playground.tscn"
+const ALLEY := "res://scenes/locations/alley/alley.tscn"
+const OUT := "res://builds/concussion-view"
+
+var _check := Harness.Checker.new()
+var _state: Node = null
+var _world: Node = null
+var _view: ConcussionView = null
+var _host: LocationHost = null
+var _player: PlayerController = null
+
+
+func _initialize() -> void:
+	Harness.arm_watchdog(self, 200.0, "concussion_view_test.gd")
+	call_deferred("_run")
+
+
+func _run() -> void:
+	var autoloads := Harness.ensure_state_autoloads(self)
+	_state = autoloads["game_state"]
+	if _state == null or autoloads["save"] == null:
+		Harness.finish(self, ["State autoloads are unavailable."], "")
+		return
+	Harness.clear_session_state(self)
+	_world = (load(MAIN) as PackedScene).instantiate()
+	var sequence := _world.get_node(^"OpeningSequence") as OpeningSequence
+	sequence.autostart = false
+	root.add_child(_world)
+	await _frames(3)
+	_view = _world.get_node_or_null(^"ConcussionView") as ConcussionView
+	_host = _world.get_node(^"LocationHost") as LocationHost
+	_player = _world.get_node(^"Player") as PlayerController
+	(_world.get_node(^"GameUI") as GameUI).fade.set_clear()
+	if not _check.expect(_view != null, "main has no ConcussionView."):
+		Harness.finish(self, _check.failures, "")
+		return
+
+	Harness.stage = "off by default"
+	_check_off("in a new game")
+	_check_layering()
+	_check_curve()
+	_check_shader()
+
+	if "--capture" in OS.get_cmdline_user_args():
+		await _capture()
+	else:
+		await _check_landing_and_countdown()
+		await _check_pause()
+		await _check_save()
+		await _check_end()
+		await _check_reseed()
+
+	Engine.time_scale = 1.0
+	paused = false
+	_world.queue_free()
+	await _frames(2)
+	Harness.clear_session_state(self)
+	Harness.finish(
+		self,
+		_check.failures,
+		(
+			"the hurt landing's paste-up starts at the contact, fades with play time, stops"
+			+ " while paused, survives a save and ends; it is a static world filter."
+		)
+	)
+
+
+func _check_off(when: String) -> void:
+	var sheet := _view.get_node(^"Sheet") as ColorRect
+	_check.expect(
+		not _view.visible and not sheet.visible and is_zero_approx(_view.get_daze()),
+		"The concussion view is drawn %s." % when
+	)
+	_check.expect(
+		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == 0,
+		"concussion_seconds_left is set %s." % when
+	)
+
+
+func _check_layering() -> void:
+	var overlay := _world.get_node(^"OutlineOverlay") as CanvasLayer
+	var sheet := _view.get_node(^"Sheet") as ColorRect
+	_check.expect(_view.is_in_group(&"world_filter"), "The view is not in the world_filter group.")
+	_check.expect(
+		_view.layer < overlay.layer and _view.layer < 0,
+		(
+			"The view (layer %d) is not under the outline overlay (layer %d)."
+			% [_view.layer, overlay.layer]
+		)
+	)
+	_check.expect(
+		sheet.mouse_filter == Control.MOUSE_FILTER_IGNORE, "The concussion sheet takes the mouse."
+	)
+
+
+func _check_curve() -> void:
+	_check.expect(
+		is_equal_approx(ConcussionView.daze_for(ConcussionView.DURATION), 1.0),
+		"The look is not at full strength at the landing."
+	)
+	_check.expect(is_zero_approx(ConcussionView.daze_for(0.0)), "The look does not end at 0.")
+	var last := 2.0
+	for step in range(ConcussionView.DURATION, -1, -30):
+		var daze := ConcussionView.daze_for(float(step))
+		_check.expect(daze <= last, "The look gets stronger as it heals (%d s left)." % step)
+		last = daze
+	var halfway := ConcussionView.daze_for(ConcussionView.DURATION / 2.0)
+	_check.expect(halfway > 0.5 and halfway < 0.8, "Halfway through the look is at %.2f." % halfway)
+
+
+func _check_shader() -> void:
+	var material := (_view.get_node(^"Sheet") as ColorRect).material as ShaderMaterial
+	if not _check.expect(
+		material != null and material.shader != null, "The concussion sheet has no shader."
+	):
+		return
+	_check.expect(material.shader.resource_path == SHADER, "The sheet does not use %s." % SHADER)
+	var code := material.shader.code
+	_check.expect(code.contains("hint_screen_texture"), "The filter does not read the screen.")
+	_check.expect(
+		code.contains("shader_type canvas_item"), "The filter is not a canvas item shader."
+	)
+	var uses_time := RegEx.create_from_string("\\bTIME\\b").search(code) != null
+	_check.expect(not uses_time, "The filter uses TIME: something in it moves.")
+
+
+func _check_landing_and_countdown() -> void:
+	Harness.stage = "the landing and the countdown"
+	ConcussionView.begin(_world)
+	_check.expect(
+		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == ConcussionView.DURATION,
+		"begin() did not write %d seconds." % ConcussionView.DURATION
+	)
+	await process_frame
+	_check.expect(_view.visible, "The look is not drawn after the landing.")
+	var arrived := await Harness.wait_until(func() -> bool: return _view.get_daze() > 0.97, 3.0)
+	_check.expect(arrived, "The look did not arrive at full strength (%.2f)." % _view.get_daze())
+	var before := _view.get_seconds_left()
+	var daze_before := _view.get_daze()
+	Engine.time_scale = 40.0
+	await create_timer(1.5, true, false, true).timeout
+	Engine.time_scale = 1.0
+	var after := _view.get_seconds_left()
+	_check.expect(
+		after < before - 20.0,
+		"Play time did not count the look down (%.1f -> %.1f)." % [before, after]
+	)
+	var saved := int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0))
+	_check.expect(
+		absi(saved - ceili(after)) <= 1,
+		"The flag holds %d s while %.1f s are left." % [saved, after]
+	)
+	_check.expect(_view.get_daze() < daze_before, "The look did not thin out as it was counted.")
+
+
+func _check_pause() -> void:
+	Harness.stage = "paused"
+	var before := _view.get_seconds_left()
+	paused = true
+	await create_timer(0.8, true, false, true).timeout
+	var during := _view.get_seconds_left()
+	paused = false
+	_check.expect(
+		is_equal_approx(before, during),
+		"The look healed while paused (%.2f -> %.2f)." % [before, during]
+	)
+
+
+func _check_save() -> void:
+	Harness.stage = "saved and loaded"
+	var save := root.get_node(^"Save")
+	var written: Dictionary = save.save_game()
+	if not _check.expect(bool(written.get("ok", false)), "Could not save: %s" % str(written)):
+		return
+	var saved := int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0))
+	_state.clear()
+	await process_frame
+	_check_off("after the story was cleared")
+	var loaded: Dictionary = save.load_game()
+	_check.expect(bool(loaded.get("ok", false)), "Could not load: %s" % str(loaded))
+	await process_frame
+	_check.expect(
+		absi(ceili(_view.get_seconds_left()) - saved) <= 1 and _view.visible,
+		(
+			"Loading did not bring back the look (%d s saved, %.1f s now)."
+			% [saved, _view.get_seconds_left()]
+		)
+	)
+	_check.expect(
+		is_equal_approx(_view.get_daze(), ConcussionView.daze_for(_view.get_seconds_left())),
+		"A loaded look arrived again as if it were a landing."
+	)
+	save.forget_all()
+
+
+func _check_end() -> void:
+	Harness.stage = "the end of the look"
+	_state.replace_snapshot({StoryFlags.CONCUSSION_SECONDS_LEFT: 2})
+	await process_frame
+	_check.expect(_view.visible, "Two seconds before the end the look is gone already.")
+	Engine.time_scale = 8.0
+	var ended := await Harness.wait_until(
+		func() -> bool: return int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, -1)) == 0,
+		5.0
+	)
+	Engine.time_scale = 1.0
+	await process_frame
+	_check.expect(ended, "The look never reached 0.")
+	_check_off("after it ended")
+	_check.expect(not _view.is_processing(), "The view still processes with nothing to count.")
+
+
+func _check_reseed() -> void:
+	Harness.stage = "a room change"
+	var material := (_view.get_node(^"Sheet") as ColorRect).material as ShaderMaterial
+	var before: Variant = material.get_shader_parameter(&"seed")
+	_check.expect(
+		_host.load_location(YARD, &"FromCorridor", _player, &"playground"), "The yard did not load."
+	)
+	await process_frame
+	var after: Variant = material.get_shader_parameter(&"seed")
+	_check.expect(
+		before != null and after != null and not is_equal_approx(float(before), float(after)),
+		"Entering another room kept the same paste-up (%s -> %s)." % [str(before), str(after)]
+	)
+
+
+# --- Capture ------------------------------------------------------------------
+
+
+func _capture() -> void:
+	Harness.stage = "capture"
+	if not _check.expect(
+		DisplayServer.get_name() != "headless", "--capture needs a rendered window."
+	):
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
+	for room: Array in [
+		[YARD, &"FromCorridor", &"playground", "yard"],
+		[ALLEY, &"FromPlayground", &"alley", "alley"]
+	]:
+		_state.replace_snapshot({})
+		if not _check.expect(
+			_host.load_location(room[0], room[1], _player, room[2]), "%s did not load." % room[3]
+		):
+			continue
+		await _frames(30)
+		var clear := await _photograph("%s_clear" % room[3])
+		var shots: Dictionary = {}
+		for seconds: int in [600, 300, 60]:
+			_state.replace_snapshot({StoryFlags.CONCUSSION_SECONDS_LEFT: seconds})
+			# Hold the clock so each picture is the moment it is named for.
+			_view.set_process(false)
+			await _frames(6)
+			shots[seconds] = await _photograph("%s_%03d" % [room[3], seconds])
+		var full := _changed(clear, shots[600])
+		var late := _changed(clear, shots[60])
+		print(
+			"%s: changed %.2f at the landing, %.2f a minute before the end" % [room[3], full, late]
+		)
+		_check.expect(
+			full > 0.25, "%s: the look barely changes the picture (%.2f)." % [room[3], full]
+		)
+		_check.expect(
+			late < full, "%s: the look did not thin out (%.2f vs %.2f)." % [room[3], late, full]
+		)
+	_state.replace_snapshot({})
+
+
+func _photograph(id: String) -> Image:
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := root.get_texture().get_image()
+	var path := ProjectSettings.globalize_path(OUT).path_join(id + ".png")
+	_check.expect(image.save_png(path) == OK, "Could not save %s." % path)
+	var small := image.duplicate() as Image
+	small.resize(
+		800, roundi(800.0 * image.get_height() / image.get_width()), Image.INTERPOLATE_LANCZOS
+	)
+	_check.expect(
+		small.save_jpg(path.get_basename() + ".jpg", 0.8) == OK, "Could not save %s's JPEG." % id
+	)
+	print("%s: %dx%d" % [id, image.get_width(), image.get_height()])
+	return image
+
+
+## The share of sampled pixels that differ noticeably between two frames.
+func _changed(a: Image, b: Image) -> float:
+	if a == null or b == null or a.get_size() != b.get_size():
+		return 0.0
+	var changed := 0
+	var total := 0
+	for y in range(0, a.get_height(), 4):
+		for x in range(0, a.get_width(), 4):
+			var p := a.get_pixel(x, y)
+			var q := b.get_pixel(x, y)
+			total += 1
+			if absf(p.r - q.r) + absf(p.g - q.g) + absf(p.b - q.b) > 0.09:
+				changed += 1
+	return float(changed) / float(maxi(total, 1))
+
+
+func _frames(count: int) -> void:
+	for _index in count:
+		await process_frame

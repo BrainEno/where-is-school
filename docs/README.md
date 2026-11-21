@@ -30,6 +30,7 @@
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–12 说明 N／学生几何、全员头部精修与主角步态，对照待所有者验收 |
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–12 几何修订同步，不独立声称获批 |
+| [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) | 序章摔伤后的“恍惚”画面：静止的后现代拼贴滤镜，落地最强、十分钟游戏时间内淡出 | 实验 | 实现 PR 作者 | 2026-11-11 | 只做美术；检查见 `tests/concussion_view_test.gd` 与 `concussion-view-capture.yml` |
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-20 | 共用舞台规则见 `tests/location_art_test.gd`；考试梦叠加层见 [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md)；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |

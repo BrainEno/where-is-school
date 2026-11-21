@@ -384,6 +384,9 @@ jobs:
           # The imagined lesson: teacher B's model, distorted, and the Munch screen filter, on
           # only while expected_b is on screen (docs/IMAGINED_LESSON.md).
           run_check imagined_lesson 200 godot --headless --path . --script res://tests/imagined_lesson_test.gd || status=1
+          # The dazed look after a hurt landing: a static paste-up of the world that starts at
+          # the roof contact and fades over ten minutes of play (docs/CONCUSSION_VIEW.md).
+          run_check concussion_view 200 godot --headless --path . --script res://tests/concussion_view_test.gd || status=1
           # Issue #174: the blocked classroom door turns its watcher (Q, and only Q) to look at
           # the player in the same frame as the text, follows them in the doorway, and lets go.
           run_check doorway_watch 240 godot --headless --path . --script res://tests/doorway_watch_test.gd || status=1
