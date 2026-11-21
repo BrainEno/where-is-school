@@ -270,12 +270,12 @@ jobs:
           queue="${RUNNER_TEMP}/queue.txt"
           : > "${queue}"
           # Mechanisms and crowd poses go first; the artifact still holds every view.
-          priority=("$inline"/service_*.jpg "$inline"/*_detail_exam_conversation.jpg
+          priority=("$inline"/service_*.jpg "$inline"/*_shot_detail_*.jpg "$inline"/*_detail_exam_conversation.jpg
                     "$inline"/*_detail_exam_revision*.jpg "$inline"/*_detail_waiting_*.jpg
                     "$inline"/*_detail_exam_plaster_pair.jpg)
           for path in "$inline"/*.jpg; do
             case "${path##*/}" in
-              service_*|*_detail_exam_conversation.jpg|*_detail_exam_revision*.jpg|*_detail_waiting_*.jpg|*_detail_exam_plaster_pair.jpg) ;;
+              service_*|*_shot_detail_*.jpg|*_detail_exam_conversation.jpg|*_detail_exam_revision*.jpg|*_detail_waiting_*.jpg|*_detail_exam_plaster_pair.jpg) ;;
               *) priority+=("$path") ;;
             esac
           done
