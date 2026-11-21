@@ -128,7 +128,8 @@ jobs:
               count = (len(data) + 3999) // 4000
               parts.extend(f'{name} {i + 1} {count} {data[i*4000:(i+1)*4000]}' for i in range(count))
           if len(parts) > 40:
-              raise SystemExit(f'Preview annotation budget exceeded: {len(parts)} > 40')
+              print(f'::error title=Q 预览转发超限::{len(parts)} 个分段；上限 40')
+              raise SystemExit(1)
           Path('parts.txt').write_text('\n'.join(parts) + '\n')
           PY
           if [ "$code" -ne 0 ] || grep -qE 'SCRIPT ERROR|Parse Error|^ERROR:|Q_CAPTURE_FAILURE:' capture.log \
@@ -173,6 +174,22 @@ jobs:
             test "$count" = 72
             sha256sum "$folder/textbook.mp4"
           fi
+
+      - name: Check the production Q rig, dialogue cues, and wrist contacts
+        if: always() && matrix.phase == 'after' && steps.capture.outcome != 'skipped'
+        shell: bash
+        env:
+          PROJECT: ${{ steps.project.outputs.path }}
+        run: |
+          set -uo pipefail
+          export CI_LOG_DIR="$GITHUB_WORKSPACE/build/q-model-migration/after/regression"
+          source "$PROJECT/tools/ci_run_check.sh"
+          if run_check q_model 220 godot --headless --resolution 1600x900 \
+            --path "$PROJECT" --script res://tests/q_model_test.gd; then
+            metrics=$(grep '^Q_MODEL_NOTE: real Q recitation:' "$CI_LOG_DIR/q_model.log")
+            echo "::notice title=Q 课本动作采样::$metrics"
+          fi
+          run_check_summary
 
       - name: Attribute the unchanged click-marker regression
         if: always() && steps.project.outputs.path != ''

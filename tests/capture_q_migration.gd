@@ -122,6 +122,7 @@ func _textbook_capture() -> void:
 	for frame in 72:
 		if frame == 56:
 			_dialogue.advance_presentation()
+			_panel.hide()  # Presenting the answer reopens the dialogue panel.
 			if _textbook_line() != &"q_ecosystem":
 				_failures.append("Q's real answer did not follow the reading cue.")
 		await process_frame
@@ -336,13 +337,17 @@ func _finish_migration() -> void:
 		var image := (entry["image"] as Image).duplicate() as Image
 		image.resize(640, 360, Image.INTERPOLATE_LANCZOS)
 		var encoded := ""
-		for attempt in 10:
-			var quality := maxf(0.8 - float(attempt) * 0.1, 0.3)
-			if attempt >= 5:
-				image.resize(int(image.get_width() * 0.85), int(image.get_height() * 0.85), Image.INTERPOLATE_LANCZOS)
+		for quality: float in [0.8, 0.65, 0.5, 0.35]:
 			encoded = Marshalls.raw_to_base64(image.save_jpg_to_buffer(quality))
 			if encoded.length() <= share:
 				break
+		while encoded.length() > share and image.get_width() > 64:
+			var shrink := clampf(sqrt(float(share) / float(encoded.length())) * 0.97, 0.5, 0.85)
+			image.resize(int(image.get_width() * shrink), int(image.get_height() * shrink), Image.INTERPOLATE_LANCZOS)
+			encoded = Marshalls.raw_to_base64(image.save_jpg_to_buffer(0.4))
+		if encoded.is_empty() or encoded.length() > share:
+			_failures.append("Cannot relay preview '%s' inside its %d-character budget." % [entry["name"], share])
+			continue
 		print("QFRAME: %s.jpg %s" % [String(entry["name"]), encoded])
 	var metadata := {"phase": _phase, "source_commit": _source_sha,
 		"engine": Engine.get_version_info(), "renderer": RenderingServer.get_current_rendering_method(),
