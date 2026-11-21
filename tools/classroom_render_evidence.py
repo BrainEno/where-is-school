@@ -76,7 +76,7 @@ CAPTURE_SHOTS = (
     "05_blackboard_platform_lectern.png",
     "06_east_doors.png",
     "07_window_and_blackout_curtain.png",
-    "08_twelve_student_desks.png",
+    "08_paired_student_desks.png",
     "09_projector_screen_down.png",
     "10_back_window_opening.png",
     "11_lectern_front.png",
@@ -87,6 +87,7 @@ CAPTURE_SHOTS = (
     "16_front_window_detail.png",
     "17_curtain_closed.png",
     "18_front_window_focus.png",
+    "19_desk_finish_detail.png",
 )
 # The clock capture (#173): tests/capture_classroom_clock.gd reads the time off each frame.
 CLOCK_SHOTS = (

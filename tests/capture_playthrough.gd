@@ -14,6 +14,7 @@ extends SceneTree
 ## the log.
 
 const Harness = preload("res://tests/test_harness.gd")
+const DeskContract = preload("res://tests/classroom_desk_contract.gd")
 const EvidenceContract = preload("res://tests/evidence_contract.gd")
 const SHOT_DIR := "res://docs/screenshots"
 const LOG_PATH := "res://docs/screenshots/PLAYTHROUGH.log"
@@ -761,7 +762,7 @@ func _place_candidate(design: String, point: Vector3, normal: Vector3) -> Node3D
 
 ## The four imported models, in the room the player is standing in.
 ##
-## The classroom's thirteen student desks, the stationery on the player's own desk, the
+## The classroom's 24 paired student desks, the stationery on the player's own desk, the
 ## player's own model and Q. These are frames of the running game — the same window, the
 ## same light, the same baked navigation as every other frame in this run — from a camera
 ## the capture places for the purpose, because the player's own camera is nailed to the
@@ -781,22 +782,19 @@ func _capture_imported_models() -> void:
 	# The scene the frames are supposed to show, checked before it is photographed: a
 	# missing model is a defect in the build, not a bad camera angle.
 	var furniture := classroom.get_node_or_null(^"Furniture")
-	var desk_names: Array[String] = [
-		"DeskA1", "DeskA2", "DeskA3", "DeskA4",
-		"DeskB1", "DeskQ", "DeskB2", "DeskB3", "DeskB4",
-		"DeskC1", "DeskC2", "DeskC3", "DeskC4",
-	]
+	var expected := DeskContract.positions()
 	var with_models := 0
 	if furniture != null:
-		for desk_name: String in desk_names:
+		for desk_name: String in expected:
 			var desk := furniture.get_node_or_null(NodePath(desk_name)) as Node3D
-			if desk != null and desk.get_node_or_null(^"Desk") != null:
+			if desk != null and desk.get_node_or_null(^"Desk") != null \
+					and desk.get_node_or_null(^"Chair/Seat") != null:
 				with_models += 1
-	_note("classroom desks with the imported model: %d of %d" % [with_models, desk_names.size()])
-	if with_models != desk_names.size():
+	_note("classroom desk and chair models present: %d of %d" % [with_models, expected.size()])
+	if with_models != expected.size():
 		_failures.append(
-			"Only %d of the classroom's %d desks have the school desk model."
-			% [with_models, desk_names.size()]
+			"Only %d of the classroom's %d sets have both the desk and chair models."
+			% [with_models, expected.size()]
 		)
 	var stationery := classroom.get_node_or_null(^"Furniture/DeskB2/Stationery") as Node3D
 	if stationery == null:
@@ -812,18 +810,17 @@ func _capture_imported_models() -> void:
 
 	# 1. A high rear view takes in all three rows without staging or moving the furniture.
 	await _shot_from_camera(
-		Vector3(0.0, 5.5, 8.4), Vector3(0.0, 0.6, 0.1),
+		Vector3(0.0, 9.0, 4.6), Vector3(0.0, 0.35, 1.25),
 		"03h_classroom_desks",
-		"The classroom: all thirteen desks and chairs, including Q beside the protagonist."
+		"The classroom: 12 pairs of desks and chairs, including Q beside the protagonist."
 	)
 
 	# 2. The player's own desk, close enough to see what is on it.
-	# From the front of the room looking back over the desk, so a player standing behind
-	# the desk cannot be between the camera and what it is photographing.
+	# Look across the protagonist's right aisle, clear of the new front-row desks.
 	await _shot_from_camera(
-		Vector3(-0.55, 1.55, -1.15), Vector3(0.0, 0.95, 0.15),
+		Vector3(-0.22, 1.63, 1.08), Vector3(-1.60, 0.89, 1.32),
 		"03i_own_desk_stationery",
-		"The player's own desk (DeskB2) from the sitting side: the stationery set on the top."
+		"The player's own desk (DeskB2) from the aisle: the stationery set on the top."
 	)
 
 	# 3. The player's own model, head to feet. Taken in the open floor in front of the
@@ -1251,7 +1248,7 @@ func _capture_cue_candidates() -> void:
 	if not await _wait_for_free(45.0):
 		_note("the candidate frames could not be taken: the player never got control back")
 		return
-	_teleport(Vector3(0.55, 0.0, 1.7), 0.0)
+	_teleport(Vector3(-0.375, 0.0, 1.7), 0.0)
 	await _wait(0.4)
 	var ahead := -_player.global_transform.basis.z
 	var centre := _player.global_position + ahead * 2.4
@@ -1516,7 +1513,7 @@ func _capture_click_navigation() -> void:
 	var navigator := _player.get_node_or_null("PointerNavigator") as PointerNavigator
 	# Which way an automatic walk ends: a finish or a cancel. A walk that stops without
 	# travelling has to say which of the two ended it.
-	var endings := [0, 0]
+	var endings: Array[int] = [0, 0]
 	_player.path_finished.connect(func() -> void: endings[0] += 1)
 	_player.path_cancelled.connect(func() -> void: endings[1] += 1)
 	var start := _player.global_position
@@ -1607,94 +1604,7 @@ func _capture_click_navigation() -> void:
 			]
 		)
 
-	# The keys take over mid-walk.
-	_ground_search_log.clear()
-	var second := _find_ground_click_screen(3.0, 6.0)
-	if second == Vector2.ZERO:
-		second = _find_ground_click_screen(2.0, 5.0)
-	if second == Vector2.ZERO:
-		second = _find_ground_click_screen(4.0, 8.0)
-	if second == Vector2.ZERO:
-		# The first walk ends wherever the click sent it, and one of those places is a
-		# corner of the room. From there the camera has two walls in frame and a 0.4 m
-		# strip of floor, so no distance band can contain a click point - measured, not
-		# guessed: 123 of 144 screen points had no ground under them and the nearest floor
-		# was 0.4 m away. That is a fact about where the player stood, not about the keys
-		# taking over a walk, so the shot stands somewhere the room is in frame, says so,
-		# and gives the same three bands one more go. The assertion below is unchanged.
-		_note(
-			"the interruption shot had no floor in view from %s; stepping into the open"
-			% str(_player.global_position)
-		)
-		_teleport(Vector3(0.4, 0.0, 2.6), 0.0)
-		await _wait(0.5)
-		await _unstick()
-		_ground_search_log.clear()
-		second = _find_ground_click_screen(3.0, 6.0)
-		if second == Vector2.ZERO:
-			second = _find_ground_click_screen(2.0, 5.0)
-		if second == Vector2.ZERO:
-			second = _find_ground_click_screen(4.0, 8.0)
-	if second != Vector2.ZERO:
-		# The same two retries the first walk gets, for the same two reasons: a click can
-		# be swallowed by something on screen before the navigator sees it, and a click
-		# the navigator refuses starts no walk. Neither is "the keys did not take over",
-		# so neither should be reported as it.
-		var was_walking := false
-		var clicks_seen := 0
-		for _attempt in 2:
-			var clicks_before := navigator.get_click_count() if navigator != null else 0
-			await _click_at_screen(second)
-			# A click becomes a route on the controller's own cadence, and the route can
-			# start a third of a second after the press. Waiting a fixed 0.25 s measured
-			# that delay instead of the thing the shot is about: the key has to take over
-			# from a walk that is *already running*, so wait for it to run.
-			was_walking = await _poll(
-				func() -> bool: return _player.is_path_active(), 2.0
-			)
-			clicks_seen = (navigator.get_click_count() if navigator != null else 0) - clicks_before
-			if was_walking:
-				break
-			_note("the interruption click started no walk; %d click(s) were accepted" % clicks_seen)
-			if clicks_seen <= 0:
-				_note("the interruption click never reached the world; trying another point")
-				second = _find_ground_click_screen(3.0, 6.0)
-				if second == Vector2.ZERO:
-					second = _find_ground_click_screen(2.0, 5.0)
-				if second == Vector2.ZERO:
-					second = _find_ground_click_screen(4.0, 8.0)
-				if second == Vector2.ZERO:
-					break
-				continue
-			# The navigator saw the click and accepted no walk: another point would be a
-			# different question, so this is the moment to stop asking it.
-			break
-		Input.action_press("move_forward")
-		await _wait(0.4)
-		Input.action_release("move_forward")
-		await _wait(0.2)
-		var stopped := not _player.is_path_active()
-		await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
-		_note("walk before WASD=%s, walk after WASD=%s" % [was_walking, stopped])
-		if not was_walking or not stopped:
-			_failures.append(
-				"Holding a movement key did not take over from the automatic walk "
-				+ "(walk before=%s, walk after=%s, clicks accepted=%d, %s, control=%s, "
-				% [
-					was_walking, stopped, clicks_seen,
-					navigator.get_last_rejection() if navigator != null else "no navigator",
-					str(_player.is_control_enabled()),
-				]
-				+ "dialogue=%s, player at %s)."
-				% [str(_dialogue.is_busy()), str(_player.global_position)]
-			)
-	else:
-		# The three bands and their numbers travel with the failure: "nothing was
-		# clickable" is four different problems depending on which test rejected what.
-		_failures.append(
-			"No second floor point was clickable for the interruption shot (%s)."
-			% ("; ".join(_ground_search_log) if not _ground_search_log.is_empty() else "no search ran")
-		)
+	await _capture_keyboard_takeover(navigator, endings)
 
 	# A click on a prop: the inspection, reached by the mouse only.
 	var sheet := _host.get_current().find_interactable(&"timetable")
@@ -1753,6 +1663,60 @@ func _capture_click_navigation() -> void:
 		_note("cue audio after the mouse shots: %s" % str(audio.get_counts()))
 	else:
 		_note("cue audio: no CueAudio autoload in this run; the cues were silent")
+
+
+## The first click can finish by a wall where a second floor pick is sensitive to
+## the camera position. Test takeover separately: one real click down the middle
+## aisle, then a key while that exact route is active.
+func _capture_keyboard_takeover(navigator: PointerNavigator, endings: Array[int]) -> void:
+	var rig := _main.get_node_or_null(^"CameraRig") as CameraRig
+	if navigator == null or rig == null:
+		_failures.append("The interruption shot needs the real pointer navigator and camera rig.")
+		return
+	if not await _wait_for_free(45.0):
+		return
+	# Use the level aisle, not the teaching step at z = -2.23.
+	var start := Vector3(-0.375, 0.0, 3.55)
+	var goal := Vector3(-0.375, 0.0, -0.7)
+	_teleport(start, 0.0)
+	if not await _poll(func() -> bool:
+		return rig.camera == root.get_camera_3d() and is_zero_approx(rig.get_focus_weight()) \
+			and rig.global_position.distance_to(_player.global_position) < 0.02, 5.0):
+		_failures.append("The interruption shot did not return to the gameplay camera in the middle aisle.")
+		return
+	var screen := rig.camera.unproject_position(goal)
+	var hit: Variant = navigator.get_ground_point_at(screen)
+	if not root.get_visible_rect().has_point(screen) or not hit is Vector3:
+		_failures.append("The interruption click found no routed floor at %s from %s." % [str(goal), str(start)])
+		return
+	# The pick snaps to the baked mesh, whose voxel height differs from the rendered
+	# floor. Check the intended floor position in plan, then match the actual path
+	# against the routed point, not against the drawn surface height.
+	var routed_goal: Vector3 = hit
+	if Vector2(routed_goal.x - goal.x, routed_goal.z - goal.z).length() > 0.25 \
+			or not _reaches(routed_goal) or _interaction.get_target_at_screen_position(screen, false) != null:
+		_failures.append("The interruption click picked %s, not the clear aisle at %s." % [str(routed_goal), str(goal)])
+		return
+	var clicks := navigator.get_click_count()
+	await _click_at_screen(screen)
+	var walking := await _poll(func() -> bool: return _player.is_path_active(), 2.0)
+	if not walking or navigator.get_click_count() != clicks + 1 or not navigator.was_last_click_accepted() \
+			or routed_goal.distance_to(_player.get_path_target()) > 0.25:
+		_failures.append("The interruption click did not start the middle-aisle walk: %s; target %s, wanted %s." % [
+			navigator.get_last_rejection(), str(_player.get_path_target()), str(routed_goal),
+		])
+		return
+	var finished_before: int = endings[0]
+	var cancelled_before: int = endings[1]
+	Input.action_press("move_forward")
+	await _wait(0.4)
+	Input.action_release("move_forward")
+	var cancelled: bool = not _player.is_path_active() and endings[1] == cancelled_before + 1 \
+		and endings[0] == finished_before and _player.is_control_enabled() and not _dialogue.is_busy()
+	_note("middle aisle walk: started by one click at %s; cancelled by WASD=%s" % [str(goal), cancelled])
+	if not cancelled:
+		_failures.append("Holding a movement key did not cancel the active middle-aisle walk exactly once.")
+	await _shot("03c_wasd_cancels", "Holding a movement key during an automatic walk: the keys take over.")
 
 
 ## A click the world refuses: the cue has to say "no" somewhere the player is looking, and

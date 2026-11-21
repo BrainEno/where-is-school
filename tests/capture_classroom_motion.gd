@@ -236,7 +236,7 @@ func _capture_dressing() -> void:
 	# change the story's curtain state or take the transition out of this room.
 	var paper := _room.get_node(^"TimetableSheet") as MeshInstance3D
 	var clip := _room.get_node(^"TimetableClip") as Node3D
-	await _place(Vector3(0.45, 0.0, 3.55), Vector3.BACK)
+	await _place(Vector3(-0.375, 0.0, 3.55), Vector3.BACK)  # Middle aisle, clear of the back pair.
 	_review.current = true
 	_review.position = Vector3(1.3, 1.82, 3.65)
 	_review.look_at(paper.global_position)

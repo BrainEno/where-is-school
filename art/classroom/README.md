@@ -19,9 +19,9 @@ children of the bodies, so the camera occluder fades them along with their wall.
 ## Identity: what makes this room *this* classroom
 
 The classroom is a 14 × 10 m space with a quiet cool-gray concrete floor, a low concrete
-teacher's platform with a real step, and a boxed standing lectern. Twelve student desk/chair
-assemblies sit in four columns by three rows, leaving broad cross-aisles and routes to the
-board, doors and story props. Facing the board, both doors are in the right-hand (east)
+teacher's platform with a real step, and a boxed standing lectern. Twenty-four student
+desks and chairs form twelve side-by-side pairs in four columns by three rows, leaving
+cross-aisles and routes to the board, doors and story props. Facing the board, both doors are in the right-hand (east)
 wall (issue #159): the grey front door near the board is the corridor exit, the white rear
 door never opens. The blackboard wall is one unbroken wall, with a roll-down projection
 screen over the left half of the board and a projector under the ceiling. The front west
@@ -29,10 +29,12 @@ window is an ordinary window; the back one is a hole through the wall behind a
 floor-to-ceiling blackout curtain. The space above
 the board stays empty; the former red pseudo-writing banner and its generation code have been deleted. There is no screen-wide "oil paint" filter. Walls and functional props
 keep `StandardMaterial3D` (toon diffuse, no specular). The student desks replace their
-photographic PBR surface with the classroom-owned `student_wood.tres`, referencing the
-existing environment pigment shader read-only. There is no photographic albedo/normal/ORM
-under a transparent wash anymore; the imported desk and its `school_desk.tscn` collider
-are unchanged.
+photographic PBR surface with three classroom-owned wood finishes, all referencing the
+existing environment pigment shader read-only. `student_wood.tres` is the regular finish;
+`student_wood_recent.tres` is a little lighter and smoother, and `student_wood_worn.tres`
+has darker pigment and more broken brush marks. The assignments are fixed in the room.
+There is no photographic albedo/normal/ORM under a transparent wash; the imported desk
+and its `school_desk.tscn` collider are unchanged.
 
 ## Colour system (sRGB)
 
@@ -153,9 +155,12 @@ Rebuild the sewn meshes and woven texture with
 `python3 art/classroom/build_schoolbag.py` (`--check` verifies the shipped assets).
 The player wakes in the chair (`PlayerStart`), and
 Q starts a little way down the aisle and walks to `QOpeningTalk` just outside the left
-chair, before the first line (the opening's Q beat, #160). At the bell he returns to `DeskQ`,
-a thirteenth desk 0.75 m left of `DeskB2` with a 3.8 cm seam between the tops. The original
-12 desks and the bag's right aisle stay in place. The stage and its step are actual
+chair, before the first line (the opening's Q beat, #160). At the bell he returns to
+`DeskQ`, 0.75 m left of `DeskB2` with a 3.8 cm seam between the tops. The other eleven
+positions each use the same spacing, leaving the bag aisle open. The front-left mate sits
+on the inside to leave room at the ordinary window; the other mates sit to the left.
+The rear-left pair is shifted 0.425 m inward so both its wall-side and Q-side aisles bake.
+All other original desks keep their positions. The stage and its step are actual
 colliders: the 0.12 m rise stays below the
 player's 0.25 m step-up and the navmesh's 0.25 m climb. The standing lectern on the stage
 is the only teacher's furniture: the low teacher's desk was taken out and its inspection
@@ -164,7 +169,7 @@ is the only teacher's furniture: the low teacher's desk was taken out and its in
 
 ### Student chair
 
-All thirteen desks instance the same chair through `scenes/environment/props/classroom_desk.tscn`.
+All 24 desks instance the same chair through `scenes/environment/props/classroom_desk.tscn`.
 The quiet plywood pan has a rolled edge, a shallow dish and subdued grain; the curved back
 has four dull fasteners. Splayed steel legs, continuous back posts, cross-bracing and rubber
 feet leave air below the seat instead of the old solid posts. The chair uses three opaque,

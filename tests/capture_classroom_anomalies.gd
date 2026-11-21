@@ -18,6 +18,8 @@ const EXPECTED_SHOTS := 22
 const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 ## Game time per real second while the braced drop plays (see the drop in `_run`).
 const BRACE_TIME_SCALE := 0.1
+const RESIDENT_TIME_SCALE := 0.4
+const RESIDENT_CAPTURE_SECONDS := 12.0
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -98,8 +100,12 @@ func _run() -> void:
 		_finish(["Couldn't choose to drop after a passed check."])
 		return
 	await _capture_pose("roof_brace", 0.34, "05-roof-brace.png", -INF, INF, 60.0)
+	# Still the first draw of the resident's doorway shot. Give the renderer more
+	# frames over the same threshold crossing, with the same budget in game time.
+	Engine.time_scale = RESIDENT_TIME_SCALE
+	await _capture_resident("19-collector-unfiltered.png", &"on_threshold",
+		RESIDENT_CAPTURE_SECONDS / RESIDENT_TIME_SCALE)
 	Engine.time_scale = 1.0
-	await _capture_resident("19-collector-unfiltered.png", &"on_threshold")
 	await _settle()
 	await _stand(COURT_COMPARE, Vector3.LEFT)
 	await _shot("15-court-normal.png")
@@ -231,34 +237,48 @@ func _capture_pose(
 	await _shot(name)
 
 
-func _capture_resident(name: String, moment: StringName) -> void:
-	if not await Harness.wait_until(func() -> bool:
-		var stage := _host.get_current().get_node_or_null(^"RoofEncounter") as RoofEncounter
-		if stage == null or _player.camera_rig.get_focus_subject() != stage.get_node(^"WakeFrame") \
-			or _player.camera_rig.get_frame_weight() < 0.96:
-			return false
+func _capture_resident(name: String, moment: StringName, limit: float = RESIDENT_CAPTURE_SECONDS) -> void:
+	# Do not match the pose before a draw and then save a later frame: the walk and
+	# the camera can advance between the process tick and the render.
+	var deadline := Time.get_ticks_msec() + int(limit * 1000.0)
+	var last := "no roof encounter"
+	var saw_pose := false
+	while Time.get_ticks_msec() < deadline:
+		await RenderingServer.frame_post_draw
+		var room := _host.get_current()
+		var stage := room.get_node_or_null(^"RoofEncounter") as RoofEncounter if room != null else null
+		if stage == null:
+			continue
 		var actor := stage.get_node(^"Collector") as NpcActor
 		var head := actor.get_node(^"Visual/Hip/Trunk/Head") as Node3D
-		var camera := _player.camera_rig.camera
-		if not camera.is_position_in_frustum(head.global_position) \
-			or not camera.is_position_in_frustum(actor.global_position):
-			return false
+		var rig := _player.camera_rig
+		var camera := rig.camera
+		var focused := rig.get_focus_subject() == stage.get_node(^"WakeFrame") and rig.get_frame_weight() >= 0.96
+		var in_view := camera.is_position_in_frustum(head.global_position) \
+			and camera.is_position_in_frustum(actor.global_position)
+		last = "phase=%d, local=%s, head_y=%.3f, framed=%s, in_view=%s" % [
+			stage.phase, str(actor.position), head.global_position.y, focused, in_view,
+		]
+		var matches := false
 		match moment:
 			&"reclined":
-				return stage.phase == RoofEncounter.Phase.WAKING and head.global_position.y < 0.67
+				matches = stage.phase == RoofEncounter.Phase.WAKING and head.global_position.y < 0.67
 			&"sitting_up":
-				return stage.phase == RoofEncounter.Phase.WAKING \
+				matches = stage.phase == RoofEncounter.Phase.WAKING \
 					and head.global_position.y > 0.99 and head.global_position.y < 1.39
 			&"on_threshold":
-				return stage.phase == RoofEncounter.Phase.WALKING_OUT \
+				matches = stage.phase == RoofEncounter.Phase.WALKING_OUT \
 					and actor.position.x >= 3.18 and actor.position.x <= 3.72
 			&"outside":
-				return stage.phase == RoofEncounter.Phase.OUTSIDE
-		return false
-	, 12.0):
-		_failures.append("The resident's motion wasn't in frame for %s." % name)
-		return
-	await _shot(name)
+				matches = stage.phase == RoofEncounter.Phase.OUTSIDE
+		saw_pose = saw_pose or matches
+		if matches and focused and in_view:
+			print("RESIDENT_FRAME: %s | %s" % [name, last])
+			_save_shot(name)
+			return
+	_failures.append("The resident's motion wasn't in frame for %s (pose seen=%s; last %s)." % [
+		name, saw_pose, last,
+	])
 
 
 func _stand(where: Vector3, facing: Vector3) -> void:
@@ -279,6 +299,10 @@ func _settle() -> void:
 
 func _shot(name: String) -> void:
 	await RenderingServer.frame_post_draw
+	_save_shot(name)
+
+
+func _save_shot(name: String) -> void:
 	var image := root.get_texture().get_image()
 	if image == null or image.is_empty():
 		_failures.append("The %s frame came back empty." % name)

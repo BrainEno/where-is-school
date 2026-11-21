@@ -5,13 +5,13 @@ extends SceneTree
 ## system of its own, restyled board, windows and teacher's desk - and none of that is
 ## allowed to cost the room anything a player relies on. The claims under test:
 ##
-## 1. **A larger room.** A 14 x 10 m shell contains thirteen desks, two doors on the east
+## 1. **A larger room.** A 14 x 10 m shell contains 24 desks in 12 pairs, two doors on the east
 ##    wall (issue #159), a roll-down screen over the board, a ceiling projector, a
 ##    step-up concrete platform, a boxed teacher's lectern (#172), the original story props
 ##    and exits.
 ##    The blackboard wall is one unbroken wall; the schoolbag hangs off the aisle side of your desk.
 ## 2. **Only purposeful solids.** The floor, the five walls (each one whole collision box,
-##    door openings and the back window included), platform/step, thirteen desk wrappers,
+##    door openings and the back window included), platform/step, 24 desk wrappers,
 ##    and the lectern are the only scene-owned collision bodies (the low teacher's desk was
 ##    taken out; its set square lies on the lectern).
 ## 3. **Its own colour system.** Every surface of the room draws a material from
@@ -31,14 +31,15 @@ extends SceneTree
 ##    room, the board and the windows never stand between the camera and the player, and
 ##    the ceiling projector thins out wherever it would; the furniture reads at a sensible
 ##    size next to the characters.
-## 9. **Navigation.** The baked mesh reaches every desk and every interactable from the
-##    spawn.
+## 9. **Navigation.** The baked mesh reaches every chair, the active aisles and every
+##    interactable from the spawn.
 ## 10. **The clock says nine.** Q's biology class starts at nine, and the wall clock's
 ##    hands say 9:00 - read from the transforms in the scene, with each hand hanging off a
 ##    pivot at the dial's centre instead of lying across it.
 
 const Harness = preload("res://tests/test_harness.gd")
 const WallContract = preload("res://tests/classroom_wall_contract.gd")
+const DeskContract = preload("res://tests/classroom_desk_contract.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const LECTERN_SCENE := "res://scenes/environment/props/teacher_lectern.tscn"
@@ -48,10 +49,15 @@ const CONCRETE_SHADER := "res://assets/materials/classroom/shaders/concrete.gdsh
 ## Shared materials the room may still use, each for a reason: the ceiling fittings are
 ## the same light panels the corridor hangs, and they are not part of the colour system.
 const SHARED_MATERIALS: Array[String] = ["res://assets/materials/light_panel.tres"]
-## No material presets are borrowed from another scene. The classroom student-wood
-## material may reference the existing environment shader read-only (owner task direction).
+## No material presets are borrowed from another scene. The student-wood presets
+## may reference the existing environment shader read-only.
 const FOREIGN_PREFIXES: Array[String] = ["res://assets/shaders/"]
-const DESK_SURFACE := "res://assets/materials/classroom/student_wood.tres"
+const DESK_SURFACES: Array[String] = [
+	CLASSROOM_MATERIALS + "student_wood.tres",
+	CLASSROOM_MATERIALS + "student_wood_recent.tres",
+	CLASSROOM_MATERIALS + "student_wood_worn.tres",
+]
+const DESK_SHADER := "res://assets/shaders/painterly/environment_surface.gdshader"
 ## tools/verify_build.py: the texture warning budget, per file.
 const TEXTURE_WARN_BYTES := 512 * 1024
 const TEXTURE_MAX_SIDE := 2048
@@ -63,21 +69,6 @@ const WALLS := {
 	"WallEast": Vector3(6.9, 1.6, 0.0),
 	"WallSouthLeft": Vector3(-3.5, 1.6, 4.9),
 	"WallSouthRight": Vector3(3.5, 1.6, 4.9),
-}
-const DESKS := {
-	"DeskA1": Vector3(-4.8, 0.0, -0.8),
-	"DeskA2": Vector3(-1.6, 0.0, -0.8),
-	"DeskA3": Vector3(1.6, 0.0, -0.8),
-	"DeskA4": Vector3(4.8, 0.0, -0.8),
-	"DeskB1": Vector3(-4.8, 0.0, 1.3),
-	"DeskQ": Vector3(-2.35, 0.0, 1.3),
-	"DeskB2": Vector3(-1.6, 0.0, 1.3),
-	"DeskB3": Vector3(1.6, 0.0, 1.3),
-	"DeskB4": Vector3(4.8, 0.0, 1.3),
-	"DeskC1": Vector3(-4.8, 0.0, 3.4),
-	"DeskC2": Vector3(-1.6, 0.0, 3.4),
-	"DeskC3": Vector3(1.6, 0.0, 3.4),
-	"DeskC4": Vector3(4.8, 0.0, 3.4),
 }
 const PROPS := {
 	"Props/Blackboard": Vector3(-1.6, 0.0, -4.75),
@@ -111,16 +102,13 @@ const INTERACTABLES := {
 	"curtain": Vector3(-5.95, 0.6, 2.2),
 	"projector_screen": Vector3(-2.9, 0.7, -4.15),
 }
-const SOLIDS: Array[String] = [
+const ROOM_SOLIDS: Array[String] = [
 	"Floor", "WallNorth", "WallWest", "WallEast", "WallSouthLeft", "WallSouthRight",
 	"Stage",
-	"Furniture/DeskA1/Desk", "Furniture/DeskA2/Desk", "Furniture/DeskA3/Desk", "Furniture/DeskA4/Desk",
-	"Furniture/DeskB1/Desk", "Furniture/DeskQ/Desk", "Furniture/DeskB2/Desk", "Furniture/DeskB3/Desk", "Furniture/DeskB4/Desk",
-	"Furniture/DeskC1/Desk", "Furniture/DeskC2/Desk", "Furniture/DeskC3/Desk", "Furniture/DeskC4/Desk",
 	"Stage/Lectern/Body",
 ]
 ## Only the desk mates' chairs carry a body, and only in this room. Authoring it in
-## the shared desk scene would make all eleven decorative chairs collide too.
+## the shared desk scene would make the other 22 decorative chairs collide too.
 const SLIDING_CHAIR_SOLIDS := ["Furniture/DeskB2/Chair/Solid", "Furniture/DeskQ/Chair/Solid"]
 ## Each wall's painted face and the material it has to carry.
 const WALL_PAINT := {
@@ -188,7 +176,23 @@ const PERSON_TO_DESK_MAX := 2.4
 const DESK_MIN_PIXELS := 45.0
 ## A desk counts as reachable when the walkable floor comes this close to its chair.
 const DESK_REACH := 1.0
+## Maintained floor between the pairs, plus the two wall-side approaches. Each point
+## should have routed floor within one 0.25 m bake cell, not just within use radius.
+const AISLE_POINTS := {
+	"left of Q": Vector3(-3.575, 0, 1.3),
+	"west aisle behind Q": Vector3(-3.575, 0, 3.4),
+	"aisle outside the rear-left pair": Vector3(-6.125, 0, 3.55),
+	"centre aisle at the front row": Vector3(-0.375, 0, -0.8),
+	"centre aisle beside the bag": Vector3(-0.375, 0, 1.3),
+	"centre aisle at the back row": Vector3(-0.375, 0, 3.4),
+	"east inner aisle": Vector3(2.825, 0, 1.3),
+	"window approach": Vector3(-5.85, 0, 0.0),
+	"curtain approach": Vector3(-5.85, 0, 2.2),
+	"rear door approach": Vector3(5.9, 0, 3.55),
+}
+const AISLE_REACH := 0.25
 
+var _desks := DeskContract.positions()
 var _failures: Array[String] = []
 var _notes: Array[String] = []
 var _main: Node = null
@@ -289,8 +293,8 @@ func _check_layout() -> void:
 		_failures.append("The classroom floor is no longer the 14 x 10 m room.")
 	for wall_name: String in WALLS:
 		_expect_at(wall_name, WALLS[wall_name])
-	for desk_name: String in DESKS:
-		_expect_at("Furniture/%s" % desk_name, DESKS[desk_name])
+	for desk_name: String in _desks:
+		_expect_at("Furniture/%s" % desk_name, _desks[desk_name])
 	for path: String in PROPS:
 		_expect_at(path, PROPS[path])
 	for wall_name: String in WALL_COLLISION:
@@ -324,8 +328,6 @@ func _check_layout() -> void:
 	var glass0 := _room.get_node_or_null(^"WindowGlass0") as MeshInstance3D
 	if glass0 == null or not is_equal_approx(glass0.position.x, -6.74):
 		_failures.append("The front west-wall window must remain in the room shell.")
-	if DESKS.size() != 13:
-		_failures.append("The layout needs the twelve original desks and Q's desk; listed %d." % DESKS.size())
 	var normal_door := _room.get_node_or_null(^"Interactables/ClassroomDoor") as LocationExit
 	if normal_door == null or normal_door.interact_id != &"classroom_door":
 		_failures.append("The normal exit lost its classroom_door ID.")
@@ -536,6 +538,9 @@ func _expect_at(path: String, expected: Vector3) -> void:
 
 
 func _check_collision() -> void:
+	var expected := ROOM_SOLIDS.duplicate()
+	for desk_name: String in _desks:
+		expected.append("Furniture/%s/Desk" % desk_name)
 	var found := {}
 	for node in _descendants(_room):
 		if not node is CollisionObject3D:
@@ -549,7 +554,7 @@ func _check_collision() -> void:
 				or trigger.monitorable or trigger.monitoring:
 				_failures.append("VoidStep must start inert and sense the player only, never block a ray or body.")
 			continue
-		if not SOLIDS.has(path):
+		if not expected.has(path):
 			# The room-built pair starts non-solid. `pushable_chair_test.py` pins the
 			# authored layer (3), which neither carves the navmesh nor blocks picking.
 			var body := node as CollisionObject3D
@@ -564,7 +569,7 @@ func _check_collision() -> void:
 			)
 			continue
 		found[path] = true
-	for path: String in SOLIDS + SLIDING_CHAIR_SOLIDS:
+	for path: String in expected + SLIDING_CHAIR_SOLIDS:
 		if not found.has(path):
 			_failures.append("'%s' no longer collides; the room's solids changed." % path)
 	_notes.append("solids %d" % found.size())
@@ -593,14 +598,17 @@ func _check_colour_system() -> void:
 		var desk_model := _is_desk_model(path)
 		if desk_model:
 			var replacement := mesh_instance.material_override as ShaderMaterial
-			if replacement == null or replacement.resource_path != DESK_SURFACE:
+			if replacement == null or replacement.resource_path not in DESK_SURFACES:
 				_failures.append("The imported desk mesh '%s' kept its photographic PBR surface." % path)
-			elif replacement.shader.resource_path != "res://assets/shaders/painterly/environment_surface.gdshader":
+			elif replacement.shader == null or replacement.shader.resource_path != DESK_SHADER:
 				_failures.append("The desk '%s' does not reuse the reviewed environment shader." % path)
 			elif bool(replacement.get_shader_parameter("use_base_texture")):
 				_failures.append("The desk '%s' still samples the photographic albedo." % path)
-			if mesh_instance.material_overlay != null:
-				_failures.append("The imported desk mesh '%s' still has a redundant alpha wash." % path)
+			elif replacement.next_pass != null or mesh_instance.material_overlay != null:
+				_failures.append("The imported desk mesh '%s' still has a redundant second pass." % path)
+			elif (path.begins_with("Furniture/DeskB2/") or path.begins_with("Furniture/DeskQ/")) \
+					and replacement.resource_path != DESK_SURFACES[0]:
+				_failures.append("The protagonist and Q keep their existing desk finish: '%s'." % path)
 		for surface in mesh_instance.mesh.get_surface_count():
 			surfaces += 1
 			var material := mesh_instance.get_active_material(surface)
@@ -628,11 +636,14 @@ func _check_colour_system() -> void:
 							"'%s' samples '%s'." % [resource_path, standard.albedo_texture.resource_path]
 						)
 			material = material.next_pass
+	for finish: String in DESK_SURFACES:
+		if not used.has(finish):
+			_failures.append("No classroom desk draws the planned wood finish: '%s'." % finish)
 	_notes.append("%d surfaces, %d materials" % [surfaces, used.size()])
 
 
 func _is_desk_model(path: String) -> bool:
-	for desk_name: String in DESKS:
+	for desk_name: String in _desks:
 		if path.begins_with("Furniture/%s/Desk/" % desk_name):
 			return true
 	return false
@@ -995,7 +1006,7 @@ func _check_navigation() -> LocationNavigation:
 	if stage_gap > 0.25:
 		_failures.append("The navigation mesh does not join the floor to the raised platform step (%.2f m)." % stage_gap)
 	var worst := 0.0
-	for desk_name: String in DESKS:
+	for desk_name: String in _desks:
 		var desk := _room.get_node_or_null(NodePath("Furniture/%s" % desk_name)) as Node3D
 		if desk == null:
 			continue
@@ -1007,6 +1018,12 @@ func _check_navigation() -> LocationNavigation:
 				"%s cannot be reached: the nearest routed floor is %.2f m from its chair."
 				% [desk_name, reach]
 			)
+	var worst_aisle := 0.0
+	for label: String in AISLE_POINTS:
+		var gap := _route_gap(map, start, _room.to_global(AISLE_POINTS[label]))
+		worst_aisle = maxf(worst_aisle, gap)
+		if gap > AISLE_REACH:
+			_failures.append("The %s has no routed floor within %.2f m (gap %.2f m)." % [label, AISLE_REACH, gap])
 	var interactables := _room.get_node_or_null(^"Interactables")
 	for child in interactables.get_children():
 		var node := child as Node3D
@@ -1018,8 +1035,8 @@ func _check_navigation() -> LocationNavigation:
 				% [String(child.get("interact_id")), gap, radius]
 			)
 	_notes.append(
-		"nav polygons %d, %d desks, step %.2f m, worst desk reach %.2f m" % [
-			navigation.get_polygon_count(), DESKS.size(), stage_gap, worst]
+		"nav polygons %d, %d desks, step %.2f m, worst desk reach %.2f m, worst aisle gap %.2f m" % [
+			navigation.get_polygon_count(), _desks.size(), stage_gap, worst, worst_aisle]
 	)
 	return navigation
 

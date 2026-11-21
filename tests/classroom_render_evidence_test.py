@@ -319,8 +319,8 @@ CASES = [
      lambda d: png(1600, 900, flat(0), d / C / "02_wall_occlusion.png")),
     ("a missing fader frame", "fader.png is missing",
      lambda d: (d / P / "fader.png").unlink()),
-    ("a missing capture frame", "08_twelve_student_desks.png is missing",
-     lambda d: (d / C / "08_twelve_student_desks.png").unlink()),
+    ("a missing capture frame", "08_paired_student_desks.png is missing",
+     lambda d: (d / C / "08_paired_student_desks.png").unlink()),
     ("a missing RESULT.txt", "pixel RESULT.txt is missing",
      lambda d: (d / P / "RESULT.txt").unlink()),
     ("a missing pixel log", "pixel test log is missing",
@@ -407,7 +407,7 @@ def main() -> int:
         check("complete Forward+ evidence passes", code == 0, out)
         manifest = (good / "MANIFEST.json").read_text()
         check("the manifest names the head SHA and every file",
-              SHA in manifest and "fader.png" in manifest and "08_twelve_student_desks.png" in manifest
+              SHA in manifest and "fader.png" in manifest and "08_paired_student_desks.png" in manifest
               and "clock_gameplay_aisle.png" in manifest)
         check("the verdict records what the clock read",
               "clock_clock_gameplay_aisle=9:00" in (good / "VERDICT.txt").read_text())
