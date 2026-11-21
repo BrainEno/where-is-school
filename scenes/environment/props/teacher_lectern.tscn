@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Material" path="res://assets/materials/classroom/wood_honey.tres" id="2_wood"]
 [ext_resource type="Material" path="res://assets/materials/classroom/wood_worn.tres" id="3_worn"]
@@ -49,6 +49,22 @@ size = Vector3(0.21, 0.008, 0.29)
 
 [sub_resource type="BoxMesh" id="BoxMesh_register"]
 size = Vector3(0.24, 0.022, 0.31)
+
+[sub_resource type="BoxMesh" id="BoxMesh_chalk_box_base"]
+size = Vector3(0.078, 0.008, 0.134)
+
+[sub_resource type="BoxMesh" id="BoxMesh_chalk_box_side"]
+size = Vector3(0.006, 0.022, 0.134)
+
+[sub_resource type="BoxMesh" id="BoxMesh_chalk_box_end"]
+size = Vector3(0.066, 0.022, 0.006)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_chalk"]
+top_radius = 0.007
+bottom_radius = 0.008
+height = 0.079
+radial_segments = 7
+rings = 0
 
 [node name="TeacherLectern" type="Node3D"]
 
@@ -149,6 +165,48 @@ position = Vector3(0.19, 1.002, -0.06)
 rotation_degrees = Vector3(-8.75, -4, 0)
 mesh = SubResource("BoxMesh_register")
 material_override = ExtResource("7_register")
+
+[node name="ChalkBox" type="Node3D" parent="Body"]
+position = Vector3(-0.38, 1.006, 0.035)
+rotation_degrees = Vector3(-8.75, 0, 0)
+
+[node name="Base" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(0, 0.004, 0)
+mesh = SubResource("BoxMesh_chalk_box_base")
+material_override = ExtResource("4_lacquer")
+
+[node name="Left" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(-0.036, 0.019, 0)
+mesh = SubResource("BoxMesh_chalk_box_side")
+material_override = ExtResource("4_lacquer")
+
+[node name="Right" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(0.036, 0.019, 0)
+mesh = SubResource("BoxMesh_chalk_box_side")
+material_override = ExtResource("4_lacquer")
+
+[node name="Front" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(0, 0.019, 0.064)
+mesh = SubResource("BoxMesh_chalk_box_end")
+material_override = ExtResource("4_lacquer")
+
+[node name="Back" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(0, 0.019, -0.064)
+mesh = SubResource("BoxMesh_chalk_box_end")
+material_override = ExtResource("4_lacquer")
+
+[node name="Chalk" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(-0.011, 0.016, 0.004)
+rotation_degrees = Vector3(90, 0, -9)
+mesh = SubResource("CylinderMesh_chalk")
+material_override = ExtResource("6_paper")
+
+[node name="ChalkStub" type="MeshInstance3D" parent="Body/ChalkBox"]
+position = Vector3(0.014, 0.016, -0.018)
+rotation_degrees = Vector3(90, 0, 12)
+scale = Vector3(1, 0.52, 1)
+mesh = SubResource("CylinderMesh_chalk")
+material_override = ExtResource("6_paper")
 
 [node name="TeacherStand" type="Marker3D" parent="."]
 position = Vector3(0, 0, -0.54)

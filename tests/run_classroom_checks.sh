@@ -37,6 +37,24 @@ esac
 
 "${godot}" --version | tee "${CI_LOG_DIR}/ENGINE.txt"
 
+# Delivery only. At most four previews, two 3800-character chunks apiece;
+# keep within Actions' per-step notice limit and leave the full PNGs untouched.
+relay_prop_previews () {
+  local folder="$1" file sha index=0 part
+  local -a parts
+  for file in "${folder}"/1[5-8]_*.jpg; do
+    [ -f "${file}" ] || continue
+    mapfile -t parts < <(base64 -w 3800 "${file}")
+    [ "${#parts[@]}" -le 2 ] || continue
+    sha=$(sha256sum "${file}" | cut -d' ' -f1)
+    index=0
+    for part in "${parts[@]}"; do
+      index=$((index + 1))
+      echo "::notice title=classroom prop preview::$(basename "${file}") ${index}/${#parts[@]} ${sha} ${part}"
+    done
+  done
+}
+
 if [ "${headless}" -eq 1 ]; then
   for test in \
     smoke camera_rig classroom_visual_slice navigation navigation_sync_stress \
@@ -53,6 +71,7 @@ if [ "${headless}" -eq 1 ]; then
 fi
 
 if [ "${render}" -eq 1 ]; then
+  python3 art/classroom/build_set_square.py --check || status=1
   methods="${CLASSROOM_RENDER_METHODS:-forward_plus gl_compatibility}"
   pixel_limit="${CLASSROOM_PIXEL_TIMEOUT:-240}"
   capture_limit="${CLASSROOM_CAPTURE_TIMEOUT:-300}"
@@ -84,6 +103,9 @@ if [ "${render}" -eq 1 ]; then
       --script res://tests/capture_classroom_art.gd \
       -- "--output=${CI_LOG_DIR}/capture-${method}" \
       "--expect-renderer=${method}" "--expect-driver=${driver}" || status=1
+    if [ "${GITHUB_ACTIONS:-}" = true ] && [ "${status}" -eq 0 ]; then
+      relay_prop_previews "${CI_LOG_DIR}/capture-${method}"
+    fi
     run_check "classroom_clock_${method}" "${clock_limit}" "${godot}" --path . \
       --audio-driver Dummy --resolution 1600x900 \
       --rendering-method "${method}" --rendering-driver "${driver}" \

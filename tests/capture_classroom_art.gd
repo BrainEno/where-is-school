@@ -5,15 +5,21 @@ extends SceneTree
 ##   -- --output=build/classroom-evidence/after
 ## The same script/camera/fixtures are used against the unmodified base and PR head.
 ## Output stays outside the shipped assets. No post-processing or paintover is applied.
-## Ten views include live gameplay, wall fade/restoration, and framing of the full room,
-## board/platform, both east-wall doors, the front window and the blackout curtain, all
-## twelve student desks, the projection screen rolled down and the back window's opening
-## with its curtain drawn aside (issue #159).
+## Includes live gameplay, wall fade/restoration, the room and furniture, close views
+## of the set square and front pane, the actual window focus, and matched views of the
+## rear curtain closed and drawn aside.
 ## CI passes `--expect-renderer=<method> --expect-driver=<driver>`; a run on any other
 ## renderer or driver (for example after Godot's own Vulkan-to-OpenGL fallback) fails.
 ## CAPTURE.txt ends with `verdict=PASS|FAIL` and any failure lines.
 
 const Harness = preload("res://tests/test_harness.gd")
+# These small previews fit the annotation budget on CI. Full PNGs stay in the artifact.
+const PREVIEW_SHOTS := [
+	"15_set_square_detail.png",
+	"16_front_window_detail.png",
+	"17_curtain_closed.png",
+	"18_front_window_focus.png",
+]
 
 var _main: Node3D = null
 var _room: LocationRoot = null
@@ -136,12 +142,43 @@ func _run() -> void:
 	await _review_shot(review, Vector3(0.7, 1.45, -1.25), Vector3(0.7, 0.85, -3.8), "11_lectern_front.png")
 	await _review_shot(review, Vector3(3.1, 1.25, -3.75), Vector3(0.7, 0.8, -3.85), "12_lectern_side.png")
 	await _review_shot(review, Vector3(2.2, 1.6, -4.55), Vector3(0.7, 0.6, -3.7), "13_lectern_teacher_side.png")
-	review.queue_free()
 	_rig.camera.current = true
-	await _frames(2)
 	# And through the game's own camera and lens, the player below the platform.
 	await _stand(Vector3(1.0, 0.0, -1.5), Vector3.FORWARD)
 	await _shot("14_lectern_gameplay.png")
+
+	var square := _room.get_node(^"Props/SetSquare") as Node3D
+	var square_at := square.global_position
+	review.fov = 38.0
+	await _review_shot(
+		review, square_at + Vector3(0.32, 0.63, 0.74), square_at, "15_set_square_detail.png"
+	)
+	var glass := _room.get_node(^"WindowGlass0") as MeshInstance3D
+	review.fov = 47.0
+	await _review_shot(
+		review, glass.global_position + Vector3(2.07, 0.18, 0.25), glass.global_position,
+		"16_front_window_detail.png"
+	)
+	# Match the open shot so the two panels and the concealed cut can be compared.
+	review.fov = 58.0
+	await _review_shot(
+		review, Vector3(-2.2, 2.3, 2.2), Vector3(-6.9, 1.5, 2.2), "17_curtain_closed.png"
+	)
+	review.queue_free()
+
+	# Use the authored inspection shot on the live rig, without text obscuring the
+	# glass or a test camera substituting for the player's framing.
+	_rig.camera.current = true
+	await _stand(Vector3(-5.85, 0.0, -0.65), Vector3(-0.15, 0.0, 0.65))
+	var window := _room.find_interactable(&"window")
+	if window == null or window.camera_shot == null:
+		_failures.append("The production front window has no inspection shot.")
+	else:
+		_rig.focus_on(window, window.camera_shot)
+		if await Harness.wait_until(func() -> bool: return _rig.get_focus_weight() >= 0.995, 9.0):
+			await _shot("18_front_window_focus.png")
+		else:
+			_failures.append("The front window's authored shot did not settle.")
 	var log_file := FileAccess.open(_out.path_join("CAPTURE.txt"), FileAccess.WRITE)
 	if log_file == null:
 		_failures.append("Cannot write capture manifest.")
@@ -154,7 +191,7 @@ func _run() -> void:
 	_main.queue_free()
 	await _frames(3)
 	Harness.finish(
-		self, _failures, "captured fourteen unmodified classroom viewport images and wall states."
+		self, _failures, "captured unmodified classroom viewport images and wall states."
 	)
 
 
@@ -225,6 +262,22 @@ func _shot(file_name: String) -> void:
 		_failures.append("%s: %s" % [path, error_string(error)])
 	else:
 		_note("shot=%s sha256=%s" % [file_name, FileAccess.get_sha256(path)])
+		if OS.get_environment("GITHUB_ACTIONS") == "true" and file_name in PREVIEW_SHOTS:
+			_write_preview(image, path.get_basename() + ".jpg")
+
+
+func _write_preview(image: Image, path: String) -> void:
+	# These delivery previews are only downscaled/compressed. The hashed 1600×900
+	# PNGs above remain the evidence of record.
+	var thumbnail := image.duplicate() as Image
+	for width: int in [540, 470, 400, 330]:
+		thumbnail.resize(width, roundi(float(width) * 9.0 / 16.0), Image.INTERPOLATE_LANCZOS)
+		var data := thumbnail.save_jpg_to_buffer(0.74)
+		if not data.is_empty() and data.size() <= 5500:
+			var file := FileAccess.open(path, FileAccess.WRITE)
+			if file != null:
+				file.store_buffer(data)
+			return
 
 
 func _frames(count: int) -> void:
