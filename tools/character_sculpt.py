@@ -33,7 +33,7 @@ RUNTIME = {
     'thin': 'assets/models/classmates/thin_classmate.glb',
     'gentle': 'assets/models/classmates/gentle_classmate.glb',
     'court': 'assets/models/classmates/court_classmate.glb',
-    'b': 'scenes/dev/teacher_b/teacher_b.glb',
+    'b': 'assets/models/teacher_b/teacher_b.glb',
 }
 REMESH = {'q': 'Q_Hair'}
 

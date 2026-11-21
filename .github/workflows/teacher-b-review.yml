@@ -7,6 +7,7 @@ on:
       - '.godot-version'
       - 'art/character_models/teacher_b/**'
       - 'scenes/dev/teacher_b/**'
+      - 'assets/models/teacher_b/**'
       - 'tests/teacher_b_review_test.gd*'
       - 'assets/shaders/characters/character_paint.gdshaderinc'
       - 'scripts/actors/character_look_applier.gd'
@@ -30,7 +31,7 @@ jobs:
           PYTHONPATH=tools python3 - <<'PY'
           from pathlib import Path
           from model_library import audit, report, ROOT
-          path = Path(ROOT, "scenes/dev/teacher_b/teacher_b.glb")
+          path = Path(ROOT, "assets/models/teacher_b/teacher_b.glb")
           problems, notes, measured = audit([str(path)])
           print(report(measured))
           for line in notes:
@@ -58,7 +59,7 @@ jobs:
           godot --headless --path . --import > ci-logs/b_import.log 2>&1 || code=$?
           echo "Cold import exit=${code}"
           # Like the main import job, keep the first pass and check its actual product.
-          scene=$(grep -o 'res://\.godot/imported/[^" ]*\.scn' scenes/dev/teacher_b/teacher_b.glb.import | head -1)
+          scene=$(grep -o 'res://\.godot/imported/[^" ]*\.scn' assets/models/teacher_b/teacher_b.glb.import | head -1)
           notes=$(grep -E 'teacher_b|Parse Error|SCRIPT ERROR|ERROR:' ci-logs/b_import.log | tail -14 | tr '\n' '|' | cut -c1-3000)
           echo "::notice title=Teacher B cold import ${code}::${notes:-no matching diagnostics}"
           if [ "$code" -ge 128 ] || [ -z "$scene" ] || [ ! -s "${scene#res://}" ]; then

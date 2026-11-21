@@ -1,13 +1,13 @@
 [gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scenes/dev/teacher_b/teacher_b_review.gd" id="1_review"]
-[ext_resource type="PackedScene" path="res://scenes/dev/teacher_b/teacher_b.glb" id="2_teacher"]
+[ext_resource type="PackedScene" path="res://assets/models/teacher_b/teacher_b.glb" id="2_teacher"]
 [ext_resource type="Script" path="res://scripts/actors/character_look_applier.gd" id="3_paint"]
-[ext_resource type="Resource" path="res://scenes/dev/teacher_b/teacher_b_look.tres" id="4_look"]
+[ext_resource type="Resource" path="res://assets/models/teacher_b/teacher_b_look.tres" id="4_look"]
 [ext_resource type="PackedScene" path="res://scenes/environment/characters/protagonist.tscn" id="5_lead"]
 [ext_resource type="Script" path="res://scripts/world/camera_rig.gd" id="6_rig"]
 
-[ext_resource type="AnimationLibrary" path="res://scenes/dev/teacher_b/teacher_b_motion.tres" id="7_motion"]
+[ext_resource type="AnimationLibrary" path="res://assets/models/teacher_b/teacher_b_motion.tres" id="7_motion"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_actions"]
 content_margin_left = 8.0

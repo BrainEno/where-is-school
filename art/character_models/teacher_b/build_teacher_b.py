@@ -858,7 +858,7 @@ def main():
     args = parser.parse_args()
     if (args.basis_only or args.split_parts) and args.output is None:
         parser.error('--basis-only and --split-parts require a separate --output')
-    out = args.output or ROOT / 'scenes/dev/teacher_b/teacher_b.glb'
+    out = args.output or ROOT / 'assets/models/teacher_b/teacher_b.glb'
     Sculpt(args.makehuman_data).build(out, args.split_parts, args.basis_only)
 
 
