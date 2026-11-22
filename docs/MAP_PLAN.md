@@ -25,7 +25,7 @@ comes from the manuscript.
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
 | `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: glass street entrance and directory on 01, biology and the old street exit on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
-| `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The road runs off its north end into the laid-flat sky; a blank sign stands out there. | 已实现 |
+| `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The gutter is an open ditch under the school-side kerb: lined, its water holding a pale strip of sky, bare cracked earth on its road side, precast slabs over it from the crossing to the school entrance, and a drain cover higher than the water that runs to it. The road runs off its north end into the laid-flat sky; a blank sign stands out there, and a pale ribbed panel stands in the ditch's line. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | The yard (key location): red court, school back wall, shed, container, tree, fence with a gap, estate. This round adds a fence run that carries on past the open west edge and sinks into the sky, a 20 m floodlight mast standing in the sky, and one chair out there facing the yard. | 已实现 |
@@ -236,6 +236,7 @@ Rebuild order for the dressed scenes:
 
 ```sh
 python3 scenes/environment/props/stage_art/source/paint_stage_textures.py
+python3 scenes/environment/props/stage_art/source/paint_street_ditch.py
 python3 tools/build_outdoor_locations.py street residential alley playground
 python3 scenes/environment/props/playground_art/source/build_playground_art.py
 python3 scenes/environment/props/stage_art/source/build_stage_art.py

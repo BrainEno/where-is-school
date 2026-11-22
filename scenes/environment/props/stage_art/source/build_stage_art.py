@@ -3,6 +3,7 @@
 and dresses each scene with visual-only nodes.
 
     python3 scenes/environment/props/stage_art/source/paint_stage_textures.py   # textures
+    python3 scenes/environment/props/stage_art/source/paint_street_ditch.py     # the ditch
     python3 tools/build_outdoor_locations.py street residential alley            # graybox
     python3 scenes/environment/props/stage_art/source/build_stage_art.py         # this
 
@@ -77,6 +78,15 @@ LIGHT_BEYOND = (236, 196, 140)
 # How far the walkway goes on past the yard door (metres). The fog has taken it long before.
 BEYOND = 96.0
 
+# The street's ditch (tools/build_outdoor_locations.py places its water, pool and cover).
+# The road runs z -36..20; the ditch is open from the north end to the slabs at the crossing.
+STREET_LEN = 56.0
+DITCH_X = (-9.725, -9.1)  # the west kerb's face to the bank
+DITCH_FLOOR = -0.62
+DITCH_OPEN_Z = (-36.0, 7.5)
+DITCH_OPEN = DITCH_OPEN_Z[1] - DITCH_OPEN_Z[0]
+EARTH_W = 4.8
+
 # name -> spec, in the yard builder's vocabulary (color, texture, triplanar, scale, offset,
 # cut, cull_off, outline, unshaded).
 MATERIALS: dict[str, dict] = {
@@ -125,6 +135,18 @@ MATERIALS: dict[str, dict] = {
     # School windows: an 8 x 6.5 m tile repeated along the 44 m wall (u = 44 / 8).
     "school_windows": {"texture": stex("window_tile"), "cut": 0.5, "scale": (5.5, 11.4 / 6.5, 1.0)},
     "street_distance": {"texture": stex("distance_street"), "unshaded": True},
+    # The ditch along the west kerb and the bare earth beside it (paint_street_ditch.py).
+    # The water is world-triplanar: 1.6 = 1 / 0.625 puts one texture width across the ditch,
+    # the 0.56 offset lands the kerb's x -9.725 on a tile edge (u -15), and v runs 9.6 m.
+    "street_earth": {"texture": stex("street_earth"), "cut": 0.5, "scale": (1.0, STREET_LEN / 9.6, 1.0)},
+    "ditch_water": {"texture": stex("ditch_water"), "triplanar": "world", "scale": (1.6, 1.0, 1.0 / 9.6),
+                    "offset": (0.56, 0.0, 0.0), "unshaded": True},
+    "ditch_wall": {"texture": stex("ditch_wall"), "scale": (DITCH_OPEN / 2.48, 1.0, 1.0)},
+    "ditch_mud": {"color": (34, 30, 36)},
+    "ditch_slab": tiled((150, 144, 140), "plaster_tile"),
+    "ditch_slab_new": tiled((192, 186, 178), "plaster_tile"),
+    "ditch_grate": {"texture": stex("ditch_grate"), "triplanar": "world", "scale": (5.0, 5.0, 5.0), "outline": True},
+    "ditch_panel": {"color": (220, 226, 160), "outline": True},
     # the courtyard
     "court_concrete": tiled((132, 124, 120), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
@@ -216,6 +238,58 @@ def return_plate(b: Builder, parent: str, name: str, pos, *, yaw=90, reverse=Fal
 # --- the street ---------------------------------------------------------------------------------
 
 
+def street_ditch(b: Builder, A: str) -> None:
+    """The gutter as a ditch cut along the west kerb, and bare earth on its road side.
+
+    The graybox Road mesh is hidden (its collider stays, so nothing about the walk or the
+    navigation changes) and redrawn here east of the bank; the ditch between is lined, with
+    its water (`Gutter`, `GutterPool`) 0.38 m down. From the crossing to the school entrance it
+    runs under precast slabs, as ditches do where people cross them. Past the street's north
+    end, where the road gives out into the laid-flat sky, one pale ribbed panel stands in
+    the ditch's line: the owner's reference collage, pasted in."""
+    x0, x1 = DITCH_X
+    wd, mid_x = x1 - x0, (x0 + x1) / 2
+    z_mid = -36.0 + STREET_LEN / 2
+    p = f"{A}/Ditch"
+    b.node("Ditch", A)
+    # the road again, east of the bank; the bed under the kerb, and the ditch's shell
+    b.flat("RoadBed", p, box(b, (11.0 - x1, 0.2, STREET_LEN)), "street_asphalt", ((11.0 + x1) / 2, -0.1, z_mid), shadow=True)
+    b.flat("KerbBed", p, box(b, (x0 + 11.0, 0.715, STREET_LEN)), "pavement", ((x0 - 11.0) / 2, -0.3625, z_mid))
+    b.flat("Bank", p, box(b, (0.2, 0.715, STREET_LEN)), "pavement", (x1 + 0.1, -0.3625, z_mid))
+    b.flat("Floor", p, box(b, (wd, 0.1, STREET_LEN)), "ditch_mud", (mid_x, DITCH_FLOOR - 0.05, z_mid))
+    b.flat("NorthEnd", p, box(b, (wd, 0.72, 0.1)), "pavement", (mid_x, -0.36, DITCH_OPEN_Z[0] + 0.05))
+    # the lining under the kerb, the face the camera looks at across the ditch
+    b.flat("Lining", p, yard.quad(b, DITCH_OPEN, -DITCH_FLOOR), "ditch_wall",
+           (x0 + 0.003, DITCH_FLOOR / 2, (DITCH_OPEN_Z[0] + DITCH_OPEN_Z[1]) / 2), (0, 90, 0))
+    # a cast coping on the bank: with the kerb, two pale edges that frame the dark water
+    b.flat("Coping", p, box(b, (0.14, 0.06, DITCH_OPEN)), "kerb", (x1 + 0.07, -0.006, (DITCH_OPEN_Z[0] + DITCH_OPEN_Z[1]) / 2))
+    # the earth on the road side, crumbling out over the asphalt
+    b.flat("Earth", p, yard.plane(b, EARTH_W, STREET_LEN), "street_earth", (x1 + EARTH_W / 2, 0.002, z_mid))
+    # slabs from the crossing to the end of the street: one replaced, paler than the rest
+    z, end, gap = DITCH_OPEN_Z[1], 20.0, 0.025
+    count = 12
+    length = (end - z - gap * count) / count
+    covered = end - z
+    b.flat("Covered", p, box(b, (wd, 0.24, covered)), "ditch_mud", (mid_x, -0.2, z + covered / 2))
+    slab = box(b, (wd, 0.07, length))
+    for i in range(count):
+        zc = z + gap / 2 + length / 2 + i * (length + gap)
+        b.flat(f"Slab{i}", p, slab, "ditch_slab_new" if i == 4 else "ditch_slab", (mid_x, -0.035, zc))
+    # the panel past the north end, standing in the ditch's line on nothing
+    q = f"{p}/Panel"
+    b.node("Panel", p, position=vec3((mid_x, 0.0, -38.4)), rotation_degrees=vec3((0, 7, 0)))
+    b.flat("Board", q, box(b, (0.05, 2.0, 2.6)), "ditch_panel", (0, 0.4, 0), shadow=True)
+    rib = box(b, (0.07, 1.94, 0.1))
+    for i in range(15):
+        b.flat(f"Rib{i}", q, rib, "ditch_panel", (0.06, 0.4, -1.12 + i * 0.16), shadow=True)
+    post = box(b, (0.04, 2.0, 0.04))
+    for i, zp in enumerate((1.34, 1.52)):
+        b.flat(f"Post{i}", q, post, "ditch_panel", (0.02, 0.4, zp), shadow=True)
+    brace = box(b, (0.03, 0.24, 0.03))
+    for i in range(7):
+        b.flat(f"Brace{i}", q, brace, "ditch_panel", (0.02, -0.45 + i * 0.27, 1.43), (40 if i % 2 else -40, 0, 0))
+
+
 def street_nodes() -> Builder:
     b = Builder()
     A = "StageArt"
@@ -232,6 +306,7 @@ def street_nodes() -> Builder:
     b.node("Landmark", A)
     b.flat("SignPole", f"{A}/Landmark", box(b, (0.12, 6.6, 0.12)), "metal_ink", (-3.0, 1.7, -40.0), shadow=True)
     b.flat("SignBoard", f"{A}/Landmark", box(b, (1.6, 1.0, 0.06)), "pale", (-3.0, 4.6, -39.95), (0, 18, 0), shadow=True)
+    street_ditch(b, A)
     # Paint on the road.
     b.node("Road", A)
     b.flat("CentreLine", f"{A}/Road", yard.plane(b, 0.4, 56.0), "road_dash", (-0.6, 0.004, -8.0))
@@ -271,7 +346,11 @@ STREET = {
         r"SchoolPlinth/MeshInstance3D": "plinth_ivory",
         r"Kerb(East|West)/MeshInstance3D": "kerb",
         r"ShopBlock/MeshInstance3D": "shop_ochre",
+        r"Gutter|GutterPool": "ditch_water",
+        r"DrainCover": "ditch_grate",
     },
+    # The graybox road is redrawn around the ditch (street_ditch); its collider stays.
+    "hidden": [r"Road/MeshInstance3D"],
     "nodes": street_nodes,
 }
 
