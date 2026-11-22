@@ -1,4 +1,4 @@
-[gd_scene load_steps=654 format=3]
+[gd_scene load_steps=655 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -13,6 +13,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fire_door.tres" id="yard_fire_door"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_step.tres" id="art_walk_step"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_glass.tres" id="art_exit_glass"]
+[ext_resource type="Material" path="res://assets/materials/corridor/graffiti/rose_plaster.tres" id="art_rose_plaster"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/wall_graffiti.tscn" id="wall_graffiti"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_entrance.tscn" id="teaching_entrance"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_door.tscn" id="restroom_door"]
@@ -13948,7 +13949,7 @@ cast_shadow = 0
 [node name="Plaster" type="MeshInstance3D" parent="GroundFloor/EntranceWallWest"]
 position = Vector3(0, 1.79, 0)
 mesh = SubResource("BoxMesh_art472")
-material_override = SubResource("Mat_municipal_rose")
+material_override = ExtResource("art_rose_plaster")
 cast_shadow = 0
 
 [node name="Frieze" type="MeshInstance3D" parent="GroundFloor/EntranceWallWest"]

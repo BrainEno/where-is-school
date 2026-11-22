@@ -4,9 +4,8 @@
 Requires Pillow, numpy and scipy. Run from any directory:
     python3 art/teaching_block/graffiti/prepare_wall_graffiti.py IMG_1689.jpeg
 
-Only the transparent paint and its Godot outline mesh go into the game. The mesh
-is cut from the paint's coverage so the normal depth-tested interaction outline
-traces the drawing rather than the edge of an invisible rectangular card.
+Write the transparent pigment, its depth-tested contour mesh, and the albedo and
+normal maps of the rose plaster beneath it. The source photograph stays private.
 """
 from __future__ import annotations
 
@@ -24,9 +23,53 @@ OUT = ROOT / "assets/materials/corridor/graffiti"
 INK = (36, 42, 57)
 HEIGHT_M = 1.50
 TILE_PX = 8
+PLASTER_PX = 512
+PLASTER_REPEAT_M = 2.0  # Reciprocal of rose_plaster.tres's local triplanar scale.
+ROSE = (185, 116, 108)  # The 01 entrance's municipal_rose, before its outdoor lighting.
 
 
-def extract_paint(source: Path) -> Image.Image:
+def plaster_finish() -> tuple[Image.Image, Image.Image, np.ndarray]:
+    """Make a seamless trowelled coat, normal map and pore field from the same height."""
+    rng = np.random.default_rng(4101)
+    shape = (PLASTER_PX, PLASTER_PX)
+
+    def field(sigma: float | tuple[float, float]) -> np.ndarray:
+        smooth = nd.gaussian_filter(rng.standard_normal(shape, dtype=np.float32), sigma, mode="wrap")
+        return np.clip(smooth / smooth.std(), -2.8, 2.8)
+
+    # The broad unevenness is from a trowel, not a dirt wash. Small clustered
+    # pits and grains carry most of the texture up close, then mip away at a distance.
+    trowel = field((14.0, 26.0))
+    aggregate = field((2.6, 4.5))
+    grit = field(.85)
+    pitting = nd.gaussian_filter((rng.random(shape) < .072).astype(np.float32), .9, mode="wrap")
+    pores = np.clip((pitting - .036) / .235, 0, 1)
+    height = .12 * trowel + .28 * aggregate + .20 * grit - .65 * pores
+    dx = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) * .5
+    dy = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) * .5
+    normal = np.stack((-2.1 * dx, 2.1 * dy, np.ones_like(height)), axis=-1)
+    normal /= np.linalg.norm(normal, axis=-1, keepdims=True)
+    relief = Image.fromarray(np.rint((normal * .5 + .5) * 255).astype(np.uint8))
+    value = 3.2 * trowel + 4.3 * aggregate + 3.9 * grit - 15.0 * pores
+    # A little warm and cool variation in the same rose palette, not multicolour noise.
+    colour = np.asarray(ROSE, dtype=np.float32) + value[..., None]
+    colour += aggregate[..., None] * np.array((.8, -.2, -.6), dtype=np.float32)
+    albedo = Image.fromarray(np.clip(np.rint(colour), 0, 255).astype(np.uint8))
+    return albedo, relief, pores
+
+
+def pigment_pores(pores: np.ndarray, shape: tuple[int, int]) -> np.ndarray:
+    # Paint and Plaster share an XY centre. On the exterior (+Z) the material
+    # projects (x, -y) in mesh-local metres, with wrapping and linear filtering.
+    h, w = shape
+    step = HEIGHT_M / h * PLASTER_PX / PLASTER_REPEAT_M
+    x = (np.arange(w) + .5 - w * .5) * step - .5
+    y = (np.arange(h) + .5 - h * .5) * step - .5
+    return nd.map_coordinates(pores, np.broadcast_arrays(y[:, None], x[None, :]),
+                              order=1, mode="grid-wrap", prefilter=False)
+
+
+def extract_paint(source: Path, pores: np.ndarray) -> Image.Image:
     with Image.open(source) as photo:
         grey = ImageOps.exif_transpose(photo).convert("L")
     # Drop the photograph's paper edge, not the marks at the page margins.
@@ -40,16 +83,25 @@ def extract_paint(source: Path) -> Image.Image:
     stroke[(labels == 0) | (np.bincount(labels.ravel())[labels] < 9)] = 0
     stroke = np.pad(stroke, 20)
 
-    # Widen the hand-drawn line a little, then break up the mist around its edge.
-    distance = nd.distance_transform_edt(stroke < .33)
+    # A rounded spray footprint adds weight without squaring off the drawn corners.
+    yy, xx = np.ogrid[-4:5, -4:5]
+    core = nd.gaussian_filter(nd.maximum_filter(stroke, footprint=xx * xx + yy * yy <= 17), 1.05)
+    distance = nd.distance_transform_edt(core < .28)
     grain = np.random.default_rng(1689).random(stroke.shape, dtype=np.float32)
-    cloud = nd.gaussian_filter(grain, 1.15)
-    core = nd.gaussian_filter(nd.maximum_filter(stroke, size=5), .95)
-    mist = np.exp(-.5 * (distance / 3.6) ** 2)
-    mist[distance > 10] = 0
-    mist *= .10 + .20 * (grain > .78) + .11 * (cloud > .56)
-    tooth = .85 + .13 * grain - .18 * (cloud <= .38)
-    alpha = 1 - (1 - .98 * core * tooth) * (1 - mist)
+    cloud = nd.gaussian_filter(grain, 5.0)
+    wisps = np.clip((cloud - .5) / cloud.std(), -2.5, 2.5)
+
+    # Soft overlapping clouds carry small loose droplets. Vary both spread and
+    # density along the line so there is no uniform Gaussian outline around it.
+    spread = np.clip(5.6 + .95 * wisps, 3.7, 7.8)
+    mist = np.exp(-.5 * (distance / spread) ** 2)
+    mist *= np.clip((19.0 - distance) / 5.0, 0, 1)
+    drops = nd.gaussian_filter((grain > .935 - .03 * wisps).astype(np.float32), .48)
+    mist *= np.clip(.145 + .044 * wisps, .045, .255) + .36 * drops
+
+    # Let the same tiny cavities in the plaster interrupt the deposited colour.
+    tooth = .90 + .08 * grain - .32 * pigment_pores(pores, stroke.shape)
+    alpha = 1 - (1 - core * tooth) * (1 - mist)
 
     # A mark that ran off the photograph fades out, rather than ending on a paper edge.
     x, y = np.arange(grey.width), np.arange(grey.height)
@@ -122,10 +174,13 @@ def main() -> None:
     parser.add_argument("source", type=Path, help="the owner's unmodified photograph")
     parser.add_argument("--output", type=Path, default=OUT)
     args = parser.parse_args()
-    paint = extract_paint(args.source)
+    albedo, normal, pores = plaster_finish()
+    paint = extract_paint(args.source, pores)
     mesh = ink_mesh(np.asarray(paint.getchannel("A")))
     args.output.mkdir(parents=True, exist_ok=True)
     paint.save(args.output / "wall_graffiti.png", optimize=True)
+    albedo.save(args.output / "rose_plaster.png", optimize=True)
+    normal.save(args.output / "rose_plaster_normal.png", optimize=True)
     (args.output / "wall_graffiti_ink.tres").write_text(mesh, encoding="utf-8")
 
 

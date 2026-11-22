@@ -27,7 +27,9 @@ The navigation mesh is baked from the same slabs, guards and sloped stair collid
 
 Outside the double glass doors, follow the wall towards the stable lane. The west
 rose-plaster bay carries the [owner-supplied drawing](../art/teaching_block/graffiti/README.md)
-as a thin layer of pigment, not a framed image. Click or tap it from the forecourt,
+as a thin layer of pigment, not a framed image. Rounded, thicker strokes feather into
+fine overspray; pores in the matte, trowelled coat interrupt the paint as well as the
+bare plaster. The other entrance bay keeps its existing finish. Click or tap it from the forecourt,
 or face it within reach and use **Interact**. The camera holds on the whole drawing
 for a few seconds and then gives control back. Its backdrop is the plaster itself:
 only this close-up holds it opaque, while ordinary exploration can still fade the wall.

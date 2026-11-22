@@ -90,6 +90,7 @@ EXTERNAL = {
         "walk_plaster", "walk_dado", "walk_step", "school_haze_floor",
     )},
     **{name: f"{YARD}/materials/{name}.tres" for name in ("exit_frame", "exit_glass", "exit_steel")},
+    "rose_plaster": "res://assets/materials/corridor/graffiti/rose_plaster.tres",
 }
 SOLIDS = {
     "gallery_frame": (64, 73, 83), "gallery_base": (109, 114, 132), "cool_trim": (62, 65, 98),
@@ -662,8 +663,10 @@ def rear_stair_and_ground_wing(b):
     directory_wall(b, g)
     for name, ends in (("EntranceWallWest", (ground_x[0]+0.11, entrance_x[0])),
                        ("EntranceWallEast", (entrance_x[1], ground_x[1]))):
+        field = "rose_plaster" if name == "EntranceWallWest" else "municipal_rose"
         solid_wall(b, g, name, (sum(ends)/2, GROUND_Y, ground_z[1]), ends[1]-ends[0],
-                   base="entry_glaze", field="municipal_rose", height=2.83)
+                   base="entry_glaze", field=field, height=2.83)
+    # Paint shares the plaster's XY centre so its baked pores line up with the coat.
     # Exterior face on the stable-lane side: paint sits 4 mm above the 0.11 m plaster face.
     # Parent it to the wall so the usual occluder fade treats both as one surface.
     b.instance("WallGraffiti", child_path(g, "EntranceWallWest"), "wall_graffiti", (0, 1.2, 0.138))
