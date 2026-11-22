@@ -6,7 +6,9 @@ const Harness = preload("res://tests/test_harness.gd")
 const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const MAIN := preload("res://scenes/main/main.tscn")
 const HALL := "res://scenes/locations/corridor/corridor.tscn"
-const ENTRY_INSIDE := Vector3(-17.78, -3.4, 11.62)
+# Just through the threshold and a step right, still outside the 2.4 m use range.
+# The live follow camera can see the whole row when the player turns from here.
+const ENTRY_INSIDE := Vector3(-16.53, -3.4, 13.06)
 const AT_COUNTER := Vector3(-13.12, -3.4, 11.66)
 
 var _check := Harness.Checker.new()

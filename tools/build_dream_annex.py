@@ -115,10 +115,10 @@ def escalator(b):
 def ticket_counter(b):
     """01, right after the glass threshold, with the wide face on the gallery side."""
     c = "TicketCounter"
-    # Positive X is the entrant's right. Set the counter beyond the deep glazed
-    # lintel's east edge so the follow camera can see the nearest clerk from the
-    # gallery, even when the lintel does not fade. Keep the 2.66 m opening clear.
-    b.node(c, ".", position=vec3((ENTRANCE_X + 4.65, G, GROUND_Z[1] - .92)),
+    # To the entrant's right, outside the 2.66 m clear span. The heads clear
+    # both the deep lintel and the east wall in the follow camera as the player
+    # turns inside the door, independently of the camera occluder fader.
+    b.node(c, ".", position=vec3((ENTRANCE_X + 4.65, G, GROUND_Z[1] - 1.16)),
            rotation_degrees=vec3((0, 180, 0)))
     body = solid(b, "Booth", c, (0, 0, 0), (3.02, .984, 1.12), fade=False)
     b.box("Plinth", body, (0, .491, .437), (3.02, .922, .226), "ticket_enamel", shadow=True)
