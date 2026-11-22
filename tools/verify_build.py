@@ -72,7 +72,7 @@ def annotate(level: str, title: str, message: str) -> None:
     that a restricted client may not be allowed to read, which makes "the build failed the
     contents check" a dead end when the only consumer is an API.
     """
-    print(f"::{level} title={title}::{message}")
+    print(f"::{level} title={title}::{message}", flush=True)
 
 # A release build has to carry the game and nothing else. Each of these is a directory that
 # exists in the repository but must never reach a player's disk.

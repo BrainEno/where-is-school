@@ -205,6 +205,8 @@ def verify_android_assets(archive: ZipFile, preview: bool) -> None:
     require(not any(path.startswith(f"assets/{folder}/") for path in paths for folder in EXCLUDED),
             "APK contains editor/developer files")
     problems, warnings = verify_build.verify(entries, header)
+    for problem in problems:
+        verify_build.annotate("error", "Android pack contents", problem)
     for warning in warnings:
         verify_build.annotate("warning", "Android build budget", warning)
     require(not problems, "; ".join(problems))

@@ -35,6 +35,14 @@ class MobileExportTest(unittest.TestCase):
                     if "wis_handheld" in preset.fields.get("custom_features", "").split(",")}
         self.assertEqual(handheld, {"iOS", "Android"})
 
+    def test_reference_only_classroom_models_stay_out_of_every_pack(self) -> None:
+        for preset in export_presets.parse(self.presets).values():
+            with self.subTest(preset=preset.name):
+                excluded = {item.strip() for item in preset.exclude_filter.split(",")}
+                for model in ("classroom_window_curtains", "classroom_biology_chart"):
+                    self.assertIn(f"assets/models/classroom/{model}.glb", excluded)
+                self.assertNotIn("assets/models/classroom/*", excluded, "Keep the used classroom models")
+
     def test_ios_settings_quote_team_and_build_exactly_once(self) -> None:
         configured = export_mobile.configure(self.presets, "iOS", {
             "application/app_store_team_id": export_mobile.UNSIGNED_TEAM,

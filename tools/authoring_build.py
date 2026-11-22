@@ -126,8 +126,13 @@ def verify_pack(pack: Path) -> None:
     for note in warnings:
         print(f"WARNING: {note}")
     if problems:
-        raise ValueError("iOS story editor pack failed verification:\n" + "\n".join(problems))
-    print(f"PASS: iOS story editor pack ({len(entries)} verified entries); no other developer resources")
+        for problem in problems:
+            verify_build.annotate("error", "iOS pack contents", problem)
+        raise ValueError("iOS story editor pack failed verification: " + "; ".join(problems))
+    size = sum(size for _, size in entries) / verify_build.MiB
+    summary = f"{len(entries)} verified entries, {size:.2f} MiB; no other developer resources"
+    print(f"PASS: iOS story editor pack ({summary})")
+    verify_build.annotate("notice", "iOS pack contents", summary)
 
 
 def main() -> int:
