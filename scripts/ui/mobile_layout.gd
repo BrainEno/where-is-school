@@ -5,13 +5,17 @@ extends RefCounted
 
 const DESIGN_SIZE := Vector2i(960, 720)
 const TEXT_MULTIPLIER := 1.3
+const MENU_TEXT_MULTIPLIER := 1.15
 const TARGET_POINTS := 48.0
 const EDGE := 12.0
 const TEST_SAFE_AREA := &"mobile_test_safe_area"
 const TEST_DENSITY := &"mobile_test_density"
 
 static var preview := OS.has_feature("editor") and "--mobile-preview" in OS.get_cmdline_user_args()
-static var enabled := OS.has_feature("mobile") or preview
+# The shipped mobile packs declare their layout, independently of input device or
+# how the app was launched. Native engine runs can still use their platform tags.
+static var enabled := OS.has_feature("wis_handheld") or OS.has_feature("ios") \
+	or OS.has_feature("android") or OS.has_feature("mobile") or preview
 
 
 static func safe_pixels(window: Window) -> Rect2:

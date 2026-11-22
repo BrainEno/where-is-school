@@ -28,6 +28,7 @@ const CAPTURE_SECONDS := 6.0
 ## How long the first press of "Forget what was read" waits for the second.
 const CLEAR_CONFIRM_SECONDS := 4.0
 const PANEL_MAX_WIDTH := 980.0
+const MOBILE_PANEL_WIDTH := 680.0
 const OUTER_MARGIN := 40.0
 
 var _factor := 1.0
@@ -196,7 +197,7 @@ func _rebuild() -> void:
 	if String(_focus_after_rebuild).is_empty():
 		_focus_after_rebuild = focused
 	var scroll_y := _scroll.scroll_vertical
-	_factor = UiTextScale.current(self)
+	_factor = MenuStyle.menu_text_scale(self)
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
@@ -930,6 +931,9 @@ func _fit() -> void:
 			MobileLayout.enlarge(control)
 	var width := minf(view.x - OUTER_MARGIN * 2.0, PANEL_MAX_WIDTH * maxf(_factor, 1.0))
 	var height := view.y - OUTER_MARGIN * 2.0
+	if MobileLayout.enabled:
+		width = minf(width, MOBILE_PANEL_WIDTH * maxf(_factor, 1.0))
+		height = minf(height, view.y * 0.83)
 	_panel.custom_minimum_size = Vector2(maxf(width, 320.0), maxf(height, 240.0))
 
 

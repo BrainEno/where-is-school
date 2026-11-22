@@ -41,6 +41,7 @@ class Sheet:
 	extends Control
 
 	var column_rect := Rect2()
+	var compact := false
 
 	func _init() -> void:
 		name = "Sheet"
@@ -49,16 +50,22 @@ class Sheet:
 
 	func _draw() -> void:
 		var view := size
-		draw_rect(Rect2(Vector2.ZERO, view), Color(MenuStyle.INK, 0.6))
-		var right := minf(column_rect.end.x + 90.0, view.x)
-		MenuStyle.draw_rough_slab(
-			self, Rect2(0.0, -8.0, right + 10.0, view.y + 16.0),
-			Color(MenuStyle.OCHRE, 0.12), 17, 12.0, false, true
-		)
-		MenuStyle.draw_rough_slab(
-			self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(MenuStyle.SHEET, 0.96), 13,
-			8.0, false, true
-		)
+		draw_rect(Rect2(Vector2.ZERO, view), Color(MenuStyle.INK, 0.44 if compact else 0.6))
+		if compact:
+			if not column_rect.has_area():
+				return
+			var card := column_rect.grow(20.0)
+			MenuStyle.draw_rough_slab(self, card, Color(MenuStyle.SHEET, 0.96), 13, 7.0)
+		else:
+			var right := minf(column_rect.end.x + 90.0, view.x)
+			MenuStyle.draw_rough_slab(
+				self, Rect2(0.0, -8.0, right + 10.0, view.y + 16.0),
+				Color(MenuStyle.OCHRE, 0.12), 17, 12.0, false, true
+			)
+			MenuStyle.draw_rough_slab(
+				self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(MenuStyle.SHEET, 0.96), 13,
+				8.0, false, true
+			)
 		if column_rect.size.y > 0.0:
 			var x := column_rect.position.x - 16.0
 			draw_line(
@@ -71,6 +78,7 @@ var _root: Control = null
 var _page: Control = null
 var _column: VBoxContainer = null
 var _touch_scroll: ScrollContainer
+var _entry_grid: GridContainer
 var _heading: Label = null
 ## The last save, under the heading: "Last saved: Corridor · 14:03".
 var _status: Label = null
@@ -99,7 +107,7 @@ func _ready() -> void:
 	name = "PauseMenu"
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_factor = UiTextScale.current(self)
+	_factor = MenuStyle.menu_text_scale(self)
 	_root = Control.new()
 	_root.name = "Root"
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -114,6 +122,7 @@ func _ready() -> void:
 	_root.add_child(_page)
 	_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sheet = Sheet.new()
+	_sheet.compact = MobileLayout.enabled
 	_page.add_child(_sheet)
 	_column = VBoxContainer.new()
 	_column.name = "Column"
@@ -126,14 +135,25 @@ func _ready() -> void:
 	_status.name = "Status"
 	_column.add_child(_status)
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 22.0)
+	gap.custom_minimum_size = Vector2(0.0, 8.0 if MobileLayout.enabled else 22.0)
 	_column.add_child(gap)
+	if MobileLayout.enabled:
+		_entry_grid = GridContainer.new()
+		_entry_grid.name = "SecondaryEntries"
+		_entry_grid.add_theme_constant_override(&"h_separation", 6)
+		_entry_grid.add_theme_constant_override(&"v_separation", 4)
 	for id: StringName in ENTRIES:
 		var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 		entry.name = String(id)
 		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
 		entry.pressed.connect(activate.bind(id))
-		_column.add_child(entry)
+		if _entry_grid == null or id == &"resume":
+			_column.add_child(entry)
+		else:
+			if _entry_grid.get_parent() == null:
+				_column.add_child(_entry_grid)
+			entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_entry_grid.add_child(entry)
 		_entries[id] = entry
 	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
 	_notice.name = "Notice"
@@ -182,8 +202,9 @@ func _open(show_page: bool) -> void:
 	_was_paused = get_tree().paused
 	_previous_focus = get_viewport().gui_get_focus_owner()
 	get_tree().paused = true
-	_factor = UiTextScale.current(self)
-	UiTextScale.apply(_root, _factor)
+	_factor = MenuStyle.menu_text_scale(self)
+	UiTextScale.apply(_column, _factor)
+	UiTextScale.apply(_hint, _factor)
 	_notice.hide()
 	_failure = {}
 	_refresh_texts()
@@ -255,6 +276,7 @@ func _on_journal_closed() -> void:
 		close()
 		return
 	_refresh_texts()
+	_fit()
 	focus_entry(&"journal")
 
 
@@ -534,7 +556,7 @@ func _on_locale_changed(_locale: String) -> void:
 
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key) and _root != null:
-		_factor = UiTextScale.current(self)
+		_factor = MenuStyle.menu_text_scale(self)
 		UiTextScale.apply(_column, _factor)
 		UiTextScale.apply(_hint, _factor)
 		_fit()
@@ -557,12 +579,26 @@ func _fit() -> void:
 			MobileLayout.enlarge(entry)
 	var left := minf(view.x * 0.085, 160.0)
 	var width := minf(view.x - left * 2.0, 560.0 * maxf(_factor, 1.0))
+	if _entry_grid != null:
+		left = clampf(view.x * 0.06, 32.0, 92.0)
+		width = minf(view.x - left * 2.0, minf(view.x * 0.64, 510.0 * _factor))
+		# Use a single scrollable column when the longer labels at this size would
+		# not fit in a grid. Never fit by shrinking or truncating the chosen text.
+		var pair := Vector2.ZERO
+		for entry: Control in _entry_grid.get_children():
+			var index := entry.get_index() % 2
+			pair[index] = maxf(pair[index], entry.get_combined_minimum_size().x)
+		width = minf(view.x - left * 2.0, maxf(width, maxf(pair.x, pair.y)))
+		_entry_grid.columns = 2 if pair.x + pair.y + 6.0 <= width else 1
 	_column.custom_minimum_size = Vector2(width, 0.0)
 	_column.size = Vector2(width, 0.0)
 	var needed := _column.get_combined_minimum_size().y
-	var foot_room := 90.0 if _hint.visible else MobileLayout.EDGE
-	var top := maxf(12.0 if MobileLayout.enabled else 24.0, minf(view.y * 0.28, view.y - needed - foot_room))
-	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, minf(needed + 2.0, view.y - top - foot_room)))
+	var foot_room := 90.0 if _hint.visible else (24.0 if MobileLayout.enabled else MobileLayout.EDGE)
+	var top := maxf(24.0, minf(view.y * 0.28, view.y - needed - foot_room))
+	if MobileLayout.enabled:
+		top = maxf(24.0, (view.y - needed - (foot_room - 24.0)) * 0.5)
+	var height := maxf(1.0, minf(needed + 2.0, view.y - top - foot_room))
+	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, height))
 	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
 	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)

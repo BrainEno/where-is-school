@@ -45,6 +45,7 @@ func _run() -> void:
 	L10n.load_tables()
 	await _title_and_settings()
 	await _load_world()
+	await _hud_available_with_pointer()
 	await _world_taps()
 	await _joystick_motion()
 	await _joystick_cancellation()
@@ -56,7 +57,7 @@ func _run() -> void:
 	await _return_during_dialogue()
 	Harness.finish(self, _check.failures,
 		"touch movement, eight directions and analog drag, release/cancel and hybrid input; "
-		+ "safe controls on phone and tablet, independent taps, settings/reading/notebook scrolling; "
+		+ "persistent controls, compact menus on phone and tablet, independent taps and modal scrolling; "
 		+ "dialogue cancellation, checkpoint return, Continue in another location and a clean new game")
 
 
@@ -121,6 +122,29 @@ func _load_world() -> void:
 	_pause = _main.get_node(^"PauseMenu") as PauseMenu
 	await physics_frame
 	await physics_frame
+
+
+func _hud_available_with_pointer() -> void:
+	Harness.stage = "handheld HUD does not depend on the latest input device"
+	var menu := _ui.get_node(^"TouchActions/Pause") as Button
+	var use := _ui.get_node(^"TouchActions/Use") as Button
+	var interaction := _player.get_node(^"InteractionController") as InteractionController
+	interaction.set_enabled(false)
+	var pointer := InputEventMouseMotion.new()
+	pointer.position = root.get_final_transform() * MobileLayout.safe_rect(_ui.hud).get_center()
+	pointer.relative = Vector2.RIGHT * 4.0
+	_send(pointer)
+	await process_frame
+	_check.expect(_settings.call("get_input_device") == &"mouse", "Fixture did not switch to pointer hints")
+	_check_target(_stick(), "Joystick with pointer hints")
+	_check_target(menu, "Menu with pointer hints")
+	_check_target(_return_button(), "Return with pointer hints")
+	_check_target(use, "Inactive Use with no target")
+	_check.expect(use.disabled, "Use looks actionable with no target")
+	var before := _nav.get_world_click_event_count()
+	await _tap_control(use)
+	_check.expect(_nav.get_world_click_event_count() == before, "Inactive Use let a tap through to the floor")
+	interaction.set_enabled(true)
 
 
 func _world_taps() -> void:
@@ -247,27 +271,32 @@ func _joystick_cancellation() -> void:
 	key.pressed = true
 	_send(key)
 	await _check_facing(Vector2.UP, "keyboard took over on a mobile surface")
-	_check.expect(not stick.is_visible_in_tree() and Input.is_action_pressed(&"move_forward"),
-		"Switching to keyboard did not hide touch or lost a held action")
+	_check.expect(stick.is_visible_in_tree() and Input.is_action_pressed(&"move_forward"),
+		"Keyboard should take over movement, not remove the touch HUD")
 	_touch(edge, false)
 	_check.expect(Input.is_action_pressed(&"move_forward"), "Touch release cleared a real key")
 	key = key.duplicate() as InputEventKey
 	key.pressed = false
 	_send(key)
+	_touch(edge, true)
+	await _check_facing(Vector2.LEFT, "before gamepad handoff")
 	var axis := InputEventJoypadMotion.new()
 	axis.axis = JOY_AXIS_LEFT_X
 	axis.axis_value = 0.8
 	_send(axis)
 	await _check_facing(Vector2.RIGHT, "gamepad axis in the same player controller")
-	_check.expect(not stick.is_visible_in_tree(), "Gamepad input did not hide the joystick")
+	_check.expect(stick.is_visible_in_tree(), "Gamepad input removed the handheld joystick")
 	axis = axis.duplicate() as InputEventJoypadMotion
 	axis.axis_value = 0.0
 	_send(axis)
-	# A fresh touch restores the visible controls; cancel rather than tapping the world.
-	_touch(center, true)
-	_touch(center, false, 0, true)
-	await process_frame
-	_check.expect(stick.is_visible_in_tree(), "Touch did not bring its controls back")
+	_drag(edge, center + Vector2.UP * stick.size.x)
+	_check.expect(await Harness.wait_until(func() -> bool: return _horizontal_speed() < 0.001, 3.0),
+		"A stick gesture canceled by gamepad input moved again after the axis was released")
+	_touch(center, false)
+	var fresh := center + Vector2.DOWN * stick.size.x * 0.32
+	_touch(fresh, true)
+	await _check_facing(Vector2.DOWN, "a fresh touch after gamepad handoff")
+	_touch(fresh, false)
 
 
 func _menu_geometry() -> void:
@@ -346,6 +375,16 @@ func _pause_navigation() -> void:
 	await _tap_control(touch_menu)
 	if not _check.expect(_pause.is_open() and paused, "Touch Menu did not pause the scene tree"):
 		return
+	var resume := _pause.get_entry(&"resume")
+	var scroll := resume.get_parent().get_parent() as ScrollContainer
+	var safe := MobileLayout.safe_rect(resume)
+	_check.expect(safe.encloses(scroll.get_global_rect()) and scroll.size.x <= safe.size.x * 0.60
+		and scroll.size.y <= safe.size.y * 0.70, "Pause column took up too much of the phone: %s" % scroll.size)
+	for id: StringName in PauseMenu.ENTRIES:
+		var entry := _pause.get_entry(id)
+		_check_target(entry, "Pause " + String(id))
+		_check.expect(scroll.get_global_rect().grow(1.0).encloses(entry.get_global_rect()),
+			"A standard phone pause entry needs scrolling: " + String(id))
 	await _tap_control(_pause.get_entry(&"journal"))
 	var journal := _pause.get_journal_panel()
 	_check.expect(journal.is_open(), "A tap did not open the notebook")
@@ -522,6 +561,7 @@ func _return_during_dialogue() -> void:
 	state.set_flag(StoryFlags.MET_Q, true)
 	_check.expect(await _offer_schoolbag(), "No reachable schoolbag prompt for the second finger")
 	var use := _ui.get_node(^"TouchActions/Use") as Button
+	_check.expect(use.is_visible_in_tree() and not use.disabled, "Use did not activate near the schoolbag")
 	var center := _stick().get_global_rect().get_center()
 	var controller := _main.get_node(^"DialogueController") as DialogueController
 	var activations: Array[StringName] = []
