@@ -56,6 +56,8 @@ kit and two-sided leaves; `tools/build_school_annexes.py` owns the six registrat
 measured corridor route fragments. `tools/build_teaching_block.py` installs the hall faces.
 The laboratory has its own builder. B does not appear in the office. The stills use the
 same ordinary/focus camera and include the detached wide view only as context.
+The later [01 exterior graffiti](graffiti/README.md) has a separate source record;
+it is the supplied drawing, processed as transparent pigment on the existing plaster.
 
 ## Reproduce
 

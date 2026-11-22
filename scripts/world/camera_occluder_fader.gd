@@ -90,9 +90,15 @@ func _physics_process(delta: float) -> void:
 	if followed != null:
 		blockers.append(_first_occluder(space, followed.global_position + Vector3(0.0, target_eye_height, 0.0)))
 
+	# A close-up of a wall may still send the leading ray through it. That wall is
+	# the shot's background, not an obstruction. Other blockers fade as usual.
+	var rig := _target as CameraRig
+	var backdrop := rig.get_insert_backdrop() if rig != null else null
 	for blocker in blockers:
-		if blocker != null:
+		if blocker != null and blocker != backdrop:
 			_release_in[blocker] = CLEAR_GRACE_SECONDS
+	if backdrop != null and _release_in.has(backdrop):
+		_release_in[backdrop] = 0.0
 	_update_materials(delta)
 
 

@@ -23,6 +23,18 @@ The navigation mesh is baked from the same slabs, guards and sloped stair collid
 - Rose and petrol enamel on 01, sage and ochre public-office trim on 02, and an indigo ledger wall on 03 make repeated rooms legible even when their numbers are unreliable. See [the wing's art notes](../art/teaching_block/README.md).
 - The new 01 door opens physically through the south wall; there is no central collider. Sight and pick rays pass through the side panes, but the capsule does not. The street shares the same frame and returns to `FromTeachingEntrance` on the outside of the threshold; `FromStreet` and `school_gate` still exist for the original 02 landing and exit. The glass crossing inside `corridor` requires neither a load nor an interact press.
 
+## A wall to look at on 01
+
+Outside the double glass doors, follow the wall towards the stable lane. The west
+rose-plaster bay carries the [owner-supplied drawing](../art/teaching_block/graffiti/README.md)
+as a thin layer of pigment, not a framed image. Click or tap it from the forecourt,
+or face it within reach and use **Interact**. The camera holds on the whole drawing
+for a few seconds and then gives control back. Its backdrop is the plaster itself:
+only this close-up holds it opaque, while ordinary exploration can still fade the wall.
+The indoor side stays blocked; this look adds no text, flag, destination or save.
+`tests/wall_graffiti_test.gd` checks the exterior approach, camera framing and release
+with both pointer and touch input.
+
 ## The biology threshold
 
 The two openings in bay 101 are the outside of `classroom/WallEast`, not a mirrored pair.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=653 format=3]
+[gd_scene load_steps=654 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -13,6 +13,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fire_door.tres" id="yard_fire_door"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_step.tres" id="art_walk_step"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_glass.tres" id="art_exit_glass"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/wall_graffiti.tscn" id="wall_graffiti"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_entrance.tscn" id="teaching_entrance"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_door.tscn" id="restroom_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/laboratory_entry_door.tscn" id="lab_door"]
@@ -13983,6 +13984,9 @@ position = Vector3(0, 2.735, 0)
 mesh = SubResource("BoxMesh_art477")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
+
+[node name="WallGraffiti" parent="GroundFloor/EntranceWallWest" instance=ExtResource("wall_graffiti")]
+position = Vector3(0, 1.2, 0.138)
 
 [node name="GlassEntrance" parent="GroundFloor" instance=ExtResource("teaching_entrance")]
 position = Vector3(-17.65, -3.4, 14.55)
