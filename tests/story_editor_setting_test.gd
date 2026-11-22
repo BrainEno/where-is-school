@@ -106,14 +106,21 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 	if not check.expect(row != null and row.is_visible_in_tree(), "Settings has no Story editor row"):
 		menu.close()
 		return
-	check.expect(MobileLayout.safe_rect(row).encloses(row.get_global_rect()) \
-			and row.size.y >= MobileLayout.hit_size(row),
-		"The Story editor row is outside the safe area or smaller than a finger")
 	check.expect(row.text.contains(L10n.t("settings.off")), "The row does not show the switch off")
+	# Geometry is a touch rule: on desktop the row simply has to be reachable in the list.
+	panel.focus_row(&"story_editor")
+	await process_frame
+	if MobileLayout.enabled:
+		check.expect(MobileLayout.safe_rect(row).encloses(row.get_global_rect()) \
+				and row.size.y >= MobileLayout.hit_size(row),
+			"The Story editor row is outside the safe area or smaller than a finger")
 	panel.cycle(&"story_editor", 1)
+	# A setting change rebuilds the list, so the button from before the press is gone.
+	await process_frame
 	await process_frame
 	check.expect(bool(settings.call("is_story_editor_enabled")), "The row did not turn the switch on")
-	check.expect(row.text.contains(L10n.t("settings.on")), "The row does not show the switch on")
+	row = panel.get_row_control(&"story_editor") as Button
+	check.expect(row != null and row.text.contains(L10n.t("settings.on")), "The row does not show the switch on")
 	panel.close()
 	await process_frame
 	# The settings screen closing is what installs it; the menu itself stays open.
