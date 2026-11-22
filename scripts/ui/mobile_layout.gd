@@ -26,8 +26,13 @@ static func safe_pixels(window: Window) -> Rect2:
 	return Rect2(DisplayServer.get_display_safe_area())
 
 
+## The safe rectangle in canvas units. A node that has left the tree has no viewport, and
+## its last size is not worth guessing: report an empty rect so a late caller lays nothing
+## out instead of raising a `SCRIPT ERROR` from inside a resize callback.
 static func safe_rect(node: Node) -> Rect2:
 	var viewport := node.get_viewport()
+	if viewport == null:
+		return Rect2()
 	var view := viewport.get_visible_rect()
 	if not enabled or not viewport is Window:
 		return view
@@ -76,11 +81,26 @@ static func enlarge(control: Control) -> void:
 
 
 static func watch(node: Node, callback: Callable) -> void:
+	# Both signals outlive the node that asked for them: the root window never goes away,
+	# and `Settings` is an autoload. After a scene change detaches a menu, a size change or
+	# a stored mobile area therefore called its `_fit()` on a node with no viewport, which
+	# is a `SCRIPT ERROR` naming `get_visible_rect()` and `tree.paused` instead of the
+	# scene swap that caused it. The node's own exit drops both connections.
 	node.get_viewport().size_changed.connect(callback)
 	if enabled:
 		var settings := node.get_node_or_null(^"/root/Settings")
 		if settings != null:
 			settings.connect(&"mobile_area_changed", callback)
+	var drop := func() -> void:
+		# `tree_exiting` still has the tree, so the viewport the watcher connected to is
+		# still reachable; after that the node has neither a tree nor a window.
+		var window := node.get_viewport()
+		if window != null and window.size_changed.is_connected(callback):
+			window.size_changed.disconnect(callback)
+		if settings != null and is_instance_valid(settings) \
+				and settings.mobile_area_changed.is_connected(callback):
+			settings.mobile_area_changed.disconnect(callback)
+	node.tree_exiting.connect(drop)
 
 
 ## Keep full-screen backdrops full-screen; only move their content inside this rect.
