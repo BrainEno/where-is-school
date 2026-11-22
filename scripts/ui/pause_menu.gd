@@ -11,10 +11,6 @@ extends CanvasLayer
 ## names the last save (if any). Keeping playing closes the entire pause and resumes the
 ## same world and conversation.
 ##
-## The look is the title screen's: a dark sheet with a hand-cut edge down the left of the
-## paused world, an ember rule in its margin, the heading and entries in the serif, and the
-## last save's room and time under the heading.
-##
 ## It never takes Esc from something that is already using it: with the log open, Esc
 ## closes the log; with a confirmation, the settings or the notebook up, Esc closes those
 ## first.
@@ -25,6 +21,7 @@ extends CanvasLayer
 ## many entries are new since the notebook was last read.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const HandheldStyle := preload("res://scripts/ui/handheld_style.gd")
 
 signal opened
 signal closed
@@ -54,8 +51,6 @@ var _notice: Label = null
 var _sheet: PauseSheet = null
 var _hint: Label = null
 var _entries: Dictionary = {}
-## The sixth entry's install and switch, created on first use (`sync_story_editor()`).
-var _story_editor: StoryEditorEntry = null
 ## The return-to-title question, created on first use (`request_return_to_title()`).
 var _return_prompt: ReturnPrompt = null
 ## The pending "new game" transaction, created on first use.
@@ -69,7 +64,7 @@ var _closing := false
 var _confirm: ConfirmPrompt = null
 var _was_paused := false
 var _previous_focus: Control = null
-## What the open question is about: `new_game`, `return_save` or `return_checkpoint`.
+## Only the new-game question is stored here; ReturnPrompt owns its own intent.
 var _pending: StringName = &""
 
 
@@ -148,8 +143,7 @@ func _ready() -> void:
 		_column.minimum_size_changed.connect(_fit_after_reflow, CONNECT_DEFERRED)
 		get_window().go_back_requested.connect(_on_mobile_back)
 	_refresh_texts()
-	# After the settings panel and the entries exist: a session started with the switch on
-	# shows the editor entry and installs the editor before the first pause.
+	# A new world reads the saved opt-in before its first pause.
 	sync_story_editor()
 
 
@@ -157,24 +151,28 @@ func is_open() -> bool:
 	return _root != null and _root.visible
 
 
-## Installs the editor for this session when Settings → Story editor is on, and keeps the
-## sixth row in step with it. The install itself is `StoryEditorEntry`'s; this menu supplies
-## its own entry factory so the row cannot drift from the other five.
+## Settings owns the optional runtime. This page only mirrors its saved switch.
 func sync_story_editor() -> void:
-	if _story_editor == null:
-		_story_editor = StoryEditorEntry.new(get_tree().root, _make_story_entry,
-			_drop_story_entry, func() -> bool: return _entries.has(STORY_ENTRY))
-	_story_editor.sync(get_node_or_null(^"/root/Settings"))
+	var settings := get_node_or_null(^"/root/Settings")
+	if settings != null and settings.has_method("is_story_editor_enabled") \
+			and bool(settings.call("is_story_editor_enabled")) \
+			and StoryEditorEntry.available(get_tree().root):
+		_make_story_entry()
+	else:
+		_drop_story_entry()
 
 
 func get_story_editor() -> Node:
-	return _story_editor.installed() if _story_editor != null else null
+	return StoryEditorEntry.installed(get_tree().root)
 
 
-## Opens the editor on the running world, if it is installed.
 func open_story_editor() -> bool:
-	return _story_editor != null and _story_editor.open()
-
+	var editor := get_story_editor()
+	if editor == null or not bool(editor.call("can_open")):
+		return false
+	# Transfer the pause on the same input event; never resume for a frame mid-handoff.
+	close()
+	return bool(editor.call("open_editor"))
 
 ## The editor entry, built on demand. A session that never turns the switch on neither
 ## shows it nor pays for its text.
@@ -212,6 +210,8 @@ func close() -> void:
 	_journal.close()
 	_journal_only = false
 	_pending = &""
+	if _return_prompt != null:
+		_return_prompt.clear()
 	_confirm.hide()
 	_root.hide()
 	_closing = false
@@ -270,17 +270,20 @@ func _on_journal_closed() -> void:
 	focus_entry(&"journal")
 
 
-## One entry button, placed where the five canonical entries go: Resume alone above the
-## pair grid, everything else in it. The editor entry uses the same factory so it cannot
-## drift in size, wrap or focus behaviour.
+## On a phone the primary action and optional editor span the column. The four other
+## entries form pairs; the desktop continues to use the original vertical list.
 func _make_entry(id: StringName) -> Button:
 	var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 	entry.name = String(id)
 	if _entry_grid != null:
 		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
+		var primary := id == &"resume"
+		HandheldStyle.apply(entry, primary, &"resume" if primary else &"")
 	entry.pressed.connect(activate.bind(id))
-	if _entry_grid == null or id == &"resume":
+	if _entry_grid == null or id in [&"resume", STORY_ENTRY]:
 		_column.add_child(entry)
+		if id == STORY_ENTRY:
+			_column.move_child(entry, _notice.get_index())
 	else:
 		if _entry_grid.get_parent() == null:
 			_column.add_child(_entry_grid)
@@ -291,13 +294,12 @@ func _make_entry(id: StringName) -> Button:
 
 ## The editor's row: the same factory as the five entries, registered in the same map so
 ## `_refresh_texts()`, the touch layout and `activate()` all treat it as an entry.
-func _make_story_entry() -> Button:
+func _make_story_entry() -> void:
 	if _entries.has(STORY_ENTRY):
-		return _entries[STORY_ENTRY] as Button
+		return
 	var button := _make_entry(STORY_ENTRY)
 	_entries[STORY_ENTRY] = button
 	button.text = L10n.t("menu.story_editor")
-	return button
 
 
 func _drop_story_entry() -> void:
@@ -305,6 +307,7 @@ func _drop_story_entry() -> void:
 		return
 	var button := _entries[STORY_ENTRY] as Button
 	_entries.erase(STORY_ENTRY)
+	button.hide()
 	button.queue_free()
 
 
@@ -346,9 +349,6 @@ func activate(id: StringName) -> void:
 		&"journal":
 			open_journal()
 		STORY_ENTRY:
-			# `close()` resets the tree's pause; the drawer's own pause is applied after, so
-			# the world never runs a frame between the menu and the drawer.
-			close()
 			open_story_editor()
 		&"new_game":
 			_pending = &"new_game"
@@ -385,9 +385,8 @@ func _on_confirmed() -> void:
 	if pending == &"new_game":
 		_on_new_game_confirmed()
 		return
-	_ensure_return_prompt()
-	_return_prompt.pending = pending
-	_return_prompt.answer(true)
+	if _return_prompt != null:
+		_return_prompt.answer(true)
 
 
 func _on_cancelled() -> void:
@@ -396,9 +395,8 @@ func _on_cancelled() -> void:
 	if pending == &"new_game":
 		focus_entry(&"new_game")
 		return
-	_ensure_return_prompt()
-	_return_prompt.pending = pending
-	_return_prompt.answer(false)
+	if _return_prompt != null:
+		_return_prompt.answer(false)
 
 
 ## Starts a new run from the menu's own world. The failure path is `NewGameAttempt`'s: it
@@ -406,10 +404,6 @@ func _on_cancelled() -> void:
 ## of the way when the title screen reads the report itself.
 func _on_new_game_confirmed() -> void:
 	_new_game_attempt().start()
-
-
-func _on_new_game_failed(report: Dictionary) -> void:
-	_new_game_attempt().failed(report)
 
 
 func _new_game_attempt() -> NewGameAttempt:
@@ -499,12 +493,7 @@ func _something_else_owns_cancel() -> bool:
 		var backlog := ui.get_node_or_null(^"%BacklogPanel") as BacklogPanel
 		if backlog != null and backlog.is_open():
 			return true
-	var editor := get_story_editor()
-	if editor != null:
-		var overlay := editor.get_node_or_null(^"AuthorOverlay")
-		if overlay != null and overlay.has_method("is_editing") and bool(overlay.call("is_editing")):
-			return true
-	return false
+	return StoryEditorEntry.is_editing(get_tree().root)
 
 
 func _refresh_texts() -> void:
@@ -550,12 +539,8 @@ func _on_locale_changed(_locale: String) -> void:
 
 
 func _on_settings_closed() -> void:
-	# The switch can have changed while the screen was up; the entry follows it before the
-	# focus returns, so the new row is there for the next press.
-	sync_story_editor()
-	if _settings_panel.is_open():
-		return
-	focus_entry(&"settings")
+	if not _closing:
+		focus_entry(&"settings")
 
 
 func _on_setting_changed(key: StringName) -> void:
@@ -564,7 +549,7 @@ func _on_setting_changed(key: StringName) -> void:
 		UiTextScale.apply(_column, _factor)
 		UiTextScale.apply(_hint, _factor)
 		_fit()
-	elif key == &"story_editor":
+	if key in [&"story_editor", &"all"]:
 		sync_story_editor()
 		_refresh_texts()
 		_fit()

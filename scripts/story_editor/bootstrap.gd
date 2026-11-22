@@ -1,14 +1,12 @@
 extends Node
-## The one place the story editor reaches a running game. Both the retail iPhone build and
-## the separate author app carry it; the retail one only lets the menus open the editor
-## after Settings → Story editor is switched on, and its autoload is installed by the
-## menus themselves (so a separate author build can still be started by staging it).
+## Attaches a local draft editor to a running world. The standalone author build stages
+## this as an autoload; the iPhone player build installs it only from the saved opt-in.
 
 const Overlay := preload("res://scripts/story_editor/author_overlay.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
 
 var _store: Store
-var _overlay: Node
+var _overlay: Overlay
 
 
 func _ready() -> void:
@@ -17,24 +15,38 @@ func _ready() -> void:
 
 
 func has_overlay() -> bool:
-	return _overlay != null and is_instance_valid(_overlay)
+	return is_instance_valid(_overlay) and not _overlay.is_queued_for_deletion() \
+		and _overlay.get_parent() == get_tree().current_scene
 
 
-## Opens the editor on the current scene. The pause menu's entry calls this; it returns
-## false when no world is running or the drawer cannot take the screen right now.
+func can_open() -> bool:
+	return has_overlay() and _overlay.can_open()
+
+
+func is_editing() -> bool:
+	return has_overlay() and _overlay.is_editing()
+
+
 func open_editor() -> bool:
-	if _overlay == null or not is_instance_valid(_overlay):
+	if not can_open():
 		return false
-	var editor := _overlay as Overlay
-	if editor == null:
-		return false
-	if not editor.can_open():
-		return false
-	editor.open_editor()
-	return editor.is_editing()
+	_overlay.open_editor()
+	return _overlay.is_editing()
+
+
+func release_overlay() -> void:
+	if not is_instance_valid(_overlay) or _overlay.is_queued_for_deletion():
+		return
+	_overlay.close_editor()
+	_overlay.hide()
+	_overlay.queue_free()
+	_overlay.get_parent().remove_child(_overlay)
+	_overlay = null
 
 
 func _attach() -> void:
+	if not is_inside_tree():
+		return
 	var world := get_tree().current_scene
 	if world == null or not world.has_node(^"DialogueController") or not world.has_node(^"GameUI") \
 			or world.has_node(^"AuthorOverlay"):
@@ -42,7 +54,6 @@ func _attach() -> void:
 	if _store == null:
 		_store = Store.new()
 		_store.load_workspace()
-	var editor := Overlay.new()
-	editor.store = _store
-	world.add_child(editor)
-	_overlay = editor
+	_overlay = Overlay.new()
+	_overlay.store = _store
+	world.add_child(_overlay)

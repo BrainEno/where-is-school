@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Attached only in the staged author project. Pauses the existing world, draws a
+## Attached by the author build or by the saved opt-in. Pauses the world, draws a
 ## detached DialoguePanel over it, and leaves the real controller and its state alone.
 
 const Form := preload("res://scripts/story_editor/author_form.gd")
@@ -593,4 +593,6 @@ func _exit_tree() -> void:
 	if _preview != null:
 		_preview.stop()
 	if _open:
+		if is_instance_valid(_ui) and is_instance_valid(_ui.dialogue_panel):
+			_ui.dialogue_panel.modulate = _live_tint
 		get_tree().paused = false

@@ -28,6 +28,7 @@ extends Node
 
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
 const InputSettings := preload("res://scripts/save/input_settings.gd")
 signal setting_changed(key: StringName)
 signal bindings_changed
@@ -223,12 +224,21 @@ func is_story_editor_enabled() -> bool:
 	return _story_editor
 
 
-func set_story_editor_enabled(value: bool) -> void:
+func set_story_editor_enabled(value: bool) -> bool:
 	if value == _story_editor:
-		return
+		return true
+	# Do not install the editor or show the setting as on until the preference is stored.
+	if _store(SECTION_AUTHORING, "story_editor", value) != OK:
+		return false
 	_story_editor = value
-	_store(SECTION_AUTHORING, "story_editor", value)
+	_sync_story_editor.call_deferred()
 	setting_changed.emit(&"story_editor")
+	return true
+
+
+func _sync_story_editor() -> void:
+	if is_inside_tree() and get_tree().root.get_node_or_null(^"Settings") == self:
+		StoryEditorEntry.reconcile(get_tree().root, _story_editor)
 
 
 func get_sprint_mode() -> StringName:
@@ -355,8 +365,10 @@ func is_using_gamepad() -> bool:
 
 
 func _input(event: InputEvent) -> void:
+	var before := _input_settings.get_input_device()
 	_input_settings.notice_device(event)
-	input_device_changed.emit(_input_settings.get_input_device())
+	if _input_settings.get_input_device() != before:
+		input_device_changed.emit(_input_settings.get_input_device())
 
 
 ## A disconnected active controller has no buttons to describe. Fall back immediately to
@@ -427,16 +439,12 @@ static func decode_event(text: String) -> InputEvent:
 ## Returns `{ok, reason, conflict}`; `reason` is "unknown_action", "unsupported",
 ## "reserved" or "conflict" when the binding is refused, and nothing changes then.
 func rebind(action: StringName, event: InputEvent) -> Dictionary:
-	var result := _input_settings.rebind(action, event)
-	if bool(result.get("ok", false)):
-		bindings_changed.emit()
-	return result
+	return _input_settings.rebind(action, event)
 
 
 ## Every rebindable action back to `project.godot`, and the stored overrides removed.
 func restore_default_bindings() -> void:
 	_input_settings.restore_default_bindings()
-	bindings_changed.emit()
 
 
 ## Whether the settings screen offers this side of an action for rebinding.
@@ -546,11 +554,11 @@ func reset_to_defaults() -> void:
 	load_settings()
 
 
-func _store(section: String, key: String, value: Variant) -> void:
+func _store(section: String, key: String, value: Variant) -> Error:
 	var config := _open()
 	config.set_value(section, key, value)
 	config.set_value(SECTION_META, "version", FORMAT_VERSION)
-	_write(config)
+	return _write(config)
 
 
 ## The file as it is now, so a write never drops keys this node does not own.
@@ -558,7 +566,8 @@ func _open() -> ConfigFile:
 	return SettingsStore.open()
 
 
-func _write(config: ConfigFile) -> void:
+func _write(config: ConfigFile) -> Error:
 	var error := SettingsStore.write(config)
 	if error != OK:
-		push_error("Settings: could not write %s (error %d)." % [SETTINGS_PATH, error])
+		push_warning("Settings: could not write %s (error %d)." % [SETTINGS_PATH, error])
+	return error

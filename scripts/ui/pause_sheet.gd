@@ -87,10 +87,11 @@ func _touch_width(column: VBoxContainer, view_width: float, left: float, factor:
 		for entry: Control in grid.get_children():
 			var column_index := entry.get_index() % 2
 			pair[column_index] = maxf(pair[column_index], entry.get_combined_minimum_size().x)
-	var resume := column.get_node_or_null(^"resume") as Control
-	var resume_width := resume.get_combined_minimum_size().x if resume != null else 0.0
-	width = minf(view_width - left * 2.0,
-		maxf(maxf(width, resume_width), maxf(pair.x, pair.y)))
+	for path: NodePath in [^"resume", ^"story_editor"]:
+		var full_row := column.get_node_or_null(path) as Control
+		if full_row != null and full_row.visible:
+			width = maxf(width, full_row.get_combined_minimum_size().x)
+	width = minf(view_width - left * 2.0, maxf(width, maxf(pair.x, pair.y)))
 	if grid != null:
 		grid.columns = 2 if pair.x + pair.y + 6.0 <= width else 1
 	column.custom_minimum_size = Vector2(width, 0.0)

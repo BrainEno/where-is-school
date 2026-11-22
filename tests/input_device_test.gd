@@ -33,6 +33,7 @@ var _hud: GameHud = null
 var _dialogue: DialoguePanel = null
 var _probe: InputProbe = null
 var _checks := 0
+var _device_changes: Array[StringName] = []
 
 
 func _initialize() -> void:
@@ -49,6 +50,7 @@ func _run() -> void:
 		return
 	_settings.call("restore_default_bindings")
 	_settings.call("set_input_device", &"keyboard")
+	_settings.connect(&"input_device_changed", func(device: StringName) -> void: _device_changes.append(device))
 	_hud = _make_hud()
 	root.add_child(_hud)
 	_probe = InputProbe.new()
@@ -85,6 +87,7 @@ func _run() -> void:
 	await _push_pad(JOY_BUTTON_A)
 	_expect(_probe.events.size() == 1, "A controller input was replayed or duplicated (%d events)." % _probe.events.size())
 	_expect(_settings.call("is_using_gamepad"), "A controller press changed prompts back to keyboard.")
+	_expect(_device_changes == [&"gamepad"], "Repeating a device fired another presentation refresh: %s." % [_device_changes])
 
 	# A real key returns to keyboard labels. The mappings are read live, not guessed.
 	_probe.events.clear()

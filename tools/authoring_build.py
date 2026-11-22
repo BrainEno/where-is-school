@@ -122,12 +122,12 @@ def verify_pack(pack: Path) -> None:
     paths = {name for name, _ in entries}
     for source in SCRIPTS:
         if not {"res://" + source, "res://" + source + "c"} & paths:
-            problems.append(f"Author pack is missing {source}")
+            problems.append(f"iOS story editor pack is missing {source}")
     for note in warnings:
         print(f"WARNING: {note}")
     if problems:
-        raise ValueError("Author pack failed verification:\n" + "\n".join(problems))
-    print(f"PASS: author pack ({len(entries)} verified entries); no other developer resources")
+        raise ValueError("iOS story editor pack failed verification:\n" + "\n".join(problems))
+    print(f"PASS: iOS story editor pack ({len(entries)} verified entries); no other developer resources")
 
 
 def main() -> int:

@@ -19,6 +19,8 @@ extends Control
 ## menus for section heads, focus and the volume dials.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const HandheldStyle := preload("res://scripts/ui/handheld_style.gd")
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
 
 signal closed
 
@@ -39,11 +41,9 @@ var _rows: VBoxContainer = null
 var _status: Label = null
 var _title: Label = null
 var _back: Button = null
-## The touch screen's own "done" key, beside Back. On a phone the hint line that names the
-## confirm input is hidden (`settings.hint_keyboard` is a keyboard hint), so the way out of
-## a changed row otherwise has no visible key at all. Every change is already stored the
-## moment it is made; this key says so and closes, which is what the player is looking for.
+## Touch-only confirmation of edits, not a second write or an entry in desktop focus.
 var _done: Button = null
+var _story_feedback := ""
 ## id -> the focusable control for that row.
 var _controls: Dictionary = {}
 var _capture_action := StringName()
@@ -114,6 +114,11 @@ func _ready() -> void:
 	_done.pressed.connect(_on_done_pressed)
 	footer.add_child(_done)
 	_done.visible = MobileLayout.enabled
+	if MobileLayout.enabled:
+		for button: Button in [_back, _done]:
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+			HandheldStyle.apply(button, button == _done)
 
 	var settings := _settings()
 	if settings != null:
@@ -129,17 +134,16 @@ func _ready() -> void:
 
 func open() -> void:
 	_cancel_capture()
-	_rebuild()
+	# A fresh visit starts on the first rows rather than a previous swipe's offset.
+	_story_feedback = ""
+	_rebuild(false)
 	show()
 	_fit()
 	focus_row(&"text_size")
 
 
-## The touch screen's "done": say that the change is already stored, then leave. A pause
-## menu and the title both put the focus back where it came from, so the sentence is read
-## on the way out rather than while a modal is closing over it.
+## Preferences save as they change. Done is a visible way back on touch, not a second write.
 func _on_done_pressed() -> void:
-	_status.text = L10n.t("settings.done_note")
 	close()
 
 
@@ -216,12 +220,14 @@ func start_capture(action: StringName, device: StringName) -> void:
 # --- Building --------------------------------------------------------------------
 
 
-func _rebuild() -> void:
+func _rebuild(keep_scroll: bool = true) -> void:
 	_rebuild_queued = false
 	var focused := _focused_id()
-	if String(_focus_after_rebuild).is_empty():
+	if not keep_scroll:
+		_focus_after_rebuild = &""
+	elif String(_focus_after_rebuild).is_empty():
 		_focus_after_rebuild = focused
-	var scroll_y := _scroll.scroll_vertical
+	var scroll_y := _scroll.scroll_vertical if keep_scroll else 0
 	_factor = MenuStyle.menu_text_scale(self)
 	for child in _rows.get_children():
 		_rows.remove_child(child)
@@ -238,6 +244,8 @@ func _rebuild() -> void:
 	_choice_row(&"auto_speed", "settings.auto_speed", _auto_speed_options(), _current(&"auto_speed"))
 	_choice_row(&"skip_scope", "settings.skip_scope", _skip_scope_options(), _current(&"skip_scope"))
 	_clear_read_log_row()
+	if MobileLayout.enabled:
+		_authoring_rows()
 	_heading("settings.section.sound")
 	for key: StringName in [&"master", &"music", &"sfx"]:
 		_volume_row(key)
@@ -265,7 +273,8 @@ func _rebuild() -> void:
 	restore.pressed.connect(_on_restore_pressed)
 	_rows.add_child(restore)
 	_controls[&"restore_bindings"] = restore
-	_authoring_rows()
+	if not MobileLayout.enabled:
+		_authoring_rows()
 
 	UiTextScale.apply(self, _factor)
 	if MobileLayout.enabled:
@@ -289,11 +298,14 @@ func _rebuild() -> void:
 ## cross between its two cells, the ends stop, and Tab wraps inside the screen.
 func _link_focus() -> void:
 	var grid: Array[Array] = []
-	for id: StringName in [
-		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log",
+	var rows: Array[StringName] = [&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log"]
+	if MobileLayout.enabled:
+		rows.append(&"story_editor")
+	rows.append_array([
 		&"volume_master", &"volume_music", &"volume_sfx", &"ui_scale", &"fullscreen", &"language",
-		&"open_logs", &"export_diagnostics", &"sprint_mode", &"story_editor",
-	]:
+		&"open_logs", &"export_diagnostics", &"sprint_mode",
+	])
+	for id: StringName in rows:
 		var single := _focusable(get_row_control(id))
 		if single != null:
 			grid.append([single, single])
@@ -302,7 +314,11 @@ func _link_focus() -> void:
 		var pad := _focusable(get_row_control(_bind_id(action, &"gamepad")))
 		if keys != null or pad != null:
 			grid.append([keys, pad])
-	for id: StringName in [&"restore_bindings", &"story_editor", &"back", &"done"]:
+	rows.assign([&"restore_bindings"])
+	if not MobileLayout.enabled:
+		rows.append(&"story_editor")
+	rows.append_array([&"back", &"done"])
+	for id: StringName in rows:
 		var single := _focusable(get_row_control(id))
 		if single != null:
 			grid.append([single, single])
@@ -345,7 +361,7 @@ func _grid_step(grid: Array[Array], row: int, column: int, step: int) -> Control
 
 
 func _focusable(control: Control) -> Control:
-	if control == null or control.focus_mode == Control.FOCUS_NONE:
+	if control == null or not control.visible or control.focus_mode == Control.FOCUS_NONE:
 		return null
 	return control
 
@@ -630,9 +646,19 @@ func _cycle(id: StringName, step: int) -> void:
 	if options.is_empty():
 		return
 	var index := posmod(int(button.get_meta(&"index", 0)) + step, options.size())
+	var value := String((options[index] as Dictionary).get("value", ""))
+	_story_feedback = ""
+	if id == &"story_editor":
+		var settings := _settings()
+		var saved := settings != null and bool(settings.call("set_story_editor_enabled", value == "on"))
+		_story_feedback = "settings.done_note" if saved else "settings.save_failed"
+		_sync_story_choice()
+		_refresh_status_hint()
+		return
 	button.set_meta(&"index", index)
 	_show_choice(button)
-	_apply_choice(id, String((options[index] as Dictionary).get("value", "")))
+	_refresh_status_hint()
+	_apply_choice(id, value)
 
 
 func _apply_choice(id: StringName, value: String) -> void:
@@ -668,9 +694,6 @@ func _apply_choice(id: StringName, value: String) -> void:
 						DisplayServer.WINDOW_MODE_FULLSCREEN if wanted
 						else DisplayServer.WINDOW_MODE_WINDOWED
 					)
-		&"story_editor":
-			if settings != null:
-				settings.call("set_story_editor_enabled", value == "on")
 		&"language":
 			var loc := get_node_or_null(^"/root/Loc")
 			if loc != null:
@@ -765,6 +788,8 @@ func _disarm_clear_read_log() -> void:
 ## they are not about reading or steering the game. The editor's drafts live in their own
 ## folder and never touch the save file, so turning this on cannot change an existing run.
 func _authoring_rows() -> void:
+	if not StoryEditorEntry.available(get_tree().root):
+		return
 	_heading("settings.section.authoring")
 	_choice_row(&"story_editor", "settings.story_editor", _on_off_options(), _current(&"story_editor"))
 	_rows.add_child(MenuStyle.paragraph(
@@ -828,8 +853,14 @@ func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key):
 		_queue_rebuild(&"text_size" if key == &"text_size" else &"")
 	elif key == &"story_editor":
-		# Another screen may have changed it; show the stored value here too.
-		_queue_rebuild(&"story_editor")
+		_sync_story_choice()
+
+
+func _sync_story_choice() -> void:
+	var button := _controls.get(&"story_editor") as Button
+	if button != null:
+		button.set_meta(&"index", _current(&"story_editor"))
+		_show_choice(button)
 
 
 func _on_bindings_changed() -> void:
@@ -852,6 +883,11 @@ func _on_locale_changed(_locale: String) -> void:
 
 func _refresh_status_hint() -> void:
 	if _status == null or is_capturing():
+		return
+	_status.add_theme_color_override(&"font_color",
+		MenuStyle.WARN if _story_feedback == "settings.save_failed" else MenuStyle.MUTED)
+	if not _story_feedback.is_empty():
+		_status.text = L10n.t(_story_feedback)
 		return
 	var pad := MenuStyle.using_gamepad(self)
 	var keys := {

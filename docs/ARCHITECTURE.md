@@ -856,24 +856,20 @@ evidence is `tests/capture_editor_dock.gd`, which photographs it under Xvfb in C
 editor-only surface — the plugin class, the bottom panel — is covered by the manual
 checklist in that test's section of the pull request, because no CI runner opens an editor.
 
-**The player's copy (story editor switch).** The retail iPhone app carries the same editor
-runtime as the separate author app, in `scripts/story_editor/` (it moved there from
-`scripts/dev/authoring/`), and links the Files bridge on the device. It is off by default:
-`[authoring] story_editor` in `settings.cfg`, a row under *Settings → Story editor* (测试).
-The pause menu is the only installer — `sync_story_editor()` hands the switch to
-`StoryEditorEntry` (`scripts/ui/story_editor_entry.gd`), which adds the `StoryEditor`
-autoload to the root when the switch is on and frees it when it is off — so a copy that never
-turns it on packs no overlay into the running scene and reads no draft. Drafts, the editor
-journal and the Files bridge exchange live in `user://story_editor/`, separate from
-`user://save.json`. The desktop and Android presets still exclude both the folder and the
-bridge; `tools/export_mobile.py --authoring` remains the separate author app
-(`io.github.braineno.whereisschool.authoring`, no bridge on the simulator).
+**The player's copy (story editor switch).** iOS carries the editor runtime in
+`scripts/story_editor/`; the device builds also link the Files bridge. The separate author
+app starts its editor automatically. In the normal iPhone app `[authoring] story_editor` in
+`user://settings.cfg` is off by default. The row appears only when the runtime is packed,
+and does not apply the change if the staged settings write fails. `Settings` delegates to
+`StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
+both it and its world overlay when turned off, including from the title screen. `PauseMenu`
+only mirrors the saved setting. Without opt-in no drafts are loaded. The
+journal and Files exchange under `user://story_editor/` never write `user://save.json` or
+shipped story content. Android and desktop exclude both the runtime and the bridge.
 
-**Confirming instead of closing (touch).** Settings stores every change as it is made, but a
-phone shows no hint line naming the confirm input, so a changed row had no visible key of its
-own. The screen now carries a full-width 「完成」 row beside 「返回」 on a touch layout
-(`settings.done`), which is a real finger target, says the change is already stored and only
-then closes. In the drawer, 「保存文字」 (`apply_text`, `scripts/story_editor/author_form.gd`)
+**Completing a change (touch).** The story editor switch acknowledges a successful save in
+Settings, or leaves the old value and displays the failure. The phone's visible 「完成」
+and 「返回」 buttons close the settings panel; they do not write or claim to save again. In the drawer, 「保存文字」 (`apply_text`, `scripts/story_editor/author_form.gd`)
 is the same answer for a text field: the draft is written as it types, and this key puts the
 keyboard away and reports that the sentence is in the draft. Both are additions; the
 keyboard and pad walk (`↑/↓`, `←/→`, Enter/A, Esc/B) is unchanged.

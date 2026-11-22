@@ -16,6 +16,7 @@ extends Control
 ## how the first version of this card showed two empty answers.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const HandheldStyle := preload("res://scripts/ui/handheld_style.gd")
 
 signal confirmed
 signal cancelled
@@ -128,6 +129,8 @@ func _answer_button(id: String) -> Button:
 	button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	if MobileLayout.enabled:
+		HandheldStyle.apply(button, id == "Cancel")
 	return button
 
 

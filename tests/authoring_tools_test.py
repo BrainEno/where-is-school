@@ -63,9 +63,9 @@ class AuthoringToolsTest(unittest.TestCase):
         ios = with_author["iOS"]
         self.assertEqual(ios.options["application/bundle_identifier"], author.AUTHOR_ID)
         self.assertEqual(ios.options["plugins/WISAuthorFiles"], "true")
-        for field in ("tests/*", "tools/*", "scenes/dev/*", "ios/plugins/*"):
+        for field in ("tests/*", "tools/*", "scenes/dev/*", "scripts/dev/*", "ios/plugins/*"):
             self.assertIn(field, ios.exclude_filter)
-        self.assertNotIn("scripts/dev/*", ios.exclude_filter)
+        self.assertNotIn("scripts/story_editor/*", ios.exclude_filter)
         self.assertEqual(retail["iOS"].options["application/bundle_identifier"], mobile.PACKAGE)
         # Both iPhone apps link the Files bridge: the retail one only reaches the editor
         # after Settings → Story editor. Desktop and Android ship neither the runtime nor
@@ -81,7 +81,8 @@ class AuthoringToolsTest(unittest.TestCase):
 
     def test_author_pack_exception_does_not_relax_other_developer_paths(self):
         author_path = "res://" + author.BOOTSTRAP + "c"
-        leaks = [(author_path, 1), ("res://scripts/dev/private.gdc", 1), ("res://ios/plugins/backdoor.gdip", 1)]
+        extra = "res://scripts/story_editor/not_exported.gdc"
+        leaks = [(author_path, 1), (extra, 1), ("res://scripts/dev/private.gdc", 1), ("res://ios/plugins/extra.gdip", 1)]
         retail = verify_contents(leaks)
         authored = verify_contents(leaks, allowed_paths=author.PACK_PATHS)
         # The editor runtime lives in scripts/story_editor/ and ships on iOS by name; the
@@ -89,7 +90,9 @@ class AuthoringToolsTest(unittest.TestCase):
         retail_dev = [line for line in retail if "under res://scripts/dev/" in line]
         self.assertEqual(retail_dev, ["1 file(s) under res://scripts/dev/ reached the build, "
                                       "first: res://scripts/dev/private.gdc"])
-        self.assertFalse(any(line.startswith("1 file(s) under res://scripts/dev/ and ") for line in retail))
+        self.assertTrue(any("2 file(s) under res://scripts/story_editor/" in line for line in retail))
+        self.assertTrue(any("1 file(s) under res://scripts/story_editor/" in line and extra in line for line in authored))
+        self.assertFalse(any(author_path in line for line in authored))
         self.assertTrue(any("1 file(s) under res://scripts/dev/" in line for line in authored))
         self.assertTrue(any("private.gdc" in line for line in authored))
         self.assertTrue(any("res://ios/plugins/" in line for line in retail))

@@ -110,6 +110,8 @@ func _run() -> void:
 	if not pause_menu.is_open() or not paused:
 		_fail("the menu button did not pause gameplay")
 		return
+	if not await _check_editor_in_pack(pause_menu, world, settings):
+		return
 	await _tap(pause_menu.get_entry(&"resume"))
 	if pause_menu.is_open() or paused:
 		_fail("the pause menu did not return to gameplay")
@@ -142,6 +144,47 @@ func _run() -> void:
 	print("PASS: MOBILE_OPENING_TOUCH_OK os=%s engine=%s handheld=%s preview=%s" % [
 		OS.get_name(), Engine.get_version_info()["string"], OS.has_feature("wis_handheld"), MobileLayout.preview])
 	quit()
+
+
+## A source tree can load files an export accidentally excluded. Exercise the same touch
+## path against the retail device pack, all the way to the editor's actual drawer.
+func _check_editor_in_pack(menu: PauseMenu, world: Node, settings: Node) -> bool:
+	if settings.is_story_editor_enabled() or menu.get_story_editor() != null:
+		_fail("a fresh run enabled the story editor automatically")
+		return false
+	await _tap(menu.get_entry(&"settings"))
+	var panel := menu.get_settings_panel()
+	var toggle := panel.get_row_control(&"story_editor") as Button
+	if not panel.is_open() or toggle == null:
+		_fail("the retail pack did not expose the story editor opt-in in Settings")
+		return false
+	panel.get_scroll().ensure_control_visible(toggle)
+	await process_frame
+	await _tap(toggle)
+	var persisted := ConfigFile.new()
+	if not settings.is_story_editor_enabled() or persisted.load("user://settings.cfg") != OK 			or persisted.get_value("authoring", "story_editor", false) != true:
+		_fail("the mobile settings tap did not save the editor switch")
+		return false
+	await _tap(panel.get_row_control(&"done"))
+	var entry := menu.get_story_entry()
+	if panel.is_open() or entry == null or not await _wait_until(func() -> bool:
+		return world.has_node(^"AuthorOverlay"), 5.0):
+		_fail("the pack did not attach the editor and expose its pause entry")
+		return false
+	var scroll := entry.get_parent().get_parent() as ScrollContainer
+	scroll.ensure_control_visible(entry)
+	await process_frame
+	await _tap(entry)
+	var overlay := world.get_node(^"AuthorOverlay")
+	if menu.is_open() or not paused or not bool(overlay.call("is_editing")):
+		_fail("a touch on the pause entry did not open the editor")
+		return false
+	overlay.call("close_editor")
+	if paused or bool(overlay.call("is_editing")):
+		_fail("closing the editor did not resume gameplay")
+		return false
+	menu.open()
+	return true
 
 
 func _finish_opening(dialogue: DialogueController, player: PlayerController) -> bool:

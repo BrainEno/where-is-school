@@ -34,7 +34,7 @@ PREVIEW = PACKAGE + ".preview"
 ANDROID_API = 36
 ANDROID_TOOLS = "36.1.0"
 UNSIGNED_TEAM = "0000000000"  # Used only to satisfy the Xcode project exporter.
-EXCLUDED = {"tests", "tools", "docs", "art", "scenes/dev", "scripts/dev", ".github", "addons"}
+EXCLUDED = {"tests", "tools", "docs", "art", "scenes/dev", "scripts/dev", ".github", "addons", "scripts/story_editor"}
 RELEASE_KEY = tuple("GODOT_ANDROID_KEYSTORE_RELEASE_" + k for k in ("PATH", "USER", "PASSWORD"))
 ORIENTATIONS = {"UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"}
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
@@ -82,7 +82,7 @@ def check_presets(root: Path) -> None:
         paths = {part.strip().removesuffix("/*") for part in preset.exclude_filter.split(",")}
         # iOS carries the story editor's runtime behind the Settings switch, so its pack
         # may include scripts/story_editor/; the rest of the developer tree stays out.
-        required = EXCLUDED - {"scripts/dev"} if platform == "iOS" else EXCLUDED
+        required = EXCLUDED - {"scripts/story_editor"} if platform == "iOS" else EXCLUDED
         require(required <= paths, f"{platform} may ship developer content: {sorted(required - paths)}")
         if platform == "iOS" and "scripts/story_editor" in paths:
             raise BuildError("The iOS preset must pack the story editor it links")
@@ -252,8 +252,7 @@ def verify_ios_app(
     executable = app / info["CFBundleExecutable"]
     # Both iPhone device apps of the same source can edit story text: the retail one only
     # after Settings → Story editor is switched on. The author app also carries the bridge
-    # on the simulator (it is its whole point there); a retail simulator does not, because
-    # no player reaches the editor on one.
+    # on the simulator; a retail simulator exercises the editor without the native bridge.
     require((b"WISAuthorFiles\0" in executable.read_bytes()) == (authoring or not simulator),
             "The story editor's Files bridge belongs to the iOS device apps")
     if authoring:
@@ -346,10 +345,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
     pack = out / f"{APP}.pck"
     require((project / "project.pbxproj").is_file() and pack.is_file(),
             "Godot did not produce the Xcode project and game pack")
-    if authoring:
-        authoring_build.verify_pack(pack)
-    else:
-        run(sys.executable, ROOT / "tools/verify_build.py", "--pck", pack)
+    authoring_build.verify_pack(pack)
     if args.target == "ios-project":
         return project
     xcode = ("xcodebuild", "-project", project, "-scheme", APP)

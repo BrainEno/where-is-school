@@ -23,9 +23,8 @@ var _page: Control
 var _close: Callable
 ## The menu's own world: the scene the session should save.
 var _world: Callable
-## What the open question is about: left empty while asking, set to a return kind once the
-## player confirms. The menu's other question (`new_game`) sets and reads it around us.
-var pending: StringName = &""
+## The question's intent belongs here, including a re-ask after a failed save.
+var _pending: StringName = &""
 
 
 func _init(confirm: Control, page: Control, close_menu: Callable, world: Callable) -> void:
@@ -53,20 +52,24 @@ func ask(menu_open: bool, open_menu: Callable, block: Control) -> bool:
 	return true
 
 
-## The answer. `true` means "save, then leave"; false leaves the last checkpoint only.
+## No means keep playing. Yes uses the intent recorded when this question opened.
 func answer(confirmed: bool) -> void:
-	var kind := pending
-	pending = StringName()
-	if not confirmed:
-		if kind == &"return_save" or kind == &"return_checkpoint":
-			_close.call()
+	var kind := _pending
+	clear()
+	if kind == &"":
 		return
-	if kind == &"return_save" or kind == &"return_checkpoint":
+	if confirmed:
 		_return_to_title(kind == &"return_save")
+	else:
+		_close.call()
+
+
+func clear() -> void:
+	_pending = &""
 
 
 func _ask(status: Dictionary, write: bool, warning: String = "") -> void:
-	pending = &"return_save" if write else &"return_checkpoint"
+	_pending = &"return_save" if write else &"return_checkpoint"
 	var message := L10n.t("menu.confirm_return_save")
 	if not write:
 		var caption := MenuStyle.save_caption(

@@ -9,6 +9,7 @@ const SCREENS := [
 	[Vector2i(1334, 750), Rect2(0, 0, 1334, 750), 2.0],
 	[Vector2i(2400, 1080), Rect2(132, 0, 2244, 1008), 3.0],
 	[Vector2i(2048, 1536), Rect2(0, 42, 2048, 1452), 2.0],
+	[Vector2i(2400, 1080), Rect2(24, 0, 2244, 1008), 3.0], # same phone, opposite grip
 ]
 
 const PORTRAIT := [Vector2i(1170, 2532), Rect2(0, 141, 1170, 2289), 3.0]
@@ -113,6 +114,8 @@ func _title_and_settings() -> void:
 		if _check.expect(reopened.is_open(), "Settings did not reopen after Done"):
 			var speed_row := reopened.get_row_control(&"text_speed") as Button
 			var before := speed_row.text
+			_check.expect(reopened.get_scroll().get_global_rect().has_point(speed_row.get_global_rect().get_center()),
+				"Reopening Settings kept the previous scroll position over the first rows")
 			await _tap_control(speed_row)
 			_check.expect(speed_row.text != before, "Tapping a choice row on a phone changed nothing")
 			await _tap_control(reopened.get_row_control(&"back"))
@@ -280,6 +283,8 @@ func _joystick_cancellation() -> void:
 		await physics_frame
 		_check.expect(_horizontal_speed() < 0.001, "A stale drag resumed after losing focus")
 		_touch(edge, false)
+	# A held thumb must cancel even when the last hint already belonged to this keyboard.
+	_settings.set_input_device(InputHint.DEVICE_KEYBOARD)
 	_touch(edge, true)
 	var key := InputEventKey.new()
 	key.physical_keycode = KEY_W
@@ -288,6 +293,17 @@ func _joystick_cancellation() -> void:
 	await _check_facing(Vector2.UP, "keyboard took over on a mobile surface")
 	_check.expect(stick.is_visible_in_tree() and Input.is_action_pressed(&"move_forward"),
 		"Keyboard should take over movement, not remove the touch HUD")
+	key = key.duplicate() as InputEventKey
+	key.pressed = false
+	_send(key)
+	_drag(edge, center + Vector2.UP * stick.size.x)
+	_check.expect(await Harness.wait_until(func() -> bool: return _horizontal_speed() < 0.001, 3.0),
+		"A held thumb took over again after the keyboard stopped")
+	_touch(edge, false)
+	key = key.duplicate() as InputEventKey
+	key.pressed = true
+	_send(key)
+	_touch(edge, true)
 	_touch(edge, false)
 	_check.expect(Input.is_action_pressed(&"move_forward"), "Touch release cleared a real key")
 	key = key.duplicate() as InputEventKey
@@ -386,6 +402,9 @@ func _pause_navigation() -> void:
 	Harness.stage = "pause, journal and Back"
 	var touch_menu := _ui.get_node(^"TouchActions/Pause") as Button
 	_check_target(touch_menu, "Touch Menu")
+	var use := _ui.get_node(^"TouchActions/Use") as Button
+	_check.expect(touch_menu.icon != null and _return_button().icon != null and use.icon != null,
+		"The HUD buttons lost their phone glyphs")
 	var before := _nav.get_world_click_event_count()
 	await _tap_control(touch_menu)
 	if not _check.expect(_pause.is_open() and paused, "Touch Menu did not pause the scene tree"):

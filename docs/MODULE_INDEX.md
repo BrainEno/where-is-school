@@ -69,6 +69,11 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `TitleScreen` | [`scripts/ui/title_screen.gd`](../scripts/ui/title_screen.gd) | Start/continue/settings/quit surface and save status; use Session for a new run. |
 | `UiTextScale` | [`scripts/ui/ui_text_scale.gd`](../scripts/ui/ui_text_scale.gd) | Apply the Settings text multiplier from an authored base size (`apply`, `set_base`, `scaled`); repeated scaling must not compound. |
 
+Phone-only button states and glyphs are the preload-only [handheld style](../scripts/ui/handheld_style.gd);
+input ownership and safe-area sizing stay with the touch controls and layout. The pause menu's
+[story editor entry](../scripts/ui/story_editor_entry.gd) binds the saved iOS opt-in to the optional
+runtime without preloading resources omitted from other exports.
+
 ### Dialogue and reading
 
 | Public type | Source | Responsibility / reuse boundary |
