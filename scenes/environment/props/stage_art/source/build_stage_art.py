@@ -393,6 +393,21 @@ def front_yard_nodes() -> Builder:
         b.flat(f"Post{i}", goal, post, "goal_white", (x, 1.22, 0), shadow=True)
         b.flat(f"Stay{i}", goal, box(b, (0.06, 0.06, 1.6)), "goal_white", (x, 0.03, -0.8))
     b.flat("Bar", goal, box(b, (7.42, 0.1, 0.1)), "goal_white", (0, 2.44, 0), shadow=True)
+    # Past the school wall, the street the side door goes out to, where the street scene has
+    # it (its x + YARD_TO_STREET): the pavement under the wall, the road and its broken centre
+    # line, the far pavement, and the rose flats and the ochre shop across it. Out of reach.
+    street = f"{A}/PastTheGate"
+    b.node("PastTheGate", A)
+    sx = YARD_TO_STREET
+    b.flat("Pavement", street, yard.plane(b, 1.4, 70.0), "pavement", (sx - 10.6, 0.07, -2.0))
+    b.flat("Road", street, yard.plane(b, 19.9, 70.0), "street_asphalt", (sx + 0.05, -0.004, -2.0))
+    b.flat("CentreLine", street, yard.plane(b, 0.4, 56.0), "road_dash", (sx - 0.6, 0.002, -8.0))
+    b.flat("FarPavement", street, yard.plane(b, 8.0, 70.0), "pavement", (sx + 13.0, 0.07, -2.0))
+    b.flat("FarKerb", street, box(b, (0.35, 0.24, 70.0)), "kerb", (sx + 8.9, 0.12, -2.0))
+    for name, mat, pos, size in (("FlatsA", "flats_rose", (17.0, 5.5, 6.0), (10.0, 11.0, 16.0)),
+                                 ("FlatsB", "flats_rose", (16.0, 7.0, -12.0), (8.0, 14.0, 14.0)),
+                                 ("Shop", "shop_ochre", (14.0, 3.6, -24.0), (8.0, 7.2, 10.0))):
+        b.flat(name, street, box(b, size), mat, (sx + pos[0], pos[1], pos[2]), shadow=True)
     # The yard's own trees, each inside its fader box (the generator's DeadTreeN body).
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (_x, _z, variant, yaw_) in enumerate(FRONT_YARD_TREES):
