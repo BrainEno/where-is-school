@@ -24,12 +24,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          diagnose() {
+            awk '/SCRIPT ERROR|Parse Error|^ERROR:|^WARNING:/{print; if (++count == 7) exit}
+                 /[[:space:]]at:.*\.gd:[0-9]+/{print}' "$1" |
+              while IFS= read -r line; do echo "::error title=Folded Drum $2::$line"; done
+          }
           godot --version
-          godot --headless --path . --import > "$RUNNER_TEMP/folded-import.log" 2>&1
-          if grep -E 'SCRIPT ERROR|Parse Error|^ERROR:' "$RUNNER_TEMP/folded-import.log"; then exit 1; fi
-          godot --headless --path . --script res://scenes/dev/folded_drum/review.gd \
-            2>&1 | tee "$RUNNER_TEMP/folded-test.log"
-          if grep -E 'SCRIPT ERROR|^ERROR:' "$RUNNER_TEMP/folded-test.log"; then exit 1; fi
+          # The first import can report resources queued for import. Judge the clean
+          # editor open after it has populated the cache, as in location-art-capture.
+          first=0
+          godot --headless --path . --import > "$RUNNER_TEMP/folded-import.log" 2>&1 || first=$?
+          if [ "$first" -ne 0 ]; then
+            echo "::notice title=Folded Drum import::Initial import exited $first; checking the editor after import."
+          fi
+          editor_log="$RUNNER_TEMP/folded-editor.log"
+          if ! godot --headless --editor --path . --quit > "$editor_log" 2>&1 ||
+              grep -Eq 'SCRIPT ERROR|Parse Error|^ERROR:' "$editor_log"; then
+            diagnose "$editor_log" editor
+            tail -n 35 "$editor_log"
+            exit 1
+          fi
+          test_log="$RUNNER_TEMP/folded-test.log"
+          if ! godot --headless --path . --script res://scenes/dev/folded_drum/review.gd > "$test_log" 2>&1 ||
+              grep -Eq 'SCRIPT ERROR|^ERROR:' "$test_log" || ! grep -q '^PASS:' "$test_log"; then
+            diagnose "$test_log" geometry
+            cat "$test_log"
+            exit 1
+          fi
+          cat "$test_log"
           grep '^PASS:' "$RUNNER_TEMP/folded-test.log" | while IFS= read -r result; do
             echo "::notice title=Folded Drum geometry and input::$result"
           done
@@ -37,11 +59,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xvfb-run -a -s '-screen 0 1760x1120x24' godot --path . --resolution 1600x1000 \
-            --rendering-method gl_compatibility --audio-driver Dummy \
-            --script res://scenes/dev/folded_drum/review.gd -- "capture=$RUNNER_TEMP/folded-frames" \
-            2>&1 | tee "$RUNNER_TEMP/folded-capture.log"
-          if grep -E 'SCRIPT ERROR|^ERROR:' "$RUNNER_TEMP/folded-capture.log"; then exit 1; fi
+          capture_log="$RUNNER_TEMP/folded-capture.log"
+          if ! xvfb-run -a -s '-screen 0 1760x1120x24' godot --path . --resolution 1600x1000 \
+              --rendering-method gl_compatibility --audio-driver Dummy \
+              --script res://scenes/dev/folded_drum/review.gd -- "capture=$RUNNER_TEMP/folded-frames" \
+              > "$capture_log" 2>&1 || grep -Eq 'SCRIPT ERROR|^ERROR:' "$capture_log"; then
+            awk '/^SCRIPT ERROR|^ERROR:|^OpenGL/ {print; if (++count == 7) exit}' "$capture_log" |
+              while IFS= read -r line; do echo "::error title=Folded Drum capture::$line"; done
+            tail -n 35 "$capture_log"
+            exit 1
+          fi
+          cat "$capture_log"
           grep -E '^Godot Engine|^OpenGL API|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
             while IFS= read -r result; do echo "::notice title=Folded Drum viewport::$result"; done
       - name: Prepare exact-byte evidence for the artifact and check API
