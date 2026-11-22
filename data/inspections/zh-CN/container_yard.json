@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "cy_tyres": {
+    "title": "轮胎台阶",
+    "prompt": "看轮胎",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·卡车轮胎垒成的台阶，一直通到箱顶"
+  },
+  "cy_plank": {
+    "title": "长木板",
+    "prompt": "抬头看木板",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·两个箱顶之间晃悠的长木板"
+  },
+  "cy_orange": {
+    "title": "橙色的集装箱",
+    "prompt": "看橙色的集装箱",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·蓝的红的中间，唯一一个橙色的"
+  }
+}

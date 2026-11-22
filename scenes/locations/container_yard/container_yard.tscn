@@ -1,0 +1,1276 @@
+[gd_scene load_steps=105 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="tone"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="look"]
+[ext_resource type="Shader" path="res://scenes/locations/container_yard/plank_sway.gdshader" id="sway"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/metal_tile.png" id="metal_tile"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/ground_tile.png" id="ground_tile"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fence_panel.tres" id="fence"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/estate.tres" id="wall"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/ground.tres" id="mesh_ground"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/bay_paint.tres" id="mesh_bay_paint"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_a.tres" id="mesh_container20_a"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_b.tres" id="mesh_container20_b"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_a.tres" id="mesh_container40_a"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_b.tres" id="mesh_container40_b"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack1.tres" id="mesh_tyre_stack1"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack2.tres" id="mesh_tyre_stack2"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack3.tres" id="mesh_tyre_stack3"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack4.tres" id="mesh_tyre_stack4"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack5.tres" id="mesh_tyre_stack5"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack6.tres" id="mesh_tyre_stack6"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_stack7.tres" id="mesh_tyre_stack7"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_heap.tres" id="mesh_tyre_heap"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/yard_office.tres" id="mesh_yard_office"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/pallets.tres" id="mesh_pallets"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_long_down.tres" id="mesh_plank_long_down"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_to_corner.tres" id="mesh_plank_to_corner"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_to_forty_foot.tres" id="mesh_plank_to_forty_foot"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_up_to_double.tres" id="mesh_plank_up_to_double"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_high_across.tres" id="mesh_plank_high_across"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_back_pair.tres" id="mesh_plank_back_pair"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_middle_diagonal.tres" id="mesh_plank_middle_diagonal"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/gap_hole.tres" id="mesh_gap_hole"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/mast.tres" id="mesh_mast"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/crane.tres" id="mesh_crane"]
+
+[sub_resource type="Environment" id="YardEnvironment"]
+background_mode = 1
+background_color = Color(0.239, 0.275, 0.361, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.66, 0.64, 0.74, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+tonemap_exposure = 0.66
+fog_enabled = true
+fog_light_color = Color(0.32, 0.3, 0.38, 1)
+fog_density = 0.006
+adjustment_enabled = true
+adjustment_saturation = 1.02
+adjustment_contrast = 1.04
+
+[sub_resource type="StandardMaterial3D" id="container_blue"]
+resource_name = "container_blue"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.188, 0.361, 0.573, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_blue_deep"]
+resource_name = "container_blue_deep"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.14, 0.27, 0.47, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_red"]
+resource_name = "container_red"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.62, 0.18, 0.14, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_red_dark"]
+resource_name = "container_red_dark"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.47, 0.17, 0.15, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_orange"]
+resource_name = "container_orange"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.88, 0.45, 0.1, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="asphalt"]
+resource_name = "asphalt"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.7, 0.7, 0.74, 1)
+roughness = 1.0
+albedo_texture = ExtResource("ground_tile")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="bay_paint"]
+resource_name = "bay_paint"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="rubber"]
+resource_name = "rubber"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="mast_steel"]
+resource_name = "mast_steel"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="gap_dark"]
+resource_name = "gap_dark"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+cull_mode = 2
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="crane"]
+resource_name = "crane"
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_ground"]
+size = Vector3(43.5, 0.2, 36.5)
+
+[sub_resource type="BoxShape3D" id="Shape_R0C01"]
+size = Vector3(12.19, 7.77, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R0C23"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R0C45"]
+size = Vector3(12.19, 7.77, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R1C0"]
+size = Vector3(6.06, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R1C23"]
+size = Vector3(12.19, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R1C4"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R2C01"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R2C2"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R2C4"]
+size = Vector3(6.06, 7.77, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R2C5"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R3C1"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R3C23"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R3C5"]
+size = Vector3(6.06, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R4C0"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R4C1"]
+size = Vector3(6.06, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R4C3"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R4C45"]
+size = Vector3(12.19, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R5C01"]
+size = Vector3(12.19, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R5C3"]
+size = Vector3(6.06, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_R5C4"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Across_R1C5"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Across_R3C0"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_LeftWall0"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_LeftWall1"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Ramp"]
+size = Vector3(1, 0.3, 7.6021)
+
+[sub_resource type="BoxShape3D" id="Shape_Ramp"]
+size = Vector3(6.4058, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="cabin"]
+resource_name = "cabin"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="BoxShape3D" id="Shape_office"]
+size = Vector3(5, 2.7, 2.4)
+
+[sub_resource type="BoxShape3D" id="Shape_plank_LongDown"]
+size = Vector3(9.5773, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_LongDown"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.115
+shader_parameter/swing = 0.057
+shader_parameter/rate = 0.990
+shader_parameter/phase = 1.162
+
+[sub_resource type="BoxShape3D" id="Shape_plank_ToCorner"]
+size = Vector3(3.2, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_ToCorner"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.038
+shader_parameter/swing = 0.019
+shader_parameter/rate = 1.125
+shader_parameter/phase = 6.239
+
+[sub_resource type="BoxShape3D" id="Shape_plank_ToFortyFoot"]
+size = Vector3(3.2, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_ToFortyFoot"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.038
+shader_parameter/swing = 0.019
+shader_parameter/rate = 1.170
+shader_parameter/phase = 1.464
+
+[sub_resource type="BoxShape3D" id="Shape_plank_UpToDouble"]
+size = Vector3(7.1834, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_UpToDouble"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.086
+shader_parameter/swing = 0.043
+shader_parameter/rate = 1.070
+shader_parameter/phase = 5.663
+
+[sub_resource type="BoxShape3D" id="Shape_plank_HighAcross"]
+size = Vector3(7.7, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_HighAcross"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.092
+shader_parameter/swing = 0.046
+shader_parameter/rate = 1.077
+shader_parameter/phase = 6.263
+
+[sub_resource type="BoxShape3D" id="Shape_plank_BackPair"]
+size = Vector3(3.2, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_BackPair"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.038
+shader_parameter/swing = 0.019
+shader_parameter/rate = 1.160
+shader_parameter/phase = 5.714
+
+[sub_resource type="BoxShape3D" id="Shape_plank_MiddleDiagonal"]
+size = Vector3(4.1878, 0.06, 0.82)
+
+[sub_resource type="ShaderMaterial" id="Mat_plank_MiddleDiagonal"]
+shader = ExtResource("sway")
+shader_parameter/sag = 0.050
+shader_parameter/swing = 0.025
+shader_parameter/rate = 1.047
+shader_parameter/phase = 2.259
+
+[sub_resource type="BoxShape3D" id="Shape_BackWall"]
+size = Vector3(42.3, 3.2, 0.3)
+
+[sub_resource type="BoxMesh" id="Box_BackWall"]
+size = Vector3(42.3, 3.2, 0.3)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceLeft"]
+size = Vector3(0.08, 2, 34.7)
+
+[sub_resource type="BoxMesh" id="Box_FenceLeft"]
+size = Vector3(0.08, 2, 34.7)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceRight"]
+size = Vector3(0.08, 2, 34.7)
+
+[sub_resource type="BoxMesh" id="Box_FenceRight"]
+size = Vector3(0.08, 2, 34.7)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceFrontWest"]
+size = Vector3(35.6, 2, 0.08)
+
+[sub_resource type="BoxMesh" id="Box_FenceFrontWest"]
+size = Vector3(35.6, 2, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceFrontEast"]
+size = Vector3(5.1, 2, 0.08)
+
+[sub_resource type="BoxMesh" id="Box_FenceFrontEast"]
+size = Vector3(5.1, 2, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_gap_stop"]
+size = Vector3(1.8, 2, 0.1)
+
+[sub_resource type="BoxMesh" id="Box_gap_flap"]
+size = Vector3(1.1, 1.4, 0.03)
+
+[node name="ContainerYard" type="Node3D"]
+script = ExtResource("location")
+location_id = &"container_yard"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("YardEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-28, 32, 0)
+light_color = Color(1, 0.8, 0.62, 1)
+light_energy = 0.32
+shadow_enabled = true
+directional_shadow_max_distance = 70.0
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("tone")
+volume_db = -30.0
+script = ExtResource("ambience")
+target_db = -26.0
+pitch_scale = 0.8
+
+[node name="YardGround" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="YardGround"]
+position = Vector3(-1.25, -0.1, -0.15)
+shape = SubResource("Shape_ground")
+
+[node name="Surface" type="MeshInstance3D" parent="YardGround"]
+mesh = ExtResource("mesh_ground")
+material_override = SubResource("asphalt")
+
+[node name="BayPaint" type="MeshInstance3D" parent="YardGround"]
+mesh = ExtResource("mesh_bay_paint")
+material_override = SubResource("bay_paint")
+cast_shadow = 0
+
+[node name="Containers" type="Node3D" parent="."]
+
+[node name="R0C01" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-13, 0, -15.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R0C01"]
+position = Vector3(0, 3.885, 0)
+shape = SubResource("Shape_R0C01")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R0C01"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R0C01"]
+position = Vector3(-0.0227, 2.59, 0.0053)
+rotation_degrees = Vector3(0, 180.087, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue")
+
+[node name="Level2" type="MeshInstance3D" parent="Containers/R0C01"]
+position = Vector3(-0.0393, 5.18, -0.0085)
+rotation_degrees = Vector3(0, 180.205, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_blue")
+
+[node name="R0C23" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(0, 0, -15.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R0C23"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R0C23")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R0C23"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R0C23"]
+position = Vector3(-0.0317, 2.59, -0.0106)
+rotation_degrees = Vector3(0, -0.105, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red")
+
+[node name="R0C45" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(13, 0, -15.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R0C45"]
+position = Vector3(0, 3.885, 0)
+shape = SubResource("Shape_R0C45")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R0C45"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_blue_deep")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R0C45"]
+position = Vector3(0.0101, 2.59, -0.0082)
+rotation_degrees = Vector3(0, 180.065, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red")
+
+[node name="Level2" type="MeshInstance3D" parent="Containers/R0C45"]
+position = Vector3(-0.0396, 5.18, -0.0016)
+rotation_degrees = Vector3(0, 0.1155, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red")
+
+[node name="R1C0" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-16.25, 0, -11)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R1C0"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R1C0")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R1C0"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R1C0"]
+position = Vector3(-0.0064, 2.59, -0.0127)
+rotation_degrees = Vector3(0, -0.2152, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red_dark")
+
+[node name="R1C23" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(0, 0, -11)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R1C23"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R1C23")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R1C23"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_red")
+
+[node name="R1C4" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(9.75, 0, -11)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R1C4"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R1C4")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R1C4"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_orange")
+
+[node name="R2C01" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-13, 0, -6.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R2C01"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R2C01")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R2C01"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue_deep")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R2C01"]
+position = Vector3(-0.0182, 2.59, 0.0076)
+rotation_degrees = Vector3(0, 180.305, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue")
+
+[node name="R2C2" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-3.25, 0, -6.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R2C2"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R2C2")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R2C2"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red")
+
+[node name="R2C4" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(9.75, 0, -6.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R2C4"]
+position = Vector3(0, 3.885, 0)
+shape = SubResource("Shape_R2C4")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R2C4"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R2C4"]
+position = Vector3(-0.0067, 2.59, -0.0207)
+rotation_degrees = Vector3(0, -0.3246, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="Level2" type="MeshInstance3D" parent="Containers/R2C4"]
+position = Vector3(0.0264, 5.18, 0.0111)
+rotation_degrees = Vector3(0, 180.115, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red_dark")
+
+[node name="R2C5" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(16.25, 0, -6.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R2C5"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R2C5")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R2C5"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_blue")
+
+[node name="R3C1" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-9.75, 0, -2)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R3C1"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R3C1")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R3C1"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_blue")
+
+[node name="R3C23" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(0, 0, -2)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R3C23"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R3C23")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R3C23"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red_dark")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R3C23"]
+position = Vector3(0.0014, 2.59, 0.0147)
+rotation_degrees = Vector3(0, 180.081, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue")
+
+[node name="R3C5" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(16.25, 0, -2)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R3C5"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R3C5")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R3C5"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R3C5"]
+position = Vector3(-0.031, 2.59, 0.0156)
+rotation_degrees = Vector3(0, 0.3206, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_red")
+
+[node name="R4C0" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-16.25, 0, 2.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R4C0"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R4C0")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R4C0"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red")
+
+[node name="R4C1" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-9.75, 0, 2.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R4C1"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R4C1")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R4C1"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R4C1"]
+position = Vector3(-0.0239, 2.59, 0.0114)
+rotation_degrees = Vector3(0, 179.955, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_red")
+
+[node name="R4C3" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(3.25, 0, 2.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R4C3"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R4C3")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R4C3"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_blue_deep")
+
+[node name="R4C45" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(13, 0, 2.5)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R4C45"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R4C45")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R4C45"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_red")
+
+[node name="R5C01" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-13, 0, 7)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R5C01"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R5C01")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R5C01"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_blue")
+
+[node name="R5C3" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(3.25, 0, 7)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R5C3"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_R5C3")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R5C3"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_red")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/R5C3"]
+position = Vector3(0.021, 2.59, -0.002)
+rotation_degrees = Vector3(0, -0.0145, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="R5C4" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(9.75, 0, 7)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/R5C4"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_R5C4")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/R5C4"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("mesh_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="Across_R1C5" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(16.25, 0, -11)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/Across_R1C5"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_Across_R1C5")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/Across_R1C5"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_blue")
+
+[node name="Across_R3C0" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-16.25, 0, -2)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/Across_R3C0"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_Across_R3C0")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/Across_R3C0"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container20_a")
+material_override = SubResource("container_red")
+
+[node name="LeftWall0" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-21, 0, -9)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/LeftWall0"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_LeftWall0")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/LeftWall0"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/LeftWall0"]
+position = Vector3(0.0007, 2.59, -0.0148)
+rotation_degrees = Vector3(0, 0.2113, 0)
+mesh = ExtResource("mesh_container40_a")
+material_override = SubResource("container_red")
+
+[node name="LeftWall1" type="StaticBody3D" parent="Containers" groups=["camera_occluder"]]
+position = Vector3(-21, 0, 3.4)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Containers/LeftWall1"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_LeftWall1")
+
+[node name="Level0" type="MeshInstance3D" parent="Containers/LeftWall1"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_red_dark")
+
+[node name="Level1" type="MeshInstance3D" parent="Containers/LeftWall1"]
+position = Vector3(0.0081, 2.59, 0.0183)
+rotation_degrees = Vector3(0, -0.1217, 0)
+mesh = ExtResource("mesh_container40_b")
+material_override = SubResource("container_blue_deep")
+
+[node name="TyreFlightA" type="StaticBody3D" parent="."]
+position = Vector3(10.5, 0, 8.72)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Stack0" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 6)
+mesh = ExtResource("mesh_tyre_stack1")
+material_override = SubResource("rubber")
+
+[node name="Stack1" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 5)
+mesh = ExtResource("mesh_tyre_stack2")
+material_override = SubResource("rubber")
+
+[node name="Stack2" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 4)
+mesh = ExtResource("mesh_tyre_stack3")
+material_override = SubResource("rubber")
+
+[node name="Stack3" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 3)
+mesh = ExtResource("mesh_tyre_stack4")
+material_override = SubResource("rubber")
+
+[node name="Stack4" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 2)
+mesh = ExtResource("mesh_tyre_stack5")
+material_override = SubResource("rubber")
+
+[node name="Stack5" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 1)
+mesh = ExtResource("mesh_tyre_stack6")
+material_override = SubResource("rubber")
+
+[node name="Stack6" type="MeshInstance3D" parent="TyreFlightA"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_tyre_stack7")
+material_override = SubResource("rubber")
+
+[node name="Ramp" type="CollisionShape3D" parent="TyreFlightA"]
+position = Vector3(0, 1.1641, 2.9985)
+rotation_degrees = Vector3(20.0797, 0, 0)
+shape = SubResource("Shape_Ramp")
+
+[node name="TyreFlightB" type="StaticBody3D" parent="."]
+position = Vector3(7.22, 2.59, 6.75)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Stack0" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(4.75, 0, 0)
+mesh = ExtResource("mesh_tyre_stack1")
+material_override = SubResource("rubber")
+
+[node name="Stack1" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(3.8, 0, 0)
+mesh = ExtResource("mesh_tyre_stack2")
+material_override = SubResource("rubber")
+
+[node name="Stack2" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(2.85, 0, 0)
+mesh = ExtResource("mesh_tyre_stack3")
+material_override = SubResource("rubber")
+
+[node name="Stack3" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(1.9, 0, 0)
+mesh = ExtResource("mesh_tyre_stack4")
+material_override = SubResource("rubber")
+
+[node name="Stack4" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(0.95, 0, 0)
+mesh = ExtResource("mesh_tyre_stack5")
+material_override = SubResource("rubber")
+
+[node name="Stack5" type="MeshInstance3D" parent="TyreFlightB"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_tyre_stack6")
+material_override = SubResource("rubber")
+
+[node name="Ramp" type="CollisionShape3D" parent="TyreFlightB"]
+position = Vector3(2.2439, 1.168, 0)
+rotation_degrees = Vector3(0, 0, -24.0442)
+shape = SubResource("Shape_Ramp")
+
+[node name="TyreHeap" type="MeshInstance3D" parent="."]
+position = Vector3(-9.5, 0, 15.4)
+mesh = ExtResource("mesh_tyre_heap")
+material_override = SubResource("rubber")
+
+[node name="YardOffice" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-16.4, 0, 14.6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="YardOffice"]
+position = Vector3(0, 1.35, 0)
+shape = SubResource("Shape_office")
+
+[node name="Cabin" type="MeshInstance3D" parent="YardOffice"]
+mesh = ExtResource("mesh_yard_office")
+material_override = SubResource("cabin")
+
+[node name="Pallets" type="MeshInstance3D" parent="."]
+position = Vector3(-12.6, 0, 13.6)
+mesh = ExtResource("mesh_pallets")
+material_override = SubResource("bay_paint")
+
+[node name="Planks" type="Node3D" parent="."]
+
+[node name="LongDown" type="StaticBody3D" parent="Planks"]
+position = Vector3(1.2396, 5.2513, 7)
+rotation_degrees = Vector3(0, -180, -16.5783)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/LongDown"]
+position = Vector3(4.7887, 0.03, 0)
+shape = SubResource("Shape_plank_LongDown")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/LongDown"]
+mesh = ExtResource("mesh_plank_long_down")
+material_override = SubResource("Mat_plank_LongDown")
+extra_cull_margin = 0.3
+
+[node name="ToCorner" type="StaticBody3D" parent="Planks"]
+position = Vector3(-16.25, 2.59, 6.35)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/ToCorner"]
+position = Vector3(1.6, 0.03, 0)
+shape = SubResource("Shape_plank_ToCorner")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/ToCorner"]
+mesh = ExtResource("mesh_plank_to_corner")
+material_override = SubResource("Mat_plank_ToCorner")
+extra_cull_margin = 0.3
+
+[node name="ToFortyFoot" type="StaticBody3D" parent="Planks"]
+position = Vector3(12.4, 2.59, 6.35)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/ToFortyFoot"]
+position = Vector3(1.6, 0.03, 0)
+shape = SubResource("Shape_plank_ToFortyFoot")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/ToFortyFoot"]
+mesh = ExtResource("mesh_plank_to_forty_foot")
+material_override = SubResource("Mat_plank_ToFortyFoot")
+extra_cull_margin = 0.3
+
+[node name="UpToDouble" type="StaticBody3D" parent="Planks"]
+position = Vector3(11.813, 2.4931, 2.1347)
+rotation_degrees = Vector3(0, 35.7539, 22.8007)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/UpToDouble"]
+position = Vector3(3.5917, 0.03, 0)
+shape = SubResource("Shape_plank_UpToDouble")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/UpToDouble"]
+mesh = ExtResource("mesh_plank_up_to_double")
+material_override = SubResource("Mat_plank_UpToDouble")
+extra_cull_margin = 0.3
+
+[node name="HighAcross" type="StaticBody3D" parent="Planks"]
+position = Vector3(9.75, 7.77, -14.85)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/HighAcross"]
+position = Vector3(3.85, 0.03, 0)
+shape = SubResource("Shape_plank_HighAcross")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/HighAcross"]
+mesh = ExtResource("mesh_plank_high_across")
+material_override = SubResource("Mat_plank_HighAcross")
+extra_cull_margin = 0.3
+
+[node name="BackPair" type="StaticBody3D" parent="Planks"]
+position = Vector3(-16, 5.18, -7.15)
+rotation_degrees = Vector3(0, 90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/BackPair"]
+position = Vector3(1.6, 0.03, 0)
+shape = SubResource("Shape_plank_BackPair")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/BackPair"]
+mesh = ExtResource("mesh_plank_back_pair")
+material_override = SubResource("Mat_plank_BackPair")
+extra_cull_margin = 0.3
+
+[node name="MiddleDiagonal" type="StaticBody3D" parent="Planks"]
+position = Vector3(-5.4373, 5.18, -1.2898)
+rotation_degrees = Vector3(0, -130.601, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Planks/MiddleDiagonal"]
+position = Vector3(2.0939, 0.03, 0)
+shape = SubResource("Shape_plank_MiddleDiagonal")
+
+[node name="Board" type="MeshInstance3D" parent="Planks/MiddleDiagonal"]
+mesh = ExtResource("mesh_plank_middle_diagonal")
+material_override = SubResource("Mat_plank_MiddleDiagonal")
+extra_cull_margin = 0.3
+
+[node name="Edges" type="Node3D" parent="."]
+
+[node name="BackWall" type="StaticBody3D" parent="Edges" groups=["camera_occluder"]]
+position = Vector3(-1.25, 1.6, -17.5)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/BackWall"]
+shape = SubResource("Shape_BackWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/BackWall"]
+mesh = SubResource("Box_BackWall")
+material_override = ExtResource("wall")
+
+[node name="FenceLeft" type="StaticBody3D" parent="Edges"]
+position = Vector3(-22.4, 1, -0.15)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/FenceLeft"]
+shape = SubResource("Shape_FenceLeft")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/FenceLeft"]
+mesh = SubResource("Box_FenceLeft")
+material_override = ExtResource("fence")
+
+[node name="FenceRight" type="StaticBody3D" parent="Edges"]
+position = Vector3(19.9, 1, -0.15)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/FenceRight"]
+shape = SubResource("Shape_FenceRight")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/FenceRight"]
+mesh = SubResource("Box_FenceRight")
+material_override = ExtResource("fence")
+
+[node name="FenceFrontWest" type="StaticBody3D" parent="Edges"]
+position = Vector3(-4.6, 1, 17.2)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/FenceFrontWest"]
+shape = SubResource("Shape_FenceFrontWest")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/FenceFrontWest"]
+mesh = SubResource("Box_FenceFrontWest")
+material_override = ExtResource("fence")
+
+[node name="FenceFrontEast" type="StaticBody3D" parent="Edges"]
+position = Vector3(17.35, 1, 17.2)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/FenceFrontEast"]
+shape = SubResource("Shape_FenceFrontEast")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/FenceFrontEast"]
+mesh = SubResource("Box_FenceFrontEast")
+material_override = ExtResource("fence")
+
+[node name="GapStop" type="StaticBody3D" parent="Edges"]
+position = Vector3(14, 1, 17.35)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Edges/GapStop"]
+shape = SubResource("Shape_gap_stop")
+
+[node name="GapHole" type="MeshInstance3D" parent="Edges"]
+position = Vector3(14, 0, 17.4)
+mesh = ExtResource("mesh_gap_hole")
+material_override = SubResource("gap_dark")
+cast_shadow = 0
+
+[node name="GapFlap" type="MeshInstance3D" parent="Edges"]
+position = Vector3(14.85, 1.05, 16.9)
+rotation_degrees = Vector3(-28, -34, 0)
+mesh = SubResource("Box_gap_flap")
+material_override = ExtResource("fence")
+
+[node name="Mast0" type="Node3D" parent="."]
+position = Vector3(18.9, 0, 15.6)
+rotation_degrees = Vector3(0, 45, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast0"]
+mesh = ExtResource("mesh_mast")
+material_override = SubResource("mast_steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast0"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.74, 0.46, 1)
+light_energy = 1.6
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Mast1" type="Node3D" parent="."]
+position = Vector3(-21.6, 0, 15.4)
+rotation_degrees = Vector3(0, 115, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast1"]
+mesh = ExtResource("mesh_mast")
+material_override = SubResource("mast_steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast1"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.74, 0.46, 1)
+light_energy = 1.6
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Mast2" type="Node3D" parent="."]
+position = Vector3(-21.6, 0, -16.6)
+rotation_degrees = Vector3(0, 185, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast2"]
+mesh = ExtResource("mesh_mast")
+material_override = SubResource("mast_steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast2"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.74, 0.46, 1)
+light_energy = 1.6
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Crane" type="MeshInstance3D" parent="."]
+position = Vector3(-6, 0, -52)
+rotation_degrees = Vector3(0, 12, 0)
+mesh = ExtResource("mesh_crane")
+material_override = SubResource("crane")
+cast_shadow = 0
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromPlayground" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(14, 0, 15.2)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToPlayground" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(14, 0.9, 16.6)
+interact_id = &"cy_back_to_playground"
+prompt_key = "prompt.container_yard_out"
+radius = 1.4
+outline_paths = PackedStringArray("../../Edges/GapFlap")
+destination_scene = "res://scenes/locations/playground/playground.tscn"
+destination_spawn = &"FromContainerYard"
+destination_id = &"playground"
+
+[node name="TyreLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(11.6, 0.6, 14.42)
+interact_id = &"cy_tyres_look"
+inspection_id = &"cy_tyres"
+radius = 1.4
+outline_paths = PackedStringArray("../../TyreFlightA/Stack0", "../../TyreFlightA/Stack1", "../../TyreFlightA/Stack2", "../../TyreFlightA/Stack3", "../../TyreFlightA/Stack4", "../../TyreFlightA/Stack5", "../../TyreFlightA/Stack6")
+
+[node name="PlankLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(-3.25, 1, 7)
+interact_id = &"cy_plank_look"
+inspection_id = &"cy_plank"
+radius = 1.6
+outline_paths = PackedStringArray("../../Planks/LongDown/Board")
+
+[node name="OrangeLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(9.75, 1, -9.28)
+interact_id = &"cy_orange_look"
+inspection_id = &"cy_orange"
+radius = 1.4
+outline_paths = PackedStringArray("../../Containers/R1C4/Level0")

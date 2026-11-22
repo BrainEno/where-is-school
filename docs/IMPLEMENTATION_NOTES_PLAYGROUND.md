@@ -68,6 +68,33 @@ Review frames come from `tests/capture_locations.gd -- construction-site` (the
 `playground_site` capture job) and `-- site-interior` (the `site_interior` job: the room,
 then the yard's gate standing open with the key held).
 
+### The container yard (round 13)
+
+Behind the blue container the chain-link is cut and bent back (`ToContainerYard`,
+`pg_container_yard`, always open; the bent sheet is `FenceRunNorth/YardGapFlap`, added by the art pass).
+It leads to the container yard (集装箱堆场), its own location
+`scenes/locations/container_yard/`, written by `tools/build_container_yard.py` (meshes under
+`meshes/*.tres`). It is the essay's candidate space:
+
+- blue and red containers, one orange, in stacks of one, two and three (2.59 m a box), so
+  the roofs stand at different heights; six rows lie along x with gaps through them, and
+  two boxes turned across a gap leave dead-end pockets: from above it reads as a maze;
+- two flights of stacked truck tyres (`TyreFlightA` on the apron, `TyreFlightB` on that
+  roof up to a double stack); each has one ramp collider under it;
+- seven timber planks between roofs, level and sloping (`Planks/*`); the board mesh sags and
+  swings in `plank_sway.gdshader` (vertex alpha is the sway weight), the collider does not;
+- an apron with faded bay paint, the yard office (a portacabin), floodlight masts, the back
+  wall and a gantry crane far off behind it.
+
+The flights and planks are walkable with the keys only: they are narrower than the
+click-to-walk agent (0.5 m radius), so the navigation mesh does not reach them. The yard's
+anchors are the gap back (`cy_back_to_playground`, to the yard's `FromContainerYard`) and
+three looks, `cy_tyres`, `cy_plank` and `cy_orange`, whose text is still 「待做」 for the
+owner, as are the prompts and the place name if the owner wants them worded differently.
+Review frames come from `tests/capture_locations.gd -- container-yard` (the
+`container_yard` capture job: overhead, the yard, the stairs and planks, four follow-camera
+stances, and the bent chain-link from the schoolyard side).
+
 Adding an anchor means: add the geometry and the `Interactables` entry in
 `tools/build_outdoor_locations.py`, regenerate, then add the inspection (or a
 conversation route and its conversation) in **both** languages.

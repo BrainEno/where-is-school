@@ -34,6 +34,8 @@ on:
       - "scenes/locations/restroom_03/**"
       - "scenes/locations/site_interior/**"
       - "data/inspections/*/site_interior.json"
+      - "scenes/locations/container_yard/**"
+      - "data/inspections/*/container_yard.json"
       - "assets/shaders/school/**"
       - "tests/location_art_test.gd"
       - "tests/school_rooms_test.gd"
@@ -101,6 +103,8 @@ jobs:
           - {location: playground_site, side: forward-plus}
           - {location: site_interior, side: after}
           - {location: site_interior, side: forward-plus}
+          - {location: container_yard, side: after}
+          - {location: container_yard, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -196,6 +200,14 @@ jobs:
               detail=(site-interior review_width=500)
               width=1280
               expect=9
+              ;;
+            container_yard)
+              # The container yard: six fixed views (overhead maze, corner, tyre stairs, the
+              # long plank, roofs, the high plank), four follow-camera stances, and the way in
+              # from the schoolyard (a stance and a view).
+              detail=(container-yard review_width=380)
+              width=1280
+              expect=12
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

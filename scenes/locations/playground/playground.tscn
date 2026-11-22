@@ -1,4 +1,4 @@
-[gd_scene load_steps=233 format=3]
+[gd_scene load_steps=234 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -610,6 +610,9 @@ size = Vector3(0.027, 0.067, 0.004)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art171"]
 size = Vector3(0.073, 0.015, 0.007)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art172"]
+size = Vector3(1.3, 1, 0.03)
 
 [node name="Playground" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -1653,6 +1656,13 @@ mesh = SubResource("BoxMesh_art171")
 material_override = ExtResource("art_pale_paper_edge")
 cast_shadow = 0
 
+[node name="YardGapFlap" type="MeshInstance3D" parent="FenceRunNorth"]
+position = Vector3(3, -0.41, 0.29)
+rotation_degrees = Vector3(35, 0, 0)
+mesh = SubResource("BoxMesh_art172")
+material_override = ExtResource("art_fence_panel")
+cast_shadow = 0
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="HoopLook" parent="Interactables" instance=ExtResource("12_interactable")]
@@ -1779,6 +1789,16 @@ destination_scene = "res://scenes/locations/site_interior/site_interior.tscn"
 destination_spawn = &"FromPorch"
 destination_id = &"site_interior"
 
+[node name="ToContainerYard" parent="Interactables" instance=ExtResource("13_location_exit")]
+position = Vector3(13.0, 0.9, -18.2)
+interact_id = &"pg_container_yard"
+prompt_key = "prompt.container_yard"
+radius = 1.6
+outline_paths = PackedStringArray("../../FenceRunNorth/YardGapFlap")
+destination_scene = "res://scenes/locations/container_yard/container_yard.tscn"
+destination_spawn = &"FromPlayground"
+destination_id = &"container_yard"
+
 [node name="BackToAlley" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(0.0, 0.9, 18.2)
 interact_id = &"pg_back_to_alley"
@@ -1821,6 +1841,9 @@ position = Vector3(12.0, 2.6, -15.5)
 
 [node name="FromSite" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-21.6, 0, 13.2)
+
+[node name="FromContainerYard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(13.0, 0, -17.6)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("14_ambience")
