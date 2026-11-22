@@ -12,6 +12,8 @@
 
 原照片由作者单独保管。使用本地 Pillow、NumPy、SciPy 提取原笔迹；去掉纸底、加粗笔触，给边缘加由固定种子生成的细颗粒与雾边。透明底 PNG 为 896 × 1032，等比放在约 1.30 × 1.50 米的墙面上；原来的眼睛、锯齿、交叠线和小图案位置不变。`wall_graffiti_ink.tres` 由有颜料的像素块合并而来，悬停复用游戏的暖色轮廓，不描一个假画框。
 
+在按 [`tools/requirements.txt`](../../../tools/requirements.txt) 安装的工具环境中运行。只想对照入库资源时，可加 `--output /path/to/scratch`，不覆盖项目资源。
+
 ```sh
 python3 art/teaching_block/graffiti/prepare_wall_graffiti.py /path/to/IMG_1689.jpeg
 python3 tools/build_teaching_block.py --check

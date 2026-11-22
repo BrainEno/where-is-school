@@ -6,6 +6,8 @@ fonttools==4.58.5
 PyYAML==6.0.2
 numpy==2.2.6
 Pillow==11.3.0
+# Offline paint-mask preparation for the teaching-block mural.
+scipy==1.15.3
 # Native source build: needs a C++ compiler and matching CPython development headers.
 # This pre-release is the already-used asset preparation tool, not a Godot upgrade.
 meshoptimizer==0.2.30a0
