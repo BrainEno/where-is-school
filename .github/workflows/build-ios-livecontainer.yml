@@ -1,0 +1,54 @@
+name: Build unsigned iOS IPA for LiveContainer
+
+on:
+  push:
+    branches:
+      - build/ios-livecontainer-20261122
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ipa:
+    name: Build and verify unsigned arm64 iPhone/iPad IPA
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Export, archive, package and verify for LiveContainer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/mobile/ios-livecontainer-logs
+          if ! python3 tools/export_mobile.py ios-unsigned-ipa \
+            --build "$GITHUB_RUN_NUMBER" \
+            --output build/mobile/ios-livecontainer \
+            2>&1 | tee build/mobile/ios-livecontainer-logs/build.log; then
+            tail -60 build/mobile/ios-livecontainer-logs/build.log
+            exit 1
+          fi
+          cat build/mobile/ios-livecontainer/BUILD.json
+      - name: Publish unsigned IPA and build manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: where-is-school-ios-livecontainer-${{ github.run_number }}
+          path: |
+            build/mobile/ios-livecontainer/ipa/*.ipa
+            build/mobile/ios-livecontainer/BUILD.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Publish build log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: where-is-school-ios-build-log-${{ github.run_number }}
+          path: build/mobile/ios-livecontainer-logs/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -95,8 +95,8 @@ def check_presets(root: Path) -> None:
             "The game does not need Android permissions")
     require(android.get("screen/edge_to_edge") == "true" and android.get("screen/immersive_mode") == "false",
             "Keep Android system bars represented in the safe area")
-    require(ios.get("application/min_ios_version") == "15.0" and ios.get("application/targeted_device_family") == "2",
-            "iOS deployment must cover the declared iPhone and iPad support")
+    require(ios.get("application/min_ios_version") == "15.0" and ios.get("application/targeted_device_family") == "3",
+            "iOS deployment must target both iPhone and iPad (universal device family)")
     settings = project_settings(root / "project.godot")
     require(settings.get("display/window/handheld/orientation") == "4", "Both landscape orientations are required")
     require(settings.get("rendering/renderer/rendering_method.mobile") == '"gl_compatibility"',
@@ -330,9 +330,30 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         "-archivePath", archive, "archive", *flags)
     app, = archive.glob("Products/Applications/*.app")
     verify_ios_app(app, pack, args.build, version, simulator=False)
-    if not signed:
+    if args.target == "ios-unsigned":
         print("VERIFIED unsigned iOS device archive; NOT an installable IPA")
         return archive
+    if args.target == "ios-unsigned-ipa":
+        # LiveContainer can sign an unsigned guest app with its imported
+        # AltStore/SideStore certificate (or launch it with JIT where supported).
+        # Keep this preview separate from the protected, device-provisioned release.
+        ipa_dir = out / "ipa"
+        ipa_dir.mkdir(parents=True, exist_ok=True)
+        payload = out / "ipa-staging" / "Payload"
+        payload.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(app, payload / app.name, symlinks=True)
+        ipa = ipa_dir / f"{APP}-unsigned.ipa"
+        run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", payload, ipa)
+        with ZipFile(ipa) as packaged:
+            require(packaged.testzip() is None, "Unsigned IPA contains a corrupt ZIP member")
+            require(f"Payload/{APP}.app/Info.plist" in packaged.namelist(),
+                    "Unsigned IPA is missing its iOS application bundle")
+        with tempfile.TemporaryDirectory(prefix="wis-verify-unsigned-ipa-") as unpacked:
+            run("ditto", "-x", "-k", ipa, unpacked)
+            exported = Path(unpacked) / "Payload" / f"{APP}.app"
+            verify_ios_app(exported, pack, args.build, version, simulator=False)
+        print("VERIFIED unsigned arm64 iOS IPA for LiveContainer; signing is delegated to LiveContainer")
+        return ipa
     run("codesign", "--verify", "--deep", "--strict", app)
     run("xcodebuild", "-exportArchive", "-archivePath", archive, "-exportOptionsPlist", args.export_options,
         "-exportPath", out / "ipa")
@@ -350,7 +371,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("target", choices=("check", "android-preview", "android-release", "ios-project", "ios-unsigned", "ios-simulator", "ios-ipa"))
+    parser.add_argument("target", choices=("check", "android-preview", "android-release", "ios-project", "ios-unsigned", "ios-unsigned-ipa", "ios-simulator", "ios-ipa"))
     parser.add_argument("--godot", default="godot")
     parser.add_argument("--output", type=Path, default=ROOT / "build/mobile")
     parser.add_argument("--build", type=int, default=1, help="Monotonically increasing distribution build number")
