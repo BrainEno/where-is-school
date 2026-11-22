@@ -349,8 +349,10 @@ func _run() -> void:
 		await _capture_views(out_dir, "site_interior", ^"Scaffold", SITE_INSIDE_STANCES, SITE_INSIDE_VIEWS,
 			"site_interior")
 		var state := root.get_node_or_null(^"/root/GameState")
+		# The flag by its id, not `StoryFlags.SITE_GATE_KEY`: the `before` captures run this
+		# script against the base commit, which may not declare the constant yet.
 		if state != null:
-			state.set_flag(StoryFlags.SITE_GATE_KEY, true)
+			state.set_flag(&"site_gate_key", true)
 		await _capture_views(out_dir, "playground", ^"Interactables/SiteGate", [], SITE_GATE_OPEN_VIEWS,
 			"site_interior_gate_open")
 	elif _school_details and SCHOOL_SCENES.has(_only):
