@@ -230,11 +230,17 @@ The owner does this; the workflow does not create tags and no agent creates one.
      `docs/PLAYTEST_CHECKLIST.md`.
    - Linux: unzip, `./where-is-school`, confirm the desktop entry's icon, play the same slice.
    This step exists because nothing in CI can click through SmartScreen or hear the audio.
-3. **Tag the same commit.**
+3. **Check the source text, then tag the same commit.** In a clean checkout of the exact
+   `main` commit tested in step 2, compare `git rev-parse HEAD` with the run's SHA. If you
+   want to release a newer commit, repeat step 2 for it. A release tag (including a
+   prerelease) fails before export if player-visible JSON contains any draft marker. The
+   [existing draft list](../tools/content_placeholder_allowlist.json) is for development
+   previews only. Ask the author for the final text rather than rewriting it or adding an
+   exception. See [issue #346](https://github.com/BrainEno/where-is-school/issues/346).
    ```sh
-   git checkout main && git pull
-   git tag -a v0.1.0-rc.1 -m "where-is-school 0.1.0-rc.1: first playable prerelease"
-   git push origin v0.1.0-rc.1
+   python3 tools/check_content_placeholders.py --release &&
+     git tag -a v0.1.0-rc.1 -m "where-is-school 0.1.0-rc.1: first playable prerelease" &&
+     git push origin v0.1.0-rc.1
    ```
    The dash is what makes it a prerelease. Nothing else needs setting.
 4. **Watch the run.** The tag triggers the same build; this time the `publish` job downloads
