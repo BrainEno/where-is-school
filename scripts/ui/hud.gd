@@ -14,6 +14,7 @@ const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 
 var _objective_tween: Tween = null
 var _prompt_tween: Tween = null
+var _touch_header_size := Vector2.ZERO
 ## True while the dialogue panel is on screen. The panel carries its own key
 ## hints at the bottom right, so the HUD's language hint steps aside to keep the
 ## two from printing on top of each other.
@@ -198,13 +199,21 @@ func _format_prompt(action: String) -> String:
 	return "[%s] %s" % [_interact_key_label(), action]
 
 
+func set_touch_header_size(header: Vector2) -> void:
+	if header.is_equal_approx(_touch_header_size):
+		return
+	_touch_header_size = header
+	_fit_mobile()
+
+
 func _fit_mobile() -> void:
 	MobileLayout.inset(self)
 	_objective_label.anchor_right = 1.0
 	_objective_label.offset_left = MobileLayout.EDGE
 	_objective_label.offset_top = 22.0
-	_objective_label.offset_right = -244.0
+	_objective_label.offset_right = -maxf(244.0, _touch_header_size.x + 2.0 * MobileLayout.EDGE)
 	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_noted_label.offset_top = maxf(NOTED_TOP, _touch_header_size.y + 2.0 * MobileLayout.EDGE)
 
 
 func _interact_key_label() -> String:

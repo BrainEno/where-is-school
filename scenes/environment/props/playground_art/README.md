@@ -19,7 +19,7 @@ involved.
 | `materials/*.tres` | `source/build_playground_art.py` | Shared `StandardMaterial3D` palette: toon and a shared ink outline. The overrides used only by the scenery are embedded there. |
 | `meshes/*.mesh`, `noodle_wrapper.tscn` | `source/yard_details.py`, `source/build_playground_art.py` | Shaped bedding, paper and wrapper film in native compressed `ArrayMesh` resources. Their UVs, surfaces and node paths are unchanged. |
 | `scenery.scn` | `source/build_playground_art.py` and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals and scenery-only materials. Still carries the round-8 construction site, hidden by `playground.tscn` until the next bake drops it. No external download or new paint tile. |
-| `construction_site.tscn`, `materials/site/*.tres` | `source/construction_site.py` (layout), `source/site_meshes.py` (parts), `source/site_mesh.py` (mesh kit) | The building under construction as a text scene of generated `ArrayMesh` resources with vertex colours (grime, rust, wet sand). Rebuilds with plain Python, no engine: `python3 scenes/environment/props/playground_art/source/construction_site.py`. The materials reuse the yard's ground, metal and plaster tiles. |
+| `construction_site.tscn`, `meshes/site/*.tres`, `materials/site/*.tres` | `source/construction_site.py` (layout), `source/site_meshes.py` (parts), `source/site_mesh.py` (mesh kit) | The building under construction as a text scene that instances generated `ArrayMesh` resources (`meshes/site/*.tres`, one file per mesh, so the scene stays small) with vertex colours (grime, rust, wet sand). Rebuilds with plain Python, no engine: `python3 scenes/environment/props/playground_art/source/construction_site.py`. The materials reuse the yard's ground, metal and plaster tiles. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
 The distribution/source record is in [ASSET_PROVENANCE.md](../../../../docs/ASSET_PROVENANCE.md).
@@ -105,7 +105,7 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
     grid of formwork tie holes and two downpipes on stand-off clamps. The deck carries
     timber formwork, yellow edge protection with toe boards, starter bars, chalk and the six
     marbles. A plywood porch with a steel door, a vision panel, a site board and a lamp
-    faces the gate: the future way in.
+    faces the gate. The porch door is the way into `site_interior`, the building's inside (a separate location; see `docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
   - Three tipped sand piles with slumped, rilled flanks, a bitten face where the shovel
     went in, pebbles and a damp skirt. A smaller spoil mound, a wheelbarrow, a rebar bundle
     and a pallet of blocks sit inside.

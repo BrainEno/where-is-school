@@ -98,16 +98,16 @@ While that conversation runs the classroom sets `curtain_fall_pending` aside and
 back if the player leaves the curtain drawn; that happens inside a beat, which no save
 can see.
 
-*Amended for Save and quit:* the pause menu's **Save and quit** writes a save on request,
-but only where the same condition holds — `Session.is_at_rest()`: the prologue is behind
-the player (`next_step()` is empty), no beat holds the lock, no conversation is open, the
-slice is not over, and the player has control. Such a moment has nothing in flight, so the
-file is the same kind of file a checkpoint writes (flags, knowledge, seed, room and the
-exact position). Anywhere else the menu does not write: it says that the next Continue
-will load the last save (naming its room and time) or that there is none, and asks before
-leaving, with the focus on *Cancel*. A write that fails is reported the same way and never
-leaves silently. Leaving switches the world's autosave off first, so the frame before the
-scene changes cannot put a different checkpoint on disk.
+*Amended for Return to main menu:* the pause menu (or the touch shortcut) always asks
+before returning, with focus on *Keep playing*. On confirmation it saves only where the
+same condition holds — `Session.is_at_rest()`: the prologue is behind the player
+(`next_step()` is empty), no beat or conversation is active, the slice is not over, and
+the player has control. The file is the same kind of file a checkpoint writes (flags,
+knowledge, seed, room and exact position). Anywhere else the question names the last
+readable checkpoint or explains that there is none. If a write fails, it asks again
+before leaving without a new save. Keeping playing resumes the same scene and any
+active conversation. Leaving switches the world's autosave off, changes scenes, and
+clears the in-memory run; it does not delete the checkpoint.
 
 ### 5. Loading is all-or-nothing, except per-entry knowledge
 

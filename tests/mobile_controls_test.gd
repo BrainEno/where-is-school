@@ -11,6 +11,10 @@ const SCREENS := [
 	[Vector2i(2048, 1536), Rect2(0, 42, 2048, 1452), 2.0],
 ]
 
+const PORTRAIT := [Vector2i(1170, 2532), Rect2(0, 141, 1170, 2289), 3.0]
+const MAIN_SCENE := "res://scenes/main/main.tscn"
+const SAVE_PATH := "user://save.json"
+
 var _check := Harness.Checker.new()
 var _settings: Node
 var _main: Node
@@ -42,16 +46,18 @@ func _run() -> void:
 	await _title_and_settings()
 	await _load_world()
 	await _world_taps()
+	await _joystick_motion()
+	await _joystick_cancellation()
+	await _menu_geometry()
 	await _pause_navigation()
 	await _reading()
 	await _large_reading()
 	await _compare_touch()
-	_main.queue_free()
-	await process_frame
+	await _return_during_dialogue()
 	Harness.finish(self, _check.failures,
-		"mobile safe controls at three aspect ratios, single-finger path and get-up, settings scroll, "
-		+ "modal back/resume, dialogue reveal and choice paging; the largest bilingual notebook stays "
-		+ "readable and swipes inside comparison cards scroll through the notes")
+		"touch movement, eight directions and analog drag, release/cancel and hybrid input; "
+		+ "safe controls on phone and tablet, independent taps, settings/reading/notebook scrolling; "
+		+ "dialogue cancellation, checkpoint return, Continue in another location and a clean new game")
 
 
 func _set_screen(metrics: Array) -> void:
@@ -101,10 +107,11 @@ func _title_and_settings() -> void:
 
 func _load_world() -> void:
 	Harness.stage = "load world"
-	_main = (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
+	_main = (load(MAIN_SCENE) as PackedScene).instantiate()
 	var opening := _main.get_node(^"OpeningSequence") as OpeningSequence
 	opening.autostart = false
 	root.add_child(_main)
+	current_scene = _main
 	opening.allow_player_control()
 	_main.get_node(^"InnerVoiceDirector").set_process(false)
 	_player = _main.get_node(^"Player") as PlayerController
@@ -172,6 +179,163 @@ func _route_screen_point(safe: Rect2) -> Vector2:
 			if NavigationServer3D.map_get_path(map, _player.global_position, ground, true).size() >= 2:
 				return screen
 	return Vector2.INF
+
+
+func _joystick_motion() -> void:
+	Harness.stage = "joystick directions, long hold and an independent world tap"
+	var stick := _stick()
+	if not _check.expect(stick != null and stick.is_visible_in_tree(), "Touch joystick is missing"):
+		return
+	var center := stick.get_global_rect().get_center()
+	var before := _nav.get_world_click_event_count()
+	_touch(center, true)
+	var last := center
+	for sector in range(8):
+		var dir := Vector2.from_angle(float(sector) * TAU / 8.0)
+		var next := center + dir * stick.size.x
+		_drag(last, next)
+		await _check_facing(dir, "sector %d" % sector)
+		last = next
+	var diagonal := Vector2(0.34, -0.94).normalized()
+	var next := center + diagonal * stick.size.x * 0.18
+	_drag(last, next)
+	await _check_facing(diagonal, "non-octant and partially tilted")
+	_touch(next, false)
+	_check.expect(_horizontal_speed() < 0.001, "Release outside the base left movement")
+	_check.expect(_nav.get_world_click_event_count() == before, "Joystick contact leaked a world click")
+
+	# Simultaneous contacts are not a two-finger world gesture. The floor tap is still
+	# picked once, but cannot queue automatic motion behind a steering thumb.
+	var point := _route_screen_point(MobileLayout.safe_rect(_ui.hud))
+	if _check.expect(point != Vector2.INF, "No reachable target for the second finger"):
+		_touch(point, true, 5)
+		_touch(center + Vector2.RIGHT * stick.size.x * 0.3, true)
+		_touch(point, false, 5)
+		_check.expect(_nav.get_world_click_event_count() == before + 1 and not _player.is_path_active(),
+			"The second finger lost its tap or queued movement behind the joystick")
+		_touch(center - Vector2.RIGHT * stick.size.x * 0.3, true, 7)
+		_drag(center, center - Vector2.RIGHT * stick.size.x, 7)
+		_touch(center, false, 7)
+		await _check_facing(Vector2.RIGHT, "second finger did not steal the stick")
+		_touch(center, false)
+
+
+
+func _joystick_cancellation() -> void:
+	Harness.stage = "joystick cancellation, focus loss and physical inputs"
+	var stick := _stick()
+	if stick == null:
+		return
+	var center := stick.get_global_rect().get_center()
+	var edge := center + Vector2.LEFT * stick.size.x * 0.3
+	_touch(edge, true)
+	await _check_facing(Vector2.LEFT, "before OS cancellation")
+	_touch(edge, false, 0, true)
+	_check.expect(_horizontal_speed() < 0.001, "Canceled touch kept steering")
+	for notice: int in [Node.NOTIFICATION_APPLICATION_FOCUS_OUT, Node.NOTIFICATION_APPLICATION_PAUSED]:
+		_touch(edge, true)
+		await _check_facing(Vector2.LEFT, "before focus/background loss")
+		stick.get_parent().notification(notice)
+		_drag(edge, center + Vector2.UP * stick.size.x)
+		await physics_frame
+		await physics_frame
+		_check.expect(_horizontal_speed() < 0.001, "A stale drag resumed after losing focus")
+		_touch(edge, false)
+	_touch(edge, true)
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_W
+	key.pressed = true
+	_send(key)
+	await _check_facing(Vector2.UP, "keyboard took over on a mobile surface")
+	_check.expect(not stick.is_visible_in_tree() and Input.is_action_pressed(&"move_forward"),
+		"Switching to keyboard did not hide touch or lost a held action")
+	_touch(edge, false)
+	_check.expect(Input.is_action_pressed(&"move_forward"), "Touch release cleared a real key")
+	key = key.duplicate() as InputEventKey
+	key.pressed = false
+	_send(key)
+	var axis := InputEventJoypadMotion.new()
+	axis.axis = JOY_AXIS_LEFT_X
+	axis.axis_value = 0.8
+	_send(axis)
+	await _check_facing(Vector2.RIGHT, "gamepad axis in the same player controller")
+	_check.expect(not stick.is_visible_in_tree(), "Gamepad input did not hide the joystick")
+	axis = axis.duplicate() as InputEventJoypadMotion
+	axis.axis_value = 0.0
+	_send(axis)
+	# A fresh touch restores the visible controls; cancel rather than tapping the world.
+	_touch(center, true)
+	_touch(center, false, 0, true)
+	await process_frame
+	_check.expect(stick.is_visible_in_tree(), "Touch did not bring its controls back")
+
+
+func _menu_geometry() -> void:
+	Harness.stage = "rotation while steering, then touch header and confirmation bounds"
+	var original_center := _stick().get_global_rect().get_center()
+	var original_edge := original_center + Vector2.RIGHT * _stick().size.x * 0.3
+	_touch(original_edge, true)
+	await _check_facing(Vector2.RIGHT, "before rotation")
+	await _set_screen(PORTRAIT)
+	_drag(original_edge, original_center)
+	_check.expect(_horizontal_speed() < 0.001, "Rotation kept an old steering gesture alive")
+	_touch(original_center, false)
+	var loc := root.get_node(^"Loc")
+	_settings.call("set_text_size", &"largest")
+	_ui.hud.set_objective("objective.leave_classroom")
+	for metrics: Array in SCREENS + [PORTRAIT]:
+		await _set_screen(metrics)
+		for locale: String in L10n.LOCALES:
+			loc.call("set_locale", locale)
+			await process_frame
+			var stick := _stick()
+			var shortcut := _return_button()
+			_check_target(stick, "Joystick")
+			_check_target(shortcut, "Return shortcut")
+			if stick == null or shortcut == null:
+				return
+			var physical := root.get_final_transform() * stick.get_global_rect()
+			_check.expect(physical.size.x >= MobileLayout.density(root) * 85.0,
+				"Joystick is too small for a thumb: %s" % physical)
+			var objective := _ui.hud.get_node(^"ObjectiveLabel") as Control
+			var pause_button := _ui.get_node(^"TouchActions/Pause") as Button
+			_check.expect(not objective.get_global_rect().intersects(shortcut.get_global_rect())
+				and not objective.get_global_rect().intersects(pause_button.get_global_rect()),
+				"Touch header covered the objective")
+			await _tap_control(shortcut)
+			var prompt := _pause.get_confirm()
+			_check_target(prompt.get_cancel_button(), "Keep playing")
+			_check_target(prompt.get_confirm_button(), "Return to main menu")
+			_check.expect(MobileLayout.safe_rect(prompt).encloses(prompt.get_panel().get_global_rect()),
+				"Confirmation panel escaped the safe area at %s (%s)" % [metrics[0], locale])
+			await _tap_control(prompt.get_cancel_button())
+			_check.expect(not paused and not _pause.is_open(), "Keep playing did not resume directly")
+	await _set_screen(SCREENS[1])
+	loc.call("set_locale", "en")
+	_settings.call("set_text_size", &"standard")
+
+
+func _stick() -> Control:
+	return _ui.get_node_or_null(^"TouchActions/Joystick") as Control
+
+
+func _return_button() -> Button:
+	return _ui.get_node_or_null(^"TouchActions/ReturnToTitle") as Button
+
+
+func _world_direction(input: Vector2) -> Vector3:
+	var rig := _main.get_node(^"CameraRig") as CameraRig
+	return (rig.planar_right() * input.x - rig.planar_forward() * input.y).normalized()
+
+
+func _horizontal_speed() -> float:
+	return Vector2(_player.velocity.x, _player.velocity.z).length()
+
+
+func _check_facing(dir: Vector2, label: String) -> void:
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return _player.get_facing_direction().dot(_world_direction(dir)) > 0.995, 2.0),
+		"Wrong camera-relative direction: %s (got %s)" % [label, _player.get_facing_direction()])
 
 
 func _pause_navigation() -> void:
@@ -339,6 +503,188 @@ func _swipe_comparison(journal: JournalPanel, pairs: Array[Dictionary], loc: Nod
 	_check.expect(scroll.scroll_vertical > origin, tag + ": swiping a comparison card did not scroll")
 
 
+func _return_during_dialogue() -> void:
+	Harness.stage = "touch Use with a held stick; return without interrupting a dialogue"
+	await _tap_control(_pause.get_entry(&"resume"))
+	var save := root.get_node(^"Save")
+	var state := root.get_node(^"GameState")
+	var narrative := root.get_node(^"NarrativeState")
+	var flags := {
+		StoryFlags.MET_Q: true, StoryFlags.TEXTBOOK_MISSING: true, StoryFlags.EXPECTATION_PLAYED: true,
+		StoryFlags.BELL_RUNG: true, StoryFlags.CLASS_DISMISSED: true,
+		StoryFlags.OBJECTIVE_KEY: "objective.leave_classroom",
+	}
+	var written: Dictionary = save.write_payload({"flags": SaveCodec.encode_flags(flags),
+		"entries": [], "check_seed": 7, "world": {"location_id": "corridor", "spawn": "FromClassroom"}})
+	_check.expect(written.get("ok", false), "Could not seed the corridor checkpoint")
+	var checkpoint := FileAccess.get_file_as_bytes(SAVE_PATH)
+	state.set_flag(&"mobile_live_probe", true)
+	state.set_flag(StoryFlags.MET_Q, true)
+	_check.expect(await _offer_schoolbag(), "No reachable schoolbag prompt for the second finger")
+	var use := _ui.get_node(^"TouchActions/Use") as Button
+	var center := _stick().get_global_rect().get_center()
+	var controller := _main.get_node(^"DialogueController") as DialogueController
+	var activations: Array[StringName] = []
+	var interaction := _player.get_node(^"InteractionController") as InteractionController
+	interaction.activation_requested.connect(func(target: Interactable) -> void: activations.append(target.interact_id))
+	_touch(center, true)
+	await _tap_control(use, 3)
+	_touch(center, false)
+	var presented := await Harness.wait_until(func() -> bool:
+		return controller.is_busy() and _ui.dialogue_panel.visible and _return_button().is_visible_in_tree(), 8.0)
+	if not _check.expect(activations == [&"schoolbag"] and presented,
+			"The second finger did not use the schoolbag exactly once: %s" % [activations]):
+		return
+	var panel := _ui.dialogue_panel
+	var line := panel.get_body_text()
+	_check.expect(not _stick().is_visible_in_tree() and _return_button().is_visible_in_tree(),
+		"The dialogue obscured Return or left the joystick over the text")
+	await _tap_control(_return_button())
+	var prompt := _pause.get_confirm()
+	_check.expect(paused and prompt.visible and root.gui_get_focus_owner() == prompt.get_cancel_button(),
+		"Return did not pause on the safe answer")
+	_check.expect(prompt.get_message().contains(L10n.t("place.corridor")), "Return did not name the prior checkpoint")
+	await _tap_control(prompt.get_cancel_button())
+	_check.expect(not paused and controller.is_busy() and panel.get_body_text() == line,
+		"Keep playing interrupted or advanced the live conversation")
+	_check.expect(FileAccess.get_file_as_bytes(SAVE_PATH) == checkpoint, "Opening/canceling Return wrote a save")
+	var advance := panel.find_child("TouchReading", true, false).get_node(^"Continue") as Button
+	if panel.is_revealing():
+		await _tap_control(advance)
+		_check.expect(not panel.is_revealing() and controller.is_busy(), "The resumed line could not finish revealing")
+	# Leave this presentation before advancing; it is deliberately absent from the save.
+	var old_world: WeakRef = weakref(_main)
+	var old_dialogue: WeakRef = weakref(controller)
+	await _tap_control(_return_button())
+	await _confirm_twice(prompt.get_confirm_button())
+	var title := await _wait_title()
+	if title == null:
+		return
+	_check.expect(old_world.get_ref() == null and old_dialogue.get_ref() == null and not paused,
+		"Return left an old world/dialogue alive or the title paused")
+	_check.expect(state.get_snapshot().is_empty() and narrative.get_entries().is_empty(),
+		"Return leaked transient flags or knowledge to the title")
+	_check.expect(FileAccess.get_file_as_bytes(SAVE_PATH) == checkpoint, "Returning during dialogue changed the checkpoint")
+	_check.expect(root.gui_get_focus_owner() == title.get_entry(&"continue"), "Return did not give the new title focus")
+	await _return_from_corridor(title)
+
+
+func _return_from_corridor(title: TitleScreen) -> void:
+	Harness.stage = "title Continue, return from corridor and start a fresh game"
+	await _tap_control(title.get_entry(&"continue"))
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		return current_scene != null and current_scene.scene_file_path == MAIN_SCENE, 8.0),
+		"Title Continue did not enter the game"):
+		return
+	_main = current_scene
+	_ui = _main.get_node(^"GameUI") as GameUI
+	_player = _main.get_node(^"Player") as PlayerController
+	_pause = _main.get_node(^"PauseMenu") as PauseMenu
+	var host := _main.get_node(^"LocationHost") as LocationHost
+	if not _check.expect(host.get_current().location_id == &"corridor" and not _ui.dialogue_panel.visible,
+			"Continue did not restore the corridor checkpoint cleanly"):
+		return
+	if not _check.expect(await Harness.wait_until(_return_button().is_visible_in_tree, 5.0),
+			"The corridor did not show the touch controls"):
+		return
+	var stick := _stick()
+	var center := stick.get_global_rect().get_center()
+	# FromClassroom faces the corridor's open width. Test sustained displacement here,
+	# not wedged against a desk after the classroom's eight-direction sweep.
+	await _hold_and_release_in_corridor(stick, center)
+	var down := center + Vector2.LEFT * stick.size.x * 0.3
+	_touch(down, true)
+	await _check_facing(Vector2.LEFT, "corridor")
+	await _tap_control(_return_button(), 2)
+	var prompt := _pause.get_confirm()
+	_check.expect(prompt.visible and paused and _horizontal_speed() < 0.001,
+		"The other thumb could not pause and reset the stick")
+	var answer := prompt.get_confirm_button().get_global_rect().get_center()
+	_drag(down, answer)
+	_touch(answer, false)
+	_check.expect(prompt.visible, "The original joystick release activated the modal")
+	_check.expect(prompt.get_message() == L10n.t("menu.confirm_return_save"), "Stable corridor did not offer to save")
+	var save := root.get_node(^"Save")
+	var writes := int(save.saves_written)
+	var world: WeakRef = weakref(_main)
+	await _confirm_twice(prompt.get_confirm_button())
+	var title_again := await _wait_title()
+	if title_again == null:
+		return
+	_check.expect(world.get_ref() == null and int(save.saves_written) == writes + 1,
+		"Repeated confirm issued multiple saves or did not free the corridor")
+	await _tap_control(title_again.get_entry(&"new_game"))
+	_check.expect(title_again.get_confirm().visible, "Title New game no longer confirms")
+	await _tap_control(title_again.get_confirm().get_confirm_button())
+	var session := root.get_node(^"Session")
+	if _check.expect(await Harness.wait_until(func() -> bool:
+		return current_scene != null and current_scene.scene_file_path == MAIN_SCENE \
+			and not session.is_starting_new_game(), 8.0), "Title New game did not finish its transaction"):
+		var host_again := current_scene.get_node(^"LocationHost") as LocationHost
+		var state := root.get_node(^"GameState")
+		_check.expect(host_again.get_current().location_id == &"classroom" and not save.has_save() \
+			and not state.get_flag(StoryFlags.CLASS_DISMISSED, false) and not paused,
+			"New game carried the old location or checkpoint into its opening")
+
+
+func _hold_and_release_in_corridor(stick: Control, center: Vector2) -> void:
+	var rig := _main.get_node(^"CameraRig") as CameraRig
+	var across := Vector2(rig.planar_right().x, -rig.planar_forward().x).normalized()
+	var start_x := _player.global_position.x
+	_touch(center + across * stick.size.x * 0.3, true)
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return _player.global_position.x > start_x + 0.18, 3.0),
+		"The player did not keep walking without new drag events")
+	var stopped := _player.global_position
+	_touch(center + across * stick.size.x, false)
+	await physics_frame
+	await physics_frame
+	var displacement := _player.global_position - stopped
+	_check.expect(_horizontal_speed() < 0.001 and Vector2(displacement.x, displacement.z).length() < 0.02,
+		"Thumb up did not stop displacement on the next physics frame")
+
+
+func _offer_schoolbag() -> bool:
+	# A real prop, in sight and within reach; use the authored navigation mesh to avoid
+	# pinning a position to a chair that may move in a future art pass.
+	var host := _main.get_node(^"LocationHost") as LocationHost
+	var target := host.get_current().find_interactable(&"schoolbag")
+	if target == null:
+		return false
+	var interaction := _player.get_node(^"InteractionController") as InteractionController
+	var map := _player.navigation_agent.get_navigation_map()
+	var use := _ui.get_node(^"TouchActions/Use") as Button
+	for i in range(16):
+		var angle := float(i) * TAU / 16.0
+		var point := target.global_position + Vector3(cos(angle), 0, sin(angle)) * 1.4
+		var floor_point := NavigationServer3D.map_get_closest_point(map, point)
+		if not interaction.is_in_reach_at(floor_point, target):
+			continue
+		_player.teleport(Transform3D(Basis.IDENTITY, floor_point + Vector3.UP * 0.05))
+		_player.face_toward(target.global_position - floor_point)
+		if await Harness.wait_until(func() -> bool:
+			return interaction.get_current_target() == target and use.is_visible_in_tree(), 0.35):
+			return true
+	return false
+
+
+func _confirm_twice(button: Button) -> void:
+	var p := button.get_global_rect().get_center()
+	_touch(p, true)
+	_touch(p, true, 8)
+	_touch(p, false)
+	_touch(p, false, 8)
+	await process_frame
+
+
+func _wait_title() -> TitleScreen:
+	if _check.expect(await Harness.wait_until(func() -> bool:
+		return current_scene is TitleScreen, 8.0), "The title never became the current scene"):
+		await process_frame
+		return current_scene as TitleScreen
+	return null
+
+
 func _check_target(control: Control, label: String) -> void:
 	if not _check.expect(control != null and control.is_visible_in_tree(), label + " is not visible"):
 		return
@@ -350,13 +696,13 @@ func _check_target(control: Control, label: String) -> void:
 	_check.expect(physical.size.x >= side and physical.size.y >= side, "%s is too small: %s" % [label, physical.size])
 
 
-func _tap_control(control: Control) -> void:
+func _tap_control(control: Control, index: int = 0) -> void:
 	if control == null:
 		return
 	var center := control.get_global_transform_with_canvas() * (control.size * 0.5)
-	_touch(center, true)
+	_touch(center, true, index)
 	await process_frame
-	_touch(center, false)
+	_touch(center, false, index)
 	await process_frame
 	await process_frame
 
@@ -369,8 +715,9 @@ func _swipe(from: Vector2, to: Vector2) -> void:
 	await process_frame
 
 
-func _drag(from: Vector2, to: Vector2) -> void:
+func _drag(from: Vector2, to: Vector2, index: int = 0) -> void:
 	var drag := InputEventScreenDrag.new()
+	drag.index = index
 	drag.position = root.get_final_transform() * to
 	drag.relative = root.get_final_transform().basis_xform(to - from)
 	drag.screen_relative = drag.relative

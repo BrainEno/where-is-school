@@ -34,7 +34,7 @@
 | [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) | 英文概念方向源文档 | 现行 | 仓库所有者 | 2026-11-17 | 中文阅读副本为 [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) |
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-20 | 共用舞台规则见 `tests/location_art_test.gd`；考试梦叠加层见 [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md)；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
-| [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md) | 考试梦实验层：扶梯、售票处、03 考场/候考室与 01 后的马棚院子 | 实验 | 实现 PR 作者 | 2026-11-20 | 生成器 `tools/build_dream_annex.py`；只加不改，检查见 `tests/dream_annex_test.gd` |
+| [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md) | 考试梦实验层：扶梯、售票处、03 考场/候考室与 01 后的马棚院子 | 实验 | 实现 PR 作者 | 2026-11-20 | 一楼进门右侧售票处；三人同步盖章，点脸可近看。检查见 `tests/dream_annex_test.gd`、`tests/ticket_counter_test.gd` |
 | [GLOSSARY.md](GLOSSARY.md) | 术语表：游戏文字用词、17 个地点 id ↔ 中英地名、人物与徽章、对话章节、10 个 autoload | 现行 | 文档 Agent | 2026-11-19 | 台词用词以本表为准（器材棚、居民楼、球场等）；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [IMAGINED_LESSON.md](IMAGINED_LESSON.md) | 序章想象场景：B 的变形模型、残影与蒙克波浪滤镜 | 实验 | 实现 PR 作者 | 2026-11-21 | 美术已做；第 7 轮加了审问骨架（每句 B 的问话三个方向、2–4 轮占位、异想天开检定），文案待作者；检查见 `tests/imagined_lesson_test.gd` |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |

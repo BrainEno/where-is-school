@@ -113,6 +113,7 @@ const SPRINT_LATCH_IDLE_SECONDS := 0.6
 @export_range(0.1, 1.5, 0.05) var waypoint_radius: float = 0.35
 
 var _control_enabled: bool = true
+var _touch_move := Vector2.ZERO
 ## Whether the wake beat currently has the model seated. Mirrors the model's own state so a
 ## repeated `set_wake_pose(1.0)` does not restart the sit or the get-up.
 var _wake_seated: bool = false
@@ -201,8 +202,12 @@ func _measure_body_radius() -> float:
 
 func _physics_process(delta: float) -> void:
 	var input_vector := Vector2.ZERO
+	var from_touch := false
 	if _control_enabled:
-		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		input_vector = _bound_movement()
+		if input_vector.is_zero_approx():
+			input_vector = _touch_move
+			from_touch = not input_vector.is_zero_approx()
 
 	if _path_active and input_vector.length() > manual_cancel_threshold:
 		# A hand on the keys always wins, including while a path awaits standing.
@@ -230,8 +235,27 @@ func _physics_process(delta: float) -> void:
 		move_direction = _path_direction(delta)
 	elif input_vector.length_squared() > 0.0001:
 		move_direction = _camera_relative(input_vector)
+		if from_touch:
+			move_direction *= input_vector.length()
 
 	_apply_movement(move_direction, delta)
+
+
+static func _bound_movement() -> Vector2:
+	return Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
+
+
+## A scene-local manual input source, not a writer to the keyboard/gamepad actions.
+func set_touch_move(direction: Vector2) -> void:
+	var was_steering := not _touch_move.is_zero_approx()
+	_touch_move = direction.limit_length() if _control_enabled else Vector2.ZERO
+	if not _touch_move.is_zero_approx():
+		cancel_path()
+	elif was_steering and not _path_active and _bound_movement().is_zero_approx():
+		# Thumb up (or another owner takes control): no residual glide. Do not touch
+		# vertical motion or stop a concurrently held physical movement action.
+		velocity.x = 0.0
+		velocity.z = 0.0
 
 
 ## The speed `_apply_movement()` aims for right now: `move_speed`, or `jog_speed` while the
@@ -323,7 +347,7 @@ var _stride_accumulator: float = 0.0
 ## character accelerates, slides and turns exactly the same way either way.
 func _apply_movement(direction: Vector3, delta: float) -> void:
 	if direction.length_squared() > 0.0001:
-		_facing_direction = direction
+		_facing_direction = direction.normalized()
 
 	var speed := target_speed()
 	var target_x := direction.x * speed
@@ -419,12 +443,11 @@ func _update_visual_facing(delta: float) -> void:
 
 ## Asks to walk to `destination` along the navigation map.
 ##
-## Returns false when the request cannot be honoured — control is locked, there is no
-## navigation map, the point is off the mesh, or there is no route — so callers can
-## react instead of watching the character walk into a wall. A false return leaves any
-## previous walk untouched; call `cancel_path()` first if that is not what you want.
+## Returns false when control is locked, the touch stick is steering, or a route is not
+## available. In particular, a second finger cannot leave a walk queued behind the thumb.
+## A false return leaves any previous walk untouched.
 func request_path_to(destination: Vector3) -> bool:
-	if not _control_enabled or navigation_agent == null:
+	if not _control_enabled or not _touch_move.is_zero_approx() or navigation_agent == null:
 		return false
 	var map := navigation_agent.get_navigation_map()
 	if not _map_has_geometry(map):
@@ -606,6 +629,7 @@ func set_control_enabled(enabled: bool) -> void:
 	if not enabled:
 		# Dialogue, a scripted beat or a transition owns the body now; a walk in
 		# progress must not resume afterwards.
+		set_touch_move(Vector2.ZERO)
 		cancel_path()
 
 

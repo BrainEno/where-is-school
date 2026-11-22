@@ -93,13 +93,17 @@ LOOPS = {
 
 
 def keyframes(b, figure, action):
-    duration, tracks = LOOPS[action]
+    pose_loop(b, figure, action, *LOOPS[action])
+
+
+def pose_loop(b, parent, action, duration, tracks, *, interpolation=2):
+    """Emit a native looping clip over local rotation pivots, with no actor script."""
     props = {"length": duration, "loop_mode": 1}
     for i, (path, keys) in enumerate(tracks.items()):
         slot = f"tracks/{i}/"
         props[slot + "type"] = '"value"'
         props[slot + "path"] = f'NodePath("{path}:rotation_degrees")'
-        props[slot + "interp"] = 2
+        props[slot + "interp"] = interpolation
         props[slot + "loop_wrap"] = "true"
         times = ", ".join(f"{time:g}" for time, _ in keys)
         transitions = ", ".join("1" for _ in keys)
@@ -108,7 +112,7 @@ def keyframes(b, figure, action):
                                 f'PackedFloat32Array({transitions}), "update": 0, "values": [{values}]}}')
     animation = b.mesh("Animation", **props)
     library = b.mesh("AnimationLibrary", _data=f'{{&"{action}": SubResource("{animation}")}}')
-    b.node("Motion", figure, "AnimationPlayer", autoplay=f'"{action}"', libraries=f'{{&"": SubResource("{library}")}}')
+    b.node("Motion", parent, "AnimationPlayer", autoplay=f'"{action}"', libraries=f'{{&"": SubResource("{library}")}}')
 
 
 def visible(b, name, parent, mesh, origin=(0, 0, 0), *, shadow=True):

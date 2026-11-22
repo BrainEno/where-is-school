@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ## `tools/build_dream_annex.py` writes `scenes/locations/corridor/dream_annex.tscn` (the
 ## corridor instances it beside the teaching block) and the waiting room inside the staff
-## office. The 03 crowd uses native pose loops; the rest of the dream uses shader motion.
+## office. The 03 crowd and the 01 stamp loop use native animation; scenery still uses shader motion.
 ##
 ## 1. Every piece draws: a material on each mesh, and a shader behind each ShaderMaterial.
 ## 2. Nothing in it acts: no script, actor, sound or interactable under the annex.
@@ -56,15 +56,20 @@ const STENCH_POINTS := {
 	"the 01 gallery": [Vector3(-11.4, -3.4, 12.6), -0.01, 0.01],
 	"02 above the stalls": [Vector3(-31.6, 0.0, 5.6), -0.01, 0.01],
 }
-const YARD_POINTS := {
+const ENTRANCE_ROUTES := {
 	"the yard": Vector3(-31.0, -3.4, 13.4),
 	"the strip by the corner doorway": Vector3(-38.6, -3.4, 11.15),
 	"the lane": Vector3(-24.0, -3.4, 17.4),
+	"the lane in front of the booth": Vector3(-13.62, -3.4, 12.25),
+	"the archive door landing": Vector3(-14.48, -3.4, 12.0),
+	"the plan room door landing": Vector3(-10.77, -3.4, 12.0),
+	"the foot of the blue stair": Vector3(-9.94, -3.4, 12.54),
 }
 const KEPT_POINTS := {
 	"the 01 gallery": Vector3(-11.4, -3.4, 12.6),
 	"the restroom door": Vector3(-25.0, -3.4, 12.6),
 	"the foot of the escalator": Vector3(0.0, 0.0, -8.45),
+	"where the old 02 booth stood": Vector3(1.38, 0.0, -8.45),
 	"the 03 lane": Vector3(-13.2, 3.6, -7.8),
 }
 
@@ -87,6 +92,7 @@ func _run() -> void:
 	if _check.expect(annex != null, "The corridor does not instance dream_annex.tscn."):
 		_check_pieces(annex, "corridor")
 		_check_spawns(corridor, annex)
+		_check_ticket_counter(corridor)
 		var exam := annex.get_node_or_null(^"ExamFloor")
 		if _check.expect(exam != null, "The annex has no ExamFloor."):
 			_check_candidates(exam, EXAM_CROWD, true)
@@ -186,6 +192,48 @@ func _check_pieces(holder: Node, where: String) -> void:
 	_check.expect(meshes > 60 and moving > 20, "%s: only %d pieces, %d moving." % [where, meshes, moving])
 
 
+func _check_ticket_counter(corridor: Node3D) -> void:
+	var booth := corridor.get_node_or_null(^"DreamAnnex/TicketCounter/Booth") as StaticBody3D
+	var door := corridor.get_node_or_null(^"TeachingBlock/GroundFloor/GlassEntrance") as Node3D
+	if not _check.expect(booth != null and door != null, "The clerk booth or the 01 glass entrance is missing."):
+		return
+	var solid := booth.get_node(^"Solid") as CollisionShape3D
+	var half := (solid.shape as BoxShape3D).size * .5
+	var bounds := solid.global_transform * AABB(-half, half * 2.0)
+	var threshold := door.global_position
+	_check.expect(absf(bounds.position.y - threshold.y) < .01 and bounds.position.x > threshold.x + 1.33
+		and bounds.end.z < threshold.z and threshold.z - bounds.end.z < .65,
+		"The booth isn't beside the right glazing, entirely inside 01 and clear of the door opening.")
+	var motion := booth.get_node_or_null(^"Motion") as AnimationPlayer
+	if not _check.expect(motion != null and motion.is_playing() and motion.current_animation == &"Stamp",
+			"The booth lost its single autoplay stamp clock."):
+		return
+	var clip := motion.get_animation(&"Stamp")
+	_check.expect(clip.loop_mode == Animation.LOOP_LINEAR and clip.get_track_count() == 3,
+		"All three clerks must share one looping stamp clip.")
+	motion.pause()
+	for index in 3:
+		var clerk := booth.get_node_or_null(NodePath("Clerk%d" % index)) as Node3D
+		if not _check.expect(clerk != null, "Clerk %d missing at the new location." % index):
+			continue
+		var face := clerk.get_node(^"Head/FaceAndHair") as MeshInstance3D
+		var shoes := clerk.get_node(^"PlantedFeet") as MeshInstance3D
+		var stamp := clerk.get_node(^"StampArm/StampFoot") as MeshInstance3D
+		var ticket := booth.get_node(NodePath("Ticket%d" % index)) as MeshInstance3D
+		var skin := face.mesh as ArrayMesh
+		_check.expect(skin != null and skin.surface_get_array_index_len(0) > 2100,
+			"Clerk %d has no shaped face for the close-up." % index)
+		_check.expect(absf((shoes.global_transform * shoes.get_aabb()).position.y - threshold.y) < .004,
+			"Clerk %d's shoes don't rest on 01." % index)
+		var paper_top := (ticket.global_transform * ticket.get_aabb()).end.y
+		for beat: float in [0.0, .96, 1.65]:
+			motion.seek(beat, true)
+			var clearance := (stamp.global_transform * stamp.get_aabb()).position.y - paper_top
+			var matches := clearance > .06 if beat == 0.0 else absf(clearance) < .003
+			_check.expect(matches, "Clerk %d stamp misses the shared raised/contact pose at %.2fs." % [index, beat])
+	motion.play()
+
+
 func _check_candidates(floor: Node, specs: Dictionary, sculpted := false) -> void:
 	var heights: Array[float] = []
 	var tailoring: Dictionary = {}
@@ -281,8 +329,8 @@ func _check_spawns(corridor: Node3D, annex: Node) -> void:
 func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 	var map := nav.get_navigation_map()
 	var entrance := NavigationServer3D.map_get_closest_point(map, corridor.get_spawn(&"FromTeachingEntrance").global_position)
-	for label: String in YARD_POINTS:
-		var wanted: Vector3 = YARD_POINTS[label]
+	for label: String in ENTRANCE_ROUTES:
+		var wanted: Vector3 = ENTRANCE_ROUTES[label]
 		var spot := NavigationServer3D.map_get_closest_point(map, wanted)
 		if not _check.expect(_on_mesh(spot, wanted), "%s is not walkable (nearest %s)." % [label, spot]):
 			continue
