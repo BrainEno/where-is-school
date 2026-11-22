@@ -5,7 +5,15 @@ on:
   # the author flow and iOS compile/pack have been exercised.
   push:
     branches: [main, 'arena/**']
-    paths: &author_paths
+    paths:
+      - '.github/workflows/authoring-ci.yml'
+      - 'scripts/dev/authoring/**'
+      - 'tools/authoring_build.py'
+      - 'tools/review_author_draft.*'
+      - 'tools/macos/ios/authoring/**'
+      - 'tests/authoring_*'
+  pull_request:
+    paths:
       - '.github/workflows/authoring-ci.yml'
       - '.github/actions/setup-godot/**'
       - '.godot-version'
@@ -23,8 +31,6 @@ on:
       - 'tools/godot_pck.py'
       - 'tools/macos/ios/**'
       - 'tests/authoring_*'
-  pull_request:
-    paths: *author_paths
 
 permissions:
   contents: read
@@ -34,9 +40,6 @@ jobs:
     name: Edit, trial and export in the real classroom
     runs-on: ubuntu-24.04
     timeout-minutes: 22
-    env:
-      XDG_DATA_HOME: ${{ runner.temp }}/wis-author-ci-data
-      WIS_TEST_AUTHOR_DRAFT: ${{ runner.temp }}/author-ci-draft.json
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -47,6 +50,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/wis-author-ci-data"
+          printf 'XDG_DATA_HOME=%s\nWIS_TEST_AUTHOR_DRAFT=%s\n' \
+            "$XDG_DATA_HOME" "$RUNNER_TEMP/author-ci-draft.json" >> "$GITHUB_ENV"
           godot --version
           python3 tests/authoring_tools_test.py
           bash tools/ci_import_godot.sh "$RUNNER_TEMP/author-import"
