@@ -111,7 +111,17 @@ func _title_and_settings() -> void:
 		await _tap_control(title.get_entry(&"settings"))
 		var reopened := title.get_settings_panel()
 		if _check.expect(reopened.is_open(), "Settings did not reopen after Done"):
+			# A finger can only press a row it can see: the list is scrolled, so bring the
+			# row into the clip the way a player would, then press it through the real
+			# touch pipeline. A row the list cannot show is a layout bug, and is reported
+			# as one rather than as a tap that did nothing.
+			reopened.focus_row(&"text_speed")
+			await process_frame
+			await process_frame
 			var speed_row := reopened.get_row_control(&"text_speed") as Button
+			_check.expect(reopened.get_scroll().get_global_rect().grow(1.0).encloses(speed_row.get_global_rect()),
+				"A settings row cannot be scrolled into the list: row=%s clip=%s" % [
+					speed_row.get_global_rect(), reopened.get_scroll().get_global_rect()])
 			var before := speed_row.text
 			await _tap_control(speed_row)
 			_check.expect(speed_row.text != before, "Tapping a choice row on a phone changed nothing")

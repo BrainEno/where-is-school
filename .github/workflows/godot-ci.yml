@@ -17,7 +17,14 @@ jobs:
   validate:
     name: Import, smoke test, and gameplay tests
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The whole suite, import included, runs 22-24 minutes on `main`. At a 25-minute cap a
+    # single slow check killed the job at the ceiling - "The job has exceeded the maximum
+    # execution time of 25m0s" - which reports the timeout instead of the check that was
+    # slow, and hides every check that had not run yet. The step that runs the checks is
+    # what bounds a stall (`tools/ci_run_check.sh`: a per-check `timeout`, a log scan and a
+    # missing-verdict rule); this cap is only the last resort, so it is set well above a
+    # normal run rather than against it.
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0

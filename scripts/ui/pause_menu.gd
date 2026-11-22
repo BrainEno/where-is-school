@@ -379,6 +379,10 @@ func _ensure_return_prompt() -> void:
 	_return_prompt = ReturnPrompt.new(_confirm, _page, close, _world)
 
 
+## The card's two answers. Two questions share this one card, so the pending kind is what
+## says which was asked: "new game" is the menu's own (`_pending`), a return is
+## `ReturnPrompt`'s, set when it asked. The menu never copies its own kind into the prompt:
+## `_pending` is empty during a return, and writing it back silenced both answers.
 func _on_confirmed() -> void:
 	var pending := _pending
 	_pending = &""
@@ -386,7 +390,6 @@ func _on_confirmed() -> void:
 		_on_new_game_confirmed()
 		return
 	_ensure_return_prompt()
-	_return_prompt.pending = pending
 	_return_prompt.answer(true)
 
 
@@ -397,7 +400,6 @@ func _on_cancelled() -> void:
 		focus_entry(&"new_game")
 		return
 	_ensure_return_prompt()
-	_return_prompt.pending = pending
 	_return_prompt.answer(false)
 
 
@@ -408,10 +410,6 @@ func _on_new_game_confirmed() -> void:
 	_new_game_attempt().start()
 
 
-func _on_new_game_failed(report: Dictionary) -> void:
-	_new_game_attempt().failed(report)
-
-
 func _new_game_attempt() -> NewGameAttempt:
 	if _new_game == null:
 		_new_game = NewGameAttempt.new(self, _root, _confirm, _show_new_game_failure)
@@ -420,6 +418,8 @@ func _new_game_attempt() -> NewGameAttempt:
 
 ## Back on screen with the notice the attempt wrote, over the run that is still there.
 ## New game keeps the focus: Enter tries again, Resume or Esc goes back to that run.
+## The failed attempt is over, so the pending question is cleared with it: leaving it set
+## would let the next return answer be read as another "new game".
 func _show_new_game_failure() -> void:
 	_pending = &""
 	get_tree().paused = true

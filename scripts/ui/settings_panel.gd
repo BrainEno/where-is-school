@@ -169,14 +169,25 @@ func get_row_control(id: StringName) -> Control:
 	return _controls.get(id) as Control
 
 
+## Every row that can take the focus, in the order a player walks them. A touch screen's
+## `done` key is the last of them; on a desktop it is not shown and is left out here, so
+## the keyboard and pad walk is exactly the one it was before the key existed.
 func get_row_ids() -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for id: Variant in _controls.keys():
 		ids.append(StringName(id))
 	ids.append(&"back")
-	if _done != null and _done.visible:
+	if _touch_done_visible():
 		ids.append(&"done")
 	return ids
+
+
+## True when the touch screen's "done" key is on screen. It is a footer key, not a row in
+## the list: `_controls` never holds it, so listing it with the rows would also put it in
+## the section grid twice - once halfway up the screen, once at the footer - and the focus
+## walk would answer Up at the ends by jumping to an invisible copy.
+func _touch_done_visible() -> bool:
+	return _done != null and _done.visible
 
 
 func focus_row(id: StringName) -> void:
@@ -292,7 +303,7 @@ func _link_focus() -> void:
 	for id: StringName in [
 		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log",
 		&"volume_master", &"volume_music", &"volume_sfx", &"ui_scale", &"fullscreen", &"language",
-		&"open_logs", &"export_diagnostics", &"sprint_mode", &"story_editor",
+		&"open_logs", &"export_diagnostics", &"sprint_mode",
 	]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -302,6 +313,8 @@ func _link_focus() -> void:
 		var pad := _focusable(get_row_control(_bind_id(action, &"gamepad")))
 		if keys != null or pad != null:
 			grid.append([keys, pad])
+	# The authoring switch is placed once, here: a control listed twice would be its own
+	# neighbour, and one of the two copies would answer Up from the row below.
 	for id: StringName in [&"restore_bindings", &"story_editor", &"back", &"done"]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -344,8 +357,13 @@ func _grid_step(grid: Array[Array], row: int, column: int, step: int) -> Control
 	return grid[row][column] as Control
 
 
+## True when this control can be a stop in the walk. A row this screen does not show - the
+## touch screen's `done` key on a desktop - must not be linked at all: Godot refuses to
+## focus a hidden control and falls through to whatever is behind the modal, which is how
+## Tab from the last row used to land on the pause menu. Only this screen's own flags are
+## read: the list is rebuilt while the panel itself is still hidden.
 func _focusable(control: Control) -> Control:
-	if control == null or control.focus_mode == Control.FOCUS_NONE:
+	if control == null or control.focus_mode == Control.FOCUS_NONE or not control.visible:
 		return null
 	return control
 

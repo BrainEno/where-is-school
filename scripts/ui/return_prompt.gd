@@ -53,16 +53,23 @@ func ask(menu_open: bool, open_menu: Callable, block: Control) -> bool:
 	return true
 
 
-## The answer. `true` means "save, then leave"; false leaves the last checkpoint only.
+## The answer to the question this class asked. The menu forwards its card's two signals
+## here, and this is the only reader of `pending`, so the menu cannot decide a return by
+## reading a kind it never set.
 func answer(confirmed: bool) -> void:
 	var kind := pending
 	pending = StringName()
 	if not confirmed:
-		if kind == &"return_save" or kind == &"return_checkpoint":
+		if is_return(kind):
 			_close.call()
 		return
-	if kind == &"return_save" or kind == &"return_checkpoint":
+	if is_return(kind):
 		_return_to_title(kind == &"return_save")
+
+
+## True while this class is waiting for an answer, whatever the menu's `_pending` says.
+func is_return(kind: StringName) -> bool:
+	return kind == &"return_save" or kind == &"return_checkpoint"
 
 
 func _ask(status: Dictionary, write: bool, warning: String = "") -> void:

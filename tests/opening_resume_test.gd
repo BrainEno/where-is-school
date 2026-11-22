@@ -1170,9 +1170,12 @@ func _wait_for_world(reports: Array) -> Node:
 func _check_entry_points_share_the_flow() -> void:
 	_case_label = "the three ways into a new game"
 	Harness.stage = _case_label
+	# The pause menu's transaction lives in the class it hands it to; the menu names that
+	# class and never calls `Session.start_new_game` itself, so the check follows the owner
+	# rather than looking for the call in the menu that delegates it.
 	var files := {
 		"the title screen": "res://scripts/ui/title_screen.gd",
-		"the pause menu": "res://scripts/ui/pause_menu.gd",
+		"the pause menu": "res://scripts/ui/new_game_attempt.gd",
 		"the end card": "res://scripts/ui/end_card.gd",
 	}
 	for label: String in files:
@@ -1187,6 +1190,12 @@ func _check_entry_points_share_the_flow() -> void:
 			text.contains("Session"),
 			"%s: %s never talks to the session." % [_case_label, label]
 		)
+	# And the menu whose entry starts it does hand it to that class, not to a second copy.
+	var menu_text := FileAccess.get_file_as_string("res://scripts/ui/pause_menu.gd")
+	_expect(
+		menu_text.contains("NewGameAttempt"),
+		"%s: the pause menu does not hand its new game to the shared transaction." % _case_label
+	)
 	var session_text := FileAccess.get_file_as_string(SESSION_SCRIPT)
 	for marker: String in [
 		"new_game_failed", "change_scene_to_file", "suspend_writes", "scene_change_failed"
