@@ -171,7 +171,7 @@ func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: N
 	var panel := menu.get_settings_panel()
 	panel.cycle(&"story_editor", 1)
 	panel.close()
-	await _expect_removed(check, world)
+	await _expect_removed(check, world, "Turning off")
 	check.expect(not settings.is_story_editor_enabled() and not SettingsStore.open().get_value("authoring", "story_editor", true),
 		"The switch off did not persist")
 	check.expect(menu.get_story_entry() == null and not menu.open_story_editor() and menu.is_open() and paused,
@@ -184,10 +184,10 @@ func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: N
 		"Re-enabling did not attach the editor")
 	settings.reset_to_defaults()
 	check.expect(not settings.is_story_editor_enabled(), "Restore defaults left the story editor on")
-	await _expect_removed(check, world)
+	await _expect_removed(check, world, "Resetting to defaults")
 
 
-func _expect_removed(check: Harness.Checker, world: Node) -> void:
+func _expect_removed(check: Harness.Checker, world: Node, label: String) -> void:
 	check.expect(await Harness.wait_until(func() -> bool:
 		return not root.has_node(^"StoryEditor") and not world.has_node(^"AuthorOverlay")
-	, 5.0), "Turning off left the editor or the world's overlay installed")
+	, 5.0), label + " left the editor or the world's overlay installed")

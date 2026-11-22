@@ -149,8 +149,8 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild -version
-          if ! python3 tools/export_mobile.py ios-unsigned --authoring --output "$RUNNER_TEMP/author-device" 2>&1 | tee "$RUNNER_TEMP/author-device.log"; then
-            grep -Ei 'error:|failed' "$RUNNER_TEMP/author-device.log" | tail -12 | cut -c1-600 |
+          if ! python3 -u tools/export_mobile.py ios-unsigned --authoring --output "$RUNNER_TEMP/author-device" 2>&1 | tee "$RUNNER_TEMP/author-device.log"; then
+            grep -Ei 'Mobile export failed:|reached the build|SCRIPT ERROR|Parse Error|[[:space:]]error:' "$RUNNER_TEMP/author-device.log" | tail -12 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Author iOS archive::%s\n' "$failure"; done
             exit 1
           fi
@@ -159,8 +159,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! python3 tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
-            grep -Ei 'error:|failed|forbidden' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
+          if ! python3 -u tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
+            grep -Ei 'Mobile export failed:|reached the build|SCRIPT ERROR|Parse Error|[[:space:]]error:' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Retail iOS archive::%s\n' "$failure"; done
             exit 1
           fi

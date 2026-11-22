@@ -762,7 +762,7 @@ def test_preset_checks() -> None:
     def preset_text(modify_resources: str = "true", icon: str = "res://assets/icon/app_icon.ico") -> str:
         return (
             "[preset.0]\n\nname=\"Windows Desktop\"\nplatform=\"Windows Desktop\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*, scripts/story_editor/*"\n'
             'export_path="build/windows/where-is-school.exe"\n\n'
             "[preset.0.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -775,7 +775,7 @@ def test_preset_checks() -> None:
             'application/file_version="0.1.0.0"\n'
             'application/product_version="0.1.0.0"\n\n'
             "[preset.1]\n\nname=\"Linux\"\nplatform=\"Linux\"\n"
-            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*"\n'
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*, scripts/story_editor/*"\n'
             'export_path="build/linux/where-is-school.x86_64"\n\n'
             "[preset.1.options]\n\n"
             'binary_format/embed_pck="true"\n'
@@ -821,7 +821,8 @@ def test_preset_checks() -> None:
         # another directory's name or a .tscn-only filter must not pass. Break just one
         # platform at a time: a correct Windows preset cannot conceal a broken Linux one.
         for index, preset_name in enumerate(("Windows Desktop", "Linux")):
-            for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/", ".github/", "addons/"):
+            for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/", ".github/", "addons/",
+                          "scripts/story_editor/"):
                 for replacement in ("", where + "*.tscn", "unrelated/" + where + "*"):
                     sections = preset_text().split("[preset.1]")
                     sections[index] = sections[index].replace(where + "*", replacement, 1)

@@ -513,6 +513,7 @@ func load_settings() -> void:
 		_load_bindings(config)
 	_apply_all_volumes()
 	_apply_ui_scale()
+	_sync_story_editor.call_deferred()
 	setting_changed.emit(&"all")
 	bindings_changed.emit()
 
