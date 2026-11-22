@@ -205,9 +205,13 @@ func set_mode(mode: String, text: String, backing: Dictionary = {}) -> void:
 	_mode = mode
 	_busy = true
 	body.text = text
+	# A control is reused for different IDs. Undo must never paste a different
+	# node's previously selected text into this one.
+	body.clear_undo_history()
 	body.placeholder_text = "输入选项文案" if mode == "choice" else "输入对白或旁白"
 	new_reply.button_pressed = bool(backing.get("new_reply", false))
 	reply.text = String(backing.get("reply", ""))
+	reply.clear_undo_history()
 	_busy = false
 	_apply_visibility()
 

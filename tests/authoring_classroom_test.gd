@@ -141,6 +141,7 @@ func _edit_fields() -> void:
 	_check.expect(_panel.get_body_text() == original, "Original comparison now displays the draft")
 	_drawer.action.emit("original")
 	_pick("field", "leave")
+	_check.expect(not _drawer.body.has_undo(), "Changing fields can undo into another field's wording")
 	_enter(_drawer.body, OPTION)
 	_check.expect(await Harness.wait_until(func() -> bool:
 		return is_instance_valid(choice_before) and OPTION in (choice_before as Button).text
@@ -198,6 +199,10 @@ func _export_round_trip() -> void:
 	var picker := _overlay.find_children("*", "FileDialog", true, false)
 	if not _check.expect(picker.size() == 1, "Export did not open the save dialog"):
 		return
+	picker[0].hide()
+	picker[0].canceled.emit()
+	_check.expect(_store.is_unexported() and not FileAccess.file_exists(export_path), "Cancelling export changed the draft or created a file")
+	_drawer.action.emit("export")
 	picker[0].hide() # Inject the user's explicit desktop destination, not an automatic save.
 	picker[0].file_selected.emit(export_path)
 	var exported := Patch.read_json(export_path)

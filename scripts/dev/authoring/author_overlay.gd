@@ -256,6 +256,9 @@ func _targets(selection: String) -> void:
 
 
 func _picked(field: String, value: String) -> void:
+	if _exchange.is_busy():
+		_catalog()
+		return
 	_clear_armed = false
 	if field in ["speaker", "target", "new_reply"]:
 		if field == "new_reply":
@@ -299,6 +302,9 @@ func _flush() -> bool:
 	if not _open or _trial or not store.blocked.is_empty():
 		return true
 	_timer.stop()
+	# TextEdit queues text_changed. A selection/close in the same frame must not
+	# drop the text even if that notification hasn't reached the debounce yet.
+	_pending_text = _mode == "text" and _drawer.body.text != _stored_value()
 	if _pending_text:
 		if not store.set_text(_chapter, _conversation, _node, _choice, _drawer.body.text):
 			_save(store.error + "（未应用；已保留输入）")
@@ -344,6 +350,8 @@ func _controls() -> void:
 
 
 func _action(id: String) -> void:
+	if _exchange.is_busy():
+		return
 	if id != "clear":
 		_clear_armed = false
 	if id not in ["close", "export", "keyboard"] and not store.blocked.is_empty():
