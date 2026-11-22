@@ -62,7 +62,7 @@ jobs:
           # runtime must be clean of parse errors; do not waive any test failure.
           if grep -E 'SCRIPT ERROR|Parse Error' build/mobile-controls/controls.log; then status=1; fi
           if (( status != 0 )); then
-            grep -E 'SCRIPT ERROR|Parse Error|FAIL|watchdog' build/mobile-controls/controls.log | head -20 > "$RUNNER_TEMP/mobile-failures" || true
+            grep -E -A1 'SCRIPT ERROR|Parse Error|FAIL|watchdog' build/mobile-controls/controls.log | head -32 > "$RUNNER_TEMP/mobile-failures" || true
             while IFS= read -r line; do printf '::error title=Mobile controls::%s\n' "$line"; done < "$RUNNER_TEMP/mobile-failures"
           fi
           exit "$status"
@@ -78,13 +78,18 @@ jobs:
           source tools/ci_run_check.sh
           run_check mobile_capture 140 xvfb-run -a --server-args='-screen 0 2560x1440x24' \
             godot --path . --resolution 2532x1170 --rendering-method gl_compatibility \
-            --script res://tests/capture_mobile_controls.gd -- --mobile-preview || exit 1
+            --script res://tests/capture_mobile_controls.gd -- --mobile-preview || {
+              grep -E -A1 'SCRIPT ERROR|Parse Error' "$CI_LOG_DIR/mobile_capture.log" | head -20 \
+                | while IFS= read -r line; do printf '::error title=Mobile capture::%s\n' "$line"; done || true
+              exit 1
+            }
           cd build/mobile-controls/frames
           {
             printf 'source_sha=%s\n' "$(git rev-parse HEAD)"
             grep '^MOBILE_CAPTURE ' ../mobile_capture.log
             sha256sum 01_gameplay_joystick_and_return.png 02_return_confirmation.png 03_main_menu_after_return.png
           } | tee CAPTURE.txt
+          while IFS= read -r line; do printf '::notice title=Mobile screenshot evidence::%s\n' "$line"; done < CAPTURE.txt
       - name: Upload input and layout results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

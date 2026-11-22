@@ -290,7 +290,15 @@ func _joystick_cancellation() -> void:
 
 
 func _menu_geometry() -> void:
-	Harness.stage = "touch header, joystick and return question bounds"
+	Harness.stage = "rotation while steering, then touch header and confirmation bounds"
+	var original_center := _stick().get_global_rect().get_center()
+	var original_edge := original_center + Vector2.RIGHT * _stick().size.x * 0.3
+	_touch(original_edge, true)
+	await _check_facing(Vector2.RIGHT, "before rotation")
+	await _set_screen(PORTRAIT)
+	_drag(original_edge, original_center)
+	_check.expect(_horizontal_speed() < 0.001, "Rotation kept an old steering gesture alive")
+	_touch(original_center, false)
 	var loc := root.get_node(^"Loc")
 	_settings.call("set_text_size", &"largest")
 	_ui.hud.set_objective("objective.leave_classroom")
@@ -541,7 +549,9 @@ func _return_during_dialogue() -> void:
 	_touch(center, true)
 	await _tap_control(use, 3)
 	_touch(center, false)
-	if not _check.expect(activations == [&"schoolbag"] and controller.is_busy(),
+	var presented := await Harness.wait_until(func() -> bool:
+		return controller.is_busy() and _ui.dialogue_panel.visible and _return_button().is_visible_in_tree(), 8.0)
+	if not _check.expect(activations == [&"schoolbag"] and presented,
 			"The second finger did not use the schoolbag exactly once: %s" % [activations]):
 		return
 	var panel := _ui.dialogue_panel
@@ -562,8 +572,8 @@ func _return_during_dialogue() -> void:
 		await _tap_control(advance)
 		_check.expect(not panel.is_revealing() and controller.is_busy(), "The resumed line could not finish revealing")
 	# Leave this presentation before advancing; it is deliberately absent from the save.
-	var old_world := weakref(_main)
-	var old_dialogue := weakref(controller)
+	var old_world: WeakRef = weakref(_main)
+	var old_dialogue: WeakRef = weakref(controller)
 	await _tap_control(_return_button())
 	await _confirm_twice(prompt.get_confirm_button())
 	var title := await _wait_title()
@@ -612,7 +622,7 @@ func _return_from_corridor(title: TitleScreen) -> void:
 	_check.expect(prompt.get_message() == L10n.t("menu.confirm_return_save"), "Stable corridor did not offer to save")
 	var save := root.get_node(^"Save")
 	var writes := int(save.saves_written)
-	var world := weakref(_main)
+	var world: WeakRef = weakref(_main)
 	await _confirm_twice(prompt.get_confirm_button())
 	var title_again := await _wait_title()
 	if title_again == null:

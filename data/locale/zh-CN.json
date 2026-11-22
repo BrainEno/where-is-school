@@ -119,7 +119,7 @@
     "menu.save_time": "{month}月{day}日 {hour}:{minute}",
     "menu.caption_separator": " · ",
     "menu.confirm_quit_checkpoint": "上次存档后的进度不会保留。下次选择「从上次继续」将读取：{caption}。",
-    "menu.confirm_quit_no_save": "目前没有可读取的存档。如果现在返回，下次需要从头开始。",
+    "menu.confirm_quit_no_save": "目前没有可读取的存档。如果现在返回，下次要从头开始。",
     "menu.confirm_quit_failed": "本次进度保存失败。仍要不保存就返回吗？",
     "menu.new_game_failed.save_stage_failed": "新游戏没有开始：存档无法移到一边。",
     "menu.new_game_failed.scene_change_failed": "新游戏没有开始：开场无法打开。",

@@ -85,7 +85,7 @@ func _capture() -> void:
 			"Opening the shortcut did not show the save-and-return question"):
 		return
 	await _shot("02_return_confirmation")
-	var old := weakref(world)
+	var old: WeakRef = weakref(world)
 	await _tap(prompt.get_confirm_button())
 	if not _checks.expect(await Harness.wait_until(func() -> bool:
 		return current_scene is TitleScreen and old.get_ref() == null, 12.0), "Return did not enter the real title and free the old world"):

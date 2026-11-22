@@ -129,7 +129,7 @@ func _check_save_and_quit_at_rest() -> void:
 	_expect(confirm.visible and focused() == confirm.get_cancel_button(), "%s: no safe confirmation focus." % _case)
 	_expect(confirm.get_message() == L10n.t("menu.confirm_return_save"), "%s: did not explain the save." % _case)
 	_expect(not _save.has_save(), "%s: opening the question wrote the save." % _case)
-	var old := weakref(world)
+	var old: WeakRef = weakref(world)
 	await _press_pad(JOY_BUTTON_DPAD_RIGHT)
 	_expect(focused() == confirm.get_confirm_button(), "%s: the D-pad did not focus Return." % _case)
 	Input.action_press(&"move_forward") # A still-held action must not reach the title or next world.
