@@ -7,6 +7,7 @@ const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const MAIN := "res://scenes/main/main.tscn"
 const TITLE := "res://scenes/ui/title_screen.tscn"
 const SAVE := "user://save.json"
+const SCREEN := Vector2i(2400, 1080)
 
 
 func _initialize() -> void:
@@ -18,10 +19,14 @@ func _run() -> void:
 	if not MobileLayout.enabled or not (MobileLayout.preview or OS.has_feature("wis_handheld")):
 		_fail("the exported pack did not enable the handheld layout itself")
 		return
+	# Headless DisplayServer has no real window size and ignores --resolution.
+	# Size the SceneTree viewport in both runs; only the editor-preview run
+	# overrides OS metrics. The real pack must still enable the layout itself.
+	root.min_size = Vector2i.ZERO
+	root.size = SCREEN
 	if MobileLayout.preview:
 		root.set_meta(MobileLayout.TEST_SAFE_AREA, Rect2(132, 0, 2244, 1008))
 		root.set_meta(MobileLayout.TEST_DENSITY, 3.0)
-		root.size = Vector2i(2400, 1080)
 	# Refuse to overwrite a player's existing save when run outside of CI.
 	if FileAccess.file_exists(SAVE):
 		_fail("the mobile opening smoke requires an isolated, empty user directory")
@@ -80,16 +85,25 @@ func _run() -> void:
 	var settings := root.get_node(^"Settings")
 	settings.set_input_device(InputHint.DEVICE_MOUSE)
 	await process_frame
-	if not touch_menu.is_visible_in_tree() or not use.is_visible_in_tree() \
-			or not stick.is_visible_in_tree() or not back.is_visible_in_tree():
-		_fail("the controls did not appear after the opening with pointer hints")
-		return
+	var safe := MobileLayout.safe_rect(stick)
+	for control: Control in [touch_menu, use, stick, back]:
+		if not control.is_visible_in_tree() or not safe.encloses(control.get_global_rect()):
+			_fail("%s did not fit the HUD after the opening: window=%s, bounds=%s, safe=%s" % [
+				control.name, root.size, control.get_global_rect(), safe])
+			return
 	var thumb := stick.get_global_rect().get_center() + Vector2.RIGHT * stick.size.x * 0.32
+	if not player.is_seated():
+		_fail("the opening did not leave the protagonist seated before the first gesture")
+		return
 	_touch(thumb, true)
-	var stood := await _wait_until(player.is_getting_up, 3.0)
+	var stood := await _wait_until(func() -> bool: return not player.is_seated(), 3.0)
 	_touch(thumb, false)
-	if not stood or not await _wait_until(func() -> bool: return not player.is_getting_up(), 4.0):
-		_fail("a real joystick press did not get the seated player up")
+	if not stood:
+		_fail("the seated player did not respond to the joystick at %s (window=%s, stick=%s)" % [
+			thumb, root.size, stick.get_global_rect()])
+		return
+	if not await _wait_until(func() -> bool: return not player.is_getting_up(), 4.0):
+		_fail("the touch-initiated get-up never finished")
 		return
 	var pause_menu := world.get_node(^"PauseMenu") as PauseMenu
 	await _tap(touch_menu)
