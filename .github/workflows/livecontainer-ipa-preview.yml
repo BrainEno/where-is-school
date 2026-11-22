@@ -1,0 +1,95 @@
+name: Verify and deliver the mobile controls IPA
+
+# One-off private delivery from the active branch. The protected Apple signing
+# workflow and the author build remain independent.
+on:
+  push:
+    branches: [arena/31215324-where-is-school]
+    paths: ['.github/workflows/livecontainer-ipa-preview.yml', '.github/wis-livecontainer-preview-*']
+
+permissions:
+  contents: read
+  checks: write # Only publish the verified digest and the one-run public certificate.
+
+jobs:
+  device:
+    name: Verify iPhone ARM64 and deliver privately
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: c932978f1dd7918e8c6b4f071c8343665dc677f1
+      IPA_NAME: Where-Is-School-Mobile-Controls-c932978.ipa
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: c932978f1dd7918e8c6b4f071c8343665dc677f1
+          path: game-source
+          persist-credentials: false
+      - name: Build and inspect the ordinary iPhone device archive
+        working-directory: game-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test -z "$(git status --porcelain)"
+          xcodebuild -version
+          python3 tools/export_mobile.py ios-unsigned --build "$((GITHUB_RUN_NUMBER + 2))" \
+            --output "$RUNNER_TEMP/wis-device"
+      - name: Run the exported iOS game pack without editor preview flags
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/wis-pack-probe"
+          godot --headless --rendering-method gl_compatibility --path "$RUNNER_TEMP/wis-pack-probe" \
+            --main-pack "$RUNNER_TEMP/wis-device/where-is-school.pck" \
+            --script "$GITHUB_WORKSPACE/game-source/tests/mobile_pack_boot.gd" 2>&1 | tee "$RUNNER_TEMP/pack-probe.log"
+          ! grep -E 'SCRIPT ERROR|Parse Error|DEVICE_PACK_TOUCH_FAILURE' "$RUNNER_TEMP/pack-probe.log"
+          verdict="$(grep '^DEVICE_PACK_TOUCH_OK ' "$RUNNER_TEMP/pack-probe.log")"
+          printf '::notice title=Packed handheld smoke::%s\n' "$verdict"
+      - name: Package and verify the app for LiveContainer
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir "$RUNNER_TEMP/wis-private-delivery"
+          python3 .github/wis-livecontainer-preview-pack.py \
+            "$GITHUB_WORKSPACE/game-source" "$SOURCE_SHA" "$RUNNER_TEMP/wis-device" \
+            "$RUNNER_TEMP/wis-private-delivery/$IPA_NAME"
+      - name: Publish the verified digest and a one-run public certificate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          openssl_bin="$(brew --prefix openssl@3)/bin/openssl"
+          test -x "$openssl_bin"
+          echo "OPENSSL_BIN=$openssl_bin" >> "$GITHUB_ENV"
+          cd "$RUNNER_TEMP/wis-private-delivery"
+          "$openssl_bin" req -new -x509 -newkey rsa:3072 -nodes -sha256 -days 1 \
+            -subj '/CN=Where Is School one-file delivery' -keyout job.key -out job.pem 2>/dev/null
+          summary="$(jq -c --arg cert "$("$openssl_bin" base64 -A -in job.pem)" \
+            '{file:., recipient_certificate:$cert}' IPA-verified.json)"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" \
+            -f "name=IPA recipient $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" -f "head_sha=$GITHUB_SHA" \
+            -f "details_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            -f status=completed -f conclusion=neutral -f 'output[title]=Verified IPA and one-run public certificate' \
+            -f "output[summary]=$summary" --jq '.id'
+      - name: Receive the signed and encrypted one-file delivery ticket
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: python3 .github/wis-livecontainer-preview-deliver.py receive "$RUNNER_TEMP/wis-private-delivery"
+      - name: Upload the verified IPA to the authorized Drive file
+        shell: bash
+        run: python3 .github/wis-livecontainer-preview-deliver.py upload "$RUNNER_TEMP/wis-private-delivery"
+      - name: Remove one-run transfer material
+        if: always()
+        shell: bash
+        run: rm -rf -- "$RUNNER_TEMP/wis-private-delivery"
