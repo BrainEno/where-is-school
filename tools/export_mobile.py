@@ -21,6 +21,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
+import authoring_build
 import export_presets
 import stamp_release_version
 import verify_build
@@ -105,13 +106,15 @@ def check_presets(root: Path) -> None:
     require(settings.get("rendering/textures/vram_compression/import_etc2_astc") == "true", "Enable mobile textures")
 
 
-def stage(destination: Path) -> None:
+def stage(destination: Path, *, authoring: bool = False) -> None:
     """Do not rewrite the working copy, editor settings, user data or export credentials."""
     for name in run("git", "ls-files", "-z", cwd=ROOT, capture=True).split("\0"):
         if not name or name.split("/")[0] not in {"assets", "data", "scenes", "scripts", "addons",
                                                   "project.godot", "export_presets.cfg", "default_bus_layout.tres"}:
             continue
-        if any(name.startswith(p + "/") for p in ("scenes/dev", "scripts/dev")):
+        if name.startswith(("scenes/dev/", "scripts/dev/")) and not (
+            authoring and authoring_build.is_authoring_source(name)
+        ):
             continue
         source, target = ROOT / name, destination / name
         require(source.is_file() and not source.is_symlink(), f"Expected a tracked file: {name}")
@@ -224,8 +227,8 @@ def android(args: argparse.Namespace, tree: Path, text: str, version: str, out: 
     return target
 
 
-def check_app(info: dict, build: int, version: str) -> None:
-    require(info.get("CFBundleIdentifier") == PACKAGE, "Unexpected iOS bundle ID")
+def check_app(info: dict, build: int, version: str, *, authoring: bool = False) -> None:
+    require(info.get("CFBundleIdentifier") == (authoring_build.AUTHOR_ID if authoring else PACKAGE), "Unexpected iOS bundle ID")
     require(str(info.get("CFBundleVersion")) == str(build) and info.get("CFBundleShortVersionString") == version,
             "Unexpected iOS build number or marketing version")
     require(info.get("MinimumOSVersion") == "15.0", "Unexpected iOS deployment target")
@@ -234,12 +237,18 @@ def check_app(info: dict, build: int, version: str) -> None:
         require(set(info.get(key, ())) == ORIENTATIONS, f"Expected sensor landscape in {key}")
 
 
-def verify_ios_app(app: Path, pack: Path, build: int, version: str, *, simulator: bool) -> None:
+def verify_ios_app(
+    app: Path, pack: Path, build: int, version: str, *, simulator: bool, authoring: bool = False
+) -> None:
     info = plistlib.loads((app / "Info.plist").read_bytes())
-    check_app(info, build, version)
+    check_app(info, build, version, authoring=authoring)
     sdk = "iphonesimulator" if simulator else "iphoneos"
     require(info.get("DTPlatformName") == sdk, f"Expected an {sdk} application")
     executable = app / info["CFBundleExecutable"]
+    require((b"WISAuthorFiles\0" in executable.read_bytes()) == authoring,
+            "Author Files bridge must only be linked into the author app")
+    if authoring:
+        require(not info.get("UIFileSharingEnabled"), "Do not expose the author app's entire data directory")
     arch = platform.machine() if simulator else "arm64"
     require(run("lipo", "-archs", executable, capture=True).strip() == arch,
             f"{sdk} executable must be {arch}")
@@ -270,10 +279,10 @@ def file_sha256(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def ios_signing_flags(team: str, options: dict) -> list[str]:
+def ios_signing_flags(team: str, options: dict, bundle: str = PACKAGE) -> list[str]:
     if options.get("signingStyle") != "manual":
         return [f"DEVELOPMENT_TEAM={team}", "CODE_SIGN_STYLE=Automatic"]
-    profile = options.get("provisioningProfiles", {}).get(PACKAGE)
+    profile = options.get("provisioningProfiles", {}).get(bundle)
     certificate = options.get("signingCertificate")
     require(isinstance(profile, str) and bool(profile.strip()), "Manual signing needs the game's profile")
     require(isinstance(certificate, str) and bool(certificate.strip()), "Manual signing needs a certificate")
@@ -284,6 +293,8 @@ def ios_signing_flags(team: str, options: dict) -> list[str]:
 def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path) -> Path:
     signed = args.target == "ios-ipa"
     simulator = args.target == "ios-simulator"
+    authoring = args.authoring
+    bundle = authoring_build.AUTHOR_ID if authoring else PACKAGE
     flags = ["DEVELOPMENT_TEAM=", "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
     require(args.target == "ios-project" or sys.platform == "darwin", "This iOS build needs macOS and full Xcode")
     if signed:
@@ -293,7 +304,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         options = plistlib.loads(args.export_options.read_bytes())
         require(options.get("destination", "export") == "export", "This command exports locally, never uploads")
         require(options.get("teamID", args.team) == args.team, "Export options select a different Apple team")
-        flags = ios_signing_flags(args.team, options)
+        flags = ios_signing_flags(args.team, options, bundle)
     if simulator:
         # Godot's official simulator slices omit both Metal and Vulkan. Do not
         # change the device preset or the source tree to get a simulator build.
@@ -303,6 +314,10 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
                                 settings.read_text(encoding="utf-8"), flags=re.M)
         require(count == 1, "Cannot select the Compatibility renderer for the simulator")
         settings.write_text(source, encoding="utf-8")
+    if authoring:
+        require(sys.platform == "darwin", "The author iOS Files bridge needs macOS and full Xcode")
+        authoring_build.compile_files_bridge(tree, simulator=simulator)
+        text = authoring_build.configure_ios(text)
     project = out / f"{APP}.xcodeproj"
     (tree / "export_presets.cfg").write_text(configure(text, "iOS", {
         "application/app_store_team_id": args.team if signed else UNSIGNED_TEAM,
@@ -313,7 +328,10 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
     pack = out / f"{APP}.pck"
     require((project / "project.pbxproj").is_file() and pack.is_file(),
             "Godot did not produce the Xcode project and game pack")
-    run(sys.executable, ROOT / "tools/verify_build.py", "--pck", pack)
+    if authoring:
+        authoring_build.verify_pack(pack)
+    else:
+        run(sys.executable, ROOT / "tools/verify_build.py", "--pck", pack)
     if args.target == "ios-project":
         return project
     xcode = ("xcodebuild", "-project", project, "-scheme", APP)
@@ -323,13 +341,13 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         version_pin = (ROOT / ".godot-version").read_text().strip()
         ensure_simulator_slice(out, APP, platform.machine(), version_pin, args.engine_version, no_download=args.no_download)
         app = build_simulator(xcode, out, flags)
-        verify_ios_app(app, pack, args.build, version, simulator=True)
+        verify_ios_app(app, pack, args.build, version, simulator=True, authoring=authoring)
         return app
     archive = out / f"{APP}.xcarchive"
     run(*xcode, "-configuration", "Release", "-sdk", "iphoneos", "-destination", "generic/platform=iOS",
         "-archivePath", archive, "archive", *flags)
     app, = archive.glob("Products/Applications/*.app")
-    verify_ios_app(app, pack, args.build, version, simulator=False)
+    verify_ios_app(app, pack, args.build, version, simulator=False, authoring=authoring)
     if not signed:
         print("VERIFIED unsigned iOS device archive; NOT an installable IPA")
         return archive
@@ -343,7 +361,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
     with tempfile.TemporaryDirectory(prefix="wis-verify-ipa-") as unpacked:
         run("ditto", "-x", "-k", ipa, unpacked)
         exported, = (Path(unpacked) / "Payload").glob("*.app")
-        verify_ios_app(exported, pack, args.build, version, simulator=False)
+        verify_ios_app(exported, pack, args.build, version, simulator=False, authoring=authoring)
         run("codesign", "--verify", "--deep", "--strict", exported)
     return ipa
 
@@ -357,9 +375,11 @@ def main() -> int:
     parser.add_argument("--team", default=os.environ.get("IOS_TEAM_ID"))
     parser.add_argument("--no-download", action="store_true", help="do not fetch a missing iOS Simulator slice")
     parser.add_argument("--export-options", type=Path, help="Local Xcode export options for a signed IPA")
+    parser.add_argument("--authoring", action="store_true", help="build the separate iOS author app")
     args = parser.parse_args()
     try:
         check_presets(ROOT)
+        require(not args.authoring or args.target.startswith("ios-"), "Authoring export is iOS only")
         if args.target == "check":
             print("PASS: committed Android and iOS mobile export contracts")
             return 0
@@ -375,7 +395,9 @@ def main() -> int:
         out.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="wis-mobile-") as temp:
             tree = Path(temp)
-            stage(tree)
+            stage(tree, authoring=args.authoring)
+            if args.authoring:
+                authoring_build.configure_project(tree, run("git", "rev-parse", "HEAD", cwd=ROOT, capture=True).strip())
             presets = (tree / "export_presets.cfg").read_text(encoding="utf-8")
             build = android if args.target.startswith("android-") else ios
             artifact = build(args, tree, presets, version, out)
@@ -383,6 +405,8 @@ def main() -> int:
                   "modified_sources": bool(run("git", "status", "--porcelain", "--untracked-files=no",
                                                cwd=ROOT, capture=True)),
                   "godot": actual, "version": version, "build": args.build, "artifact": str(artifact.relative_to(out))}
+        if args.authoring:
+            report.update(variant="authoring", bundle_id=authoring_build.AUTHOR_ID)
         if artifact.is_file():
             report["sha256"] = file_sha256(artifact)
         (out / "BUILD.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

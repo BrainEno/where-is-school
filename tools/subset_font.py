@@ -139,6 +139,9 @@ def collect_characters(text_sources: tuple[str, ...] = TEXT_SOURCES) -> tuple[se
     characters: set[str] = set()
     for pattern in text_sources:
         for name in glob.glob(pattern, recursive=True):
+            # This drawer is absent from the retail pack and uses a system CJK fallback.
+            if Path(name).as_posix().startswith("scripts/dev/authoring/"):
+                continue
             text = Path(name).read_text(encoding="utf-8", errors="ignore")
             if name.endswith(".json"):
                 # Only the *values* matter, but keys are cheap and a key that leaks into

@@ -96,6 +96,14 @@ static func load_from_file(path: String) -> DialogueGraph:
 	return graph
 
 
+## Runs the same schema and reachability checks on a candidate not yet written to disk.
+static func load_from_data(data: Dictionary, label: String) -> DialogueGraph:
+	var graph := DialogueGraph.new()
+	graph.source_path = label
+	graph._parse_document(data, label)
+	return graph
+
+
 func is_valid() -> bool:
 	return errors.is_empty()
 
@@ -142,8 +150,10 @@ func _parse_file(path: String) -> void:
 	if not (root is Dictionary):
 		errors.append("%s: root value must be an object." % path)
 		return
-	var data: Dictionary = root
+	_parse_document(root as Dictionary, path)
 
+
+func _parse_document(data: Dictionary, path: String) -> void:
 	var version := int(data.get("format_version", 0))
 	if version != FORMAT_VERSION:
 		errors.append(
@@ -703,11 +713,9 @@ func _validate_no_linear_cycle(conversation: Conversation, label: String) -> voi
 ## Adding the sequence edge for all three, as this function used to, made a line parked
 ## after a choice hub look reachable when no playthrough could ever show it: the
 ## validator accepted dead content, and the translation of it sank with it (issue #20).
-func _report_unreachable(conversation: Conversation, label: String) -> void:
+static func reachable_nodes(conversation: Conversation, start: StringName) -> Dictionary:
 	var reached: Dictionary = {}
-	var queue: Array[StringName] = []
-	if conversation.nodes.has(conversation.start_id):
-		queue.append(conversation.start_id)
+	var queue: Array[StringName] = [start]
 	while not queue.is_empty():
 		var current: StringName = queue.pop_back()
 		if reached.has(current) or not conversation.nodes.has(current):
@@ -730,6 +738,11 @@ func _report_unreachable(conversation: Conversation, label: String) -> void:
 			var order_index := conversation.order.find(current)
 			if order_index >= 0 and order_index + 1 < conversation.order.size():
 				queue.append(conversation.order[order_index + 1])
+	return reached
+
+
+func _report_unreachable(conversation: Conversation, label: String) -> void:
+	var reached := reachable_nodes(conversation, conversation.start_id)
 	for node_id: StringName in conversation.order:
 		if not reached.has(node_id):
 			errors.append(
