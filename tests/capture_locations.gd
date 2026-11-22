@@ -181,6 +181,24 @@ const SITE_VIEWS := [
 	["gate_lock", Vector3(-23.3, 1.45, 13.75), Vector3(-26.5, 0.95, 13.2)],
 	["site_entrance", Vector3(-24.2, 2.9, 8.6), Vector3(-28.4, 1.4, 11.6)],
 ]
+## Inside the building under construction (`site_interior`): by the porch door, at the key
+## and under the light column, where the trip filter peaks; then fixed views of the room.
+const SITE_INSIDE_STANCES := [
+	["porch_stance", Vector3(4.0, 0.0, 0.8)],
+	["key_stance", Vector3(-1.9, 0.0, 2.6)],
+	["column_stance", Vector3(0.7, 0.0, -0.3)],
+]
+const SITE_INSIDE_VIEWS := [
+	["inside_overview", Vector3(7.5, 9.5, 8.5), Vector3(-0.8, 0.6, -0.6)],
+	["light_column", Vector3(3.6, 1.7, 2.6), Vector3(-1.4, 3.0, -1.8)],
+	["chalk_key", Vector3(-1.4, 1.3, 4.8), Vector3(-3.0, 0.1, 3.2)],
+	["looking_up", Vector3(1.2, 1.2, 0.9), Vector3(-1.4, 9.0, -1.8)],
+	["porch_door_inside", Vector3(-2.4, 1.7, -1.4), Vector3(6.0, 1.1, 0.0)],
+]
+## With the key held, the yard's gate stands open: its padlock and chain are gone.
+const SITE_GATE_OPEN_VIEWS := [
+	["gate_open", Vector3(-22.9, 1.9, 15.6), Vector3(-26.6, 0.9, 12.6)],
+]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
@@ -221,6 +239,7 @@ var _school_details := false
 var _school_focus := false
 var _dream_annex := false
 var _construction_site := false
+var _site_interior := false
 var _annex_thresholds := false
 
 var _main: Node = null
@@ -263,6 +282,8 @@ func _initialize() -> void:
 			_annex_thresholds = true
 		elif arg == "construction-site":
 			_construction_site = true
+		elif arg == "site-interior":
+			_site_interior = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -324,6 +345,14 @@ func _run() -> void:
 		var yard := _host.get_current()
 		if yard != null:
 			await _capture_focus(yard, out_dir, &"pg_site_look", SITE_SHOT_STANCE, "playground_site_shot_detail_building")
+	elif _site_interior:
+		await _capture_views(out_dir, "site_interior", ^"Scaffold", SITE_INSIDE_STANCES, SITE_INSIDE_VIEWS,
+			"site_interior")
+		var state := root.get_node_or_null(^"/root/GameState")
+		if state != null:
+			state.set_flag(StoryFlags.SITE_GATE_KEY, true)
+		await _capture_views(out_dir, "playground", ^"Interactables/SiteGate", [], SITE_GATE_OPEN_VIEWS,
+			"site_interior_gate_open")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

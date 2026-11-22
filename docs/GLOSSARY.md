@@ -55,7 +55,7 @@
 | 交还牌 | return plate | | 街边、巷口的小牌子 |
 | 交还板 | return board | | 操场上那块板，与交还牌是不同物件 |
 | 篮筐 | hoop | | 与「篮板」（backboard）不同 |
-| 建造中的大楼 | the building under construction | 工地大楼、新楼、在建楼 | 操场西南角外的工地：蓝色施工挡板、紧闭的校门、门前两三座中空沙堆、黄色挖掘机、一层层椭圆楼板。以后会写成「椭球大楼」（the ellipsoid building）；在那之前台词里不要提前用这个名字。场景节点 `PlaygroundArt/BuildingSite`（`construction_site.tscn`） |
+| 建造中的大楼 | the building under construction | 工地大楼、新楼、在建楼 | 操场西南角外的工地：蓝色施工挡板、紧闭的校门、门前两三座中空沙堆、黄色挖掘机、一层层椭圆楼板。以后会写成「椭球大楼」（the ellipsoid building）；在那之前台词里不要提前用这个名字。场景节点 `PlaygroundArt/BuildingSite`（`construction_site.tscn`，网格在 `meshes/site/*.tres`）；楼里是单独的地点 `site_interior`（从门廊的门进去） |
 
 ## 3. 人物、内心声音与知识徽章
 
