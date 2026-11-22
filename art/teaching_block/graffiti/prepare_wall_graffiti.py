@@ -22,10 +22,11 @@ ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "assets/materials/corridor/graffiti"
 INK = (36, 42, 57)
 HEIGHT_M = 1.50
-TILE_PX = 4
+TILE_PX = 3
 PLASTER_PX = 512  # Internal field: shared with the paint's sampled pores.
 PLASTER_OUTPUT_PX = 256
-PAINT_OUTPUT_SIZE = (448, 516)
+NORMAL_OUTPUT_PX = 128
+PAINT_OUTPUT_SIZE = (336, 387)
 PLASTER_REPEAT_M = 2.0  # Reciprocal of rose_plaster.tres's local triplanar scale.
 ROSE = (185, 116, 108)  # The 01 entrance's municipal_rose, before its outdoor lighting.
 
@@ -110,7 +111,6 @@ def extract_paint(source: Path, pores: np.ndarray) -> Image.Image:
     edge = np.minimum.outer(np.minimum(y, y[::-1]), np.minimum(x, x[::-1]))
     alpha *= np.pad(np.minimum(1.0, (edge + 6) / 17), 20, mode="edge")
     alpha[alpha < .024] = 0
-    # The camera's full drawing fits comfortably in a half-resolution texture.
     # Resize coverage alone so transparent RGB stays the same ink colour, then
     # quantize to 32 levels: WebP can pack the alpha without a noisy colour halo.
     coverage = Image.fromarray(np.rint(alpha * 255).astype(np.uint8))
@@ -185,9 +185,8 @@ def main() -> None:
     albedo, normal, pores = plaster_finish()
     # Keep the pore field at full precision for alignment; only downsample the
     # final two maps, since their fine grain is already filtered at viewing scale.
-    size = (PLASTER_OUTPUT_PX, PLASTER_OUTPUT_PX)
-    albedo = albedo.resize(size, Image.Resampling.LANCZOS)
-    normal = normal.resize(size, Image.Resampling.LANCZOS)
+    albedo = albedo.resize((PLASTER_OUTPUT_PX, PLASTER_OUTPUT_PX), Image.Resampling.LANCZOS)
+    normal = normal.resize((NORMAL_OUTPUT_PX, NORMAL_OUTPUT_PX), Image.Resampling.LANCZOS)
     paint = extract_paint(args.source, pores)
     mesh = ink_mesh(np.asarray(paint.getchannel("A")))
     args.output.mkdir(parents=True, exist_ok=True)
