@@ -28,7 +28,7 @@ func _run() -> void:
 
 
 func _test_implicit_continuation() -> void:
-	var base := {"format_version": 1.0, "locale": "zh-CN", "chapter": "fixture", "conversations": {
+	var base := {"format_version": DialogueGraph.FORMAT_VERSION, "locale": "zh-CN", "chapter": "fixture", "conversations": {
 		"simple": {"start": "a", "nodes": [
 			{"id": "a", "speaker": "student", "text": "A"},
 			{"id": "b", "speaker": "student", "text": "B", "next": null},

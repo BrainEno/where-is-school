@@ -61,8 +61,13 @@ jobs:
         run: |
           set -euo pipefail
           log="$RUNNER_TEMP/author-patch.log"
-          timeout 90 godot --headless --path . --script res://tests/authoring_patch_test.gd |& tee "$log"
-          if grep -m 12 -E 'SCRIPT ERROR|Parse Error|ObjectDB instances leaked' "$log"; then exit 1; fi
+          result=0
+          timeout 90 godot --headless --path . --script res://tests/authoring_patch_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Author patch and journal::%s\n' "$failure"; done || true
+            exit 1
+          fi
       - name: Test rendered desktop, landscape touch and desktop review
         shell: bash
         run: |
@@ -71,8 +76,13 @@ jobs:
           # Use the same real panel and room in both runs; the phone-sized run substitutes
           # safe-area metrics, not a simulator or physical keyboard.
           log="$RUNNER_TEMP/author-desktop.log"
-          timeout 180 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --rendering-driver opengl3 --path . --script res://tests/authoring_classroom_test.gd |& tee "$log"
-          if grep -m 12 -E 'SCRIPT ERROR|Parse Error|ObjectDB instances leaked' "$log"; then exit 1; fi
+          result=0
+          timeout 180 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --rendering-driver opengl3 --path . --script res://tests/authoring_classroom_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Rendered author classroom::%s\n' "$failure"; done || true
+            exit 1
+          fi
           python3 tools/review_author_draft.py "$WIS_TEST_AUTHOR_DRAFT" --output "$RUNNER_TEMP/author-review"
           python3 - "$RUNNER_TEMP/author-review" <<'PY'
           import json, sys
@@ -83,8 +93,13 @@ jobs:
           assert (output / "data/dialogue/en/prologue.json").is_file()
           PY
           log="$RUNNER_TEMP/author-touch.log"
-          WIS_TEST_AUTHOR_DRAFT= timeout 150 godot --headless --path . --script res://tests/authoring_classroom_test.gd -- --mobile-preview |& tee "$log"
-          if grep -m 12 -E 'SCRIPT ERROR|Parse Error|ObjectDB instances leaked' "$log"; then exit 1; fi
+          result=0
+          WIS_TEST_AUTHOR_DRAFT= timeout 150 godot --headless --path . --script res://tests/authoring_classroom_test.gd -- --mobile-preview |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Author touch layout::%s\n' "$failure"; done || true
+            exit 1
+          fi
           git diff --exit-code -- data/dialogue
   iphone:
     name: Compile author-only UIKit bridge and verify an unsigned iPhone archive
