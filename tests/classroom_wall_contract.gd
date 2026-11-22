@@ -12,7 +12,7 @@ const WALLS := {
 const SPOTS: Array[Vector3] = [
 	Vector3(0.0, 0.0, 0.85),
 	Vector3(1.6, 0.0, 2.7),
-	Vector3(3.5, 0.0, 0.9),
+	Vector3(3.25, 0.0, 0.9),  # Stand clear of the right-hand pair, not against its desk box.
 	Vector3(3.2, 0.0, 2.85),
 	Vector3(-3.8, 0.0, 2.7),
 	Vector3(-3.8, 0.0, -2.4),

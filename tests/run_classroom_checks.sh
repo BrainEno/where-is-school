@@ -109,7 +109,7 @@ if [ "${render}" -eq 1 ]; then
       "--expect-renderer=${method}" "--expect-driver=${driver}" "${preview_args[@]}" || status=1
     if [ "${GITHUB_ACTIONS:-}" = true ] && [ "${status}" -eq 0 ]; then
       if [ "${method}" = forward_plus ]; then
-        relay_prop_previews "${CI_LOG_DIR}/capture-${method}" 15_set_square_detail.jpg 18_front_window_focus.jpg
+        relay_prop_previews "${CI_LOG_DIR}/capture-${method}" 08_paired_student_desks.jpg 19_desk_finish_detail.jpg
       else
         relay_prop_previews "${CI_LOG_DIR}/capture-${method}" 16_front_window_detail.jpg 17_curtain_closed.jpg
       fi

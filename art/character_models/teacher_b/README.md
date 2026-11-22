@@ -2,7 +2,8 @@
 
 [简体中文](README.zh-CN.md)
 
-This is a **review asset**, not a character placement or a release approval. The
+This is the editable model and review stage for B. The existing fantasy uses the
+runtime GLB; the review is not her real entrance or a release approval. The
 owner's reference is visual direction only; it is not included, sampled into a
 texture, or re-created as a dialogue portrait. The stand collar, thin silhouette,
 swept grey hair, low roll, angular eyes and tortoiseshell spectacles are the
@@ -52,7 +53,15 @@ The triangle count is descriptive, not a finish criterion: review the head,
 clothing joins, gesture and readability against the **current** protagonist, not
 the retired `protagonist.glb` now used by the seated student.
 
-## Silver-hair refinement
+## Local face and hair polish
+
+The [head study](../sculpt/README.md) tightens B's silver sweep and low chignon,
+lowers the brows against the frames, and softens the cheek hollows without
+removing her age lines. The split Blender source and production GLB use the same
+baked strokes. The glasses, blink deltas, rig, clothes and motions are unchanged,
+as are story cues and the existing imagined staging.
+
+## Earlier silver-hair refinement
 
 The side part and low chignon stay. Fitted, tapered locks break up the crown;
 subdivided ridges and an asymmetric tuck carry the flow into the nape. The

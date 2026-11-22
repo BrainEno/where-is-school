@@ -10,6 +10,9 @@ exit or spawn. Four layers of generated meshes and primitives:
   troublemaker who punches the wall;
 * behind 01, a walkable stable yard with a two-storey dream house, an outdoor
   escalator that ends in nothing, grain, quilts, horses, hens and their smell.
+
+Round 10 (2026-11-11) turns the yard into a stink stable: shaped, painted horses, dung
+and straw, swarms of flies and a giant one, paper stink clouds (`dream_stable.py`).
 """
 from __future__ import annotations
 
@@ -20,7 +23,8 @@ from build_teaching_block import (
     ENTRANCE_X, GROUND_Y, GROUND_Z, OFFICE_X, RISE, UPPER_NORTH, UPPER_WEST, WEST_STAIR_WIDTH, WEST_STAIR_Z,
     child_path, plane, quad, slab, srgb, vec3,
 )
-from dream_figures import PEOPLE, figure, hen, horse, motion_material, part, shader_material, swivel_chair
+import dream_stable
+from dream_figures import PEOPLE, figure, hen, motion_material, part, shader_material, swivel_chair
 from exam_crowd import exam_candidates, waiting_candidates
 from fixture_geometry import FixtureBuild
 from ticket_clerks import PRESS_Z, STATIONS, build_clerk, stamp_loop
@@ -241,18 +245,7 @@ def yard_ground(b, y):
            (sum(YARD_X) / 2, G + .004, sum(YARD_Z) / 2))
     # Everything past the wall is village ground, never walkable.
     b.box("VillageGround", y, (-49.5, G - .13, 6), (45, .2, 40), "earth_dark")
-    rng = random.Random(2026)
-    for i in range(26):
-        x, z = rng.uniform(-39.5, -21.5), rng.uniform(5.0, 18.0)
-        if HOUSE_X[0] < x < HOUSE_X[1] and z < HOUSE_Z[1]:
-            continue
-        b.round(f"Dung{i}", y, (x, G + .009, z), rng.uniform(.06, .2), .012, "dung", sides=7)
-    for i in range(70):
-        x, z = rng.uniform(-39.8, -21.0), rng.uniform(4.8, 18.2)
-        if HOUSE_X[0] < x < HOUSE_X[1] and z < HOUSE_Z[1]:
-            continue
-        b.box(f"Straw{i}", y, (x, G + .012, z), (.018, .008, rng.uniform(.16, .38)), "straw",
-              rot=(0, rng.uniform(0, 180), 0))
+    dream_stable.yard_ground(b, y, YARD_X, YARD_Z, HOUSE_X, HOUSE_Z)
 
 
 def grain_mat(b, parent, name, pos, size, yaw):
@@ -294,7 +287,7 @@ def dream_house(b, y):
     b.box("NorthWall", body, (0, HOUSE_STOREY / 2, -d / 2 + .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
     b.box("SouthWall", body, (0, HOUSE_STOREY / 2, d / 2 - .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
     b.box("StallBack", body, (w / 2 - stall_back, HOUSE_STOREY / 2, 0), (.2, HOUSE_STOREY, d - .4), "stall_dark")
-    b.box("StallFloor", body, (w / 2 - stall_back / 2, .02, 0), (stall_back, .04, d - .4), "straw")
+    b.box("StallFloor", body, (w / 2 - stall_back / 2, .02, 0), (stall_back, .04, d - .4), "earth_dark")
     b.box("UpperFloor", body, (0, HOUSE_STOREY + .1, 0), (w + .1, .22, d + .1), "timber", shadow=True)
     # 2F is solid except for a one-metre slice behind the south window.
     top, sill, head, hall = HOUSE_TOP, HOUSE_STOREY + .8, HOUSE_STOREY + 2.1, 1.0
@@ -321,8 +314,12 @@ def dream_house(b, y):
         b.box(f"Partition{i}", body, (w / 2 - stall_back / 2, .8, posts[i + 1]), (stall_back, 1.6, .08), "timber")
         b.node(f"StallLamp{i}", body, "OmniLight3D", position=vec3((w / 2 - .9, 2.5, z)),
                light_color=srgb((255, 196, 128)), light_energy=.42, omni_range=3.2)
-    horse(b, body, "BayHorse", (w / 2 - 1.0, 0, posts[0] + 1.0), 90, "horse_bay", .1)
-    horse(b, body, "GreyHorse", (w / 2 - 1.05, 0, (posts[2] + posts[3]) / 2 - .1), 84, "horse_grey", .55)
+    # Round 10: shaped horses with their heads over the half doors; the grey one is dazed.
+    dream_stable.horse(b, body, "BayHorse", (w / 2 - .9, 0, (posts[0] + posts[1]) / 2), 90, dream_stable.sm.BAY,
+                       graze=.62, phase=.1)
+    dream_stable.horse(b, body, "GreyHorse", (w / 2 - .92, 0, (posts[2] + posts[3]) / 2), 82, dream_stable.sm.GREY,
+                       graze=.16, phase=.55, swish=.12, dazed=True)
+    dream_stable.stall_dressing(b, body, w, d, stall_back, posts)
     # The only way in: a small doorway at the south-west corner, easy to walk past.
     b.box("CornerDoorway", body, (-w / 2 + .75, 1.0, d / 2 + .004), (.82, 1.96, .02), "void")
     b.box("CornerStep", body, (-w / 2 + .75, .05, d / 2 + .2), (1.0, .1, .4), "mud_cap")
@@ -382,29 +379,19 @@ def chickens_and_smell(b, y):
     for i, (x, z, yaw, coat) in enumerate(((-30.2, 8.0, 20, "hen"), (-29.4, 8.9, 200, "hen_brown"),
                                            (-31.0, 9.4, 95, "hen"))):
         hen(b, y, f"YardHen{i}", (x, G, z), yaw, coat, i * .41 + .2)
-    b.node("Heap", y, position=vec3((-31.6, G, 5.4)))
-    for i, (dx, dz, r, hgt) in enumerate(((0, 0, .9, .32), (.3, .2, .6, .52), (-.3, -.1, .5, .62), (.1, .0, .3, .75))):
-        b.round(f"Mound{i}", child_path(y, "Heap"), (dx, hgt / 2, dz), r, hgt, "dung", top=r * .45, sides=9)
-    flies = b.bind("flies", "res://assets/shaders/school/restroom_flies.gdshader", "Shader")
-    b.local_mats["flies"] = f'[sub_resource type="ShaderMaterial" id="Mat_flies"]\nshader = {flies}\n'
-    fly = b.mesh("BoxMesh", size=vec3((.03, .012, .04)))
-    rng = random.Random(77)
-    for c, (centre, count) in enumerate((((-31.6, G + 1.1, 5.4), 26), ((-33.6, G + 1.6, 7.5), 18))):
-        floats = []
-        for _ in range(count):
-            px, py, pz = rng.uniform(-.6, .6), rng.uniform(-.35, .35), rng.uniform(-.6, .6)
-            floats.extend((1, 0, 0, px, 0, 1, 0, py, 0, 0, 1, pz))
-        mm = b.mesh("MultiMesh", transform_format=1, instance_count=count, mesh=f'SubResource("{fly}")',
-                    custom_aabb="AABB(-1, -0.82, -1, 2, 1.64, 2)",
-                    buffer="PackedFloat32Array(" + ", ".join(f"{v:.4f}" for v in floats) + ")")
-        b.node(f"Flies{c}", y, "MultiMeshInstance3D", position=vec3(centre), multimesh=f'SubResource("{mm}")',
-               material_override=b.surface("flies"), cast_shadow=0)
+    b.node("Heap", y, position=vec3(dream_stable.HEAP))
+    dream_stable.heap(b, y, child_path(y, "Heap"))
+    dream_stable.flies(b, y)
+    dream_stable.stink(b, y)
+    # The old ribbons stay, thicker and greener: the smell as something you could stand in.
     odor = b.bind("dream_odor", "res://assets/shaders/school/dream_odor.gdshader", "Shader")
-    ribbon = quad(b, .55, 2.6)
+    ribbon = quad(b, .8, 3.0)
     for i, (x, z) in enumerate(((-31.7, 5.5), (-31.2, 5.9), (-33.0, 6.0), (-33.0, 8.3), (-32.9, 9.6),
-                                (-36.0, 13.0), (-24.0, 16.2), (-29.5, 12.5))):
-        mat = shader_material(b, "odor", odor, {"phase": i * .23})
-        b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.35, z)),
+                                (-36.0, 13.0), (-24.0, 16.2), (-29.5, 12.5), (-30.4, 6.6), (-32.4, 7.2),
+                                (-34.6, 11.6), (-27.4, 14.2))):
+        tint = ((.74, .84, .2, 1.0), (.86, .76, .22, 1.0), (.56, .66, .2, 1.0))[i % 3]
+        mat = shader_material(b, "odor", odor, {"phase": i * .23, "tint": f"Color({tint[0]:g}, {tint[1]:g}, {tint[2]:g}, 1)"})
+        b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.5, z)),
                rotation_degrees=vec3((0, i * 47 % 180, 0)), mesh=f'SubResource("{ribbon}")',
                material_override=b.surface(mat), cast_shadow=0)
 
@@ -499,6 +486,7 @@ def waiting_room(b):
 
 def annex():
     b = FixtureBuild("DreamAnnex", PIGMENTS)
+    b.stable_files = {}
     unlit(b, "metro_light", (238, 242, 246), .96)
     unlit(b, "void", (6, 6, 9))
     unlit(b, "window_warm", PIGMENTS["window_warm"])

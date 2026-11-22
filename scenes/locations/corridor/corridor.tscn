@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -23,6 +23,14 @@
 [ext_resource type="Script" path="res://scenes/locations/corridor/ticket_clerk_look.gd" id="ticket_look"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/plinth_ivory.tres" id="art_slide_ivory"]
 [ext_resource type="Resource" path="res://assets/camera/shots/annex_alignment.tres" id="29_annex_shot"]
+[ext_resource type="Script" path="res://scenes/locations/corridor/stench_haze.gd" id="30_stench_haze"]
+[ext_resource type="Shader" path="res://assets/shaders/school/stench_haze.gdshader" id="31_stench_haze_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_stench_haze"]
+resource_local_to_scene = true
+shader = ExtResource("31_stench_haze_shader")
+shader_parameter/stench = 0.0
+shader_parameter/seed = 0.37
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_20"]
 size = Vector3(4.4, 0.18, 0.3)
@@ -679,3 +687,17 @@ stream = ExtResource("15_room_tone_walkway")
 volume_db = -18.0
 script = ExtResource("16_ambience_player")
 target_db = -26.0
+
+[node name="StenchHaze" type="CanvasLayer" parent="." groups=["world_filter"]]
+layer = -3
+visible = false
+script = ExtResource("30_stench_haze")
+
+[node name="Sheet" type="ColorRect" parent="StenchHaze"]
+material = SubResource("ShaderMaterial_stench_haze")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

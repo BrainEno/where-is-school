@@ -61,7 +61,7 @@
 | [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) | 序章美术迁移与证据记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行截图证据说明见 [screenshots/README.md](screenshots/README.md) |
 | [PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md](PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md) | 生物老师 B 的主观幻想、异想天开、交织分支与人物刻板印象设计补充 | 提案/待所有者 | 仓库所有者 | 2026-11-21 | 不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md)；具体作者文本留白，待后续定稿 |
 | [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) | 首个可玩垂直切片验收范围 | 现行 | 仓库所有者 | 2026-11-17 | 人工验收见 [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) |
-| [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
+| [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；现行头部编辑见 [B/Q 头部精修](../art/character_models/sculpt/README.md) |
 | [RELEASE.md](RELEASE.md) | 双平台发布与导出验证流程 | 现行 | 工程 Agent | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
 | [STORY_DOCS.zh-CN.md](STORY_DOCS.zh-CN.md) | 故事文档（台本）格式与 Google 文档往返流程 | 现行 | 内容 Agent | 2026-11-19 | 工具 `tools/story_doc.py`；内容契约见 [data/dialogue_schema/README.md](../data/dialogue_schema/README.md) |
 | [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-17 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |

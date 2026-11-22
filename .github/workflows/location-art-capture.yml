@@ -170,7 +170,7 @@ jobs:
               # Two live locations: preserve the overview and add authored 03 pose plates.
               detail=(dream-annex review_width=440)
               width=1280
-              expect=14
+              expect=17
               ;;
             playground_site)
               # The building under construction past the yard's south-west corner

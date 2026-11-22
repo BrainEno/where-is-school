@@ -127,7 +127,7 @@ def test_the_collision_is_on_a_layer_that_does_not_carve_the_room() -> None:
     chair = source()
     check("const SOLID_LAYER := 4" in chair, "the chair must collide on layer 3 (value 4)")
     # The room authors the sliding pair's bodies. The shared prop must not make
-    # the eleven other chairs collide and change their walk routes.
+    # the other chairs collide and change the walk routes.
     prop = (ROOT / "scenes/environment/props/classroom_desk.tscn").read_text(encoding="utf-8")
     check(
         "CollisionObject3D" not in prop and 'type="StaticBody3D"' not in prop,

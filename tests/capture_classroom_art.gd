@@ -5,9 +5,9 @@ extends SceneTree
 ##   -- --output=build/classroom-evidence/after
 ## The same script/camera/fixtures are used against the unmodified base and PR head.
 ## Output stays outside the shipped assets. No post-processing or paintover is applied.
-## Includes live gameplay, wall fade/restoration, the room and furniture, close views
-## of the set square and front pane, the actual window focus, and matched views of the
-## rear curtain closed and drawn aside.
+## Includes live gameplay, wall fade/restoration, all twelve desk pairs, close views
+## of the desk finishes, set square and front pane, the actual window focus,
+## and matched views of the rear curtain closed and drawn aside.
 ## CI passes `--expect-renderer=<method> --expect-driver=<driver>`; a run on any other
 ## renderer or driver (for example after Godot's own Vulkan-to-OpenGL fallback) fails.
 ## CAPTURE.txt ends with `verdict=PASS|FAIL` and any failure lines.
@@ -15,10 +15,10 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 # These small previews fit the annotation budget on CI. Full PNGs stay in the artifact.
 const PREVIEW_SHOTS := [
-	"15_set_square_detail.png",
+	"08_paired_student_desks.png",
 	"16_front_window_detail.png",
 	"17_curtain_closed.png",
-	"18_front_window_focus.png",
+	"19_desk_finish_detail.png",
 ]
 
 var _main: Node3D = null
@@ -129,7 +129,11 @@ func _run() -> void:
 	await _review_shot(review, Vector3(0.8, 3.2, 2.0), Vector3(0.0, 1.0, -3.7), "05_blackboard_platform_lectern.png")
 	await _review_shot(review, Vector3(0.6, 2.6, 0.0), Vector3(6.9, 1.1, 0.0), "06_east_doors.png")
 	await _review_shot(review, Vector3(-0.4, 2.7, 0.1), Vector3(-6.7, 1.7, 0.0), "07_window_and_blackout_curtain.png")
-	await _review_shot(review, Vector3(0.0, 6.5, 8.8), Vector3(0.0, 0.35, 0.7), "08_twelve_student_desks.png")
+	# Above the room but inside the rear wall's footprint: see all 24 chairs, not
+	# through the wall or with any geometry hidden.
+	await _review_shot(
+		review, Vector3(0.0, 9.0, 4.6), Vector3(0.0, 0.35, 1.25), "08_paired_student_desks.png"
+	)
 	# The screen pulled down over the board, then put back as the room is built.
 	var screen := _room.get_node("WallNorth/ProjectorScreen") as ProjectorScreen
 	screen.set_unroll_amount(1.0)
@@ -149,6 +153,13 @@ func _run() -> void:
 	# And through the game's own camera and lens, the player below the platform.
 	await _stand(Vector3(1.0, 0.0, -1.5), Vector3.FORWARD)
 	await _shot("14_lectern_gameplay.png")
+
+	# A3's newer surface and its worn neighbour share the same light and lens.
+	review.fov = 42.0
+	await _review_shot(
+		review, Vector3(1.48, 2.6, 1.35), Vector3(1.225, 0.50, -0.52), "19_desk_finish_detail.png"
+	)
+	_rig.camera.current = true
 
 	var square := _room.get_node(^"Props/SetSquare") as Node3D
 	var square_at := square.global_position
@@ -273,17 +284,18 @@ func _shot(file_name: String) -> void:
 
 func _write_preview(image: Image, path: String) -> void:
 	# Delivery only. The hashed 1600×900 PNGs remain the evidence of record.
-	var thumbnail := image.duplicate() as Image
-	thumbnail.resize(480, 270, Image.INTERPOLATE_LANCZOS)
-	for quality: float in [0.66, 0.54, 0.44, 0.34]:
-		var data := thumbnail.save_jpg_to_buffer(quality)
-		if data.is_empty() or data.size() > 11000:
-			continue
-		var file := FileAccess.open(path, FileAccess.WRITE)
-		if file != null:
-			file.store_buffer(data)
-			_note("preview=%s bytes=%d" % [path.get_file(), data.size()])
-			return
+	for size: Vector2i in [Vector2i(480, 270), Vector2i(400, 225), Vector2i(320, 180)]:
+		var thumbnail := image.duplicate() as Image
+		thumbnail.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
+		for quality: float in [0.66, 0.54, 0.44, 0.34]:
+			var data := thumbnail.save_jpg_to_buffer(quality)
+			if data.is_empty() or data.size() > 11000:
+				continue
+			var file := FileAccess.open(path, FileAccess.WRITE)
+			if file != null:
+				file.store_buffer(data)
+				_note("preview=%s size=%s bytes=%d" % [path.get_file(), size, data.size()])
+				return
 	_note("preview unavailable: %s" % path.get_file())
 
 
