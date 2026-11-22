@@ -15,9 +15,9 @@ extends CanvasLayer
 ## `begin(from, true)` writes `HEAVY_SECONDS`, and every second above `DURATION` is drawn
 ## stronger than the landing (`daze` up to `HEAVY_DAZE`), pressing the same paste-up harder.
 ##
-## **The yard tap** relieves it: a mouthful of water takes a third of what is left
-## (`relieve()`), washing the face clears it (`clear()`). Both are only flag writes; this
-## node eases the picture to the new strength over `RELIEF_SECONDS`, never a cut.
+## **The yard tap** ends it: a mouthful of water or a wash of the face clears it
+## (`clear()`). That is only a flag write; this node eases the picture out over
+## `RELIEF_SECONDS`, never a cut.
 ##
 ## **State.** The only state is the story flag `concussion_seconds_left` (int). The landing
 ## writes `DURATION` (`begin()`); this node counts it down while the tree runs - a paused
@@ -39,13 +39,11 @@ const HEAVY_SECONDS := 300
 const HEAVY_DAZE := 1.25
 ## How quickly the look arrives at the landing: the moment of contact, not a fade.
 const ARRIVAL_SECONDS := 0.35
-## How long the picture takes to settle after water: quick, but never a cut.
+## How long the picture takes to clear after water: quick, but never a cut.
 const RELIEF_SECONDS := 1.4
 ## Fast, then slow: `daze` falls as `exp(-FADE_RATE * elapsed share)`, rescaled to end at 0.
 ## 2.4 takes about half of the look in the first minute of four.
 const FADE_RATE := 2.4
-## Share of what is left that one mouthful of water takes away.
-const DRINK_RELIEF := 1.0 / 3.0
 
 @export var sheet_path: NodePath = ^"Sheet"
 @export var host_path: NodePath = ^"../LocationHost"
@@ -78,23 +76,8 @@ static func begin(from: Node, heavier: bool = false) -> void:
 	state.set_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, maxi(HEAVY_SECONDS, now))
 
 
-## A mouthful of water: takes `share` of the strength that is left (rounded to whole
-## seconds of the countdown, which is what the flag holds). Returns the new seconds.
-static func relieve(from: Node, share: float = DRINK_RELIEF) -> int:
-	var state := _state_of(from)
-	if state == null:
-		return 0
-	var left: Variant = state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)
-	var now := int(left) if left is int or left is float else 0
-	if now <= 0:
-		return 0
-	var seconds := mini(now - 1, floori(seconds_for(daze_for(now) * (1.0 - share))))
-	seconds = maxi(seconds, 0)
-	state.set_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, seconds)
-	return seconds
-
-
-## Cold water on the face: the look is gone at once (eased over `RELIEF_SECONDS`).
+## Water from the yard tap, drunk or on the face: the look is gone at once (eased over
+## `RELIEF_SECONDS`).
 static func clear(from: Node) -> void:
 	var state := _state_of(from)
 	if state != null:

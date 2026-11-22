@@ -39,6 +39,9 @@ const STEP_UP_SURFACE_DOT := 0.985
 ## `character_visual_animation.gd`'s `jog_speed_threshold` (4.4 m/s) the walk clip becomes
 ## the jog clip, so the legs follow the body instead of being told separately.
 @export_range(1.0, 12.0, 0.1) var jog_speed: float = 5.6
+## Speed while crouched (`set_crouching()`): the bent-over walk of a protagonist hiding,
+## well under a walk. The sprint input does nothing while it lasts.
+@export_range(0.3, 6.0, 0.1) var crouch_speed: float = 1.5
 @export_range(1.0, 40.0, 0.5) var acceleration: float = 18.0
 @export_range(1.0, 30.0, 0.5) var gravity: float = 9.8
 ## How quickly the visual turns toward the movement direction.
@@ -79,6 +82,10 @@ const SEATED_WAKE_POSE := 0.5
 const WAKE_GET_UP_SECONDS := 0.75
 const STANDING_HIP_HEIGHT := 0.9
 const SEATED_HIP_DROP := 0.06
+## How far the hips sink in the crouch (the knees of `prologue_action_poses.gd`'s `CROUCH`),
+## and how long sinking into it or rising out of it takes.
+const CROUCH_HIP_DROP := 0.22
+const CROUCH_BLEND_SECONDS := 0.25
 const HIP_RISE_KEYS: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.467, 0.78), Vector2(1.0, 1.0)]
 const SEATED_CHAIR_GROUP := &"seated_chair"
 const SeatMotion = preload("res://scripts/actors/player/classroom_seat_motion.gd")
@@ -158,6 +165,9 @@ var sprint_mode: StringName = &"hold"
 var _sprint_latched := false
 ## In toggle mode: how long the body has stood still with the jog on.
 var _sprint_idle := 0.0
+## Bent over and slow (`set_crouching()`); the weight eases the hips down and back up.
+var _crouching := false
+var _crouch_weight := 0.0
 
 
 func _ready() -> void:
@@ -261,9 +271,42 @@ func set_touch_move(direction: Vector2) -> void:
 ## The speed `_apply_movement()` aims for right now: `move_speed`, or `jog_speed` while the
 ## sprint input is held. Public so the difference can be asserted without a floor to run on.
 func target_speed() -> float:
+	if _crouching:
+		return crouch_speed
 	if sprint_mode == &"toggle":
 		return jog_speed if _sprint_latched else move_speed
 	return jog_speed if Input.is_action_pressed(SPRINT_ACTION) else move_speed
+
+
+## Bent over, low and slow: `crouch_speed` instead of a walk or a jog, the model's crouch
+## clips instead of idle and walk, the hips `CROUCH_HIP_DROP` lower. Owned by the beat that
+## asks for it (hiding after the roof jump, `roof_way_down.gd`), which also ends it.
+## `instant` skips the easing, for a beat that hands over to its own hip keys right away.
+func set_crouching(crouching: bool, instant: bool = false) -> void:
+	_crouching = crouching
+	if _character_animator != null:
+		_character_animator.set_crouched(crouching)
+	if instant:
+		_crouch_weight = 1.0 if crouching else 0.0
+		_apply_crouch_height()
+
+
+func is_crouching() -> bool:
+	return _crouching
+
+
+## Runs in `_process`, not physics: a staged beat can crouch the body while it moves it
+## with physics off (the walk across the container roof).
+func _process(delta: float) -> void:
+	if not _crouching and _crouch_weight <= 0.0:
+		return
+	_crouch_weight = move_toward(_crouch_weight, 1.0 if _crouching else 0.0, delta / CROUCH_BLEND_SECONDS)
+	_apply_crouch_height()
+
+
+func _apply_crouch_height() -> void:
+	if visual != null:
+		visual.position.y = STANDING_HIP_HEIGHT - CROUCH_HIP_DROP * _crouch_weight
 
 
 ## Switches between holding the sprint input and pressing it once. Any jog that was on stops.

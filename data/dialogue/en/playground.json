@@ -505,7 +505,7 @@
         {
           "id": "prw_1",
           "speaker": "protagonist",
-          "text": "The man is still standing in his doorway, looking up at the roof. The ladder is at your feet. At the other end the doors are open; the north leaf stands half open, and behind it there is a dark corner.",
+          "text": "TODO · the roof: he stands in his doorway looking round; the ladder at your feet; nobody watching the back end of the container.",
           "choices": [
             {
               "id": "ladder",
@@ -521,7 +521,7 @@
             },
             {
               "id": "jump",
-              "text": "Drop off the open end and hide behind the door leaf.",
+              "text": "TODO · Bent low, creep to the back of the container and drop off left of the ladder.",
               "next": "prw_jump",
               "effects": [
                 {
@@ -601,7 +601,7 @@
         {
           "id": "prj_check",
           "speaker": "voice_orientation",
-          "text": "The leaf is on your right, he is at the door. Keep still. Get into the dark behind the leaf.",
+          "text": "TODO · orientation: down behind the container, which hides you from him.",
           "check": {
             "ability": "orientation",
             "difficulty": 10,
@@ -613,7 +613,7 @@
         {
           "id": "prj_hidden",
           "speaker": "protagonist",
-          "text": "You fold yourself in behind the leaf, one hand on the ground. You keep your breathing low.",
+          "text": "TODO · unheard: keep low and out of his sight.",
           "next": null
         },
         {
@@ -675,7 +675,7 @@
         {
           "id": "ptu_drink",
           "speaker": "protagonist",
-          "text": "It tastes of rust and is cold enough to hurt. The layer over everything thins a little.",
+          "text": "TODO · after the water, the layer over everything is gone.",
           "next": null
         },
         {

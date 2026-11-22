@@ -1,5 +1,6 @@
 extends SceneTree
-## Captures the real curtain, both roof outcomes, resident, ladder and yard shots.
+## Captures the real curtain, both roof outcomes, resident, ladder and yard shots, and the
+## crouched jump off the closed rear with the hiding that follows (round 12).
 ## HUD hidden for art review. Fixtures place the player near each starting mark;
 ## the game drives the transition, character motion, camera and impression shader.
 ## `classroom_anomaly_test` separately exercises both routes with movement input.
@@ -14,7 +15,10 @@ const INLINE_SIZE := Vector2i(480, 270)
 ## Four 4000-character parts per frame, even with textured walls. The full PNG is
 ## not affected. The workflow prioritizes the last (yard detail) frames inline.
 const INLINE_BYTES := 12000
-const EXPECTED_SHOTS := 22
+const EXPECTED_SHOTS := 25
+const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
+## The orientation the roof jump's check adds to the dice (the protagonist's).
+const ORIENTATION := 3
 const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 ## Game time per real second while the braced drop plays (see the drop in `_run`).
 const BRACE_TIME_SCALE := 0.1
@@ -125,7 +129,7 @@ func _run() -> void:
 	await _capture_resident("20-bedding-reaction.png", &"reclined")
 	await _capture_resident("17-resident-wakes.png", &"sitting_up")
 	await _capture_resident("18-resident-steps-out.png", &"on_threshold")
-	await _capture_resident("21-resident-looks-up.png", &"outside")
+	await _capture_resident("21-resident-looks-round.png", &"looking_round")
 	await _settle()
 	var container := _host.get_current().get_node_or_null(^"ContainerBody") as Node3D
 	if container == null or not _state.get_flag(StoryFlags.CURTAIN_LANDING_INJURED, false):
@@ -158,12 +162,49 @@ func _run() -> void:
 	await _focus_shot(&"pg_tap", "13-tap-and-drain.png")
 	await _stand(Vector3(-12.5, 0.03, -4.4), Vector3.LEFT)
 	await _focus_shot(&"pg_shed_door", "14-equipment-shed.png")
+	await _capture_rear_jump()
 	_finish(_failures)
 
 
+## The yard again from the roof, the resident in his doorway: jump. The bent-over creep to
+## the closed rear, the drop, and - the landing unheard - the player's own crouched walk
+## while he searches.
+func _capture_rear_jump() -> void:
+	if not _host.load_location(PLAYGROUND, RoofEncounter.ROOF_SPAWN, _player, &"playground"):
+		_failures.append("Couldn't load the yard on the roof for the jump.")
+		return
+	await create_timer(0.3).timeout
+	var container := _host.get_current().get_node(^"ContainerBody") as Node3D
+	var stage := _host.get_current().get_node(^"RoofEncounter") as RoofEncounter
+	await _stand((container.get_node(^"Ladder/RoofMark") as Marker3D).global_position, Vector3.BACK)
+	var seeded := false
+	for seed_value in 400:
+		var resolver := CheckResolver.new(seed_value)
+		if resolver.dice_total_for("pg_roof_jump/prj_check") + ORIENTATION >= 10:
+			_dialogue.set_check_resolver(resolver)
+			seeded = true
+			break
+	_activate(&"pg_container_ladder")
+	if not seeded or not await _choose(&"jump"):
+		_failures.append("The roof ladder did not offer the jump while the resident watched.")
+		return
+	await _capture_pose("crouch_walk", 0.0, "22-roof-creep.png", 2.3, 3.2)
+	await _capture_pose("void_step", 0.55, "23-rear-drop.png")
+	if not await Harness.wait_until(func() -> bool:
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
+			_dialogue.advance_presentation()
+		return stage.phase == RoofEncounter.Phase.SEARCHING and _player.is_control_enabled()
+	, 25.0):
+		_failures.append("The resident never searched with the player in control.")
+		return
+	_player.set_touch_move(Vector2(0.0, -1.0))
+	await _capture_pose("crouch_walk", 0.0, "24-hiding-crouch.png", -INF, 0.4)
+	_player.set_touch_move(Vector2.ZERO)
+
+
 func _focus_shot(id: StringName, frame: String) -> void:
-	# Still dazed from the hurt landing, the tap offers water (round 8): wash, and
-	# photograph the clear yard after it.
+	# Still dazed from the hurt landing, the tap offers water (round 8): drink, and
+	# photograph the clear yard after it (round 12: a mouthful clears the look).
 	var dazed := id == &"pg_tap" and int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) > 0
 	_activate(id)
 	var rig := _player.camera_rig
@@ -178,13 +219,13 @@ func _focus_shot(id: StringName, frame: String) -> void:
 	if id == &"pg_shed_door" and not await _choose(&"leave"):
 		_failures.append("The shed inspection did not offer its unchanged leave choice.")
 		return
-	if dazed and not await _choose(&"wash"):
-		_failures.append("The dazed tap did not offer a wash.")
+	if dazed and not await _choose(&"drink"):
+		_failures.append("The dazed tap did not offer a mouthful.")
 		return
 	await _settle()
 	if dazed:
 		await create_timer(ConcussionView.RELIEF_SECONDS + 0.4).timeout
-		await _shot("13b-tap-washed.png")
+		await _shot("13b-tap-drunk.png")
 
 
 func _seed_balance(passed: bool) -> bool:
@@ -271,6 +312,10 @@ func _capture_resident(name: String, moment: StringName, limit: float = RESIDENT
 					and actor.position.x >= 3.18 and actor.position.x <= 3.72
 			&"outside":
 				matches = stage.phase == RoofEncounter.Phase.OUTSIDE
+			&"looking_round":
+				matches = stage.phase == RoofEncounter.Phase.WALKING_OUT \
+					and actor.position.distance_to((stage.get_node(^"ExitRoute/Doorstep") as Node3D).position) < 0.05 \
+					and absf(head.rotation_degrees.y) > 30.0
 		saw_pose = saw_pose or matches
 		if matches and focused and in_view:
 			print("RESIDENT_FRAME: %s | %s" % [name, last])
