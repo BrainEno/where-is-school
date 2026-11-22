@@ -131,7 +131,8 @@ func _look_at_clerk(index: int, use_keyboard := false) -> bool:
 	var pickable := await Harness.wait_until(func() -> bool:
 		var pixel := _rig.camera.unproject_position(eye)
 		return root.get_visible_rect().has_point(pixel) and _interaction.get_target_at_screen_position(pixel, false) == subject, 3.0)
-	if not _check.expect(pickable, "%s isn't pickable at her face (feet %s)." % [id, _player.global_position]):
+	if not pickable:
+		_check.expect(false, _pick_diagnostic(subject, eye))
 		return false
 	_check.expect(_rig.get_focus_subject() == null and not _director.is_beat_active(), "Aiming started a shot before the click.")
 	if index == 0:
@@ -162,6 +163,26 @@ func _look_at_clerk(index: int, use_keyboard := false) -> bool:
 		"%s didn't give gameplay back." % id)
 
 
+func _pick_diagnostic(subject: Interactable, eye: Vector3) -> String:
+	var camera := _rig.camera
+	var pixel := camera.unproject_position(eye)
+	var origin := camera.project_ray_origin(pixel)
+	var direction := camera.project_ray_normal(pixel)
+	var space := _player.get_world_3d().direct_space_state
+	var area := PhysicsRayQueryParameters3D.create(origin, origin + direction * 60.0, Interactable.INTERACTION_LAYER)
+	area.collide_with_areas = true
+	area.collide_with_bodies = false
+	var body := PhysicsRayQueryParameters3D.create(origin, eye, _interaction.occluder_mask)
+	var area_hit := space.intersect_ray(area).get("collider") as Node
+	var body_hit := space.intersect_ray(body).get("collider") as Node
+	return ("%s isn't pickable at her face: feet %s, camera %s, eye %s at %s in %s, "
+		+ "area %s, first body %s, player LOS %s, camera visible %s.") % [
+		subject.interact_id, _player.global_position, origin, eye, pixel, root.get_visible_rect(),
+		area_hit.get_path() if area_hit != null else "none", body_hit.get_path() if body_hit != null else "none",
+		_interaction.has_line_of_sight(subject), _interaction.is_drawn_at_screen_ray(origin, direction, subject),
+	]
+
+
 func _check_framing(head: Node3D, id: StringName) -> void:
 	var camera := _rig.camera
 	var eye_space := camera.global_position - head.global_position
@@ -170,12 +191,20 @@ func _check_framing(head: Node3D, id: StringName) -> void:
 	var crown := head.to_global(Vector3(0, .268, -.015))
 	var ap := camera.unproject_position(a)
 	var bp := camera.unproject_position(b)
-	var safe := root.get_visible_rect().grow(-30.0)
-	_check.expect(camera == root.get_camera_3d() and eye_space.normalized().dot(head.global_basis.z) > .83
-		and not camera.is_position_behind(a) and safe.has_point(ap) and safe.has_point(bp)
-		and safe.has_point(camera.unproject_position(crown)) and ap.distance_to(bp) >= root.size.y * .11,
-		"%s did not get a readable front three-quarter view of both eyes and hair." % id)
-	print("TICKET SHOT: %s, projected eyes %.1f px, camera %.2f m from chin" % [id, ap.distance_to(bp), eye_space.length()])
+	# Camera3D projects in viewport coordinates, not Window.size (physical pixels).
+	# Require the same share of the picture with or without mobile canvas scaling.
+	var view := camera.get_viewport().get_visible_rect()
+	var safe := view.grow(-30.0)
+	var crown_pixel := camera.unproject_position(crown)
+	var eye_ratio := ap.distance_to(bp) / view.size.y
+	var angle := eye_space.normalized().dot(head.global_basis.z)
+	var in_frame := safe.has_point(ap) and safe.has_point(bp) and safe.has_point(crown_pixel)
+	_check.expect(camera == root.get_camera_3d() and angle > .83 and not camera.is_position_behind(a)
+		and in_frame and eye_ratio >= .11,
+		"%s didn't frame both eyes and hair: eye gap %.1f%%, facing %.3f, eyes %s/%s, crown %s, safe rect %s."
+		% [id, eye_ratio * 100.0, angle, ap, bp, crown_pixel, safe])
+	print("TICKET SHOT: %s, eye gap %.1f%% of picture, camera %.2f m from chin"
+		% [id, eye_ratio * 100.0, eye_space.length()])
 
 
 func _click(pixel: Vector2) -> void:
