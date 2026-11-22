@@ -1,4 +1,4 @@
-[gd_scene load_steps=59 format=3]
+[gd_scene load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -30,7 +30,7 @@ background_mode = 1
 background_color = Color(0.46, 0.44, 0.54, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.7, 0.66, 0.76, 1)
-ambient_light_energy = 0.85
+ambient_light_energy = 1.0
 tonemap_mode = 2
 tonemap_exposure = 0.7
 fog_enabled = true
@@ -105,7 +105,7 @@ resource_name = "quay_deck"
 diffuse_mode = 3
 specular_mode = 2
 vertex_color_use_as_albedo = true
-albedo_color = Color(0.82, 0.8, 0.78, 1)
+albedo_color = Color(0.96, 0.95, 0.95, 1)
 roughness = 1.0
 albedo_texture = ExtResource("ground_tile")
 uv1_scale = Vector3(0.25, 0.25, 0.25)
@@ -187,6 +187,12 @@ size = Vector3(46, 0.3, 26)
 [sub_resource type="BoxShape3D" id="Shape_pier"]
 size = Vector3(3.2, 0.3, 18)
 
+[sub_resource type="PlaneMesh" id="Plane_Hinterland"]
+size = Vector2(114, 52)
+
+[sub_resource type="PlaneMesh" id="Plane_EastLand"]
+size = Vector2(68, 26)
+
 [sub_resource type="BoxShape3D" id="Shape_SeaWest"]
 size = Vector3(7.7, 1.2, 0.3)
 
@@ -249,9 +255,9 @@ location_id = &"port"
 environment = SubResource("PortEnvironment")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-24, -150, 0)
-light_color = Color(1, 0.78, 0.58, 1)
-light_energy = 0.4
+rotation_degrees = Vector3(-40, -150, 0)
+light_color = Color(1, 0.8, 0.62, 1)
+light_energy = 0.75
 shadow_enabled = true
 directional_shadow_max_distance = 70.0
 
@@ -299,6 +305,16 @@ cast_shadow = 0
 [node name="Iron" type="MeshInstance3D" parent="Quay"]
 mesh = ExtResource("mesh_iron")
 material_override = SubResource("steel")
+
+[node name="Hinterland" type="MeshInstance3D" parent="Quay"]
+position = Vector3(33, -0.01, 44)
+mesh = SubResource("Plane_Hinterland")
+material_override = SubResource("quay_deck")
+
+[node name="EastLand" type="MeshInstance3D" parent="Quay"]
+position = Vector3(56, -0.01, 5)
+mesh = SubResource("Plane_EastLand")
+material_override = SubResource("quay_deck")
 
 [node name="Lifebuoy" type="MeshInstance3D" parent="Quay"]
 position = Vector3(-14.1, 0, -25.55)
@@ -532,7 +548,7 @@ mesh = ExtResource("yard_container40_open")
 material_override = SubResource("container_blue")
 
 [node name="Mast0" type="Node3D" parent="."]
-position = Vector3(20.8, 0, 16.8)
+position = Vector3(-8, 0, 16.8)
 rotation_degrees = Vector3(0, 30, 0)
 
 [node name="Pole" type="MeshInstance3D" parent="Mast0"]

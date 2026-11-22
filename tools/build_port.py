@@ -50,6 +50,8 @@ YARD = "res://scenes/locations/container_yard/meshes"
 # The quay: land from X_MIN to X_MAX and from the edge Z_EDGE back to the fence at Z_MAX.
 X_MIN, X_MAX, Z_EDGE, Z_MAX = -24.0, 22.0, -8.0, 18.0
 QUAY_FOOT = -2.6
+# Past the fences the land runs on, flat and empty, so the sea is only toward the camera.
+FAR_EAST, FAR_BACK = 90.0, 70.0
 WATER_Y = -1.8
 # The pier: a narrow deck from the quay edge out to the end of the world.
 PIER_X, PIER_W, PIER_END = -15.0, 3.2, -26.0
@@ -72,7 +74,7 @@ WAITING = (
 BOLLARDS = (-22.0, -19.0, -11.0, -7.0, -2.0, 3.0, 8.0, 13.0, 18.0, 21.0)
 MOORINGS = ((3.0, 7.5), (8.0, 4.0), (18.0, 13.5), (21.0, 25.0))  # bollard x, where it reaches the ship
 
-CONCRETE = (0.7, 0.68, 0.64)
+CONCRETE = (0.78, 0.77, 0.74)
 COPE = (0.84, 0.82, 0.76)
 WET = (0.24, 0.26, 0.24)
 WEED = (0.2, 0.26, 0.17)
@@ -150,7 +152,7 @@ def faces_mesh():
     side((X_MIN, Z_EDGE), (west, Z_EDGE), (0, 0, -1), 131)
     side((east, Z_EDGE), (X_MAX, Z_EDGE), (0, 0, -1), 132)
     side((X_MIN, Z_EDGE), (X_MIN, Z_MAX), (-1, 0, 0), 133)
-    side((X_MAX, Z_EDGE), (X_MAX, Z_MAX), (1, 0, 0), 134)
+    side((X_MAX, Z_EDGE), (FAR_EAST, Z_EDGE), (0, 0, -1), 134)
     side((west, Z_EDGE), (west, PIER_END), (-1, 0, 0), 135)
     side((east, Z_EDGE), (east, PIER_END), (1, 0, 0), 136)
     side((west, PIER_END), (east, PIER_END), (0, 0, -1), 137)
@@ -420,7 +422,7 @@ def build() -> Scene:
     env = s.sub("Environment", "PortEnvironment",
                 background_mode="1", background_color=colour(sky),
                 ambient_light_source="2", ambient_light_color=colour((0.7, 0.66, 0.76)),
-                ambient_light_energy="0.85", tonemap_mode="2", tonemap_exposure="0.7",
+                ambient_light_energy="1.0", tonemap_mode="2", tonemap_exposure="0.7",
                 fog_enabled="true", fog_light_color=colour(sky), fog_density="0.007",
                 adjustment_enabled="true", adjustment_saturation="1.02", adjustment_contrast="1.04")
 
@@ -438,7 +440,7 @@ def build() -> Scene:
         return s.sub("StandardMaterial3D", rid, **props)
 
     box_mats = {name: painted(f"container_{name}", c, texture=metal_tile) for name, c in COLOURS.items()}
-    deck_mat = painted("quay_deck", (0.82, 0.8, 0.78), texture=ground_tile, scale=0.25, world=True)
+    deck_mat = painted("quay_deck", (0.96, 0.95, 0.95), texture=ground_tile, scale=0.25, world=True)
     face_mat = painted("quay_face", (1, 1, 1), texture=ground_tile, scale=0.3, world=True, srgb=True)
     paint_mat = painted("quay_paint", (1, 1, 1), srgb=True)
     steel_mat = painted("steel", (1, 1, 1), srgb=True)
@@ -448,8 +450,8 @@ def build() -> Scene:
 
     root = s.node("Port", None, "Node3D", script=location, location_id='&"port"')
     s.node("WorldEnvironment", root, "WorldEnvironment", environment=env)
-    s.node("Sun", root, "DirectionalLight3D", rotation_degrees=v3((-24, -150, 0)),
-           light_color=colour((1, 0.78, 0.58)), light_energy="0.4", shadow_enabled="true",
+    s.node("Sun", root, "DirectionalLight3D", rotation_degrees=v3((-40, -150, 0)),
+           light_color=colour((1, 0.8, 0.62)), light_energy="0.75", shadow_enabled="true",
            directional_shadow_max_distance="70.0")
     s.node("Navigation", root, "NavigationRegion3D", script=navigation)
     s.node("Ambience", root, "AudioStreamPlayer", stream=tone, volume_db="-30.0", script=ambience,
@@ -471,6 +473,12 @@ def build() -> Scene:
     s.node("Markings", "Quay", "MeshInstance3D", mesh=s.mesh("Markings", markings()), material_override=paint_mat,
            cast_shadow="0")
     s.node("Iron", "Quay", "MeshInstance3D", mesh=s.mesh("Iron", iron_mesh()), material_override=steel_mat)
+    # The land past the fences: two plain slabs, just under the deck's level.
+    for name, (x0, x1, z0, z1) in (("Hinterland", (X_MIN, FAR_EAST, Z_MAX, FAR_BACK)),
+                                   ("EastLand", (X_MAX, FAR_EAST, Z_EDGE, Z_MAX))):
+        s.node(name, "Quay", "MeshInstance3D", position=v3(((x0 + x1) / 2, -0.01, (z0 + z1) / 2)),
+               mesh=s.sub("PlaneMesh", f"Plane_{name}", size=f"Vector2({x1 - x0:g}, {z1 - z0:g})"),
+               material_override=deck_mat)
     s.node("Lifebuoy", "Quay", "MeshInstance3D", position=v3((PIER_X + 0.9, 0, PIER_END + 0.45)),
            mesh=s.mesh("Lifebuoy", lifebuoy_mesh()), material_override=steel_mat)
 
@@ -538,7 +546,7 @@ def build() -> Scene:
           {"rig_mesh": truck_rig, "rig": steel_mat, "box_mesh": truck_box, "box": box_mats["blue"]})
 
     # Floodlight masts.
-    for i, (x, z) in enumerate(((20.8, 16.8), (-22.8, 16.6), (-22.8, -6.6), (1.0, -6.9))):
+    for i, (x, z) in enumerate(((-8.0, 16.8), (-22.8, 16.6), (-22.8, -6.6), (1.0, -6.9))):
         holder = s.node(f"Mast{i}", root, "Node3D", position=v3((x, 0, z)), rotation_degrees=v3((0, 30 + i * 80, 0)))
         s.node("Pole", holder, "MeshInstance3D", mesh=mast, material_override=steel_mat)
         s.node("Light", holder, "OmniLight3D", position=v3((0, 8.6, 0.6)), light_color=colour((1.0, 0.76, 0.5)),
