@@ -604,6 +604,11 @@ def build_nodes() -> Builder:
     b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
     school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
     _yard_return_details(b, A)
+    # Behind the container the chain-link is cut and one sheet bent back into the yard: the
+    # way through to the container yard (`ToContainerYard`, whose outline is this sheet). A
+    # child of the fence, not of the art layer, so it stays text and fades with the fence.
+    b.flat("YardGapFlap", "FenceRunNorth", b.mesh("BoxMesh", size=vec3((1.3, 1.0, 0.03))), "fence_panel",
+           (3.0, -0.41, 0.29), (35, 0, 0))
     return b
 
 

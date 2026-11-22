@@ -967,6 +967,12 @@ def build_playground(for_courtyard_view: bool = False):
          "outline": ("PlaygroundArt/BuildingSite/Sand/PileSouth/Body",),
          "scene": "res://scenes/locations/site_interior/site_interior.tscn", "spawn": "FromPorch",
          "id_dest": "site_interior"},
+        # The container yard (round 13), through the chain-link behind the blue container.
+        # The bent-back sheet it outlines is added by the art pass (build_playground_art.py).
+        {"name": "ToContainerYard", "pos": (13.0, 0.9, -18.2), "id": "pg_container_yard",
+         "prompt_key": "prompt.container_yard", "radius": 1.6, "outline": ("FenceRunNorth/YardGapFlap",),
+         "scene": "res://scenes/locations/container_yard/container_yard.tscn", "spawn": "FromPlayground",
+         "id_dest": "container_yard"},
     ]
     s.spawns = [
         ("FromAlley", (0.0, 0, 16.0)),
@@ -977,6 +983,8 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromSchool", (12.0, 2.6, -15.5)),
         # Out of the building site's gate, on the yard side of it.
         ("FromSite", (-21.6, 0, 13.2)),
+        # Back from the container yard, behind the blue container.
+        ("FromContainerYard", (13.0, 0, -17.6)),
     ]
     return s
 

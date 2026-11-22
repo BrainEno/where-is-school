@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "cy_tyres": {
+    "title": "Tyres for stairs",
+    "prompt": "Look at the tyres",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · truck tyres stacked into stairs up to the roof"
+  },
+  "cy_plank": {
+    "title": "The long plank",
+    "prompt": "Look up at the plank",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · a long plank between two roofs, swaying"
+  },
+  "cy_orange": {
+    "title": "An orange container",
+    "prompt": "Look at the orange container",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the one orange container among the blue and red"
+  }
+}
