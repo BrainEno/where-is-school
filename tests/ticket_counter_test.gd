@@ -7,7 +7,7 @@ const MobileLayout = preload("res://scripts/ui/mobile_layout.gd")
 const MAIN := preload("res://scenes/main/main.tscn")
 const HALL := "res://scenes/locations/corridor/corridor.tscn"
 const ENTRY_INSIDE := Vector3(-17.78, -3.4, 11.62)
-const AT_COUNTER := Vector3(-14.36, -3.4, 11.66)
+const AT_COUNTER := Vector3(-13.12, -3.4, 11.66)
 
 var _check := Harness.Checker.new()
 var _world: Node
@@ -36,7 +36,7 @@ func _run() -> void:
 	if MobileLayout.enabled:
 		Input.emulate_mouse_from_touch = true
 	if not _capture.is_empty():
-		DirAccess.make_dir_recursive_absolute(_capture.path_join("review"))
+		DirAccess.make_dir_recursive_absolute(_capture)
 	var autoloads := Harness.ensure_state_autoloads(self)
 	Harness.clear_session_state(self)
 	var state: Node = autoloads["game_state"]
@@ -242,8 +242,11 @@ func _frame(label: String) -> void:
 	if not _check.expect(image != null and not image.is_empty(), "No renderer image for %s." % label):
 		return
 	var filename := "ticket_shot_detail_%s.jpg" % label
-	var saved := image.save_jpg(_capture.path_join(filename), .88)
-	image.resize(448, 252, Image.INTERPOLATE_LANCZOS)
-	var review := image.save_jpg(_capture.path_join("review").path_join(filename), .70)
-	if _check.expect(saved == OK and review == OK, "Could not write %s." % filename):
-		_frames += 1
+	if not _check.expect(image.save_jpg(_capture.path_join(filename), .88) == OK, "Could not write %s." % filename):
+		return
+	_frames += 1
+	print("EVIDENCE " + JSON.stringify({
+		"frame": filename,
+		"size": [image.get_width(), image.get_height()],
+		"shows": {"kind": "ticket_counter", "view": label},
+	}))

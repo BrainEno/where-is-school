@@ -123,9 +123,9 @@ instance uniform, and its ink contour moves with it.
   the muck heap shows the stench filter) and eight overviews (two of the stink stable),
   adding six timed review frames: the conversation, booklet and pencil
   at two points of the revision loop, plaster pair, waiting-room conversation, and
-  seated reader. It also runs `tests/ticket_counter_test.gd` under the real renderer for
-  one entrance frame and three face shots. For a manual 03 pass, climb the west stair from 02, turn along 03 past
-  the glass and watch each group for a full loop (about eight seconds). Continue to the
+  seated reader. A separate ticket visit job renders one entrance frame and three face
+  shots from actual clicks. For a manual 03 pass, climb the west stair from 02, turn along
+  03 past the glass and watch each group for a full loop (about eight seconds). Continue to the
   staff office and check that the study stool stays out of the entrance and inspection routes.
 
 ## Looking at the ticket clerks on 01
@@ -145,6 +145,11 @@ real spawn through the threshold, sends mouse events at all three faces, checks 
 the same camera frames their eyes and hair, then checks the facing interaction and walks
 on after controls return. Append `-- --mobile-preview` to exercise the touch path instead.
 With a window, `-- capture=<dir>` saves the approach and three clicked close-ups.
+The booth sits beyond the east edge of the deep entrance lintel so the first look does
+not depend on that lintel fading. To review the full-size frames without the artifact
+store, dispatch `location-art-capture.yml` with `relay_ticket_evidence=true`, then
+`python3 tools/dialogue_evidence_relay.py fetch --run <id> --out build/ticket-frames`.
+The relay checks the commit and each JPEG's hash; the images stay out of Git.
 
 ## The seven 03 corridor sculpts
 

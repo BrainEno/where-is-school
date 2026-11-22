@@ -337,7 +337,7 @@ destination_id = &"street"
 
 [node name="TicketClerk0Look" parent="Interactables" instance=ExtResource("11_interactable")]
 script = ExtResource("ticket_look")
-position = Vector3(-15.15, -2.38, 12.91)
+position = Vector3(-13.91, -2.38, 12.91)
 interact_id = &"ticket_clerk_0"
 prompt_key = "prompt.look"
 outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk0/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk0/Uniform")
@@ -347,7 +347,7 @@ radius = 0.66
 
 [node name="TicketClerk1Look" parent="Interactables" instance=ExtResource("11_interactable")]
 script = ExtResource("ticket_look")
-position = Vector3(-14.24, -2.38, 12.91)
+position = Vector3(-13.0, -2.38, 12.91)
 interact_id = &"ticket_clerk_1"
 prompt_key = "prompt.look"
 outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk1/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk1/Uniform")
@@ -357,7 +357,7 @@ radius = 0.66
 
 [node name="TicketClerk2Look" parent="Interactables" instance=ExtResource("11_interactable")]
 script = ExtResource("ticket_look")
-position = Vector3(-13.33, -2.38, 12.91)
+position = Vector3(-12.09, -2.38, 12.91)
 interact_id = &"ticket_clerk_2"
 prompt_key = "prompt.look"
 outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk2/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk2/Uniform")

@@ -92,9 +92,10 @@ The 02 -> 03 west stair becomes a metro escalator whose steps run down. Just thr
 01 glass door on the right, three women in staff uniforms stamp in exact step. A click on
 a clerk uses a brief close-up; 02's former booth space is clear. 03 becomes an exam floor
 with paper room numbers, a painted seating plan, hard colour fields, turned chairs,
-cliques and a troublemaker. The staff office becomes the waiting room. Behind 01, the forecourt's west side now opens onto
-a walkable stable yard, with a two-storey dream house whose only door is at its
-south-west corner. Rules, element map and checks are in [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md).
+cliques and a troublemaker. The staff office becomes the waiting room. Behind 01, the
+forecourt's west side now opens onto a walkable stable yard, with a two-storey dream
+house whose only door is at its south-west corner. Rules, element map and checks are in
+[EXAM_DREAM_ART.md](EXAM_DREAM_ART.md).
 
 ## Service controls and the edge of the set
 

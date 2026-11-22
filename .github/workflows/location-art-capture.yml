@@ -20,6 +20,7 @@ on:
   pull_request:
     paths:
       - "tests/capture_locations.gd"
+      - "tests/ticket_counter_test.gd"
       - "scenes/locations/laboratory/**"
       - "scenes/locations/staff_office/**"
       - "scenes/locations/restroom/**"
@@ -55,12 +56,17 @@ on:
         description: "Commit or ref photographed as 'before'"
         required: false
         default: "main"
+      relay_ticket_evidence:
+        description: "Run the ticket visit and relay original JPEGs for Drive or offline review"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
   capture:
+    if: inputs.relay_ticket_evidence != true
     name: ${{ matrix.location }} (${{ matrix.side }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -221,31 +227,6 @@ jobs:
           mkdir -p "$inline" "${RUNNER_TEMP}/frames"
           cp "${frames[@]}" "$out/LOCATIONS.md" "${RUNNER_TEMP}/frames/"
           cp "${views[@]}" "$inline/"
-          ticket_status=0
-          if [ "${LOCATION}/${SIDE}" = dream_annex/after ]; then
-            tickets="${RUNNER_TEMP}/tickets"
-            xvfb-run -a --server-args="-screen 0 1600x900x24" \
-              godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
-              --script res://tests/ticket_counter_test.gd -- "capture=${tickets}" \
-              > "${RUNNER_TEMP}/tickets.log" 2>&1
-            ticket_code=$?
-            cp "${RUNNER_TEMP}/tickets.log" "${RUNNER_TEMP}/frames/"
-            ticket_shots=("$tickets/"ticket_shot_detail_*.jpg)
-            if [ "$ticket_code" -ne 0 ] || [ "${#ticket_shots[@]}" -ne 4 ] || \
-                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/tickets.log" || \
-                ! grep -q '^PASS:' "${RUNNER_TEMP}/tickets.log"; then
-              tail -n 45 "${RUNNER_TEMP}/tickets.log"
-              awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)/ {print; if (++count == 6) exit}' \
-                "${RUNNER_TEMP}/tickets.log" | while read -r issue; do
-                  echo "::error title=ticket counter::$issue"
-                done
-              ticket_status=1
-            else
-              cp "${ticket_shots[@]}" "${RUNNER_TEMP}/frames/"
-              cp "$tickets/review/"*.jpg "$inline/"
-              echo "::notice title=ticket counter::4 game-camera frames from a real doorway approach and three face clicks"
-            fi
-          fi
           if [ "${LOCATION}/${SIDE}" = corridor/after ]; then
             wing="docs/screenshots/map_art/teaching-wing"
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
@@ -313,7 +294,6 @@ jobs:
             done
           done
           echo "queued $(wc -l < "${queue}") annotation part(s)"
-          exit "$ticket_status"
 
       # GitHub keeps at most 10 notices per step and 50 annotations per job, so the parts
       # are spread over four steps of ten. A frame whose parts do not all fit is
@@ -353,6 +333,7 @@ jobs:
   # `tests/location_art_test.gd` is not in `godot-ci.yml` yet (another open pull request
   # is changing that file), so this workflow runs it until it is registered there.
   art-test:
+    if: inputs.relay_ticket_evidence != true
     name: location art test
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -435,3 +416,108 @@ jobs:
           name: location-art-regressions
           path: ci-logs/
           if-no-files-found: warn
+
+  ticket-visit:
+    name: Play through the 01 ticket counter
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      shards: ${{ steps.pack.outputs.shards }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-godot
+
+      - name: Import project resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --import > "${RUNNER_TEMP}/import-1.log" 2>&1 || true
+          godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log"; then exit 1; fi
+
+      - name: Walk through the glass door and click the three faces
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          tickets="${RUNNER_TEMP}/tickets"
+          xvfb-run -a --server-args="-screen 0 1600x900x24" \
+            godot --path . --resolution 1600x900 --rendering-driver opengl3 --audio-driver Dummy \
+            --script res://tests/ticket_counter_test.gd -- "capture=${tickets}" \
+            > "${RUNNER_TEMP}/tickets.log" 2>&1
+          code=$?
+          tail -n 45 "${RUNNER_TEMP}/tickets.log"
+          shopt -s nullglob
+          shots=("$tickets/"ticket_shot_detail_*.jpg)
+          if [ "$code" -ne 0 ] || [ "${#shots[@]}" -ne 4 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/tickets.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/tickets.log"; then
+            awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)/ {print; if (++count == 6) exit}' \
+              "${RUNNER_TEMP}/tickets.log" | while IFS= read -r issue; do
+                echo "::error title=ticket counter::${issue}"
+              done
+            echo "::error title=ticket counter::Expected four gameplay JPEGs and a passing test, got ${#shots[@]} files (exit ${code})"
+            exit 1
+          fi
+          grep -E '^TICKET SHOT:|^EVIDENCE ' "${RUNNER_TEMP}/tickets.log" | while IFS= read -r record; do
+            echo "::notice title=ticket gameplay::${record}"
+          done
+
+      - name: Pack original frames for the opt-in relay
+        id: pack
+        if: inputs.relay_ticket_evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/dialogue_evidence_relay.py pack --set tickets \
+            --log "${RUNNER_TEMP}/tickets.log" --frames "${RUNNER_TEMP}/tickets" --out "${RUNNER_TEMP}/ticket-relay"
+
+      - name: Upload original ticket frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ticket-counter-frames-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/tickets/
+            ${{ runner.temp }}/tickets.log
+            ${{ runner.temp }}/ticket-relay/queue.txt
+          if-no-files-found: error
+
+  # Opt-in only, as with the opening/clock relays. Exposes the exact full-size artifact
+  # bytes through GitHub's check API when the artifact store cannot be reached from here.
+  ticket-relay:
+    name: Relay ticket frames (shard ${{ matrix.shard }})
+    needs: ticket-visit
+    if: inputs.relay_ticket_evidence && needs.ticket-visit.outputs.shards != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.ticket-visit.outputs.shards) }}
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ticket-counter-frames-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/evidence
+      - name: Select this shard of 45 parts
+        shell: bash
+        run: |
+          set -euo pipefail
+          queue=$(find "${RUNNER_TEMP}/evidence" -name queue.txt -type f -print -quit)
+          test -s "$queue"
+          sed -n "$(( SHARD * 45 + 1 )),$(( (SHARD + 1) * 45 ))p" "$queue" > "${RUNNER_TEMP}/shard.txt"
+          test -s "${RUNNER_TEMP}/shard.txt"
+      - name: Publish 1/5
+        run: sed -n '1,9p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 2/5
+        run: sed -n '10,18p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 3/5
+        run: sed -n '19,27p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 4/5
+        run: sed -n '28,36p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
+      - name: Publish 5/5
+        run: sed -n '37,45p' "${RUNNER_TEMP}/shard.txt" | while read -r file part data; do echo "::notice title=relay ${file} ${part}::${data}"; done
