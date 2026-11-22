@@ -44,3 +44,6 @@ or sampled. This revision is a reviewable refinement, not a claim of commercial-
 quality. Source rights do not clear other characters/portraits, and owner visual approval,
 Windows Forward+ deformation and performance review remain separate requirements.
 See `docs/CHARACTER_INTEGRATION.md` §§9–10 for genuine base/current capture instructions.
+The [classroom head pass](../sculpt/README.md) records the later crown, brow, cheek and lip
+edits to this same runtime model. It touches neither the original source nor the cut eye
+layers, and keeps the size, seat binding and actions of the existing wrapper.
