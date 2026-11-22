@@ -43,7 +43,7 @@ func _capture() -> void:
 		StoryFlags.OBJECTIVE_KEY: "objective.leave_classroom",
 	}
 	var written: Dictionary = save.write_payload({"flags": SaveCodec.encode_flags(flags), "entries": [],
-		"check_seed": 7, "world": {"location_id": "classroom", "spawn": "PlayerStart"}})
+		"check_seed": 7, "world": {"location_id": "classroom", "spawn": "FromCorridor"}})
 	if not _checks.expect(written.get("ok", false), "The classroom checkpoint could not be written"):
 		return
 	if not _checks.expect(DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT)) == OK, "Could not create the evidence directory"):
@@ -70,9 +70,21 @@ func _capture() -> void:
 	var ui := world.get_node(^"GameUI") as GameUI
 	var stick := ui.get_node(^"TouchActions/Joystick") as Control
 	var shortcut := ui.get_node(^"TouchActions/ReturnToTitle") as Button
+	var at_rest := await Harness.wait_until(func() -> bool:
+		return not ui.fade.visible and session.is_at_rest(world), 25.0)
+	var director := world.get_node(^"OpeningSequence") as OpeningSequence
+	if not _checks.expect(at_rest, "Classroom never settled (next=%s beat=%s fade=%s dialogue=%s)" % [
+		director.next_step(), director.is_beat_active(), ui.fade.visible, ui.dialogue_panel.visible]):
+		return
+	# Xvfb can deliver real mouse motion when the window takes focus after a scene
+	# change. Select touch with a real injected finger in the notch's unsafe area,
+	# where it cannot change the world or activate the controls.
+	var unsafe := Vector2(MobileLayout.safe_rect(stick).position.x * 0.5, 20.0)
+	_touch(unsafe, true)
+	_touch(unsafe, false)
 	if not _checks.expect(await Harness.wait_until(func() -> bool:
-		return stick.is_visible_in_tree() and shortcut.is_visible_in_tree() and session.is_at_rest(world), 15.0),
-		"Classroom never became playable with the touch HUD"):
+		return stick.is_visible_in_tree() and shortcut.is_visible_in_tree(), 5.0),
+		"No touch HUD in the settled classroom (device=%s, dialog=%s)" % [InputHint.device(stick), ui.dialogue_panel.visible]):
 		return
 	var point := stick.get_global_rect().get_center() + Vector2.UP * stick.size.x * 0.24
 	_touch(point, true)

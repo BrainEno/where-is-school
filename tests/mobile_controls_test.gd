@@ -219,25 +219,6 @@ func _joystick_motion() -> void:
 		await _check_facing(Vector2.RIGHT, "second finger did not steal the stick")
 		_touch(center, false)
 
-	# Pick a clear direction from the real body; furniture is not a test obstacle.
-	var free := Vector2.ZERO
-	for dir: Vector2 in [Vector2.RIGHT, Vector2.UP, Vector2.LEFT, Vector2.DOWN]:
-		if not _player.test_move(_player.global_transform, _world_direction(dir) * 0.55):
-			free = dir
-			break
-	if not _check.expect(free != Vector2.ZERO, "No clear heading for the sustained hold"):
-		return
-	var start := _player.global_position
-	_touch(center + free * stick.size.x * 0.3, true)
-	_check.expect(await Harness.wait_until(func() -> bool:
-		return _player.global_position.distance_to(start) > 0.18, 3.0),
-		"The player did not keep walking without new drag events")
-	var stopped := _player.global_position
-	_touch(center + free * stick.size.x, false)
-	await physics_frame
-	await physics_frame
-	_check.expect(_horizontal_speed() < 0.001 and _player.global_position.distance_to(stopped) < 0.02,
-		"Thumb up did not stop displacement on the next physics frame")
 
 
 func _joystick_cancellation() -> void:
@@ -608,6 +589,9 @@ func _return_from_corridor(title: TitleScreen) -> void:
 		return
 	var stick := _stick()
 	var center := stick.get_global_rect().get_center()
+	# FromClassroom faces the corridor's open width. Test sustained displacement here,
+	# not wedged against a desk after the classroom's eight-direction sweep.
+	await _hold_and_release_in_corridor(stick, center)
 	var down := center + Vector2.LEFT * stick.size.x * 0.3
 	_touch(down, true)
 	await _check_facing(Vector2.LEFT, "corridor")
@@ -641,6 +625,23 @@ func _return_from_corridor(title: TitleScreen) -> void:
 		_check.expect(host_again.get_current().location_id == &"classroom" and not save.has_save() \
 			and not state.get_flag(StoryFlags.CLASS_DISMISSED, false) and not paused,
 			"New game carried the old location or checkpoint into its opening")
+
+
+func _hold_and_release_in_corridor(stick: Control, center: Vector2) -> void:
+	var rig := _main.get_node(^"CameraRig") as CameraRig
+	var across := Vector2(rig.planar_right().x, -rig.planar_forward().x).normalized()
+	var start_x := _player.global_position.x
+	_touch(center + across * stick.size.x * 0.3, true)
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return _player.global_position.x > start_x + 0.18, 3.0),
+		"The player did not keep walking without new drag events")
+	var stopped := _player.global_position
+	_touch(center + across * stick.size.x, false)
+	await physics_frame
+	await physics_frame
+	var displacement := _player.global_position - stopped
+	_check.expect(_horizontal_speed() < 0.001 and Vector2(displacement.x, displacement.z).length() < 0.02,
+		"Thumb up did not stop displacement on the next physics frame")
 
 
 func _offer_schoolbag() -> bool:
