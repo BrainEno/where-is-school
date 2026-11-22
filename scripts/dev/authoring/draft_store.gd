@@ -95,7 +95,7 @@ func can_undo() -> bool:
 func set_text(chapter: String, conversation: String, node: String, choice: String, value: String) -> bool:
 	var slot := Patch.find_record(nodes_for(chapter, conversation), node)
 	if not choice.is_empty():
-		slot = Patch.find_record(slot.get("choices", []), choice)
+		slot = Patch.find_record(Patch.choices_at(slot), choice)
 	if slot.is_empty():
 		error = "找不到这个字段。"
 		return false

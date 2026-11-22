@@ -55,6 +55,7 @@ func start(graph: DialogueGraph, conversation: String, flags: Dictionary, knowle
 	_knowledge = Knowledge.new()
 	_knowledge.restore_snapshot(knowledge)
 	_runtime = DialogueRuntime.new(_flags, _knowledge, _characters, _abilities, CheckResolver.new(seed_value))
+	_runtime.log_session = false
 	_runtime.line_changed.connect(_line)
 	_runtime.choices_changed.connect(_choices)
 	_runtime.conversation_finished.connect(_finished)

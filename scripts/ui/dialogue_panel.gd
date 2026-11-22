@@ -186,6 +186,7 @@ var _style_pressed: StyleBoxFlat = StyleBoxFlat.new()
 ## how a panel ends up sized for the text it had a moment ago.
 var _layout_dirty: bool = false
 var _preview_bounds := Rect2()
+var _preview_scroll := -1.0
 var _layout_stage: int = 0
 ## The portrait for the line on screen, already resolved and cropped, or null.
 var _portrait_texture: Texture2D = null
@@ -458,7 +459,8 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	_title_label.visible = not title.is_empty()
 
 	_body_label.text = String(line.get("text", ""))
-	if _touch_footer != null:
+	_preview_scroll = -1.0
+	if preview_only or _touch_footer != null:
 		_body_touch = -1
 		_body_label.get_v_scroll_bar().value = 0.0
 	set_choices([])
@@ -485,6 +487,7 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 func update_preview_text(text: String, choices: PackedStringArray) -> void:
 	if not preview_only or choices.size() != _choice_buttons.size():
 		return
+	var position := _body_label.get_v_scroll_bar().value
 	var changed := _body_label.text != text
 	if changed:
 		_line["text"] = text
@@ -498,6 +501,8 @@ func update_preview_text(text: String, choices: PackedStringArray) -> void:
 			_choice_buttons[index].text = label
 			changed = true
 	if changed:
+		if _preview_scroll < 0.0 and position > 0.0:
+			_preview_scroll = position
 		_queue_fit()
 
 
@@ -727,6 +732,12 @@ func _process(delta: float) -> void:
 		refresh_static_text()
 	if _layout_dirty and visible:
 		_settle_layout()
+	elif visible and _preview_scroll >= 0.0:
+		# The containers resize after layout, not during it. Reapply the old
+		# offset once the scrollbar knows its new range and page height.
+		_body_label.get_content_height()
+		_body_label.get_v_scroll_bar().value = _preview_scroll
+		_preview_scroll = -1.0
 	if not _revealing:
 		return
 	var direction := 1.0
@@ -1092,10 +1103,11 @@ func _settle_layout() -> void:
 		offset_right = left + width
 		offset_bottom = -foot
 		offset_top = -foot - retained_height
-		# On touch, let the container lay out the width without a minimum height from
-		# the paragraph's *previous* wrap. Read the actual shaped height below.
-		_body_label.fit_content = _touch_footer == null
-		_body_label.scroll_active = false
+		# Touch and detached previews measure shaped height instead of letting the
+		# label's previous wrap impose a minimum height on the container.
+		_body_label.fit_content = _touch_footer == null and not preview_only
+		if not preview_only:
+			_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
 		# Measure with every option, then decide how many can be shown.
 		for button in _choice_buttons:
@@ -1109,13 +1121,15 @@ func _settle_layout() -> void:
 
 	var needed: float = _frame.get_combined_minimum_size().y
 	var body_height := _body_label.get_combined_minimum_size().y
-	if _touch_footer != null:
+	if _touch_footer != null or preview_only:
 		var content_height := float(_body_label.get_content_height())
 		needed += maxf(0.0, content_height - body_height)
 		body_height = maxf(content_height, body_height)
 	var scrolling := needed > max_height + 0.5
 	var height := max_height if scrolling else clampf(needed, min_height, max_height)
 	offset_top = -foot - height
+	if preview_only:
+		_body_label.scroll_active = scrolling
 	if scrolling:
 		# The body keeps the room that is left and scrolls; nothing is cut off and no
 		# type size is reduced to force the paragraph in.

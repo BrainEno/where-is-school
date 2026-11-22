@@ -17,6 +17,7 @@ import export_mobile as mobile
 import export_presets
 from macos.ios.sign_ipa import export_options, profile_details
 from review_author_draft import preserve_source_values
+from subset_font import collect_characters
 from verify_build import verify_contents
 
 
@@ -88,6 +89,15 @@ class AuthoringToolsTest(unittest.TestCase):
         with self.assertRaises(mobile.BuildError):
             mobile.ios_signing_flags(team, options)
         self.assertIn(f"PROVISIONING_PROFILE_SPECIFIER={name}", mobile.ios_signing_flags(team, options, author.AUTHOR_ID))
+
+    def test_author_preview_fixtures_do_not_expand_the_retail_font(self):
+        with patch("subset_font.glob.glob", return_value=["tests/authoring_classroom_test.gd",
+                                                          "scripts/dev/authoring/author_form.gd"]):
+            used, _ = collect_characters(("unused",))
+        self.assertFalse(used)
+        with patch("subset_font.glob.glob", return_value=["tests/dialogue_layout_test.gd"]):
+            used, _ = collect_characters(("unused",))
+        self.assertTrue(used)
 
     def test_review_does_not_rewrite_unrelated_numeric_leaves(self):
         before = [{"id": "a", "check": {"difficulty": 9}, "text": "A"}]

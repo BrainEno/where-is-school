@@ -49,15 +49,18 @@ static func find_record(rows: Array, id: String) -> Dictionary:
 	return {}
 
 
+static func choices_at(node: Dictionary) -> Array:
+	var choices: Variant = node.get("choices")
+	return choices as Array if choices is Array else []
+
+
 static func can_insert(node: Dictionary) -> bool:
-	var choices: Variant = node.get("choices", [])
-	return not node.is_empty() and (choices == null or (choices is Array and choices.is_empty())) \
+	return not node.is_empty() and choices_at(node).is_empty() \
 		and not node.has("check") and not node.has("conditions") and not node.has("requires")
 
 
 static func can_add_choice(node: Dictionary) -> bool:
-	var choices: Variant = node.get("choices")
-	return choices is Array and not choices.is_empty() \
+	return not choices_at(node).is_empty() \
 		and not node.has("next") and not node.has("check") \
 		and not node.has("conditions") and not node.has("requires")
 
@@ -70,7 +73,7 @@ static func continuation(nodes: Array, node: Dictionary) -> Variant:
 
 
 static func choice_signature(node: Dictionary) -> String:
-	var choices: Array = node.get("choices", []).duplicate(true)
+	var choices: Array = choices_at(node).duplicate(true)
 	for choice: Dictionary in choices:
 		choice.erase("text")
 	return digest(choices)
@@ -149,7 +152,7 @@ static func _apply_op(data: Dictionary, op: Dictionary) -> String:
 				return "需要有效的文案（1–8000 字符）。"
 			var slot := node
 			if not String(op["choice"]).is_empty():
-				slot = find_record(node.get("choices", []), op["choice"])
+				slot = find_record(choices_at(node), op["choice"])
 			if slot.is_empty():
 				return "原选项已删除。"
 			var current: String = slot.get("text", "")

@@ -32,7 +32,7 @@ python3 tools/review_author_draft.py /path/to/where-is-school-dialogue-draft.jso
 
 ## iPhone 构建与验收
 
-作者版 Bundle ID：`io.github.braineno.whereisschool.authoring`，和普通版可并存。CI 的 macOS 测试只编译 UIKit 组件并校验无签名归档（不是可安装 IPA）。**CI 通过后**才在受信任的 macOS + Xcode 环境签名；使用明确匹配该 Bundle ID 的 Development 或 Ad Hoc 描述文件，并包含目标设备。项目已有 `sign_ipa.py` 的三个受保护输入仍从私密环境提供；不要用聊天、PR 或公开构件传签名材料及设备描述文件。公开 `build-ios.yml` 的保护规则不变，不用它发作者版私密 IPA。
+作者版 Bundle ID：`io.github.braineno.whereisschool.authoring`，和普通版可并存。CI 的 macOS 测试校验作者版和普通版的无签名归档（都不是可安装 IPA），并确认 UIKit 组件只在作者版链接。**CI 通过后**才从通过检查的干净提交，在受信任的 macOS + Xcode 环境签名；使用明确匹配该 Bundle ID 的 Development 或 Ad Hoc 描述文件，并包含目标设备。项目已有 `sign_ipa.py` 的三个受保护输入仍从私密环境提供；不要用聊天、PR 或公开构件传签名材料及设备描述文件。公开 `build-ios.yml` 的保护规则不变，不用它发作者版私密 IPA。
 
 ```sh
 python3 tools/macos/ios/sign_ipa.py --authoring --distribution development \

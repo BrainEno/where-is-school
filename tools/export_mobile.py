@@ -248,6 +248,7 @@ def verify_ios_app(
     require((b"WISAuthorFiles\0" in executable.read_bytes()) == authoring,
             "Author Files bridge must only be linked into the author app")
     if authoring:
+        require(info.get("CFBundleDisplayName") == authoring_build.AUTHOR_NAME, "Unexpected author app display name")
         require(not info.get("UIFileSharingEnabled"), "Do not expose the author app's entire data directory")
     arch = platform.machine() if simulator else "arm64"
     require(run("lipo", "-archs", executable, capture=True).strip() == arch,

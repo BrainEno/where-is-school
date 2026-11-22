@@ -70,6 +70,10 @@ TEXT_SOURCES = (
     "project.godot",
 )
 
+# The separate preview uses system CJK fallback, including for these fixtures.
+# It should not add its Chinese UI or deliberately out-of-subset text to retail.
+AUTHOR_FIXTURES = frozenset(("tests/authoring_classroom_test.gd", "tests/authoring_patch_test.gd"))
+
 # What can reach the dialogue panel: content, locale tables, scenes and scripts. The serif
 # face draws nothing else, so the editor add-on and the tests are left out on purpose; a
 # glyph only they use is drawn by the Sans subset through the panel's fallback.
@@ -139,8 +143,8 @@ def collect_characters(text_sources: tuple[str, ...] = TEXT_SOURCES) -> tuple[se
     characters: set[str] = set()
     for pattern in text_sources:
         for name in glob.glob(pattern, recursive=True):
-            # This drawer is absent from the retail pack and uses a system CJK fallback.
-            if Path(name).as_posix().startswith("scripts/dev/authoring/"):
+            path = Path(name).as_posix()
+            if path.startswith("scripts/dev/authoring/") or path in AUTHOR_FIXTURES:
                 continue
             text = Path(name).read_text(encoding="utf-8", errors="ignore")
             if name.endswith(".json"):

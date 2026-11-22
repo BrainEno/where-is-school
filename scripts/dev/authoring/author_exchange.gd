@@ -70,10 +70,22 @@ func _request(data: Dictionary) -> void:
 	set_process(true)
 
 
+## FileDialog normally returns an OS path, including for project files.
+static func is_export_destination(path: String) -> bool:
+	if not path.is_absolute_path() or path.begins_with("res://") or path.get_extension().to_lower() != "json":
+		return false
+	var absolute := ProjectSettings.globalize_path(path).replace("\\", "/").simplify_path()
+	var project := ProjectSettings.globalize_path("res://").replace("\\", "/").trim_suffix("/")
+	if OS.has_feature("windows") or OS.has_feature("macos"):
+		absolute = absolute.to_lower()
+		project = project.to_lower()
+	return not absolute.begins_with(project + "/")
+
+
 func write_to(path: String) -> void:
 	if _kind != "export":
 		return
-	if path.get_extension().to_lower() != "json" or path.begins_with("res://"):
+	if not is_export_destination(path):
 		_finish(false, "请选择项目之外的 .json 文件。")
 		return
 	if FileAccess.file_exists(path):

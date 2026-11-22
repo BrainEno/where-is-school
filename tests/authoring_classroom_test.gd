@@ -7,6 +7,9 @@ const Bootstrap := preload("res://scripts/dev/authoring/bootstrap.gd")
 const Overlay := preload("res://scripts/dev/authoring/author_overlay.gd")
 const Form := preload("res://scripts/dev/authoring/author_form.gd")
 const Store := preload("res://scripts/dev/authoring/draft_store.gd")
+const Exchange := preload("res://scripts/dev/authoring/author_exchange.gd")
+const LogStore := preload("res://scripts/diagnostics/log_store.gd")
+const EventSchema := preload("res://scripts/diagnostics/event_schema.gd")
 const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
@@ -44,12 +47,16 @@ func _run() -> void:
 	await _boot_world()
 	if await _open_at_student():
 		var before := _snapshot()
+		var live_events := _dialogue_events()
+		_check.expect(not live_events.is_empty(), "The real classroom did not record a dialogue event")
+		_try_world_input()
 		await _edit_fields()
 		await _edit_branches()
 		await _walk_draft()
 		_export_round_trip()
-		_check.expect(_snapshot() == before, "Editor or trial changed live story, camera, reveals, input, or history")
-		_drawer.action.emit("close")
+		_check.expect(_snapshot() == before, "Editor or trial changed live story, camera, saves, reveals, or history")
+		_check.expect(_dialogue_events() == live_events, "Trial emitted gameplay diagnostics into the real session")
+		_send_action(&"ui_cancel")
 		_check.expect(not paused and _ui.dialogue_panel.visible and _snapshot() == before,
 			"Closing the drawer did not preserve the real choice/reveal state")
 		_controller.select_choice(0)
@@ -86,6 +93,9 @@ func _boot_world() -> void:
 		root.size = Vector2i(852, 393)
 		root.set_meta(MobileLayout.TEST_SAFE_AREA, Rect2(48, 0, 756, 377))
 		root.set_meta(MobileLayout.TEST_DENSITY, 1.0)
+	elif DisplayServer.get_name() == "headless":
+		# No window manager sets a desktop extent in the headless driver.
+		root.size = Vector2i(1600, 900)
 	await process_frame # Let initial Control layouts propagate, without advancing narrative.
 
 
@@ -116,7 +126,12 @@ func _open_at_student() -> bool:
 	if MobileLayout.enabled:
 		_check.expect(MobileLayout.safe_rect(launch).encloses(launch.get_global_rect()), "Author launcher is outside the OS safe area")
 		_check.expect(launch.size.y >= MobileLayout.hit_size(launch), "Author launcher is smaller than the touch minimum")
-	await _tap(launch)
+		_launch_touch(launch.get_global_rect().get_center(), true)
+		await process_frame # The deferred opener from a cancelled release must never fire.
+		_check.expect(not paused and launch.visible, "Cancelled first finger activated the author launcher")
+		_launch_touch(launch.get_global_rect().get_center(), false)
+	else:
+		await _tap(launch)
 	if not _check.expect(await Harness.wait_until(func() -> bool: return paused, 5), "Author launcher did not pause the classroom"):
 		return false
 	_drawer = _overlay.get_node(^"AuthorDrawer") as Form
@@ -134,18 +149,31 @@ func _edit_fields() -> void:
 	Harness.stage = "mutating preview wording only"
 	var original := _panel.get_body_text()
 	var choice_before := _panel.find_child("Choice1", true, false)
-	_enter(_drawer.body, SAMPLE)
-	_check.expect(await Harness.wait_until(func() -> bool: return _panel.get_body_text() == SAMPLE, 4), "Changed body never reached preview")
+	var revised_body := (SAMPLE + "\n").repeat(12).strip_edges()
+	_enter(_drawer.body, revised_body)
+	_drawer.body.set_caret_line(1)
+	_drawer.body.set_caret_column(3)
+	_check.expect(await Harness.wait_until(func() -> bool: return _panel.get_body_text() == revised_body, 4), "Changed body never reached preview")
+	_check.expect(_drawer.body.get_caret_line() == 1 and _drawer.body.get_caret_column() == 3, "Preview moved the editing caret")
 	_check.expect(_panel.find_child("Choice1", true, false) == choice_before, "Editing text recreated the option buttons")
 	_drawer.action.emit("original")
 	_check.expect(_panel.get_body_text() == original, "Original comparison now displays the draft")
 	_drawer.action.emit("original")
 	_pick("field", "leave")
 	_check.expect(not _drawer.body.has_undo(), "Changing fields can undo into another field's wording")
+	var body := _panel.get_node(^"%BodyLabel") as RichTextLabel
+	var scroll := body.get_v_scroll_bar()
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return body.scroll_active and not _panel._layout_dirty and _panel._preview_scroll < 0.0 \
+			and scroll.max_value - scroll.page > 20.0
+	, 4), "Long draft should scroll in the real preview panel")
+	scroll.value = 20.0
 	_enter(_drawer.body, OPTION)
 	_check.expect(await Harness.wait_until(func() -> bool:
-		return is_instance_valid(choice_before) and OPTION in (choice_before as Button).text
+		return is_instance_valid(choice_before) and OPTION in (choice_before as Button).text \
+			and not _panel._layout_dirty and _panel._preview_scroll < 0.0
 	, 4), "Option wording did not update the existing preview button")
+	_check.expect(is_equal_approx(scroll.value, 20.0), "Changing an option reset the current reading position")
 
 
 func _edit_branches() -> void:
@@ -170,7 +198,13 @@ func _walk_draft() -> void:
 	Harness.stage = "isolated trial through new response, inserted line, and real ending"
 	_drawer.action.emit("trial")
 	_check.expect(_panel.visible and not _drawer.visible and paused, "Trial did not reuse detached dialogue controls")
-	_panel.choice_selected.emit(2)
+	var third := _panel.find_child("Choice3", true, false) as Button
+	_check.expect(await Harness.wait_until(func() -> bool: return not _panel._layout_dirty, 4), "Trial layout did not settle")
+	_panel.reveal_choice(2)
+	if _check.expect(await Harness.wait_until(func() -> bool:
+		return third != null and third.is_visible_in_tree() and not _panel._layout_dirty
+	, 4), "Third option could not be reached in trial"):
+		await _tap(third)
 	_check.expect(_panel.get_body_text() == REPLY, "New third option did not walk to its response")
 	_panel.advance_requested.emit()
 	_check.expect(_panel.get_body_text() == _store.nodes_for("prologue", "student").filter(
@@ -202,6 +236,16 @@ func _export_round_trip() -> void:
 	picker[0].hide()
 	picker[0].canceled.emit()
 	_check.expect(_store.is_unexported() and not FileAccess.file_exists(export_path), "Cancelling export changed the draft or created a file")
+	var protected_path := ProjectSettings.globalize_path(_directory.path_join("already-there.json"))
+	var protected_file := FileAccess.open(protected_path, FileAccess.WRITE)
+	protected_file.store_string("keep me")
+	protected_file.close()
+	_drawer.action.emit("export")
+	picker[0].hide()
+	picker[0].file_selected.emit(protected_path)
+	_check.expect(FileAccess.get_file_as_string(protected_path) == "keep me" and _store.is_unexported(), "Export overwrote the existing destination")
+	_check.expect(not Exchange.is_export_destination(ProjectSettings.globalize_path("res://data/dialogue/new-draft.json")),
+		"An absolute path inside the project bypassed the dialogue export boundary")
 	_drawer.action.emit("export")
 	picker[0].hide() # Inject the user's explicit desktop destination, not an automatic save.
 	picker[0].file_selected.emit(export_path)
@@ -212,13 +256,37 @@ func _export_round_trip() -> void:
 	_check.expect(restored.export_json() == _store.export_json(), "Fresh workspace lost the authored changes")
 
 
+func _dialogue_events() -> Array:
+	var log := root.get_node(^"Diagnostics")
+	log.flush()
+	var rows: Array = LogStore.history(log.directory_path(), EventSchema.new())["rows"]
+	return rows.filter(func(row: Dictionary) -> bool: return String(row["event"]).begins_with("dialogue."))
+
+
+func _try_world_input() -> void:
+	var before := _snapshot()
+	for action: StringName in [&"move_forward", &"interact", &"dialogue_advance", &"backlog", &"journal", &"pause"]:
+		_send_action(action)
+	_check.expect(paused and not (_world.get_node(^"PauseMenu") as PauseMenu).is_open() and _snapshot() == before,
+		"Gameplay input reached an always-running menu or dialogue behind the drawer")
+
+
+func _send_action(action: StringName) -> void:
+	for down: bool in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = down
+		root.push_input(event, true)
+
+
 func _snapshot() -> Array:
 	var camera := _world.get_node(^"CameraRig/Camera3D") as Camera3D
 	return [_controller.get_current_line().duplicate(true), _game_state.get_snapshot(), _knowledge.to_snapshot(),
 		_ui.backlog.get_entries().duplicate(true), _controller.get_read_log().line_count(),
 		_controller.get_read_log().choice_count(), _controller.get_playback().get_waited(),
 		_controller.get_playback().mode, _controller.get_session_seed(), _player.global_position,
-		camera.global_transform, _ui.dialogue_panel.get_node(^"%BodyLabel").visible_characters]
+		camera.global_transform, _ui.dialogue_panel.get_node(^"%BodyLabel").visible_characters,
+		root.get_node(^"Save").saves_written]
 
 
 func _enter(field: TextEdit, value: String) -> void:
@@ -239,15 +307,25 @@ func _pick(field: String, id: String) -> void:
 func _tap(control: Control) -> void:
 	var point := control.get_global_rect().get_center()
 	for down: bool in [true, false]:
-		if MobileLayout.enabled and control.name == "EditStory":
-			var touch := InputEventScreenTouch.new()
-			touch.position = point
-			touch.pressed = down
-			root.push_input(touch, true)
-		else:
-			var mouse := InputEventMouseButton.new()
-			mouse.button_index = MOUSE_BUTTON_LEFT
-			mouse.position = point
-			mouse.pressed = down
-			root.push_input(mouse, true)
-	await process_frame
+		_send_mouse(point, down, false)
+	await process_frame # Allow the click to propagate before asserting its result.
+
+
+func _launch_touch(point: Vector2, cancelled: bool) -> void:
+	for down: bool in [true, false]:
+		_send_mouse(point, down, true)
+		var touch := InputEventScreenTouch.new()
+		touch.position = point
+		touch.pressed = down
+		touch.canceled = cancelled and not down
+		root.push_input(touch, true)
+
+
+func _send_mouse(point: Vector2, down: bool, emulated: bool) -> void:
+	var mouse := InputEventMouseButton.new()
+	mouse.button_index = MOUSE_BUTTON_LEFT
+	mouse.position = point
+	mouse.pressed = down
+	if emulated:
+		mouse.device = InputEvent.DEVICE_ID_EMULATION
+	root.push_input(mouse, true)

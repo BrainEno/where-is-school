@@ -102,7 +102,7 @@ jobs:
           fi
           git diff --exit-code -- data/dialogue
   iphone:
-    name: Compile author-only UIKit bridge and verify an unsigned iPhone archive
+    name: Verify unsigned author and retail iPhone archives
     runs-on: macos-26
     timeout-minutes: 32
     steps:
@@ -124,3 +124,13 @@ jobs:
             exit 1
           fi
           printf '::notice title=Author archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/author-device/BUILD.json")"
+      - name: Verify retail archive has no author scripts or native bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
+            grep -Ei 'error:|failed|forbidden' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Retail iOS archive::%s\n' "$failure"; done
+            exit 1
+          fi
+          printf '::notice title=Retail archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/retail-device/BUILD.json")"

@@ -28,6 +28,7 @@ var _trial := false
 var _original := false
 var _clear_armed := false
 var _touch := -1
+var _launcher_mouse := false
 var _live_tint: Color
 var _chapter := ""
 var _conversation := ""
@@ -81,7 +82,7 @@ func _build_editor() -> void:
 		if _trial:
 			_preview.choose(index)
 		elif not _original and _mode == "text":
-			var choices: Array = _selected_node().get("choices", [])
+			var choices: Array = Patch.choices_at(_selected_node())
 			if index < choices.size():
 				_picked("field", choices[index]["id"])
 	)
@@ -175,7 +176,7 @@ func _select_from_live() -> void:
 
 func _choice_options() -> Array:
 	var entries := [{"id": "", "label": "正文"}]
-	for choice: Dictionary in _selected_node().get("choices", []):
+	for choice: Dictionary in Patch.choices_at(_selected_node()):
 		entries.append({"id": choice["id"], "label": "选项 · " + _snippet(choice["text"])})
 	return entries
 
@@ -190,7 +191,7 @@ func _catalog() -> void:
 	var rows := _nodes()
 	if not rows.is_empty() and _selected_node().is_empty():
 		_node = rows[0]["id"]
-	if not _choice.is_empty() and Patch.find_record(_selected_node().get("choices", []), _choice).is_empty():
+	if not _choice.is_empty() and Patch.find_record(Patch.choices_at(_selected_node()), _choice).is_empty():
 		_choice = ""
 	_drawer.replace_options("chapter", _id_options(chapters), _chapter)
 	_drawer.replace_options("conversation", _id_options(conversations), _conversation)
@@ -220,7 +221,7 @@ func _selected_node() -> Dictionary:
 func _stored_value() -> String:
 	var slot := _selected_node()
 	if not _choice.is_empty():
-		slot = Patch.find_record(slot.get("choices", []), _choice)
+		slot = Patch.find_record(Patch.choices_at(slot), _choice)
 	return slot.get("text", "")
 
 
@@ -497,10 +498,14 @@ func close_editor() -> void:
 	get_tree().paused = false
 
 
+func _keyboard_height() -> int:
+	return DisplayServer.virtual_keyboard_get_height() if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD) else 0
+
+
 func _usable_rect() -> Rect2:
 	var area := MobileLayout.safe_rect(_entry).grow(-MobileLayout.EDGE)
 	if _open and MobileLayout.enabled:
-		var pixels := DisplayServer.virtual_keyboard_get_height()
+		var pixels := _keyboard_height()
 		if pixels > 0:
 			var scale_y := maxf(get_window().get_screen_transform().get_scale().y, 0.01)
 			var bottom := _entry.get_viewport_rect().end.y - float(pixels) / scale_y
@@ -518,7 +523,7 @@ func _fit() -> void:
 	_entry.position = Vector2(area.get_center().x - _entry.size.x / 2.0, area.position.y)
 	if _drawer == null or not _open:
 		return
-	var compact := MobileLayout.enabled and DisplayServer.virtual_keyboard_get_height() > 0
+	var compact := MobileLayout.enabled and _keyboard_height() > 0
 	_drawer.set_keyboard_compact(compact)
 	_drawer.fit_touch()
 	_back.reset_size()
@@ -536,32 +541,43 @@ func _fit() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _open:
-		if event.is_action_pressed("ui_cancel") and not event.is_echo():
-			get_viewport().set_input_as_handled()
-			if _trial:
-				_end_trial()
-			elif DisplayServer.virtual_keyboard_get_height() > 0:
-				_drawer.hide_keyboard()
-			else:
-				close_editor()
-		return
-	if not _entry.visible or not MobileLayout.enabled:
-		return
-	# Reserve just the launcher rectangle before either mobile movement implementation
-	# can interpret this touch. Every other gameplay event is left to the existing code.
-	if event is InputEventScreenTouch:
-		if event.pressed and _touch < 0 and _entry.get_global_rect().has_point(event.position):
-			_touch = event.index
-			get_viewport().set_input_as_handled()
-		elif not event.pressed and event.index == _touch:
-			_touch = -1
-			get_viewport().set_input_as_handled()
-			if not event.canceled and _entry.get_global_rect().has_point(event.position):
-				open_editor.call_deferred()
-	elif event is InputEventScreenDrag and event.index == _touch:
+	if MobileLayout.enabled and _owns_launcher_input(event):
 		get_viewport().set_input_as_handled()
+		return
+	if _open and event.is_action_pressed("ui_cancel") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		if _trial:
+			_end_trial()
+		elif _keyboard_height() > 0:
+			_drawer.hide_keyboard()
+		else:
+			close_editor()
 
+
+func _launcher_hit(point: Vector2) -> bool:
+	return _entry.visible and _entry.get_global_rect().has_point(point)
+
+
+func _owns_launcher_input(event: InputEvent) -> bool:
+	# Godot can send the emulated mouse pair ahead of the native screen pair.
+	# Let only the native release activate, so a cancelled touch never opens it.
+	if MobileLayout.is_emulated_mouse(event):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			var owned := _launcher_hit(event.position) if event.pressed else _launcher_mouse
+			_launcher_mouse = owned and event.pressed
+			return owned
+		return _launcher_mouse and event is InputEventMouseMotion
+	if event is InputEventScreenTouch:
+		if event.pressed and _launcher_hit(event.position):
+			if _touch < 0:
+				_touch = event.index
+			return true
+		if not event.pressed and event.index == _touch:
+			_touch = -1
+			if not event.canceled and _launcher_hit(event.position):
+				open_editor.call_deferred()
+			return true
+	return event is InputEventScreenDrag and event.index == _touch
 
 func _unhandled_input(_event: InputEvent) -> void:
 	if _open:
