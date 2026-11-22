@@ -76,8 +76,24 @@ def file_sha256(path: Path) -> str:
 
 
 def configure_bridge(text: str) -> str:
-    """The Files bridge block for a preset that keeps its own identity: the retail app."""
-    return export_presets.set_option(text, "iOS", "plugins/WISAuthorFiles", True)
+    """The Files bridge block for a preset that keeps its own identity: the retail app.
+
+    Godot scans `*.gdip` beside the Xcode project; the plugin's own files must not be
+    packed as resources (the author preset excludes them the same way).
+    """
+    preset = export_presets.parse(text)["iOS"]
+    text = export_presets.set_option(text, "iOS", "plugins/WISAuthorFiles", True)
+    header = f"[preset.{preset.index}]"
+    start = text.index(header) + len(header)
+    end = text.index("\n[", start)
+    excludes = [p.strip() for p in preset.exclude_filter.split(",") if p.strip()]
+    if "ios/plugins/*" not in excludes:
+        excludes.append("ios/plugins/*")
+    segment, count = re.subn(r'^exclude_filter=.*$', f'exclude_filter={json.dumps(",".join(excludes))}',
+                             text[start:end], flags=re.MULTILINE)
+    if count != 1:
+        raise ValueError("Cannot configure the retail iOS resource selection")
+    return text[:start] + segment + text[end:]
 
 
 def compile_files_bridge(tree: Path, *, simulator: bool) -> None:
@@ -94,9 +110,6 @@ def compile_files_bridge(tree: Path, *, simulator: bool) -> None:
                         "-c", BRIDGE / "FilesBridge.mm", "-o", object_file], check=True)
         subprocess.run(["xcrun", "libtool", "-static", "-o", destination / "libWISAuthorFiles.a", object_file], check=True)
     shutil.copyfile(BRIDGE / "FilesBridge.gdip", destination / "FilesBridge.gdip")
-    # Evidence for the release check: which bridge source this slice was built from.
-    manifest = {"source_sha256": file_sha256(BRIDGE / "FilesBridge.mm")}
-    (destination / "BUNDLE.json").write_text(json.dumps(manifest) + "\n", encoding="utf-8")
 
 
 def verify_pack(pack: Path) -> None:
