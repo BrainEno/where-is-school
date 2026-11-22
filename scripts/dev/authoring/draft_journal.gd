@@ -66,7 +66,7 @@ func _slot(index: int) -> String:
 static func write_checked(path: String, content: String) -> Error:
 	var bytes := content.to_utf8_buffer()
 	if bytes.size() > Patch.MAX_BYTES:
-		return ERR_FILE_TOO_BIG
+		return ERR_INVALID_PARAMETER
 	var absolute := ProjectSettings.globalize_path(path)
 	var result := DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())
 	if result != OK:

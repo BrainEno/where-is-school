@@ -50,12 +50,14 @@ static func find_record(rows: Array, id: String) -> Dictionary:
 
 
 static func can_insert(node: Dictionary) -> bool:
-	return not node.is_empty() and node.get("choices", []).is_empty() \
+	var choices: Variant = node.get("choices", [])
+	return not node.is_empty() and (choices == null or (choices is Array and choices.is_empty())) \
 		and not node.has("check") and not node.has("conditions") and not node.has("requires")
 
 
 static func can_add_choice(node: Dictionary) -> bool:
-	return not node.is_empty() and not node.get("choices", []).is_empty() \
+	var choices: Variant = node.get("choices")
+	return choices is Array and not choices.is_empty() \
 		and not node.has("next") and not node.has("check") \
 		and not node.has("conditions") and not node.has("requires")
 
