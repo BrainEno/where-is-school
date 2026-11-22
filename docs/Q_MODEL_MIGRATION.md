@@ -16,7 +16,10 @@ Owner 已明确确认：**new-Q 是 ChatGPT 为本项目生成的原创 Q，并�
 | 迁移时的无损整理基准（`prepare_base()`） | 1,004,268 | `be670a4056f51db612653a868bff6d701a968d4b1ab19d85cafad55de92b46f1` |
 | 首次独立头部精修（历史） | 992,760 | `28c9279e45ffce7e895ae00aadb036bcfa99105c9063d3927bda73122fd01293` |
 | 序章近景精修前（`0ac97d7`） | 992,760 | `c290e795e2a48e4bdb8fff78c65b0b12d34b4b93aeb9ed22e7962cb5e784d250` |
-| `assets/models/q/new-Q.glb`（序章近景精修） | 992,764 | `274a2da481523189723ee808490295174e11c654e979c6f24a57a5c5987247cc` |
+| B / Q 局部精修前（`0230efb`，保留 #329） | 992,764 | `274a2da481523189723ee808490295174e11c654e979c6f24a57a5c5987247cc` |
+| `assets/models/q/new-Q.glb`（短发与五官局部精修） | 992,760 | `96141f7677de7e3747702ab6dd92687ff0b3870f20d465b3932430ef4f05a7f3` |
+
+[本轮头部编辑](../art/character_models/sculpt/README.md)接在 #329 的近景雕刻之后，仅替换指定头部表面的位置与法线。原始批准文件、绑定、13 个形变的偏移、6 段动作和原游戏镜头不变。
 
 源上传 commit `f9aa19d4fa8ad56b0e4d2e46c48c799d10ffbb42`，blob
 `0d71fcf65cf76fa7abe7124cba7f74fbfa02efb9`。初始开发基线为

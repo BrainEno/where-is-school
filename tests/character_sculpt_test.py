@@ -35,6 +35,21 @@ DETAIL_MESHES = {
     'court': {FACE['court'], 'small_detail'},
     'b': {FACE['b'], 'b_brows_and_crease'},
 }
+# Final rest-space displacement budgets, in metres. These surfaces alone may
+# move. In particular material-batched B hands, eyes and glasses are excluded.
+BQ_BOUNDS = {
+    'b': {('Face and neck', 'b_skin'): .0035,
+          ('b_brows_and_crease', 'b_brows_and_crease'): .007,
+          ('b_swept_silver', 'b_swept_silver'): .006},
+    'q': {('Q_Eyes', 'Q_Mat_Sclera'): .003, ('Q_Eyes', 'Q_Mat_Iris'): .003,
+          ('Q_Eyes', 'Q_Mat_Pupil'): .003, ('Q_Hair', 'Q_Mat_Hair'): .017,
+          ('Q_Head', 'Q_Mat_Skin'): .004, ('Q_Head', 'Q_Mat_Hair'): .0045,
+          ('Q_Head', 'Q_Mat_MouthInner'): .0035},
+}
+
+
+def snapshot(ref, path):
+    return subprocess.check_output(['git', 'show', f'{ref}:{path}'], cwd=ROOT)
 
 
 def stream_bytes(doc, data, index):
@@ -63,11 +78,10 @@ def read(doc, data, index):
 class HeadSculpts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.bases = {role: subprocess.check_output(['git','show',f'{sculpt.BASE}:{sculpt.historic_path(role)}'],cwd=ROOT)
-                     for role in sculpt.RUNTIME}
-        cls.review_bases = {role: subprocess.check_output(
-                                ['git','show',f'{sculpt.REVIEW_BASE}:{sculpt.historic_path(role)}'],cwd=ROOT)
-                            for role in sculpt.RUNTIME}
+        cls.bases = {role: snapshot(sculpt.BASE, sculpt.historic_path(role)) for role in sculpt.RUNTIME}
+        cls.review_bases = {role: snapshot(sculpt.REVIEW_BASE, sculpt.historic_path(role)) for role in sculpt.RUNTIME}
+        cls.before_polish = {role: snapshot(sculpt.BQ_POLISH_BASE, path) for role, path in sculpt.RUNTIME.items()}
+        cls.before_closeup = snapshot(sculpt.Q_CLOSEUP_BASE, sculpt.RUNTIME['q'])
         cls.outputs = {role:(ROOT/path).read_bytes() for role,path in sculpt.RUNTIME.items()}
         cls.layers = sculpt.read_layers()
 
@@ -177,7 +191,10 @@ class HeadSculpts(unittest.TestCase):
         for role, base in self.review_bases.items():
             with self.subTest(role=role):
                 a, ab = decode(base)
-                b, bb = decode(self.outputs[role])
+                # This is the second-pass contract, not the later close-up or
+                # B/Q polish. All other final outputs must still meet it.
+                checkpoint = {'q': self.before_closeup, 'b': self.before_polish['b']}
+                b, bb = decode(checkpoint.get(role, self.outputs[role]))
                 changed = set()
                 for (slot, name, p), (slot2, name2, q) in zip(
                         sculpt.primitives(a), sculpt.primitives(b), strict=True):
@@ -196,9 +213,8 @@ class HeadSculpts(unittest.TestCase):
                 self.assertEqual(changed, DETAIL_MESHES[role])
 
     def test_q_closeup_refines_only_face_depth_on_the_integrated_model(self):
-        old = subprocess.check_output(['git', 'show', f'{sculpt.Q_CLOSEUP_BASE}:{sculpt.RUNTIME["q"]}'], cwd=ROOT)
-        a, ab = decode(old)
-        b, bb = decode(self.outputs['q'])
+        a, ab = decode(self.before_closeup)
+        b, bb = decode(self.before_polish['q'])
         self.assertEqual({k: v for k, v in a.items() if k != 'accessors'},
                          {k: v for k, v in b.items() if k != 'accessors'})
         face_streams = []
@@ -223,6 +239,53 @@ class HeadSculpts(unittest.TestCase):
         for idx, (x, y) in enumerate(zip(a['accessors'], b['accessors'], strict=True)):
             if idx not in face_streams:
                 self.assertEqual(x, y)
+
+    def test_bq_polish_changes_only_the_intended_indexed_head_surfaces(self):
+        for role, before in self.before_polish.items():
+            with self.subTest(role=role):
+                if role not in BQ_BOUNDS:
+                    self.assertEqual(self.outputs[role], before)
+                    continue
+                a, ab = decode(before)
+                b, bb = decode(self.outputs[role])
+                self.assertEqual({k: v for k, v in a.items() if k != 'accessors'},
+                                 {k: v for k, v in b.items() if k != 'accessors'})
+                edited = set()
+                allowed = set()
+                for slot, name, part in sculpt.primitives(a):
+                    surface = (name, a['materials'][part['material']]['name'])
+                    if surface not in BQ_BOUNDS[role]:
+                        continue
+                    with self.subTest(slot=slot, surface=surface):
+                        edited.add(surface)
+                        xyz = part['attributes']['POSITION']
+                        allowed.update((xyz, part['attributes']['NORMAL']))
+                        x, y = read(a, ab, xyz), read(b, bb, xyz)
+                        delta = np.linalg.norm(y - x, axis=1)
+                        self.assertGreater(delta.max(), .001)
+                        self.assertLessEqual(delta.max(), BQ_BOUNDS[role][surface])
+                        self.assertTrue((x[delta > 2e-7, 1] > HEAD_FLOOR[role]).all())
+                        tri = read(a, ab, part['indices']).reshape(-1, 3)
+                        n0, n1 = (np.cross(v[tri[:, 1]] - v[tri[:, 0]], v[tri[:, 2]] - v[tri[:, 0]])
+                                  for v in (x, y))
+                        area = np.linalg.norm(n0, axis=1)
+                        stable = area > 1e-9
+                        self.assertTrue((np.linalg.norm(n1[stable], axis=1) > .4 * area[stable]).all())
+                        self.assertTrue((np.sum(n0[stable] * n1[stable], axis=1) > 0.).all())
+                self.assertEqual(edited, BQ_BOUNDS[role].keys())
+                # Mask only the sculpted position/normal streams. Index, morph,
+                # paint, rig, action data and the whole rest of the BIN stay exact.
+                masked = bytearray(bb)
+                for i, (x, y) in enumerate(zip(a['accessors'], b['accessors'], strict=True)):
+                    if i not in allowed:
+                        self.assertEqual(x, y)
+                        continue
+                    bounds = {'min', 'max'}
+                    self.assertEqual({k: v for k, v in x.items() if k not in bounds},
+                                     {k: v for k, v in y.items() if k not in bounds})
+                    start, end = sculpt.span(a, i)
+                    masked[start:end] = ab[start:end]
+                self.assertEqual(ab, masked)
 
     def test_details_keep_every_supported_expression_on_the_previous_rig(self):
         for role, base in self.review_bases.items():
