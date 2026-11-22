@@ -1,24 +1,24 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/dev/folded_drum/preview.gd" id="1_preview"]
 [ext_resource type="PackedScene" path="res://scenes/dev/folded_drum/folded_drum.tscn" id="2_building"]
-[ext_resource type="Shader" path="res://scenes/dev/folded_drum/card_stock.gdshader" id="3_card"]
 
 [sub_resource type="Environment" id="Environment_studio"]
 background_mode = 1
 background_color = Color(0.236, 0.297, 0.327, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.76, 0.81, 0.93, 1)
-ambient_light_energy = 0.57
+ambient_light_color = Color(0.86, 0.9, 0.98, 1)
+ambient_light_energy = 0.44
 reflected_light_source = 2
 
-[sub_resource type="ShaderMaterial" id="Material_table"]
-shader = ExtResource("3_card")
-shader_parameter/pigment = Color(0.223, 0.278, 0.301, 1)
+[sub_resource type="StandardMaterial3D" id="Material_table"]
+specular_mode = 2
+albedo_color = Color(0.205, 0.254, 0.278, 1)
+roughness = 1.0
 
 [sub_resource type="PlaneMesh" id="Mesh_table"]
 material = SubResource("Material_table")
-size = Vector2(360, 360)
+size = Vector2(1800, 1800)
 
 [node name="FoldedDrumPreview" type="Node3D"]
 script = ExtResource("1_preview")
@@ -33,8 +33,8 @@ mesh = SubResource("Mesh_table")
 
 [node name="WarmKey" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-48, -45, 0)
-light_color = Color(1, 0.943, 0.836, 1)
-light_energy = 1.06
+light_color = Color(1, 0.97, 0.91, 1)
+light_energy = 0.78
 light_angular_distance = 0.75
 shadow_enabled = true
 shadow_bias = 0.054
@@ -45,14 +45,14 @@ directional_shadow_max_distance = 71.0
 [node name="SkyFill" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-29, 142, 0)
 light_color = Color(0.74, 0.84, 1, 1)
-light_energy = 0.33
+light_energy = 0.24
 
 [node name="FoldedDrum" parent="." instance=ExtResource("2_building")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(18.026, 25.106, 24.712)
-rotation_degrees = Vector3(-31, 38, 0)
+position = Vector3(20.787, 23.901, 26.373)
+rotation_degrees = Vector3(-30.5, 41, 0)
 current = true
 fov = 42.0
 near = 0.20
-far = 240.0
+far = 960.0

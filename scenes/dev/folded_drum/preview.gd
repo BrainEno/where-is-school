@@ -3,9 +3,9 @@ extends Node3D
 
 # Focus in world units; azimuth and elevation in degrees; distance from focus.
 const VIEWS := [
-	{ "focus": Vector3(-1.50, 6.05, -0.28), "orbit": Vector3(38, 31, 37.0) },
-	{ "focus": Vector3(-1.22, 5.70, -0.95), "orbit": Vector3(193, 45, 35.0) },
-	{ "focus": Vector3(-0.68, 4.98, 3.54), "orbit": Vector3(18, 14, 23.5) },
+	{ "focus": Vector3(-1.40, 3.98, 0.85), "orbit": Vector3(41, 30.5, 39.25) },
+	{ "focus": Vector3(-1.35, 2.30, -1.30), "orbit": Vector3(216, 47, 41.0) },
+	{ "focus": Vector3(-1.05, 4.55, 2.42), "orbit": Vector3(14, 23.4, 32.0) },
 ]
 
 var _focus: Vector3

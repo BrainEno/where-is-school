@@ -28,7 +28,11 @@ func _review() -> void:
 
 	var scene := PREVIEW.instantiate()
 	root.add_child(scene)
-	var aabb := _test_meshes(scene.get_node("FoldedDrum"))
+	var building: Node3D = scene.get_node("FoldedDrum")
+	var aabb := _test_meshes(building)
+	var screen: MeshInstance3D = building.get_node("ScreenWing/ScreenWallAndFoldedBays")
+	_expect((screen.global_transform * screen.get_aabb()).end.z < 3.41,
+		"the side return must stay behind the +Z facade's ribs")
 	_check_tube(scene, "LongTube")
 	_check_tube(scene, "ShortTube")
 	var camera: Camera3D = scene.get_node("Camera3D")

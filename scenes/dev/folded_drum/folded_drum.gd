@@ -180,15 +180,17 @@ func _clip_x(points: Array[Vector2], edge: float, sign_x: float) -> Array[Vector
 
 func _side(parent: Node3D) -> void:
 	var wall := CardMesh.new()
-	wall.box(Vector3(0.03, 4.97, -1.83), Vector3(13.48, 5.53, 3.57), &"ink")
-	wall.box(Vector3(0.00, 0.93, -1.83), Vector3(13.17, 1.86, 3.36), &"shade")
+	# The corner tower closes the join. Keep the side's solid return behind the
+	# front facade so it cannot mask the last ribs of the +Z elevation.
+	wall.box(Vector3(0.39, 4.97, -1.83), Vector3(12.76, 5.53, 3.57), &"ink")
+	wall.box(Vector3(0.35, 0.93, -1.83), Vector3(12.46, 1.86, 3.36), &"shade")
 	for i: int in 4:
 		var y: float = FLOORS[i] if i < FLOORS.size() else EAVE
-		wall.box(Vector3(0.02, y, -1.44), Vector3(13.64, 0.27, 4.03), &"ivory")
-		wall.box(Vector3(0.02, y + 0.14, 0.48), Vector3(13.59, 0.05, 0.26), &"chalk")
+		wall.box(Vector3(0.28, y, -1.44), Vector3(13.12, 0.27, 4.03), &"ivory")
+		wall.box(Vector3(0.28, y + 0.14, 0.48), Vector3(13.11, 0.05, 0.26), &"chalk")
 	for i: int in FLOORS.size():
 		var y: float = FLOORS[i]
-		_screen(wall, -6.34, -0.88 - i * 0.19, y + 0.16, y + 1.59, 22)
+		_screen(wall, -6.16, -0.88 - i * 0.19, y + 0.16, y + 1.59, 22)
 		for j: int in 4:
 			var x := 0.11 + j * 1.65
 			wall.box(Vector3(x + 0.72, y + 0.88, 0.031), Vector3(1.44, 1.40, 0.16),
@@ -368,7 +370,9 @@ func _returns(parent: Node3D) -> void:
 		var z := -6.90 + i * 2.05
 		rear.box(Vector3(-9.06, 4.75, z), Vector3(0.091, 1.39, 1.66), &"glass")
 		rear.box(Vector3(-9.13, 4.02, z), Vector3(0.29, 0.11, 1.73), &"cream")
-	rear.box(Vector3(-6.04, 1.42, -9.73), Vector3(2.23, 2.53, 0.20), &"blue")
+	rear.box(Vector3(-6.04, 1.43, -9.74), Vector3(2.47, 2.68, 0.16), &"cut")
+	rear.box(Vector3(-6.04, 1.42, -9.83), Vector3(2.23, 2.52, 0.08), &"blue")
+	rear.box(Vector3(-6.04, 1.41, -9.88), Vector3(0.047, 2.51, 0.028), &"recess")
 	rear.box(Vector3(-4.15, 0.22, -10.04), Vector3(6.34, 0.44, 0.74), &"cream")
 	rear.box(Vector3(-4.48, 0.061, -10.49), Vector3(6.95, 0.12, 0.30), &"dark_teal")
 	rear.commit(parent, "QuietServiceReturns", _palette)
