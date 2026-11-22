@@ -2,8 +2,8 @@ extends RefCounted
 ## Two checked slots. A torn write to the older slot cannot erase the last good draft.
 ## Not a save slot and not part of the normal game session/reset path.
 
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
-const DIRECTORY := "user://authoring"
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const DIRECTORY := "user://story_editor"
 
 var _directory: String
 var _sequence := 0

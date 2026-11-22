@@ -60,8 +60,15 @@ jobs:
           source tools/ci_run_check.sh
           run_check controls 90 godot --headless --path . \
             --script res://tests/mobile_controls_test.gd -- --mobile-preview || true
+          XDG_DATA_HOME="$RUNNER_TEMP/mobile-opening-user-data" \
+            run_check mobile_opening 75 godot --headless --path . \
+              --script res://tests/mobile_pack_boot.gd -- --mobile-preview || true
+          if (( status == 0 )); then
+            verdict="$(grep '^PASS: MOBILE_OPENING_TOUCH_OK ' "$CI_LOG_DIR/mobile_opening.log")"
+            printf '::notice title=New game to mobile controls::%s\n' "$verdict"
+          fi
           run_check_summary
-      - name: Render the joystick, return prompt and resulting title
+      - name: Render the joystick, compact pause, return prompt and resulting title
         id: capture
         if: ${{ !cancelled() }}
         shell: bash
@@ -80,7 +87,7 @@ jobs:
           {
             printf 'source_sha=%s\n' "$(git rev-parse HEAD)"
             grep '^MOBILE_CAPTURE ' ../mobile_capture.log
-            sha256sum 01_gameplay_joystick_and_return.png 02_return_confirmation.png 03_main_menu_after_return.png
+            sha256sum 01_gameplay_joystick_and_return.png 02_return_confirmation.png 03_main_menu_after_return.png 04_compact_pause_menu.png
           } | tee CAPTURE.txt
           while IFS= read -r line; do printf '::notice title=Mobile screenshot evidence::%s\n' "$line"; done < CAPTURE.txt
           # A small same-frame JPEG, not a replacement for the original PNG. GitHub
@@ -109,6 +116,9 @@ jobs:
       - name: Relay main-menu review preview
         if: ${{ !cancelled() && steps.capture.outcome == 'success' }}
         run: bash "$RUNNER_TEMP/publish-mobile-preview.sh" 03_main_menu_after_return
+      - name: Relay compact pause review preview
+        if: ${{ !cancelled() && steps.capture.outcome == 'success' }}
+        run: bash "$RUNNER_TEMP/publish-mobile-preview.sh" 04_compact_pause_menu
       - name: Upload input and layout results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

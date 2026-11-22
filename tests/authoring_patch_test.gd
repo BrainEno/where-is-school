@@ -2,9 +2,9 @@ extends SceneTree
 ## No new canonical content: fixture operations exercise the same graph parser as live data.
 
 const Harness := preload("res://tests/test_harness.gd")
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
-const Journal := preload("res://scripts/dev/authoring/draft_journal.gd")
-const Store := preload("res://scripts/dev/authoring/draft_store.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const Journal := preload("res://scripts/story_editor/draft_journal.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
 const CHAPTER := "prologue"
 const FIXTURE := "演练用文字。\n第二行。"
 

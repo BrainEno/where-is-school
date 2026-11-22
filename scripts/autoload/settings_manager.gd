@@ -28,6 +28,7 @@ extends Node
 
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const InputSettings := preload("res://scripts/save/input_settings.gd")
 signal setting_changed(key: StringName)
 signal bindings_changed
 signal input_device_changed(device: StringName)
@@ -43,6 +44,9 @@ const SECTION_DISPLAY := SettingsStore.SECTION_DISPLAY
 const SECTION_INPUT := "input"
 const SECTION_META := "settings"
 const SECTION_CONTROLS := "controls"
+## Author tools that a player's copy may carry (issue: the story editor in the iPhone build).
+## `[authoring] story_editor` is off unless the player turns it on.
+const SECTION_AUTHORING := "authoring"
 const FORMAT_VERSION := 1
 
 const TEXT_SIZES: Array[StringName] = [&"standard", &"large", &"largest"]
@@ -78,23 +82,23 @@ const UI_REFERENCE_SIZE := SettingsOutputs.UI_REFERENCE_SIZE
 ## The smallest logical size the layout is verified at; see `SettingsOutputs`.
 const UI_MINIMUM_LOGICAL := SettingsOutputs.UI_MINIMUM_LOGICAL
 
-const DEVICE_KEYBOARD := InputBindings.DEVICE_KEYBOARD
-const DEVICE_MOUSE := InputBindings.DEVICE_MOUSE
-const DEVICE_TOUCH := InputBindings.DEVICE_TOUCH
-const DEVICE_GAMEPAD := InputBindings.DEVICE_GAMEPAD
+## The binding rules live in `InputSettings` (and `InputBindings`); these are its constants
+## under the names callers have always used.
+const DEVICE_KEYBOARD := InputSettings.DEVICE_KEYBOARD
+const DEVICE_MOUSE := InputSettings.DEVICE_MOUSE
+const DEVICE_TOUCH := InputSettings.DEVICE_TOUCH
+const DEVICE_GAMEPAD := InputSettings.DEVICE_GAMEPAD
 
-## The binding rules live in `InputBindings` (issue #223); these are its constants under
-## the names callers have always used.
 ## Everything the settings screen lets the player rebind, in the order it lists them.
-const REBINDABLE_ACTIONS: Array[StringName] = InputBindings.REBINDABLE_ACTIONS
+const REBINDABLE_ACTIONS: Array[StringName] = InputSettings.REBINDABLE_ACTIONS
 ## Pairs that may share an input because they never listen at the same time.
-const SHARED_PAIRS: Array = InputBindings.SHARED_PAIRS
+const SHARED_PAIRS: Array = InputSettings.SHARED_PAIRS
 ## Rebinding never offers these: Esc cancels a capture, so it cannot be captured.
-const RESERVED_KEYS: Array[int] = InputBindings.RESERVED_KEYS
+const RESERVED_KEYS: Array[int] = InputSettings.RESERVED_KEYS
 ## Actions whose keyboard key is Esc and stays Esc.
-const KEYBOARD_LOCKED_ACTIONS: Array[StringName] = InputBindings.KEYBOARD_LOCKED_ACTIONS
+const KEYBOARD_LOCKED_ACTIONS: Array[StringName] = InputSettings.KEYBOARD_LOCKED_ACTIONS
 ## Xbox-style names, which is what SDL reports for most pads.
-const JOY_BUTTON_NAMES: Dictionary = InputBindings.JOY_BUTTON_NAMES
+const JOY_BUTTON_NAMES: Dictionary = InputSettings.JOY_BUTTON_NAMES
 
 var _text_size: StringName = DEFAULT_TEXT_SIZE
 var _text_speed: StringName = DEFAULT_TEXT_SPEED
@@ -102,13 +106,13 @@ var _auto_speed: StringName = DEFAULT_AUTO_SPEED
 var _skip_scope: StringName = DEFAULT_SKIP_SCOPE
 var _sprint_mode: StringName = DEFAULT_SPRINT_MODE
 var _ui_scale: StringName = DEFAULT_UI_SCALE
+var _story_editor := false
 var _volumes: Dictionary = {}
 ## The bus levels `default_bus_layout.tres` sets, read once: 100 % means "as mixed".
 var _bus_trim: Dictionary = {}
-## action -> Array[InputEvent], as `project.godot` declares them.
-var _default_events: Dictionary = {}
+## The rebinding half: the input map, its defaults and the stored overrides.
+var _input_settings: InputSettings
 var _load_problems: Array[String] = []
-var _device: StringName = DEVICE_KEYBOARD
 var _applying_scale := false
 var _applied_ui_scale := 1.0
 var _mobile_area := Rect2()
@@ -123,10 +127,13 @@ func _ready() -> void:
 	for key: StringName in VOLUME_KEYS:
 		_volumes[key] = DEFAULT_VOLUME
 	_capture_bus_trim()
-	_capture_default_bindings()
-	_ensure_ui_navigation()
+	_input_settings = InputSettings.new(
+		_write, _open, func() -> Array[String]: return _load_problems,
+		default_events, func() -> void: bindings_changed.emit()
+	)
+	_input_settings.prepare()
 	if MobileLayout.enabled:
-		_device = DEVICE_TOUCH
+		_input_settings.set_input_device(DEVICE_TOUCH)
 	# Safe insets can change on a 180-degree turn or when system bars reappear,
 	# without a resize event. Only the mobile path polls, and only four times a second.
 	set_process(MobileLayout.enabled)
@@ -207,6 +214,21 @@ func set_skip_scope(value: StringName) -> void:
 	_skip_scope = value
 	_store(SECTION_TEXT, "skip_scope", String(value))
 	setting_changed.emit(&"skip_scope")
+
+
+## The story editor switch. Off is the player's game: no launcher, no overlay and no
+## draft reads. On, the world offers 「剧情编辑」; drafts live in `user://story_editor/`, apart
+## from the save file.
+func is_story_editor_enabled() -> bool:
+	return _story_editor
+
+
+func set_story_editor_enabled(value: bool) -> void:
+	if value == _story_editor:
+		return
+	_story_editor = value
+	_store(SECTION_AUTHORING, "story_editor", value)
+	setting_changed.emit(&"story_editor")
 
 
 func get_sprint_mode() -> StringName:
@@ -320,187 +342,120 @@ func _process(delta: float) -> void:
 # --- Input ---------------------------------------------------------------------
 
 
+## The rebinding half lives in `InputSettings` (`scripts/save/input_settings.gd`): the
+## input map, its defaults and its stored overrides. These forward so the settings screen,
+## the menus and the tests keep one node to talk to.
+
 func get_input_device() -> StringName:
-	return _device
+	return _input_settings.get_input_device()
 
 
 func is_using_gamepad() -> bool:
-	return _device == DEVICE_GAMEPAD
+	return _input_settings.is_using_gamepad()
 
 
-## The last meaningful device event selects the prompt family. Mouse motion is included
-## so pointer users see click affordances; axis noise below the gameplay deadzone is ignored.
-## This only changes presentation state: it never replays or synthesizes an action.
 func _input(event: InputEvent) -> void:
-	_set_detected_device(InputBindings.detected_device(event, _device))
+	_input_settings.notice_device(event)
+	input_device_changed.emit(_input_settings.get_input_device())
 
 
 ## A disconnected active controller has no buttons to describe. Fall back immediately to
 ## the always-available keyboard; connecting a pad alone does not steal the active hand.
 func _on_joy_connection_changed(_device_id: int, connected: bool) -> void:
-	if not connected and _device == DEVICE_GAMEPAD:
-		_set_detected_device(DEVICE_TOUCH if MobileLayout.enabled else DEVICE_KEYBOARD)
-
-
-func _set_detected_device(device: StringName) -> void:
-	if device not in InputBindings.DEVICES:
-		return
-	if device == _device:
-		return
-	_device = device
-	input_device_changed.emit(device)
+	var before := _input_settings.get_input_device()
+	_input_settings.joy_connection_changed(connected, MobileLayout.enabled)
+	if _input_settings.get_input_device() != before:
+		input_device_changed.emit(_input_settings.get_input_device())
 
 
 ## For tests and explicit settings flows: select a presentation family without an event.
 func set_input_device(device: StringName) -> void:
-	_set_detected_device(device)
-
-
-## The defaults are what `project.godot` declares, read from the project settings rather
-## than from the live input map, which may already carry the player's rebinding.
-func _capture_default_bindings() -> void:
-	_default_events = InputBindings.project_defaults()
+	var before := _input_settings.get_input_device()
+	_input_settings.set_input_device(device)
+	if _input_settings.get_input_device() != before:
+		input_device_changed.emit(_input_settings.get_input_device())
 
 
 ## The default events of an action, as `project.godot` declares them.
 func default_events(action: StringName) -> Array:
-	var events: Array = []
-	for event: InputEvent in (_default_events.get(action, []) as Array):
-		events.append(event.duplicate())
-	return events
-
-
-## Godot's built-in menu actions get the pad's D-pad, A and B if the engine's defaults do
-## not already include them, so every menu can be driven from a controller.
-func _ensure_ui_navigation() -> void:
-	InputBindings.ensure_ui_navigation()
+	return _input_settings.default_events(action)
 
 
 func is_keyboard_event(event: InputEvent) -> bool:
-	return event is InputEventKey or event is InputEventMouseButton
+	return _input_settings.is_keyboard_event(event)
 
 
 func is_gamepad_event(event: InputEvent) -> bool:
-	return InputBindings.is_gamepad_event(event)
+	return _input_settings.is_gamepad_event(event)
 
 
-func _matches_device(event: InputEvent, device: StringName) -> bool:
-	if device == DEVICE_GAMEPAD:
-		return is_gamepad_event(event)
-	return event is InputEventKey
-
-
-## The event the settings screen shows and replaces for an action on a device: the first
-## key for the keyboard, the first button or stick direction for the pad.
+## The event the settings screen shows and replaces for an action on a device.
 func primary_event(action: StringName, device: StringName) -> InputEvent:
-	if not InputMap.has_action(action):
-		return null
-	for event: InputEvent in InputMap.action_get_events(action):
-		if _matches_device(event, device):
-			return event
-	return null
+	return _input_settings.primary_event(action, device)
 
 
 ## A short name for what triggers an action on a device: "E", "Space", "A", "D-pad ↑".
 func binding_label(action: StringName, device: StringName = &"") -> String:
-	var which := device if not String(device).is_empty() else _device
-	var event := primary_event(action, which)
-	if event == null and which == DEVICE_GAMEPAD:
-		event = primary_event(action, DEVICE_KEYBOARD)
-	if event == null:
-		return "—"
-	return event_label(event)
+	return _input_settings.binding_label(action, device)
 
 
 ## Instance spelling of `event_label`, for callers that only hold the node.
 func label_for_event(event: InputEvent) -> String:
-	return event_label(event)
+	return _input_settings.label_for_event(event)
 
 
 func get_rebindable_actions() -> Array[StringName]:
-	var out: Array[StringName] = []
-	for action: StringName in REBINDABLE_ACTIONS:
-		out.append(action)
-	return out
+	return _input_settings.get_rebindable_actions()
 
 
 ## A short name for an input: "E", "Space", "A", "D-pad ↑". See `InputBindings`.
 static func event_label(event: InputEvent) -> String:
-	return InputBindings.event_label(event)
+	return InputSettings.event_label(event)
 
 
 ## `key:69`, `mouse:1`, `joy_button:0`, `joy_axis:1:-`. Empty for anything else.
 static func encode_event(event: InputEvent) -> String:
-	return InputBindings.encode_event(event)
+	return InputSettings.encode_event(event)
 
 
 ## The inverse of `encode_event`, or null for anything that is not a valid binding.
 static func decode_event(text: String) -> InputEvent:
-	return InputBindings.decode_event(text)
+	return InputSettings.decode_event(text)
 
 
 ## Replaces the primary binding of `action` on the device the event belongs to.
 ## Returns `{ok, reason, conflict}`; `reason` is "unknown_action", "unsupported",
 ## "reserved" or "conflict" when the binding is refused, and nothing changes then.
 func rebind(action: StringName, event: InputEvent) -> Dictionary:
-	var checked := InputBindings.check_rebind(action, event)
-	var result := {
-		"ok": false, "reason": String(checked["reason"]), "conflict": checked["conflict"]
-	}
-	if not bool(checked["ok"]):
-		return result
-	var clean: InputEvent = checked["clean"]
-	var device := DEVICE_GAMEPAD if is_gamepad_event(clean) else DEVICE_KEYBOARD
-	InputBindings.apply_events(
-		action, InputBindings.events_with(action, clean, device, _matches_device)
-	)
-	_store_action(action)
-	bindings_changed.emit()
-	result["ok"] = true
+	var result := _input_settings.rebind(action, event)
+	if bool(result.get("ok", false)):
+		bindings_changed.emit()
 	return result
 
 
 ## Every rebindable action back to `project.godot`, and the stored overrides removed.
 func restore_default_bindings() -> void:
-	for action: StringName in REBINDABLE_ACTIONS:
-		_apply_events(action, default_events(action))
-	var config := _open()
-	if config.has_section(SECTION_INPUT):
-		config.erase_section(SECTION_INPUT)
-	_write(config)
+	_input_settings.restore_default_bindings()
 	bindings_changed.emit()
 
 
 ## Whether the settings screen offers this side of an action for rebinding.
 ## False for the keyboard side of the Esc actions; the settings screen shows them fixed.
 func can_rebind(action: StringName, device: StringName) -> bool:
-	if not REBINDABLE_ACTIONS.has(action):
-		return false
-	return device == DEVICE_GAMEPAD or not KEYBOARD_LOCKED_ACTIONS.has(action)
+	return _input_settings.can_rebind(action, device)
 
 
 ## True when an action's events are exactly its defaults.
 func is_default_binding(action: StringName) -> bool:
-	return _encoded(InputMap.action_get_events(action)) == _encoded(default_events(action))
+	return _input_settings.is_default_binding(action)
 
 
 func _apply_events(action: StringName, events: Array) -> void:
-	InputBindings.apply_events(action, events)
+	_input_settings.apply_events(action, events)
 
 
 func _encoded(events: Array) -> PackedStringArray:
-	return InputBindings.encoded(events)
-
-
-func _store_action(action: StringName) -> void:
-	var config := _open()
-	if is_default_binding(action):
-		if config.has_section_key(SECTION_INPUT, String(action)):
-			config.erase_section_key(SECTION_INPUT, String(action))
-	else:
-		config.set_value(SECTION_INPUT, String(action), _encoded(InputMap.action_get_events(action)))
-	config.set_value(SECTION_META, "version", FORMAT_VERSION)
-	_write(config)
+	return _input_settings.encoded(events)
 
 
 # --- Loading and saving ----------------------------------------------------------
@@ -523,6 +478,7 @@ func load_settings() -> void:
 	_skip_scope = DEFAULT_SKIP_SCOPE
 	_sprint_mode = DEFAULT_SPRINT_MODE
 	_ui_scale = DEFAULT_UI_SCALE
+	_story_editor = false
 	for key: StringName in VOLUME_KEYS:
 		_volumes[key] = DEFAULT_VOLUME
 	for action: StringName in REBINDABLE_ACTIONS:
@@ -536,6 +492,14 @@ func load_settings() -> void:
 			config, SECTION_CONTROLS, "sprint_mode", SPRINT_MODES, DEFAULT_SPRINT_MODE
 		)
 		_ui_scale = _read_choice(config, SECTION_DISPLAY, "ui_scale", UI_SCALES, DEFAULT_UI_SCALE)
+		if config.has_section_key(SECTION_AUTHORING, "story_editor"):
+			var stored: Variant = config.get_value(SECTION_AUTHORING, "story_editor")
+			if stored is bool:
+				_story_editor = stored
+			else:
+				_load_problems.append(
+					"[%s] story_editor = %s is not true or false" % [SECTION_AUTHORING, str(stored)]
+				)
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
 		_load_bindings(config)
@@ -562,16 +526,18 @@ func _read_volume(config: ConfigFile, key: String) -> int:
 
 
 ## Applies the stored `[input]` lists. Each is checked whole against the rules `rebind`
-## keeps (`InputBindings.load_section`), and a list that breaks one keeps the defaults.
+## keeps (`InputSettings.load_section`), and a list that breaks one keeps the defaults.
 func _load_bindings(config: ConfigFile) -> void:
-	InputBindings.load_section(config, SECTION_INPUT, default_events, _load_problems)
+	_input_settings.load_section(config)
 
 
 ## Back to every default. The language (`[display] locale`) is the player's and `Loc`'s,
 ## and stays. Used by the tests so one check never inherits another's preferences.
 func reset_to_defaults() -> void:
 	var config := _open()
-	for section: String in [SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_CONTROLS, SECTION_META]:
+	for section: String in [
+		SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_CONTROLS, SECTION_AUTHORING, SECTION_META
+	]:
 		if config.has_section(section):
 			config.erase_section(section)
 	if config.has_section_key(SECTION_DISPLAY, "ui_scale"):

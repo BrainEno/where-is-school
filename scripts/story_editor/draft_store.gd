@@ -2,8 +2,8 @@ extends RefCounted
 ## Author workspace: immutable shipped chapters, an operation log, and validated graphs.
 ## All mutations below build a candidate first. The runtime is never rebound to it.
 
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
-const Journal := preload("res://scripts/dev/authoring/draft_journal.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const Journal := preload("res://scripts/story_editor/draft_journal.gd")
 const UNDO_LIMIT := 24
 # Leave space for escaped journal/bridge envelopes and a separate unfinished field.
 const LOG_LIMIT := 640 * 1024

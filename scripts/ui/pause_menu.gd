@@ -32,53 +32,34 @@ signal closed
 # The notebook sits right under Resume, the thing most often opened from here; Settings
 # follows it (Down, Down, Enter from Resume) and the way out comes last.
 const ENTRIES: Array[StringName] = [&"resume", &"journal", &"settings", &"new_game", &"save_quit"]
+## Added after the five entries while Settings → Story editor is on. It is not part of
+## `ENTRIES`, so every existing order, focus walk and test keeps the five entries it knows.
+const STORY_ENTRY := &"story_editor"
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
+const ReturnPrompt := preload("res://scripts/ui/return_prompt.gd")
+const NewGameAttempt := preload("res://scripts/ui/new_game_attempt.gd")
 
-
-## The paused world behind a wash, and the sheet the menu is set on: dark, its right edge
-## cut by hand, an ember rule down the column's margin. It also stops clicks reaching the
-## world, as the plain backdrop did.
-class Sheet:
-	extends Control
-
-	var column_rect := Rect2()
-
-	func _init() -> void:
-		name = "Sheet"
-		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		mouse_filter = Control.MOUSE_FILTER_STOP
-
-	func _draw() -> void:
-		var view := size
-		draw_rect(Rect2(Vector2.ZERO, view), Color(MenuStyle.INK, 0.6))
-		var right := minf(column_rect.end.x + 90.0, view.x)
-		MenuStyle.draw_rough_slab(
-			self, Rect2(0.0, -8.0, right + 10.0, view.y + 16.0),
-			Color(MenuStyle.OCHRE, 0.12), 17, 12.0, false, true
-		)
-		MenuStyle.draw_rough_slab(
-			self, Rect2(0.0, -8.0, right, view.y + 16.0), Color(MenuStyle.SHEET, 0.96), 13,
-			8.0, false, true
-		)
-		if column_rect.size.y > 0.0:
-			var x := column_rect.position.x - 16.0
-			draw_line(
-				Vector2(x, column_rect.position.y + 6.0), Vector2(x, column_rect.end.y - 4.0),
-				Color(MenuStyle.EMBER, 0.85), 2.0
-			)
 
 var _factor := 1.0
 var _root: Control = null
 var _page: Control = null
 var _column: VBoxContainer = null
 var _touch_scroll: ScrollContainer
+var _entry_grid: GridContainer
 var _heading: Label = null
 ## The last save, under the heading: "Last saved: Corridor · 14:03".
 var _status: Label = null
 ## Why Save and quit did not save, when it could not.
 var _notice: Label = null
-var _sheet: Sheet = null
+var _sheet: PauseSheet = null
 var _hint: Label = null
 var _entries: Dictionary = {}
+## The sixth entry's install and switch, created on first use (`sync_story_editor()`).
+var _story_editor: StoryEditorEntry = null
+## The return-to-title question, created on first use (`request_return_to_title()`).
+var _return_prompt: ReturnPrompt = null
+## The pending "new game" transaction, created on first use.
+var _new_game: NewGameAttempt = null
 var _settings_panel: SettingsPanel = null
 var _journal: JournalPanel = null
 ## True while the menu is open only as the notebook's frame (the notebook key during
@@ -90,16 +71,13 @@ var _was_paused := false
 var _previous_focus: Control = null
 ## What the open question is about: `new_game`, `return_save` or `return_checkpoint`.
 var _pending: StringName = &""
-## The new game that did not start, while the notice shows it. Kept as the report so a
-## language switch renders it again (`NewGameFailureText`).
-var _failure: Dictionary = {}
 
 
 func _ready() -> void:
 	name = "PauseMenu"
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_factor = UiTextScale.current(self)
+	_factor = MenuStyle.menu_text_scale(self)
 	_root = Control.new()
 	_root.name = "Root"
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -113,7 +91,8 @@ func _ready() -> void:
 	_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_page)
 	_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_sheet = Sheet.new()
+	_sheet = PauseSheet.new()
+	_sheet.compact = MobileLayout.enabled
 	_page.add_child(_sheet)
 	_column = VBoxContainer.new()
 	_column.name = "Column"
@@ -126,25 +105,26 @@ func _ready() -> void:
 	_status.name = "Status"
 	_column.add_child(_status)
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 22.0)
+	gap.custom_minimum_size = Vector2(0.0, 8.0 if MobileLayout.enabled else 22.0)
 	_column.add_child(gap)
+	if MobileLayout.enabled:
+		_entry_grid = GridContainer.new()
+		_entry_grid.name = "SecondaryEntries"
+		_entry_grid.add_theme_constant_override(&"h_separation", 6)
+		_entry_grid.add_theme_constant_override(&"v_separation", 4)
 	for id: StringName in ENTRIES:
-		var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
-		entry.name = String(id)
-		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
-		entry.pressed.connect(activate.bind(id))
-		_column.add_child(entry)
-		_entries[id] = entry
+		_entries[id] = _make_entry(id)
 	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
 	_notice.name = "Notice"
 	_notice.visible = false
 	_column.add_child(_notice)
 	_hint = MenuStyle.label("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
+	_hint.name = "Hint"
 	_page.add_child(_hint)
 
 	_settings_panel = SettingsPanel.new()
 	_root.add_child(_settings_panel)
-	_settings_panel.closed.connect(focus_entry.bind(&"settings"))
+	_settings_panel.closed.connect(_on_settings_closed)
 	_journal = JournalPanel.new()
 	_root.add_child(_journal)
 	_journal.closed.connect(_on_journal_closed)
@@ -163,12 +143,43 @@ func _ready() -> void:
 		settings.connect("bindings_changed", _refresh_texts)
 	MobileLayout.watch(_root, _fit)
 	if MobileLayout.enabled:
+		# The wrapped status is first measured before the scroll column has a width.
+		# Refit the card once that label (or a late notice) has been laid out.
+		_column.minimum_size_changed.connect(_fit_after_reflow, CONNECT_DEFERRED)
 		get_window().go_back_requested.connect(_on_mobile_back)
 	_refresh_texts()
+	# After the settings panel and the entries exist: a session started with the switch on
+	# shows the editor entry and installs the editor before the first pause.
+	sync_story_editor()
 
 
 func is_open() -> bool:
 	return _root != null and _root.visible
+
+
+## Installs the editor for this session when Settings → Story editor is on, and keeps the
+## sixth row in step with it. The install itself is `StoryEditorEntry`'s; this menu supplies
+## its own entry factory so the row cannot drift from the other five.
+func sync_story_editor() -> void:
+	if _story_editor == null:
+		_story_editor = StoryEditorEntry.new(get_tree().root, _make_story_entry,
+			_drop_story_entry, func() -> bool: return _entries.has(STORY_ENTRY))
+	_story_editor.sync(get_node_or_null(^"/root/Settings"))
+
+
+func get_story_editor() -> Node:
+	return _story_editor.installed() if _story_editor != null else null
+
+
+## Opens the editor on the running world, if it is installed.
+func open_story_editor() -> bool:
+	return _story_editor != null and _story_editor.open()
+
+
+## The editor entry, built on demand. A session that never turns the switch on neither
+## shows it nor pays for its text.
+func get_story_entry() -> Button:
+	return _entries.get(STORY_ENTRY) as Button
 
 
 func open() -> void:
@@ -182,10 +193,10 @@ func _open(show_page: bool) -> void:
 	_was_paused = get_tree().paused
 	_previous_focus = get_viewport().gui_get_focus_owner()
 	get_tree().paused = true
-	_factor = UiTextScale.current(self)
-	UiTextScale.apply(_root, _factor)
+	_factor = MenuStyle.menu_text_scale(self)
+	UiTextScale.apply(_column, _factor)
+	UiTextScale.apply(_hint, _factor)
 	_notice.hide()
-	_failure = {}
 	_refresh_texts()
 	_page.visible = show_page
 	_root.show()
@@ -255,7 +266,46 @@ func _on_journal_closed() -> void:
 		close()
 		return
 	_refresh_texts()
+	_fit()
 	focus_entry(&"journal")
+
+
+## One entry button, placed where the five canonical entries go: Resume alone above the
+## pair grid, everything else in it. The editor entry uses the same factory so it cannot
+## drift in size, wrap or focus behaviour.
+func _make_entry(id: StringName) -> Button:
+	var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
+	entry.name = String(id)
+	if _entry_grid != null:
+		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
+	entry.pressed.connect(activate.bind(id))
+	if _entry_grid == null or id == &"resume":
+		_column.add_child(entry)
+	else:
+		if _entry_grid.get_parent() == null:
+			_column.add_child(_entry_grid)
+		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_entry_grid.add_child(entry)
+	return entry
+
+
+## The editor's row: the same factory as the five entries, registered in the same map so
+## `_refresh_texts()`, the touch layout and `activate()` all treat it as an entry.
+func _make_story_entry() -> Button:
+	if _entries.has(STORY_ENTRY):
+		return _entries[STORY_ENTRY] as Button
+	var button := _make_entry(STORY_ENTRY)
+	_entries[STORY_ENTRY] = button
+	button.text = L10n.t("menu.story_editor")
+	return button
+
+
+func _drop_story_entry() -> void:
+	if not _entries.has(STORY_ENTRY):
+		return
+	var button := _entries[STORY_ENTRY] as Button
+	_entries.erase(STORY_ENTRY)
+	button.queue_free()
 
 
 func get_entry(id: StringName) -> Button:
@@ -295,6 +345,11 @@ func activate(id: StringName) -> void:
 			_settings_panel.open()
 		&"journal":
 			open_journal()
+		STORY_ENTRY:
+			# `close()` resets the tree's pause; the drawer's own pause is applied after, so
+			# the world never runs a frame between the menu and the drawer.
+			close()
+			open_story_editor()
 		&"new_game":
 			_pending = &"new_game"
 			_confirm.ask(
@@ -311,111 +366,65 @@ func _world() -> Node:
 
 
 ## The same question from the pause page and the mobile shortcut. No write on opening.
+## The question and its consequences are `ReturnPrompt`'s; the card that asks is this
+## menu's, so "keep playing" closes this menu and nothing else.
 func request_return_to_title() -> void:
-	if _confirm == null or _confirm.visible or _settings_panel.is_open() or _journal.is_open():
+	_ensure_return_prompt()
+	_return_prompt.ask(is_open(), _open.bind(false), get_entry(&"save_quit"))
+
+
+func _ensure_return_prompt() -> void:
+	if _return_prompt != null:
 		return
-	var session := get_node_or_null(^"/root/Session")
-	if session == null or not get_entry(&"save_quit").visible or session.call("is_changing_scene"):
-		return
-	if not is_open():
-		_open(false)
-	else:
-		_page.hide()
-	var status: Dictionary = session.call("get_save_status", _world())
-	_ask_return(status, bool(status.get("can_save_now", false)))
-
-
-func _ask_return(status: Dictionary, write: bool, warning: String = "") -> void:
-	_pending = &"return_save" if write else &"return_checkpoint"
-	var message := L10n.t("menu.confirm_return_save")
-	if not write:
-		message = L10n.t("menu.confirm_quit_checkpoint", {"caption": _caption(status)}) \
-			if status.get("ok", false) else L10n.t("menu.confirm_quit_no_save")
-	if not warning.is_empty():
-		message = warning + "\n\n" + message
-	_confirm.ask(message, L10n.t("menu.return_to_title"), L10n.t("menu.keep_playing"),
-		L10n.t("menu.confirm_heading_quit"))
-
-
-func _return_to_title(write: bool) -> void:
-	var session := get_node_or_null(^"/root/Session")
-	if session == null:
-		close()
-		return
-	var report: Dictionary = session.call("save_and_quit", write, _world())
-	if report.get("ok", false):
-		return # The scene, including this layer, has already left the tree.
-	var status: Dictionary = session.call("get_save_status", _world())
-	match String(report.get("reason", "")):
-		"save_failed":
-			# A second, explicit answer is required before leaving without a new save.
-			_ask_return(status, false, L10n.t("menu.confirm_quit_failed"))
-		"not_at_rest":
-			_ask_return(status, false)
-		_:
-			_ask_return(status, write and bool(status.get("can_save_now", false)),
-				L10n.t("menu.return_failed"))
+	_return_prompt = ReturnPrompt.new(_confirm, _page, close, _world)
 
 
 func _on_confirmed() -> void:
 	var pending := _pending
 	_pending = &""
-	match pending:
-		&"return_save", &"return_checkpoint":
-			_return_to_title(pending == &"return_save")
-		&"new_game":
-			_on_new_game_confirmed()
+	if pending == &"new_game":
+		_on_new_game_confirmed()
+		return
+	_ensure_return_prompt()
+	_return_prompt.pending = pending
+	_return_prompt.answer(true)
 
 
 func _on_cancelled() -> void:
 	var pending := _pending
 	_pending = &""
-	if pending == &"return_save" or pending == &"return_checkpoint":
-		close()
-	elif pending == &"new_game":
+	if pending == &"new_game":
 		focus_entry(&"new_game")
-
-
-func _on_new_game_confirmed() -> void:
-	var session := get_node_or_null(^"/root/Session")
-	if session == null:
 		return
-	_root.hide()
-	# A failure before the world is freed (the save could not be moved aside) leaves this
-	# menu alive, and it comes back with the reason. A failure after it ends on the title
-	# screen, which reads the report itself; this menu is gone by then, and so is the
-	# connection.
-	if not session.is_connected("new_game_failed", _on_new_game_failed):
-		session.connect("new_game_failed", _on_new_game_failed, CONNECT_ONE_SHOT)
-	# The menu's own world: the session switches its autosave off before anything else.
-	var immediate: Variant = session.call("start_new_game", _world())
-	if immediate is Dictionary and String((immediate as Dictionary).get("reason", "")) == "busy":
-		# Refused before it started, so no signal follows.
-		if session.is_connected("new_game_failed", _on_new_game_failed):
-			session.disconnect("new_game_failed", _on_new_game_failed)
-		_reopen_with_failure(immediate as Dictionary)
+	_ensure_return_prompt()
+	_return_prompt.pending = pending
+	_return_prompt.answer(false)
+
+
+## Starts a new run from the menu's own world. The failure path is `NewGameAttempt`'s: it
+## keeps the menu on screen with the reason when the world was never freed, and stays out
+## of the way when the title screen reads the report itself.
+func _on_new_game_confirmed() -> void:
+	_new_game_attempt().start()
 
 
 func _on_new_game_failed(report: Dictionary) -> void:
-	if not is_inside_tree():
-		return
-	var session := get_node_or_null(^"/root/Session")
-	if session != null and session.has_method("mark_new_game_failure_shown"):
-		session.call("mark_new_game_failure_shown")
-	_reopen_with_failure(report)
+	_new_game_attempt().failed(report)
 
 
-## Back on screen after a new game that did not start, with the reason and the focus on
-## New game: Enter tries again, Resume or Esc goes back to the run that is still there.
-## The transaction unpaused the tree to free the world; it did not, so the pause comes back.
-func _reopen_with_failure(report: Dictionary) -> void:
+func _new_game_attempt() -> NewGameAttempt:
+	if _new_game == null:
+		_new_game = NewGameAttempt.new(self, _root, _confirm, _show_new_game_failure)
+	return _new_game
+
+
+## Back on screen with the notice the attempt wrote, over the run that is still there.
+## New game keeps the focus: Enter tries again, Resume or Esc goes back to that run.
+func _show_new_game_failure() -> void:
 	_pending = &""
-	_confirm.hide()
 	get_tree().paused = true
-	_failure = report.duplicate(true)
 	_refresh_texts()
 	_root.show()
-	_notice.text = NewGameFailureText.describe(_failure)
 	_notice.visible = true
 	_fit()
 	focus_entry(&"new_game")
@@ -490,6 +499,11 @@ func _something_else_owns_cancel() -> bool:
 		var backlog := ui.get_node_or_null(^"%BacklogPanel") as BacklogPanel
 		if backlog != null and backlog.is_open():
 			return true
+	var editor := get_story_editor()
+	if editor != null:
+		var overlay := editor.get_node_or_null(^"AuthorOverlay")
+		if overlay != null and overlay.has_method("is_editing") and bool(overlay.call("is_editing")):
+			return true
 	return false
 
 
@@ -498,10 +512,13 @@ func _refresh_texts() -> void:
 		return
 	_heading.text = L10n.t("menu.paused")
 	_status.text = _status_text()
-	if not _failure.is_empty():
-		_notice.text = NewGameFailureText.describe(_failure)
+	var failure := _new_game.report() if _new_game != null else {}
+	if not failure.is_empty():
+		_notice.text = NewGameFailureText.describe(failure)
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.return_to_title" if id == &"save_quit" else "menu.%s" % id)
+	if _entries.has(STORY_ENTRY):
+		(_entries[STORY_ENTRY] as Button).text = L10n.t("menu.story_editor")
 	var unread := _journal.get_unread_count() if _journal != null else 0
 	if unread > 0:
 		(_entries[&"journal"] as Button).text = L10n.t("menu.journal_unread", {"count": unread})
@@ -532,11 +549,24 @@ func _on_locale_changed(_locale: String) -> void:
 	_fit()
 
 
+func _on_settings_closed() -> void:
+	# The switch can have changed while the screen was up; the entry follows it before the
+	# focus returns, so the new row is there for the next press.
+	sync_story_editor()
+	if _settings_panel.is_open():
+		return
+	focus_entry(&"settings")
+
+
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key) and _root != null:
-		_factor = UiTextScale.current(self)
+		_factor = MenuStyle.menu_text_scale(self)
 		UiTextScale.apply(_column, _factor)
 		UiTextScale.apply(_hint, _factor)
+		_fit()
+	elif key == &"story_editor":
+		sync_story_editor()
+		_refresh_texts()
 		_fit()
 
 
@@ -546,26 +576,24 @@ func _on_device_changed(_device: StringName) -> void:
 		_fit()
 
 
+## The two faces' measuring is `PauseSheet`'s; this says which face is in use and where
+## the hint line under the card goes.
 func _fit() -> void:
 	if _column == null:
 		return
 	var safe := MobileLayout.safe_rect(_root)
 	var view := safe.size
-	if MobileLayout.enabled:
+	if _touch_scroll != null:
 		_hint.visible = MenuStyle.using_gamepad(self)
 		for entry: Button in _entries.values():
 			MobileLayout.enlarge(entry)
-	var left := minf(view.x * 0.085, 160.0)
-	var width := minf(view.x - left * 2.0, 560.0 * maxf(_factor, 1.0))
-	_column.custom_minimum_size = Vector2(width, 0.0)
-	_column.size = Vector2(width, 0.0)
-	var needed := _column.get_combined_minimum_size().y
-	var foot_room := 90.0 if _hint.visible else MobileLayout.EDGE
-	var top := maxf(12.0 if MobileLayout.enabled else 24.0, minf(view.y * 0.28, view.y - needed - foot_room))
-	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, minf(needed + 2.0, view.y - top - foot_room)))
-	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
-	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
-	_hint.size = Vector2(view.x - left * 2.0, 0.0)
-	if _sheet != null:
-		_sheet.column_rect = Rect2(bounds.position, Vector2(width, needed)) if _touch_scroll == null else bounds
-		_sheet.queue_redraw()
+	_sheet.place(_column, _touch_scroll, safe, _factor, 90.0 if _hint.visible else 24.0)
+	_hint.position = safe.position + Vector2(
+		clampf(view.x * 0.06, 32.0, 92.0) + 12.0, view.y - 48.0 * maxf(_factor, 1.0)
+	)
+	_hint.size = Vector2(view.x - clampf(view.x * 0.06, 32.0, 92.0) * 2.0, 0.0)
+
+
+func _fit_after_reflow() -> void:
+	if _column.is_visible_in_tree():
+		_fit()

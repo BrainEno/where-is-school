@@ -1,8 +1,8 @@
 extends SceneTree
 ## Called by review_author_draft.py in a staging project. Never writes to res://.
 
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
-const Journal := preload("res://scripts/dev/authoring/draft_journal.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const Journal := preload("res://scripts/story_editor/draft_journal.gd")
 
 
 func _initialize() -> void:

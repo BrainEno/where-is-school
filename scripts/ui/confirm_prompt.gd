@@ -60,6 +60,7 @@ var _cancel: Button = null
 var _panel: PanelContainer = null
 var _card: Card = null
 var _center: CenterContainer = null
+var _answers: HBoxContainer
 
 
 func _init() -> void:
@@ -71,7 +72,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	theme = MenuStyle.page_theme()
-	_factor = UiTextScale.current(self)
+	_factor = MenuStyle.menu_text_scale(self)
 	var shade := MenuStyle.backdrop(Color(MenuStyle.INK, 0.62))
 	shade.gui_input.connect(_on_shade_input)
 	add_child(shade)
@@ -87,7 +88,7 @@ func _ready() -> void:
 	_panel.add_theme_stylebox_override(&"panel", MenuStyle.prompt_content_style())
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override(&"separation", 14)
+	column.add_theme_constant_override(&"separation", 10 if MobileLayout.enabled else 14)
 	_panel.add_child(column)
 	_heading = MenuStyle.serif_label("", MenuStyle.ENTRY_SIZE, _factor, MenuStyle.PAPER, 0.5, 2)
 	_heading.name = "Heading"
@@ -101,6 +102,7 @@ func _ready() -> void:
 	column.add_child(_message)
 	var row := HBoxContainer.new()
 	row.name = "Answers"
+	_answers = row
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_theme_constant_override(&"separation", 10)
 	column.add_child(row)
@@ -143,7 +145,7 @@ static func _trap_focus(button: Button, other: Button) -> void:
 ## Shows the question. Focus goes to "cancel". `heading` is the short title above it
 ## ("New game"); without one the card starts with the question.
 func ask(message: String, confirm_text: String, cancel_text: String, heading: String = "") -> void:
-	set_text_scale(UiTextScale.current(self))
+	set_text_scale(MenuStyle.menu_text_scale(self))
 	_heading.text = heading
 	_heading.visible = not heading.is_empty()
 	_message.text = message
@@ -191,7 +193,11 @@ func _fit() -> void:
 		MobileLayout.enlarge(_confirm)
 	# A readable measure, never wider than the screen allows.
 	var width := minf(view.x - 120.0, 600.0 * maxf(_factor, 1.0))
-	_message.custom_minimum_size = Vector2(maxf(width - 92.0, 200.0), 0.0)
+	var padding := _panel.get_theme_stylebox(&"panel").get_minimum_size().x
+	if MobileLayout.enabled:
+		var answers_width := _answers.get_combined_minimum_size().x + padding
+		width = minf(view.x - 2.0 * MobileLayout.EDGE, maxf(480.0 * _factor, answers_width))
+	_message.custom_minimum_size = Vector2(maxf(width - padding, 200.0), 0.0)
 	if _card != null:
 		_card.queue_redraw()
 

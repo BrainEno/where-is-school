@@ -86,6 +86,9 @@ FORBIDDEN_PREFIXES = (
     # it does for addons/.
     "res://scenes/dev/",
     "res://scripts/dev/",
+    # The story editor is a player-facing tool on iOS: its runtime lives in
+    # scripts/story_editor/ and is allowed by name (app/export_mobile.py). Every other
+    # developer script, and that folder itself, still fails unless named.
     "res://.github/",
     # The narrative editor is an EditorPlugin. The game never loads it, and a player's
     # build has no business carrying the author's tooling.

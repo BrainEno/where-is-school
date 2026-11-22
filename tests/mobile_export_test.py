@@ -29,6 +29,12 @@ class MobileExportTest(unittest.TestCase):
         for name in ("Linux", "Windows Desktop", "iOS"):
             self.assertEqual(staged[name], original[name])
 
+    def test_only_handheld_exports_select_the_touch_layout(self) -> None:
+        presets = export_presets.parse(self.presets)
+        handheld = {name for name, preset in presets.items()
+                    if "wis_handheld" in preset.fields.get("custom_features", "").split(",")}
+        self.assertEqual(handheld, {"iOS", "Android"})
+
     def test_ios_settings_quote_team_and_build_exactly_once(self) -> None:
         configured = export_mobile.configure(self.presets, "iOS", {
             "application/app_store_team_id": export_mobile.UNSIGNED_TEAM,

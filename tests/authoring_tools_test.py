@@ -23,6 +23,12 @@ from verify_build import verify_contents
 
 class AuthoringToolsTest(unittest.TestCase):
     def test_author_selection_is_exact_and_never_added_to_the_normal_project(self):
+        """The project tree copies everything tracked; staging then filters by variant.
+
+        The retail iPhone pack carries the story editor runtime (Settings → Story editor);
+        the desktop and Android presets still exclude it, and the author app differs from
+        the retail project only in its name and the `Authoring` autoload.
+        """
         candidates = ["project.godot", *sorted(author.SCRIPTS), "scripts/dev/stray.gd", "scenes/dev/preview.tscn",
                       "tools/macos/ios/authoring/FilesBridge.gdip", "ios/plugins/stray.gdip"]
         with tempfile.TemporaryDirectory() as directory:
@@ -36,7 +42,7 @@ class AuthoringToolsTest(unittest.TestCase):
                 mobile.stage(work / "retail")
                 mobile.stage(work / "author", authoring=True)
             self.assertEqual({p.relative_to(work / "retail").as_posix() for p in (work / "retail").rglob("*") if p.is_file()},
-                             {"project.godot"})
+                             {"project.godot", *author.SCRIPTS})
             self.assertEqual({p.relative_to(work / "author").as_posix() for p in (work / "author").rglob("*") if p.is_file()},
                              {"project.godot", *author.SCRIPTS})
             author.configure_project(work / "author", "abc")
@@ -61,14 +67,29 @@ class AuthoringToolsTest(unittest.TestCase):
             self.assertIn(field, ios.exclude_filter)
         self.assertNotIn("scripts/dev/*", ios.exclude_filter)
         self.assertEqual(retail["iOS"].options["application/bundle_identifier"], mobile.PACKAGE)
-        self.assertNotIn("plugins/WISAuthorFiles", retail["iOS"].options)
+        # Both iPhone apps link the Files bridge: the retail one only reaches the editor
+        # after Settings → Story editor. Desktop and Android ship neither the runtime nor
+        # the bridge.
+        self.assertEqual(retail["iOS"].options["plugins/WISAuthorFiles"], "true")
+        for platform in ("Android", "Linux", "Windows Desktop"):
+            # Non-iOS builds exclude the editor even though the files are tracked: the
+            # preset is what keeps them out of a desktop or Android pack.
+            self.assertIn("scripts/story_editor/*", retail[platform].exclude_filter)
+            self.assertNotIn("plugins/WISAuthorFiles", retail[platform].options)
+        self.assertIn("scripts/dev/*", retail["Android"].exclude_filter)
+        self.assertIn("scripts/dev/*", retail["Linux"].exclude_filter)
 
     def test_author_pack_exception_does_not_relax_other_developer_paths(self):
         author_path = "res://" + author.BOOTSTRAP + "c"
         leaks = [(author_path, 1), ("res://scripts/dev/private.gdc", 1), ("res://ios/plugins/backdoor.gdip", 1)]
         retail = verify_contents(leaks)
         authored = verify_contents(leaks, allowed_paths=author.PACK_PATHS)
-        self.assertTrue(any("2 file(s) under res://scripts/dev/" in line for line in retail))
+        # The editor runtime lives in scripts/story_editor/ and ships on iOS by name; the
+        # developer tree itself, and any other script under it, is still refused.
+        retail_dev = [line for line in retail if "under res://scripts/dev/" in line]
+        self.assertEqual(retail_dev, ["1 file(s) under res://scripts/dev/ reached the build, "
+                                      "first: res://scripts/dev/private.gdc"])
+        self.assertFalse(any(line.startswith("1 file(s) under res://scripts/dev/ and ") for line in retail))
         self.assertTrue(any("1 file(s) under res://scripts/dev/" in line for line in authored))
         self.assertTrue(any("private.gdc" in line for line in authored))
         self.assertTrue(any("res://ios/plugins/" in line for line in retail))
@@ -92,7 +113,7 @@ class AuthoringToolsTest(unittest.TestCase):
 
     def test_author_preview_fixtures_do_not_expand_the_retail_font(self):
         with patch("subset_font.glob.glob", return_value=["tests/authoring_classroom_test.gd",
-                                                          "scripts/dev/authoring/author_form.gd"]):
+                                                          "scripts/story_editor/author_form.gd"]):
             used, _ = collect_characters(("unused",))
         self.assertFalse(used)
         with patch("subset_font.glob.glob", return_value=["tests/dialogue_layout_test.gd"]):

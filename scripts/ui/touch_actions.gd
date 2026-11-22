@@ -42,13 +42,17 @@ func _ready() -> void:
 	_pause = _button("Pause", _menu.open)
 	_return = _button("ReturnToTitle", _menu.request_return_to_title)
 	_use = _button("Use", _use_current)
+	# Keep the inactive button recognizable even over a bright part of the world.
+	var inactive_panel := MenuStyle.panel_style()
+	inactive_panel.border_color = MenuStyle.MUTED
+	_use.add_theme_stylebox_override(&"disabled", inactive_panel)
+	_use.add_theme_color_override(&"font_disabled_color", MenuStyle.MUTED)
 	_controls.assign([_return, _pause, _use, _stick])
 	_menu.opened.connect(_refresh)
 	_menu.closed.connect(_refresh)
-	# A physical controller on a handheld gets a clear screen until the next touch.
 	var settings := get_node_or_null(^"/root/Settings")
 	if settings != null:
-		settings.connect(&"input_device_changed", _refresh.unbind(1))
+		settings.connect(&"input_device_changed", _on_input_device_changed)
 		settings.connect(&"setting_changed", _on_setting_changed)
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
@@ -86,10 +90,13 @@ func _refresh() -> void:
 		return
 	var blocked := get_tree().paused or _menu.is_open() or _ui.backlog.is_open() \
 		or _ui.end_card.visible or _ui.fade.visible
-	visible = not blocked and InputHint.device(self) == InputHint.DEVICE_TOUCH
+	# Handheld HUD visibility follows gameplay, not the last input event. A host,
+	# trackpad or controller can change the hints without taking away touch buttons.
+	visible = not blocked
 	var exploring := visible and not _ui.dialogue_panel.visible and _player.is_control_enabled()
 	_stick.visible = exploring
-	_use.visible = exploring and _can_use()
+	_use.visible = exploring
+	_use.disabled = not exploring or not _can_use()
 	_return.visible = visible and _menu.get_entry(&"save_quit").visible
 	for id: int in _fingers:
 		var control := _fingers[id]
@@ -148,7 +155,7 @@ func _touch(event: InputEventScreenTouch) -> void:
 		var button := _fingers[id] as Button
 		_cancel_finger(id)
 		_fingers.erase(id)
-		if not event.canceled and button != null and _hit(button, event.position):
+		if not event.canceled and button != null and not button.disabled and _hit(button, event.position):
 			button.pressed.emit()
 
 
@@ -197,6 +204,15 @@ func _can_use() -> bool:
 func _use_current() -> void:
 	if _use.is_visible_in_tree() and _player.is_control_enabled() and _can_use():
 		_interaction.request_activation(_interaction.get_current_target())
+
+
+func _on_input_device_changed(device: StringName) -> void:
+	# The physical movement vector can take over immediately, but the old thumb
+	# must not start moving again when that key/axis is released. Mouse reports
+	# need not mean a hardware handoff (for example in a hosted iOS window).
+	if _stick_finger >= 0 and device in [InputHint.DEVICE_KEYBOARD, InputHint.DEVICE_GAMEPAD]:
+		_cancel_finger(_stick_finger)
+	_refresh()
 
 
 func _on_setting_changed(key: StringName) -> void:
