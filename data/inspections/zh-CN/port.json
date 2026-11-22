@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "port_sea": {
+    "title": "海",
+    "prompt": "看海",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·栈桥尽头，水面像铺平的天空，一直铺到世界的边缘"
+  },
+  "port_crane": {
+    "title": "岸桥",
+    "prompt": "抬头看吊机",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·吊机把一个货柜悬在半空，正要装船"
+  },
+  "port_ship": {
+    "title": "货船",
+    "prompt": "看货船",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·靠在码头边的货船，甲板上堆满了要运走的货柜"
+  }
+}

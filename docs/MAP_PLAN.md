@@ -161,8 +161,8 @@ exploration, not implemented content; this plan places them only as far as the b
 |---|---|---|---|---|
 | Upstairs flats (via `residential/FromStair`) | Inside an ordinary home block | One landing, one open door | Separate scene | 建议新增 |
 | Shop interior (street) | Daily life with the shutter half up | One counter | Zone of the street (shallow) | 建议新增 |
-| Container yard | Named as a candidate space | Stacks as a maze of corridors, seen from above | Separate scene | 已确定但未实现 (candidate) |
-| Port-like area | Named as a candidate space | Edge of the world; water as the laid-flat sky | Separate scene | 已确定但未实现 (candidate) |
+| Container yard | Named as a candidate space | Stacks as a maze of corridors, seen from above | Separate scene (`container_yard`) | 已实现 (round 13; through the cut chain-link behind the schoolyard's blue container) |
+| Port-like area | Named as a candidate space | Edge of the world; water as the laid-flat sky | Separate scene (`port`) | 已实现 (round 14; by the truck in the container yard, its box bound for the dock) |
 | Road north of the street (past the blank sign) | The town that does not continue | A walk that ends in the sky | Extension of the street scene | 建议新增; whether it is ever walkable: 尚待作者决定 |
 
 ## 7. Future unstable or non-Euclidean links
@@ -219,7 +219,7 @@ flowchart LR
 | 1 | Prompt keys, unused spawns, CI registration of the new test | 建议新增 |
 | 2 | Stairwell and upper corridor | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | First candidate rooms | 已实现: laboratory and restroom; the staff office is another optional visit. The gym and later room order remain undecided. |
-| 4 | First periphery space | 已确定但未实现 (candidates); choice 尚待作者决定 |
+| 4 | First periphery spaces | 已实现: the container yard (round 13) and the port past it (round 14); their lines are still the owner's to write |
 | 5 | Unstable links; elliptical building | 建议新增 / 尚待作者决定 |
 
 ## Tests

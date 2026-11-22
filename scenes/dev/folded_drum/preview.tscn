@@ -1,0 +1,95 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/folded_drum/preview.gd" id="1_preview"]
+[ext_resource type="PackedScene" path="res://scenes/dev/folded_drum/folded_drum.tscn" id="2_building"]
+[ext_resource type="Shader" path="res://scenes/dev/folded_drum/card_stock.gdshader" id="3_stock"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_reflection"]
+sky_top_color = Color(0.52, 0.568, 0.636, 1)
+sky_horizon_color = Color(0.72, 0.7, 0.664, 1)
+ground_horizon_color = Color(0.27, 0.267, 0.254, 1)
+ground_bottom_color = Color(0.12, 0.123, 0.128, 1)
+sun_angle_max = 0.0
+
+[sub_resource type="Sky" id="Sky_reflection"]
+radiance_size = 2
+sky_material = SubResource("SkyMaterial_reflection")
+
+[sub_resource type="Environment" id="Environment_studio"]
+background_mode = 1
+background_color = Color(0.227, 0.227, 0.219, 1)
+sky = SubResource("Sky_reflection")
+ambient_light_source = 2
+ambient_light_color = Color(0.82, 0.85, 0.91, 1)
+ambient_light_energy = 0.28
+ambient_light_sky_contribution = 0.16
+reflected_light_source = 1
+tonemap_mode = 4
+tonemap_agx_white = 6.9
+tonemap_agx_contrast = 1.34
+tonemap_exposure = 1.10
+ssao_enabled = true
+ssao_radius = 1.08
+ssao_intensity = 1.92
+ssao_power = 1.16
+ssao_detail = 0.78
+ssao_light_affect = 0.08
+ssao_ao_channel_affect = 0.36
+
+[sub_resource type="ShaderMaterial" id="Material_table"]
+shader = ExtResource("3_stock")
+shader_parameter/pigment = Color(0.237, 0.238, 0.226, 1)
+shader_parameter/stock_kind = 1
+shader_parameter/grain_strength = 0.48
+shader_parameter/relief = 0.007
+
+[sub_resource type="PlaneMesh" id="Mesh_table"]
+material = SubResource("Material_table")
+size = Vector2(1800, 1800)
+
+[node name="FoldedDrumPreview" type="Node3D"]
+script = ExtResource("1_preview")
+
+[node name="Studio" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_studio")
+
+[node name="Table" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.463, 0)
+cast_shadow = 0
+mesh = SubResource("Mesh_table")
+
+[node name="WarmKey" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -39, 0)
+light_color = Color(1, 0.976, 0.92, 1)
+light_energy = 1.40
+light_angular_distance = 0.87
+shadow_enabled = true
+shadow_bias = 0.105
+shadow_normal_bias = 1.27
+shadow_blur = 1.0
+directional_shadow_split_1 = 0.29
+directional_shadow_split_2 = 0.54
+directional_shadow_split_3 = 0.8
+directional_shadow_blend_splits = true
+directional_shadow_max_distance = 67.0
+
+[node name="LouvreRake" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-24, 72, 0)
+light_color = Color(0.89, 0.91, 0.95, 1)
+light_energy = 0.23
+light_angular_distance = 1.8
+shadow_enabled = true
+shadow_bias = 0.09
+shadow_normal_bias = 1.15
+shadow_blur = 1.0
+directional_shadow_max_distance = 52.0
+
+[node name="FoldedDrum" parent="." instance=ExtResource("2_building")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(15.429, 18.139, 21.146)
+rotation_degrees = Vector3(-29.2, 41, 0)
+current = true
+fov = 55.4
+near = 0.17
+far = 960.0

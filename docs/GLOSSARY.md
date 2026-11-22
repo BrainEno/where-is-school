@@ -56,7 +56,8 @@
 | 交还板 | return board | | 操场上那块板，与交还牌是不同物件 |
 | 篮筐 | hoop | | 与「篮板」（backboard）不同 |
 | 建造中的大楼 | the building under construction | 工地大楼、新楼、在建楼 | 操场西南角外的工地：蓝色施工挡板、紧闭的校门、门前两三座中空沙堆、黄色挖掘机、一层层椭圆楼板。以后会写成「椭球大楼」（the ellipsoid building）；在那之前台词里不要提前用这个名字。场景节点 `PlaygroundArt/BuildingSite`（`construction_site.tscn`，网格在 `meshes/site/*.tres`）；楼里是单独的地点 `site_interior`（从门廊的门进去） |
-| 集装箱堆场 | the container yard | 集装箱场、堆场、货柜场 | 操场那只蓝色集装箱后面，铁丝网被剪开、往里翻起的地方钻过去。像停车场，蓝色红色（极少橙色）的集装箱一到三层高，从上往下看是迷宫；卡车轮胎垒成台阶，箱顶之间搭着会晃的长木板。单独的地点 `container_yard`（`tools/build_container_yard.py`） |
+| 集装箱堆场 | the container yard | 集装箱场、堆场、货柜场 | 操场那只蓝色集装箱后面，铁丝网被剪开、往里翻起的地方钻过去。像停车场，蓝色红色（极少橙色）的集装箱一到三层高，从上往下看是迷宫；卡车轮胎垒成台阶，箱顶之间搭着会晃的长木板。单独的地点 `container_yard`（`tools/build_container_yard.py`）；停在空地上的卡车，箱子开往码头，爬进去就到港口 |
+| 港口 | the port | 码头、海港 | 爬进堆场卡车上那只开往码头的货柜到这里。世界的边缘：混凝土码头，伸进海里的窄栈桥，水面是铺平的天空（不受光，只映出傍晚的天和云，慢慢晃）；岸桥吊着一只货柜，靠岸的货船，等着装船的集装箱。单独的地点 `port`（`tools/build_port.py`） |
 
 ## 3. 人物、内心声音与知识徽章
 

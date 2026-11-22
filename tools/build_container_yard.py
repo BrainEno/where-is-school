@@ -15,6 +15,8 @@ containers, which you walk through by the gaps between them.
   (`plank_sway.gdshader`) while their colliders stay put.
 * An apron with faded parking-bay paint by the way in, floodlight masts, the back wall of
   the yard, and a gantry crane far off behind it.
+* A truck on the apron, its 40 ft box open at the tail and bound for the dock: climbing in
+  is the way to the port (build_port.py, which parks the same truck there).
 
 Gameplay is art-first: the tyre flights and the planks are real ramps and boards that the
 player can walk with the keys (they are narrower than the click-to-walk agent), the way in
@@ -77,6 +79,10 @@ COLOURS = {
 X_MIN, X_MAX, Z_MIN, Z_MAX = -22.4, 19.9, -17.5, 17.2
 GAP_X = 14.0
 SPAWN = (GAP_X, 0.0, 15.2)
+# The truck on the apron, a box on its trailer bound for the dock, doors open toward +x:
+# climbing in is the way to the port (build_port.py parks the same truck there).
+TRUCK_DECK = 1.35
+TRUCK_TAIL_X, TRUCK_Z = 7.0, 11.8
 
 # Tyres: a flat-laid truck tyre is 0.36 m high, so seven of them reach a single roof.
 TYRE_H, TYRE_R, TYRE_HOLE = 0.36, 0.47, 0.26
@@ -117,7 +123,8 @@ def colour(c, a=1.0) -> str:
 class Scene:
     """Just enough of a text scene: ext resources, sub resources, nodes, mesh files."""
 
-    def __init__(self):
+    def __init__(self, res: str = RES):
+        self.base = res  # where `mesh` puts its files: `<base>/meshes/`
         self.ext: dict[str, str] = {}
         self.subs: list[str] = []
         self.nodes: list[str] = []
@@ -135,9 +142,9 @@ class Scene:
     def mesh(self, name: str, mesh) -> str:
         file_name = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).lower() + ".tres"
         if file_name in self.files:
-            raise SystemExit(f"two yard meshes would share {file_name}")
+            raise SystemExit(f"two meshes would share {file_name}")
         self.files[file_name] = f'[gd_resource type="ArrayMesh" format=3]\n\n[resource]\n_surfaces = {mesh.surface()}\n'
-        return self.res("ArrayMesh", f"{RES}/meshes/{file_name}", f"mesh_{file_name.removesuffix('.tres')}")
+        return self.res("ArrayMesh", f"{self.base}/meshes/{file_name}", f"mesh_{file_name.removesuffix('.tres')}")
 
     def node(self, name: str, parent: str | None, kind: str | None = None, *, instance: str | None = None,
              groups: list[str] | None = None, **props) -> str:
@@ -196,8 +203,11 @@ def weathering(seed: int, length: float):
     return paint
 
 
-def container_mesh(length: float, seed: int):
-    """One box, lying along x, doors at +x, standing on y = 0 with its roof at CH."""
+def container_mesh(length: float, seed: int, open_doors: bool = False):
+    """One box, lying along x, doors at +x, standing on y = 0 with its roof at CH.
+
+    `open_doors`: both leaves swung right round against the sides, and the dark inside
+    showing through the doorway (the truck's box, bound for the dock)."""
     hx, hz = length / 2, CW / 2
     post = 0.15
     m = sm.PaintMesh()
@@ -228,7 +238,9 @@ def container_mesh(length: float, seed: int):
     m.paint(paint)
     # The doors: two leaves, four locking bars with their guides and handles.
     leaf_w = (CW - 2 * post) / 2
-    for side in (-1, 1):
+    if open_doors:
+        _open_doors(m, paint, hx, hz, leaf_w)
+    for side in ((-1, 1) if not open_doors else ()):
         zc = side * leaf_w / 2
         m.add(box((0.05, CH - 0.4, leaf_w - 0.02), (hx - 0.08, CH / 2, zc)))
         m.paint(paint)
@@ -240,12 +252,85 @@ def container_mesh(length: float, seed: int):
             for y in (0.32, CH - 0.32):
                 m.add(box((0.07, 0.1, 0.09), (hx - 0.03, y, bz)), (*CAST, 1.0))
             m.add(box((0.05, 0.05, 0.22), (hx + 0.01, 1.22, bz + side * 0.09)), (*CAST, 1.0))
-    m.add(box((0.012, 0.22, 0.34), (hx - 0.045, 1.95, -leaf_w / 2)), (0.9, 0.9, 0.86, 1.0))
+    if not open_doors:
+        m.add(box((0.012, 0.22, 0.34), (hx - 0.045, 1.95, -leaf_w / 2)), (0.9, 0.9, 0.86, 1.0))
     # The roof: its top is the walking surface, at CH.
     m.add(box((length - 0.16, 0.05, CW - 0.16), (0, CH - 0.025, 0)))
     m.paint(lambda p, n: (*sm.mix((0.86, 0.86, 0.88), RUST, 0.45 * fbm(p[0] * 0.6 + seed, p[2] * 0.9, seed + 2)),
                           1.0))
     return m
+
+
+def _open_doors(m, paint, hx: float, hz: float, leaf_w: float):
+    """Leaves folded back flat against the long sides, and the dark inside of the box."""
+    for side in (-1, 1):
+        z = side * (hz + 0.05)
+        m.add(box((leaf_w - 0.02, CH - 0.4, 0.05), (hx - leaf_w / 2 - 0.02, CH / 2, z)))
+        m.paint(paint)
+        for bx in (hx - leaf_w * 0.28, hx - leaf_w * 0.72):
+            m.add(cylinder(0.022, CH - 0.42, 8, center=(bx, CH / 2, z + side * 0.04)), (*FRAME, 1.0))
+            m.add(box((0.22, 0.05, 0.05), (bx, 1.22, z + side * 0.08)), (*CAST, 1.0))
+    inside = (0.05, 0.05, 0.06, 1.0)
+    m.add(box((0.02, CH - 0.32, CW - 0.28), (hx - 0.9, CH / 2, 0)), inside)
+    for sz in (-1, 1):
+        m.add(box((0.9, CH - 0.32, 0.02), (hx - 0.45, CH / 2, sz * (hz - 0.16))), inside)
+    m.add(box((0.9, 0.02, CW - 0.28), (hx - 0.45, CH - 0.17, 0)), inside)
+    m.add(box((0.9, 0.03, CW - 0.28), (hx - 0.45, 0.18, 0)), (0.2, 0.16, 0.13, 1.0))
+
+
+# --- the truck ----------------------------------------------------------------------------
+
+
+def truck_mesh(length: float):
+    """A tractor unit and a skeletal trailer for one box of `length` lying on it.
+
+    The box sits centred on the origin with its floor at TRUCK_DECK; the cab is at -x, the
+    trailer's tail (and the box's doors) at +x. Vertex colours are the whole colour."""
+    hx = length / 2
+    m = sm.PaintMesh()
+    cab = (0.84, 0.82, 0.76, 1.0)
+    dark = (0.12, 0.12, 0.13, 1.0)
+    steel = (0.32, 0.32, 0.34, 1.0)
+    x_cab = -hx - 1.7
+    m.add(box((2.1, 2.3, 2.42), (x_cab, 2.35, 0), bevel=0.06),
+          lambda p, n: (*sm.mix(cab[:3], RUST, 0.25 * fbm(p[0] * 1.3, p[1] * 0.8 + p[2], 91)), 1.0))
+    m.add(box((0.04, 0.95, 2.1), (x_cab - 1.06, 2.85, 0)), (0.12, 0.15, 0.2, 1.0))
+    for sz in (-1, 1):
+        m.add(box((0.9, 0.7, 0.04), (x_cab - 0.4, 2.9, sz * 1.22)), (0.12, 0.15, 0.2, 1.0))
+        m.add(box((0.06, 0.3, 0.06), (x_cab - 1.15, 2.8, sz * 1.32)), dark)
+    m.add(box((0.3, 0.55, 2.42), (x_cab - 1.15, 1.25, 0)), steel)
+    m.add(box((0.08, 0.5, 1.6), (x_cab - 1.07, 1.75, 0)), (0.5, 0.5, 0.5, 1.0))
+    m.add(box((2.0, 0.5, 2.42), (x_cab, 1.0, 0)), (0.62, 0.3, 0.18, 1.0))
+    # Chassis rails from the bumper to the tail, the fifth wheel, the tail bar and lamps.
+    for sz in (-0.45, 0.45):
+        m.add(box((length + 2.8, 0.3, 0.16), (-1.4, TRUCK_DECK - 0.22, sz)), steel)
+    for k in range(int(length / 1.5) + 1):
+        m.add(box((0.12, 0.12, CW - 0.1), (-hx + 0.3 + k * 1.5, TRUCK_DECK - 0.06, 0)), steel)
+    m.add(box((1.2, 0.12, 1.2), (-hx + 0.4, TRUCK_DECK - 0.42, 0)), dark)
+    m.add(box((0.1, 0.12, CW - 0.2), (hx - 0.05, 0.62, 0)), (0.7, 0.66, 0.6, 1.0))
+    for sz in (-1, 1):
+        m.add(box((0.05, 0.12, 0.3), (hx + 0.01, 0.95, sz * 0.95)), (0.75, 0.12, 0.08, 1.0))
+    # Wheels: the steer axle, two drive axles under the box's front, two trailer axles.
+    tyre = cylinder(0.52, 0.32, 14, axis="z", center=(0, 0.52, 0))
+    hub = cylinder(0.24, 0.34, 10, axis="z", center=(0, 0.52, 0))
+    for x in (x_cab - 0.3, -hx + 0.1, -hx + 1.4, hx - 2.8, hx - 1.6):
+        for sz in (-1, 1):
+            m.add(tyre, (*RUBBER, 1.0), offset=(x, 0, sz * 1.02))
+            m.add(hub, (0.55, 0.55, 0.56, 1.0), offset=(x, 0, sz * 1.04))
+    return m
+
+
+def truck(s: Scene, parent: str, centre, materials: dict) -> str:
+    """The truck as one body; its box is `Truck/Box`, the open doors toward +x."""
+    body = s.node("Truck", parent, "StaticBody3D", groups=["camera_occluder"], position=v3(centre),
+                  collision_layer="1", collision_mask="0")
+    reach = L40 / 2 + 3.0
+    s.node("CollisionShape3D", body, "CollisionShape3D", position=v3(((L40 / 2 - reach) / 2, (TRUCK_DECK + CH) / 2, 0)),
+           shape=s.sub("BoxShape3D", "Shape_truck", size=v3((L40 / 2 + reach, TRUCK_DECK + CH, CW + 0.2))))
+    s.node("Rig", body, "MeshInstance3D", mesh=materials["rig_mesh"], material_override=materials["rig"])
+    s.node("Box", body, "MeshInstance3D", position=v3((0, TRUCK_DECK, 0)), mesh=materials["box_mesh"],
+           material_override=materials["box"])
+    return body
 
 
 # --- tyres and planks -------------------------------------------------------------------
@@ -602,6 +687,12 @@ def build() -> Scene:
     s.node("Pallets", root, "MeshInstance3D", position=v3((-12.6, 0, 13.6)), mesh=s.mesh("Pallets", pallets()),
            material_override=paint_mat)
 
+    # The truck on the apron, its box open at the tail: the way on to the port.
+    rig = {"rig_mesh": s.mesh("Truck", truck_mesh(L40)), "rig": steel_mat,
+           "box_mesh": s.mesh("Container40Open", container_mesh(L40, 5, open_doors=True)),
+           "box": container_mats["blue"]}
+    truck(s, root, (TRUCK_TAIL_X - L40 / 2, 0, TRUCK_Z), rig)
+
     # The planks: a fixed board to walk on, a mesh that sags and sways over it.
     s.node("Planks", root, "Node3D")
     for i, (name, a, b) in enumerate(PLANKS):
@@ -663,6 +754,8 @@ def build() -> Scene:
 
     s.node("SpawnPoints", root, "Node3D")
     s.node("FromPlayground", "SpawnPoints", "Marker3D", groups=["spawn_point"], position=v3(SPAWN))
+    s.node("FromPort", "SpawnPoints", "Marker3D", groups=["spawn_point"],
+           position=v3((TRUCK_TAIL_X + 1.6, 0, TRUCK_Z)))
 
     s.node("Interactables", root, "Node3D")
     s.node("BackToPlayground", "Interactables", instance=exit_scene, position=v3((GAP_X, 0.9, Z_MAX - 0.6)),
@@ -670,6 +763,11 @@ def build() -> Scene:
            outline_paths='PackedStringArray("../../Edges/GapFlap")',
            destination_scene='"res://scenes/locations/playground/playground.tscn"',
            destination_spawn='&"FromContainerYard"', destination_id='&"playground"')
+    s.node("ToPort", "Interactables", instance=exit_scene, position=v3((TRUCK_TAIL_X + 0.8, 0.9, TRUCK_Z)),
+           interact_id='&"cy_to_port"', prompt_key='"prompt.port"', radius="1.4",
+           outline_paths='PackedStringArray("../../Truck/Box")',
+           destination_scene='"res://scenes/locations/port/port.tscn"',
+           destination_spawn='&"FromContainerYard"', destination_id='&"port"')
     s.node("TyreLook", "Interactables", instance=look, position=v3((FLIGHT_A_X + 1.1, 0.6, face_a + 6.2)),
            interact_id='&"cy_tyres_look"', inspection_id='&"cy_tyres"', radius="1.4",
            outline_paths="PackedStringArray(" + ", ".join(f'"../../{p}"' for p in flight_a) + ")")

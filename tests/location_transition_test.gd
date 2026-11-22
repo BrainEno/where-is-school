@@ -32,7 +32,7 @@ const LOCATIONS: Array[String] = [
 	"classroom", "corridor", "street", "residential", "alley", "playground", "laboratory",
 	"staff_office", "restroom",
 	"archive", "plan_room", "projection_room", "computer_room", "vacant_office", "principal_office",
-	"restroom_02", "restroom_03", "site_interior", "container_yard",
+	"restroom_02", "restroom_03", "site_interior", "container_yard", "port",
 ]
 const FIXTURE_DIR := "user://location_fixtures"
 
