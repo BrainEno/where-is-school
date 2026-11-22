@@ -19,6 +19,8 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = albedo.rgb * COLOR.rgb;
+	// The vertex colour is the timber's sRGB colour; light works in linear.
+	vec3 timber = mix(COLOR.rgb / 12.92, pow((COLOR.rgb + 0.055) / 1.055, vec3(2.4)), step(0.04045, COLOR.rgb));
+	ALBEDO = albedo.rgb * timber;
 	ROUGHNESS = 1.0;
 }

@@ -307,6 +307,7 @@ def plank_mesh(length: float, seed: int):
     for k in range(int(length / 0.9) + 1):
         x = min(length - 0.05, 0.05 + k * 0.9)
         m.add(box((0.07, 0.035, PLANK_W + 0.04), (x, -0.017, 0)))
+    m._mark = 0  # paint every board and cleat, not only the last one added
     m.paint(lambda p, n: (*sm.mix(TIMBER, (0.4, 0.33, 0.27),
                                   0.55 * fbm(p[0] * 0.8 + seed * 5.0, p[2] * 9.0, seed)),
                           math.sin(math.pi * max(0.0, min(1.0, p[0] / length)))))
@@ -424,6 +425,8 @@ def pallets():
                 part.add(box((1.2, 0.08, 0.1), (0, y + 0.04, bz)))
             for bx in range(7):
                 part.add(box((0.12, 0.022, 1.0), (-0.54 + bx * 0.18, y + 0.09, 0)))
+        # `paint` covers what was added since the last `add`, so reset the mark to cover it all.
+        part._mark = 0
         part.paint(lambda p, n, k=k: (*sm.mix(TIMBER, (0.45, 0.4, 0.34), 0.5 + 0.4 * noise(p[0] * 3, p[2] * 3, k)), 1.0))
         m.add(part, rotation=rot, offset=(x, 0, z))
     return m
@@ -497,9 +500,14 @@ def build() -> Scene:
                 fog_enabled="true", fog_light_color=colour((0.32, 0.3, 0.38)), fog_density="0.006",
                 adjustment_enabled="true", adjustment_saturation="1.02", adjustment_contrast="1.04")
 
-    def painted(rid, base, *, texture=None, scale=0.58, world=False, cull=None):
+    def painted(rid, base, *, texture=None, scale=0.58, world=False, cull=None, srgb=False):
+        # `srgb`: the vertex colour carries the whole colour (rubber, timber, steel), so it is
+        # read as sRGB like the palette it was picked from; the containers and the ground get
+        # their hue from `base` and only grime from the vertices, and were tuned without it.
         props = {"resource_name": f'"{rid}"', "diffuse_mode": "3", "specular_mode": "2",
                  "vertex_color_use_as_albedo": "true", "albedo_color": colour(base), "roughness": "1.0"}
+        if srgb:
+            props["vertex_color_is_srgb"] = "true"
         if cull is not None:
             props["cull_mode"] = cull
         if texture is not None:
@@ -511,10 +519,10 @@ def build() -> Scene:
 
     container_mats = {name: painted(f"container_{name}", c, texture=metal_tile) for name, c in COLOURS.items()}
     ground_mat = painted("asphalt", (0.7, 0.7, 0.74), texture=ground_tile, scale=0.25, world=True)
-    paint_mat = painted("bay_paint", (1, 1, 1))
-    rubber_mat = painted("rubber", (1, 1, 1))
-    steel_mat = painted("mast_steel", (1, 1, 1))
-    hole_mat = painted("gap_dark", (1, 1, 1), cull="2")
+    paint_mat = painted("bay_paint", (1, 1, 1), srgb=True)
+    rubber_mat = painted("rubber", (1, 1, 1), srgb=True)
+    steel_mat = painted("mast_steel", (1, 1, 1), srgb=True)
+    hole_mat = painted("gap_dark", (1, 1, 1), cull="2", srgb=True)
     crane_mat = s.sub("StandardMaterial3D", "crane", resource_name='"crane"', shading_mode="0",
                       vertex_color_use_as_albedo="true", albedo_color=colour((1, 1, 1)))
 
@@ -584,7 +592,7 @@ def build() -> Scene:
            material_override=rubber_mat)
 
     # The yard office by the apron, and pallets beside it.
-    cabin_mat = painted("cabin", (1, 1, 1), texture=metal_tile, scale=0.5)
+    cabin_mat = painted("cabin", (1, 1, 1), texture=metal_tile, scale=0.5, srgb=True)
     s.node("YardOffice", root, "StaticBody3D", groups=["camera_occluder"], position=v3((-16.4, 0, 14.6)),
            collision_layer="1", collision_mask="0")
     s.node("CollisionShape3D", "YardOffice", "CollisionShape3D", position=v3((0, 1.35, 0)),

@@ -214,7 +214,7 @@ const YARD_VIEWS := [
 const YARD_STANCES := [
 	["entrance", Vector3(14.0, 0.0, 14.6)],
 	["lane", Vector3(2.0, 0.0, -4.25)],
-	["roof", Vector3(3.0, 5.18, 7.0)],
+	["tyre_foot", Vector3(12.2, 0.0, 12.6)],
 	["orange", Vector3(9.75, 0.0, -8.75)],
 ]
 ## The schoolyard side: the bent chain-link behind the blue container.
