@@ -188,7 +188,23 @@ func _capture_rear_jump() -> void:
 	if not seeded or not await _choose(&"jump"):
 		_failures.append("The roof ladder did not offer the jump while the resident watched.")
 		return
+	# Review framing only: the yard camera is far from a figure bent over on the roof.
+	var rig := _player.camera_rig
+	var close := CameraShot.new()
+	close.subject_mix = 1.0
+	close.distance_scale = 0.42
+	close.height_scale = 0.55
+	close.yaw_degrees = 20.0
+	close.fov = 40.0
+	await Harness.wait_until(func() -> bool:
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
+			_dialogue.advance_presentation()
+		return not _dialogue.is_busy()
+	, 10.0)
+	rig.focus_on(_player, close)
+	await create_timer(0.5).timeout
 	await _capture_pose("crouch_walk", 0.0, "22-roof-creep.png", 2.3, 3.2)
+	rig.release_focus()
 	await _capture_pose("void_step", 0.55, "23-rear-drop.png")
 	if not await Harness.wait_until(func() -> bool:
 		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
@@ -197,9 +213,23 @@ func _capture_rear_jump() -> void:
 	, 25.0):
 		_failures.append("The resident never searched with the player in control.")
 		return
+	# Review only: lift the (heavier) dazed look so the crouched walk can be seen.
+	ConcussionView.clear(_main)
+	rig.focus_on(_player, close)
+	await create_timer(ConcussionView.RELIEF_SECONDS + 0.3).timeout
 	_player.set_touch_move(Vector2(0.0, -1.0))
 	await _capture_pose("crouch_walk", 0.0, "24-hiding-crouch.png", -INF, 0.4)
 	_player.set_touch_move(Vector2.ZERO)
+	rig.release_focus()
+	# Let the search and the beat end in fast time, so nothing is left running at exit.
+	Engine.time_scale = 6.0
+	if not await Harness.wait_until(func() -> bool:
+		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
+			_dialogue.advance_presentation()
+		return not _sequence.is_beat_active() and not _dialogue.is_busy()
+	, 30.0):
+		_failures.append("The jump's beat never ended after the search.")
+	Engine.time_scale = 1.0
 
 
 func _focus_shot(id: StringName, frame: String) -> void:
