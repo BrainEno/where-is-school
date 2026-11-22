@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "port_sea": {
+    "title": "The sea",
+    "prompt": "Look at the sea",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · at the end of the pier the water is the sky laid flat, out to the edge of the world"
+  },
+  "port_crane": {
+    "title": "The crane",
+    "prompt": "Look up at the crane",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the crane holds a box in the air, about to load it onto the ship"
+  },
+  "port_ship": {
+    "title": "The ship",
+    "prompt": "Look at the ship",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · a ship alongside the quay, its deck stacked with boxes to be carried off"
+  }
+}

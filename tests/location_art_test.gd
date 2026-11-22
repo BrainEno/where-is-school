@@ -224,9 +224,20 @@ const LOCATIONS := {
 	"container_yard": {
 		"scene": "res://scenes/locations/container_yard/container_yard.tscn",
 		"stage": false,
-		"interactables": 4, # The gap back to the yard, the tyre stairs, the long plank, the orange box.
-		"spawns": ["FromPlayground"],
-		"exits": {"cy_back_to_playground": "playground/FromContainerYard"},
+		# The gap back to the yard, the truck to the port, the tyre stairs, the long plank, the orange box.
+		"interactables": 5,
+		"spawns": ["FromPlayground", "FromPort"],
+		"exits": {
+			"cy_back_to_playground": "playground/FromContainerYard",
+			"cy_to_port": "port/FromContainerYard",
+		},
+	},
+	"port": {
+		"scene": "res://scenes/locations/port/port.tscn",
+		"stage": false,
+		"interactables": 4, # The truck back to the yard, the sea from the pier end, the crane, the ship.
+		"spawns": ["FromContainerYard"],
+		"exits": {"port_back_to_container_yard": "container_yard/FromPort"},
 	},
 }
 

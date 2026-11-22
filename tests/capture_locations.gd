@@ -27,6 +27,7 @@ extends SceneTree
 ## `annex-thresholds` compares the new door approaches on the real hall floor.
 ## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
 ## `container-yard` frames the 集装箱堆场 past the yard: overhead, the tyre stairs, the planks.
+## `port` frames the 港口 past the yard's truck: the quay, the pier, the crane, the ship, the sea.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -220,6 +221,26 @@ const YARD_STANCES := [
 ## The schoolyard side: the bent chain-link behind the blue container.
 const YARD_GAP_STANCES := [["behind_container", Vector3(13.0, 0.0, -17.6)]]
 const YARD_GAP_VIEWS := [["fence_flap", Vector3(16.5, 3.2, -12.5), Vector3(13.0, 0.7, -18.4)]]
+## The port (`port`), past the yard's truck: fixed views (the quay from high up, the sea
+## from the pier, the crane, the ship, the water from overhead, the truck), then follow-
+## camera stances, then the truck on the yard's apron that takes you there.
+const PORT_VIEWS := [
+	["overview", Vector3(34.0, 30.0, 34.0), Vector3(-4.0, 0.0, -10.0)],
+	["sea_edge", Vector3(-11.0, 4.0, -16.0), Vector3(-17.0, -1.0, -30.0)],
+	["crane", Vector3(26.0, 5.0, 12.0), Vector3(12.0, 12.0, -6.0)],
+	["ship", Vector3(-2.0, 6.0, 2.0), Vector3(20.0, 4.0, -16.0)],
+	["sky_water", Vector3(-8.0, 30.0, -10.0), Vector3(-12.0, -1.8, -30.0)],
+	["truck", Vector3(23.0, 3.0, 20.0), Vector3(15.0, 1.5, 15.0)],
+]
+const PORT_STANCES := [
+	["arrival", Vector3(19.0, 0.0, 15.2)],
+	["stacks_lane", Vector3(-6.0, 0.0, 8.3)],
+	["quay_edge", Vector3(-4.0, 0.0, -6.6)],
+	["under_crane", Vector3(14.0, 0.0, -1.2)],
+	["pier_end", Vector3(-15.0, 0.0, -24.6)],
+]
+const PORT_YARD_STANCES := [["yard_truck", Vector3(8.6, 0.0, 11.8)]]
+const PORT_YARD_VIEWS := [["yard_truck_tail", Vector3(13.0, 3.5, 16.0), Vector3(6.0, 1.8, 11.8)]]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
@@ -262,6 +283,7 @@ var _dream_annex := false
 var _construction_site := false
 var _site_interior := false
 var _container_yard := false
+var _port := false
 var _annex_thresholds := false
 
 var _main: Node = null
@@ -308,6 +330,8 @@ func _initialize() -> void:
 			_site_interior = true
 		elif arg == "container-yard":
 			_container_yard = true
+		elif arg == "port":
+			_port = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -384,6 +408,11 @@ func _run() -> void:
 		await _capture_views(out_dir, "container_yard", ^"Containers", YARD_STANCES, [], "container_yard_walk")
 		await _capture_views(out_dir, "playground", ^"Interactables/ToContainerYard", YARD_GAP_STANCES,
 			YARD_GAP_VIEWS, "container_yard_gap")
+	elif _port:
+		await _capture_views(out_dir, "port", ^"Crane", [], PORT_VIEWS, "port")
+		await _capture_views(out_dir, "port", ^"Crane", PORT_STANCES, [], "port_walk")
+		await _capture_views(out_dir, "container_yard", ^"Interactables/ToPort", PORT_YARD_STANCES, PORT_YARD_VIEWS,
+			"port_yard_truck")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

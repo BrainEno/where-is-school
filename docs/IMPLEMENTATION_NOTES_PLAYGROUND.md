@@ -88,12 +88,41 @@ It leads to the container yard (集装箱堆场), its own location
 
 The flights and planks are walkable with the keys only: they are narrower than the
 click-to-walk agent (0.5 m radius), so the navigation mesh does not reach them. The yard's
-anchors are the gap back (`cy_back_to_playground`, to the yard's `FromContainerYard`) and
-three looks, `cy_tyres`, `cy_plank` and `cy_orange`, whose text is still 「待做」 for the
+anchors are the gap back (`cy_back_to_playground`, to the yard's `FromContainerYard`), the
+truck to the port (`cy_to_port`, below) and three looks, `cy_tyres`, `cy_plank` and `cy_orange`, whose text is still 「待做」 for the
 owner, as are the prompts and the place name if the owner wants them worded differently.
 Review frames come from `tests/capture_locations.gd -- container-yard` (the
 `container_yard` capture job: overhead, the yard, the stairs and planks, four follow-camera
 stances, and the bent chain-link from the schoolyard side).
+
+### The port (round 14)
+
+On the container yard's apron stands a truck (`Truck`), a 40 ft box on its trailer with
+the doors swung open at the tail: the box the essay's children almost walked into, bound
+for the dock. Climbing in (`ToPort`, `cy_to_port`) leads to the port (港口), its own
+location `scenes/locations/port/`, written by `tools/build_port.py`; the truck's meshes
+(`truck.tres`, `container40_open.tres`) are written by `tools/build_container_yard.py`
+and the port refers to them, as it does to the yard's boxes and masts. In
+docs/MAP_PLAN.md it is the edge of the world, where the water is the sky laid flat:
+
+- a concrete quay with the sea past its edge toward -z and -x, where the game camera
+  looks, and a narrow pier out into it; at the pier end there is nothing but water;
+- the sea is one plane under `sky_water.gdshader`: unshaded, each pixel the evening sky it
+  would mirror (blue-violet overhead, pale orange toward the low sun), clouds drifting on a
+  deck overhead, a slow, broad swell that trembles the reflection; fog fades it into the
+  background colour;
+- a ship-to-shore crane on two rails (its legs are the only colliders), a box hanging from
+  its spreader over the water, a feeder ship alongside (visual only), boxes waiting to ship
+  in two rows, bollards, mooring lines and a lifebuoy;
+- the same truck, parked by the stacks with its box open: the way back.
+
+Invisible walls (`EdgeWalls`) close every edge over the water; the quay, the pier and the
+lanes between the stacks are on one navigation island. The port's anchors are the truck
+back (`port_back_to_container_yard`, to the yard's `FromPort`) and three looks, `port_sea`
+(at the pier end), `port_crane` and `port_ship`, whose text is still 「待做」 for the owner,
+as are the prompts (`prompt.port`, `prompt.port_out`) and the place name. Review frames come
+from `tests/capture_locations.gd -- port` (the `port` capture job: six fixed views, five
+follow-camera stances, and the truck on the yard's apron).
 
 Adding an anchor means: add the geometry and the `Interactables` entry in
 `tools/build_outdoor_locations.py`, regenerate, then add the inspection (or a

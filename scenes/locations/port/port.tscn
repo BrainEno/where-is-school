@@ -1,0 +1,646 @@
+[gd_scene load_steps=61 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="AudioStream" path="res://assets/audio/room_tone_walkway.wav" id="tone"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="look"]
+[ext_resource type="Shader" path="res://scenes/locations/port/sky_water.gdshader" id="water"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/metal_tile.png" id="metal_tile"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/ground_tile.png" id="ground_tile"]
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fence_panel.tres" id="fence"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_a.tres" id="yard_container20_a"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_b.tres" id="yard_container20_b"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_a.tres" id="yard_container40_a"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_b.tres" id="yard_container40_b"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/truck.tres" id="yard_truck"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_open.tres" id="yard_container40_open"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/mast.tres" id="yard_mast"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/deck.tres" id="mesh_deck"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/faces.tres" id="mesh_faces"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/markings.tres" id="mesh_markings"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/iron.tres" id="mesh_iron"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/lifebuoy.tres" id="mesh_lifebuoy"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/crane.tres" id="mesh_crane"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/ship.tres" id="mesh_ship"]
+
+[sub_resource type="Environment" id="PortEnvironment"]
+background_mode = 1
+background_color = Color(0.46, 0.44, 0.54, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.7, 0.66, 0.76, 1)
+ambient_light_energy = 1.0
+tonemap_mode = 2
+tonemap_exposure = 0.7
+fog_enabled = true
+fog_light_color = Color(0.46, 0.44, 0.54, 1)
+fog_density = 0.007
+adjustment_enabled = true
+adjustment_saturation = 1.02
+adjustment_contrast = 1.04
+
+[sub_resource type="StandardMaterial3D" id="container_blue"]
+resource_name = "container_blue"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.188, 0.361, 0.573, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_blue_deep"]
+resource_name = "container_blue_deep"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.14, 0.27, 0.47, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_red"]
+resource_name = "container_red"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.62, 0.18, 0.14, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_red_dark"]
+resource_name = "container_red_dark"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.47, 0.17, 0.15, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="container_orange"]
+resource_name = "container_orange"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.88, 0.45, 0.1, 1)
+roughness = 1.0
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.58, 0.58, 0.58)
+uv1_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="quay_deck"]
+resource_name = "quay_deck"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.96, 0.95, 0.95, 1)
+roughness = 1.0
+albedo_texture = ExtResource("ground_tile")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="quay_face"]
+resource_name = "quay_face"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+albedo_texture = ExtResource("ground_tile")
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="quay_paint"]
+resource_name = "quay_paint"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="steel"]
+resource_name = "steel"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="crane_steel"]
+resource_name = "crane_steel"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="ship"]
+resource_name = "ship"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.35, 0.35, 0.35)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="ShaderMaterial" id="SkyWater"]
+shader = ExtResource("water")
+
+[sub_resource type="PlaneMesh" id="Plane_sea"]
+size = Vector2(420, 420)
+
+[sub_resource type="BoxShape3D" id="Shape_land"]
+size = Vector3(46, 0.3, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_pier"]
+size = Vector3(3.2, 0.3, 18)
+
+[sub_resource type="PlaneMesh" id="Plane_Hinterland"]
+size = Vector2(114, 52)
+
+[sub_resource type="PlaneMesh" id="Plane_EastLand"]
+size = Vector2(68, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_SeaWest"]
+size = Vector3(7.7, 1.2, 0.3)
+
+[sub_resource type="BoxShape3D" id="Shape_SeaEast"]
+size = Vector3(35.7, 1.2, 0.3)
+
+[sub_resource type="BoxShape3D" id="Shape_WestEdge"]
+size = Vector3(0.3, 1.2, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_PierWest"]
+size = Vector3(0.3, 1.2, 18)
+
+[sub_resource type="BoxShape3D" id="Shape_PierEast"]
+size = Vector3(0.3, 1.2, 18)
+
+[sub_resource type="BoxShape3D" id="Shape_PierEnd"]
+size = Vector3(3.5, 1.2, 0.3)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceBack"]
+size = Vector3(46, 2, 0.08)
+
+[sub_resource type="BoxMesh" id="Box_FenceBack"]
+size = Vector3(46, 2, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_FenceEast"]
+size = Vector3(0.08, 2, 25.4)
+
+[sub_resource type="BoxMesh" id="Box_FenceEast"]
+size = Vector3(0.08, 2, 25.4)
+
+[sub_resource type="BoxShape3D" id="Shape_Row0Slot01"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Row0Slot2"]
+size = Vector3(6.06, 7.77, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Row0Slot3"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Row1Slot0"]
+size = Vector3(6.06, 2.59, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_Row1Slot12"]
+size = Vector3(12.19, 5.18, 2.44)
+
+[sub_resource type="BoxShape3D" id="Shape_crane_bogie"]
+size = Vector3(3, 1.3, 1.3)
+
+[sub_resource type="BoxShape3D" id="Shape_crane_leg"]
+size = Vector3(1, 28.6, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_truck"]
+size = Vector3(15.19, 3.94, 2.64)
+
+[node name="Port" type="Node3D"]
+script = ExtResource("location")
+location_id = &"port"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("PortEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-40, -150, 0)
+light_color = Color(1, 0.8, 0.62, 1)
+light_energy = 0.75
+shadow_enabled = true
+directional_shadow_max_distance = 70.0
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("tone")
+volume_db = -30.0
+script = ExtResource("ambience")
+target_db = -25.0
+pitch_scale = 0.7
+
+[node name="Sea" type="MeshInstance3D" parent="."]
+position = Vector3(0, -1.8, -60)
+mesh = SubResource("Plane_sea")
+material_override = SubResource("SkyWater")
+cast_shadow = 0
+
+[node name="Quay" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Land" type="CollisionShape3D" parent="Quay"]
+position = Vector3(-1, -0.15, 5)
+shape = SubResource("Shape_land")
+
+[node name="Pier" type="CollisionShape3D" parent="Quay"]
+position = Vector3(-15, -0.15, -17)
+shape = SubResource("Shape_pier")
+
+[node name="Deck" type="MeshInstance3D" parent="Quay"]
+mesh = ExtResource("mesh_deck")
+material_override = SubResource("quay_deck")
+
+[node name="Faces" type="MeshInstance3D" parent="Quay"]
+mesh = ExtResource("mesh_faces")
+material_override = SubResource("quay_face")
+
+[node name="Markings" type="MeshInstance3D" parent="Quay"]
+mesh = ExtResource("mesh_markings")
+material_override = SubResource("quay_paint")
+cast_shadow = 0
+
+[node name="Iron" type="MeshInstance3D" parent="Quay"]
+mesh = ExtResource("mesh_iron")
+material_override = SubResource("steel")
+
+[node name="Hinterland" type="MeshInstance3D" parent="Quay"]
+position = Vector3(33, -0.01, 44)
+mesh = SubResource("Plane_Hinterland")
+material_override = SubResource("quay_deck")
+
+[node name="EastLand" type="MeshInstance3D" parent="Quay"]
+position = Vector3(56, -0.01, 5)
+mesh = SubResource("Plane_EastLand")
+material_override = SubResource("quay_deck")
+
+[node name="Lifebuoy" type="MeshInstance3D" parent="Quay"]
+position = Vector3(-14.1, 0, -25.55)
+mesh = ExtResource("mesh_lifebuoy")
+material_override = SubResource("steel")
+
+[node name="EdgeWalls" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="SeaWest" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(-20.3, 0.6, -8)
+shape = SubResource("Shape_SeaWest")
+
+[node name="SeaEast" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(4.3, 0.6, -8)
+shape = SubResource("Shape_SeaEast")
+
+[node name="WestEdge" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(-24, 0.6, 5)
+shape = SubResource("Shape_WestEdge")
+
+[node name="PierWest" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(-16.6, 0.6, -17)
+shape = SubResource("Shape_PierWest")
+
+[node name="PierEast" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(-13.4, 0.6, -17)
+shape = SubResource("Shape_PierEast")
+
+[node name="PierEnd" type="CollisionShape3D" parent="EdgeWalls"]
+position = Vector3(-15, 0.6, -26)
+shape = SubResource("Shape_PierEnd")
+
+[node name="Fences" type="Node3D" parent="."]
+
+[node name="FenceBack" type="StaticBody3D" parent="Fences"]
+position = Vector3(-1, 1, 18)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fences/FenceBack"]
+shape = SubResource("Shape_FenceBack")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Fences/FenceBack"]
+mesh = SubResource("Box_FenceBack")
+material_override = ExtResource("fence")
+
+[node name="FenceEast" type="StaticBody3D" parent="Fences"]
+position = Vector3(22, 1, 5.3)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fences/FenceEast"]
+shape = SubResource("Shape_FenceEast")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Fences/FenceEast"]
+mesh = SubResource("Box_FenceEast")
+material_override = ExtResource("fence")
+
+[node name="Waiting" type="Node3D" parent="."]
+
+[node name="Row0Slot01" type="StaticBody3D" parent="Waiting" groups=["camera_occluder"]]
+position = Vector3(-16.25, 0, 6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Waiting/Row0Slot01"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_Row0Slot01")
+
+[node name="Level0" type="MeshInstance3D" parent="Waiting/Row0Slot01"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("yard_container40_a")
+material_override = SubResource("container_blue")
+
+[node name="Level1" type="MeshInstance3D" parent="Waiting/Row0Slot01"]
+position = Vector3(0, 2.59, 0)
+rotation_degrees = Vector3(0, 180.257, 0)
+mesh = ExtResource("yard_container40_b")
+material_override = SubResource("container_red")
+
+[node name="Row0Slot2" type="StaticBody3D" parent="Waiting" groups=["camera_occluder"]]
+position = Vector3(-6.5, 0, 6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Waiting/Row0Slot2"]
+position = Vector3(0, 3.885, 0)
+shape = SubResource("Shape_Row0Slot2")
+
+[node name="Level0" type="MeshInstance3D" parent="Waiting/Row0Slot2"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("yard_container20_b")
+material_override = SubResource("container_red")
+
+[node name="Level1" type="MeshInstance3D" parent="Waiting/Row0Slot2"]
+position = Vector3(0, 2.59, 0)
+rotation_degrees = Vector3(0, -0.0903, 0)
+mesh = ExtResource("yard_container20_b")
+material_override = SubResource("container_blue")
+
+[node name="Level2" type="MeshInstance3D" parent="Waiting/Row0Slot2"]
+position = Vector3(0, 5.18, 0)
+rotation_degrees = Vector3(0, 0.3886, 0)
+mesh = ExtResource("yard_container20_a")
+material_override = SubResource("container_blue")
+
+[node name="Row0Slot3" type="StaticBody3D" parent="Waiting" groups=["camera_occluder"]]
+position = Vector3(0, 0, 6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Waiting/Row0Slot3"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_Row0Slot3")
+
+[node name="Level0" type="MeshInstance3D" parent="Waiting/Row0Slot3"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+mesh = ExtResource("yard_container20_b")
+material_override = SubResource("container_orange")
+
+[node name="Row1Slot0" type="StaticBody3D" parent="Waiting" groups=["camera_occluder"]]
+position = Vector3(-19.5, 0, 10.6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Waiting/Row1Slot0"]
+position = Vector3(0, 1.295, 0)
+shape = SubResource("Shape_Row1Slot0")
+
+[node name="Level0" type="MeshInstance3D" parent="Waiting/Row1Slot0"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("yard_container20_b")
+material_override = SubResource("container_red_dark")
+
+[node name="Row1Slot12" type="StaticBody3D" parent="Waiting" groups=["camera_occluder"]]
+position = Vector3(-9.75, 0, 10.6)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Waiting/Row1Slot12"]
+position = Vector3(0, 2.59, 0)
+shape = SubResource("Shape_Row1Slot12")
+
+[node name="Level0" type="MeshInstance3D" parent="Waiting/Row1Slot12"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
+mesh = ExtResource("yard_container40_a")
+material_override = SubResource("container_blue_deep")
+
+[node name="Level1" type="MeshInstance3D" parent="Waiting/Row1Slot12"]
+position = Vector3(0, 2.59, 0)
+rotation_degrees = Vector3(0, 180.188, 0)
+mesh = ExtResource("yard_container40_a")
+material_override = SubResource("container_red")
+
+[node name="Crane" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(14, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="BogieWSea" type="CollisionShape3D" parent="Crane"]
+position = Vector3(-5.5, 0.65, -6.2)
+shape = SubResource("Shape_crane_bogie")
+
+[node name="LegWSea" type="CollisionShape3D" parent="Crane"]
+position = Vector3(-5.5, 15.4, -6.2)
+shape = SubResource("Shape_crane_leg")
+
+[node name="BogieWLand" type="CollisionShape3D" parent="Crane"]
+position = Vector3(-5.5, 0.65, 3.8)
+shape = SubResource("Shape_crane_bogie")
+
+[node name="LegWLand" type="CollisionShape3D" parent="Crane"]
+position = Vector3(-5.5, 15.4, 3.8)
+shape = SubResource("Shape_crane_leg")
+
+[node name="BogieESea" type="CollisionShape3D" parent="Crane"]
+position = Vector3(5.5, 0.65, -6.2)
+shape = SubResource("Shape_crane_bogie")
+
+[node name="LegESea" type="CollisionShape3D" parent="Crane"]
+position = Vector3(5.5, 15.4, -6.2)
+shape = SubResource("Shape_crane_leg")
+
+[node name="BogieELand" type="CollisionShape3D" parent="Crane"]
+position = Vector3(5.5, 0.65, 3.8)
+shape = SubResource("Shape_crane_bogie")
+
+[node name="LegELand" type="CollisionShape3D" parent="Crane"]
+position = Vector3(5.5, 15.4, 3.8)
+shape = SubResource("Shape_crane_leg")
+
+[node name="Frame" type="MeshInstance3D" parent="Crane"]
+mesh = ExtResource("mesh_crane")
+material_override = SubResource("crane_steel")
+extra_cull_margin = 2.0
+
+[node name="Hanging" type="MeshInstance3D" parent="."]
+position = Vector3(14, 5, -8.7)
+mesh = ExtResource("yard_container20_b")
+material_override = SubResource("container_red")
+
+[node name="Ship" type="Node3D" parent="."]
+
+[node name="Hull" type="MeshInstance3D" parent="Ship"]
+mesh = ExtResource("mesh_ship")
+material_override = SubResource("ship")
+
+[node name="Truck" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(11.305, 0, 15.2)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Truck"]
+position = Vector3(-1.5, 1.97, 0)
+shape = SubResource("Shape_truck")
+
+[node name="Rig" type="MeshInstance3D" parent="Truck"]
+mesh = ExtResource("yard_truck")
+material_override = SubResource("steel")
+
+[node name="Box" type="MeshInstance3D" parent="Truck"]
+position = Vector3(0, 1.35, 0)
+mesh = ExtResource("yard_container40_open")
+material_override = SubResource("container_blue")
+
+[node name="Mast0" type="Node3D" parent="."]
+position = Vector3(-8, 0, 16.8)
+rotation_degrees = Vector3(0, 30, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast0"]
+mesh = ExtResource("yard_mast")
+material_override = SubResource("steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast0"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.76, 0.5, 1)
+light_energy = 1.4
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Mast1" type="Node3D" parent="."]
+position = Vector3(-22.8, 0, 16.6)
+rotation_degrees = Vector3(0, 110, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast1"]
+mesh = ExtResource("yard_mast")
+material_override = SubResource("steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast1"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.76, 0.5, 1)
+light_energy = 1.4
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Mast2" type="Node3D" parent="."]
+position = Vector3(-22.8, 0, -6.6)
+rotation_degrees = Vector3(0, 190, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast2"]
+mesh = ExtResource("yard_mast")
+material_override = SubResource("steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast2"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.76, 0.5, 1)
+light_energy = 1.4
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="Mast3" type="Node3D" parent="."]
+position = Vector3(1, 0, -6.9)
+rotation_degrees = Vector3(0, 270, 0)
+
+[node name="Pole" type="MeshInstance3D" parent="Mast3"]
+mesh = ExtResource("yard_mast")
+material_override = SubResource("steel")
+
+[node name="Light" type="OmniLight3D" parent="Mast3"]
+position = Vector3(0, 8.6, 0.6)
+light_color = Color(1, 0.76, 0.5, 1)
+light_energy = 1.4
+omni_range = 22.0
+omni_attenuation = 0.8
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromContainerYard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(19, 0, 15.2)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="BackToContainerYard" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(18.2, 0.9, 15.2)
+interact_id = &"port_back_to_container_yard"
+prompt_key = "prompt.port_out"
+radius = 1.4
+outline_paths = PackedStringArray("../../Truck/Box")
+destination_scene = "res://scenes/locations/container_yard/container_yard.tscn"
+destination_spawn = &"FromPort"
+destination_id = &"container_yard"
+
+[node name="SeaLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(-15, 1, -25)
+interact_id = &"port_sea_look"
+inspection_id = &"port_sea"
+radius = 1.6
+outline_paths = PackedStringArray("../../Quay/Lifebuoy")
+
+[node name="CraneLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(14, 1, -1.2)
+interact_id = &"port_crane_look"
+inspection_id = &"port_crane"
+radius = 1.6
+outline_paths = PackedStringArray("../../Crane/Frame")
+
+[node name="ShipLook" parent="Interactables" instance=ExtResource("look")]
+position = Vector3(6, 1, -7)
+interact_id = &"port_ship_look"
+inspection_id = &"port_ship"
+radius = 1.6
+outline_paths = PackedStringArray("../../Ship/Hull")
