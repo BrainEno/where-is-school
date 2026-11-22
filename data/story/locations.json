@@ -92,6 +92,10 @@
     "container_yard": {
       "scene": "res://scenes/locations/container_yard/container_yard.tscn",
       "spawn": "FromPlayground"
+    },
+    "port": {
+      "scene": "res://scenes/locations/port/port.tscn",
+      "spawn": "FromContainerYard"
     }
   }
 }

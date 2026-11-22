@@ -1,4 +1,4 @@
-[gd_scene load_steps=105 format=3]
+[gd_scene load_steps=108 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -27,6 +27,8 @@
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/tyre_heap.tres" id="mesh_tyre_heap"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/yard_office.tres" id="mesh_yard_office"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/pallets.tres" id="mesh_pallets"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/truck.tres" id="mesh_truck"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_open.tres" id="mesh_container40_open"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_long_down.tres" id="mesh_plank_long_down"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_to_corner.tres" id="mesh_plank_to_corner"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_to_forty_foot.tres" id="mesh_plank_to_forty_foot"]
@@ -269,6 +271,9 @@ texture_filter = 3
 
 [sub_resource type="BoxShape3D" id="Shape_office"]
 size = Vector3(5, 2.7, 2.4)
+
+[sub_resource type="BoxShape3D" id="Shape_truck"]
+size = Vector3(15.19, 3.94, 2.64)
 
 [sub_resource type="BoxShape3D" id="Shape_plank_LongDown"]
 size = Vector3(9.5773, 0.06, 0.82)
@@ -1001,6 +1006,24 @@ position = Vector3(-12.6, 0, 13.6)
 mesh = ExtResource("mesh_pallets")
 material_override = SubResource("bay_paint")
 
+[node name="Truck" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0.905, 0, 11.8)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Truck"]
+position = Vector3(-1.5, 1.97, 0)
+shape = SubResource("Shape_truck")
+
+[node name="Rig" type="MeshInstance3D" parent="Truck"]
+mesh = ExtResource("mesh_truck")
+material_override = SubResource("mast_steel")
+
+[node name="Box" type="MeshInstance3D" parent="Truck"]
+position = Vector3(0, 1.35, 0)
+mesh = ExtResource("mesh_container40_open")
+material_override = SubResource("container_blue")
+
 [node name="Planks" type="Node3D" parent="."]
 
 [node name="LongDown" type="StaticBody3D" parent="Planks"]
@@ -1247,6 +1270,9 @@ cast_shadow = 0
 [node name="FromPlayground" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(14, 0, 15.2)
 
+[node name="FromPort" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(8.6, 0, 11.8)
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="BackToPlayground" parent="Interactables" instance=ExtResource("exit")]
@@ -1258,6 +1284,16 @@ outline_paths = PackedStringArray("../../Edges/GapFlap")
 destination_scene = "res://scenes/locations/playground/playground.tscn"
 destination_spawn = &"FromContainerYard"
 destination_id = &"playground"
+
+[node name="ToPort" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(7.8, 0.9, 11.8)
+interact_id = &"cy_to_port"
+prompt_key = "prompt.port"
+radius = 1.4
+outline_paths = PackedStringArray("../../Truck/Box")
+destination_scene = "res://scenes/locations/port/port.tscn"
+destination_spawn = &"FromContainerYard"
+destination_id = &"port"
 
 [node name="TyreLook" parent="Interactables" instance=ExtResource("look")]
 position = Vector3(11.6, 0.6, 14.42)
