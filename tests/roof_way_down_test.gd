@@ -5,16 +5,21 @@ extends SceneTree
 ##
 ## 1. **The ladder asks first.** With the resident outside, using the roof ladder offers
 ##    the ladder, the jump and waiting; waiting leaves the protagonist on the roof.
-## 2. **The jump, unheard.** A passed orientation check: the protagonist steps off
-##    (`void_step`), lands hard on the yard behind the north door leaf (`roof_impact`), and
-##    the dazed look comes back heavier than a landing (`ConcussionView.HEAVY_SECONDS`).
-##    The resident searches for 30-60 story seconds, never holds the hidden protagonist in
-##    a clear line of sight while he looks, and goes back into his cabin. Then the player
-##    has control on the yard floor, the look keeps fading, and the checkpoint is there.
-## 3. **The jump, heard.** A failed check: the same fall, then he stops the protagonist
-##    (`pg_collector_stop`) and keeps him in view; there is no search.
-## 4. **The tap.** Clear-headed it is its inspection. Dazed, it offers water: a mouthful
-##    takes a third of the look and can be taken again, a wash clears it, leaving keeps it.
+## 2. **The jump, unheard.** A passed orientation check: the protagonist creeps bent over
+##    along the roof (`crouch_walk`) to the closed rear, steps off (`void_step`), lands hard
+##    on the yard behind it (`roof_impact`), and the dazed look comes back heavier than a
+##    landing (`ConcussionView.HEAVY_SECONDS`). While the resident searches the player has
+##    control, crouched and slow (`PlayerController.crouch_speed`), not frozen. Left where
+##    they landed, the protagonist is never held in a clear line of sight; he searches for
+##    30-60 story seconds and goes back into his cabin. Then the player stands up with
+##    control on the yard floor, the look keeps fading, and the checkpoint is there.
+## 3. **The jump, unheard, then seen.** The same, but the protagonist moves out along the
+##    south side while he searches: he finds them, the search ends, and he stops them
+##    (`pg_collector_stop`).
+## 4. **The jump, heard.** A failed check: the same fall, then he stops the protagonist
+##    and keeps him in view; there is no search.
+## 5. **The tap.** Clear-headed it is its inspection. Dazed, it offers water: a mouthful
+##    clears the look, and so does a wash; leaving keeps it.
 
 const Harness = preload("res://tests/test_harness.gd")
 const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
@@ -28,6 +33,9 @@ const TIME_SCALE := 4.0
 ## A glimpse is not being found: he has to hold the protagonist in a clear line of
 ## sight, in front of him, for this many story seconds.
 const FOUND_SECONDS := 1.5
+## Where the protagonist steps out into his search (local to the container): the yard off
+## the south side, west of the ladder, in the open.
+const IN_THE_OPEN := Vector3(-2.2, 0.0, 3.6)
 
 var _check := Harness.Checker.new()
 var _state: Node = null
@@ -87,6 +95,8 @@ func _run() -> void:
 	await _check_wait()
 	Harness.stage = "the jump, unheard"
 	await _check_jump(true)
+	Harness.stage = "the jump, unheard, then seen"
+	await _check_jump(true, true)
 	Harness.stage = "the jump, heard"
 	await _check_jump(false)
 	Harness.stage = "the tap"
@@ -103,8 +113,9 @@ func _run() -> void:
 		self,
 		_check.failures,
 		(
-			"the roof ladder asks while the resident watches; the jump falls again, heavier,"
-			+ " and is searched for or stopped; the tap's water relieves and clears the look."
+			"the roof ladder asks while the resident watches; the jump creeps to the rear and"
+			+ " falls again, heavier, and is hidden from crouched, found or stopped; the tap's"
+			+ " water clears the look."
 		)
 	)
 
@@ -135,7 +146,7 @@ func _check_wait() -> void:
 # --- 2./3. the jump -----------------------------------------------------------------
 
 
-func _check_jump(unheard: bool) -> void:
+func _check_jump(unheard: bool, step_out: bool = false) -> void:
 	if not await _on_roof(true):
 		return
 	_seed_check(unheard)
@@ -150,6 +161,9 @@ func _check_jump(unheard: bool) -> void:
 	var search_ended := 0
 	var in_sight := 0.0
 	var longest_sight := 0.0
+	var hiding_free := true
+	var hiding_slow := true
+	var stepped_out := false
 	var started := Time.get_ticks_msec()
 	var last := started
 	while _sequence.is_beat_active() and Time.get_ticks_msec() - started < 60000:
@@ -163,6 +177,18 @@ func _check_jump(unheard: bool) -> void:
 			search_started = Time.get_ticks_msec()
 		if phase == RoofEncounter.Phase.INSIDE and search_ended == 0:
 			search_ended = Time.get_ticks_msec()
+		if phase == RoofEncounter.Phase.SEARCHING:
+			hiding_free = (
+				hiding_free and _player.is_control_enabled() and _player.is_physics_processing()
+			)
+			hiding_slow = (
+				hiding_slow
+				and _player.is_crouching()
+				and _player.target_speed() < _player.move_speed * 0.5
+			)
+			if step_out and not stepped_out:
+				stepped_out = true
+				_player.teleport(Transform3D(Basis(), container.to_global(IN_THE_OPEN)))
 		if phase == RoofEncounter.Phase.SEARCHING and _sees(collector):
 			in_sight += step
 			longest_sight = maxf(longest_sight, in_sight)
@@ -173,9 +199,14 @@ func _check_jump(unheard: bool) -> void:
 		await process_frame
 	await _settle(10.0, "the end of the jump")
 	var label := "unheard" if unheard else "heard"
+	if step_out:
+		label = "seen"
 	_check.expect(
-		clips.has("void_step") and clips.has("roof_impact"),
-		"The %s jump did not step off and land hard (%s)." % [label, str(clips.keys())]
+		clips.has("crouch_walk") and clips.has("void_step") and clips.has("roof_impact"),
+		(
+			"The %s jump did not creep to the rear, step off and land hard (%s)."
+			% [label, str(clips.keys())]
+		)
 	)
 	_check.expect(
 		heaviest >= ConcussionView.HEAVY_SECONDS,
@@ -188,21 +219,41 @@ func _check_jump(unheard: bool) -> void:
 		record is Dictionary and bool((record as Dictionary).get("success", false)) == unheard,
 		"The landing's check did not come out %s: %s." % [label, str(record)]
 	)
-	var hide := container.to_global(RoofWayDown.HIDE)
+	var hide := container.to_global(IN_THE_OPEN if step_out else RoofWayDown.HIDE)
 	var flat := _player.global_position - hide
 	flat.y = 0.0
 	_check.expect(
 		flat.length() < 0.25 and _player.is_on_floor() and _player.is_control_enabled(),
 		(
-			"The %s jump left the player at %s with control %s, not behind the leaf at %s."
+			"The %s jump left the player at %s with control %s, not at %s."
 			% [label, str(_player.global_position), _player.is_control_enabled(), str(hide)]
 		)
+	)
+	_check.expect(
+		not _player.is_crouching(), "The protagonist was still crouched after the %s jump." % label
 	)
 	_check.expect(
 		_view.visible and _view.get_daze() > 0.5,
 		"The look was gone after the %s jump (%.2f)." % [label, _view.get_daze()]
 	)
 	if unheard:
+		_check.expect(
+			search_started > 0 and hiding_free and hiding_slow,
+			(
+				"Hiding after the %s jump was not a free, slow crouch (free %s, slow %s)."
+				% [label, hiding_free, hiding_slow]
+			)
+		)
+	if step_out:
+		_check.expect(
+			search_ended == 0 and _stage().phase == RoofEncounter.Phase.OUTSIDE,
+			"Seen in the open, the protagonist was not found: the search ran on."
+		)
+		_check.expect(
+			_conversations.has(RoofWayDown.STOP_CONVERSATION) and collector.is_watching(),
+			"Found while he searched, the protagonist was not stopped."
+		)
+	elif unheard:
 		var story_seconds := (search_ended - search_started) / 1000.0 * TIME_SCALE
 		_check.expect(
 			(
@@ -261,18 +312,25 @@ func _check_tap() -> void:
 
 	ConcussionView.begin(_world)
 	await Harness.wait_until(func() -> bool: return _view.get_daze() > 0.97, 3.0)
-	for sip in 2:
-		await _activate(&"pg_tap")
-		await _choices("the tap, dazed")
-		var before := ConcussionView.daze_for(_seconds())
-		if not await _choose(&"drink", "a mouthful at the tap"):
-			return
-		var after := ConcussionView.daze_for(_seconds())
-		_check.expect(
-			absf(after - before * 2.0 / 3.0) < 0.04,
-			"Mouthful %d took the look %.2f -> %.2f, not a third." % [sip + 1, before, after]
-		)
-		await _settle(10.0, "the mouthful")
+	await _activate(&"pg_tap")
+	await _choices("the tap, dazed")
+	if not await _choose(&"drink", "a mouthful at the tap"):
+		return
+	_check.expect(_seconds() == 0, "A mouthful did not clear the look (%d s left)." % _seconds())
+	await _settle(10.0, "the mouthful")
+	var drunk := await Harness.wait_until(
+		func() -> bool: return not _view.visible, ConcussionView.RELIEF_SECONDS + 2.0
+	)
+	_check.expect(drunk, "The look was still drawn after the mouthful.")
+	_inspections.clear()
+	await _activate(&"pg_tap")
+	await _settle(10.0, "the tap after the mouthful")
+	_check.expect(
+		_inspections.has(&"pg_tap"), "Cleared by a mouthful, the tap still offered water."
+	)
+
+	ConcussionView.begin(_world)
+	await Harness.wait_until(func() -> bool: return _view.get_daze() > 0.97, 3.0)
 	var kept := _seconds()
 	await _activate(&"pg_tap")
 	if not await _choose(&"leave", "leaving the tap"):

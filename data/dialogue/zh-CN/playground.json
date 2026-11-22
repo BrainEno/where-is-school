@@ -505,7 +505,7 @@
         {
           "id": "prw_1",
           "speaker": "protagonist",
-          "text": "门口那个人还站着，仰头朝箱顶看。梯子就在你脚边。另一头的门开着，北边那扇门板斜着半开，门板背后是一块暗角。",
+          "text": "待做·箱顶上的处境：他站在门口四下张望；梯子在你脚边；箱子后头那一端没人看着。",
           "choices": [
             {
               "id": "ladder",
@@ -521,7 +521,7 @@
             },
             {
               "id": "jump",
-              "text": "从开门那头跳下去，躲到门板后面。",
+              "text": "待做·弯着腰挪到箱子后头，从梯子左手边跳下去。",
               "next": "prw_jump",
               "effects": [
                 {
@@ -601,7 +601,7 @@
         {
           "id": "prj_check",
           "speaker": "voice_orientation",
-          "text": "门板在你右边，他在门口。别动。往门板后面的暗处缩。",
+          "text": "待做·路感：落在箱子后头，箱子挡着他。",
           "check": {
             "ability": "orientation",
             "difficulty": 10,
@@ -613,7 +613,7 @@
         {
           "id": "prj_hidden",
           "speaker": "protagonist",
-          "text": "你缩到门板背后，一只手撑着地。呼吸压得很低。",
+          "text": "待做·没被听见：弯着腰，别进他的视线。",
           "next": null
         },
         {
@@ -675,7 +675,7 @@
         {
           "id": "ptu_drink",
           "speaker": "protagonist",
-          "text": "水有股铁锈味，凉得发紧。脑子里那层东西薄了一点。",
+          "text": "待做·喝下去之后，脑子里那层东西散了。",
           "next": null
         },
         {

@@ -11,6 +11,15 @@ const LEAN := [Vector3(29, -7, 19), Vector3(-29, 30, 1), Vector3(14, 11, 10),
 	Vector3(-41, 27, -25), Vector3(-12, 41, -23)]
 const GRIP := [Vector3(10, 0, -7), Vector3(-34, 49, -5), Vector3(-10, 28, -4),
 	Vector3(-115, 13, -33), Vector3(-94, 16, -49)]
+## Bent over and low, knees deep, face still up: the hiding walk after the roof jump.
+## `PlayerController.CROUCH_HIP_DROP` lowers the hips by the height these knees take.
+const CROUCH := [Vector3(30, 0, -17), Vector3(-46, 84, -36), Vector3(-46, 84, -36),
+	Vector3(-28, 14, -42), Vector3(-28, 14, -42)]
+## One crouched step per half cycle: reach (thigh forward, shin nearly upright), take the
+## weight, push off behind, then fold the knee high to swing through.
+const CROUCH_STEP := [
+	Vector3(-60, 56, 4), Vector3(-46, 86, -38), Vector3(-24, 80, -22), Vector3(-50, 108, -22),
+]
 
 
 static func clips() -> Dictionary:
@@ -25,7 +34,27 @@ static func clips() -> Dictionary:
 	var other: Array = []
 	for row: Array in down:
 		other.append([row[0]] + _mirror(row.slice(1)))
+	var crouch_walk: Array = []
+	for index in 5:
+		var phase := index % 4
+		# +1 while the left leg reaches, -1 while it pushes off; the right arm swings with it.
+		var swing := cos(phase * PI / 2.0)
+		crouch_walk.append([
+			0.24 * index,
+			Vector3(31, 3.0 * swing, -16),
+			CROUCH_STEP[phase],
+			CROUCH_STEP[(phase + 2) % 4],
+			Vector3(-28 + 12.0 * swing, 14, -44),
+			Vector3(-28 - 12.0 * swing, 14, -44),
+		])
+	var crouch_idle: Array = [
+		[0.0] + CROUCH,
+		[1.2, Vector3(33, 0, -15), CROUCH[1], CROUCH[2], CROUCH[3], CROUCH[4]],
+		[2.4] + CROUCH,
+	]
 	return {
+		"crouch_idle": _looped(_clip(crouch_idle)),
+		"crouch_walk": _looped(_clip(crouch_walk)),
 		"classroom_rise": _clip([
 			[0.0] + SEAT,
 			[0.17, Vector3(16, 7, -4), Vector3(-80, 82, -4), Vector3(-79, 81, -3),
@@ -177,6 +206,11 @@ static func _clip(frames: Array) -> Dictionary:
 			_key(tracks, "upper_arm" + suffix, time, Vector3(arm.x, 0, arm.y * sign_z))
 			_key(tracks, "fore_arm" + suffix, time, Vector3(arm.z, 0, 0))
 	return {"length": float(frames.back()[0]), "tracks": tracks, "loop": false}
+
+
+static func _looped(clip: Dictionary) -> Dictionary:
+	clip["loop"] = true
+	return clip
 
 
 static func _key(tracks: Dictionary, bone: String, time: float, value: Vector3) -> void:
