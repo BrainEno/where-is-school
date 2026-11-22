@@ -22,8 +22,10 @@ ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "assets/materials/corridor/graffiti"
 INK = (36, 42, 57)
 HEIGHT_M = 1.50
-TILE_PX = 8
-PLASTER_PX = 512
+TILE_PX = 4
+PLASTER_PX = 512  # Internal field: shared with the paint's sampled pores.
+PLASTER_OUTPUT_PX = 256
+PAINT_OUTPUT_SIZE = (448, 516)
 PLASTER_REPEAT_M = 2.0  # Reciprocal of rose_plaster.tres's local triplanar scale.
 ROSE = (185, 116, 108)  # The 01 entrance's municipal_rose, before its outdoor lighting.
 
@@ -108,8 +110,14 @@ def extract_paint(source: Path, pores: np.ndarray) -> Image.Image:
     edge = np.minimum.outer(np.minimum(y, y[::-1]), np.minimum(x, x[::-1]))
     alpha *= np.pad(np.minimum(1.0, (edge + 6) / 17), 20, mode="edge")
     alpha[alpha < .024] = 0
-    paint = Image.new("RGBA", (alpha.shape[1], alpha.shape[0]), INK)
-    paint.putalpha(Image.fromarray((np.rint(alpha * 63) * 4).astype(np.uint8)))
+    # The camera's full drawing fits comfortably in a half-resolution texture.
+    # Resize coverage alone so transparent RGB stays the same ink colour, then
+    # quantize to 32 levels: WebP can pack the alpha without a noisy colour halo.
+    coverage = Image.fromarray(np.rint(alpha * 255).astype(np.uint8))
+    coverage = coverage.resize(PAINT_OUTPUT_SIZE, Image.Resampling.LANCZOS)
+    coverage = coverage.point(lambda value: min(255, round(value / 8) * 8))
+    paint = Image.new("RGBA", PAINT_OUTPUT_SIZE, INK)
+    paint.putalpha(coverage)
     return paint
 
 
@@ -175,6 +183,11 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=OUT)
     args = parser.parse_args()
     albedo, normal, pores = plaster_finish()
+    # Keep the pore field at full precision for alignment; only downsample the
+    # final two maps, since their fine grain is already filtered at viewing scale.
+    size = (PLASTER_OUTPUT_PX, PLASTER_OUTPUT_PX)
+    albedo = albedo.resize(size, Image.Resampling.LANCZOS)
+    normal = normal.resize(size, Image.Resampling.LANCZOS)
     paint = extract_paint(args.source, pores)
     mesh = ink_mesh(np.asarray(paint.getchannel("A")))
     args.output.mkdir(parents=True, exist_ok=True)

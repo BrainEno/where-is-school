@@ -175,6 +175,11 @@ func _check_wall(wall: StaticBody3D, subject: StagedInteractable, paint: MeshIns
 		and material.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA
 		and paint.mesh.get_surface_count() == 1 and paint.mesh.get_faces().size() > 6,
 		"Expected one contour-shaped surface with the imported clear-background paint.")
+	_check.expect(material != null and material.albedo_texture != null
+		and material.albedo_texture.get_width() >= 448 and material.albedo_texture.get_height() >= 516
+		and coat != null and coat.albedo_texture != null and coat.normal_texture != null
+		and coat.albedo_texture.get_width() >= 256 and coat.normal_texture.get_width() >= 256,
+		"Budgeted paint and plaster textures must retain the close-up's minimum detail.")
 	_check.expect(subject.get_outline_meshes() == [paint] and subject.get_pick_shapes().size() == 1
 		and subject.collision_layer == Interactable.INTERACTION_LAYER and subject.collision_mask == 0,
 		"The pick/outline should cover just the paint, without adding physical collision.")
