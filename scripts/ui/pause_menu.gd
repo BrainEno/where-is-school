@@ -145,7 +145,8 @@ func _ready() -> void:
 	for id: StringName in ENTRIES:
 		var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
 		entry.name = String(id)
-		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
+		if _entry_grid != null:
+			entry.autowrap_mode = TextServer.AUTOWRAP_OFF
 		entry.pressed.connect(activate.bind(id))
 		if _entry_grid == null or id == &"resume":
 			_column.add_child(entry)
@@ -183,6 +184,9 @@ func _ready() -> void:
 		settings.connect("bindings_changed", _refresh_texts)
 	MobileLayout.watch(_root, _fit)
 	if MobileLayout.enabled:
+		# The wrapped status is first measured before the scroll column has a width.
+		# Refit the card once that label (or a late notice) has been laid out.
+		_column.minimum_size_changed.connect(_fit_after_reflow, CONNECT_DEFERRED)
 		get_window().go_back_requested.connect(_on_mobile_back)
 	_refresh_texts()
 
@@ -573,35 +577,52 @@ func _fit() -> void:
 		return
 	var safe := MobileLayout.safe_rect(_root)
 	var view := safe.size
-	if MobileLayout.enabled:
+	var left := minf(view.x * 0.085, 160.0)
+	var width := minf(view.x - left * 2.0, 560.0 * maxf(_factor, 1.0))
+	if _touch_scroll == null:
+		_column.custom_minimum_size = Vector2(width, 0.0)
+		_column.size = Vector2(width, 0.0)
+		var needed := _column.get_combined_minimum_size().y
+		var top := maxf(24.0, minf(view.y * 0.28, view.y - needed - 90.0))
+		_column.position = safe.position + Vector2(left, top)
+		_sheet.column_rect = Rect2(_column.position, Vector2(width, needed))
+	else:
 		_hint.visible = MenuStyle.using_gamepad(self)
 		for entry: Button in _entries.values():
 			MobileLayout.enlarge(entry)
-	var left := minf(view.x * 0.085, 160.0)
-	var width := minf(view.x - left * 2.0, 560.0 * maxf(_factor, 1.0))
-	if _entry_grid != null:
 		left = clampf(view.x * 0.06, 32.0, 92.0)
-		width = minf(view.x - left * 2.0, minf(view.x * 0.64, 510.0 * _factor))
-		# Use a single scrollable column when the longer labels at this size would
-		# not fit in a grid. Never fit by shrinking or truncating the chosen text.
-		var pair := Vector2.ZERO
-		for entry: Control in _entry_grid.get_children():
-			var index := entry.get_index() % 2
-			pair[index] = maxf(pair[index], entry.get_combined_minimum_size().x)
-		width = minf(view.x - left * 2.0, maxf(width, maxf(pair.x, pair.y)))
-		_entry_grid.columns = 2 if pair.x + pair.y + 6.0 <= width else 1
-	_column.custom_minimum_size = Vector2(width, 0.0)
-	_column.size = Vector2(width, 0.0)
-	var needed := _column.get_combined_minimum_size().y
-	var foot_room := 90.0 if _hint.visible else (24.0 if MobileLayout.enabled else MobileLayout.EDGE)
-	var top := maxf(24.0, minf(view.y * 0.28, view.y - needed - foot_room))
-	if MobileLayout.enabled:
-		top = maxf(24.0, (view.y - needed - (foot_room - 24.0)) * 0.5)
-	var height := maxf(1.0, minf(needed + 2.0, view.y - top - foot_room))
-	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, height))
-	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
+		width = _fit_touch_width(view.x, left)
+		_fit_touch_height(safe, left, width)
 	_hint.position = safe.position + Vector2(left + 12.0, view.y - 48.0 * maxf(_factor, 1.0))
 	_hint.size = Vector2(view.x - left * 2.0, 0.0)
-	if _sheet != null:
-		_sheet.column_rect = Rect2(bounds.position, Vector2(width, needed)) if _touch_scroll == null else bounds
-		_sheet.queue_redraw()
+	_sheet.queue_redraw()
+
+
+func _fit_touch_width(view_width: float, left: float) -> float:
+	var width := minf(view_width * 0.64, 510.0 * _factor)
+	# Use a single scrollable column when the longer labels at this size would
+	# not fit in a grid. Never fit by shrinking or truncating the chosen text.
+	var pair := Vector2.ZERO
+	for entry: Control in _entry_grid.get_children():
+		var index := entry.get_index() % 2
+		pair[index] = maxf(pair[index], entry.get_combined_minimum_size().x)
+	var resume_width := get_entry(&"resume").get_combined_minimum_size().x
+	width = minf(view_width - left * 2.0, maxf(width, resume_width, pair.x, pair.y))
+	_entry_grid.columns = 2 if pair.x + pair.y + 6.0 <= width else 1
+	_column.custom_minimum_size = Vector2(width, 0.0)
+	return width
+
+
+func _fit_after_reflow() -> void:
+	if _column.is_visible_in_tree():
+		_fit()
+
+
+func _fit_touch_height(safe: Rect2, left: float, width: float) -> void:
+	var needed := _column.get_combined_minimum_size().y + 2.0
+	var foot := 90.0 if _hint.visible else 24.0
+	var height := maxf(1.0, minf(needed, safe.size.y * 0.68, safe.size.y - 24.0 - foot))
+	var top := maxf(24.0, (safe.size.y - height - (foot - 24.0)) * 0.5)
+	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, height))
+	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
+	_sheet.column_rect = bounds

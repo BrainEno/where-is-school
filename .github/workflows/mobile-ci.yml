@@ -60,7 +60,12 @@ jobs:
           source tools/ci_run_check.sh
           run_check controls 90 godot --headless --path . \
             --script res://tests/mobile_controls_test.gd -- --mobile-preview || true
+          XDG_DATA_HOME="$RUNNER_TEMP/mobile-opening-user-data" \
+            run_check mobile_opening 75 godot --headless --path . \
+              --script res://tests/mobile_pack_boot.gd -- --mobile-preview || true
           run_check_summary
+          verdict="$(grep '^MOBILE_OPENING_TOUCH_OK ' "$CI_LOG_DIR/mobile_opening.log")"
+          printf '::notice title=New game to mobile controls::%s\n' "$verdict"
       - name: Render the joystick, compact pause, return prompt and resulting title
         id: capture
         if: ${{ !cancelled() }}
