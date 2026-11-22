@@ -17,8 +17,8 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 30
     env:
-      SOURCE_SHA: d16075bbdd0b5fe7632dd31bae065f124afd84e2
-      IPA_NAME: Where-Is-School-Mobile-Controls-d16075b.ipa
+      SOURCE_SHA: d58c2b78f3f7977edb028443d20f0eefd3179940
+      IPA_NAME: Where-Is-School-Mobile-Controls-d58c2b7.ipa
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -28,7 +28,7 @@ jobs:
           include-templates: true
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
+          ref: d58c2b78f3f7977edb028443d20f0eefd3179940
           path: game-source
           persist-credentials: false
       - name: Build and inspect the ordinary iPhone device archive
@@ -48,7 +48,7 @@ jobs:
           mkdir "$RUNNER_TEMP/wis-pack-probe"
           log="$RUNNER_TEMP/pack-probe.log"
           status=0
-          godot --headless --rendering-method gl_compatibility --resolution 2400x1080 \
+          godot --headless --rendering-method gl_compatibility \
             --path "$RUNNER_TEMP/wis-pack-probe" --main-pack "$RUNNER_TEMP/wis-device/where-is-school.pck" \
             --script "$GITHUB_WORKSPACE/game-source/tests/mobile_pack_boot.gd" > "$log" 2>&1 || status=$?
           tail -40 "$log"
