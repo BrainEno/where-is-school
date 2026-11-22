@@ -2,14 +2,17 @@ extends RefCounted
 ## Getting off the container roof while the woken resident stands in his doorway.
 ##
 ## The roof ladder (`container_ladder.gd`) asks first (`ask()`): climb down the ladder in
-## front of him, drop off the open end and hide behind the half-open north door leaf, or
-## wait. The ladder is slow and seen: at the bottom he tells the protagonist to stop
-## (`STOP_CONVERSATION`). The drop is a second fall (`jump()`): the protagonist lands hard
-## on the yard, the dazed look comes back heavier (`ConcussionView.begin(…, true)`), and a
-## visible orientation check decides whether the landing was heard. Unheard, the resident
-## looks round the container for a while (`RoofEncounter.search()`, story time) and goes
-## back in, and the protagonist has the yard; heard, he stops the protagonist as on the
-## ladder. Marks are local to the container, so moving the prop keeps the route.
+## front of him, creep bent over to the closed rear end (left of the ladder, as the yard
+## sees it) and drop off there, or wait. The ladder is slow and seen: at the bottom he tells
+## the protagonist to stop (`STOP_CONVERSATION`). The drop is a second fall (`jump()`): the
+## protagonist lands hard on the yard behind the container, the dazed look comes back
+## heavier (`ConcussionView.begin(…, true)`), and a visible orientation check decides
+## whether the landing was heard. Unheard, the resident looks round the container for a
+## while (`RoofEncounter.search()`, story time) and the player hides by moving: crouched,
+## slow (`PlayerController.set_crouching()`), never frozen. Kept out of his sight, the
+## protagonist has the yard once he goes back in; held in it, or heard landing, they are
+## stopped as on the ladder. Marks are local to the container, so moving the prop keeps
+## the route.
 
 const Motion = preload("res://scripts/actors/staged_actor_motion.gd")
 const RoofEncounter = preload("res://scenes/locations/playground/roof_encounter.gd")
@@ -24,15 +27,18 @@ const JUMP := &"jump"
 const STAY := &"stay"
 const CHECKPOINT := "playground:container_jump"
 
-## Where the protagonist steps off: the north edge of the roof near the open end.
-const EDGE := Vector3(2.6, 2.6, -0.86)
-## Where the drop lands: behind the half-open north leaf, near its far edge, out of sight
-## of the doorstep and of every stop on the search route.
-const HIDE := Vector3(2.95, 0.0, -2.1)
-## What the camera holds during the search: the open end, the leaf and the doorstep.
-const SEARCH_FRAME := Vector3(3.6, 0.9, -1.0)
-## The point of the impact clip held while crouched behind the leaf.
+## Where the protagonist steps off: the closed rear end of the roof, the whole container
+## between them and his doorway.
+const EDGE := Vector3(-2.55, 2.6, 0.2)
+## Where the drop lands: the yard behind that closed end, out of sight of the doorstep and
+## of every stop on the search route.
+const HIDE := Vector3(-3.6, 0.0, 0.2)
+## The bent-over walk along the roof to `EDGE`, m/s.
+const ROOF_CREEP_SPEED := 1.1
+## The point of the impact clip held while the check is read, and where the rise from it
+## hands over to the crouch.
 const HOLD := 0.42
+const CROUCH_FROM := 0.6
 ## How far the hips sink at the impact, and in the crouch that follows.
 const SINK := 0.48
 const CROUCH := 0.38
@@ -55,17 +61,23 @@ static func stopped(director: Node, encounter: RoofEncounter, player: PlayerCont
 	await director.play_conversation(STOP_CONVERSATION)
 
 
-## The drop off the open end. Returns the beat's request (see StagedInteractable).
+## The drop off the closed rear. Returns the beat's request (see StagedInteractable).
 static func jump(container: Node3D, encounter: RoofEncounter, director: Node) -> Dictionary:
 	var player: PlayerController = director.get_player()
 	var physics := player.is_physics_processing()
 	player.set_physics_process(false)
 	player.velocity = Vector3.ZERO
-	if not await Motion.walk_to(player, container.to_global(EDGE), 1.3):
+	# Bent over across the roof, below the line of the edge from his doorway.
+	player.set_crouching(true)
+	if not await Motion.walk_to(player, container.to_global(EDGE), ROOF_CREEP_SPEED):
+		player.set_crouching(false, true)
 		player.set_physics_process(physics)
 		return {}
-	var out := -container.global_basis.z
+	var out := -container.global_basis.x
 	await Motion.turn_to(player, out)
+	# Up off the knees at the edge (eased), then over.
+	player.set_crouching(false)
+	await player.get_tree().create_timer(PlayerController.CROUCH_BLEND_SECONDS + 0.1, false).timeout
 	var ground := _floor_under(container, container.to_global(HIDE))
 	var rig := player.camera_rig
 	if rig != null:
@@ -106,28 +118,69 @@ static func jump(container: Node3D, encounter: RoofEncounter, director: Node) ->
 			_plant(contacts, soles, palm_at, right, smoothstep(0.0, 0.2, t))
 	)
 	await director.play_conversation(JUMP_CONVERSATION)
-	var hidden := heard_nothing(player)
-	if hidden and encounter != null:
-		if rig != null:
-			rig.frame_point(container.to_global(SEARCH_FRAME), 0.6)
-		await encounter.search(director)
-	await _act_range(
-		player,
-		"roof_impact",
-		HOLD,
-		1.0,
-		0.7,
-		func(t: float) -> void:
-			_hips(player, -CROUCH * (1.0 - smoothstep(0.1, 0.9, t)), 0.0)
-			_plant(contacts, soles, palm_at, right, 1.0 - smoothstep(0.6, 1.0, t))
-	)
-	Motion.reset_pose(player)
-	player.set_physics_process(physics)
+	var hidden := heard_nothing(player) and encounter != null
+	if hidden:
+		var found: bool = await _hide(
+			player, contacts, soles, palm_at, right, encounter, director, physics
+		)
+		hidden = not found
+	else:
+		await _act_range(
+			player,
+			"roof_impact",
+			HOLD,
+			1.0,
+			0.7,
+			func(t: float) -> void:
+				_hips(player, -CROUCH * (1.0 - smoothstep(0.1, 0.9, t)), 0.0)
+				_plant(contacts, soles, palm_at, right, 1.0 - smoothstep(0.6, 1.0, t))
+		)
+		Motion.reset_pose(player)
+		player.set_physics_process(physics)
 	if not hidden:
 		await stopped(director, encounter, player)
 	if rig != null:
 		await rig.release_frame(0.42)
 	return {"checkpoint": CHECKPOINT}
+
+
+## Unheard: up from the impact into a crouch, and the player moves the protagonist while
+## the resident searches - bent over, at `PlayerController.crouch_speed`, the camera
+## following them again. Interaction stays off with the beat. Returns whether he found
+## them; either way they stand up when it is over.
+static func _hide(
+	player: PlayerController,
+	contacts: Dictionary,
+	soles: Array[Vector3],
+	palm_at: Vector3,
+	right: Vector3,
+	encounter: RoofEncounter,
+	director: Node,
+	physics: bool
+) -> bool:
+	await _act_range(
+		player,
+		"roof_impact",
+		HOLD,
+		CROUCH_FROM,
+		0.5,
+		func(t: float) -> void:
+			var low := lerpf(CROUCH, PlayerController.CROUCH_HIP_DROP, smoothstep(0.1, 0.9, t))
+			_hips(player, -low, 0.0)
+			_plant(contacts, soles, palm_at, right, 1.0 - smoothstep(0.4, 1.0, t))
+	)
+	Motion.reset_pose(player)
+	player.set_crouching(true, true)
+	player.set_physics_process(physics)
+	var rig := player.camera_rig
+	if rig != null:
+		rig.release_frame(0.6)
+	player.set_control_enabled(true)
+	var found: bool = await encounter.search(director, player)
+	player.set_control_enabled(false)
+	player.velocity = Vector3(0.0, player.velocity.y, 0.0)
+	player.set_crouching(false)
+	return found
 
 
 ## The recorded result of the landing's check: true when the drop went unheard.

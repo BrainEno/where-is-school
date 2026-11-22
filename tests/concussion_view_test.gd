@@ -1,7 +1,7 @@
 extends SceneTree
 ## The dazed look after a hurt landing (docs/CONCUSSION_VIEW.md): a static postmodern
 ## paste-up of the world that is strongest at the landing and gone after four minutes of play,
-## heavier after a second fall, and relieved by the yard tap.
+## heavier after a second fall, and cleared by water from the yard tap.
 ##
 ## On the real main scene:
 ##
@@ -21,8 +21,8 @@ extends SceneTree
 ## 8. **Each room its own paste-up**, changed on entry (behind the black of the change).
 ## 9. **A second fall is heavier.** `begin(from, true)` writes `HEAVY_SECONDS` and the strength
 ##    drawn goes above the landing's.
-## 10. **Water.** `relieve()` takes a third of the strength left, eased rather than cut;
-##    `clear()` ends the look at once: the flag is 0 and the view eases out and stops.
+## 10. **Water.** `clear()` (a mouthful or a wash at the yard tap) ends the look at once:
+##    the flag is 0 and the view eases out rather than cutting, and stops.
 ##
 ## With `-- --capture` (a rendered window; `.github/workflows/concussion-view-capture.yml`)
 ## it photographs the yard and the alley from the game camera, clear and at several points of
@@ -270,7 +270,7 @@ func _check_end() -> void:
 
 
 func _check_heavier_and_water() -> void:
-	Harness.stage = "a second fall, a mouthful of water, a wash"
+	Harness.stage = "a second fall, then water"
 	ConcussionView.begin(_world)
 	await Harness.wait_until(func() -> bool: return _view.get_daze() > 0.97, 3.0)
 	ConcussionView.begin(_world, true)
@@ -282,36 +282,22 @@ func _check_heavier_and_water() -> void:
 	_check.expect(heavier, "The second fall is not heavier (%.2f)." % _view.get_daze())
 
 	var before := _view.get_daze()
-	var seconds := ConcussionView.relieve(_world)
-	_check.expect(
-		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == seconds,
-		"relieve() did not write the seconds it returned."
-	)
-	var after := ConcussionView.daze_for(seconds)
-	_check.expect(
-		absf(after - before * 2.0 / 3.0) < 0.03,
-		"A mouthful took %.2f -> %.2f, not a third." % [before, after]
-	)
-	await process_frame
-	_check.expect(_view.get_daze() > before * 0.8, "The relief was a cut, not eased.")
-	var settled := await Harness.wait_until(
-		func() -> bool: return _view.get_daze() < before * 0.7, ConcussionView.RELIEF_SECONDS + 2.0
-	)
-	_check.expect(settled, "The relief never settled (%.2f)." % _view.get_daze())
-
 	ConcussionView.clear(_world)
 	_check.expect(
 		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, -1)) == 0,
-		"Washing did not clear the flag."
+		"Water did not clear the flag."
 	)
 	await process_frame
-	_check.expect(_view.visible, "The wash was a cut: the view vanished on the same frame.")
+	_check.expect(
+		_view.visible and _view.get_daze() > before * 0.8,
+		"The water was a cut: the view vanished on the same frame."
+	)
 	var washed := await Harness.wait_until(
 		func() -> bool: return not _view.visible, ConcussionView.RELIEF_SECONDS + 2.0
 	)
-	_check.expect(washed, "The view never eased out after the wash.")
-	_check_off("after the wash")
-	_check.expect(not _view.is_processing(), "The view still processes after the wash.")
+	_check.expect(washed, "The view never eased out after the water.")
+	_check_off("after the water")
+	_check.expect(not _view.is_processing(), "The view still processes after the water.")
 
 
 func _check_reseed() -> void:

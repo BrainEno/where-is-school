@@ -21,6 +21,9 @@ const STRIDE := 0.90
 var _pulse: Tween
 var _last_position := Vector3.ZERO
 var _phase := 0.0
+## How far up he looks (`raise_gaze()`) and how far aside (`turn_head()`): one head.
+var _gaze := 0.0
+var _turn := 0.0
 
 
 func _ready() -> void:
@@ -91,6 +94,7 @@ func stand(look_up: bool = false) -> void:
 	set_process(false)
 	_hip.position = Vector3(0.0, HIP_HEIGHT, 0.0)
 	_trunk.rotation_degrees = Vector3(-5.0, 0.0, -1.0)
+	_turn = 0.0
 	raise_gaze(1.0 if look_up else 0.0)
 	for side in 2:
 		_arm(side, 2.0, -8.0 if side == 0 else 8.0, 13.0)
@@ -98,7 +102,19 @@ func stand(look_up: bool = false) -> void:
 
 
 func raise_gaze(weight: float) -> void:
-	_head.rotation_degrees = Vector3(lerpf(4.0, 31.0, weight), -5.0, 1.0)
+	_gaze = weight
+	_pose_head()
+
+
+## The head turned aside by `degrees` (either way), keeping how far up it looks: a man
+## looking round for what woke him.
+func turn_head(degrees: float) -> void:
+	_turn = degrees
+	_pose_head()
+
+
+func _pose_head() -> void:
+	_head.rotation_degrees = Vector3(lerpf(4.0, 31.0, _gaze), -5.0 + _turn, 1.0)
 
 
 func start_walking() -> void:

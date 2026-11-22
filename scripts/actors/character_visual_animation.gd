@@ -40,6 +40,10 @@ const STATE_WALK := &"walk"
 const STATE_JOG := &"jog"
 ## The clip a seated character holds.
 const SEATED_CLIP := "sit_idle"
+## What a crouched character (`set_crouched()`) holds instead of `idle` and `walk`/`jog`.
+## Only rigs that bind them (the protagonist's `prologue_actions`) can crouch.
+const CROUCH_IDLE_CLIP := "crouch_idle"
+const CROUCH_WALK_CLIP := "crouch_walk"
 
 ## Planar speed (m/s) above which a standing character starts walking...
 @export_range(0.01, 2.0, 0.01) var walk_enter_speed: float = 0.2
@@ -59,6 +63,8 @@ const SEATED_CLIP := "sit_idle"
 @export_range(0.3, 6.0, 0.05) var stride_speed: float = 1.6
 ## The same for the jog clip.
 @export_range(0.5, 12.0, 0.1) var jog_stride_speed: float = 5.0
+## The same for the crouched walk: short, deep steps cover less ground per cycle.
+@export_range(0.3, 6.0, 0.05) var crouch_stride_speed: float = 1.1
 @export_range(0.1, 2.0, 0.05) var min_walk_playback: float = 0.7
 @export_range(0.5, 4.0, 0.05) var max_walk_playback: float = 1.9
 ## Cross-fade between locomotion clips, in seconds. Every clip keys every animated bone, so
@@ -109,6 +115,7 @@ var _body: CharacterBody3D = null
 var _reported_velocity := Vector3.ZERO
 var _reporting := false
 var _seated := false
+var _crouched := false
 var _talking := false
 var _action := ""
 var _sampling_action := false
@@ -253,6 +260,29 @@ func is_seated() -> bool:
 	return _seated
 
 
+## Bent over: `crouch_idle` standing still, `crouch_walk` moving, until `set_crouched(false)`.
+## The locomotion decision is unchanged; only the clip each state shows is. Hiding the
+## hips lower is the controller's job (`PlayerController.set_crouching()`), not this node's.
+## A rig without the crouch clips ignores the request.
+func set_crouched(crouched: bool) -> void:
+	var can := crouched and _bound and _player.has_animation(_library_clip(CROUCH_WALK_CLIP)) \
+		and _player.has_animation(_library_clip(CROUCH_IDLE_CLIP))
+	if can == _crouched:
+		return
+	_crouched = can
+	if _bound and _action.is_empty() and not _seated:
+		_show(_resume_clip(), blend_time)
+		_player.speed_scale = playback_for(_state, _planar_speed)
+
+
+func is_crouched() -> bool:
+	return _crouched
+
+
+func _library_clip(clip_name: String) -> String:
+	return "%s/%s" % [String(CharacterAnimation.LIBRARY_NAME), clip_name]
+
+
 ## Visible NPC presentations can carry a staged reaction even on someone else's line.
 ## Ordinary visuals only need the speaker request. An empty line clears the presentation.
 func present_dialogue_line(line: Dictionary, speaking: bool) -> void:
@@ -386,6 +416,10 @@ func _next_state(state: StringName, speed: float) -> StringName:
 ## Playback speed of a locomotion clip for a ground speed: 1 for idle, the stride ratio for
 ## walk and jog.
 func playback_for(state: StringName, speed: float) -> float:
+	if _crouched:
+		if state == STATE_IDLE:
+			return 1.0
+		return clampf(speed / maxf(crouch_stride_speed, 0.01), min_walk_playback, max_walk_playback)
 	if state == STATE_WALK:
 		return walk_playback_for(speed)
 	if state == STATE_JOG:
@@ -403,6 +437,8 @@ func walk_playback_for(speed: float) -> float:
 func _resume_clip() -> String:
 	if _seated:
 		return seated_dialogue_clip if _talking and not seated_dialogue_clip.is_empty() else SEATED_CLIP
+	if _crouched:
+		return CROUCH_IDLE_CLIP if _state == STATE_IDLE else CROUCH_WALK_CLIP
 	if _talking and _state == STATE_IDLE and not dialogue_clip.is_empty():
 		return dialogue_clip
 	return String(_state)
@@ -426,7 +462,7 @@ func _show(clip_name: String, blend: float) -> void:
 	if not CharacterAnimation.play(_player, clip_name, blend):
 		return
 	_current_clip = clip_name
-	if _seated or clip_name == String(STATE_IDLE):
+	if _seated or clip_name == String(STATE_IDLE) or clip_name == CROUCH_IDLE_CLIP:
 		_player.speed_scale = 1.0
 
 

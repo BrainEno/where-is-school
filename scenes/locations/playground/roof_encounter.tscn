@@ -50,15 +50,10 @@ metadata/pause = 6.0
 metadata/pause_back = 1.5
 metadata/look = Vector3(1.39, 2.9, 0.9)
 
-[node name="RearCorner" type="Marker3D" parent="SearchRoute"]
-position = Vector3(-3.55, 0.014, 2.5)
-metadata/pause = 1.5
-metadata/look = Vector3(-6.0, 1.2, 4.5)
-
-[node name="Rear" type="Marker3D" parent="SearchRoute"]
-position = Vector3(-3.75, 0.014, 0.9)
+[node name="SouthRear" type="Marker3D" parent="SearchRoute"]
+position = Vector3(-1.2, 0.014, 2.6)
 metadata/pause = 5.0
-metadata/look = Vector3(-8.0, 1.2, 0.9)
+metadata/look = Vector3(-6.0, 1.2, 5.0)
 
 [node name="WakeFrame" type="Marker3D" parent="."]
 position = Vector3(2.62, 0.12, -0.19)

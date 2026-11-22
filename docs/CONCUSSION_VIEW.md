@@ -16,7 +16,7 @@ Round 8 (the owner kept the look and asked for these changes):
   half gone in the first minute), then slow;
 - the pasted card is a **shard of broken mirror**, as if it had fallen with him;
 - a **second fall** (jumping off the container roof, `RoofWayDown`) makes it heavier, and
-  the **yard tap** relieves it (a mouthful) or clears it (a wash).
+  water from the **yard tap** clears it, a mouthful or a wash.
 
 ## What it looks like
 
@@ -57,7 +57,7 @@ paste-up is pressed harder: wider offsets, stronger printing, more of the frame 
 | Braced drop (the passed balance check) | Nothing. |
 | Jump off the container roof (`RoofWayDown.jump`, either landing) | `begin(from, true)` writes 300 (or keeps more): the 60 s above 240 are drawn heavier, 1 → 1.25. A braced lander who jumps starts the look here. |
 | Play | The view counts down with the game clock and writes the whole seconds back to the flag. Strength falls as `exp(-2.4 × elapsed share)`, rescaled to end at 0: 0.50 three minutes before the end, 0.23 at two, 0.08 at one. |
-| Yard tap, a mouthful (`pg_tap_use`, `drink`) | `relieve()`: takes a third of the strength that is left; can be repeated. Eased over 1.4 s. |
+| Yard tap, a mouthful (`pg_tap_use`, `drink`) | `clear()`: writes 0 (round 12: drinking makes the look go, as the wash does). Eased over 1.4 s. |
 | Yard tap, a wash (`wash`) | `clear()`: the flag is 0 at once; the picture eases out over 1.4 s. |
 | Pause menu, settings | The tree is paused; the look does not heal. |
 | Save / Continue | The flag is saved like any other; Continue resumes the same look (without a second arrival). |
@@ -90,7 +90,7 @@ on; hidden and not processing when it is off. One flag write per second while it
 - `tests/classroom_anomaly_test.gd`: the real hurt landing starts the look; the braced drop
   does not.
 - `tests/roof_way_down_test.gd`: the jump makes the look heavier and it keeps fading; the
-  yard tap relieves and clears it.
+  yard tap's water, drunk or washed, clears it.
 - `.github/workflows/concussion-view-capture.yml`: the same test with `-- --capture` on
   Compatibility, Forward+ and Mobile: the yard and the alley, clear and at 300 (heavy) /
   240 / 180 / 60 s.
@@ -98,6 +98,6 @@ on; hidden and not processing when it is off. One flag write per second while it
 
 ## Open for the owner
 
-- Duration (240 s), curve (`FADE_RATE` 2.4), the heavier look (300 s, 1.25) and the drink
-  (a third) are proposals.
+- Duration (240 s), curve (`FADE_RATE` 2.4) and the heavier look (300 s, 1.25) are
+  proposals.
 - Whether the look should also touch the sound (it does not).
