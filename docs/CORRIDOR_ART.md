@@ -76,6 +76,19 @@ fade together under the follow camera so the slide stays visible when facing it.
 Each return is unconditional and lands outside its own door. The original staff office
 retains its rota, trays and hook, and remains unstaffed.
 
+## Computer room: remembered technology
+
+The computer room already has six CRT stations, a boot sequence and games. The
+PR #318 art direction for the *whole room* is addressed separately: muted lilac
+plaster and a cool floor surround the warm beige hardware, while a shallow dusk
+landscape and colour bars on the west wall echo a late-2000s screen without
+copying a commercial logo or image. A restrained pink bounce light joins the
+existing room light. The north-wall raster, floor registration and playable CRT
+remain the focal interaction and retain their original geometry. The landscape
+is visual dressing only: no new collision, clues, teacher, dialogue or story state.
+The remaining narrative and update-popup ideas in the supplement are not implied
+to be implemented. Owner visual review in the actual camera is still needed.
+
 ## 开发试玩：从真实玻璃门开始
 
 用 Godot `.godot-version` 打开工程。在编辑器打开 `scenes/dev/school_room_tour.tscn`，按 **F6（运行当前场景）**。也可以从项目根目录执行：

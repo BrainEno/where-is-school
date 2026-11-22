@@ -124,6 +124,15 @@ func _enter() -> bool:
 		return false
 	_room = _host.get_current()
 	_state.set_flag(StoryFlags.CURRENT_LOCATION, &"computer_room")
+	var mural := _room.get_node_or_null(^"DuskMural") as Node3D
+	if _check.expect(mural != null, "The computer room lost its dusk landscape."):
+		_check.expect(mural.get_node_or_null(^"Sky") is MeshInstance3D
+			and mural.get_node_or_null(^"Sun") is MeshInstance3D
+			and mural.get_node_or_null(^"DuskBounce") is OmniLight3D,
+			"The landscape lost its graphic planes or light.")
+		_check.expect(mural.find_children("*", "CollisionObject3D", true, false).is_empty()
+			and mural.find_children("*", "CollisionShape3D", true, false).is_empty(),
+			"The landscape must not obstruct the computer room.")
 	var nav := _room.get_node(^"Navigation") as LocationNavigation
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 			return nav.is_routable() and _player.is_on_floor(), 8.0), "No walkable map in the lab."):
