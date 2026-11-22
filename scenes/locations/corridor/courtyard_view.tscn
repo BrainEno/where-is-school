@@ -1,4 +1,4 @@
-[gd_scene load_steps=76 format=3]
+[gd_scene load_steps=77 format=3]
 
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_haze_floor.tres" id="art_school_haze_floor"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ground.tres" id="yard_ground"]
@@ -23,6 +23,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/shutter.tres" id="yard_shutter"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/trunk.tres" id="yard_trunk"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/crown.tres" id="yard_crown"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/earth_yard.tscn" id="earth_yard"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/court_line.tres" id="yard_court_line"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/court_key.tres" id="yard_court_key"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/hoop_net.tres" id="yard_hoop_net"]
@@ -469,6 +470,8 @@ position = Vector3(20, 4.6, 15)
 mesh = SubResource("BoxMesh_art32")
 material_override = ExtResource("yard_crown")
 cast_shadow = 0
+
+[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]
 
 [node name="Court" type="Node3D" parent="Yard"]
 
