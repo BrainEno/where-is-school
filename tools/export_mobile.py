@@ -267,7 +267,7 @@ def verify_ios_app(
             "The built application does not contain the verified Godot pack")
 
 
-def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str]) -> Path:
+def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str], *, simulator: bool = True) -> Path:
     products = out / "simulator"
     cmd = (*xcode, "-configuration", "Debug", "-sdk", "iphonesimulator", "-destination",
            "generic/platform=iOS Simulator", "-derivedDataPath", out / "DerivedData",
@@ -332,6 +332,10 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
         authoring_build.compile_files_bridge(tree, simulator=simulator)
     if authoring:
         text = authoring_build.configure_ios(text)
+    elif not simulator:
+        # The retail device app carries the editor runtime in its own bundle; this writes
+        # the same Files bridge plugin block the author preset uses, keeping the identity.
+        text = authoring_build.configure_bridge(text)
     project = out / f"{APP}.xcodeproj"
     (tree / "export_presets.cfg").write_text(configure(text, "iOS", {
         "application/app_store_team_id": args.team if signed else UNSIGNED_TEAM,
@@ -354,7 +358,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
 
         version_pin = (ROOT / ".godot-version").read_text().strip()
         ensure_simulator_slice(out, APP, platform.machine(), version_pin, args.engine_version, no_download=args.no_download)
-        app = build_simulator(xcode, out, flags)
+        app = build_simulator(xcode, out, flags, simulator=simulator)
         verify_ios_app(app, pack, args.build, version, simulator=True, authoring=authoring)
         return app
     archive = out / f"{APP}.xcarchive"

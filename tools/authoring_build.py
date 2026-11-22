@@ -75,6 +75,11 @@ def file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def configure_bridge(text: str) -> str:
+    """The Files bridge block for a preset that keeps its own identity: the retail app."""
+    return export_presets.set_option(text, "iOS", "plugins/WISAuthorFiles", True)
+
+
 def compile_files_bridge(tree: Path, *, simulator: bool) -> None:
     sdk = "iphonesimulator" if simulator else "iphoneos"
     arch = platform.machine() if simulator else "arm64"
