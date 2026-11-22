@@ -548,7 +548,7 @@ def teaching_entrance():
 def directory_wall(b, parent):
     pivot, height = -16.205, 3.05
     wall = b.shell("DirectoryWall", parent, (pivot, GROUND_Y, GROUND_Z[0]), groups=("camera_occluder",))
-    for i, (lo, hi) in enumerate(complement(-23.31, GROUND_X[1], [threshold_gap(ARCHIVE), threshold_gap(PLAN_ROOM)])):
+    for i, (lo, hi) in enumerate(complement(-23.31, GROUND_X[1], [threshold_gap(ARCHIVE), (-11.69, -9.85)])):
         x, width = (lo+hi)/2-pivot, hi-lo
         b.shape(f"Solid{i}", wall, (x,height/2,0), (width,height,.22))
         b.box(f"Dado{i}", wall, (x,.47,0), (width,.94,.22), "clay_red")
@@ -661,6 +661,26 @@ def rear_stair_and_ground_wing(b):
                 {"North": [ground_x], "South": [ground_x], "East": [low_track], "West": [ground_z]},
                 "night_blue", "arch_chalk")
     directory_wall(b, g)
+    # The old plan-room aperture now leads into a short 01 east wing. It ends
+    # before the rear stair; the plan-room portal and its return share the new
+    # wall. The intervening classroom is only a locked visual leaf.
+    east_x, east_z = (-11.85, -5.20), (6.55, ground_z[0] + .02)
+    slab(b, g, "EastWingFloor", east_x, east_z, GROUND_Y, "gallery_tile")
+    for i, (lo, hi) in enumerate(complement(*east_x, [threshold_gap(PLAN_ROOM)])):
+        solid_wall(b, g, f"EastWingNorth{i}", ((lo+hi)/2, GROUND_Y, east_z[0]), hi-lo,
+                   base="entry_glaze", field="municipal_rose")
+    for name, x in (("EastWingWest", east_x[0]), ("EastWingEnd", east_x[1])):
+        solid_wall(b, g, name, (x, GROUND_Y, (east_z[0]+east_z[1])/2), east_z[1]-east_z[0],
+                   yaw=90, base="entry_glaze", field="municipal_rose")
+    b.node("ClosedClassroom", g, position=vec3((-9.55, GROUND_Y, east_z[0]+.13)))
+    closed = child_path(g, "ClosedClassroom")
+    b.box("Leaf", closed, (0, 1.03, 0), (1.16, 2.06, .035), "office_sage")
+    for side in (-1, 1):
+        b.box(f"Jamb{side}", closed, (side*.61, 1.05, .02), (.08, 2.10, .06), "night_blue")
+    b.box("Head", closed, (0, 2.12, .02), (1.30, .10, .06), "night_blue")
+    b.box("VisionLight", closed, (0, 1.54, .03), (.50, .42, .02), "entry_glaze")
+    b.box("Handle", closed, (.42, 1.0, .05), (.13, .035, .03), "exit_steel")
+    sign(b, closed, "Number", (0, 2.36, .04), "103", .55, plate="night_blue")
     for name, ends in (("EntranceWallWest", (ground_x[0]+0.11, entrance_x[0])),
                        ("EntranceWallEast", (entrance_x[1], ground_x[1]))):
         field = "rose_plaster" if name == "EntranceWallWest" else "municipal_rose"

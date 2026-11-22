@@ -62,7 +62,7 @@ const ENTRANCE_ROUTES := {
 	"the lane": Vector3(-24.0, -3.4, 17.4),
 	"the lane in front of the booth": Vector3(-13.62, -3.4, 12.25),
 	"the archive door landing": Vector3(-14.48, -3.4, 12.0),
-	"the plan room door landing": Vector3(-10.77, -3.4, 12.0),
+	"the plan room door landing": Vector3(-6.45, -3.4, 8.0),
 	"the foot of the blue stair": Vector3(-9.94, -3.4, 12.54),
 }
 const KEPT_POINTS := {

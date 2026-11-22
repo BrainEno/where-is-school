@@ -33,8 +33,9 @@ the same shallow, locally generated earthen surface and sparse perimeter bars. R
 visual only: the original slab, gate openings and navigation remain unchanged. Its
 source is `tools/build_yard_earth.py`; `--check` verifies the generated scene.
 
-This is a first-stage alternative, not the full campus expansion: the 01 archive and
-plan-room doors still sit near the entrance, and a continuous playable yard on every
+The 01 plan-room door is now east of the archive in a short branch behind the
+directory wall; a closed classroom front separates the rooms visually. The old plan
+portal is an open connection into the branch. A continuous playable yard on every
 side of the building is not yet constructed. The original graybox collision and level
 transitions remain in place. Visual and route testing in Godot is required.
 
@@ -71,7 +72,7 @@ from either side only presents `classroom_rear_door`; it never changes location.
 
 | Floor | Public end room | Optional rooms and the Orientation problem |
 |---|---|---|
-| 01 | The original `restroom` at the west end, clear of the amber line to the laboratory. | Archive and plan room stay by the directory. Projection moves behind the laboratory return: a dark light trap faces the bell register, only visible on its approach from the recess. Use the nick in the middle frame. Inside, a film strip loops on the wide screen and turns up again, late and pale, on the side wall. |
+| 01 | The original `restroom` at the west end, clear of the amber line to the laboratory. | The archive remains by the directory. A short east branch, entered through the former plan-room opening, puts a closed classroom before the relocated plan room. Projection moves behind the laboratory return: a dark light trap faces the bell register, only visible on its approach from the recess. Use the nick in the middle frame. Inside, a film strip loops on the wide screen and turns up again, late and pale, on the side wall. |
 | 02 | `restroom_02`, east of the fire-stair turn. | The borrowed office is a single painted-over bay in the east window run; look for the lower of two print corners. The computer room is much further on, between 104 and 105, just past the yard stair on the opposite side. The grille repeats the broken raster mark; six CRTs and a room-size copy disagree by one row. |
 | 03 | The original staff-office route and east-end `restroom_03` stay put. The latter has an offset enamel edge and no gate. | Principal's office remains after the north turn: two halves of its moulding don't make a point. Match the offset pins. The throne, floor axis and painted depth behind them put the room's centre in different places. |
 
@@ -125,7 +126,7 @@ godot --path . res://scenes/dev/school_room_tour.tscn
 | 03 教师办公室 | 在校长室所在的横廊继续往 205 那头走，过 205 后看左侧的长条铁丝玻璃，帘角下面留了一片红纸。 | 看两窗之间垂下来的值班表，再看地上换了顺序的栏线；桌上值班册、传件盘和钥匙架仍能分别检视。 |
 | 03 末端厕所 | 出教师办公室继续向同一侧走到端墙。沿转过角的断格瓷片，找带两块斜瓷片的小门。 | 进去还有一小段没对齐的瓷格，水池、门闩和地漏仍可近看；这不是办公室的暗门。 |
 
-另外，01 **档案室**和**图纸室**仍靠楼层索引墙，可在试玩直接进入。常规版想找这些小房间，先试把手读局部痕迹，再去拨铰链侧的小铜片；不靠试铃、抬挡墙或其他房间触发。校准失手时可以照痕迹手调，不必反复掷骰。
+另外，01 **档案室**仍靠楼层索引墙；**图纸室**移到索引墙后方的东侧短廊，经过一扇不开放的教室门后到达。两者都可在试玩直接进入。常规版想找这些小房间，先试把手读局部痕迹，再去拨铰链侧的小铜片；不靠试铃、抬挡墙或其他房间触发。校准失手时可以照痕迹手调，不必反复掷骰。
 
 ## Exam dream layer (experimental)
 

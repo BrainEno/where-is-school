@@ -32,7 +32,7 @@ class Threshold:
 
 ARCHIVE = Threshold("archive", "Archive", "01", "档案室", "ARCHIVE", (-14.48, -3.4, 10.55), 0,
                     (74, 56, 62), (127, 91, 71))
-PLAN_ROOM = Threshold("plan_room", "PlanRoom", "01", "图纸室", "PLAN ROOM", (-10.77, -3.4, 10.55), 0,
+PLAN_ROOM = Threshold("plan_room", "PlanRoom", "01", "图纸室", "PLAN ROOM", (-6.45, -3.4, 6.55), 0,
                       (42, 66, 73), (84, 113, 112))
 # The screen on 01 hides the aperture until the player rounds the laboratory return.
 PROJECTION = Threshold("projection_room", "ProjectionRoom", "01", "投影准备室", "PROJECTION", (-23.2, -3.4, 8.02), -90,
