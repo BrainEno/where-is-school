@@ -22,11 +22,11 @@ split the frames into annotation-sized parts, and this tool puts them back toget
     `docs/screenshots/`, removes the PNGs they replace, and records them as current in
     `MANIFEST.json` through `tools/screenshot_evidence.apply_relay()`.
 
-Two sets of frames travel this way (``pack --set``): ``dialogue`` (the default; the opening
-line and the reading band, from `Playthrough capture` dispatched with
-``relay_dialogue_evidence=true``) and ``clock`` (the classroom clock, #173, from
-`Classroom visual evidence` dispatched with ``relay_clock_evidence=true``). ``fetch`` needs
-no set: ``frames.json`` says which frames the run carried.
+Frame sets selectable with ``pack --set`` are ``dialogue`` (the opening line and the
+reading band), ``clock`` (the classroom clock, #173), and ``tickets`` (the glass
+entrance and three actual clicks, from `Location art capture` dispatched with
+``relay_ticket_evidence=true``). ``fetch`` needs no set: ``frames.json`` says which
+frames the run carried. Use ``--out`` for ticket review; those images are not committed.
 
 Usage:
 
@@ -76,8 +76,9 @@ CLOCK_FRAMES = (
     "clock_gameplay_rows",
     "clock_gameplay_aisle",
 )
+TICKET_FRAMES = tuple(f"ticket_shot_detail_{view}" for view in ("entry", "clerk_0", "clerk_1", "clerk_2"))
 # `pack --set <name>`: which frames a relay run has to carry.
-FRAME_SETS = {"dialogue": WANTED_FRAMES, "clock": CLOCK_FRAMES}
+FRAME_SETS = {"dialogue": WANTED_FRAMES, "clock": CLOCK_FRAMES, "tickets": TICKET_FRAMES}
 PART_SIZE = 4000
 PER_JOB = 45
 INDEX_FILE = "frames.json"
@@ -277,6 +278,8 @@ def apply(index: dict, files: dict[str, bytes], *, run: dict, root: Path = ROOT)
 def describe(record: dict) -> str:
     """One line on what a relayed frame shows, for whoever runs `fetch`."""
     shows = record.get("shows", {}) if isinstance(record.get("shows"), dict) else {}
+    if shows.get("kind") == "ticket_counter":
+        return f"01 ticket visit - {shows.get('view')}"
     if shows.get("kind") == "clock":
         measured = shows.get("measured", {}) if isinstance(shows.get("measured"), dict) else {}
         return (
@@ -365,13 +368,15 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def not_evidence(index: dict) -> list[str]:
-    """Frames a run carried that must not become current evidence: a clock frame whose own
-    pixels did not read the time its scene was set to (#173). The relay publishes those too,
-    so a failed reading can be looked at (`fetch --out`), but `--apply` refuses them."""
+    """Refuse review-only ticket frames and clock frames that did not read the scene time."""
     problems = []
     for frame in index.get("frames", []):
         shows = frame.get("record", {}).get("shows", {})
-        if not isinstance(shows, dict) or shows.get("kind") != "clock":
+        if not isinstance(shows, dict):
+            continue
+        if shows.get("kind") == "ticket_counter":
+            problems.append(f"{frame['file']}: out-of-repository review only; use --out")
+        if shows.get("kind") != "clock":
             continue
         measured = shows.get("measured") if isinstance(shows.get("measured"), dict) else {}
         if measured.get("verdict") != "PASS":

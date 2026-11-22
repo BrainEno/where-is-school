@@ -62,7 +62,7 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 31, # Original 29 plus two mechanical controls.
+		"interactables": 34, # Original 29, two mechanical controls and three clerk looks.
 		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
 			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],

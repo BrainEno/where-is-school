@@ -2,10 +2,10 @@
 
 `build_teaching_block.py` calls `annex()` and writes `dream_annex.tscn`, which the
 hand-authored corridor instances beside `TeachingBlock`. Nothing here moves a wall,
-exit or spawn. Four layers, all procedural primitives:
+exit or spawn. Four layers of generated meshes and primitives:
 
 * the 02 -> 03 west stair is dressed as a metro escalator whose steps run down;
-* a ticket counter on 02 whose three identical clerks watch the escalator;
+* a ticket counter just inside the 01 glass entrance with three synchronized clerks;
 * 03 as an exam floor: paper room numbers, a seating grid, turned chairs and a
   troublemaker who punches the wall;
 * behind 01, a walkable stable yard with a two-storey dream house, an outdoor
@@ -20,13 +20,14 @@ import math
 import random
 
 from build_teaching_block import (
-    GROUND_Y, OFFICE_X, RISE, UPPER_NORTH, UPPER_WEST, WEST_STAIR_WIDTH, WEST_STAIR_Z,
+    ENTRANCE_X, GROUND_Y, GROUND_Z, OFFICE_X, RISE, UPPER_NORTH, UPPER_WEST, WEST_STAIR_WIDTH, WEST_STAIR_Z,
     child_path, plane, quad, slab, srgb, vec3,
 )
 import dream_stable
 from dream_figures import PEOPLE, figure, hen, motion_material, part, shader_material, swivel_chair
 from exam_crowd import exam_candidates, waiting_candidates
 from fixture_geometry import FixtureBuild
+from ticket_clerks import PRESS_Z, STATIONS, build_clerk, stamp_loop
 
 G = GROUND_Y
 STAIR_RUN, STAIR_ORIGIN = 7.55, (-2.2, 0.0, WEST_STAIR_Z)
@@ -41,6 +42,7 @@ PIGMENTS = {
     "vermilion": (222, 76, 52), "cobalt": (40, 74, 162), "lemon": (238, 206, 72), "paper": (237, 232, 216),
     "graphite": (36, 38, 44), "steel": (170, 175, 181), "rubber": (24, 24, 28), "tile_white": (214, 216, 210),
     "wayfind": (28, 36, 58), "led": (226, 64, 48),
+    "ticket_enamel": (48, 78, 105), "stamp_rubber": (70, 52, 55), "stamp_wood": (116, 78, 59),
     # The yard: earth, dung, straw and sun-dried colour.
     "earth": (128, 104, 76), "earth_dark": (96, 78, 58), "dung": (70, 55, 37), "straw": (212, 180, 98),
     "grain": (224, 177, 82), "grain_ridge": (184, 138, 58), "timber": (104, 76, 54), "mud_wall": (176, 150, 116),
@@ -111,31 +113,31 @@ def escalator(b):
 
 
 def ticket_counter(b):
-    """02, opposite the escalator: three clerks who may be one clerk."""
+    """01, right after the glass threshold, with the wide face on the gallery side."""
     c = "TicketCounter"
-    b.node(c, ".", position=vec3((1.5, 0, WEST_STAIR_Z)))
-    body = solid(b, "Booth", c, (0, 0, 0), (.9, 2.55, 2.8))
-    b.box("Plinth", body, (-.2, .5, 0), (.5, 1.0, 2.8), "cobalt", shadow=True)
-    b.box("Counter", body, (-.4, 1.02, 0), (.32, .05, 2.84), "steel")
-    b.box("Back", body, (.4, 1.27, 0), (.1, 2.55, 2.8), "graphite", shadow=True)
-    b.box("Head", body, (0, 2.42, 0), (.9, .26, 2.86), "lemon", shadow=True)
-    label(b, "HeadText", body, (-.452, 2.42, 0), "EXAM FEE  ·  TICKETS", .0021, rot=(0, -90, 0), ink=(28, 36, 58))
-    b.box("Partition", body, (-.45, 1.68, 0), (.02, 1.22, 2.8), "booth_glass")
-    for i, z in enumerate((-.93, 0, .93)):
-        b.round(f"Voice{i}", body, (-.47, 1.56, z), .07, .012, "graphite", rot=(0, 0, 90))
-        b.box(f"Slot{i}", body, (-.5, 1.06, z), (.16, .03, .3), "graphite")
-        b.box(f"Open{i}", body, (-.47, 2.16, z), (.02, .1, .34), "led")
-        b.box(f"Roll{i}", body, (-.18, 1.1, z + .3), (.12, .12, .12), "paper")
-        figure(b, body, f"Clerk{i}", (.14, .1, z), -90,
-               {"coat": "uniform", "hair": "hair", "droop": True, "scarf": "sleeve_white"},
-               pose="sit", hand="stamp", phase=0.0)
-        b.box(f"Stool{i}", body, (.16, .25, z), (.34, .5, .34), "graphite")
-    label(b, "EndText", body, (0, 2.42, 1.432), "TICKETS", .0024, ink=(28, 36, 58))
-    # A queue lane along the glass for a queue that never forms.
-    for i, z in enumerate((-1.3, 0, 1.3)):
-        b.box(f"Stanchion{i}", c, (-.95, .48, z), (.06, .96, .06), "steel")
-        b.round(f"StanchionFoot{i}", c, (-.95, .01, z), .14, .02, "graphite")
-    b.box("Rope", c, (-.95, .9, 0), (.03, .05, 2.6), "vermilion")
+    # To the entrant's right, outside the 2.66 m clear span. Set it in from the
+    # wall for a clear camera ray on turning, but short of the gallery's east
+    # lane, including the navigation bake's 0.50 m radius and voxel margin.
+    b.node(c, ".", position=vec3((ENTRANCE_X + 4.03, G, GROUND_Z[1] - 1.16)),
+           rotation_degrees=vec3((0, 180, 0)))
+    body = solid(b, "Booth", c, (0, 0, 0), (3.02, .984, 1.12), fade=False)
+    b.box("Plinth", body, (0, .491, .437), (3.02, .922, .226), "ticket_enamel", shadow=True)
+    b.box("Kick", body, (0, .088, .557), (2.97, .166, .024), "graphite")
+    b.box("Counter", body, (0, .958, .299), (3.06, .052, .574), "steel", shadow=True)
+    b.box("Back", body, (0, .337, -.507), (3.0, .67, .072), "ticket_enamel", shadow=True)
+    for side in (-1, 1):
+        b.box(f"End{side+1}", body, (side*1.48, .463, 0), (.06, .926, 1.115), "ticket_enamel", shadow=True)
+    b.box("SignBand", body, (0, .694, .555), (2.91, .164, .018), "lemon")
+    label(b, "HeadText", body, (0, .694, .567), "EXAM FEE  ·  TICKETS", .00175, ink=(28, 36, 58))
+    tracks = []
+    for i, x in enumerate(STATIONS):
+        b.box(f"Slot{i}", body, (x, .87, .558), (.27, .029, .018), "graphite")
+        b.box(f"Open{i}", body, (x+.20, .87, .559), (.064, .029, .019), "led")
+        b.round(f"Roll{i}", body, (x-.252, 1.026, .321), .043, .084, "paper", sides=10)
+        b.box(f"Ticket{i}", body, (x+.199, .986, PRESS_Z), (.100, .004, .104), "paper")
+        b.box(f"Stool{i}", body, (x, .242, -.235), (.352, .484, .319), "graphite")
+        tracks.append(build_clerk(b, body, i, x))
+    stamp_loop(b, body, tracks)
 
 
 # --- 03: an exam floor that is also a waiting room ----------------------------------------

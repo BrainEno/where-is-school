@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://scenes/locations/corridor/high_window_peek.gd" id="high_peek"]
 [ext_resource type="Script" path="res://scenes/locations/corridor/directory_tab.gd" id="directory_tab"]
 [ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="camera_shot"]
+[ext_resource type="Script" path="res://scenes/locations/corridor/ticket_clerk_look.gd" id="ticket_look"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/plinth_ivory.tres" id="art_slide_ivory"]
 [ext_resource type="Resource" path="res://assets/camera/shots/annex_alignment.tres" id="29_annex_shot"]
 [ext_resource type="Script" path="res://scenes/locations/corridor/stench_haze.gd" id="30_stench_haze"]
@@ -96,6 +97,33 @@ height_scale = 0.91
 fov = 48.0
 glide_seconds = 0.65
 release_seconds = 0.6
+
+[sub_resource type="Resource" id="CameraShot_ticket_0"]
+script = ExtResource("camera_shot")
+fov = 40.0
+glide_seconds = 0.50
+release_seconds = 0.60
+insert_anchor_path = NodePath("../../DreamAnnex/TicketCounter/Booth/Clerk0/Head")
+insert_aim = Vector3(0, 0.070, 0.039)
+insert_eye_offset = Vector3(0.205, 0.084, 0.861)
+
+[sub_resource type="Resource" id="CameraShot_ticket_1"]
+script = ExtResource("camera_shot")
+fov = 40.0
+glide_seconds = 0.50
+release_seconds = 0.60
+insert_anchor_path = NodePath("../../DreamAnnex/TicketCounter/Booth/Clerk1/Head")
+insert_aim = Vector3(0, 0.070, 0.039)
+insert_eye_offset = Vector3(0.205, 0.084, 0.861)
+
+[sub_resource type="Resource" id="CameraShot_ticket_2"]
+script = ExtResource("camera_shot")
+fov = 40.0
+glide_seconds = 0.50
+release_seconds = 0.60
+insert_anchor_path = NodePath("../../DreamAnnex/TicketCounter/Booth/Clerk2/Head")
+insert_aim = Vector3(0, 0.070, 0.039)
+insert_eye_offset = Vector3(0.205, 0.084, 0.861)
 
 [node name="Corridor" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -306,6 +334,36 @@ radius = 1.35
 destination_scene = "res://scenes/locations/street/street.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"street"
+
+[node name="TicketClerk0Look" parent="Interactables" instance=ExtResource("11_interactable")]
+script = ExtResource("ticket_look")
+position = Vector3(-14.53, -2.38, 12.67)
+interact_id = &"ticket_clerk_0"
+prompt_key = "prompt.look"
+outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk0/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk0/Uniform")
+support_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth")
+camera_shot = SubResource("CameraShot_ticket_0")
+radius = 0.66
+
+[node name="TicketClerk1Look" parent="Interactables" instance=ExtResource("11_interactable")]
+script = ExtResource("ticket_look")
+position = Vector3(-13.62, -2.38, 12.67)
+interact_id = &"ticket_clerk_1"
+prompt_key = "prompt.look"
+outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk1/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk1/Uniform")
+support_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth")
+camera_shot = SubResource("CameraShot_ticket_1")
+radius = 0.66
+
+[node name="TicketClerk2Look" parent="Interactables" instance=ExtResource("11_interactable")]
+script = ExtResource("ticket_look")
+position = Vector3(-12.71, -2.38, 12.67)
+interact_id = &"ticket_clerk_2"
+prompt_key = "prompt.look"
+outline_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth/Clerk2/Head/FaceAndHair", "../../DreamAnnex/TicketCounter/Booth/Clerk2/Uniform")
+support_paths = PackedStringArray("../../DreamAnnex/TicketCounter/Booth")
+camera_shot = SubResource("CameraShot_ticket_2")
+radius = 0.66
 
 [node name="DirectoryInspect" parent="Interactables" instance=ExtResource("11_interactable")]
 script = ExtResource("directory_tab")

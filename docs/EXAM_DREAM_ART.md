@@ -4,7 +4,8 @@
 > **Owner:** implementation PR author.
 > **Source:** `tools/build_dream_annex.py`, the shader-driven `tools/dream_figures.py`, and
 > `tools/exam_crowd.py` / `tools/exam_crowd_forms.py` for the 03 crowd;
-> `tools/exam_hall_heads.py` sculpts the seven figures standing outside the exam rooms;
+> `tools/exam_hall_heads.py` sculpts the seven figures outside the exam rooms and
+> shares its facial mesh forms with the mature heads in `tools/ticket_clerks.py`;
 > `tools/dream_stable.py` / `tools/stable_meshes.py` build the stink stable behind 01.
 
 This pass restyles the teaching block from a dream fragment the owner supplied: an exam
@@ -14,19 +15,19 @@ metro-style escalator up to an empty exam floor. The building has a single doorw
 south-west corner, and you keep missing it. Old women dry grain and quilts in front of it.
 The stable smell is everywhere.
 
-The pass is an *addition*. It moves no wall, exit, spawn or interaction and resolves
-nothing in the story. The 03 crowd uses shaped, vertex-painted meshes and native pose
-loops; the stink stable's horses, dung, straw, flies and smell are shaped meshes painted in
-vertex colour; the stair, counter, chairs and the rest of the yard still use primitives and
-shader motion. None of it uses a script, actor, sound or new texture. The one script is the
-stench filter, which lives in the corridor beside the annex (below).
+The pass overlays the building without moving an existing wall, exit or spawn. The
+counter now sits inside and to the right of the 01 glass door. The clerks and the
+03 crowd use native animation on shaped, vertex-painted figures. The stink stable
+uses vertex-painted meshes; the stair, chairs and other yard pieces use primitives
+and shader motion. `DreamAnnex` itself still has no scripts, actors, sound or new
+textures. The three clerk looks and the stench filter are staged in the corridor.
 
 ## What is where
 
 | Place | Dream element | How it is drawn |
 |---|---|---|
 | 02 -> 03 west stair | Subway-scale escalator "toward an invisible direction". **The steps run down**: anyone climbing is walking up a down escalator, the "hidden slide back" of the closing feeling. | `dream_escalator.gdshader` paints a moving step belt over the existing treads. The player still walks on the teaching block's ramp collider. Steel skirts, rubber handrails, comb plates, a light-bar canopy and a metro totem reading `03 / EXAM ↑`. |
-| 02, opposite the stair foot | Ticket counter: "the exam costs money". Its sellers ignore you, stare at the escalator, mouths drooping, hands moving like machines. | A cobalt booth labelled `EXAM FEE · TICKETS` with three identical clerks in one pose. All three stamp in exact step (one `phase`). The mechanical snap comes from `mechanical = 1`. A queue lane waits for a queue that never forms. |
+| 01, inside and to the right of the glass entrance | A ticket counter with three silent, metronomic attendants. Seen closer, they are middle-aged women in school staff uniforms. | Open petrol-blue counter with the original `EXAM FEE · TICKETS` sign. One clip drops all three stamps together onto their slips. Point at a face or jacket and click for a short front three-quarter view of that clerk. The old 02 spot is clear. |
 | 03 corridor (west run and north turn) | Empty corridor; paper on every door says EXAM ROOM; inside, messy desks "finished or not yet started". | A taped paper notice on every bay door, with exam-room numbers that disagree (`07`, `07`, `13`, `00` …). Dropped papers and a tipped chair sit behind the high slit. A seating plan is painted on the corridor floor, slightly off-square. Hard vermilion, cobalt and lemon colour fields cover the walls, with a red floor rule leading to the office. |
 | 03 toward the staff office | In the gaps along the glass: a brief conversation, then two candidates absorbed in exam prep. | A varsity-jacket speaker gestures palm-up; a shorter student in a pleated skirt nods back. Further along, a hooded reader traces a page with a pencil while a student in a long coat checks an admission slip. The backward footprints, turned chairs and `NOW SERVING — — —` screen stay in place. |
 | 03 west wall | The troublemaker and accomplice by the damaged plaster. | `Troublemaker/Ranter` pauses between sharp forearm movements toward the dents. `Accomplice` leans in with an open hand. No dialogue or reaction to the player. |
@@ -74,9 +75,10 @@ instance uniform, and its ink contour moves with it.
   **The one exception is fresh dung**, which carries a hard cartoon highlight
   (`stable_paint` `gloss`): a cut-out cream shape from the painted light, not a specular
   lobe, so the droppings read wet from across the yard. Nothing else in the dream shines.
-- **Repetition is the absurdity.** The three clerks share a pose and a phase. Half the door
-  numbers say `07`. The footprints reverse. The escalator runs down under people walking up.
-- **03 is human; 02 is mechanical.** Twelve candidates vary in shoe-to-head height,
+- **Repetition is the absurdity.** The three clerks share one exact stamp clock; they do
+  not turn, speak or interrupt it when approached. Half the door numbers say `07`. The
+  footprints reverse. The escalator runs down under people walking up.
+- **03 moves at a different rhythm.** Twelve candidates vary in shoe-to-head height,
   shoulder width, dress, hairline and stance. Rounded, tapered profiles and cloth/skin
   pigment planes hold up at walking distance. Collars, cuffs, pleats, glasses and laced
   shoes are secondary to the silhouettes. Each moving form uses one opaque painted
@@ -106,7 +108,8 @@ instance uniform, and its ink contour moves with it.
     navigation and can be reached from the glass entrance;
   - the stair under the escalator still climbs 02 -> 03 directly, and the 01 gallery stays
     walkable;
-  - no annex collider crowds a spawn marker;
+  - no annex collider crowds a spawn marker; the counter stays to the right of the clear doorway;
+  - the 01 clerks bend only their stamp arms, with planted feet and two simultaneous paper contacts;
   - the exam-floor and office vignettes add no collider;
   - the crowd keeps its varied heights, native posed joints, planted shoes and held props;
   - `StenchHaze` is a world filter under the outline, hidden with nobody near, full at the
@@ -120,9 +123,34 @@ instance uniform, and its ink contour moves with it.
   the muck heap shows the stench filter) and eight overviews (two of the stink stable),
   adding six timed review frames: the conversation, booklet and pencil
   at two points of the revision loop, plaster pair, waiting-room conversation, and
-  seated reader. For a manual pass, climb the west stair from 02, turn along 03 past
-  the glass and watch each group for a full loop (about eight seconds). Continue to the
+  seated reader. A separate ticket visit job renders one entrance frame and three face
+  shots from actual clicks. For a manual 03 pass, climb the west stair from 02, turn along
+  03 past the glass and watch each group for a full loop (about eight seconds). Continue to the
   staff office and check that the study stool stays out of the entrance and inspection routes.
+
+## Looking at the ticket clerks on 01
+
+Walk through the 01 glass door and turn right along the inside face. The counter sits
+outside the clear span of the opening, with the through lane to the stair on its front
+side. A click on a clerk uses the normal pointer approach; it does not pull the camera
+while hovering or while the player is still walking up. There are three separate look
+targets. Each uses the original camera with a head-relative insert and eases back after
+roughly three seconds. No dialogue, interaction with a fee, objective, record or save is
+started. The lower lids, cheek shapes, warmer skin tones, greying hair and matching
+pressed collars are in the mesh, not an overlay on the shot. The silhouettes in the
+stable-yard house remain the old set dressing.
+
+`godot --headless --path . --script res://tests/ticket_counter_test.gd` walks from the
+real spawn through the threshold, sends mouse events at all three faces, checks that
+the same camera frames their eyes and hair, then checks the facing interaction and walks
+on after controls return. Append `-- --mobile-preview` to exercise the touch path instead.
+With a window, `-- capture=<dir>` saves the approach and three clicked close-ups.
+The booth sits slightly inside the wall line. The clerk heads clear the lintel in the
+follow camera on turning right, while the east end leaves the original gallery lane
+open to the blue stair. To review the full-size frames without the artifact
+store, dispatch `location-art-capture.yml` with `relay_ticket_evidence=true`, then
+`python3 tools/dialogue_evidence_relay.py fetch --run <id> --out build/ticket-frames`.
+The relay checks the commit and each JPEG's hash; the images stay out of Git.
 
 ## The seven 03 corridor sculpts
 
@@ -143,8 +171,8 @@ open gestures; the original grips and their paper, booklet and pencil stay attac
 | `Troublemaker/Accomplice` | Short layered cut, straight brow, roomier cuffed work shirt | 1.59 m |
 
 Rebuild with `python3 tools/build_teaching_block.py`, then run it with `--check`.
-No character is added, and no pose key, pivot, spawn, prop or dialogue is changed.
-The waiting room, synchronized clerks and stable yard keep their own models. Each
+That 03 pass added no character and did not change a pose key, pivot, spawn, prop or
+dialogue. This 01 clerk round does not change the 03 or waiting-room meshes. Each
 candidate still fits the 2,100-triangle limit (including props) and uses the same
 five to seven painted meshes. In `dream_annex_test.gd` the width and depth of each
 head, measured relative to its height, also distinguish the seven silhouettes.
@@ -156,5 +184,6 @@ head, measured relative to its height, also distinguish the seven silhouettes.
   flies move in the vertex shader, so their meshes carry a `custom_aabb` wide enough for it.
 - Shader motion is per mesh, so a turned chair keeps its pivot only because its parts are
   unrotated boxes. Do not add rotated parts to a shader-driven assembly.
-- The crowd is noninteractive. These are short ambient loops, not dialogue, lip sync or pathfinding.
-  The fixed capture views are review frames, not gameplay shots.
+- The 03 and stable-yard crowds are noninteractive. The three 01 looks are camera staging,
+  not conversations or a transaction. The fixed overview capture views are review frames;
+  the separate ticket click captures use the gameplay camera.
