@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/dev/folded_drum/folded_drum.gd" id="1_model"]
+
+[node name="FoldedDrum" type="Node3D"]
+script = ExtResource("1_model")
+
+[node name="Site" type="Node3D" parent="."]
+
+[node name="FrontWing" type="Node3D" parent="."]
+position = Vector3(-3.4, 0, 3.18)
+
+[node name="ScreenWing" type="Node3D" parent="."]
+position = Vector3(4.05, 0, -3.05)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Returns" type="Node3D" parent="."]
+
+[node name="RoundHall" type="Node3D" parent="."]
+position = Vector3(-1.65, 0, -2.25)
+
+[node name="CornerTower" type="Node3D" parent="."]
+position = Vector3(3.63, 0, 3.33)
