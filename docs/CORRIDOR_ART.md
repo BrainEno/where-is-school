@@ -23,6 +23,21 @@ The navigation mesh is baked from the same slabs, guards and sloped stair collid
 - Rose and petrol enamel on 01, sage and ochre public-office trim on 02, and an indigo ledger wall on 03 make repeated rooms legible even when their numbers are unreliable. See [the wing's art notes](../art/teaching_block/README.md).
 - The new 01 door opens physically through the south wall; there is no central collider. Sight and pick rays pass through the side panes, but the capsule does not. The street shares the same frame and returns to `FromTeachingEntrance` on the outside of the threshold; `FromStreet` and `school_gate` still exist for the original 02 landing and exit. The glass crossing inside `corridor` requires neither a load nor an interact press.
 
+## Yard and entrance study
+
+The existing large glass entrance remains the main route. A small locked service gate
+is an exterior wall dressing, not another exit. The stable yard shifts four metres west
+of the restroom with a walkable lane back to the entrance, so the shed and toilet no
+longer occupy the same apparent space. The rear playable yard and its window view use
+the same shallow, locally generated earthen surface and sparse perimeter bars. Relief is
+visual only: the original slab, gate openings and navigation remain unchanged. Its
+source is `tools/build_yard_earth.py`; `--check` verifies the generated scene.
+
+This is a first-stage alternative, not the full campus expansion: the 01 archive and
+plan-room doors still sit near the entrance, and a continuous playable yard on every
+side of the building is not yet constructed. The original graybox collision and level
+transitions remain in place. Visual and route testing in Godot is required.
+
 ## A wall to look at on 01
 
 Outside the double glass doors, follow the wall towards the stable lane. The west

@@ -887,7 +887,8 @@ def finish(text: str, used: set[str], b: Builder) -> str:
 
     text = re.sub(r'\[ext_resource type="StandardMaterial3D" path="res://assets/materials/[^"]+" id="([^"]+)"\]\n', keep, text)
     ext = [f'[ext_resource type="PackedScene" path="{RES}/{SCENERY_FILE}" id="yard_scenery"]',
-           f'[ext_resource type="PackedScene" path="{RES}/construction_site.tscn" id="building_site"]']
+           f'[ext_resource type="PackedScene" path="{RES}/construction_site.tscn" id="building_site"]',
+           f'[ext_resource type="PackedScene" path="{RES}/earth_yard.tscn" id="earth_yard"]']
     new_ext = "\n".join(ext + material_resources(used) + b.mesh_resources()) + "\n"
     first_sub = text.index("\n\n[sub_resource")
     text = text[: first_sub + 1] + new_ext + text[first_sub + 1 :]
@@ -896,7 +897,8 @@ def finish(text: str, used: set[str], b: Builder) -> str:
     # The building under construction is its own text scene (source/construction_site.py),
     # instanced into the art layer rather than baked into it.
     site = '[node name="BuildingSite" parent="PlaygroundArt" instance=ExtResource("building_site")]\n'
-    nodes = [b.nodes[0], site, *b.nodes[1:]]
+    soil = '[node name="EarthYard" parent="." instance=ExtResource("earth_yard")]\n'
+    nodes = [b.nodes[0], site, soil, *b.nodes[1:]]
     anchor = text.index('\n[node name="Interactables"')
     text = text[: anchor + 1] + "\n".join(nodes) + "\n" + text[anchor + 1 :]
     steps = len(re.findall(r"^\[(ext|sub)_resource", text, re.M)) + 1

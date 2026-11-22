@@ -99,8 +99,9 @@ instance uniform, and its ink contour moves with it.
 - `python3 tools/build_teaching_block.py` writes `scenes/locations/corridor/dream_annex.tscn`
   with the teaching block. `--check` detects stale output. `corridor.tscn` instances
   it as `DreamAnnex` beside `TeachingBlock` (not under `StageArt`, whose stage-material
-  rule this layer's ShaderMaterials would break). The forecourt's west guard rail is gone,
-  so the lane joins the apron.
+  rule this layer's ShaderMaterials would break). The forecourt's west guard rail is gone; the stable yard is shifted four metres west
+  from the restroom, and a short earth lane connects it back to the apron. The stench
+  sources move with the yard; neither the restroom nor the glass entrance moves.
 - `python3 tools/build_school_rooms.py` adds `WaitingRoom` to the staff office through
   `build_dream_annex.waiting_room()`.
 - `godot --headless --path . --script res://tests/dream_annex_test.gd` checks:
