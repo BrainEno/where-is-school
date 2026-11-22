@@ -95,6 +95,28 @@ python3 -m venv .venv
 界面字面量；跨行构造、同一行的额外色值和改写旧色都会被识别。白/黑过渡端点与命名色不拦截，
 不更改任何现有画面；`check_ui_palette.py`、引擎版本与用例注册检查保持原职责。
 
+## 玩家文本占位检查（#346）
+
+```sh
+python3 tools/check_content_placeholders.py            # PR／开发预览：不能新增或改写占位
+python3 tools/check_content_placeholders.py --release  # 正式发布：要求零处
+python3 tests/content_placeholders_test.py
+```
+
+检查 `data/**` 下 JSON 的玩家文本字段（如 `text`、`*_text`、`title`、`prompt`、`description`）
+的字符串值，以及 `data/locale/` 中 `strings` 表的界面文案。识别 `待做` 和独立的
+`TODO`、`TBD`、`WIP`、`FIXME`（英文大小写不敏感）；不扫描 ID、草稿文档或 GDScript。
+输出定位文件、字段和标记，不打印正文。
+
+[存量表](content_placeholder_allowlist.json) 只认文件、字段路径和文本的 SHA-256 完全相同的项。
+每组说明原因和跟踪议题（#345、#346）。数组内用 `@id` 或 `@entry_id` 定位唯一的节点、选项、
+笔记记录；没有唯一标识的数组项用下标。作者补齐文字后，在同一变更删除 `CONTENT_PLACEHOLDER_STALE`
+指出的记录；整份文件或分组清空后删除空项。不要为新占位扩大存量表。工具只读，只需 Python 标准库，
+不替作者改文，也不替代内容结构、译文一致性或发布包检查。
+
+Godot CI、Test tooling 和桌面预览导出均执行普通检查；桌面发布标签改用 `--release`，不使用存量表。
+现有占位仍可供已知的开发预览测试使用，但不能通过正式发布预检。
+
 ## 无写入的工具检查
 
 以下循环包含 `tools/*.py` 中提供独立 `--check` 模式的脚本，不会重写生产资产：
