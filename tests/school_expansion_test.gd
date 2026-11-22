@@ -207,6 +207,14 @@ func _on_roll(result: Dictionary) -> void:
 func _check_connected_landings() -> void:
 	var hall := _host.get_current()
 	var nav := hall.get_node(^"Navigation") as LocationNavigation
+	var wing := hall.get_node_or_null(^"TeachingBlock/GroundFloor/EastWingFloor")
+	var classroom := hall.get_node_or_null(^"TeachingBlock/GroundFloor/ClosedClassroom")
+	var archive := hall.get_spawn(&"FromArchive")
+	var plans := hall.get_spawn(&"FromPlanRoom")
+	_check.expect(wing != null and classroom != null, "The east wing or closed classroom is missing.")
+	if _check.expect(archive != null and plans != null, "The 01 room return points are missing."):
+		_check.expect(plans.global_position.x > archive.global_position.x + 6.0,
+			"The plan room is not separated east of the archive.")
 	var map := nav.get_navigation_map()
 	var start := NavigationServer3D.map_get_closest_point(map, _player.global_position)
 	var markers: Array = WC.values()

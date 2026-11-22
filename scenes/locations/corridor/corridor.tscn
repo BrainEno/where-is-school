@@ -478,7 +478,7 @@ camera_shot = ExtResource("29_annex_shot")
 radius = 0.34
 
 [node name="PlanRoomDoor" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(-10.24, -2.3, 11)
+position = Vector3(-5.92, -2.3, 7)
 interact_id = &"to_plan_room"
 outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel/HallLever", "../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel/HallSign")
 support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/PlanRoomPortal/Door/Panel")
@@ -491,7 +491,7 @@ destination_spawn = &"FromCorridor"
 destination_id = &"plan_room"
 
 [node name="PlanRoomAlignment" parent="Interactables" instance=ExtResource("11_interactable")]
-position = Vector3(-11.41, -2.26, 10.95)
+position = Vector3(-7.09, -2.26, 6.95)
 interact_id = &"align_plan_room"
 conversation_route = &"align_plan_room"
 prompt_key = "prompt.annex_align"
@@ -653,7 +653,7 @@ position = Vector3(-14.48, -3.4, 12)
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FromPlanRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-10.77, -3.4, 12)
+position = Vector3(-6.45, -3.4, 8)
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="FromProjectionRoom" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
