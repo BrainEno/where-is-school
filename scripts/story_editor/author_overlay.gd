@@ -118,10 +118,23 @@ func is_editing() -> bool:
 	return _open
 
 
-func _allowed() -> bool:
+## The pause menu's editor entry opens the drawer while the menu's own pause is in effect,
+## so the drawer must accept that pause as its own. The menu closes on the same click, and
+## `open_editor()` replaces that pause with the editor's.
+func can_open() -> bool:
 	return is_instance_valid(_ui) and _ui.is_node_ready() and _controller != null \
-		and not get_tree().paused and not _ui.fade.visible and not _ui.end_card.visible \
-		and not _ui.backlog.is_open() and not _ui.check_overlay.visible
+		and (not get_tree().paused or _pause_owner()) and not _ui.fade.visible \
+		and not _ui.end_card.visible and not _ui.backlog.is_open() and not _ui.check_overlay.visible
+
+
+## True when the only thing pausing the tree is the pause menu this drawer replaces.
+func _pause_owner() -> bool:
+	var menu := get_parent().get_node_or_null(^"PauseMenu")
+	return menu != null and menu.has_method("is_open") and bool(menu.call("is_open"))
+
+
+func _allowed() -> bool:
+	return can_open() and not get_tree().paused
 
 
 func _process(_delta: float) -> void:

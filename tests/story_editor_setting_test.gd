@@ -138,8 +138,13 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 	check.expect(launcher.is_visible_in_tree(), "The editor launcher is hidden inside a running world")
 	menu.open()
 	await process_frame
-	var opened := menu.open_story_editor()
-	check.expect(opened and paused, "The pause entry did not open the editor over the paused world")
+	# The click runs the entry, which opens the drawer and then closes the menu under it.
+	menu.activate(&"story_editor")
+	await process_frame
+	var overlay_now := world.get_node_or_null(^"AuthorOverlay")
+	check.expect(overlay_now != null and bool(overlay_now.call("is_editing")),
+		"The pause entry did not open the editor over the paused world")
+	check.expect(paused, "Opening the editor from the pause menu left the world running")
 	check.expect(not menu.is_open(), "The pause menu stayed over the opened editor")
 	await process_frame
 	if paused:

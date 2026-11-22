@@ -28,6 +28,8 @@ func open_editor() -> bool:
 	var editor := _overlay as Overlay
 	if editor == null:
 		return false
+	if not editor.can_open():
+		return false
 	editor.open_editor()
 	return editor.is_editing()
 

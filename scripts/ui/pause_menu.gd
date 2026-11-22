@@ -388,7 +388,9 @@ func activate(id: StringName) -> void:
 		&"journal":
 			open_journal()
 		STORY_ENTRY:
-			open_story_editor()
+			# The drawer takes the pause over; the menu must not stay on top of it.
+			if open_story_editor():
+				close()
 		&"new_game":
 			_pending = &"new_game"
 			_confirm.ask(
