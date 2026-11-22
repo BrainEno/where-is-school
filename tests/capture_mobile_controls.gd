@@ -130,16 +130,19 @@ func _shot(label: String) -> void:
 ## The PNG stays full-size. A separate same-frame copy fits nine CI notices for
 ## reviewers who can reach GitHub's API but not the artifact storage host.
 func _save_review_preview(image: Image, label: String) -> void:
-	image.resize(844, 390, Image.INTERPOLATE_LANCZOS)
-	for quality: float in [0.84, 0.74, 0.64, 0.54, 0.44]:
-		var bytes := image.save_jpg_to_buffer(quality)
-		if bytes.is_empty() or bytes.size() > 27000:
-			continue
-		var file := FileAccess.open(OUT.path_join(label + ".preview.jpg"), FileAccess.WRITE)
-		if file != null:
-			file.store_buffer(bytes)
+	# The gameplay view has much more detail than the two menu views.
+	for dimensions: Vector2i in [Vector2i(844, 390), Vector2i(633, 293), Vector2i(422, 195)]:
+		image.resize(dimensions.x, dimensions.y, Image.INTERPOLATE_LANCZOS)
+		for quality: float in [0.84, 0.74, 0.64, 0.54, 0.44]:
+			var bytes := image.save_jpg_to_buffer(quality)
+			if bytes.is_empty() or bytes.size() > 27000:
+				continue
+			var file := FileAccess.open(OUT.path_join(label + ".preview.jpg"), FileAccess.WRITE)
+			if file != null:
+				file.store_buffer(bytes)
+			else:
+				push_warning("Mobile capture: could not write the review preview for %s" % label)
 			return
-		break
 	push_warning("Mobile capture: no compact review preview for %s" % label)
 
 

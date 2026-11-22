@@ -112,6 +112,17 @@ func _check_save_and_quit_at_rest() -> void:
 	_expect(bool(_session.call("is_at_rest", world)), "%s: the world is not at rest (%s)." % [
 		_case, _rest_report(world)
 	])
+	# A mounted preview can be at rest, but only the current scene may save or leave.
+	current_scene = null
+	for write: bool in [true, false]:
+		var refused: Dictionary = _session.call("save_and_quit", write, world)
+		_expect(not refused.get("ok", true) and refused.get("reason") == "no_world",
+			"%s: non-current world was not refused (write=%s): %s." % [_case, write, refused])
+		if not world.is_inside_tree() or _session.call("is_changing_scene"):
+			_failures.append("%s: refusing a non-current world still started a scene change." % _case)
+			return
+	_expect(not _save.has_save(), "%s: refusing a non-current world wrote a save." % _case)
+	current_scene = world
 	var menu := world.get_node("PauseMenu") as PauseMenu
 	await _press_key(KEY_ESCAPE)
 	_expect(menu.is_open() and paused, "%s: Esc did not open the regular pause menu." % _case)

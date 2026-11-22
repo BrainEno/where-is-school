@@ -185,15 +185,20 @@ func save_and_quit(write: bool = true, world: Node = null) -> Dictionary:
 		report["detail"] = "a scene change is already in progress"
 		return report
 	var target: Node = world if world != null else _find_world()
-	if not is_instance_valid(target) or target != get_tree().current_scene or not _is_world(target):
+	if not is_instance_valid(target) or not _is_world(target):
 		report["reason"] = "no_world"
 		return report
-	var save := _save()
+	# Diagnose an unfinished beat even for a caller's explicitly supplied world.
+	# Only the current scene can go on to write or leave.
+	if write and not is_at_rest(target):
+		report["reason"] = "not_at_rest"
+		report["detail"] = "a conversation, a beat or the prologue is in progress"
+		return report
+	if target != get_tree().current_scene:
+		report["reason"] = "no_world"
+		return report
 	if write:
-		if not is_at_rest(target):
-			report["reason"] = "not_at_rest"
-			report["detail"] = "a conversation, a beat or the prologue is in progress"
-			return report
+		var save := _save()
 		if save == null or not save.has_method("save_game"):
 			report["reason"] = "no_save"
 			report["detail"] = "the save system is not available"
