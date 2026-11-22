@@ -93,6 +93,7 @@ func _run() -> void:
 		_check_pieces(annex, "corridor")
 		_check_spawns(corridor, annex)
 		_check_ticket_counter(corridor)
+		_check_stable_art(annex)
 		var exam := annex.get_node_or_null(^"ExamFloor")
 		if _check.expect(exam != null, "The annex has no ExamFloor."):
 			_check_candidates(exam, EXAM_CROWD, true)
@@ -126,6 +127,30 @@ func _run() -> void:
 	for _frame in 4:
 		await physics_frame
 	Harness.finish(self, _check.failures, "the exam dream draws, never acts, opens the stable yard and moves nothing.")
+
+
+func _check_stable_art(annex: Node) -> void:
+	for name: String in ["OldWoman0", "OldWoman1"]:
+		var person := annex.get_node_or_null(NodePath("StableYard/" + name)) as Node3D
+		if not _check.expect(person != null, "The stable lost " + name):
+			continue
+		for part: NodePath in [^"Feet", ^"Body/Coat", ^"Body/Head", ^"Body/ArmL", ^"Body/ArmR"]:
+			var piece := person.get_node_or_null(part) as MeshInstance3D
+			if not _check.expect(piece != null, name + " lost " + str(part)):
+				continue
+			var mesh := piece.mesh as ArrayMesh
+			var paint := piece.material_override as StandardMaterial3D
+			_check.expect(mesh != null and mesh.surface_get_array_index_len(0) > 100
+				and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
+				and paint != null and paint.vertex_color_use_as_albedo,
+				name + " lost its shaped, painted " + str(part))
+		_check.expect(person.get_node_or_null(^"Motion") is AnimationPlayer,
+			name + " lost its quiet visual motion")
+	var wisp := annex.get_node_or_null(^"StableYard/Stink0") as MultiMeshInstance3D
+	if _check.expect(wisp != null and wisp.multimesh != null, "The stable lost its wisps"):
+		var bounds := wisp.multimesh.mesh.get_aabb()
+		_check.expect(bounds.size.z > 0.15 and wisp.multimesh.instance_count <= 3,
+			"The smell must be sparse and three-dimensional")
 
 
 func _check_stench(corridor: Node) -> void:
