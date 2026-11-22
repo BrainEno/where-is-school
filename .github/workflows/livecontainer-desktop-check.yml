@@ -1,0 +1,47 @@
+name: Render the desktop title regression for the IPA source
+
+on:
+  push:
+    branches: [arena/31215324-where-is-school]
+    paths: ['.github/workflows/livecontainer-desktop-check.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    name: Check the exact IPA source in a real desktop viewport
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
+          path: game-source
+          persist-credentials: false
+      - name: Test the title with real mouse, keys and pad, including large text
+        working-directory: game-source
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/wis-desktop-data"
+          export CI_LOG_DIR="$RUNNER_TEMP/wis-desktop-checks"
+          mkdir -p "$CI_LOG_DIR"
+          godot --headless --path . --import > "$CI_LOG_DIR/import.log" 2>&1
+          source tools/ci_run_check.sh
+          run_check title_mouse 200 xvfb-run -a --server-args='-screen 0 1600x900x24' \
+            godot --resolution 1600x900 --rendering-method gl_compatibility --path . \
+              --script res://tests/title_menu_interaction_test.gd -- --part=mouse || true
+          run_check title_keys 200 xvfb-run -a --server-args='-screen 0 1600x900x24' \
+            godot --resolution 1600x900 --rendering-method gl_compatibility --path . \
+              --script res://tests/title_menu_interaction_test.gd -- --part=keys || true
+          run_check title_matrix 200 xvfb-run -a --server-args='-screen 0 1280x720x24' \
+            godot --resolution 1280x720 --rendering-method gl_compatibility --path . \
+              --script res://tests/title_menu_interaction_test.gd -- --part=matrix || true
+          run_check_summary
