@@ -1,102 +1,59 @@
-name: Package iOS for LiveContainer
+name: Deliver the LiveContainer iOS preview
 
-# This delivery workflow is scoped to the requested build branch. It is not a
-# release, and never uses the protected Apple signing environment.
+# One build branch, one verified encrypted artifact, one destination file. This
+# job never receives Apple signing credentials or Google account credentials.
 on:
   push:
     branches: [arena/31215324-where-is-school]
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
-  device-ipa:
-    if: github.ref == 'refs/heads/arena/31215324-where-is-school'
-    name: Build and deliver an ARM64 device IPA
-    runs-on: macos-26
-    timeout-minutes: 30
+  delivery:
+    name: Upload the verified package to Drive
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
     env:
-      SOURCE_SHA: a6cc5d6a76e215bbe971a8e5cc0135c9d7395fb6
+      IPA_SHA256: 4a3fee83c943a987ecfe2a0368269322670e9a3e42e5397f4ddc17b652d71ada
       IPA_NAME: Where-Is-School-LiveContainer-a6cc5d6.ipa
+      IPA_BYTES: '38137819'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-godot
-        with:
-          include-templates: true
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          ref: a6cc5d6a76e215bbe971a8e5cc0135c9d7395fb6
-          path: game-source
-          persist-credentials: false
-      - name: Export and validate a device archive without Apple secrets
-        shell: bash
-        working-directory: game-source
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          test -z "$(git status --porcelain)"
-          xcodebuild -version
-          python3 tools/export_mobile.py ios-unsigned --build "$GITHUB_RUN_NUMBER" \
-            --output "$RUNNER_TEMP/wis-device"
-      - name: Package and verify the IPA
+      - name: Create a one-run recipient key for the file transfer ticket
         shell: bash
         run: |
           set -euo pipefail
-          python3 tools/macos/ios/livecontainer_preview.py \
-            "$GITHUB_WORKSPACE/game-source" "$SOURCE_SHA" "$RUNNER_TEMP/wis-device" \
-            "$RUNNER_TEMP/$IPA_NAME"
-      - name: Seal the verified IPA for transfer
-        shell: bash
-        run: |
-          set -euo pipefail
-          openssl_bin="$(brew --prefix openssl@3)/bin/openssl"
-          test -x "$openssl_bin"
-          cat > "$RUNNER_TEMP/recipient.pem" <<'PEM'
-          -----BEGIN CERTIFICATE-----
-          MIIEMTCCApmgAwIBAgIUdt0SMvC2vKPLHcLwi+LtqvkdCaswDQYJKoZIhvcNAQEL
-          BQAwKDEmMCQGA1UEAwwdV2hlcmUgSXMgU2Nob29sIElQQSB0cmFuc3BvcnQwHhcN
-          MjYxMTIyMDYzMjU3WhcNMjYxMTI0MDYzMjU3WjAoMSYwJAYDVQQDDB1XaGVyZSBJ
-          cyBTY2hvb2wgSVBBIHRyYW5zcG9ydDCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCC
-          AYoCggGBAKtcsihxCveHSK5fA4AQuOmGRYIgep96K/0kZNXu1yZntpGuuhTwQ+P9
-          H4wGOXgqtZRWUCIUVMOOSUF2FDrAFc1Cs3XEJL7QLL0sDr0m/S36WlYcpiETq+Up
-          qvzF0DAoTi818v77Y79xOI/XZvg3p49t+Imm6hJTw0dbTzbf3XiVDptqYQfpLTEZ
-          8iJuq+R5HedBMAsA8emf3P/FFDPhTWoMSFnfl0mO86q4WWAMY8rCp9LkodxMktFS
-          NEjr55zS5xgf5lq2ILZypF7yteXlR94//xvSii46xo9IgVppuTUhdQqOk5funkEg
-          TX2XFVXwJamQZvaPKKq+EUsLUxKsiD0EhLKB+Esj7AFDasBFBsTHqn2vQCviHVcz
-          64o/mssV7ssYdk++1XN8XMyAQohSj2IwO4UwmGEg6tBqlXhgMjjDLtRdG5YpIq/3
-          xsbYg5ooT3Bf4eqXIWr0nEC9Y10P0mZwSqp0tAmB9shhB2VkEONqY6LD9t+pZFIX
-          VRpbAZwZdwIDAQABo1MwUTAdBgNVHQ4EFgQU5ryYrU1EWXK6/FA7W/hfVlQo7Ecw
-          HwYDVR0jBBgwFoAU5ryYrU1EWXK6/FA7W/hfVlQo7EcwDwYDVR0TAQH/BAUwAwEB
-          /zANBgkqhkiG9w0BAQsFAAOCAYEAngFtzQiRCAloAR9L1BZkp8fF9MclfGlBB6g8
-          lylRJ9Zdla/ASlaygdRxh4f4zAiI/WNOjIc9eYwHOW5sumqdbBTkNh1mlS/CNNgo
-          h4S1V5KE0FNo0swNCKp+Sk2gvJ4UA3RjNiHjPfvbebecUVCeUlzJtSgUMMPM2ua5
-          KswhL+vDR8yZNCprUlDH1tLg9wX9Js+EefiI88KV9csqSg9my2MEcAtSjUQtlNH9
-          qo9lq157Migg3m2tj1GHVXt3f4A7I+TQOk/8iTjVTbd7IxFMvaZ2lwFjlrgrfxdy
-          +DWLsrOHlkPllsOqkubBFlcOmLFUotg+dHFBPrPORdmdsUxu6Gl2HckEXqeDqp+f
-          Fjz+R5/jYM6RZ6BaoW99dYcLiXuSpGwWAW0BL234rswSzRYPMxLUFVpeZaRNMe8t
-          qzT3K3eiXxWVJOIq2rqutfZY5MLGIfXAkcYjQa/tQ1BmH35hZJxdhfLSMA4Vr/0i
-          Pu6UUsH1BpIEIT8lMpqkI8z4j8L7
-          -----END CERTIFICATE-----
-          PEM
-          "$openssl_bin" cms -encrypt -binary -aes-256-gcm -outform DER \
-            -in "$RUNNER_TEMP/$IPA_NAME" -out "$RUNNER_TEMP/ios-device.cms" "$RUNNER_TEMP/recipient.pem"
-      - name: Transfer the encrypted package
-        continue-on-error: true
-        shell: bash
+          umask 077
+          mkdir "$RUNNER_TEMP/wis-transfer"
+          cd "$RUNNER_TEMP/wis-transfer"
+          openssl req -new -x509 -newkey rsa:3072 -nodes -sha256 -days 1 \
+            -subj '/CN=Where Is School one-file delivery' -keyout job.key -out job.pem 2>/dev/null
+          printf '::notice title=One-run delivery public certificate::%s\n' "$(base64 -w0 job.pem)"
+      - name: Recover the verified ciphertext from the macOS runner
         env:
-          RECEIVER_URL: https://8787-ig88ysnbwdh8pw585splb.e2b.app/transfer
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --proto '=https' --connect-timeout 15 --max-time 160 \
-            --retry 2 -H 'Content-Type: application/pkcs7-mime' \
-            --upload-file "$RUNNER_TEMP/ios-device.cms" "$RECEIVER_URL"
-      - name: Keep a short-lived encrypted backup
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: livecontainer-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ios-device.cms
-          if-no-files-found: error
-          retention-days: 1
-          compression-level: 0
+          gh run download 44994282270 --repo "$GITHUB_REPOSITORY" \
+            --name livecontainer-encrypted-44994282270-1 --dir "$RUNNER_TEMP/wis-transfer"
+      - name: Receive the signed and encrypted delivery ticket
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/macos/ios/deliver_livecontainer_preview.py receive "$RUNNER_TEMP/wis-transfer"
+      - name: Check the IPA digest and upload only that file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/macos/ios/deliver_livecontainer_preview.py upload "$RUNNER_TEMP/wis-transfer"
+      - name: Remove temporary delivery keys
+        if: always()
+        shell: bash
+        run: rm -rf -- "$RUNNER_TEMP/wis-transfer"
