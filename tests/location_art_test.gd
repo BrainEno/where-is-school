@@ -122,13 +122,17 @@ const LOCATIONS := {
 		"stage": false,
 		# Includes deferred outline pick shapes, not only the yard's bodies. The optional
 		# paper has an anchor and a pick box; tap and bench now trace their final meshes.
-		# The look at the building under construction picks by its two gate leaves.
-		"shapes": 101,
-		"interactables": 17, # The new paper read is separate from the view through the doorway.
-		"spawns": ["FromAlley", "FromCorridor", "FromSchool"],
+		# The look at the building under construction picks by its two gate leaves. The
+		# site's gate (the same two leaves) and the climb over the hoarding (the south sand
+		# pile) add a sphere each and three boxes.
+		"shapes": 106,
+		"interactables": 19, # The new paper read is separate from the view through the doorway.
+		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
+			"pg_site_gate": "site_interior/FromPorch",
+			"pg_site_climb": "site_interior/FromPorch",
 		},
 	},
 	"laboratory": {
@@ -207,6 +211,13 @@ const LOCATIONS := {
 		"interactables": 4,
 		"spawns": ["FromCorridor"],
 		"exits": {"restroom_03_to_corridor": "corridor/FromRestroom03"},
+	},
+	"site_interior": {
+		"scene": "res://scenes/locations/site_interior/site_interior.tscn",
+		"stage": false,
+		"interactables": 3, # The porch door out, the key in the chalk star, the ladder.
+		"spawns": ["FromPorch"],
+		"exits": {"site_interior_porch_door": "playground/FromSite"},
 	},
 }
 

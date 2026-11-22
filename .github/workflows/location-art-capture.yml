@@ -31,6 +31,8 @@ on:
       - "scenes/locations/principal_office/**"
       - "scenes/locations/restroom_02/**"
       - "scenes/locations/restroom_03/**"
+      - "scenes/locations/site_interior/**"
+      - "data/inspections/*/site_interior.json"
       - "assets/shaders/school/**"
       - "tests/location_art_test.gd"
       - "tests/school_rooms_test.gd"
@@ -91,6 +93,8 @@ jobs:
           - {location: annex_thresholds, side: after}
           - {location: playground_site, side: after}
           - {location: playground_site, side: forward-plus}
+          - {location: site_interior, side: after}
+          - {location: site_interior, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -179,6 +183,13 @@ jobs:
               detail=(construction-site review_width=500)
               width=1280
               expect=10
+              ;;
+            site_interior)
+              # Inside the building under construction: three stances (porch, key,
+              # light column), five fixed views, and the yard's gate opened by the key.
+              detail=(site-interior review_width=500)
+              width=1280
+              expect=9
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

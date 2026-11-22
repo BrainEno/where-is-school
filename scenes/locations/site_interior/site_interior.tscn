@@ -1,0 +1,899 @@
+[gd_scene load_steps=103 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
+[ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
+[ext_resource type="Script" path="res://scripts/world/ambience_player.gd" id="ambience"]
+[ext_resource type="AudioStream" path="res://assets/audio/laboratory_hum.wav" id="hum"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/location_exit.tscn" id="exit"]
+[ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="tap_target"]
+[ext_resource type="Script" path="res://scenes/locations/site_interior/site_key.gd" id="key_script"]
+[ext_resource type="Script" path="res://scenes/locations/site_interior/site_trip.gd" id="trip_script"]
+[ext_resource type="Shader" path="res://assets/shaders/school/site_trip_paint.gdshader" id="sh_site_trip_paint"]
+[ext_resource type="Shader" path="res://assets/shaders/school/site_trip_floor.gdshader" id="sh_site_trip_floor"]
+[ext_resource type="Shader" path="res://assets/shaders/school/site_trip_light.gdshader" id="sh_site_trip_light"]
+[ext_resource type="Shader" path="res://assets/shaders/school/site_trip_haze.gdshader" id="sh_site_trip_haze"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/slab.tres" id="mesh_slab"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/vortex.tres" id="mesh_vortex"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift00.tres" id="mesh_lift00"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift01.tres" id="mesh_lift01"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift02.tres" id="mesh_lift02"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift03.tres" id="mesh_lift03"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift04.tres" id="mesh_lift04"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift05.tres" id="mesh_lift05"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift06.tres" id="mesh_lift06"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift07.tres" id="mesh_lift07"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift08.tres" id="mesh_lift08"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift09.tres" id="mesh_lift09"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift10.tres" id="mesh_lift10"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift11.tres" id="mesh_lift11"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift12.tres" id="mesh_lift12"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift13.tres" id="mesh_lift13"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift14.tres" id="mesh_lift14"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift15.tres" id="mesh_lift15"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift16.tres" id="mesh_lift16"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift17.tres" id="mesh_lift17"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift18.tres" id="mesh_lift18"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift19.tres" id="mesh_lift19"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift20.tres" id="mesh_lift20"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift21.tres" id="mesh_lift21"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift22.tres" id="mesh_lift22"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift23.tres" id="mesh_lift23"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift24.tres" id="mesh_lift24"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lift25.tres" id="mesh_lift25"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/starter_bars.tres" id="mesh_starter_bars"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/door_frame.tres" id="mesh_door_frame"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/door_leaf.tres" id="mesh_door_leaf"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/scaffold_tubes.tres" id="mesh_scaffold_tubes"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/scaffold_boards.tres" id="mesh_scaffold_boards"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/scaffold_ladder.tres" id="mesh_scaffold_ladder"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/light_column.tres" id="mesh_light_column"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/marble.tres" id="mesh_marble"]
+[ext_resource type="Shader" path="res://assets/shaders/school/site_trip_marble.gdshader" id="sh_site_trip_marble"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/chalk.tres" id="mesh_chalk"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/key_bow.tres" id="mesh_key_bow"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/key_blade.tres" id="mesh_key_blade"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lamp0.tres" id="mesh_lamp0"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lamp1.tres" id="mesh_lamp1"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/site_interior/meshes/lamp2.tres" id="mesh_lamp2"]
+
+[sub_resource type="Environment" id="TripEnvironment"]
+background_mode = 1
+background_color = Color(0.07, 0.04, 0.12, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.66, 0.58, 0.78, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+tonemap_exposure = 0.95
+glow_enabled = true
+glow_intensity = 0.7
+glow_bloom = 0.05
+glow_hdr_threshold = 0.9
+
+[sub_resource type="ShaderMaterial" id="Mat_wall"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.62
+shader_parameter/band_pitch = 0.85
+shader_parameter/dots = 1.0
+shader_parameter/glow = 0.3
+shader_parameter/band_centre = Vector3(-1.4, 0, -1.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_door"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.78
+shader_parameter/band_pitch = 0.22
+shader_parameter/glow = 0.2
+shader_parameter/band_twist = 0.4
+shader_parameter/palette_shift = 0.4
+shader_parameter/band_centre = Vector3(-1.4, 0, -1.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_plain"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.18
+shader_parameter/band_pitch = 1.6
+shader_parameter/glow = 0.1
+shader_parameter/band_centre = Vector3(-1.4, 0, -1.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_stripes"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.92
+shader_parameter/band_pitch = 0.32
+shader_parameter/band_twist = 0.0
+shader_parameter/band_speed = 0.3
+shader_parameter/glow = 0.45
+shader_parameter/band_centre = Vector3(-1.4, 0, -1.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_bars"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.9
+shader_parameter/band_pitch = 0.14
+shader_parameter/band_twist = 0.0
+shader_parameter/band_speed = 0.5
+shader_parameter/glow = 0.5
+shader_parameter/sway = 0.07
+shader_parameter/band_centre = Vector3(-1.4, 0, -1.8)
+
+[sub_resource type="ShaderMaterial" id="Mat_chalk"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.35
+shader_parameter/band_pitch = 0.6
+shader_parameter/glow = 0.9
+shader_parameter/band_centre = Vector3(-3, 0, 3.2)
+
+[sub_resource type="ShaderMaterial" id="Mat_key"]
+shader = ExtResource("sh_site_trip_paint")
+shader_parameter/band_mix = 0.0
+shader_parameter/pulse = 0.9
+shader_parameter/glow = 0.0
+shader_parameter/roughness_value = 0.3
+shader_parameter/band_centre = Vector3(-3, 0, 3.2)
+
+[sub_resource type="ShaderMaterial" id="Mat_floor"]
+shader = ExtResource("sh_site_trip_floor")
+shader_parameter/centre = Vector3(-1.4, 0, -1.8)
+shader_parameter/contrast = 0.58
+shader_parameter/glow = 0.16
+shader_parameter/fade_radius = 7.2
+
+[sub_resource type="ShaderMaterial" id="Mat_vortex"]
+shader = ExtResource("sh_site_trip_floor")
+shader_parameter/centre = Vector3(-1.4, 0, -1.8)
+shader_parameter/contrast = 1.0
+shader_parameter/glow = 1.1
+shader_parameter/fade_radius = 44.0
+shader_parameter/arms = 6.0
+shader_parameter/twist = 3.0
+shader_parameter/spin = 0.03
+
+[sub_resource type="ShaderMaterial" id="Mat_light"]
+shader = ExtResource("sh_site_trip_light")
+shader_parameter/strength = 0.55
+shader_parameter/height = 14.0
+
+[sub_resource type="ShaderMaterial" id="Mat_haze"]
+shader = ExtResource("sh_site_trip_haze")
+shader_parameter/trip = 0.0
+
+[sub_resource type="BoxShape3D" id="Shape_slab"]
+size = Vector3(12.6, 0.2, 15.6)
+
+[sub_resource type="BoxShape3D" id="Shape_lift00"]
+size = Vector3(1.883, 0.9434, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift01"]
+size = Vector3(1.8376, 1.0046, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift02"]
+size = Vector3(1.7677, 0.9315, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift03"]
+size = Vector3(1.6864, 1.0063, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift04"]
+size = Vector3(1.6107, 0.9508, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift05"]
+size = Vector3(1.5592, 0.9931, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift06"]
+size = Vector3(1.546, 0.9628, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift07"]
+size = Vector3(1.575, 0.9849, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift08"]
+size = Vector3(1.6378, 0.9539, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift09"]
+size = Vector3(1.7179, 0.9568, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift10"]
+size = Vector3(1.7967, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift11"]
+size = Vector3(1.8585, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift12"]
+size = Vector3(1.8922, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift13"]
+size = Vector3(1.8922, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift14"]
+size = Vector3(1.8585, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift15"]
+size = Vector3(1.7967, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift16"]
+size = Vector3(1.7179, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift17"]
+size = Vector3(1.6378, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift18"]
+size = Vector3(1.575, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift19"]
+size = Vector3(1.546, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift20"]
+size = Vector3(1.5592, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift21"]
+size = Vector3(1.6107, 2.4, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift22"]
+size = Vector3(1.6864, 2.3546, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift23"]
+size = Vector3(1.7677, 0.9981, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift24"]
+size = Vector3(1.8376, 0.8949, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_lift25"]
+size = Vector3(1.883, 0.9033, 0.34)
+
+[sub_resource type="BoxShape3D" id="Shape_door"]
+size = Vector3(0.32, 2.4, 1.44)
+
+[sub_resource type="BoxShape3D" id="Shape_scaffold"]
+size = Vector3(1.84, 2.4, 1.84)
+
+[sub_resource type="ShaderMaterial" id="Mat_marble0"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 2.7
+shader_parameter/orbit_height = 2.7
+shader_parameter/orbit_rate = 0.045
+shader_parameter/phase = 0.0
+shader_parameter/size = 0.42
+shader_parameter/hue = 0.02
+
+[sub_resource type="ShaderMaterial" id="Mat_marble1"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 3.3
+shader_parameter/orbit_height = 3.6
+shader_parameter/orbit_rate = 0.032
+shader_parameter/phase = 0.21
+shader_parameter/size = 0.55
+shader_parameter/hue = 0.16
+
+[sub_resource type="ShaderMaterial" id="Mat_marble2"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 2.4
+shader_parameter/orbit_height = 4.6
+shader_parameter/orbit_rate = -0.05
+shader_parameter/phase = 0.43
+shader_parameter/size = 0.36
+shader_parameter/hue = 0.33
+
+[sub_resource type="ShaderMaterial" id="Mat_marble3"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 3.5
+shader_parameter/orbit_height = 2.9
+shader_parameter/orbit_rate = -0.028
+shader_parameter/phase = 0.6
+shader_parameter/size = 0.5
+shader_parameter/hue = 0.5
+
+[sub_resource type="ShaderMaterial" id="Mat_marble4"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 2.9
+shader_parameter/orbit_height = 4.1
+shader_parameter/orbit_rate = 0.038
+shader_parameter/phase = 0.77
+shader_parameter/size = 0.6
+shader_parameter/hue = 0.66
+
+[sub_resource type="ShaderMaterial" id="Mat_marble5"]
+shader = ExtResource("sh_site_trip_marble")
+shader_parameter/orbit_radius = 3.1
+shader_parameter/orbit_height = 5.3
+shader_parameter/orbit_rate = -0.04
+shader_parameter/phase = 0.9
+shader_parameter/size = 0.45
+shader_parameter/hue = 0.82
+
+[node name="SiteInterior" type="Node3D"]
+script = ExtResource("location")
+location_id = &"site_interior"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("TripEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-60, -30, 0)
+light_color = Color(0.8, 0.7, 1, 1)
+light_energy = 0.45
+shadow_enabled = true
+directional_shadow_max_distance = 30
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+script = ExtResource("navigation")
+
+[node name="Ambience" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("hum")
+script = ExtResource("ambience")
+volume_db = -30
+target_db = -25
+pitch_scale = 0.62
+
+[node name="Slab" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Slab"]
+position = Vector3(0, -0.1, 0)
+shape = SubResource("Shape_slab")
+
+[node name="Surface" type="MeshInstance3D" parent="Slab"]
+mesh = ExtResource("mesh_slab")
+material_override = SubResource("Mat_floor")
+
+[node name="Vortex" type="MeshInstance3D" parent="."]
+position = Vector3(0, -6, 0)
+mesh = ExtResource("mesh_vortex")
+material_override = SubResource("Mat_vortex")
+cast_shadow = 0
+
+[node name="Shell" type="Node3D" parent="."]
+
+[node name="Lift00" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift00"]
+position = Vector3(6.0095, 0.4717, 1.5674)
+rotation_degrees = Vector3(0, -99.5542, 0)
+shape = SubResource("Shape_lift00")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift00"]
+mesh = ExtResource("mesh_lift00")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift01" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift01"]
+position = Vector3(5.554, 0.5023, 3.2584)
+rotation_degrees = Vector3(0, -110.741, 0)
+shape = SubResource("Shape_lift01")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift01"]
+mesh = ExtResource("mesh_lift01")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift02" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift02"]
+position = Vector3(4.7951, 0.4658, 4.7732)
+rotation_degrees = Vector3(0, -122.731, 0)
+shape = SubResource("Shape_lift02")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift02"]
+mesh = ExtResource("mesh_lift02")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift03" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift03"]
+position = Vector3(3.7724, 0.5031, 6.0291)
+rotation_degrees = Vector3(0, -135.915, 0)
+shape = SubResource("Shape_lift03")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift03"]
+mesh = ExtResource("mesh_lift03")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift04" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift04"]
+position = Vector3(2.5399, 0.4754, 6.9563)
+rotation_degrees = Vector3(0, -150.536, 0)
+shape = SubResource("Shape_lift04")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift04"]
+mesh = ExtResource("mesh_lift04")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift05" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift05"]
+position = Vector3(1.1643, 0.4965, 7.5015)
+rotation_degrees = Vector3(0, -166.501, 0)
+shape = SubResource("Shape_lift05")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift05"]
+mesh = ExtResource("mesh_lift05")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift06" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift06"]
+position = Vector3(-0.2778, 0.4814, 7.6322)
+rotation_degrees = Vector3(0, 176.778, 0)
+shape = SubResource("Shape_lift06")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift06"]
+mesh = ExtResource("mesh_lift06")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift07" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift07"]
+position = Vector3(-1.7039, 0.4924, 7.3402)
+rotation_degrees = Vector3(0, 160.247, 0)
+shape = SubResource("Shape_lift07")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift07"]
+mesh = ExtResource("mesh_lift07")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift08" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift08"]
+position = Vector3(-3.0333, 0.4769, 6.6435)
+rotation_degrees = Vector3(0, 144.756, 0)
+shape = SubResource("Shape_lift08")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift08"]
+mesh = ExtResource("mesh_lift08")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift09" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift09"]
+position = Vector3(-4.1925, 0.4784, 5.583)
+rotation_degrees = Vector3(0, 130.699, 0)
+shape = SubResource("Shape_lift09")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift09"]
+mesh = ExtResource("mesh_lift09")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift10" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift10"]
+position = Vector3(-5.1197, 1.2, 4.2188)
+rotation_degrees = Vector3(0, 118.013, 0)
+shape = SubResource("Shape_lift10")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift10"]
+mesh = ExtResource("mesh_lift10")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift11" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift11"]
+position = Vector3(-5.7662, 1.2, 2.6261)
+rotation_degrees = Vector3(0, 106.38, 0)
+shape = SubResource("Shape_lift11")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift11"]
+mesh = ExtResource("mesh_lift11")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift12" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift12"]
+position = Vector3(-6.0981, 1.2, 0.8914)
+rotation_degrees = Vector3(0, 95.3887, 0)
+shape = SubResource("Shape_lift12")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift12"]
+mesh = ExtResource("mesh_lift12")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift13" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift13"]
+position = Vector3(-6.0981, 1.2, -0.8914)
+rotation_degrees = Vector3(0, 84.6113, 0)
+shape = SubResource("Shape_lift13")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift13"]
+mesh = ExtResource("mesh_lift13")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift14" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift14"]
+position = Vector3(-5.7662, 1.2, -2.6261)
+rotation_degrees = Vector3(0, 73.6201, 0)
+shape = SubResource("Shape_lift14")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift14"]
+mesh = ExtResource("mesh_lift14")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift15" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift15"]
+position = Vector3(-5.1197, 1.2, -4.2188)
+rotation_degrees = Vector3(0, 61.9872, 0)
+shape = SubResource("Shape_lift15")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift15"]
+mesh = ExtResource("mesh_lift15")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift16" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift16"]
+position = Vector3(-4.1925, 1.2, -5.583)
+rotation_degrees = Vector3(0, 49.3013, 0)
+shape = SubResource("Shape_lift16")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift16"]
+mesh = ExtResource("mesh_lift16")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift17" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift17"]
+position = Vector3(-3.0333, 1.2, -6.6435)
+rotation_degrees = Vector3(0, 35.2436, 0)
+shape = SubResource("Shape_lift17")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift17"]
+mesh = ExtResource("mesh_lift17")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift18" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift18"]
+position = Vector3(-1.7039, 1.2, -7.3402)
+rotation_degrees = Vector3(0, 19.7526, 0)
+shape = SubResource("Shape_lift18")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift18"]
+mesh = ExtResource("mesh_lift18")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift19" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift19"]
+position = Vector3(-0.2778, 1.2, -7.6322)
+rotation_degrees = Vector3(0, 3.2217, 0)
+shape = SubResource("Shape_lift19")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift19"]
+mesh = ExtResource("mesh_lift19")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift20" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift20"]
+position = Vector3(1.1643, 1.2, -7.5015)
+rotation_degrees = Vector3(0, -13.499, 0)
+shape = SubResource("Shape_lift20")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift20"]
+mesh = ExtResource("mesh_lift20")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift21" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift21"]
+position = Vector3(2.5399, 1.2, -6.9563)
+rotation_degrees = Vector3(0, -29.4638, 0)
+shape = SubResource("Shape_lift21")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift21"]
+mesh = ExtResource("mesh_lift21")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift22" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift22"]
+position = Vector3(3.7724, 1.1773, -6.0291)
+rotation_degrees = Vector3(0, -44.0849, 0)
+shape = SubResource("Shape_lift22")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift22"]
+mesh = ExtResource("mesh_lift22")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift23" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift23"]
+position = Vector3(4.7951, 0.4991, -4.7732)
+rotation_degrees = Vector3(0, -57.2685, 0)
+shape = SubResource("Shape_lift23")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift23"]
+mesh = ExtResource("mesh_lift23")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift24" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift24"]
+position = Vector3(5.554, 0.4475, -3.2584)
+rotation_degrees = Vector3(0, -69.259, 0)
+shape = SubResource("Shape_lift24")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift24"]
+mesh = ExtResource("mesh_lift24")
+material_override = SubResource("Mat_wall")
+
+[node name="Lift25" type="StaticBody3D" parent="Shell" groups=["camera_occluder"]]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Shell/Lift25"]
+position = Vector3(6.0095, 0.4516, -1.5674)
+rotation_degrees = Vector3(0, -80.4458, 0)
+shape = SubResource("Shape_lift25")
+
+[node name="Pour" type="MeshInstance3D" parent="Shell/Lift25"]
+mesh = ExtResource("mesh_lift25")
+material_override = SubResource("Mat_wall")
+
+[node name="StarterBars" type="MeshInstance3D" parent="Shell"]
+mesh = ExtResource("mesh_starter_bars")
+material_override = SubResource("Mat_bars")
+cast_shadow = 0
+
+[node name="Door" type="StaticBody3D" parent="."]
+position = Vector3(6, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Door"]
+position = Vector3(0.08, 1.2, 0)
+shape = SubResource("Shape_door")
+
+[node name="Frame" type="MeshInstance3D" parent="Door"]
+mesh = ExtResource("mesh_door_frame")
+material_override = SubResource("Mat_plain")
+
+[node name="Leaf" type="MeshInstance3D" parent="Door"]
+mesh = ExtResource("mesh_door_leaf")
+material_override = SubResource("Mat_door")
+
+[node name="DoorLight" type="OmniLight3D" parent="Door"]
+position = Vector3(-0.6, 2.3, 0)
+light_color = Color(1, 0.78, 0.52, 1)
+light_energy = 0.7
+omni_range = 3.2
+
+[node name="Scaffold" type="StaticBody3D" parent="."]
+position = Vector3(-1.4, 0, -1.8)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="Scaffold"]
+position = Vector3(0, 1.2, 0)
+shape = SubResource("Shape_scaffold")
+
+[node name="Tubes" type="MeshInstance3D" parent="Scaffold"]
+mesh = ExtResource("mesh_scaffold_tubes")
+material_override = SubResource("Mat_stripes")
+
+[node name="Boards" type="MeshInstance3D" parent="Scaffold"]
+mesh = ExtResource("mesh_scaffold_boards")
+material_override = SubResource("Mat_plain")
+
+[node name="Ladder" type="MeshInstance3D" parent="Scaffold"]
+mesh = ExtResource("mesh_scaffold_ladder")
+material_override = SubResource("Mat_stripes")
+
+[node name="LightColumn" type="MeshInstance3D" parent="."]
+position = Vector3(-1.4, 0, -1.8)
+mesh = ExtResource("mesh_light_column")
+material_override = SubResource("Mat_light")
+cast_shadow = 0
+
+[node name="ColumnLight" type="OmniLight3D" parent="."]
+position = Vector3(-1.4, 3.2, -1.8)
+light_color = Color(1, 0.9, 1, 1)
+light_energy = 2.2
+omni_range = 8.5
+
+[node name="Marbles" type="Node3D" parent="."]
+position = Vector3(-1.4, 0, -1.8)
+
+[node name="Marble_0" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble0")
+cast_shadow = 0
+custom_aabb = AABB(-3.32, 1.78, -3.32, 6.64, 1.84, 6.64)
+
+[node name="Marble_1" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble1")
+cast_shadow = 0
+custom_aabb = AABB(-4.05, 2.55, -4.05, 8.1, 2.1, 8.1)
+
+[node name="Marble_2" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble2")
+cast_shadow = 0
+custom_aabb = AABB(-2.96, 3.74, -2.96, 5.92, 1.72, 5.92)
+
+[node name="Marble_3" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble3")
+cast_shadow = 0
+custom_aabb = AABB(-4.2, 1.9, -4.2, 8.4, 2, 8.4)
+
+[node name="Marble_4" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble4")
+cast_shadow = 0
+custom_aabb = AABB(-3.7, 3, -3.7, 7.4, 2.2, 7.4)
+
+[node name="Marble_5" type="MeshInstance3D" parent="Marbles"]
+mesh = ExtResource("mesh_marble")
+material_override = SubResource("Mat_marble5")
+cast_shadow = 0
+custom_aabb = AABB(-3.75, 4.35, -3.75, 7.5, 1.9, 7.5)
+
+[node name="Chalk" type="MeshInstance3D" parent="."]
+position = Vector3(-3, 0, 3.2)
+mesh = ExtResource("mesh_chalk")
+material_override = SubResource("Mat_chalk")
+cast_shadow = 0
+
+[node name="Key" type="Node3D" parent="."]
+position = Vector3(-3, 0, 3.2)
+rotation_degrees = Vector3(0, 25, 0)
+
+[node name="Bow" type="MeshInstance3D" parent="Key"]
+position = Vector3(-0.25, 0, 0)
+mesh = ExtResource("mesh_key_bow")
+material_override = SubResource("Mat_key")
+cast_shadow = 0
+
+[node name="Blade" type="MeshInstance3D" parent="Key"]
+position = Vector3(-0.25, 0, 0)
+mesh = ExtResource("mesh_key_blade")
+material_override = SubResource("Mat_key")
+cast_shadow = 0
+
+[node name="Glint" type="OmniLight3D" parent="Key"]
+position = Vector3(0, 0.45, 0)
+light_color = Color(1, 0.8, 0.4, 1)
+light_energy = 0.9
+omni_range = 2.0
+
+[node name="Lamp0" type="Node3D" parent="."]
+position = Vector3(2.6, 0, -3.2)
+
+[node name="Flex" type="MeshInstance3D" parent="Lamp0"]
+mesh = ExtResource("mesh_lamp0")
+material_override = SubResource("Mat_plain")
+cast_shadow = 0
+
+[node name="Light" type="OmniLight3D" parent="Lamp0"]
+position = Vector3(0, 2.6, 0)
+light_color = Color(1, 0.3, 0.8, 1)
+light_energy = 1.4
+omni_range = 6.0
+
+[node name="Lamp1" type="Node3D" parent="."]
+position = Vector3(-4, 0, -0.6)
+
+[node name="Flex" type="MeshInstance3D" parent="Lamp1"]
+mesh = ExtResource("mesh_lamp1")
+material_override = SubResource("Mat_plain")
+cast_shadow = 0
+
+[node name="Light" type="OmniLight3D" parent="Lamp1"]
+position = Vector3(0, 2.9, 0)
+light_color = Color(0.3, 0.9, 1, 1)
+light_energy = 1.4
+omni_range = 6.0
+
+[node name="Lamp2" type="Node3D" parent="."]
+position = Vector3(1.4, 0, 4.4)
+
+[node name="Flex" type="MeshInstance3D" parent="Lamp2"]
+mesh = ExtResource("mesh_lamp2")
+material_override = SubResource("Mat_plain")
+cast_shadow = 0
+
+[node name="Light" type="OmniLight3D" parent="Lamp2"]
+position = Vector3(0, 3.2, 0)
+light_color = Color(1, 0.7, 0.3, 1)
+light_energy = 1.4
+omni_range = 6.0
+
+[node name="SiteTrip" type="CanvasLayer" parent="." groups=["world_filter"]]
+layer = -3
+visible = false
+script = ExtResource("trip_script")
+column = Vector3(-1.4, 0, -1.8)
+
+[node name="Sheet" type="ColorRect" parent="SiteTrip"]
+material = SubResource("Mat_haze")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="FromPorch" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(4.7, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Interactables" type="Node3D" parent="."]
+
+[node name="PorchDoor" parent="Interactables" instance=ExtResource("exit")]
+position = Vector3(5.45, 0.9, 0)
+interact_id = &"site_interior_porch_door"
+prompt_key = "prompt.site_porch_out"
+radius = 1.4
+outline_paths = PackedStringArray("../../Door/Leaf", "../../Door/Frame")
+support_paths = PackedStringArray("../../Door")
+destination_scene = "res://scenes/locations/playground/playground.tscn"
+destination_spawn = &"FromSite"
+destination_id = &"playground"
+required_flag = &"site_gate_key"
+blocked_inspection_id = &"site_porch_locked"
+
+[node name="KeyLook" parent="Interactables" instance=ExtResource("tap_target")]
+script = ExtResource("key_script")
+position = Vector3(-3, 0.3, 3.2)
+interact_id = &"site_interior_key"
+inspection_id = &"site_key"
+radius = 1.2
+outline_paths = PackedStringArray("../../Key/Bow", "../../Key/Blade")
+
+[node name="LadderLook" parent="Interactables" instance=ExtResource("tap_target")]
+position = Vector3(0.15, 1, -1.8)
+interact_id = &"site_interior_ladder"
+inspection_id = &"site_ladder"
+radius = 1.3
+outline_paths = PackedStringArray("../../Scaffold/Ladder")
+support_paths = PackedStringArray("../../Scaffold")

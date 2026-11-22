@@ -1,4 +1,4 @@
-[gd_scene load_steps=232 format=3]
+[gd_scene load_steps=233 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -61,6 +61,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/trunk.tres" id="art_trunk"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/tyre.tres" id="art_tyre"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/wall_patches.tres" id="art_wall_patches"]
+[ext_resource type="Script" path="res://scenes/locations/playground/site_gate.gd" id="staged_1"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -1755,6 +1756,29 @@ radius = 1.4
 camera_shot = ExtResource("shot_6")
 outline_paths = PackedStringArray("../../PlaygroundArt/BuildingSite/Gate/LeafNorth/Frame", "../../PlaygroundArt/BuildingSite/Gate/LeafSouth/Frame")
 
+[node name="SiteGate" parent="Interactables" instance=ExtResource("13_location_exit")]
+script = ExtResource("staged_1")
+position = Vector3(-22.6, 0.9, 13.2)
+interact_id = &"pg_site_gate"
+prompt_key = "prompt.site_gate"
+radius = 1.8
+outline_paths = PackedStringArray("../../PlaygroundArt/BuildingSite/Gate/LeafNorth/Frame", "../../PlaygroundArt/BuildingSite/Gate/LeafSouth/Frame")
+destination_scene = "res://scenes/locations/site_interior/site_interior.tscn"
+destination_spawn = &"FromPorch"
+destination_id = &"site_interior"
+required_flag = &"site_gate_key"
+blocked_inspection_id = &"pg_site"
+
+[node name="SiteClimb" parent="Interactables" instance=ExtResource("13_location_exit")]
+position = Vector3(-22.7, 0.9, 17.05)
+interact_id = &"pg_site_climb"
+prompt_key = "prompt.site_climb"
+radius = 1.6
+outline_paths = PackedStringArray("../../PlaygroundArt/BuildingSite/Sand/PileSouth/Body")
+destination_scene = "res://scenes/locations/site_interior/site_interior.tscn"
+destination_spawn = &"FromPorch"
+destination_id = &"site_interior"
+
 [node name="BackToAlley" parent="Interactables" instance=ExtResource("13_location_exit")]
 position = Vector3(0.0, 0.9, 18.2)
 interact_id = &"pg_back_to_alley"
@@ -1794,6 +1818,9 @@ position = Vector3(-3.0, 0, -17.6)
 
 [node name="FromSchool" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(12.0, 2.6, -15.5)
+
+[node name="FromSite" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-21.6, 0, 13.2)
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("14_ambience")
