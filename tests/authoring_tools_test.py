@@ -72,7 +72,9 @@ class AuthoringToolsTest(unittest.TestCase):
         # the bridge.
         self.assertEqual(retail["iOS"].options["plugins/WISAuthorFiles"], "true")
         for platform in ("Android", "Linux", "Windows Desktop"):
-            self.assertNotIn("scripts/story_editor", retail[platform].exclude_filter)
+            # Non-iOS builds exclude the editor even though the files are tracked: the
+            # preset is what keeps them out of a desktop or Android pack.
+            self.assertIn("scripts/story_editor/*", retail[platform].exclude_filter)
             self.assertNotIn("plugins/WISAuthorFiles", retail[platform].options)
         self.assertIn("scripts/dev/*", retail["Android"].exclude_filter)
         self.assertIn("scripts/dev/*", retail["Linux"].exclude_filter)
