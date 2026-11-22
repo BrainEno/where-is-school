@@ -388,9 +388,10 @@ func activate(id: StringName) -> void:
 		&"journal":
 			open_journal()
 		STORY_ENTRY:
-			# The drawer takes the pause over; the menu must not stay on top of it.
-			if open_story_editor():
-				close()
+			# `close()` resets the tree's pause; the drawer's own pause is applied after, so
+			# the world never runs a frame between the menu and the drawer.
+			close()
+			open_story_editor()
 		&"new_game":
 			_pending = &"new_game"
 			_confirm.ask(
