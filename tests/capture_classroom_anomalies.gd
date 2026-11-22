@@ -192,8 +192,8 @@ func _capture_rear_jump() -> void:
 	var rig := _player.camera_rig
 	var close := CameraShot.new()
 	close.subject_mix = 1.0
-	close.distance_scale = 0.42
-	close.height_scale = 0.55
+	close.distance_scale = 0.7
+	close.height_scale = 0.8
 	close.yaw_degrees = 20.0
 	close.fov = 40.0
 	await Harness.wait_until(func() -> bool:
@@ -221,13 +221,21 @@ func _capture_rear_jump() -> void:
 	await _capture_pose("crouch_walk", 0.0, "24-hiding-crouch.png", -INF, 0.4)
 	_player.set_touch_move(Vector2.ZERO)
 	rig.release_focus()
-	# Let the search and the beat end in fast time, so nothing is left running at exit.
-	Engine.time_scale = 6.0
+	# End the beat before exit, so nothing is left running: step out in front of him (a
+	# software renderer is too slow to sit out the whole search) and let him stop the
+	# protagonist.
+	Engine.time_scale = 4.0
+	var actor := stage.get_node(^"Collector") as NpcActor
 	if not await Harness.wait_until(func() -> bool:
 		if _dialogue.is_busy() and not _dialogue.has_pending_choices():
 			_dialogue.advance_presentation()
+		if stage.phase == RoofEncounter.Phase.SEARCHING and _player.is_control_enabled():
+			var ahead := actor.global_position + actor.get_facing_direction() * 2.6
+			var local := container.to_local(ahead)
+			if absf(local.x) > 3.4 or absf(local.z) > 1.6:
+				_player.teleport(Transform3D(Basis(), Vector3(ahead.x, actor.global_position.y, ahead.z)))
 		return not _sequence.is_beat_active() and not _dialogue.is_busy()
-	, 30.0):
+	, 60.0):
 		_failures.append("The jump's beat never ended after the search.")
 	Engine.time_scale = 1.0
 
