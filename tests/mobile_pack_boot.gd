@@ -125,7 +125,7 @@ func _run() -> void:
 			or FileAccess.get_file_as_bytes(SAVE) != checkpoint:
 		_fail("Return did not leave the opening checkpoint intact")
 		return
-	print("MOBILE_OPENING_TOUCH_OK os=%s engine=%s handheld=%s preview=%s" % [
+	print("PASS: MOBILE_OPENING_TOUCH_OK os=%s engine=%s handheld=%s preview=%s" % [
 		OS.get_name(), Engine.get_version_info()["string"], OS.has_feature("wis_handheld"), MobileLayout.preview])
 	quit()
 
@@ -177,5 +177,5 @@ func _touch(point: Vector2, down: bool) -> void:
 
 
 func _fail(reason: String) -> void:
-	print("MOBILE_OPENING_TOUCH_FAILURE: " + reason)
+	print("FAIL: mobile opening touch: " + reason)
 	quit(1)

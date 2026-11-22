@@ -63,9 +63,11 @@ jobs:
           XDG_DATA_HOME="$RUNNER_TEMP/mobile-opening-user-data" \
             run_check mobile_opening 75 godot --headless --path . \
               --script res://tests/mobile_pack_boot.gd -- --mobile-preview || true
+          if (( status == 0 )); then
+            verdict="$(grep '^PASS: MOBILE_OPENING_TOUCH_OK ' "$CI_LOG_DIR/mobile_opening.log")"
+            printf '::notice title=New game to mobile controls::%s\n' "$verdict"
+          fi
           run_check_summary
-          verdict="$(grep '^MOBILE_OPENING_TOUCH_OK ' "$CI_LOG_DIR/mobile_opening.log")"
-          printf '::notice title=New game to mobile controls::%s\n' "$verdict"
       - name: Render the joystick, compact pause, return prompt and resulting title
         id: capture
         if: ${{ !cancelled() }}

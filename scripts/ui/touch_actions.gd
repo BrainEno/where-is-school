@@ -42,6 +42,11 @@ func _ready() -> void:
 	_pause = _button("Pause", _menu.open)
 	_return = _button("ReturnToTitle", _menu.request_return_to_title)
 	_use = _button("Use", _use_current)
+	# Keep the inactive button recognizable even over a bright part of the world.
+	var inactive_panel := MenuStyle.panel_style()
+	inactive_panel.border_color = MenuStyle.MUTED
+	_use.add_theme_stylebox_override(&"disabled", inactive_panel)
+	_use.add_theme_color_override(&"font_disabled_color", MenuStyle.MUTED)
 	_controls.assign([_return, _pause, _use, _stick])
 	_menu.opened.connect(_refresh)
 	_menu.closed.connect(_refresh)
