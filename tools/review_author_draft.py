@@ -55,8 +55,17 @@ def review(draft: Path, godot: str, output: Path | None) -> None:
         script.write_bytes((ROOT / "tools/review_author_draft.gd").read_bytes())
         reviewed = work / "review.json"
         export_mobile.run(godot, "--headless", "--path", tree, "--script", script, "--", draft, reviewed)
-        changes = json.loads(reviewed.read_text(encoding="utf-8"))
+        result = json.loads(reviewed.read_text(encoding="utf-8"))
 
+    waiting = result["pending_followups"]
+    if waiting:
+        print(f"占位草稿预检通过：{len(waiting)} 句待补写。补写后重新导出；未生成候选对白。")
+        if output:
+            output.mkdir(parents=True, exist_ok=True)
+            write_list(output / "pending_followups.json", waiting)
+        return
+
+    changes = result["chapters"]
     pending: list[dict] = []
     copies: dict[str, str] = {}
     diff: list[str] = []
@@ -88,14 +97,18 @@ def review(draft: Path, godot: str, output: Path | None) -> None:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(candidate, encoding="utf-8")
         (output / "preview.diff").write_text("".join(diff), encoding="utf-8")
-        (output / "pending_en.json").write_text(json.dumps(pending, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        write_list(output / "pending_en.json", pending)
+
+
+def write_list(path: Path, items: list[dict]) -> None:
+    path.write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("draft", type=Path)
     parser.add_argument("--godot", default="godot")
-    parser.add_argument("--output", type=Path, help="Optional empty directory for candidate JSON, diff and translations")
+    parser.add_argument("--output", type=Path, help="Optional empty directory for review copies or a pending follow-up list")
     args = parser.parse_args()
     try:
         review(args.draft.resolve(), args.godot, args.output.resolve() if args.output else None)

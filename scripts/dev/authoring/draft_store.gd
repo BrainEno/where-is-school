@@ -14,6 +14,7 @@ var _graphs := {}
 var _original_graphs := {}
 var _entries := {}
 var _data := {}
+var _followups := {}
 var _undo: Array[Dictionary] = []
 var _journal: Journal
 var _unapplied := {}
@@ -77,6 +78,22 @@ func graph_for(chapter: String, original: bool = false) -> DialogueGraph:
 	return (_original_graphs if original else _graphs).get(chapter)
 
 
+func choice_targets(chapter: String, conversation: String, hub: String) -> Array:
+	var graph := graph_for(chapter)
+	var entry := graph.get_conversation(StringName(conversation)) if graph != null else null
+	if entry == null:
+		return []
+	var followups: Patch.Followups = _followups.get(chapter)
+	var targets := []
+	for row: Dictionary in nodes_for(chapter, conversation):
+		if followups != null and followups.owns_line(conversation, row["id"]):
+			continue
+		var reachable := DialogueGraph.reachable_nodes(entry, StringName(row["id"]))
+		if not reachable.has(StringName(hub)):
+			targets.append(row)
+	return targets
+
+
 func change_count() -> int:
 	var total := 0
 	for entry: Dictionary in _entries.values():
@@ -92,14 +109,43 @@ func can_undo() -> bool:
 	return blocked.is_empty() and not _undo.is_empty()
 
 
-func set_text(chapter: String, conversation: String, node: String, choice: String, value: String) -> bool:
+func _text_slot(chapter: String, conversation: String, node: String, choice: String) -> Dictionary:
 	var slot := Patch.find_record(nodes_for(chapter, conversation), node)
-	if not choice.is_empty():
-		slot = Patch.find_record(Patch.choices_at(slot), choice)
+	return slot if choice.is_empty() else Patch.find_record(Patch.choices_at(slot), choice)
+
+
+func first_followup(chapter: String, conversation: String, hub: String, choice: String) -> String:
+	var followups: Patch.Followups = _followups.get(chapter)
+	return followups.first(conversation, hub, choice) if followups != null else ""
+
+
+func is_placeholder(chapter: String, conversation: String, node: String) -> bool:
+	var followups: Patch.Followups = _followups.get(chapter)
+	return followups != null and followups.is_placeholder(conversation, node)
+
+
+func placeholder_count() -> int:
+	var count := 0
+	for followups: Patch.Followups in _followups.values():
+		count += followups.placeholders.size()
+	return count
+
+
+func editable_text(chapter: String, conversation: String, node: String, choice: String) -> String:
+	if choice.is_empty() and is_placeholder(chapter, conversation, node):
+		return "" # The prompt/note is never prefilled as if it were an authored line.
+	return _text_slot(chapter, conversation, node, choice).get("text", "")
+
+
+func set_text(chapter: String, conversation: String, node: String, choice: String, value: String) -> bool:
+	var slot := _text_slot(chapter, conversation, node, choice)
 	if slot.is_empty():
 		error = "找不到这个字段。"
 		return false
 	var before: String = slot.get("text", "")
+	if choice.is_empty() and is_placeholder(chapter, conversation, node) and value.begins_with(Patch.PLACEHOLDER):
+		error = "请填写正文，不要保留占位标记。"
+		return false
 	if before == value:
 		return true
 	return _commit(chapter, {"kind": "text", "conversation": conversation, "node": node,
@@ -127,6 +173,54 @@ func add_choice(chapter: String, conversation: String, anchor: String, text: Str
 	var ok := _commit(chapter, {"kind": "choice", "conversation": conversation, "node": anchor,
 		"before": Patch.choice_signature(node), "id": id, "text": text, "next": target, "reply": reply})
 	return id if ok else ""
+
+
+func append_followup(chapter: String, conversation: String, node: String, choice: String, lines: Array) -> String:
+	if lines.is_empty() or lines.size() > Patch.MAX_ROUND_LINES:
+		error = "每轮后续需要 1–12 句。"
+		return ""
+	var followups: Patch.Followups = _followups.get(chapter)
+	var tail := followups.tail(conversation, node, choice) if followups != null else ""
+	var nodes := nodes_for(chapter, conversation)
+	var option := Patch.find_record(Patch.choices_at(Patch.find_record(nodes, node)), choice)
+	var edge := Patch.followup_edge(nodes, option, tail)
+	if option.is_empty() or not edge.has("next"):
+		error = "先选中一个已有选项。"
+		return ""
+	var draft_lines: Array[Dictionary] = []
+	for line: Variant in lines:
+		if not line is Dictionary:
+			error = "后续对白格式无效。"
+			return ""
+		draft_lines.append({"id": Patch.new_id(), "speaker": line.get("speaker"),
+			"text": line.get("text"), "placeholder": line.get("placeholder", false)})
+	var applied := _commit(chapter, {"kind": "followup", "conversation": conversation,
+		"node": node, "choice": choice, "guard": Patch.option_signature(option),
+		"after": tail, "before": edge["next"], "lines": draft_lines})
+	return draft_lines[0]["id"] if applied else ""
+
+
+## Confirm a completed form against the same guard/validation path as imported drafts.
+## Keep a follow-up's option selected so another round can be appended immediately.
+func apply_structure(mode: String, chapter: String, conversation: String, node: String,
+		choice: String, values: Dictionary) -> Dictionary:
+	match mode:
+		"insert":
+			var id := insert_line(chapter, conversation, node, values["speaker"], values["text"])
+			return {} if id.is_empty() else {"node": id, "choice": ""}
+		"choice":
+			var id := ""
+			var target: Variant = values["target"]
+			if values["new_reply"]:
+				id = add_choice(chapter, conversation, node, values["text"],
+					null if target == "" else target, values["speaker"], values["reply"])
+			else:
+				id = add_choice(chapter, conversation, node, values["text"], target)
+			return {} if id.is_empty() else {"node": node, "choice": id}
+		"followup":
+			var first := append_followup(chapter, conversation, node, choice, values["lines"])
+			return {} if first.is_empty() else {"node": node, "choice": choice}
+	return {}
 
 
 func _commit(chapter: String, operation: Dictionary) -> bool:
@@ -174,15 +268,22 @@ func _install(entries: Dictionary) -> bool:
 		if result.has("error"):
 			error = result["error"]
 			return false
-		entry["result"] = Patch.digest(result["data"])
+		var followups: Patch.Followups = result.get("followups")
+		if followups == null or followups.placeholders.is_empty():
+			entry["result"] = Patch.digest(result["data"])
+		else:
+			entry.erase("result") # An unfinished chapter cannot be treated as published.
 		parsed[chapter] = result
 	for chapter: String in _data.keys():
 		if not parsed.has(chapter):
 			_graphs[chapter] = _original_graphs[chapter]
 	_data.clear()
+	_followups.clear()
 	for chapter: String in parsed:
 		_data[chapter] = parsed[chapter]["data"]
 		_graphs[chapter] = parsed[chapter]["graph"]
+		if parsed[chapter].has("followups"):
+			_followups[chapter] = parsed[chapter]["followups"]
 	_entries = installed
 	return true
 

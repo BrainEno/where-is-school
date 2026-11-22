@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # The branch push checks the exact head; the PR also checks its merge with main.
           persist-credentials: false
       - uses: ./.github/actions/setup-godot
       - name: Import project and validate staging rules
@@ -54,6 +54,7 @@ jobs:
           printf 'XDG_DATA_HOME=%s\nWIS_TEST_AUTHOR_DRAFT=%s\n' \
             "$XDG_DATA_HOME" "$RUNNER_TEMP/author-ci-draft.json" >> "$GITHUB_ENV"
           godot --version
+          printf '::notice title=Classroom test revision::%s\n' "$(git rev-parse HEAD)"
           python3 tests/authoring_tools_test.py
           bash tools/ci_import_godot.sh "$RUNNER_TEMP/author-import"
       - name: Validate operation guards, JSON round trip and local crash recovery
@@ -83,14 +84,27 @@ jobs:
               while IFS= read -r failure; do printf '::error title=Rendered author classroom::%s\n' "$failure"; done || true
             exit 1
           fi
+          python3 tools/review_author_draft.py "${WIS_TEST_AUTHOR_DRAFT%.json}-pending.json" \
+            --output "$RUNNER_TEMP/author-pending"
           python3 tools/review_author_draft.py "$WIS_TEST_AUTHOR_DRAFT" --output "$RUNNER_TEMP/author-review"
-          python3 - "$RUNNER_TEMP/author-review" <<'PY'
+          python3 - "$RUNNER_TEMP/author-review" "$RUNNER_TEMP/author-pending" <<'PY'
           import json, sys
           from pathlib import Path
-          output = Path(sys.argv[1])
-          assert len(json.loads((output / "pending_en.json").read_text())) == 5
+          output, pending_dir = map(Path, sys.argv[1:])
+          assert {path.name for path in pending_dir.iterdir()} == {"pending_followups.json"}
+          pending, = json.loads((pending_dir / "pending_followups.json").read_text())
+          assert [pending[key] for key in ("chapter", "conversation", "hub", "choice")] == ["prologue", "student", "st_reciting", "wait"]
+          assert pending["note"] and pending["node"].startswith("author_")
+          translations = json.loads((output / "pending_en.json").read_text())
+          assert len(translations) == 10
+          assert any(f"#{pending['node']}" in row["path"] for row in translations)
           assert (output / "preview.diff").stat().st_size > 0
-          assert (output / "data/dialogue/en/prologue.json").is_file()
+          for locale in ("zh-CN", "en"):
+              candidate = (output / f"data/dialogue/{locale}/prologue.json").read_text()
+              assert pending["note"] not in candidate
+              rows = json.loads(candidate)["conversations"]["student"]["nodes"]
+              choices = {row["id"]: row for row in rows[0]["choices"]}
+              assert choices["wait"]["next"] == pending["node"] != choices["leave"]["next"]
           PY
           log="$RUNNER_TEMP/author-touch.log"
           result=0

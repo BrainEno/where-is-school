@@ -19,6 +19,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_implicit_continuation()
+	_test_choice_followups()
 	_test_store_patch()
 	_test_empty_draft_recovery()
 	for name: String in DirAccess.get_files_at(_directory):
@@ -47,6 +48,96 @@ func _test_implicit_continuation() -> void:
 		"Patch smuggled an effect or changed the shipped data in place")
 	inserted["before"] = "removed"
 	_check.expect(Patch.apply_chapter(base, "fixture", {"ops": [inserted]}).has("error"), "Changed predecessor edge accepted")
+
+
+func _test_choice_followups() -> void:
+	# Both choices originally share an ending. Their additions must be private,
+	# preserve the old shared path and leave implicit order on other nodes alone.
+	var left := {"id": "left", "text": "Left", "next": "join", "once": true}
+	var right := {"id": "right", "text": "Right", "next": "join"}
+	var base := {"format_version": DialogueGraph.FORMAT_VERSION, "locale": "zh-CN", "chapter": "fixture", "conversations": {
+		"branch": {"start": "open", "nodes": [
+			{"id": "open", "speaker": "student", "text": "Open"},
+			{"id": "ask", "speaker": "student", "text": "Ask", "choices": [left, right]},
+			{"id": "join", "speaker": "student", "text": "Join"},
+			{"id": "end", "speaker": "student", "text": "End", "next": null},
+		]},
+	}}
+	var snapshot := base.duplicate(true)
+	var a := _followup_line("First")
+	a["next"] = "end"
+	a["effects"] = [{"type": "set_flag", "flag": "ignored"}]
+	var b := _followup_line("Second")
+	var pending := _followup_line("", true)
+	var note := _followup_line("Draft note", true)
+	var one := _followup_op(left, [a, b])
+	var two := _followup_op(right, [pending, note])
+	var entry := {"ops": [one, two]}
+	var result := Patch.apply_chapter(base, "fixture", entry)
+	if not _check.expect(not result.has("error"), "Follow-ups on shared edge refused: %s" % result.get("error", "")):
+		return
+	var rows: Array = Patch.get_conversation(result["data"], "branch")["nodes"]
+	var hub := Patch.find_record(rows, "ask")
+	var choices := Patch.choices_at(hub)
+	_check.expect(base == snapshot and choices == [left.merged({"next": a["id"]}, true), right.merged({"next": pending["id"]}, true)],
+		"Follow-ups changed the source, option wording, order or conditions")
+	var entry_graph: DialogueGraph = result["graph"]
+	var parsed := entry_graph.get_conversation(&"branch")
+	for route: Array in [[a, b, pending], [pending, note, a]]:
+		var reach := DialogueGraph.reachable_nodes(parsed, StringName(route[0]["id"]))
+		_check.expect(reach.size() == 4 and reach.has(&"join") and reach.has(&"end") and reach.has(StringName(route[1]["id"])) \
+			and not reach.has(StringName(route[2]["id"])), "One option leaked into the other's private round")
+	_check.expect(Patch.find_record(rows, a["id"]) == {"id": a["id"], "speaker": "student", "text": "First", "next": b["id"]},
+		"Follow-up trusted a caller-supplied edge or effect")
+	var followups: Patch.Followups = result["followups"]
+	_check.expect(followups.placeholders.size() == 2 and Patch.find_record(rows, pending["id"])["text"] == Patch.PLACEHOLDER,
+		"Blank/note placeholders did not remain visible and separately tracked")
+	var c := _followup_line("Third")
+	var three := _followup_op(choices[0], [c], b["id"], "join")
+	var extended := Patch.apply_chapter(base, "fixture", {"ops": [one, two, three]})
+	if _check.expect(not extended.has("error"), "Cannot append in chronological order: %s" % extended.get("error", "")):
+		var ext: Array = Patch.get_conversation(extended["data"], "branch")["nodes"]
+		_check.expect(Patch.find_record(ext, b["id"])["next"] == c["id"] and Patch.find_record(ext, c["id"])["next"] == "join" \
+			and Patch.find_record(ext, note["id"])["next"] == "join", "Appending did not preserve order or isolated rejoin")
+	var leak := {"kind": "choice", "conversation": "branch", "node": "ask", "before": Patch.choice_signature(hub),
+		"id": Patch.new_id(), "text": "Shared draft round", "next": b["id"]}
+	_check.expect(Patch.apply_chapter(base, "fixture", {"ops": [one, two, leak]}).has("error"),
+		"A later jump could turn a private follow-up into shared state")
+	_check_followup_conflicts(base, one)
+
+
+func _check_followup_conflicts(base: Dictionary, op: Dictionary) -> void:
+	var edited := base.duplicate(true)
+	var choices := Patch.choices_at(Patch.get_conversation(edited, "branch")["nodes"][1])
+	choices[0]["text"] = "Concurrent wording"
+	choices[1]["next"] = "end"
+	var entry := {"ops": [op]}
+	var merged := Patch.apply_chapter(edited, "fixture", entry)
+	if _check.expect(not merged.has("error"), "Unrelated wording or sibling edge blocked the follow-up"):
+		var merged_choices := Patch.choices_at(Patch.get_conversation(merged["data"], "branch")["nodes"][1])
+		_check.expect(merged_choices[0]["text"] == "Concurrent wording" and merged_choices[1]["next"] == "end",
+			"Follow-up overwrote concurrent wording or the other option")
+	choices[0]["once"] = false
+	_check.expect(Patch.apply_chapter(edited, "fixture", entry).has("error"), "Changed option conditions not detected")
+	choices[0]["once"] = true
+	choices[1]["next"] = "join"
+	choices[0]["next"] = "end"
+	_check.expect(Patch.apply_chapter(edited, "fixture", entry).has("error"), "Changed option edge not detected")
+	choices.pop_front()
+	_check.expect(Patch.apply_chapter(edited, "fixture", entry).has("error"), "Deleted option not detected")
+	var first: Dictionary = op["lines"][0]
+	for invalid: Array in [[], [first, first], [_followup_line("")], [first.merged({"speaker": "not-in-conversation"}, true)]]:
+		_check.expect(Patch.apply_chapter(base, "fixture", {"ops": [op.merged({"lines": invalid}, true)]}).has("error"),
+			"Accepted a malformed follow-up instead of rejecting it as a whole")
+
+
+func _followup_line(text: String, placeholder: bool = false) -> Dictionary:
+	return {"id": Patch.new_id(), "speaker": "student", "text": text, "placeholder": placeholder}
+
+
+func _followup_op(choice: Dictionary, lines: Array, after: String = "", before: String = "join") -> Dictionary:
+	return {"kind": "followup", "conversation": "branch", "node": "ask", "choice": choice["id"],
+		"guard": Patch.option_signature(choice), "after": after, "before": before, "lines": lines}
 
 
 func _test_store_patch() -> void:

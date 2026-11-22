@@ -162,12 +162,13 @@ func _select_from_live() -> void:
 		return
 	_catalog()
 	var matches: bool = unfinished and saved.get("chapter") == _chapter \
-		and saved.get("conversation") == _conversation and saved.get("node") == _node
+		and saved.get("conversation") == _conversation and saved.get("node") == _node and saved.get("choice", "") == _choice
 	var restored := String(saved.get("mode", "text")) if matches else "text"
 	if restored == "insert" and not Patch.can_insert(_selected_node()) \
-			or restored == "choice" and not Patch.can_add_choice(_selected_node()):
+			or restored == "choice" and not Patch.can_add_choice(_selected_node()) \
+			or restored == "followup" and _choice.is_empty():
 		restored = "text"
-	_mode = restored if restored in ["text", "insert", "choice"] else "text"
+	_mode = restored if restored in ["text", "insert", "choice", "followup"] else "text"
 	_pending_text = matches and _mode == "text" and bool(saved.get("dirty", false))
 	_prepare_form(saved if matches else {})
 	_render()
@@ -193,21 +194,14 @@ func _catalog() -> void:
 		_node = rows[0]["id"]
 	if not _choice.is_empty() and Patch.find_record(Patch.choices_at(_selected_node()), _choice).is_empty():
 		_choice = ""
-	_drawer.replace_options("chapter", _id_options(chapters), _chapter)
-	_drawer.replace_options("conversation", _id_options(conversations), _conversation)
+	_drawer.replace_options("chapter", Form.id_options(chapters), _chapter)
+	_drawer.replace_options("conversation", Form.id_options(conversations), _conversation)
 	var options := []
 	for node: Dictionary in rows:
 		var label := "%s · %s" % [node["speaker"], _snippet(node.get("text", ""))]
 		options.append({"id": node["id"], "label": label if not label.ends_with(" · ") else node["id"]})
 	_drawer.replace_options("node", options, _node)
 	_drawer.replace_options("field", _choice_options(), _choice)
-
-
-func _id_options(list: Array) -> Array:
-	var rows := []
-	for id: String in list:
-		rows.append({"id": id, "label": id})
-	return rows
 
 
 func _nodes() -> Array:
@@ -219,10 +213,7 @@ func _selected_node() -> Dictionary:
 
 
 func _stored_value() -> String:
-	var slot := _selected_node()
-	if not _choice.is_empty():
-		slot = Patch.find_record(Patch.choices_at(slot), _choice)
-	return slot.get("text", "")
+	return store.editable_text(_chapter, _conversation, _node, _choice)
 
 
 func _snippet(text: String) -> String:
@@ -231,37 +222,30 @@ func _snippet(text: String) -> String:
 
 func _prepare_form(backing: Dictionary = {}) -> void:
 	var value := _stored_value() if _mode == "text" else ""
-	_drawer.set_mode(_mode, String(backing.get("text", value)), backing)
-	var speakers := []
-	for row: Dictionary in _nodes():
-		var speaker: String = row["speaker"]
-		if speaker not in speakers:
-			speakers.append(speaker)
-	var speaker_pick := String(backing.get("speaker", _selected_node().get("speaker", "")))
-	_drawer.replace_options("speaker", _id_options(speakers), speaker_pick)
+	var fields := backing.duplicate()
+	fields["replace_placeholder"] = _choice.is_empty() and store.is_placeholder(_chapter, _conversation, _node)
+	_drawer.set_mode(_mode, String(backing.get("text", value)), fields)
+	_drawer.set_speakers(_nodes(), String(backing.get("speaker", _selected_node().get("speaker", ""))))
+	_drawer.round_context.text = "选项：%s\n逐句填写；本轮结束后接回原去向。" % _snippet(_stored_value())
 	_targets(String(backing.get("target", "")))
 	_controls()
 
 
 func _targets(selection: String) -> void:
-	var targets := []
-	if _drawer.new_reply.button_pressed:
-		targets.append({"id": "", "label": "回应后结束"})
-	if _mode == "choice":
-		var conversation := store.graph_for(_chapter).get_conversation(StringName(_conversation))
-		for row: Dictionary in _nodes():
-			var reachable := DialogueGraph.reachable_nodes(conversation, StringName(row["id"]))
-			if not reachable.has(StringName(_node)):
-				targets.append({"id": row["id"], "label": "%s · %s" % [row["id"], _snippet(row.get("text", ""))]})
-	_drawer.replace_options("target", targets, selection)
+	_drawer.set_targets(store.choice_targets(_chapter, _conversation, _node) if _mode == "choice" else [], selection)
 
 
 func _picked(field: String, value: String) -> void:
 	if _exchange.is_busy():
-		_catalog()
+		if field == "line":
+			_drawer.restore_round_selection()
+		else:
+			_catalog()
 		return
 	_clear_armed = false
-	if field in ["speaker", "target", "new_reply"]:
+	if field in ["speaker", "target", "new_reply", "line"]:
+		if field == "line":
+			_drawer.select_round_line(value.to_int())
 		if field == "new_reply":
 			_targets(_drawer.selected("target"))
 		_dirty()
@@ -307,10 +291,13 @@ func _flush() -> bool:
 	# drop the text even if that notification hasn't reached the debounce yet.
 	_pending_text = _mode == "text" and _drawer.body.text != _stored_value()
 	if _pending_text:
+		var was_placeholder := _choice.is_empty() and store.is_placeholder(_chapter, _conversation, _node)
 		if not store.set_text(_chapter, _conversation, _node, _choice, _drawer.body.text):
 			_save(store.error + "（未应用；已保留输入）")
 			return false
 		_pending_text = false
+		if was_placeholder:
+			_catalog() # Refresh the resolved node label, but keep the editor's caret.
 		_render()
 	return _save()
 
@@ -319,11 +306,7 @@ func _save(note: String = "") -> bool:
 	store.buffer = {"chapter": _chapter, "conversation": _conversation, "node": _node,
 		"choice": _choice, "mode": _mode, "dirty": _pending_text}
 	if _pending_text or _mode != "text":
-		store.buffer["text"] = _drawer.body.text
-		store.buffer["reply"] = _drawer.reply.text
-		store.buffer["speaker"] = _drawer.selected("speaker")
-		store.buffer["target"] = _drawer.selected("target")
-		store.buffer["new_reply"] = _drawer.new_reply.button_pressed
+		store.buffer.merge(_drawer.capture_buffer())
 	_save_failed = not store.save_editor_state()
 	_status("无法保存到本机；请缩短输入或检查可用空间。" if _save_failed else note)
 	return not _save_failed
@@ -333,6 +316,8 @@ func _status(note: String = "") -> void:
 	if _drawer == null:
 		return
 	var report := "%d 项修改%s" % [store.change_count(), " · 未导出" if store.is_unexported() else ""]
+	if store.placeholder_count() > 0:
+		report += " · %d 句占位待补写" % store.placeholder_count()
 	if not store.blocked.is_empty():
 		report = store.blocked
 	_drawer.status.text = report if note.is_empty() else "%s\n%s" % [note, report]
@@ -343,6 +328,11 @@ func _controls() -> void:
 	var node := _selected_node()
 	_drawer.button("insert").disabled = _mode != "text" or not Patch.can_insert(node)
 	_drawer.button("choice").disabled = _mode != "text" or not Patch.can_add_choice(node)
+	var first := store.first_followup(_chapter, _conversation, _node, _choice)
+	_drawer.button("followup").disabled = _choice.is_empty() or not store.blocked.is_empty()
+	_drawer.button("followup").text = "添加后续" if first.is_empty() else "追加后续"
+	_drawer.button("show_followup").visible = not first.is_empty()
+	_drawer.round_placeholder.disabled = _exchange.is_busy()
 	_drawer.button("undo").disabled = not store.can_undo() or _mode != "text"
 	_drawer.button("clear").disabled = store.change_count() == 0 or _mode != "text"
 	_drawer.button("trial").disabled = _conversation.is_empty() or not store.blocked.is_empty()
@@ -360,10 +350,18 @@ func _action(id: String) -> void:
 	match id:
 		"keyboard": _drawer.hide_keyboard()
 		"close": close_editor()
-		"edit_body": _exchange.edit_field("body", _drawer.body.text, "编辑文案")
+		"edit_body":
+			_exchange.edit_field("body", _drawer.body.text, _drawer.body_caption())
+			_controls()
 		"edit_reply": _exchange.edit_field("reply", _drawer.reply.text, "编辑新回应")
-		"insert", "choice":
-			if _flush():
+		"round_add", "round_remove": _drawer.change_round_size(id == "round_add")
+		"show_followup":
+			var first := store.first_followup(_chapter, _conversation, _node, _choice)
+			if not first.is_empty() and _mode == "text" and _flush():
+				_show_draft()
+				_picked("node", first)
+		"insert", "choice", "followup":
+			if _mode == "text" and (id != "followup" or not _choice.is_empty()) and _flush():
 				_mode = id
 				_prepare_form()
 				_save("填写后点「保存新增」。")
@@ -397,25 +395,21 @@ func _action(id: String) -> void:
 func _apply_structure() -> void:
 	if _mode == "text":
 		return
-	var id := ""
-	if _mode == "insert":
-		id = store.insert_line(_chapter, _conversation, _node, _drawer.selected("speaker"), _drawer.body.text)
-		if not id.is_empty():
-			_node = id
-			_choice = ""
-	else:
-		var target: Variant = _drawer.selected("target")
-		if _drawer.new_reply.button_pressed:
-			id = store.add_choice(_chapter, _conversation, _node, _drawer.body.text,
-				null if target == "" else target, _drawer.selected("speaker"), _drawer.reply.text)
-		else:
-			id = store.add_choice(_chapter, _conversation, _node, _drawer.body.text, target)
-		if not id.is_empty():
-			_choice = id
-	if id.is_empty():
+	var selection := store.apply_structure(_mode, _chapter, _conversation, _node, _choice, _drawer.capture_buffer())
+	if selection.is_empty():
 		_save(store.error)
-	else:
-		_return_to_fields("结构已通过校验，可以试走。")
+		return
+	var new_round := _mode == "followup"
+	if new_round:
+		_show_draft()
+	_node = selection["node"]
+	_choice = selection["choice"]
+	_return_to_fields("后续已保存，可以查看或试走。" if new_round else "结构已通过校验，可以试走。")
+
+
+func _show_draft() -> void:
+	_original = false
+	_drawer.button("original").text = "看原文"
 
 
 func _return_to_fields(note: String = "") -> void:

@@ -18,7 +18,8 @@ func _review() -> void:
 	if not Patch.valid_envelope(draft):
 		_fail("无效或不支持的剧情草稿（需为本游戏作者版导出的 JSON）。")
 		return
-	var output := {}
+	var chapters := {}
+	var placeholders: Array[Dictionary] = []
 	for id: Variant in draft["chapters"]:
 		if not id is String or id not in DialogueLibrary.CHAPTERS or not draft["chapters"][id] is Dictionary:
 			_fail("草稿引用了不支持的章节。")
@@ -35,8 +36,14 @@ func _review() -> void:
 		if not graph.is_valid():
 			_fail("当前章节本身未通过校验：" + id)
 			return
+		var followups: Patch.Followups = result.get("followups")
+		if followups != null:
+			for pending: Dictionary in followups.placeholders.values():
+				placeholders.append(pending.merged({"chapter": id}))
 		if result["data"] != base:
-			output[id] = result["data"]
+			chapters[id] = result["data"]
+	# Never emit a game-data candidate containing a draft-only placeholder.
+	var output := {"chapters": chapters if placeholders.is_empty() else {}, "pending_followups": placeholders}
 	var error := Journal.write_checked(args[1], JSON.stringify(output, "\t", false, true))
 	if error != OK:
 		_fail("无法保存预检结果。")

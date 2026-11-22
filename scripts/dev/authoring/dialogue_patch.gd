@@ -8,7 +8,41 @@ const LOCALE := "zh-CN"
 const MAX_FIELD_CHARS := 8000
 const MAX_BYTES := 2 * 1024 * 1024
 const MAX_OPS := 1024
+const MAX_ROUND_LINES := 12
+const PLACEHOLDER := "〔占位剧情 · 待补写〕"
 const ID_PREFIX := "author_"
+
+
+## Rebuilt by replay; none of this bookkeeping is serialized into game data.
+class Followups:
+	var routes := {} # option key -> {first, tail}
+	var owners := {} # line key -> owning option key
+	var placeholders := {} # line key -> pending review row
+
+	static func option_key(conversation: String, node: String, choice: String) -> String:
+		return JSON.stringify([conversation, node, choice])
+
+	static func line_key(conversation: String, node: String) -> String:
+		return JSON.stringify([conversation, node])
+
+	func is_placeholder(conversation: String, node: String) -> bool:
+		return placeholders.has(line_key(conversation, node))
+
+	func first(conversation: String, hub: String, choice: String) -> String:
+		return routes.get(option_key(conversation, hub, choice), {}).get("first", "")
+
+	func tail(conversation: String, hub: String, choice: String) -> String:
+		return routes.get(option_key(conversation, hub, choice), {}).get("tail", "")
+
+	func owns_line(conversation: String, id: String) -> bool:
+		return owners.has(line_key(conversation, id))
+
+	func include_insertion(conversation: String, anchor: String, id: String) -> void:
+		var key: String = owners.get(line_key(conversation, anchor), "")
+		if not key.is_empty():
+			owners[line_key(conversation, id)] = key
+			if routes[key]["tail"] == anchor:
+				routes[key]["tail"] = id
 
 
 static func new_id() -> String:
@@ -52,6 +86,18 @@ static func find_record(rows: Array, id: String) -> Dictionary:
 static func choices_at(node: Dictionary) -> Array:
 	var choices: Variant = node.get("choices")
 	return choices as Array if choices is Array else []
+
+
+## Resolve only this option's edge. Once it owns a draft round, extend its tail
+## rather than prepending to the option or modifying the old shared destination.
+static func followup_edge(nodes: Array, option: Dictionary, tail: String) -> Dictionary:
+	return option if tail.is_empty() else find_record(nodes, tail)
+
+
+static func option_signature(option: Dictionary) -> String:
+	var shape := option.duplicate()
+	shape.erase("text")
+	return digest(shape)
 
 
 static func can_insert(node: Dictionary) -> bool:
@@ -119,11 +165,12 @@ static func apply_chapter(base: Dictionary, chapter: String, entry: Dictionary) 
 		return {"data": base, "graph": DialogueGraph.load_from_data(base, chapter), "already_applied": true}
 	var candidate := base.duplicate(true)
 	var added_choices: Array[Dictionary] = []
+	var followups := Followups.new()
 	for v: Variant in ops:
 		if not v is Dictionary:
 			return {"error": "修改操作格式无效。"}
 		var op: Dictionary = v
-		var error := _apply_op(candidate, op)
+		var error := _apply_op(candidate, op, followups)
 		if not error.is_empty():
 			return {"error": "%s / %s / %s：%s" % [chapter, op.get("conversation", "?"), op.get("node", "?"), error]}
 		if op["kind"] == "choice":
@@ -135,10 +182,10 @@ static func apply_chapter(base: Dictionary, chapter: String, entry: Dictionary) 
 		var conversation := graph.get_conversation(StringName(choice["conversation"]))
 		if DialogueGraph.reachable_nodes(conversation, StringName(choice["next"])).has(StringName(choice["node"])):
 			return {"error": "%s / %s：新选项不能绕回这个选择点。" % [choice["conversation"], choice["node"]]}
-	return {"data": candidate, "graph": graph, "already_applied": false}
+	return {"data": candidate, "graph": graph, "already_applied": false, "followups": followups}
 
 
-static func _apply_op(data: Dictionary, op: Dictionary) -> String:
+static func _apply_op(data: Dictionary, op: Dictionary, followups: Followups) -> String:
 	if not op.get("conversation") is String or not op.get("node") is String:
 		return "缺少会话或节点 ID。"
 	var conversation := get_conversation(data, op["conversation"])
@@ -158,6 +205,11 @@ static func _apply_op(data: Dictionary, op: Dictionary) -> String:
 			var current: String = slot.get("text", "")
 			if current != op["before"] and current != op["text"]:
 				return "同一字段已在另一版本修改；没有覆盖。"
+			var pending := Followups.line_key(op["conversation"], op["node"])
+			if op["choice"].is_empty() and followups.placeholders.has(pending):
+				if op["text"].begins_with(PLACEHOLDER):
+					return "请填写正文，不要保留占位标记。"
+				followups.placeholders.erase(pending)
 			slot["text"] = op["text"]
 		"insert":
 			if not can_insert(node) or not op.get("reply") is Dictionary or not op.has("before"):
@@ -170,6 +222,7 @@ static func _apply_op(data: Dictionary, op: Dictionary) -> String:
 				return "新对白必须接回原后续，且 ID、说话人和正文有效。"
 			nodes.insert(nodes.find(node) + 1, reply)
 			node["next"] = reply["id"]
+			followups.include_insertion(op["conversation"], op["node"], reply["id"])
 		"choice":
 			if not can_add_choice(node) or choice_signature(node) != op.get("before"):
 				return "该选择点不支持添加，或已有分支结构已变。"
@@ -188,12 +241,64 @@ static func _apply_op(data: Dictionary, op: Dictionary) -> String:
 				var reply := _new_reply(nodes, raw_reply)
 				if reply.is_empty() or reply["id"] != target:
 					return "新回应需要有效的说话人、正文和接回点。"
+				if reply["next"] != null and followups.owns_line(op["conversation"], reply["next"]):
+					return "不能接到另一选项专属的后续句。"
 				# A choice hub has no fall-through; inserting here cannot steal an edge
 				# from an unrelated node which uses implicit file order.
 				nodes.insert(nodes.find(node) + 1, reply)
 			elif find_record(nodes, target).is_empty():
 				return "选项的去向不存在。"
+			elif followups.owns_line(op["conversation"], target):
+				return "不能接到另一选项专属的后续句。"
 			choices.append({"id": id, "text": text, "next": target})
+		"followup":
+			return _apply_followup(nodes, node, op, followups)
 		_:
 			return "不支持的操作。"
+	return ""
+
+
+static func _apply_followup(nodes: Array, hub: Dictionary, op: Dictionary, followups: Followups) -> String:
+	var choice: Variant = op.get("choice")
+	var lines: Variant = op.get("lines")
+	if not choice is String or not op.get("after") is String or not op.get("before") is String \
+			or not lines is Array or lines.is_empty() or lines.size() > MAX_ROUND_LINES:
+		return "后续需要一个选项和 1–12 句。"
+	var option := find_record(choices_at(hub), choice)
+	var tail := followups.tail(op["conversation"], op["node"], choice)
+	var edge := followup_edge(nodes, option, tail)
+	if option.is_empty() or option_signature(option) != op.get("guard") or tail != op["after"] \
+			or edge.get("next") != op["before"] or find_record(nodes, op["before"]).is_empty():
+		return "该选项或原去向已改变；没有覆盖后续。"
+	var key := Followups.option_key(op["conversation"], op["node"], choice)
+	var added: Array[Dictionary] = []
+	var ids := {}
+	for index in lines.size():
+		var row: Variant = lines[index]
+		if not row is Dictionary or not _valid_new_id(row.get("id")) \
+				or ids.has(row["id"]) or not find_record(nodes, row["id"]).is_empty():
+			return "后续第 %d 句的 ID 无效或重复。" % (index + 1)
+		var text: Variant = row.get("text")
+		var is_placeholder: Variant = row.get("placeholder")
+		if not _speaker_known(nodes, row.get("speaker")) or not is_placeholder is bool \
+				or not text is String or text.length() > MAX_FIELD_CHARS \
+				or (not is_placeholder and not authored_text(text)):
+			return "请检查后续第 %d 句：选说话人，填写正文，或标为占位。" % (index + 1)
+		ids[row["id"]] = true
+		var address := Followups.line_key(op["conversation"], row["id"])
+		followups.owners[address] = key
+		if is_placeholder:
+			followups.placeholders[address] = {"conversation": op["conversation"],
+				"hub": op["node"], "choice": choice, "node": row["id"], "speaker": row["speaker"], "note": text}
+			text = PLACEHOLDER + ("\n" + text if not text.strip_edges().is_empty() else "")
+		# Never take next, effects, conditions, etc. from the incoming line.
+		added.append({"id": row["id"], "speaker": row["speaker"], "text": text})
+	var position := nodes.find(hub if tail.is_empty() else edge) + 1
+	for index in added.size():
+		added[index]["next"] = added[index + 1]["id"] if index + 1 < added.size() else edge["next"]
+		nodes.insert(position + index, added[index])
+	edge["next"] = added[0]["id"]
+	if tail.is_empty():
+		followups.routes[key] = {"first": added[0]["id"]}
+	followups.routes[key]["tail"] = added.back()["id"]
 	return ""

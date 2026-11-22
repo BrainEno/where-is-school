@@ -17,6 +17,9 @@ const SAMPLE := "文案测试：一行。\n第二行，龘。"
 const OPTION := "流程测试选项"
 const REPLY := "独立试玩的回应"
 const INSERT := "插入对白的测试"
+const LEAVE_ROUND := ["离开选项的第一句测试。", "离开选项的第二句测试。", "稍后追加的第三句测试。"]
+const WAIT_ROUND := ["等待选项的占位已补写。", "等待选项的第二句测试。"]
+const WAIT_NOTE := "待补写的备注（测试）"
 
 var _check := Harness.Checker.new()
 var _directory := "user://classroom-authoring-test-" + Patch.new_id()
@@ -53,6 +56,7 @@ func _run() -> void:
 		await _edit_fields()
 		await _edit_branches()
 		await _walk_draft()
+		await _edit_followups()
 		_export_round_trip()
 		_check.expect(_snapshot() == before, "Editor or trial changed live story, camera, saves, reveals, or history")
 		_check.expect(_dialogue_events() == live_events, "Trial emitted gameplay diagnostics into the real session")
@@ -224,11 +228,118 @@ func _walk_draft() -> void:
 	_check.expect(_drawer.visible and paused, "Returning from trial did not restore the editor")
 
 
+func _edit_followups() -> void:
+	Harness.stage = "authoring separate follow-ups on leave and wait"
+	_pick("node", "st_reciting")
+	_check.expect(_drawer.button("followup").disabled, "Follow-up should require a specific option, not just a node")
+	_pick("field", "leave")
+	_check.expect(not _drawer.button("followup").disabled, "The selected existing option cannot start a new round")
+	if MobileLayout.enabled:
+		_check.expect(_drawer.button("followup").get_combined_minimum_size().y >= MobileLayout.hit_size(_drawer),
+			"Follow-up button does not meet the mobile hit target")
+	_drawer.action.emit("followup")
+	_enter(_drawer.body, LEAVE_ROUND[0])
+	_drawer.action.emit("round_add")
+	_pick("speaker", "protagonist")
+	_enter(_drawer.body, LEAVE_ROUND[1])
+	_pick("line", "0")
+	_check.expect(_drawer.body.text == LEAVE_ROUND[0] and _drawer.selected("speaker") == "student" and not _drawer.body.has_undo(),
+		"Switching draft lines lost input, speaker, or field undo isolation")
+	_drawer.action.emit("apply")
+	if not _check.expect(_store.change_count() == 5 and _drawer.selected("field") == "leave", "First round was not saved on leave"):
+		return
+	_drawer.action.emit("followup")
+	_enter(_drawer.body, LEAVE_ROUND[2])
+	_drawer.action.emit("apply")
+	_pick("field", "wait")
+	_drawer.action.emit("followup")
+	_drawer.action.emit("apply")
+	_check.expect(_store.change_count() == 6 and _drawer.round_placeholder.visible, "Blank unmarked line was applied or its form discarded")
+	_drawer.round_placeholder.button_pressed = true
+	_enter(_drawer.body, WAIT_NOTE)
+	_drawer.action.emit("round_add")
+	_enter(_drawer.body, WAIT_ROUND[1])
+	_drawer.action.emit("round_add")
+	_enter(_drawer.body, "Discard only this unsaved row")
+	_drawer.action.emit("round_remove")
+
+	Harness.stage = "recovering an unfinished multi-line form against the same option"
+	_drawer.action.emit("close")
+	if not _check.expect(not paused, "Closing an unfinished round did not keep the world usable"):
+		return
+	_store = Store.new(_directory)
+	_store.load_workspace()
+	_overlay.store = _store
+	_overlay.open_editor()
+	_check.expect(_store.change_count() == 6 and _drawer.round_placeholder.visible and _drawer.selected("line") == "1" \
+		and _drawer.body.text == WAIT_ROUND[1], "Unfinished round lost the selected line or prematurely changed topology")
+	_pick("line", "0")
+	_check.expect(_drawer.body.text == WAIT_NOTE and _drawer.round_placeholder.button_pressed, "Placeholder note/checkbox lost on reopen")
+	_drawer.action.emit("apply")
+	var wait_first := _store.first_followup("prologue", "student", "st_reciting", "wait")
+	var leave_first := _store.first_followup("prologue", "student", "st_reciting", "leave")
+	if not _check.expect(not wait_first.is_empty() and not leave_first.is_empty() and wait_first != leave_first \
+		and _drawer.selected("field") == "wait" and _store.placeholder_count() == 1, "Both existing choices did not get separate rounds"):
+		return
+
+	Harness.stage = "walking both original options in isolation and exporting a placeholder"
+	await _walk_option(0, LEAVE_ROUND, "st_let_be")
+	await _walk_option(1, [Patch.PLACEHOLDER + "\n" + WAIT_NOTE, WAIT_ROUND[1]], "st_1")
+	_drawer.action.emit("original")
+	await _walk_option(0, [], "st_let_be")
+	_drawer.action.emit("original")
+	var pending_path := _export_path().get_basename() + "-pending.json"
+	_drawer.action.emit("export")
+	var picker := _overlay.find_children("*", "FileDialog", true, false)
+	if not _check.expect(picker.size() == 1, "Placeholder draft could not be explicitly exported"):
+		return
+	picker[0].hide()
+	picker[0].file_selected.emit(pending_path)
+	_check.expect(Patch.valid_envelope(Patch.read_json(pending_path)) and not _store.is_unexported(), "Placeholder export had no portable draft")
+
+	Harness.stage = "finding and completing placeholder without changing its stable ID"
+	_pick("node", "st_reciting")
+	_pick("field", "wait")
+	_check.expect(_drawer.button("show_followup").is_visible_in_tree(), "Existing round has no direct entry for editing")
+	_drawer.action.emit("show_followup")
+	_check.expect(_drawer.selected("node") == wait_first and _drawer.body.text.is_empty() and WAIT_NOTE in _panel.get_body_text(),
+		"Selected placeholder could not be edited separately from its note")
+	_enter(_drawer.body, WAIT_ROUND[0])
+	_check.expect(await Harness.wait_until(func() -> bool:
+		return _store.placeholder_count() == 0 and _panel.get_body_text() == WAIT_ROUND[0]
+	, 4), "Placeholder was not replaced in place by the authored line")
+	_check.expect(_store.first_followup("prologue", "student", "st_reciting", "wait") == wait_first,
+		"Filling a placeholder broke its stable route ID")
+	await _walk_option(1, WAIT_ROUND, "st_1")
+
+
+func _walk_option(index: int, lines: Array, resume_id: String) -> void:
+	_pick("node", "st_reciting")
+	_drawer.action.emit("trial")
+	var option := _panel.find_child("Choice%d" % (index + 1), true, false) as Button
+	if _check.expect(await Harness.wait_until(func() -> bool: return not _panel._layout_dirty, 4), "Follow-up trial layout did not settle"):
+		_panel.reveal_choice(index)
+		if _check.expect(await Harness.wait_until(func() -> bool:
+			return is_instance_valid(option) and option.is_visible_in_tree() and not _panel._layout_dirty
+		, 4), "Original option %d could not be reached in trial" % index):
+			await _tap(option)
+			for line: String in lines:
+				_check.expect(_panel.get_body_text() == line, "Option %d skipped a follow-up, changed its order, or leaked another round" % index)
+				_panel.advance_requested.emit()
+			var resumed := Patch.find_record(_store.nodes_for("prologue", "student"), resume_id)
+			_check.expect(_panel.get_body_text() == resumed["text"], "Option %d did not continue to its original route" % index)
+	_send_action(&"ui_cancel")
+	_check.expect(_drawer.visible and paused, "Follow-up trial could not return to editing")
+
+
+func _export_path() -> String:
+	var override := OS.get_environment("WIS_TEST_AUTHOR_DRAFT")
+	return override if not override.is_empty() else ProjectSettings.globalize_path(_directory.path_join("export.json"))
+
+
 func _export_round_trip() -> void:
 	Harness.stage = "manual JSON export and reopen"
-	var export_path := OS.get_environment("WIS_TEST_AUTHOR_DRAFT")
-	if export_path.is_empty():
-		export_path = ProjectSettings.globalize_path(_directory.path_join("export.json"))
+	var export_path := _export_path()
 	_drawer.action.emit("export")
 	var picker := _overlay.find_children("*", "FileDialog", true, false)
 	if not _check.expect(picker.size() == 1, "Export did not open the save dialog"):
