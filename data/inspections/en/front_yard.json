@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "front_yard_card_reader": {
+    "title": "The card reader",
+    "prompt": "Look at the card reader",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the card reader just inside the side door; its lamp is red and nobody is swiping"
+  },
+  "front_yard_gate": {
+    "title": "The retractable gate",
+    "prompt": "Look at the gate",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the retractable gate is shut, the parking-lot kind, its head against the side door's pier"
+  },
+  "front_yard_dead_tree": {
+    "title": "The dead tree",
+    "prompt": "Look at the dead tree",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · a dead tree, not a single leaf on it"
+  }
+}

@@ -14,6 +14,14 @@
         "left_classroom"
       ]
     },
+    "front_yard": {
+      "scene": "res://scenes/locations/front_yard/front_yard.tscn",
+      "spawn": "FromCorridor",
+      "objective": "objective.outside",
+      "arrival_flags": [
+        "front_yard_arrived"
+      ]
+    },
     "street": {
       "scene": "res://scenes/locations/street/street.tscn",
       "objective": "objective.outside",

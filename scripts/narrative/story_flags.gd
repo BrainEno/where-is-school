@@ -52,7 +52,9 @@ const N_ARRIVED: StringName = &"n_arrived"
 const CLASS_DISMISSED: StringName = &"class_dismissed"
 ## bool: the player left the classroom for the walkway.
 const LEFT_CLASSROOM: StringName = &"left_classroom"
-## bool: the player walked out of the school building into the street.
+## bool: the player has stepped out of the teaching block into the front yard (前操场).
+const FRONT_YARD_ARRIVED: StringName = &"front_yard_arrived"
+## bool: the player went out through the school gate's side door into the street.
 const LEFT_SCHOOL: StringName = &"left_school"
 ## bool: the first street conversation has played.
 const STREET_ARRIVED: StringName = &"street_arrived"
@@ -195,6 +197,7 @@ const ALL_FLAGS: Array[StringName] = [
 	N_ARRIVED,
 	CLASS_DISMISSED,
 	LEFT_CLASSROOM,
+	FRONT_YARD_ARRIVED,
 	LEFT_SCHOOL,
 	STREET_ARRIVED,
 	STREET_WALL_SEEN,

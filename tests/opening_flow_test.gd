@@ -238,6 +238,24 @@ func _run() -> void:
 			await _check_prompt(&"school_gate", "gate prompt")
 			# The keyboard's own path: a real E press, not the activation API.
 			await _press_key_e(gate)
+			# Out of the teaching block is the front yard, still inside the school wall; the
+			# street is past the side door of the school gate.
+			if await _pump_until(
+				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "front_yard",
+				60.0, "the front yard to load"
+			):
+				if bool(_game_state.get_flag(StoryFlags.LEFT_SCHOOL, false)):
+					_failures.append("Stepping out of the teaching block counted as leaving the school.")
+				await _settle(30.0, "the front yard to settle")
+				var side_door := _host.get_current().find_interactable(&"front_yard_to_street")
+				if side_door == null:
+					_failures.append("The front yard has no side door out to the street.")
+				else:
+					_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(-90.0)), Vector3(13.3, 0, 15.8)))
+					await physics_frame
+					await physics_frame
+					await _check_prompt(&"front_yard_to_street", "side door prompt")
+					await _press_key_e(side_door)
 			if await _pump_until(
 				func() -> bool: return String(_game_state.get_flag(StoryFlags.CURRENT_LOCATION, "")) == "street",
 				60.0, "the street to load"

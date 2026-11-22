@@ -260,6 +260,22 @@
           "/site_porch_locked/text": "2a88c33df06bf11bcab1314ce46aa6db2bc2b017f12876644d0334404e72d496"
         }
       }
+    },
+    {
+      "issue": 346,
+      "reason": "Round 16 front yard (前操场): the card reader, the retractable gate and a dead tree are inspectable; the owner writes their lines.",
+      "files": {
+        "data/inspections/zh-CN/front_yard.json": {
+          "/front_yard_card_reader/text": "ae282dfa2219364e469c324ce3b834e0f1534db68e68d8df8af80ba144e90530",
+          "/front_yard_gate/text": "787357e37784ee4e87078b75801fe58e723f4aa12c71fe4e54885a49b378d43e",
+          "/front_yard_dead_tree/text": "131c7a1dd920a49a48493b46bd15b87920c334a2aba32b07f5e1d2aa6b4fc4b5"
+        },
+        "data/inspections/en/front_yard.json": {
+          "/front_yard_card_reader/text": "281b93435192635ac9c751cb7acf9075c5f629ef16a37174e758d421a0f9fd15",
+          "/front_yard_gate/text": "949fb660d354c5f9f073105ce94ff00ca39303bf9923f78549cc8b87fb209424",
+          "/front_yard_dead_tree/text": "333bbf9f8f53bfcaa90f51632a5ccf24dfc801649cc0fd122dc7fd94fdf09055"
+        }
+      }
     }
   ]
 }

@@ -17,6 +17,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const LOCATIONS := [
 	"res://scenes/locations/classroom/classroom.tscn",
 	"res://scenes/locations/corridor/corridor.tscn",
+	"res://scenes/locations/front_yard/front_yard.tscn",
 	"res://scenes/locations/street/street.tscn",
 	"res://scenes/locations/playground/playground.tscn",
 	"res://scenes/locations/residential/residential.tscn",

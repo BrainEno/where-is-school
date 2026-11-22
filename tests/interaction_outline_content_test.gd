@@ -26,6 +26,7 @@ const WORLD_FILTER_GROUP := &"world_filter"
 const LOCATIONS := [
 	"res://scenes/locations/classroom/classroom.tscn",
 	"res://scenes/locations/corridor/corridor.tscn",
+	"res://scenes/locations/front_yard/front_yard.tscn",
 	"res://scenes/locations/street/street.tscn",
 	"res://scenes/locations/residential/residential.tscn",
 	"res://scenes/locations/alley/alley.tscn",

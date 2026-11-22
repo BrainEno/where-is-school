@@ -503,14 +503,15 @@ func _check_route() -> void:
 		"E: a run that has gone nowhere reached %s." % str(_route_ids(rows)))
 	flags.data[StoryFlags.CURRENT_LOCATION] = "corridor"
 	flags.data[StoryFlags.LEFT_CLASSROOM] = true
+	flags.data[StoryFlags.FRONT_YARD_ARRIVED] = true
 	flags.data[StoryFlags.STREET_ARRIVED] = true
 	rows = JournalRoute.compose(locations, flags, {"place.residential": 2})
-	_expect(_route_ids(rows) == [&"classroom", &"corridor", &"street", &"residential"],
-		"E: the route is %s, not classroom, corridor, street, residential." % str(_route_ids(rows)))
+	_expect(_route_ids(rows) == [&"classroom", &"corridor", &"front_yard", &"street", &"residential"],
+		"E: the route is %s, not classroom, corridor, front yard, street, residential." % str(_route_ids(rows)))
 	for row: Dictionary in rows:
 		_expect(bool(row["current"]) == (row["location_id"] == &"corridor"),
 			"E: '%s' is marked current wrongly." % row["location_id"])
-	_expect(int(rows[3]["entries"]) == 2, "E: the residential count is %s." % rows[3]["entries"])
+	_expect(int(rows[4]["entries"]) == 2, "E: the residential count is %s." % rows[4]["entries"])
 	_expect(not _route_ids(rows).has(&"playground") and not _route_ids(rows).has(&"alley"),
 		"E: the route names a place the run has not reached.")
 	flags.data[StoryFlags.CURRENT_LOCATION] = "laboratory"

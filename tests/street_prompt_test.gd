@@ -1,13 +1,15 @@
 extends SceneTree
-## The street's way back into the school says what it does.
+## The way back into the teaching block says what it does.
 ##
-## Two things are checked here, and they are different problems:
+## Since round 16 the glass entrance opens on the front yard (前操场), not the street: the
+## street is past the school gate's side door (docs/GLOSSARY.md). Three things are checked:
 ##
-## 1. the street exit says "Go back inside" in both languages, and arrives at the
-##    glass entrance on 01 rather than claiming to go to the classroom;
-## 2. the story's "the class is dismissed" rewrite only touches the classroom door. It
+## 1. the front yard's glass-door exit says "Go back inside" in both languages, and arrives
+##    at the glass entrance on 01 rather than claiming to go to the classroom;
+## 2. the street's side door leads back into the front yard, not into the building;
+## 3. the story's "the class is dismissed" rewrite only touches the classroom door. It
 ##    used to match any exit whose destination was the corridor, which also matched
-##    the street's return exit — so standing in the street showed "Leave the
+##    the street's old return exit — so standing outside showed "Leave the
 ##    classroom" at the school door. That regression is pinned below.
 ##
 ## The corridor-to-classroom door keeps the same short phrase, but remains a
@@ -16,6 +18,7 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 
 const STREET := "res://scenes/locations/street/street.tscn"
+const FRONT_YARD := "res://scenes/locations/front_yard/front_yard.tscn"
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 
@@ -67,13 +70,14 @@ func _run() -> void:
 	_sequence.allow_player_control()
 
 	_check_locale_keys()
-	await _check_street_exit_text()
+	await _check_yard_exit_text()
+	await _check_street_side_door()
 	await _check_corridor_still_says_back_inside()
 	await _check_dismissal_does_not_rewrite_the_street()
 
 	Harness.finish(
 		self, _failures,
-		"the street's way back says 'Go back inside' in both languages and the story rewrite left it alone."
+		"the front yard's way back says 'Go back inside' in both languages, the street's side door leads to the front yard, and the story rewrite left them alone."
 	)
 
 
@@ -94,22 +98,22 @@ func _check_locale_keys() -> void:
 			)
 
 
-func _check_street_exit_text() -> void:
-	var location := await _enter(STREET, &"FromCorridor")
+func _check_yard_exit_text() -> void:
+	var location := await _enter(FRONT_YARD, &"FromCorridor")
 	if location == null:
 		return
-	var exit := location.get_node_or_null("Interactables/BackToSchool") as LocationExit
+	var exit := location.get_node_or_null("Interactables/BackInside") as LocationExit
 	if exit == null:
-		_failures.append("The street lost its way back to school.")
+		_failures.append("The front yard lost its way back into the teaching block.")
 		return
 	if exit.prompt_key != "prompt.back_inside":
-		_failures.append("The street exit still uses the prompt key '%s'." % exit.prompt_key)
+		_failures.append("The front yard exit uses the prompt key '%s'." % exit.prompt_key)
 	if exit.destination_scene != CORRIDOR:
-		_failures.append("The street exit now leads to '%s'." % exit.destination_scene)
+		_failures.append("The front yard exit now leads to '%s'." % exit.destination_scene)
 	if exit.destination_id != &"corridor" or exit.destination_spawn != &"FromTeachingEntrance":
-		_failures.append("The street exit now spawns at '%s'." % String(exit.destination_spawn))
+		_failures.append("The front yard exit now spawns at '%s'." % String(exit.destination_spawn))
 	if exit.is_milestone_end:
-		_failures.append("The street exit turned into a milestone end.")
+		_failures.append("The front yard exit turned into a milestone end.")
 	for locale: String in EXPECTED.keys():
 		# The game switches language through the `Loc` autoload, which sets both the
 		# dialogue library and the static display locale. A plain script run has no
@@ -119,11 +123,28 @@ func _check_street_exit_text() -> void:
 		var prompt := _dialogue.get_interact_prompt(exit)
 		if prompt != String(EXPECTED[locale]):
 			_failures.append(
-				"In %s the street exit shows '%s' instead of '%s'."
+				"In %s the front yard exit shows '%s' instead of '%s'."
 				% [locale, prompt, String(EXPECTED[locale])]
 			)
 	L10n.set_locale("en")
 	_dialogue.apply_locale("en")
+	await _frames(2)
+
+
+## The street's way back is the school gate's side door, into the front yard.
+func _check_street_side_door() -> void:
+	var street := await _enter(STREET, &"FromCorridor")
+	if street == null:
+		return
+	var exit := street.get_node_or_null("Interactables/BackToSchool") as LocationExit
+	if exit == null:
+		_failures.append("The street lost its way back through the side door.")
+		return
+	if exit.prompt_key != "prompt.back_to_school" or not L10n.has_key("prompt.back_to_school", "zh-CN"):
+		_failures.append("The street's side door uses the prompt key '%s'." % exit.prompt_key)
+	if exit.destination_scene != FRONT_YARD or exit.destination_id != &"front_yard" \
+			or exit.destination_spawn != &"FromStreet":
+		_failures.append("The street's side door now leads to '%s'/%s." % [exit.destination_scene, exit.destination_spawn])
 	await _frames(2)
 
 
@@ -146,25 +167,25 @@ func _check_corridor_still_says_back_inside() -> void:
 ## The regression: with the class dismissed, the director rewrites the classroom door
 ## and nothing else.
 func _check_dismissal_does_not_rewrite_the_street() -> void:
-	var street := await _enter(STREET, &"FromCorridor")
-	if street == null:
+	var yard := await _enter(FRONT_YARD, &"FromCorridor")
+	if yard == null:
 		return
 	_game_state.set_flag(StoryFlags.CLASS_DISMISSED, true)
 	_sequence.call("update_exit_prompt")
 	await _frames(2)
-	var street_exit := street.get_node_or_null("Interactables/BackToSchool") as LocationExit
+	var street_exit := yard.get_node_or_null("Interactables/BackInside") as LocationExit
 	if street_exit == null:
-		_failures.append("The street lost its way back to school during the dismissal check.")
+		_failures.append("The front yard lost its way back inside during the dismissal check.")
 		return
 	if not street_exit.get_prompt_override().is_empty():
 		_failures.append(
-			"Dismissing the class rewrote the street exit's prompt to '%s'."
+			"Dismissing the class rewrote the front yard exit's prompt to '%s'."
 			% street_exit.get_prompt_override()
 		)
 	var shown := _dialogue.get_interact_prompt(street_exit)
 	if shown != String(EXPECTED["en"]):
 		_failures.append(
-			"With the class dismissed, the street exit shows '%s' instead of '%s'."
+			"With the class dismissed, the front yard exit shows '%s' instead of '%s'."
 			% [shown, String(EXPECTED["en"])]
 		)
 

@@ -118,10 +118,12 @@ off in a release export (override with
 ```
 classroom (stay, or leave) → walkway → schoolyard (end card at the far gap)
                                 ↓
-                        street → residential courtyard → alley → schoolyard
+                        front yard → street → residential courtyard → alley → schoolyard
 ```
 
-The walkway is the short way in and the street is the long way round; both end in
+Out of the walkway's glass doors is the front yard (dirt, dead trees, the school gate);
+the street starts past the gate's side door. The walkway is the short way in and the
+street is the long way round; both end in
 the same yard, and the end card sits at `pg_gap_in_fence` in the yard, not at an
 alley mouth.
 
@@ -133,6 +135,7 @@ different for three of them, and a search for the wrong one finds nothing:
 | --- | --- | --- |
 | classroom | `classroom` | `scenes/locations/classroom/classroom.tscn` |
 | walkway | `corridor` | `scenes/locations/corridor/corridor.tscn` |
+| front yard | `front_yard` | `scenes/locations/front_yard/front_yard.tscn` |
 | street | `street` | `scenes/locations/street/street.tscn` |
 | residential courtyard | `residential` | `scenes/locations/residential/residential.tscn` |
 | alley | `alley` | `scenes/locations/alley/alley.tscn` |
@@ -232,8 +235,8 @@ match a marker exactly — only an empty id means "this location's default". See
 
 ## Navigation
 
-Six locations are playable — the classroom, the walkway (`corridor` in the data), the
-street, the residential courtyard (`residential`), the alley and the schoolyard
+Seven locations are on the main route — the classroom, the walkway (`corridor` in the data), the
+front yard (`front_yard`), the street, the residential courtyard (`residential`), the alley and the schoolyard
 (`playground`) — and **each one owns its own navigation mesh**.
 Nothing is imported from a neighbouring room and nothing is hand-painted: every
 location scene has a `NavigationRegion3D` named `Navigation` that bakes itself from

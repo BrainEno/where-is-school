@@ -226,7 +226,10 @@ residential 4 / 17; inspections 8 (classroom), 3 (corridor), 4 (street), 4
    re-entering the classroom, or continuing a save made there, brought the room back
    without her. `tests/n_presence_test.gd` covers it.
 8. **Exit** — the door becomes usable, the player crosses the walkway, and the
-   school exit drops them into the street with an arrival line.
+   school exit opens on the front yard (`front_yard`, round 16): bare dirt, dead trees,
+   the shut retractable gate and the side door beside it, with a look-only card reader.
+   Going out through the side door (`front_yard_to_street`) drops them into the street
+   with an arrival line; `left_school` is written there, not at the glass doors.
 9. **Street** — the school wall, the notice on its pole, the gutter, the shutter,
    the bins and the lamp are all inspectable or conversational; the stair at the
    north end leads up to the residential area.
@@ -309,7 +312,8 @@ What each test covers:
 - `opening_flow_test` — boots the real main scene with beats enabled and drives
   the whole slice headlessly: wake → Q → targeting of every authored interaction →
   locked door → schoolbag → expectation (verifying no observed knowledge appears)
-  → bell → substitute → class dismissed → walkway → street → stair → courtyard →
+  → bell → substitute → class dismissed → walkway → front yard → side door → street →
+  stair → courtyard →
   animal (twice) → end card.
 
 The language-agnostic half of that coverage is UID-driven by content files, so a

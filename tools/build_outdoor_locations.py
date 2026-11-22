@@ -25,8 +25,43 @@ BAKE_ONLY_LAYER = 1 << 4
 # masks. Thin landing-top colliders use it instead of making the tall visible plinths solid.
 PLAYER_ONLY_LAYER = 1 << 2
 
-# The stage pass paints the barred windows across this same front face.
-STREET_SCHOOL_Z = (-28.0, 12.7)
+# Layer 8 is in no body mask but the camera occluder fader's (which casts against every
+# layer): nothing walks into it, clicks on it, bakes it, or is hidden from an interaction by
+# it. A dead tree's fader box is on it, so the tree fades when it stands between the camera
+# and the player without its twigs becoming a wall.
+FADE_ONLY_LAYER = 1 << 7
+
+# The teaching block's long front, as the front yard sees it (x -11 is its face); the stage
+# pass paints the barred windows across it. North of the glass entrance's recess.
+STREET_SCHOOL_Z = (-8.3, 12.7)
+# ... and south of it, to the yard's south wall.
+SCHOOL_SOUTH_Z = (20.0, 32.3)
+
+# The school wall (围墙) between the front yard and the street, and the gate in it (校门):
+# the retractable gate's opening (伸缩门), its pier, the side door's opening (小门), its pier.
+# The street sees the wall's east face at x -11.0 (SCHOOL_WALL_X); the front yard sees its west
+# face at x 15.0 (YARD_WALL_X). Both share z, so the door is at the same place either side.
+# docs/GLOSSARY.md has the names.
+SCHOOL_WALL_X = -11.15
+YARD_WALL_X = 15.15
+SCHOOL_WALL_H = 2.6
+GATE_PIER = 0.6
+STREET_GATE_Z = (8.5, 14.65)
+STREET_DOOR_Z = (15.25, 16.35)
+GATE_HEIGHT = 1.75
+DOOR_HEIGHT = 2.2
+
+# The front yard (前操场): dirt from the teaching block (west, x -11) to the school wall
+# (east), with a low railing north and south and more sports ground past it. The glass entrance is the
+# street's old one, where it was, so the corridor's door still lands in the same recess.
+FRONT_YARD_Z = (-8.3, 32.3)
+# Dead trees: (x, z, variant, yaw degrees; multiples of 90 keep the crown in its fader box).
+FRONT_YARD_TREES = (
+    (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
+    (-6.6, 26.4, "c", 0), (3.4, 22.8, "b", 270), (11.0, 27.6, "a", 90),
+)
+# The box each crown grows in (front_yard_meshes.TREE_BOUNDS), as the fader's collider.
+FRONT_YARD_TREE_BOX = (5.4, 7.3)
 
 MATS = {
     "asphalt": "res://assets/materials/outdoor_asphalt.tres",
@@ -302,23 +337,21 @@ def build_street():
     s.box("Road", (0, -0.1, -8), (22, 0.2, 56), "asphalt")
     s.box("PavementEast", (13, 0.075, -8), (8, 0.15, 56), "concrete")
     s.box("KerbEast", (8.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
-    # Stop the vestibule pavement at the inside face of the return. Leaving a
-    # pavement hidden under the return lets the bake find false routes inside it.
-    street_end, split = 20.0, STREET_SCHOOL_Z[1]
-    s.box("PavementWest", (-13, 0.075, (-36 + split)/2), (6, 0.15, split+36), "concrete")
-    s.box("PavementSchoolEntry", (-11, 0.075, (split+street_end)/2), (2, 0.15, street_end-split), "concrete")
+    s.box("PavementWest", (-10.5, 0.075, -8), (1.0, 0.15, 56), "concrete")
     s.box("KerbWest", (-9.9, 0.12, -8), (0.35, 0.24, 56), "concrete")
-    # Keep a shallow, walkable recess behind the shared glass entrance instead
-    # of putting a doorway over the side of the solid school block.
-    z_school = sum(STREET_SCHOOL_Z) / 2
-    length = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
-    s.box("SchoolBlock", (-16, 6.5, z_school), (10, 13, length), "wall", ["camera_occluder"])
-    s.box("SchoolPlinth", (-16, 0.6, z_school), (10.2, 1.2, length), "concrete")
-    s.box("SchoolEntryReturn", (-15.9, 5.4, 16.35), (7.8, 10.8, 7.3), "wall", ["camera_occluder"])
-    s.box("SchoolEntryEnd", (-11.45, 1.49, 19.22), (1.66, 2.68, 0.20), "wall", ["camera_occluder"])
-    s.box("SchoolEntryMat", (-10.79, 0.15, 15.8), (1.46, 0.025, 3.04), "metal", None, False)
-    s.props.append(("SchoolGlassEntrance", "res://scenes/environment/props/teaching_block_entrance.tscn",
-                    (-10.62, 0.15, 15.8), 90))
+    # The west side is the school wall (围墙), not the school: the teaching block stands back
+    # behind it across the front yard (前操场), painted by the stage pass and out of reach.
+    # The gate (校门) is in the wall at the south end: the retractable gate, shut, and beside
+    # it the side door (小门) that goes back in. docs/GLOSSARY.md has the names.
+    _school_wall(s, SCHOOL_WALL_X, (-36.0, 19.6), 1)
+    # the wall's ivory foot along the street, where the receipt hatch is set
+    s.box("SchoolWallDado", (-11.15, 0.6, (-36.0 + STREET_GATE_Z[0] - GATE_PIER) / 2),
+          (0.5, 1.2, STREET_GATE_Z[0] - GATE_PIER + 36.0), "concrete")
+    # the camera on a bracket that the school wall conversation points out, on the gate's
+    # north pier, looking down past the gate at the foot of the wall
+    pier_z = STREET_GATE_Z[0] - GATE_PIER / 2
+    s.box("WallCameraBracket", (-10.62, 2.9, pier_z), (0.46, 0.06, 0.06), "metal", None, False)
+    s.box("WallCamera", (-10.36, 2.82, pier_z), (0.3, 0.16, 0.18), "metal", None, False)
     # east side buildings
     s.box("FlatBlockA", (17, 5.5, 6), (10, 11, 16), "brick", ["camera_occluder"])
     s.box("FlatBlockB", (16, 7.0, -12), (8, 14, 14), "brick", ["camera_occluder"])
@@ -349,9 +382,6 @@ def build_street():
     s.box("DrainCover", (-9.4125, 0.03, -30), (0.64, 0.08, 0.8), "metal", None, False)
     # the standing water the gutter inspection is about: backed up against the cover
     s.box("GutterPool", (-9.4125, -0.375, -25.5), (0.625, 0.01, 8.2), "glass", None, False)
-    # the camera on a bracket that the school wall conversation points out
-    s.box("WallCameraBracket", (-10.8, 3.4, 6.0), (0.4, 0.06, 0.06), "metal", None, False)
-    s.box("WallCamera", (-10.52, 3.32, 6.0), (0.3, 0.16, 0.18), "metal", None, False)
     # The stair up to the residential area, at the north end, and where it goes.
     #
     # It used to climb nine slabs to a landing against a 3.2 m garden wall: a flight of
@@ -399,7 +429,7 @@ def build_street():
     s.box("PassageLight", (10.5, 2.7, -41.38), (1.4, 2.2, 0.04), "dusk", None, False)
 
     s.interactables = [
-        {"name": "SchoolWallLook", "pos": (-9.4, 1.2, 6.0), "id": "street_school_wall",
+        {"name": "SchoolWallLook", "pos": (-9.5, 1.2, 7.4), "id": "street_school_wall",
          "route": "street_wall", "prompt": "Look at the school wall", "radius": 1.4,
          "outline": ("WallCamera", "WallCameraBracket")},
         {"name": "NoticeLook", "pos": (9.4, 1.2, 2.0), "id": "street_notice_pole",
@@ -416,20 +446,20 @@ def build_street():
          "outline": ("LampPost", "LampHead", "LampGlow")},
         {"name": "ReturnPlateLook", "pos": (-10.39, 1.43, -10.8), "id": "street_return_plate",
          "inspection": "street_return_plate", "radius": 1.45,
-         "outline": ("SchoolBlock/StageReturnPlate/Case",)},
+         "outline": ("SchoolWall/StageReturnPlate/Case",)},
         {"name": "ReceiptSlotLook", "pos": (-10.37, 1.02, -24.7), "id": "street_receipt_slot",
          "inspection": "street_receipt_slot", "radius": 1.3,
-         "outline": ("SchoolPlinth/StageReceiptSlot/Housing",)},
+         "outline": ("SchoolWallDado/StageReceiptSlot/Housing",)},
     ]
     s.exits = [
-        {"name": "BackToSchool", "pos": (-9.6, 0.9, 15.8), "id": "street_back_to_school",
-         "prompt_key": "prompt.back_inside", "radius": 1.25,
-         "support": ("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right",
-                     "../../SchoolGlassEntrance/Header"),
-         "outline": ("SchoolGlassEntrance/Left/Stile", "SchoolGlassEntrance/Right/Stile",
-                     "SchoolGlassEntrance/Header/Shoe"),
-         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromTeachingEntrance",
-         "id_dest": "corridor"},
+        # Back in through the side door, to the front yard. Same id as when this was the
+        # teaching block's own door: saves and the journal know the street's way back by it.
+        {"name": "BackToSchool", "pos": (-10.4, 0.9, sum(STREET_DOOR_Z) / 2), "id": "street_back_to_school",
+         "prompt_key": "prompt.back_to_school", "radius": 1.25,
+         "support": ("../../SideDoor", "../../GatePierSouth", "../../SideDoorPier"),
+         "outline": ("SideDoor/StageDoor/Frame", "SideDoor/StageDoor/Bars"),
+         "scene": "res://scenes/locations/front_yard/front_yard.tscn", "spawn": "FromStreet",
+         "id_dest": "front_yard"},
         # The anchor stands in the doorway at the head of the stair, so a click on the stair
         # walks the player up it and through the door instead of stopping at the bottom.
         {"name": "ToResidential", "pos": (10.5, 2.5, -36.6), "id": "street_to_residential",
@@ -442,13 +472,140 @@ def build_street():
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromStreet",
          "id_dest": "residential"},
     ]
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromResidential", (10.5, 1.6, -35.4))]
+    # `FromCorridor` is outside the side door now; it keeps the name the route used to give it,
+    # because saves taken in the street name it.
+    s.spawns = [("FromCorridor", (-7.4, 0, 15.2)), ("FromResidential", (10.5, 1.6, -35.4))]
     # The painted distance keeps going, but neither the asphalt nor the pavements
     # do. A low works barrier makes the playable southern edge physical and legible.
     s.box("SouthWorksBarrier", (0, 0.53, 19.79), (34, 1.06, 0.28), "concrete", ["camera_occluder"])
     s.box("SouthWorksCap", (0, 1.085, 19.79), (34, 0.12, 0.31), "metal", body=False)
     for i in range(8):
         s.box(f"SouthWorksJoint{i}", (-14.7+4.2*i, 0.53, 19.647), (.055, .90, .028), "metal", body=False)
+    return s
+
+
+def _school_wall(s, x, span, face):
+    """The school wall along z at `x`, with the gate in it (docs/GLOSSARY.md, 校门).
+
+    North to south: the wall, the gate's north pier, the retractable gate (伸缩门, shut: one
+    collider the height of its lattice), the south pier, the side door (小门, shut until it
+    is used as an exit: its leaf is the collider), the door's pier, and the wall again. The
+    stage pass hides the gate's and the door's graybox and draws them (build_stage_art.py).
+    `face` is +1 when the side the player walks is east of the wall, -1 when west.
+    Everything is a camera occluder, so the stage pieces hung on it fade with it."""
+    occ = ["camera_occluder"]
+    g0, g1 = STREET_GATE_Z
+    d0, d1 = STREET_DOOR_Z
+    h, p = SCHOOL_WALL_H, GATE_PIER
+    north = (span[0], g0 - p)
+    south = (d1 + p, span[1])
+    s.box("SchoolWall", (x, h / 2, sum(north) / 2), (0.3, h, north[1] - north[0]), "wall", occ)
+    s.box("GatePierNorth", (x, (h + 0.3) / 2, g0 - p / 2), (p, h + 0.3, p), "wall", occ)
+    s.box("RetractableGate", (x, GATE_HEIGHT / 2, (g0 + g1) / 2), (0.3, GATE_HEIGHT, g1 - g0), "metal", occ)
+    s.box("GatePierSouth", (x, (h + 0.3) / 2, (g1 + d0) / 2), (p, h + 0.3, d0 - g1), "wall", occ)
+    s.box("SideDoor", (x, DOOR_HEIGHT / 2, (d0 + d1) / 2), (0.1, DOOR_HEIGHT, d1 - d0), "metal", occ)
+    s.box("SideDoorPier", (x, (h + 0.3) / 2, d1 + p / 2), (p, h + 0.3, p), "wall", occ)
+    s.box("SchoolWallSouth", (x, h / 2, sum(south) / 2), (0.3, h, south[1] - south[0]), "wall", occ)
+    # the lintel over the side door, which keeps it a door and not a gap
+    s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.36, 0.4, d1 - d0), "wall", occ, False)
+
+
+def _teaching_front(s):
+    """The teaching block's front with the glass entrance, as the front yard sees it.
+
+    This is the street's old west side, moved here unchanged: the long front north of the
+    entrance, the return round the recess with the glass doors, and now the front south of it
+    too. Its numbers are the ones the corridor's door was aligned to."""
+    occ = ["camera_occluder"]
+    z_school = sum(STREET_SCHOOL_Z) / 2
+    length = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
+    s.box("SchoolBlock", (-16, 6.5, z_school), (10, 13, length), "wall", occ)
+    s.box("SchoolPlinth", (-16, 0.6, z_school), (10.2, 1.2, length), "concrete")
+    z_south = sum(SCHOOL_SOUTH_Z) / 2
+    south = SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]
+    s.box("SchoolBlockSouth", (-16, 6.5, z_south), (10, 13, south), "wall", occ)
+    s.box("SchoolPlinthSouth", (-16, 0.6, z_south), (10.2, 1.2, south), "concrete")
+    # Keep a shallow, walkable recess behind the shared glass entrance instead
+    # of putting a doorway over the side of the solid school block.
+    s.box("SchoolEntryReturn", (-15.9, 5.4, 16.35), (7.8, 10.8, 7.3), "wall", occ)
+    s.box("SchoolEntryEnd", (-11.45, 1.49, 19.22), (1.66, 2.68, 0.20), "wall", occ)
+    s.box("SchoolEntryMat", (-10.79, 0.15, 15.8), (1.46, 0.025, 3.04), "metal", None, False)
+    s.props.append(("SchoolGlassEntrance", "res://scenes/environment/props/teaching_block_entrance.tscn",
+                    (-10.62, 0.15, 15.8), 90))
+
+
+def build_front_yard():
+    """The front yard (前操场): out of the teaching block's glass doors onto bare dirt.
+
+    The owner's picture: no road outside the school, a dirt playground either side, dead
+    trees, and the school gate - a parking-lot retractable gate, shut, and beside it a door
+    one person wide with a card reader just inside it. The street starts past that door.
+    The ground, the trees, the gate and the reader are drawn by the stage pass
+    (build_stage_art.py, FRONT_YARD); here are the walk, the walls and the routes."""
+    s = Scene("FrontYard", "front_yard")
+    s.env = {
+        'sky': 'Color(0.243, 0.196, 0.176, 1)',
+        'ambient': 'Color(0.52, 0.43, 0.36, 1)',
+        'energy': '1.05',
+        'fog': 'Color(0.34, 0.27, 0.22, 1)',
+        'fog_density': '0.004',
+        'saturation': '0.85',
+    }
+    s.sun = {'rotation': (-14, 38, 0), 'color': 'Color(1, 0.72, 0.5, 1)', 'energy': 2.1}
+    s.ambience = {'volume': -18.0, 'target': -26.0}
+    z0, z1 = FRONT_YARD_Z
+    x0, x1 = -11.0, YARD_WALL_X + 0.15
+    occ = ["camera_occluder"]
+    # the dirt, and a concrete apron along the block's foot and into the entrance's recess
+    s.box("YardGround", ((x0 + x1) / 2, -0.1, (z0 + z1) / 2), (x1 - x0, 0.2, z1 - z0), "soil")
+    s.box("SchoolApron", (-10.3, 0.075, (z0 + z1) / 2), (1.4, 0.15, z1 - z0), "concrete")
+    s.box("PavementSchoolEntry", (-11.5, 0.075, 16.35), (1.0, 0.15, 7.3), "concrete")
+    _teaching_front(s)
+    # North and south, a low railing (栏杆): the sports ground goes on past it, dirt and dead
+    # trees into the haze, so the block has playground on both sides. East, the school wall
+    # with the gate in it.
+    for name, z in (("NorthRail", z0 + 0.15), ("SouthRail", z1 - 0.15)):
+        s.box(name, ((x0 + x1) / 2, 0.6, z), (x1 - x0, 1.2, 0.1), "metal", occ)
+    _school_wall(s, YARD_WALL_X, (z0 + 0.3, z1 - 0.3), -1)
+    # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
+    bw, bh = FRONT_YARD_TREE_BOX
+    for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):
+        s.box(f"DeadTree{i}", (x, bh / 2 - 0.1, z), (bw, bh, bw), "soil", occ, True, FADE_ONLY_LAYER)
+        s.box(f"DeadTree{i}Trunk", (x, 1.0, z), (0.42, 2.0, 0.42), "soil")
+    d_mid = sum(STREET_DOOR_Z) / 2
+    g_mid = sum(STREET_GATE_Z) / 2
+    tx = FRONT_YARD_TREES[0][0]
+
+    s.interactables = [
+        # placeholders until the owner writes them (data/inspections/*/front_yard.json)
+        {"name": "CardReaderLook", "pos": (14.62, 1.3, STREET_DOOR_Z[1] + GATE_PIER / 2), "id": "front_yard_card_reader",
+         "inspection": "front_yard_card_reader", "radius": 0.95,
+         "support": ("../../SideDoorPier",), "outline": ("SideDoorPier/StageCardReader/Body",)},
+        {"name": "GateLook", "pos": (14.55, 1.0, g_mid - 1.2), "id": "front_yard_gate",
+         "inspection": "front_yard_gate", "radius": 1.4,
+         "support": ("../../RetractableGate",), "outline": ("RetractableGate/StageGate/Head",)},
+        {"name": "DeadTreeLook", "pos": (tx + 0.45, 1.2, FRONT_YARD_TREES[0][1] + 0.45), "id": "front_yard_dead_tree",
+         "inspection": "front_yard_dead_tree", "radius": 1.3,
+         "support": ("../../DeadTree0Trunk",), "outline": ("DeadTree0/StageTree/Trunk",)},
+    ]
+    s.exits = [
+        {"name": "BackInside", "pos": (-9.6, 0.9, 15.8), "id": "front_yard_back_inside",
+         "prompt_key": "prompt.back_inside", "radius": 1.25,
+         "support": ("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right",
+                     "../../SchoolGlassEntrance/Header"),
+         "outline": ("SchoolGlassEntrance/Left/Stile", "SchoolGlassEntrance/Right/Stile",
+                     "SchoolGlassEntrance/Header/Shoe"),
+         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromTeachingEntrance",
+         "id_dest": "corridor"},
+        # Out through the side door; nobody has to swipe (the reader is only to look at).
+        {"name": "ToStreet", "pos": (14.45, 0.9, d_mid), "id": "front_yard_to_street",
+         "prompt_key": "prompt.out_gate", "radius": 1.25,
+         "support": ("../../SideDoor", "../../GatePierSouth", "../../SideDoorPier"),
+         "outline": ("SideDoor/StageDoor/Frame", "SideDoor/StageDoor/Bars"),
+         "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
+         "id_dest": "street"},
+    ]
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromStreet", (12.0, 0, d_mid))]
     return s
 
 
@@ -1156,6 +1313,7 @@ def write(scene, path):
 
 
 BUILDERS = {
+    "front_yard": build_front_yard,
     "street": build_street,
     "residential": build_residential,
     "alley": build_alley,
