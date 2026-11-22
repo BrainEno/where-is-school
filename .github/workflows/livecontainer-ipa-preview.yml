@@ -12,6 +12,36 @@ permissions:
   checks: write # Only publish the verified digest and the one-run public certificate.
 
 jobs:
+  desktop:
+    name: Check desktop title, settings and checkpoint return
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
+          path: game-source
+          persist-credentials: false
+      - name: Run targeted desktop regressions
+        working-directory: game-source
+        shell: bash
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/wis-desktop-data"
+          export CI_LOG_DIR="$RUNNER_TEMP/wis-desktop-checks"
+          mkdir -p "$CI_LOG_DIR"
+          godot --headless --path . --import > "$CI_LOG_DIR/import.log" 2>&1
+          source tools/ci_run_check.sh
+          run_check title 120 godot --headless --path . --script res://tests/title_menu_interaction_test.gd || true
+          run_check settings 120 godot --headless --path . --script res://tests/settings_regression_test.gd || true
+          run_check save_quit 120 godot --headless --path . --script res://tests/save_quit_test.gd || true
+          run_check_summary
   simulator:
     name: Boot the ordinary build on iPhone Simulator
     runs-on: macos-26
@@ -27,7 +57,7 @@ jobs:
           include-templates: true
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: 2595307b01612dc7a87807c98345ca3e4311f335
+          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
           path: game-source
           persist-credentials: false
       - name: Verify native Simulator launch and capture the title
@@ -52,8 +82,8 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 30
     env:
-      SOURCE_SHA: 2595307b01612dc7a87807c98345ca3e4311f335
-      IPA_NAME: Where-Is-School-Mobile-Controls-2595307.ipa
+      SOURCE_SHA: d16075bbdd0b5fe7632dd31bae065f124afd84e2
+      IPA_NAME: Where-Is-School-Mobile-Controls-d16075b.ipa
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -63,7 +93,7 @@ jobs:
           include-templates: true
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: 2595307b01612dc7a87807c98345ca3e4311f335
+          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
           path: game-source
           persist-credentials: false
       - name: Build and inspect the ordinary iPhone device archive
@@ -84,10 +114,10 @@ jobs:
           godot --headless --rendering-method gl_compatibility --path "$RUNNER_TEMP/wis-pack-probe" \
             --main-pack "$RUNNER_TEMP/wis-device/where-is-school.pck" \
             --script "$GITHUB_WORKSPACE/game-source/tests/mobile_pack_boot.gd" 2>&1 | tee "$RUNNER_TEMP/pack-probe.log"
-          if grep -E 'SCRIPT ERROR|Parse Error|MOBILE_OPENING_TOUCH_FAILURE' "$RUNNER_TEMP/pack-probe.log"; then
+          if grep -E 'SCRIPT ERROR|Parse Error|^FAIL:' "$RUNNER_TEMP/pack-probe.log"; then
             exit 1
           fi
-          verdict="$(grep '^MOBILE_OPENING_TOUCH_OK .* handheld=true preview=false$' "$RUNNER_TEMP/pack-probe.log")"
+          verdict="$(grep '^PASS: MOBILE_OPENING_TOUCH_OK .* handheld=true preview=false$' "$RUNNER_TEMP/pack-probe.log")"
           printf '::notice title=Packed handheld smoke::%s\n' "$verdict"
       - name: Package and verify the app for LiveContainer
         shell: bash
