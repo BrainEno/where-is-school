@@ -191,7 +191,7 @@ def street_earth() -> Image.Image:
     # dried chalky plates with cracks between them, and wet dark ground between those
     dry = smooth(0.15, 0.75, big + 0.3 * mid)
     wet = smooth(-0.35, -0.95, big - 0.25 * mid)
-    lum += 0.2 * dry - 0.2 * wet
+    lum += 0.14 * dry - 0.2 * wet
     # the plates' borders, pushed about so they wander, and broken where the noise says
     # the ground has not split yet
     edges = cells(h, w, rng, 110)
@@ -243,35 +243,37 @@ def street_earth() -> Image.Image:
 
 
 def ditch_water() -> Image.Image:
-    """The water in the ditch (plan, 0.625 x 9.6 m). It holds the sky: pale, brighter than
-    the street around it, with long clouds drawn out along the ditch - and, against the
-    kerb, the kerb's dark reflection. A scum line on both sides, leaves and a scrap of
-    paper riding in it."""
+    """The water in the ditch (plan, 0.625 x 9.6 m). Dark, as water in a channel is from
+    above, except where it holds the sky: long pale reflections drawn out along the ditch,
+    brighter than the street around them - a torn strip of sky lying in the road. The kerb's
+    reflection is the darkest band; foam and silt are held against both walls; leaves and
+    a scrap of paper ride in it."""
     rng = np.random.default_rng(3152)
     w, h = int(WATER_M[0] * WATER_PX_M), int(WATER_M[1] * WATER_PX_M)
     u = np.arange(w)[None, :] / w
-    sky = 0.84 + 0.05 * fbm(h, w, rng, 260.0, 2, sx=40.0)
-    clouds = fbm(h, w, rng, 90.0, 3, sx=14.0)
-    lum = sky + 0.1 * smooth(0.3, 1.2, clouds) - 0.06 * smooth(-0.4, -1.2, clouds)
-    # slow ripples, drawn across the flow
-    lum += 0.025 * wrap_noise(h, w, rng, 3.0, 18.0)
-    # the kerb in the water (west, column 0) and the bank's darker earth (east)
-    lum -= 0.5 * smooth(0.32, 0.08, u + 0.02 * wrap_noise(h, w, rng, 10.0))
-    lum -= 0.22 * smooth(0.82, 0.97, u)
-    # scum and silt held against both walls
-    scum = smooth(0.4, 1.2, fbm(h, w, rng, 6.0, 3))
-    lum -= 0.3 * scum * (smooth(0.07, 0.0, u) + smooth(0.93, 1.0, u))
+    clouds = fbm(h, w, rng, 70.0, 3, sx=16.0)
+    sky = smooth(-0.1, 0.55, clouds + 0.25 * wrap_noise(h, w, rng, 220.0, 30.0))
+    # reflections need open sky above them: none in the kerb's band, fewer by the bank
+    sky *= smooth(0.16, 0.36, u) * (1.0 - 0.45 * smooth(0.7, 0.95, u))
+    lum = 0.2 + 0.05 * fbm(h, w, rng, 30.0, 2) + 0.7 * sky
+    # slow ripples, drawn across the flow, breaking the edges of the reflections
+    lum += 0.05 * wrap_noise(h, w, rng, 2.5, 14.0) * (0.3 + sky)
+    lum -= 0.1 * smooth(0.2, 0.0, u)
+    # foam and silt held against both walls
+    foam = smooth(0.3, 1.1, fbm(h, w, rng, 5.0, 3))
+    edge = smooth(0.08, 0.0, u) + smooth(0.92, 1.0, u)
+    lum += 0.35 * foam * edge
     # leaves and a paper scrap
-    stamp(lum, rng, 26, (1.5, 3.5), (0.18, 0.35))
+    stamp(lum, rng, 26, (1.5, 3.5), (0.42, 0.55))
     for _ in range(2):
         y, x = rng.uniform(0, h), rng.uniform(0.35, 0.7) * w
         ys = np.arange(int(y) - 10, int(y) + 10) % h
         xs = np.arange(int(x) - 7, int(x) + 7) % w
-        lum[np.ix_(ys, xs)] = 0.98
+        lum[np.ix_(ys, xs)] = 0.95
     tint = np.zeros((h, w, 3))
-    # warm at the top of the sky, a cooler lilac in the clouds' shade
-    tint[..., 0] += 8 * smooth(0.0, 1.0, clouds)
-    tint[..., 2] += 10 * smooth(0.0, -1.0, clouds)
+    # the reflected sky warm, the dark water a cold lilac
+    tint[..., 0] += 10 * sky
+    tint[..., 2] += 12 * (1 - sky)
     return print_plate(ramp(lum, tint), 16)
 
 
@@ -282,7 +284,9 @@ def ditch_wall() -> Image.Image:
     rng = np.random.default_rng(3153)
     w, h = int(WALL_M[0] * WALL_PX_M), int(WALL_M[1] * WALL_PX_M)
     y = np.arange(h)[:, None] / WALL_PX_M  # metres below the kerb's foot
-    lum = 0.6 + 0.07 * fbm(h, w, rng, 24.0) + 0.05 * wrap_noise(h, w, rng, 1.0)
+    lum = 0.4 + 0.07 * fbm(h, w, rng, 24.0) + 0.05 * wrap_noise(h, w, rng, 1.0)
+    # the top is the kerb's underside, lighter; the wall darkens towards the water
+    lum += 0.14 * smooth(0.12, 0.0, y) - 0.08 * smooth(0.1, WATERLINE_M, y)
     # runs from the top edge, longest where the noise says the joint leaks
     runs = smooth(0.2, 1.4, wrap_noise(1, w, rng, 1.0, 5.0))[0]
     length = 0.06 + 0.3 * runs

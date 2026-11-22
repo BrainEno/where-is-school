@@ -261,6 +261,8 @@ def street_ditch(b: Builder, A: str) -> None:
     # the lining under the kerb, the face the camera looks at across the ditch
     b.flat("Lining", p, yard.quad(b, DITCH_OPEN, -DITCH_FLOOR), "ditch_wall",
            (x0 + 0.003, DITCH_FLOOR / 2, (DITCH_OPEN_Z[0] + DITCH_OPEN_Z[1]) / 2), (0, 90, 0))
+    # a cast coping on the bank: with the kerb, two pale edges that frame the dark water
+    b.flat("Coping", p, box(b, (0.14, 0.06, DITCH_OPEN)), "kerb", (x1 + 0.07, -0.006, (DITCH_OPEN_Z[0] + DITCH_OPEN_Z[1]) / 2))
     # the earth on the road side, crumbling out over the asphalt
     b.flat("Earth", p, yard.plane(b, EARTH_W, STREET_LEN), "street_earth", (x1 + EARTH_W / 2, 0.002, z_mid))
     # slabs from the crossing to the end of the street: one replaced, paler than the rest
