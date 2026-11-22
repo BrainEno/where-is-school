@@ -29,6 +29,8 @@ REVIEW_BASE = 'fd11c183249ef43730fc2fdf36be77cf10669974'
 Q_CLOSEUP_BASE = '0ac97d77f7a3407c8ca7bc6298d4a011186b8608'
 # Integrated Q close-up (#329) and shipping B, before the two-character polish.
 BQ_POLISH_BASE = '0230efb4e1124537046d37f248bfb268ef1a63d5'
+# Preserve the merged B/Q pass while reviewing N and the seated student.
+CLASSROOM_POLISH_BASE = '4fb137620d005d302b00a35d457e1dfb237c4517'
 RUNTIME = {
     'lead': 'assets/models/protagonist/Protagonist_Character.glb',
     'q': 'assets/models/q/new-Q.glb',

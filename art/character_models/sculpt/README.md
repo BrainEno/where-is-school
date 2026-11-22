@@ -28,23 +28,41 @@
 
 只替换两人的指定头部位置和法线。其他六位运行模型、两人的衣着、骨架、形变增量、动作、材质、对白、镜头与想象呈现均不变。
 
+## 教室：代课老师 N 和坐姿学生
+
+以合入 #333 的 `4fb137620d005d302b00a35d457e1dfb237c4517` 为改前。`refine_classroom.py` 在已有头部层之后补局部笔触，继续用 N 和坐姿学生自己的基网格。
+
+- **N (`N`)：** 保留短波波头和冠顶，侧分不对称，耳侧和发尾收贴。略打开眼睑，巩膜、虹膜、瞳孔和睫线一起跟随；眉片沿新皮肤调整，柔化鼻梁与唇面，保留窄脸和年轻代课老师的神态。原发壳拓扑及相对原始导出的 13 mm 限制不变。
+- **坐姿学生 (`SEATED`)：** 把较突出的额发片收进同一侧梳发沿，按头皮拟合外壳，贴近鬓角和后颈；保留宽下颌，整理颊面、眉线和闭合嘴唇。八片裁切眼层及两道独立上眼睑不动。历史文件名 `protagonist.glb` 指这位坐姿学生，不是可操控主角的 `Protagonist_Character.glb`。
+
+仅改这两位的头部位置和法线；不加网格、材质、骨架、表情或动作。衣服、座椅接触、`StudentTalk`、N 的进场、镜头与对白仍走原逻辑。其余六位运行模型与雕刻层保持同字节。
+
+| 正式模型 | 字节 / 三角 | 当前 SHA-256 |
+| --- | --- | --- |
+| `assets/models/teacher-n/teacher-n.glb` | 1,346,256 / 56,950 | `0aee4caebb48f7867ab16fc1f194cf65b77b7509cc3feda99de11b38fed43928` |
+| `assets/models/protagonist/protagonist.glb` | 1,109,832 / 46,384 | `f200d5c3fd4d985e11552c65822ed8a341ec60e435ec2905453c9b97121eeb12` |
+
+这两份是对既有自有资产的第一方网格编辑；[来源台账](../../../docs/ASSET_PROVENANCE.md)里的 N、学生来源和许可不变，台账中的旧导出散列是前序版本。未引入模型、贴图、肖像样本或动画素材。
+
 ## 打开、编辑、烘焙
 
-1. 在 **Blender 4.5 LTS** 打开 [`Head_Studies.blend`](Head_Studies.blend)（制作及复烘用 **4.5.3**）。在 Outliner 只显示一位角色（本轮为 `B` 或 `Q`）；局部对象按 Hair / Face / Eye / Ear 分组。角色在编辑视图内对齐眼高，不改变 GLB 的原点或尺寸。
+1. 在 **Blender 4.5 LTS** 打开 [`Head_Studies.blend`](Head_Studies.blend)（制作及复烘用 **4.5.3**）。在 Outliner 只显示要改的角色（N 和坐姿学生分别是 `N`、`SEATED`）；局部对象按 Hair / Face / Eye / Ear 分组。角色在编辑视图内对齐眼高，不改变 GLB 的原点或尺寸。
 2. 保留 `Basis`；选 `Sculpt` 键，值设为 1，在网格上编辑。设为 0 看最初基网格，不是本轮评审基线。其余表情键相对 `Basis`，预览原表情偏移。只有 Q 的独立发壳直接编辑网格，其隐藏对象 `| original` 可显示对照；主角的原刺束有可编辑的 `Sculpt`，不再用连续发壳。除 Q 发壳外不改顶点次序、三角形或对象标识。
 3. 本文件是头部编辑源，不是完整绑定场景。四个审看角色的完整 `.blend` 在 [`classmates`](../classmates/) 和 [`teacher_b`](../teacher_b/)，沿用原重建指令。分件映射回同一雕刻层，不再从 Blender 重新导出全身 GLB。
 
-从仓库根目录取八份精确输入。`BASE` 是最初雕刻前的运行 GLB，`REVIEW_BASE` 是本轮对照用的已整合版本（`fd11c183249ef43730fc2fdf36be77cf10669974`）。浅克隆缺快照时使用 `git fetch --no-tags --depth=1 origin <SHA>`。
+从仓库根目录取八份精确输入。`BASE` 是最初雕刻前的运行 GLB（B 当时在 `scenes/dev/`），`CLASSROOM_POLISH_BASE` 是这次审核用的已整合版。浅克隆缺快照时使用 `git fetch --no-tags --depth=1 origin <SHA>`。
 
 ```sh
 PYTHONPATH=tools python3 - <<'PY'
 from pathlib import Path
 from subprocess import check_output
-from character_sculpt import BASE, REVIEW_BASE, RUNTIME
-for folder, ref in [('basis', BASE), ('previous', REVIEW_BASE)]:
+from character_sculpt import BASE, CLASSROOM_POLISH_BASE, RUNTIME, historic_path
+for folder, ref, roles in [('basis', BASE, RUNTIME),
+                           ('classroom-before', CLASSROOM_POLISH_BASE, ('n', 'seated'))]:
     out = Path('build/sculpt') / folder
     out.mkdir(parents=True, exist_ok=True)
-    for role, path in RUNTIME.items():
+    for role in roles:
+        path = historic_path(role) if ref == BASE else RUNTIME[role]
         (out / f'{role}.glb').write_bytes(check_output(['git', 'show', f'{ref}:{path}']))
 PY
 
@@ -68,12 +86,14 @@ python3 tools/prepare_classroom_student.py
 
 ```sh
 blender -b -t 2 --python-exit-code 1 -P art/character_models/sculpt/render_review.py -- \
-  --comparison-base fd11c183249ef43730fc2fdf36be77cf10669974 \
-  --bases build/sculpt/previous --out build/sculpt/frames --close --expressions
+  --comparison-base 4fb137620d005d302b00a35d457e1dfb237c4517 \
+  --bases build/sculpt/classroom-before --out build/sculpt/classroom-frames \
+  --roles n seated --views front quarter side back --close
 python3 tests/character_sculpt_test.py
+python3 tests/character_geometry_test.py
 ```
 
-本轮只复拍 B、Q：从 `0230efb4e1124537046d37f248bfb268ef1a63d5` 提取两份 `RUNTIME` 路径下的 GLB，分别命名 `b.glb`、`q.glb` 放入 `build/sculpt/bq-before/`。以上命令换成相应的 `--comparison-base` 与 `--bases build/sculpt/bq-before`，并加 `--roles b q`。
+B、Q 上轮用 `0230efb4e1124537046d37f248bfb268ef1a63d5`：提取两份 `RUNTIME` 路径下的 GLB，分别命名 `b.glb`、`q.glb`；换入相应的 `--comparison-base`、`--bases`，使用 `--roles b q --expressions`。`Character integration capture` 的 `refinement-n`、`refinement-student` 在相同教室机位替换真实的基线与改后 GLB，不只是给新模型套旧着色。
 
 每位角色的两版共用机位、灯光、焦距和帧，`--close` 放大五官；彩色使用原 GLB 材质，棚拍降低非玻璃高光，不改游戏着色。`--expressions` 只拍现成的闭眼、张口、松唇、笑或抬眉（以各模型支持为准）。`LipRelease` 是松唇，不是口型；N 与坐姿学生没有源表情键，B 只有闭眼。`MANIFEST.json` 记录两版 GLB 的 SHA-256 与实际启用的键。棚拍不入 Git，也不当作 Godot 画面。用原教室、同学和 B 审看场景另看运行时面孔；主角从侧面按住方向键走路，和小跑、坐下、起身区分开验收。
 

@@ -22,6 +22,8 @@ from forms import (LANDMARKS, components, ease, face, facial_details, hairline,
                    lead_spikes, other_hair, q_closeup_planes, shell_relief)
 from refine_bq import (b_brows_and_folds, b_cheek_and_mouth, b_chignon, q_brows,
                        q_cheek_and_mouth, q_cropped_fringe, q_cropped_relief, seat_q_orbit)
+from refine_classroom import (n_bob, n_brow, n_face, student_brow, student_crop,
+                              student_face, student_hair_clearance, student_lock, student_nape)
 
 # The prepared seated GLB retains these node IDs for the two inset nostrils.
 STUDENT_NOSTRILS = {'Sphere.019', 'Sphere.020'}
@@ -230,6 +232,59 @@ def polish_bq(role, parts, skull):
                 s.output = marks * flip
 
 
+def within_original_bob(p, origin):
+    delta = p - origin
+    return origin + delta*np.minimum(1., .0128/np.maximum(1e-12,np.linalg.norm(delta,axis=1)))[:,None]
+
+
+def polish_classroom(role, parts, original_bob):
+    if role not in ('n', 'seated'):
+        return
+    teacher = role == 'n'
+    sign = LANDMARKS[role][0]
+    axes = np.array([1., 1., sign])
+    skin = next(s for s in parts if (s.node, s.mat['name']) == (
+        ('ST_Head_Skin', 'M_ST_Skin') if teacher else ('Head_Main_Mesh', 'WIS_Protagonist_Skin')))
+    face_stroke = n_face if teacher else student_face
+    brow_stroke = n_brow if teacher else student_brow
+    skin_before = skin.output * axes
+    skin_after = face_stroke(skin_before)
+    skin.output = skin_after * axes
+    scalp = None if teacher else BVHTree.FromPolygons(
+        skin_after.tolist(), skin.triangles.tolist(), all_triangles=True)
+    for s in parts:
+        if s.output is None or s is skin:
+            continue
+        p = s.output * axes
+        if teacher and s.node == 'ST_Hair':
+            q = within_original_bob(n_bob(p) * axes, original_bob[s.mat['name']]) * axes
+        elif not teacher and s.node.startswith('Hair_'):
+            q = student_crop(p)
+            if s.node == 'Hair_Cap':
+                depth = q[:, 2].copy() - .004
+                for i in np.flatnonzero((q[:, 2] > .034) & (abs(q[:, 0]) < .092)):
+                    x, y, _ = q[i]
+                    hit, _, _, _ = scalp.ray_cast(Vector((x, y, .30)), Vector((0., 0., -1.)), .29)
+                    if hit is not None:
+                        depth[i] = hit.z
+                q = student_hair_clearance(q, depth)
+            elif s.node == 'Hair_Back':
+                q = student_nape(q)
+            elif s.node.startswith(('Hair_Fringe_', 'Hair_Side_')):
+                q = student_lock(q, s.node.startswith('Hair_Side_'))
+        elif s.node.startswith('ST_Eyebrow_' if teacher else 'Eyebrow_'):
+            q = brow_stroke(face_stroke(p))
+            refit_marks(p, q, skin_before, skin_after, skin.triangles, relief=.80)
+        elif teacher and s.node.startswith(('ST_Head_', 'ST_Eye_')):
+            q = face_stroke(p)
+        elif not teacher and s.node in ('Mouth_Line', 'Lower_Lip_Plane'):
+            # Coherent with the skin brush, preserving the existing lip seam.
+            q = face_stroke(p)
+        else:
+            continue
+        s.output = q * axes
+
+
 def sculpt(role, parts):
     sign = LANDMARKS[role][0]
     skull = None
@@ -265,9 +320,7 @@ def sculpt(role, parts):
                 keep_deforming_lids(s,p,q)
         q[:,2] *= sign
         if original_bob is not None and kind=='hair':
-            origin = original_bob[s.mat['name']]
-            delta = q-origin
-            q = origin + delta*np.minimum(1., .0128/np.maximum(1e-12,np.linalg.norm(delta,axis=1)))[:,None]
+            q = within_original_bob(q, original_bob[s.mat['name']])
         s.output = q
     # Reproduce the earlier height correction before this pass. In particular,
     # it reached the upper scalp on the lead; editing only his hair must keep
@@ -295,6 +348,7 @@ def sculpt(role, parts):
             q[:,2] *= sign
             s.output = q
     polish_bq(role, parts, skull)
+    polish_classroom(role, parts, original_bob)
 
 
 def material(s):

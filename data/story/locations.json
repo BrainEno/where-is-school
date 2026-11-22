@@ -84,6 +84,10 @@
     "restroom_03": {
       "scene": "res://scenes/locations/restroom_03/restroom_03.tscn",
       "spawn": "FromCorridor"
+    },
+    "site_interior": {
+      "scene": "res://scenes/locations/site_interior/site_interior.tscn",
+      "spawn": "FromPorch"
     }
   }
 }
