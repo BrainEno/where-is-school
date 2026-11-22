@@ -36,6 +36,9 @@ func _capture() -> void:
 	Harness.clear_session_state(self)
 	var loc := Harness.ensure_autoload(self, "Loc", "res://scripts/i18n/loc.gd")
 	loc.set_locale("zh-CN")
+	# A standalone SceneTree script does not boot the project's Settings autoload.
+	# Use the real mobile canvas scale and last-device detection, not a visibility override.
+	Harness.ensure_autoload(self, "Settings", "res://scripts/autoload/settings_manager.gd")
 	var save: Node = states["save"]
 	var flags := {
 		StoryFlags.MET_Q: true, StoryFlags.TEXTBOOK_MISSING: true, StoryFlags.EXPECTATION_PLAYED: true,
@@ -76,12 +79,12 @@ func _capture() -> void:
 	if not _checks.expect(at_rest, "Classroom never settled (next=%s beat=%s fade=%s dialogue=%s)" % [
 		director.next_step(), director.is_beat_active(), ui.fade.visible, ui.dialogue_panel.visible]):
 		return
-	# Xvfb can deliver real mouse motion when the window takes focus after a scene
-	# change. Select touch with a real injected finger in the notch's unsafe area,
-	# where it cannot change the world or activate the controls.
-	var unsafe := Vector2(MobileLayout.safe_rect(stick).position.x * 0.5, 20.0)
-	_touch(unsafe, true)
-	_touch(unsafe, false)
+	if InputHint.device(stick) != InputHint.DEVICE_TOUCH:
+		# If the Xvfb pointer took focus, select touch in the unsafe notch area.
+		# The real device detector sees it, but it cannot act on the world or UI.
+		var unsafe := Vector2(MobileLayout.safe_rect(stick).position.x * 0.5, 20.0)
+		_touch(unsafe, true)
+		_touch(unsafe, false)
 	if not _checks.expect(await Harness.wait_until(func() -> bool:
 		return stick.is_visible_in_tree() and shortcut.is_visible_in_tree(), 5.0),
 		"No touch HUD in the settled classroom (device=%s, dialog=%s)" % [InputHint.device(stick), ui.dialogue_panel.visible]):
@@ -115,12 +118,29 @@ func _shot(label: String) -> void:
 			"No full-size rendered pixels for %s" % label):
 		return
 	var colors := {}
-	for y in range(20, image.get_height(), 73):
-		for x in range(20, image.get_width(), 71):
+	for y in range(20, image.get_height(), 29):
+		for x in range(20, image.get_width(), 31):
 			colors[image.get_pixel(x, y)] = true
 	if _checks.expect(colors.size() >= 12 and image.save_png(OUT.path_join(label + ".png")) == OK,
 			"A blank or unsavable frame: %s" % label):
 		print("MOBILE_FRAME %s.png %dx%d" % [label, image.get_width(), image.get_height()])
+		_save_review_preview(image, label)
+
+
+## The PNG stays full-size. A separate same-frame copy fits nine CI notices for
+## reviewers who can reach GitHub's API but not the artifact storage host.
+func _save_review_preview(image: Image, label: String) -> void:
+	image.resize(844, 390, Image.INTERPOLATE_LANCZOS)
+	for quality: float in [0.84, 0.74, 0.64, 0.54, 0.44]:
+		var bytes := image.save_jpg_to_buffer(quality)
+		if bytes.is_empty() or bytes.size() > 27000:
+			continue
+		var file := FileAccess.open(OUT.path_join(label + ".preview.jpg"), FileAccess.WRITE)
+		if file != null:
+			file.store_buffer(bytes)
+			return
+		break
+	push_warning("Mobile capture: no compact review preview for %s" % label)
 
 
 func _tap(button: Button) -> void:
