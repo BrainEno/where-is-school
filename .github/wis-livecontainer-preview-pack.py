@@ -19,7 +19,7 @@ def pack(source: Path, sha: str, output: Path, ipa: Path) -> None:
 
     report = json.loads((output / "BUILD.json").read_text())
     require(report["head"] == sha and not report["modified_sources"], "Unexpected game source")
-    require(report["target"] == "ios-unsigned" and not report.get("authoring"),
+    require(report["target"] == "ios-unsigned" and report.get("variant", "retail") == "retail",
             "Expected an ordinary unsigned iPhoneOS archive")
     require(not ipa.exists(), "Refusing to reuse an existing IPA")
     archive = output / report["artifact"]
