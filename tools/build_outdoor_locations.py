@@ -114,7 +114,7 @@ class Scene:
         # An interactable whose use is staged by its own script (a StagedInteractable
         # subclass that sets its handler) keeps the shared scene and swaps the script.
         script_ids = {}
-        for item in self.interactables:
+        for item in self.interactables + self.exits:
             script = item.get("script")
             if script and script not in script_ids:
                 script_ids[script] = f"staged_{len(script_ids)}"
@@ -247,6 +247,8 @@ class Scene:
                 lines.append('')
         for item in self.exits:
             lines.append(f'[node name="{item["name"]}" parent="Interactables" instance=ExtResource("{base + 1}_location_exit")]')
+            if item.get('script'):
+                lines.append(f'script = ExtResource("{script_ids[item["script"]]}")')
             lines.append('position = %s' % v3(item['pos']))
             lines.append(f'interact_id = &"{item["id"]}"')
             if item.get('prompt_key'):
@@ -260,6 +262,9 @@ class Scene:
                 lines.append(f'destination_scene = "{item["scene"]}"')
                 lines.append(f'destination_spawn = &"{item["spawn"]}"')
                 lines.append(f'destination_id = &"{item["id_dest"]}"')
+            if item.get('required_flag'):
+                lines.append(f'required_flag = &"{item["required_flag"]}"')
+                lines.append(f'blocked_inspection_id = &"{item["blocked_inspection"]}"')
             if item.get('milestone'):
                 lines.append('is_milestone_end = true')
                 lines.append(f'end_card_key = "{item["milestone"]}"')
@@ -946,6 +951,22 @@ def build_playground(for_courtyard_view: bool = False):
         {"name": "FarGap", "pos": (-14.0, 0.9, -18.2), "id": "pg_gap_in_fence",
          "prompt_key": "prompt.gate_far", "radius": 1.8, "milestone": "end.slice",
          "outline": ("FenceRunGap",)},
+        # The building site (round 11). The gate is padlocked: until the key from inside
+        # the building is held, `site_gate.gd` keeps this exit off and `SiteLook` answers
+        # at the same spot. The south sand pile is the way in without it, over the
+        # hoarding; from inside there is no climbing back, so the porch door wants the key.
+        {"name": "SiteGate", "pos": (-22.6, 0.9, 13.2), "id": "pg_site_gate",
+         "script": "res://scenes/locations/playground/site_gate.gd",
+         "prompt_key": "prompt.site_gate", "radius": 1.8,
+         "outline": ("PlaygroundArt/BuildingSite/Gate/LeafNorth/Frame",
+                     "PlaygroundArt/BuildingSite/Gate/LeafSouth/Frame"),
+         "scene": "res://scenes/locations/site_interior/site_interior.tscn", "spawn": "FromPorch",
+         "id_dest": "site_interior", "required_flag": "site_gate_key", "blocked_inspection": "pg_site"},
+        {"name": "SiteClimb", "pos": (-22.7, 0.9, 17.05), "id": "pg_site_climb",
+         "prompt_key": "prompt.site_climb", "radius": 1.6,
+         "outline": ("PlaygroundArt/BuildingSite/Sand/PileSouth/Body",),
+         "scene": "res://scenes/locations/site_interior/site_interior.tscn", "spawn": "FromPorch",
+         "id_dest": "site_interior"},
     ]
     s.spawns = [
         ("FromAlley", (0.0, 0, 16.0)),
@@ -954,6 +975,8 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromCorridor", (-3.0, 0, -17.6)),
         # Arrival from classroom window curtain fall: lands on top of the blue container.
         ("FromSchool", (12.0, 2.6, -15.5)),
+        # Out of the building site's gate, on the yard side of it.
+        ("FromSite", (-21.6, 0, 13.2)),
     ]
     return s
 

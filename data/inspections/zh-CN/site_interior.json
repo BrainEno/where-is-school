@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "site_key": {
+    "title": "粉笔星里的钥匙",
+    "prompt": "捡起钥匙",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·粉笔星里的钥匙",
+    "repeat_text": "待做·又看了一眼钥匙",
+    "effects": [
+      {
+        "type": "set_flag",
+        "flag": "site_gate_key",
+        "value": true
+      }
+    ]
+  },
+  "site_ladder": {
+    "title": "梯子",
+    "prompt": "看梯子",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·通向光里的梯子"
+  },
+  "site_porch_locked": {
+    "title": "门廊的门",
+    "prompt": "推门廊的门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·外面的门还锁着"
+  }
+}

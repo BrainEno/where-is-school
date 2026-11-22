@@ -42,13 +42,31 @@ Conventions kept from the earlier outdoor work:
 The building under construction (glossary 建造中的大楼, later the 椭球大楼) is not in
 that table. It is a text scene outside the walkable ground, past the south-west corner:
 `scenes/environment/props/playground_art/construction_site.tscn`, written by
-`source/construction_site.py` and instanced in `playground.tscn` as
-`PlaygroundArt/BuildingSite` (see the art README). Its one anchor is `SiteLook`
-(`pg_site_look`, inspection `pg_site`, text still a 「待做」 placeholder) at the yard edge
-in front of the gate; its camera shot frames the whole building. The site itself has no
-collider; a way in (and the lock on the gate) will be added as exits and interactables
-on the yard side. Its review frames come from
-`tests/capture_locations.gd -- construction-site` (the `playground_site` capture job).
+`source/construction_site.py` (its meshes are separate resources under
+`meshes/site/*.tres`, its materials under `materials/site/*.tres`) and instanced in
+`playground.tscn` as `PlaygroundArt/BuildingSite` (see the art README). The site itself
+has no collider. Three anchors stand at the yard edge:
+
+- `SiteLook` (`pg_site_look`, inspection `pg_site`, text still a 「待做」 placeholder) in
+  front of the gate; its camera shot frames the whole building.
+- `SiteClimb` (`pg_site_climb`), by the south sand pile: the way in without the key, over
+  the hoarding. It leads straight to `site_interior` (`FromPorch`).
+- `SiteGate` (`pg_site_gate`, `site_gate.gd`) at the same spot as `SiteLook`. It stays
+  switched off until `StoryFlags.SITE_GATE_KEY` is set. With the key, the two swap: the
+  padlock and chain are hidden, the north leaf swings in and the gate leads in too.
+
+The inside of the building is its own location, `scenes/locations/site_interior/`
+(written by `tools/build_site_interior.py`). It is entered through the porch door and is
+deliberately psychedelic: striped paint that crawls, a spiral floor, marbles orbiting a
+light column, and a screen filter (`SiteTrip`, `site_trip.gd`) that peaks near the column.
+The padlock key lies in the chalk star (`site_key`, which sets the flag). Nobody climbs
+back out, so the porch door (`site_interior_porch_door`, to the yard's `FromSite`) needs
+the key; without it the door answers `site_porch_locked`. The wording of `site_key`,
+`site_ladder`, `site_porch_locked` and `pg_site` is still 「待做」 for the owner.
+
+Review frames come from `tests/capture_locations.gd -- construction-site` (the
+`playground_site` capture job) and `-- site-interior` (the `site_interior` job: the room,
+then the yard's gate standing open with the key held).
 
 Adding an anchor means: add the geometry and the `Interactables` entry in
 `tools/build_outdoor_locations.py`, regenerate, then add the inspection (or a

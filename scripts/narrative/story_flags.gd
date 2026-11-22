@@ -131,6 +131,11 @@ const ROOF_WAY_DOWN: StringName = &"roof_way_down"
 ## String: the last use of the yard tap while dazed (`yard_tap.gd`): "drink", "wash" or
 ## "leave". Written by the tap's choice; the tap applies it as it is written.
 const TAP_USE: StringName = &"tap_use"
+## bool: the protagonist has the padlock key of the building site's hoarding gate, picked
+## out of the chalk star inside the building (`site_key`). It opens the porch door's way
+## back out to the yard (`site_interior`) and turns the yard's gate into a two-way exit
+## (`site_gate.gd`). Absent in saves written before round 11.
+const SITE_GATE_KEY: StringName = &"site_gate_key"
 
 # --- Dialogue choice consequences ------------------------------------------
 ## bool: the protagonist admitted not remembering Q.
@@ -231,6 +236,7 @@ const ALL_FLAGS: Array[StringName] = [
 	CONCUSSION_SECONDS_LEFT,
 	ROOF_WAY_DOWN,
 	TAP_USE,
+	SITE_GATE_KEY,
 	ASKED_Q_IDENTITY,
 	ASKED_Q_DATE,
 	STAYED_SILENT,

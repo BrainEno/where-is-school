@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "site_key": {
+    "title": "A key in the chalk star",
+    "prompt": "Pick up the key",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the key in the chalk star",
+    "repeat_text": "TODO · the key, again",
+    "effects": [
+      {
+        "type": "set_flag",
+        "flag": "site_gate_key",
+        "value": true
+      }
+    ]
+  },
+  "site_ladder": {
+    "title": "The ladder",
+    "prompt": "Look at the ladder",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the ladder up the light"
+  },
+  "site_porch_locked": {
+    "title": "The porch door",
+    "prompt": "Try the porch door",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the gate outside is still locked"
+  }
+}
