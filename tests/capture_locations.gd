@@ -248,6 +248,7 @@ const RETURN_SPOTS := {
 	"street": [
 		["detail_return_plate", Vector3(-9.15, 0, -10.8)],
 		["detail_receipt_slot", Vector3(-9.18, 0, -24.7)],
+		["detail_ditch", Vector3(-8.3, 0, -31.4)],
 	],
 	"residential": [
 		["detail_alley_guide", Vector3(3.23, 0, -15.76)],
