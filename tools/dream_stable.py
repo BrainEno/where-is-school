@@ -9,7 +9,7 @@ annex scene is too close to the release's 1 MiB budget for a scene to embed them
 The manner is the visual experiments' (#196 colour fields, #200 ink hulls and cut paper),
 pushed toward the absurd: horses painted in flat fields with a drawn contour, dung with a
 cartoon gloss, flies by the hundred and one the size of a dog, the smell cut out of
-acid-green paper, and a knocked-out spiral over whoever breathes it. The yellow-green screen
+muted translucent wisps, and a knocked-out spiral over whoever breathes it. The yellow-green screen
 filter that thickens near the stalls is `scenes/locations/corridor/stench_haze.gd`, in the
 corridor: nothing here carries a script.
 """
@@ -196,20 +196,20 @@ def flies(b, y):
 
 
 def stink(b, y):
-    """Cartoon stink clouds cut from paper, rising off the heap, the stalls and the droppings."""
+    """Sparse translucent wisps rise off the heap, stalls and droppings."""
     clouds = [shaped(b, f"StinkCloud{k}", lambda k=k: sm.stink_cloud(k + 1, .3 + .05 * k,
                                                                      (sm.ACID, sm.MUSTARD, sm.BILE)[k]))
               for k in range(3)]
     rng = random.Random(11)
-    sources = (((HEAP[0], G + .7, HEAP[2] + .2), 7, .7, 2.6), ((-33.0, G + 1.0, 7.4), 6, .9, 2.3),
-               ((-30.4, G + .2, 11.6), 4, .8, 1.8), ((-35.8, G + .2, 12.8), 4, .7, 1.8),
-               ((-25.4, G + .2, 15.8), 3, .6, 1.6))
+    sources = (((HEAP[0], G + .7, HEAP[2] + .2), 3, .7, 2.6), ((-33.0, G + 1.0, 7.4), 3, .9, 2.3),
+               ((-30.4, G + .2, 11.6), 2, .8, 1.8), ((-35.8, G + .2, 12.8), 2, .7, 1.8),
+               ((-25.4, G + .2, 15.8), 2, .6, 1.6))
     for c, (centre, count, spread, lift) in enumerate(sources):
         rid = clouds[c % 3]
         xs = [((rng.uniform(-spread, spread), rng.uniform(0, .3), rng.uniform(-spread, spread)),
                rng.uniform(0, math.tau), rng.uniform(.55, 1.0)) for _ in range(count)]
-        mat = paper(b, rise=(.25, lift, 0), rise_rate=.07 + .01 * c, fade_edge=.28, spin=.22, wobble=.3,
-                    phase=c * .31)
+        mat = _mat(b, "stench_wisp", "res://assets/shaders/school/stench_wisp.gdshader", dict(rise=(.25, lift, 0), rise_rate=.07 + .01 * c, fade_edge=.28, spin=.22, wobble=.3,
+                    phase=c * .31))
         reach = spread + .7
         multimesh(b, f"Stink{c}", y, centre, rid, mat, xs, (-reach, -.5, -reach, 2 * reach, lift + 1.2, 2 * reach))
     halo = shaped(b, "DazeHalo", sm.daze_halo)

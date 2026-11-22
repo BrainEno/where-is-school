@@ -46,7 +46,7 @@ float value_noise(vec2 p) {
 }
 
 void fragment() {
-	float s = clamp(stench, 0.0, 1.0);
+	float s = clamp(stench, 0.0, 1.0) * 0.18;
 	float t = TIME;
 	vec2 uv = SCREEN_UV;
 	vec2 aspect = vec2(SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x, 1.0);

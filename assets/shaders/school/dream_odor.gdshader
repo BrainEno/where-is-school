@@ -19,7 +19,7 @@ void fragment() {
 	float core = 1.0 - abs(UV.x - .5) * 2.0;
 	float density = smoothstep(.15, .5, band) * (1.0 - smoothstep(.55, .9, band)) * core * (1.0 - lift * .8);
 	float h = fract(sin(dot(floor(FRAGCOORD.xy), vec2(12.9898, 78.233))) * 43758.5453);
-	if (h > density * .85) {
+	if (h > density * .18) {
 		discard;
 	}
 	ALBEDO = tint.rgb;
