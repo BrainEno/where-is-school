@@ -44,11 +44,10 @@ extends Node
 ## proved, and either put back or discarded. `SaveManager` makes the same promise one level
 ## down for ordinary writes (see the header of `save_manager.gd`).
 ##
-## **Save and quit** (the pause menu) is the other way out of a run: `save_and_quit()` saves
-## where the player stands when `is_at_rest()` says a save can describe everything there
-## (ADR 0005 §4), and only a written save lets the menu leave without asking. The menu reads
-## what it shows about the file through `get_save_status()`, which never recovers or
-## quarantines anything while a run is live.
+## **Return to main menu** uses `save_and_quit()` after the player confirms. It saves
+## where the player stands only when `is_at_rest()` says a save can describe everything
+## there (ADR 0005 §4). The question reads `get_save_status()`, which never recovers or
+## quarantines a file while a run is live.
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
 
@@ -77,6 +76,7 @@ const FALLBACK_BROKEN_PATH := "user://save.broken.json"
 var world_scene := MAIN_SCENE
 
 var _starting := false
+var _leaving := false
 var _last_report: Dictionary = {}
 ## False from the moment a new game fails until a screen has shown the failure. A failure
 ## after the old world was freed ends on a title screen that did not exist when the signal
@@ -120,6 +120,8 @@ func inspect_save() -> Dictionary:
 ## Enters the world; the director resumes the save if there is one. Returns
 ## `{ok, error, scene}` — a caller that shows an error needs to know the scene never came.
 func continue_game() -> Dictionary:
+	if is_changing_scene():
+		return {"ok": false, "error": ERR_BUSY, "scene": MAIN_SCENE}
 	var tree := get_tree()
 	tree.paused = false
 	var error := _go_to(MAIN_SCENE, MAIN_SCENE)
@@ -140,7 +142,7 @@ func get_save_status(world: Node = null) -> Dictionary:
 	var suspended := save != null and save.has_method("writes_suspended") \
 		and bool(save.call("writes_suspended"))
 	status["can_save_now"] = bool(status["at_rest"]) and save != null and not suspended \
-		and not _starting
+		and not is_changing_scene()
 	return status
 
 
@@ -178,11 +180,14 @@ func save_and_quit(write: bool = true, world: Node = null) -> Dictionary:
 	var report := {
 		"ok": false, "saved": false, "reason": "", "detail": "", "path": "", "scene": TITLE_SCENE,
 	}
-	if _starting:
+	if is_changing_scene():
 		report["reason"] = "busy"
-		report["detail"] = "a new game is being started"
+		report["detail"] = "a scene change is already in progress"
 		return report
 	var target: Node = world if world != null else _find_world()
+	if not is_instance_valid(target) or target != get_tree().current_scene or not _is_world(target):
+		report["reason"] = "no_world"
+		return report
 	var save := _save()
 	if write:
 		if not is_at_rest(target):
@@ -193,34 +198,66 @@ func save_and_quit(write: bool = true, world: Node = null) -> Dictionary:
 			report["reason"] = "no_save"
 			report["detail"] = "the save system is not available"
 			return report
+		_leaving = true
 		var written: Dictionary = save.call("save_game")
 		if not bool(written.get("ok", false)):
+			_leaving = false
 			report["reason"] = "save_failed"
 			report["detail"] = String(written.get("detail", written.get("reason", "")))
 			push_error("Session: Save and quit could not save: %s" % report["detail"])
 			return report
 		report["saved"] = true
 		report["path"] = String(written.get("path", ""))
-	_silence_world(target)
-	get_tree().paused = false
-	var left := go_to_title()
-	if not bool(left.get("ok", false)):
-		# Still in the world: give it its autosave back rather than leave it mute.
-		_restore_world(target)
+	_leaving = true
+	var error := _leave_for_title(target)
+	if error != OK:
 		report["reason"] = "scene_change_failed"
-		report["detail"] = "could not enter the title screen (error %d)" % int(left.get("error", 0))
+		report["detail"] = "could not enter the title screen (error %d)" % error
 		return report
 	report["ok"] = true
 	return report
 
 
+## The end card has already finished saving, but uses the same scene teardown.
 func go_to_title() -> Dictionary:
-	var error := _go_to(TITLE_SCENE, "the title screen")
+	if is_changing_scene():
+		return {"ok": false, "error": ERR_BUSY, "scene": TITLE_SCENE}
+	_leaving = true
+	var error := _leave_for_title(_find_world())
 	return {"ok": error == OK, "error": error, "scene": TITLE_SCENE}
+
+
+func _leave_for_title(world: Node) -> int:
+	var tree := get_tree()
+	var was_paused := tree.paused
+	var director := world.get_node_or_null(^"OpeningSequence") if world != null else null
+	var was_autosaving := director != null and "autosave_enabled" in director \
+		and bool(director.get("autosave_enabled"))
+	_silence_world(world)
+	tree.paused = false
+	var error := _go_to(TITLE_SCENE, "the title screen")
+	if error != OK:
+		_restore_world(world, was_autosaving)
+		tree.paused = was_paused
+		_leaving = false
+	else:
+		# change_scene_to_file detaches the old scene synchronously. Clear the autoloads
+		# after it has stopped listening and before the title enters at end of frame.
+		_clear_session()
+		tree.scene_changed.connect(_on_title_entered, CONNECT_ONE_SHOT)
+	return error
+
+
+func _on_title_entered() -> void:
+	_leaving = false
 
 
 func quit_game() -> void:
 	get_tree().quit()
+
+
+func is_changing_scene() -> bool:
+	return _starting or _leaving
 
 
 func is_starting_new_game() -> bool:
@@ -251,7 +288,7 @@ func mark_new_game_failure_shown() -> void:
 ## passes its own instance and `enter_world = false` to inspect the state in between.
 ## Returns the report described at the top of this file.
 func start_new_game(world: Node = null, enter_world: bool = true) -> Dictionary:
-	if _starting:
+	if is_changing_scene():
 		# A second click while the first transaction is between two awaits. It must not
 		# run any of the steps again: the save may already be staged.
 		var busy := _blank_report()
@@ -545,12 +582,12 @@ func _silence_world(world: Node) -> void:
 
 
 ## The undo of `_silence_world`, for a transaction that had to stop early.
-func _restore_world(world: Node) -> void:
+func _restore_world(world: Node, autosave: bool = true) -> void:
 	if world == null or not is_instance_valid(world):
 		return
 	var director := world.get_node_or_null(^"OpeningSequence")
 	if director != null and "autosave_enabled" in director:
-		director.set("autosave_enabled", true)
+		director.set("autosave_enabled", autosave)
 	var save := _save()
 	if save != null and save.has_method("bind_world"):
 		save.call("bind_world", world)

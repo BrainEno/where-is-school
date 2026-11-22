@@ -17,7 +17,9 @@ on:
       - 'assets/**'
       - 'data/**'
       - 'tests/mobile*'
+      - 'tests/capture_mobile_controls.gd'
       - 'tests/test_harness.gd'
+      - 'tools/ci_run_check.sh'
       - 'tools/export_mobile.py'
       - 'tools/export_presets.py'
       - 'tools/stamp_release_version.py'
@@ -64,6 +66,25 @@ jobs:
             while IFS= read -r line; do printf '::error title=Mobile controls::%s\n' "$line"; done < "$RUNNER_TEMP/mobile-failures"
           fi
           exit "$status"
+      - name: Render the joystick, return prompt and resulting title
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/mobile-capture-user-data"
+          export CI_LOG_DIR=build/mobile-controls
+          source tools/ci_run_check.sh
+          run_check mobile_capture 140 xvfb-run -a --server-args='-screen 0 2560x1440x24' \
+            godot --path . --resolution 2532x1170 --rendering-method gl_compatibility \
+            --script res://tests/capture_mobile_controls.gd -- --mobile-preview || exit 1
+          cd build/mobile-controls/frames
+          {
+            printf 'source_sha=%s\n' "$(git rev-parse HEAD)"
+            grep '^MOBILE_CAPTURE ' ../mobile_capture.log
+            sha256sum 01_gameplay_joystick_and_return.png 02_return_confirmation.png 03_main_menu_after_return.png
+          } | tee CAPTURE.txt
       - name: Upload input and layout results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

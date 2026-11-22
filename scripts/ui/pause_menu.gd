@@ -2,16 +2,14 @@ class_name PauseMenu
 extends CanvasLayer
 ## The menu during play: Esc or Start.
 ##
-## Resume / Notebook / Settings / New game / Save and quit. The world is paused while it is open (the
-## tree is, and this layer runs anyway); the settings screen is the same one the title
-## screen opens. New game asks first and then hands over to `Session.start_new_game()`,
-## which stops this world's autosave before anything is deleted.
+## Resume / Notebook / Settings / New game / Return to main menu. The world is paused
+## while this layer is open; settings is the same screen the title uses. Scene and save
+## transactions belong to Session.
 ##
-## **Save and quit** saves the run where it stands and goes to the title, where Continue
-## picks it up again. It saves only where a save can describe everything (ADR 0005 §4:
-## after the prologue, no conversation open, no beat running - `Session.is_at_rest()`).
-## Anywhere else, or when the write fails, it does not pretend: it asks whether to leave
-## anyway, says which save the next Continue will load, and the safe answer has the focus.
+## Both the pause entry and the touch HUD ask before returning to the title. At rest the
+## answer saves the current run. In a beat, or after a write fails, the question instead
+## names the last save (if any). Keeping playing closes the entire pause and resumes the
+## same world and conversation.
 ##
 ## The look is the title screen's: a dark sheet with a hand-cut edge down the left of the
 ## paused world, an ember rule in its margin, the heading and entries in the serif, and the
@@ -70,6 +68,7 @@ class Sheet:
 
 var _factor := 1.0
 var _root: Control = null
+var _page: Control = null
 var _column: VBoxContainer = null
 var _touch_scroll: ScrollContainer
 var _heading: Label = null
@@ -88,7 +87,8 @@ var _journal_only := false
 var _closing := false
 var _confirm: ConfirmPrompt = null
 var _was_paused := false
-## What the open question is about: `new_game` or `quit_unsaved`.
+var _previous_focus: Control = null
+## What the open question is about: `new_game`, `return_save` or `return_checkpoint`.
 var _pending: StringName = &""
 ## The new game that did not start, while the notice shows it. Kept as the report so a
 ## language switch renders it again (`NewGameFailureText`).
@@ -108,12 +108,17 @@ func _ready() -> void:
 	# One face on the sheet: the status, the notice and the hint in the serif too.
 	_root.theme = MenuStyle.page_theme()
 	add_child(_root)
+	_page = Control.new()
+	_page.name = "PausePage"
+	_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_page)
+	_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_sheet = Sheet.new()
-	_root.add_child(_sheet)
+	_page.add_child(_sheet)
 	_column = VBoxContainer.new()
 	_column.name = "Column"
 	_column.add_theme_constant_override(&"separation", 4)
-	_touch_scroll = MobileLayout.add_menu_column(_root, _column)
+	_touch_scroll = MobileLayout.add_menu_column(_page, _column)
 	_heading = MenuStyle.serif_label("", MenuStyle.TITLE_SIZE, _factor, MenuStyle.PAPER, 0.6, 3)
 	_heading.name = "Heading"
 	_column.add_child(_heading)
@@ -135,7 +140,7 @@ func _ready() -> void:
 	_notice.visible = false
 	_column.add_child(_notice)
 	_hint = MenuStyle.label("", MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED)
-	_root.add_child(_hint)
+	_page.add_child(_hint)
 
 	_settings_panel = SettingsPanel.new()
 	_root.add_child(_settings_panel)
@@ -169,16 +174,22 @@ func is_open() -> bool:
 func open() -> void:
 	if is_open():
 		return
+	_open(true)
+	focus_entry(&"resume")
+
+
+func _open(show_page: bool) -> void:
 	_was_paused = get_tree().paused
+	_previous_focus = get_viewport().gui_get_focus_owner()
 	get_tree().paused = true
 	_factor = UiTextScale.current(self)
 	UiTextScale.apply(_root, _factor)
-	_notice.visible = false
+	_notice.hide()
 	_failure = {}
 	_refresh_texts()
+	_page.visible = show_page
 	_root.show()
 	_fit()
-	focus_entry(&"resume")
 	opened.emit()
 
 
@@ -189,10 +200,14 @@ func close() -> void:
 	_settings_panel.close()
 	_journal.close()
 	_journal_only = false
+	_pending = &""
 	_confirm.hide()
 	_root.hide()
 	_closing = false
 	get_tree().paused = _was_paused
+	if is_instance_valid(_previous_focus) and _previous_focus.is_visible_in_tree():
+		_previous_focus.grab_focus()
+	_previous_focus = null
 	closed.emit()
 
 
@@ -274,8 +289,8 @@ func activate(id: StringName) -> void:
 	match id:
 		&"resume":
 			close()
-		&"save_quit":
-			_save_and_quit()
+		&"save_quit", &"title":
+			request_return_to_title()
 		&"settings":
 			_settings_panel.open()
 		&"journal":
@@ -288,9 +303,6 @@ func activate(id: StringName) -> void:
 				L10n.t("menu.confirm_no"),
 				L10n.t("menu.confirm_heading_new_game")
 			)
-		&"title":
-			# Kept for callers from before Save and quit: the same thing without the save.
-			_quit_without_saving()
 
 
 ## The menu's own world: the scene this layer belongs to.
@@ -298,70 +310,70 @@ func _world() -> Node:
 	return owner if owner != null else get_parent()
 
 
-## Saves and leaves when the world is at rest; otherwise says why it cannot and asks.
-func _save_and_quit() -> void:
-	var session := get_node_or_null(^"/root/Session")
-	if session == null:
+## The same question from the pause page and the mobile shortcut. No write on opening.
+func request_return_to_title() -> void:
+	if _confirm == null or _confirm.visible or _settings_panel.is_open() or _journal.is_open():
 		return
+	var session := get_node_or_null(^"/root/Session")
+	if session == null or not get_entry(&"save_quit").visible or session.call("is_changing_scene"):
+		return
+	if not is_open():
+		_open(false)
+	else:
+		_page.hide()
 	var status: Dictionary = session.call("get_save_status", _world())
-	if bool(status.get("can_save_now", false)):
-		var report: Dictionary = session.call("save_and_quit", true, _world())
-		if bool(report.get("ok", false)):
-			_root.hide()
-			return
-		if String(report.get("reason", "")) == "save_failed":
-			_ask_quit_unsaved(L10n.t("menu.confirm_quit_failed", {
-				"detail": String(report.get("detail", "")),
-			}), L10n.t("menu.confirm_heading_save_failed"))
-			return
-		_show_notice(String(report.get("detail", report.get("reason", ""))))
-		return
-	var caption := _caption(status)
-	if bool(status.get("ok", false)):
-		_ask_quit_unsaved(L10n.t("menu.confirm_quit_checkpoint", {"caption": caption}))
-	else:
-		_ask_quit_unsaved(L10n.t("menu.confirm_quit_no_save"))
+	_ask_return(status, bool(status.get("can_save_now", false)))
 
 
-func _ask_quit_unsaved(message: String, heading: String = "") -> void:
-	_pending = &"quit_unsaved"
-	if heading.is_empty():
-		heading = L10n.t("menu.confirm_heading_quit")
-	_confirm.ask(message, L10n.t("menu.confirm_quit_yes"), L10n.t("menu.confirm_no"), heading)
+func _ask_return(status: Dictionary, write: bool, warning: String = "") -> void:
+	_pending = &"return_save" if write else &"return_checkpoint"
+	var message := L10n.t("menu.confirm_return_save")
+	if not write:
+		message = L10n.t("menu.confirm_quit_checkpoint", {"caption": _caption(status)}) \
+			if status.get("ok", false) else L10n.t("menu.confirm_quit_no_save")
+	if not warning.is_empty():
+		message = warning + "\n\n" + message
+	_confirm.ask(message, L10n.t("menu.return_to_title"), L10n.t("menu.keep_playing"),
+		L10n.t("menu.confirm_heading_quit"))
 
 
-func _quit_without_saving() -> void:
+func _return_to_title(write: bool) -> void:
 	var session := get_node_or_null(^"/root/Session")
 	if session == null:
+		close()
 		return
-	var report: Dictionary = session.call("save_and_quit", false, _world())
-	if bool(report.get("ok", false)):
-		_root.hide()
-	else:
-		_show_notice(String(report.get("detail", report.get("reason", ""))))
-
-
-func _show_notice(text: String) -> void:
-	_failure = {}
-	_notice.text = text
-	_notice.visible = not text.is_empty()
-	_fit()
+	var report: Dictionary = session.call("save_and_quit", write, _world())
+	if report.get("ok", false):
+		return # The scene, including this layer, has already left the tree.
+	var status: Dictionary = session.call("get_save_status", _world())
+	match String(report.get("reason", "")):
+		"save_failed":
+			# A second, explicit answer is required before leaving without a new save.
+			_ask_return(status, false, L10n.t("menu.confirm_quit_failed"))
+		"not_at_rest":
+			_ask_return(status, false)
+		_:
+			_ask_return(status, write and bool(status.get("can_save_now", false)),
+				L10n.t("menu.return_failed"))
 
 
 func _on_confirmed() -> void:
 	var pending := _pending
 	_pending = &""
 	match pending:
-		&"quit_unsaved":
-			_quit_without_saving()
-		_:
+		&"return_save", &"return_checkpoint":
+			_return_to_title(pending == &"return_save")
+		&"new_game":
 			_on_new_game_confirmed()
 
 
 func _on_cancelled() -> void:
 	var pending := _pending
 	_pending = &""
-	focus_entry(&"save_quit" if pending == &"quit_unsaved" else &"new_game")
+	if pending == &"return_save" or pending == &"return_checkpoint":
+		close()
+	elif pending == &"new_game":
+		focus_entry(&"new_game")
 
 
 func _on_new_game_confirmed() -> void:
@@ -471,7 +483,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## The log closes on Esc; the session may be swapping worlds.
 func _something_else_owns_cancel() -> bool:
 	var session := get_node_or_null(^"/root/Session")
-	if session != null and bool(session.call("is_starting_new_game")):
+	if session != null and bool(session.call("is_changing_scene")):
 		return true
 	var ui: Node = get_parent().get_node_or_null(^"GameUI") if get_parent() != null else null
 	if ui != null:
@@ -489,7 +501,7 @@ func _refresh_texts() -> void:
 	if not _failure.is_empty():
 		_notice.text = NewGameFailureText.describe(_failure)
 	for id: StringName in ENTRIES:
-		(_entries[id] as Button).text = L10n.t("menu.%s" % id)
+		(_entries[id] as Button).text = L10n.t("menu.return_to_title" if id == &"save_quit" else "menu.%s" % id)
 	var unread := _journal.get_unread_count() if _journal != null else 0
 	if unread > 0:
 		(_entries[&"journal"] as Button).text = L10n.t("menu.journal_unread", {"count": unread})

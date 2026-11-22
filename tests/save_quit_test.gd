@@ -1,7 +1,7 @@
 extends SceneTree
 ## Save and quit, Continue, and a new game that really is one.
 ##
-## The pause menu's **Save and quit** is the player's way out of a run, and the title's
+## The pause menu's **Return to main menu** is the way out of a run, and the title's
 ## **Continue** the way back in. This check plays both through the real scenes - the
 ## `PauseMenu` inside `main.tscn`, the title screen as the current scene - and asserts what
 ## a player would notice:
@@ -9,8 +9,8 @@ extends SceneTree
 ## 1. **At rest, it saves where the player stands** and goes to the title. The file holds
 ##    the flags and the exact position; the title then offers Continue with the room and
 ##    the time under it, and Continue puts the body back where it stood.
-## 2. **In the prologue (or a conversation, or a beat) it does not write.** It asks first,
-##    names the save the next Continue will load, opens on Cancel, and leaving does not
+## 2. **In the prologue (or a conversation, or a beat) it does not write.** It still asks,
+##    names the save the next Continue will load, opens on Keep playing, and leaving does not
 ##    touch the file - not even through the autosave of the world being left.
 ## 3. **With nothing saved and nothing savable** it says the next game starts over.
 ## 4. **A write that fails** is reported and asked about; the menu never leaves silently.
@@ -113,16 +113,31 @@ func _check_save_and_quit_at_rest() -> void:
 		_case, _rest_report(world)
 	])
 	var menu := world.get_node("PauseMenu") as PauseMenu
-	menu.open()
-	await _frames(2)
+	await _press_key(KEY_ESCAPE)
+	_expect(menu.is_open() and paused, "%s: Esc did not open the regular pause menu." % _case)
+	_expect(world.get_node_or_null(^"GameUI/TouchActions/Joystick") == null,
+		"%s: desktop instantiated a touch joystick." % _case)
 	_expect(
 		menu.get_status_text() == L10n.t("menu.no_save_yet"),
 		"%s: with no save the status reads '%s'." % [_case, menu.get_status_text()]
 	)
-	menu.activate(&"save_quit")
-	_expect(not menu.get_confirm().visible, "%s: a savable moment asked a question." % _case)
+	for _entry in 4:
+		await _press_key(KEY_DOWN)
+	_expect(focused() == menu.get_entry(&"save_quit"), "%s: keyboard could not reach Return." % _case)
+	await _press_key(KEY_ENTER)
+	var confirm := menu.get_confirm()
+	_expect(confirm.visible and focused() == confirm.get_cancel_button(), "%s: no safe confirmation focus." % _case)
+	_expect(confirm.get_message() == L10n.t("menu.confirm_return_save"), "%s: did not explain the save." % _case)
+	_expect(not _save.has_save(), "%s: opening the question wrote the save." % _case)
+	var old := weakref(world)
+	await _press_pad(JOY_BUTTON_DPAD_RIGHT)
+	_expect(focused() == confirm.get_confirm_button(), "%s: the D-pad did not focus Return." % _case)
+	Input.action_press(&"move_forward") # A still-held action must not reach the title or next world.
+	await _press_pad(JOY_BUTTON_A)
 	var title := await _wait_for_title()
-	_expect(not paused, "%s: the title opened paused." % _case)
+	_expect(not paused and old.get_ref() == null and not Input.is_action_pressed(&"move_forward"),
+		"%s: the title inherited pause, the old scene, or held input." % _case)
+	_expect(_game_state.get_snapshot().is_empty(), "%s: title inherited story flags." % _case)
 	var read: Dictionary = _save.read_save()
 	_expect(bool(read.get("ok", false)), "%s: no readable save was written: %s" % [_case, str(read)])
 	if bool(read.get("ok", false)):
@@ -148,7 +163,6 @@ func _check_save_and_quit_at_rest() -> void:
 		"%s: Continue's line is '%s', without the room." % [_case, title.get_continue_detail()]
 	)
 	# Continue: the same flags, the same room, the same place to stand.
-	_game_state.clear()
 	title.activate(&"continue")
 	var resumed := await _wait_for_world()
 	if resumed == null:
@@ -198,8 +212,11 @@ func _check_quit_in_the_prologue_keeps_the_checkpoint() -> void:
 	_expect(focused() == confirm.get_cancel_button(), "%s: the question opened on Quit." % _case)
 	confirm.get_cancel_button().pressed.emit()
 	await _frames(2)
-	_expect(menu.is_open() and current_scene == world, "%s: Cancel left the run." % _case)
-	_expect(focused() == menu.get_entry(&"save_quit"), "%s: Cancel lost the focus." % _case)
+	_expect(not paused and not menu.is_open() and current_scene == world,
+		"%s: Keep playing did not resume the same run." % _case)
+	_expect(focused() != confirm.get_confirm_button() and focused() != confirm.get_cancel_button(),
+		"%s: the hidden modal still held focus." % _case)
+	menu.open()
 	menu.activate(&"save_quit")
 	await _frames(2)
 	confirm.get_confirm_button().pressed.emit()
@@ -245,25 +262,37 @@ func _check_a_failed_write_is_asked_about() -> void:
 	var world := await _open_world(true)
 	if world == null:
 		return
+	var payload: Dictionary = _save.capture()
+	_expect(_save.write_payload(payload).get("ok", false), "%s: could not seed a checkpoint." % _case)
+	var checkpoint := FileAccess.get_file_as_bytes(SAVE_PATH)
 	var menu := world.get_node("PauseMenu") as PauseMenu
 	menu.open()
-	await _frames(2)
-	_save.set("io", RefusingIO.new())
 	menu.activate(&"save_quit")
 	await _frames(2)
-	_save.set("io", null)
-	var prefix := L10n.t("menu.confirm_quit_failed").split("{detail}")[0]
-	_expect(
-		menu.get_confirm().visible and menu.get_confirm().get_message().begins_with(prefix),
-		"%s: a failed write did not ask (question '%s')." % [_case, menu.get_confirm().get_message()]
-	)
-	_expect(current_scene == world, "%s: a failed write left the run." % _case)
-	_expect(not _save.has_save(), "%s: a refused write left a save behind." % _case)
-	menu.get_confirm().get_cancel_button().pressed.emit()
+	_save.set("io", RefusingIO.new())
+	var confirm := menu.get_confirm()
+	confirm.get_confirm_button().pressed.emit()
 	await _frames(2)
-	_expect(menu.is_open(), "%s: Cancel closed the menu." % _case)
-	menu.close()
-	await _free_current_scene()
+	var warning := L10n.t("menu.confirm_quit_failed")
+	_expect(confirm.visible and confirm.get_message().begins_with(warning)
+		and confirm.get_message().contains(L10n.t("place.classroom")),
+		"%s: the failed write did not explain the checkpoint (question '%s')." % [_case, confirm.get_message()])
+	_expect(current_scene == world and paused and focused() == confirm.get_cancel_button(),
+		"%s: the failed write left the run or focused the destructive answer." % _case)
+	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == checkpoint, "%s: a refused write changed the save." % _case)
+	confirm.get_cancel_button().pressed.emit()
+	await _frames(2)
+	_expect(not menu.is_open() and not paused, "%s: Keep playing did not close the failed-write dialog." % _case)
+	menu.open()
+	menu.activate(&"save_quit")
+	confirm.get_confirm_button().pressed.emit()
+	await _frames(2)
+	_expect(confirm.visible and confirm.get_message().begins_with(warning), "%s: retry did not require agreement." % _case)
+	confirm.get_confirm_button().pressed.emit()
+	_save.set("io", null)
+	await _wait_for_title()
+	_expect(FileAccess.get_file_as_bytes(SAVE_PATH) == checkpoint,
+		"%s: the explicit return without saving destroyed the old save." % _case)
 
 
 # --- 5. New game from the title, with leftovers of the old run ---------------------------
@@ -434,3 +463,29 @@ func _physics_frames(count: int) -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+
+func _press_key(code: Key) -> void:
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	await _press(event)
+
+
+func _press_pad(button: JoyButton) -> void:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	await _press(event)
+
+
+func _press(event: InputEvent) -> void:
+	event.pressed = true
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+	await process_frame
+	var release := event.duplicate() as InputEvent
+	release.pressed = false
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()
+	await process_frame
+	await process_frame
