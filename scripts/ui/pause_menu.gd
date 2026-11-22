@@ -607,7 +607,7 @@ func _fit_touch_width(view_width: float, left: float) -> float:
 		var index := entry.get_index() % 2
 		pair[index] = maxf(pair[index], entry.get_combined_minimum_size().x)
 	var resume_width := get_entry(&"resume").get_combined_minimum_size().x
-	width = minf(view_width - left * 2.0, maxf(width, resume_width, pair.x, pair.y))
+	width = minf(view_width - left * 2.0, maxf(maxf(width, resume_width), maxf(pair.x, pair.y)))
 	_entry_grid.columns = 2 if pair.x + pair.y + 6.0 <= width else 1
 	_column.custom_minimum_size = Vector2(width, 0.0)
 	return width
@@ -621,7 +621,8 @@ func _fit_after_reflow() -> void:
 func _fit_touch_height(safe: Rect2, left: float, width: float) -> void:
 	var needed := _column.get_combined_minimum_size().y + 2.0
 	var foot := 90.0 if _hint.visible else 24.0
-	var height := maxf(1.0, minf(needed, safe.size.y * 0.68, safe.size.y - 24.0 - foot))
+	var limit := minf(safe.size.y * 0.68, safe.size.y - 24.0 - foot)
+	var height := clampf(needed, 1.0, maxf(1.0, limit))
 	var top := maxf(24.0, (safe.size.y - height - (foot - 24.0)) * 0.5)
 	var bounds := Rect2(safe.position + Vector2(left, top), Vector2(width, height))
 	MobileLayout.place_menu_column(_column, _touch_scroll, bounds)
