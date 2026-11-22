@@ -17,8 +17,8 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 60
     env:
-      SOURCE_SHA: f41e0c2
-      IPA_NAME: Where-Is-School-Story-Editor-f41e0c2.ipa
+      SOURCE_SHA: 262aaa9330692dde02bc1507d945b8de27c8d053
+      IPA_NAME: Where-Is-School-Story-Editor-262aaa9.ipa
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -28,7 +28,7 @@ jobs:
           include-templates: true
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: f41e0c2
+          ref: 262aaa9330692dde02bc1507d945b8de27c8d053
           path: game-source
           persist-credentials: false
       - name: Build and inspect the ordinary iPhone device archive
