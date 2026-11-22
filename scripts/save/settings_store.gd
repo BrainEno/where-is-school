@@ -19,13 +19,14 @@ extends RefCounted
 ##
 ## The read-modify-write discipline stays where it is, inside each owner: every write loads
 ## the file first and sets only the keys that owner owns, so a volume change never drops the
-## language and the other way round. This class only answers "which file".
+## language and the other way round. This class owns the filename and staging procedure.
 ##
 ## The keys are named here too, next to the path, because a reader looking for where the
 ## language is stored should not have to read two autoloads to find it:
 
 ## The whole preferences file. One file, not one per subsystem.
 const PATH := "user://settings.cfg"
+const STAGING_PATH := PATH + ".tmp"
 
 ## `[display] locale` - the language choice, owned by `Loc`. `Settings` never writes it and
 ## deliberately preserves it (`reset_to_defaults()` leaves it alone).
@@ -48,10 +49,21 @@ static func open() -> ConfigFile:
 	return config
 
 
-## Saves `config`. Returns the engine's error, so the caller can tell the player that the
-## settings did not persist instead of believing they did.
+## Publish a complete file in one same-directory rename. A refused stage or swap leaves
+## the previous settings in place: never truncate it to save one toggle.
 static func write(config: ConfigFile) -> Error:
-	return config.save(PATH)
+	var error := config.save(STAGING_PATH)
+	if error != OK:
+		return error
+	var staged := ConfigFile.new()
+	error = staged.load(STAGING_PATH)
+	if error == OK and staged.encode_to_text() != config.encode_to_text():
+		error = ERR_FILE_CORRUPT
+	if error == OK:
+		error = DirAccess.rename_absolute(STAGING_PATH, PATH)
+	if error != OK:
+		DirAccess.remove_absolute(STAGING_PATH)
+	return error
 
 
 ## The value of `[section] key` when it is one of `allowed`; otherwise `fallback`, and a

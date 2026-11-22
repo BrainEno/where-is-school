@@ -1170,9 +1170,13 @@ func _wait_for_world(reports: Array) -> Node:
 func _check_entry_points_share_the_flow() -> void:
 	_case_label = "the three ways into a new game"
 	Harness.stage = _case_label
+	var pause_source := FileAccess.get_file_as_string("res://scripts/ui/pause_menu.gd")
+	_expect(pause_source.contains('preload("res://scripts/ui/new_game_attempt.gd")')
+		and pause_source.contains("_new_game_attempt().start()"),
+		"%s: PauseMenu no longer delegates to NewGameAttempt." % _case_label)
 	var files := {
 		"the title screen": "res://scripts/ui/title_screen.gd",
-		"the pause menu": "res://scripts/ui/pause_menu.gd",
+		"the pause menu's NewGameAttempt": "res://scripts/ui/new_game_attempt.gd",
 		"the end card": "res://scripts/ui/end_card.gd",
 	}
 	for label: String in files:

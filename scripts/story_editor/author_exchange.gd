@@ -2,10 +2,10 @@ extends Node
 ## Explicit handoff to the desktop save dialog or the iOS author-only UIKit bridge.
 ## The bridge can see only these request/result files, not drafts, settings or saves.
 
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
-const Journal := preload("res://scripts/dev/authoring/draft_journal.gd")
-const INBOX := "user://authoring/share/request.json"
-const RECEIPT := "user://authoring/share/result.json"
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const Journal := preload("res://scripts/story_editor/draft_journal.gd")
+const INBOX := "user://story_editor/share/request.json"
+const RECEIPT := "user://story_editor/share/result.json"
 const FILE_NAME := "where-is-school-dialogue-draft.json"
 
 signal exported(digest: String, note: String)
