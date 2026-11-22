@@ -88,6 +88,10 @@
     "site_interior": {
       "scene": "res://scenes/locations/site_interior/site_interior.tscn",
       "spawn": "FromPorch"
+    },
+    "container_yard": {
+      "scene": "res://scenes/locations/container_yard/container_yard.tscn",
+      "spawn": "FromPlayground"
     }
   }
 }

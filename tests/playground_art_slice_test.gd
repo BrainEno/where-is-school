@@ -112,10 +112,15 @@ const EXITS := {
 		Vector3(-22.7, 0.9, 17.05), "res://scenes/locations/site_interior/site_interior.tscn",
 		&"FromPorch", false,
 	],
+	"pg_container_yard": [
+		Vector3(13.0, 0.9, -18.2), "res://scenes/locations/container_yard/container_yard.tscn",
+		&"FromPlayground", false,
+	],
 }
 const SPAWNS := {
 	"FromAlley": Vector3(0.0, 0.0, 16.0), "FromCorridor": Vector3(-3.0, 0.0, -17.6),
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
+	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
 ## The baked navigation at base commit 359ed4a (Godot CI run 43014461771).
 ## 143 with the old solid block. The shell's doorway and threshold make the cabin

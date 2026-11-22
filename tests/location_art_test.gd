@@ -124,15 +124,17 @@ const LOCATIONS := {
 		# paper has an anchor and a pick box; tap and bench now trace their final meshes.
 		# The look at the building under construction picks by its two gate leaves. The
 		# site's gate (the same two leaves) and the climb over the hoarding (the south sand
-		# pile) add a sphere each and three boxes.
-		"shapes": 106,
-		"interactables": 19, # The new paper read is separate from the view through the doorway.
-		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite"],
+		# pile) add a sphere each and three boxes. The way to the container yard (the bent
+		# chain-link behind the container) adds a sphere and a box.
+		"shapes": 108,
+		"interactables": 20, # The new paper read is separate from the view through the doorway.
+		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
 			"pg_site_gate": "site_interior/FromPorch",
 			"pg_site_climb": "site_interior/FromPorch",
+			"pg_container_yard": "container_yard/FromPlayground",
 		},
 	},
 	"laboratory": {
@@ -218,6 +220,13 @@ const LOCATIONS := {
 		"interactables": 3, # The porch door out, the key in the chalk star, the ladder.
 		"spawns": ["FromPorch"],
 		"exits": {"site_interior_porch_door": "playground/FromSite"},
+	},
+	"container_yard": {
+		"scene": "res://scenes/locations/container_yard/container_yard.tscn",
+		"stage": false,
+		"interactables": 4, # The gap back to the yard, the tyre stairs, the long plank, the orange box.
+		"spawns": ["FromPlayground"],
+		"exits": {"cy_back_to_playground": "playground/FromContainerYard"},
 	},
 }
 

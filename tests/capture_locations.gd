@@ -26,6 +26,7 @@ extends SceneTree
 ## stench filter is up) and fixed views, including the 03 crowd at authored keyframes.
 ## `annex-thresholds` compares the new door approaches on the real hall floor.
 ## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
+## `container-yard` frames the 集装箱堆场 past the yard: overhead, the tyre stairs, the planks.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -199,6 +200,26 @@ const SITE_INSIDE_VIEWS := [
 const SITE_GATE_OPEN_VIEWS := [
 	["gate_open", Vector3(-22.9, 1.9, 15.6), Vector3(-26.6, 0.9, 12.6)],
 ]
+## The container yard (`container_yard`): fixed views first (the maze from overhead, the
+## yard from a corner, the tyre stairs, the long plank from the gap under it, the roofs and
+## the high plank over the orange box), then follow-camera stances, then the way in.
+const YARD_VIEWS := [
+	["maze_top", Vector3(0.5, 46.0, 9.0), Vector3(-1.0, 0.0, -1.0)],
+	["overview", Vector3(24.0, 26.0, 30.0), Vector3(-2.0, 0.0, -3.0)],
+	["tyre_stairs", Vector3(14.5, 3.0, 16.6), Vector3(10.5, 1.6, 10.5)],
+	["long_plank", Vector3(-1.2, 1.5, 10.8), Vector3(-3.8, 4.3, 7.0)],
+	["roofs", Vector3(16.5, 9.5, 11.5), Vector3(5.0, 3.5, 3.0)],
+	["high_plank", Vector3(13.0, 2.0, -8.6), Vector3(8.5, 5.0, -11.0)],
+]
+const YARD_STANCES := [
+	["entrance", Vector3(14.0, 0.0, 14.6)],
+	["lane", Vector3(2.0, 0.0, -4.25)],
+	["tyre_foot", Vector3(12.2, 0.0, 12.6)],
+	["orange", Vector3(9.75, 0.0, -8.75)],
+]
+## The schoolyard side: the bent chain-link behind the blue container.
+const YARD_GAP_STANCES := [["behind_container", Vector3(13.0, 0.0, -17.6)]]
+const YARD_GAP_VIEWS := [["fence_flap", Vector3(16.5, 3.2, -12.5), Vector3(13.0, 0.7, -18.4)]]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
@@ -240,6 +261,7 @@ var _school_focus := false
 var _dream_annex := false
 var _construction_site := false
 var _site_interior := false
+var _container_yard := false
 var _annex_thresholds := false
 
 var _main: Node = null
@@ -284,6 +306,8 @@ func _initialize() -> void:
 			_construction_site = true
 		elif arg == "site-interior":
 			_site_interior = true
+		elif arg == "container-yard":
+			_container_yard = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -355,6 +379,11 @@ func _run() -> void:
 			state.set_flag(&"site_gate_key", true)
 		await _capture_views(out_dir, "playground", ^"Interactables/SiteGate", [], SITE_GATE_OPEN_VIEWS,
 			"site_interior_gate_open")
+	elif _container_yard:
+		await _capture_views(out_dir, "container_yard", ^"Containers", [], YARD_VIEWS, "container_yard")
+		await _capture_views(out_dir, "container_yard", ^"Containers", YARD_STANCES, [], "container_yard_walk")
+		await _capture_views(out_dir, "playground", ^"Interactables/ToContainerYard", YARD_GAP_STANCES,
+			YARD_GAP_VIEWS, "container_yard_gap")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

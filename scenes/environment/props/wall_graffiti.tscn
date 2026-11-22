@@ -1,0 +1,50 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/interaction/camera_look.gd" id="1_look"]
+[ext_resource type="Script" path="res://scripts/world/camera_shot.gd" id="2_shot"]
+[ext_resource type="Texture2D" path="res://assets/materials/corridor/graffiti/wall_graffiti.png" id="3_paint"]
+[ext_resource type="ArrayMesh" path="res://assets/materials/corridor/graffiti/wall_graffiti_ink.tres" id="4_ink"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_reach"]
+resource_local_to_scene = true
+radius = 1.05
+
+[sub_resource type="Resource" id="CameraShot_wall"]
+script = ExtResource("2_shot")
+fov = 51.5
+glide_seconds = 0.6
+release_seconds = 0.65
+insert_anchor_path = NodePath("Paint")
+insert_eye_offset = Vector3(0.28, 0.72, 1.8)
+insert_backdrop_path = NodePath("..")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pigment"]
+transparency = 1
+depth_draw_mode = 0
+diffuse_mode = 3
+specular_mode = 2
+metallic_specular = 0.0
+roughness = 1.0
+albedo_texture = ExtResource("3_paint")
+texture_filter = 3
+texture_repeat = false
+
+[node name="WallGraffiti" type="Area3D"]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("1_look")
+interact_id = &"teaching_entrance_graffiti"
+prompt_key = "prompt.look"
+radius = 1.05
+camera_shot = SubResource("CameraShot_wall")
+outline_paths = PackedStringArray("Paint")
+hold_seconds = 4.6
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_reach")
+
+[node name="Paint" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.59, -0.024)
+cast_shadow = 0
+material_override = SubResource("StandardMaterial3D_pigment")
+mesh = ExtResource("4_ink")
