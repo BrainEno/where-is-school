@@ -5,10 +5,10 @@ extends Node3D
 # The portrait view puts the irregular near tower and projecting pipes forward,
 # like the photo. The review captures the same camera without an editor overlay.
 const VIEWS := [
-	{ "focus": Vector3(-2.10, 4.06, 0.92), "orbit": Vector3(46, 31.8, 28.9), "fov": 50.8 },
+	{ "focus": Vector3(-1.58, 3.65, 1.58), "orbit": Vector3(41, 29.2, 29.7), "fov": 55.4 },
 	{ "focus": Vector3(-1.35, 2.30, -1.30), "orbit": Vector3(216, 47, 41.0), "fov": 42.0 },
-	{ "focus": Vector3(-3.15, 4.64, 5.30), "orbit": Vector3(27.5, 23.8, 20.3), "fov": 44.0 },
-	{ "focus": Vector3(4.26, 5.06, -2.67), "orbit": Vector3(72, 23.5, 18.8), "fov": 39.2 },
+	{ "focus": Vector3(-3.41, 4.68, 5.51), "orbit": Vector3(33.8, 20.8, 20.3), "fov": 45.0 },
+	{ "focus": Vector3(4.28, 4.84, -2.94), "orbit": Vector3(77, 19, 17.5), "fov": 40.8 },
 ]
 
 var _focus: Vector3

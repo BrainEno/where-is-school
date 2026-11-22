@@ -136,7 +136,7 @@ func mitered_pipe(sections: Array[Vector3], inks: Array[StringName], slope: Vect
 			face(inks.front(), ring, Vector3.DOWN)
 		last = ring
 		last_tangent = tangent
-	# The only cap inside the bore is buried at the socket, more than four units away.
+	# The only cap inside the bore is buried at the socket, not across the mouth.
 	face(inks.back(), last, Vector3.UP)
 
 

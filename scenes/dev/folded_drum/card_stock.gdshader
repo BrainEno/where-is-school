@@ -6,9 +6,13 @@ uniform vec4 pigment : source_color = vec4(0.85, 0.79, 0.68, 1.0);
 uniform int stock_kind : hint_enum("Card", "Mineral", "Painted foil") = 0;
 uniform float grain_strength : hint_range(0.0, 1.5) = 1.0;
 uniform float relief : hint_range(0.0, 0.04) = 0.013;
+uniform float exposed_bias : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 dark_coat : source_color = vec4(0.105, 0.115, 0.125, 1.0);
 
 varying vec3 stock_position;
+
+// Turn the grain off the model axes, so a folded face never samples a row of the lattice.
+const mat3 GRAIN_AXES = mat3(vec3(0.80, 0.60, 0.0), vec3(-0.48, 0.64, 0.60), vec3(0.36, -0.48, 0.80));
 
 float fleck(vec3 p) {
 	p = fract(p * 0.1031);
@@ -24,6 +28,24 @@ float stock_noise(vec3 point) {
 	vec2 b = mix(vec2(fleck(cell + vec3(0, 1, 0)), fleck(cell + vec3(0, 1, 1))),
 		vec2(fleck(cell + vec3(1, 1, 0)), fleck(cell + vec3(1, 1, 1))), f.x);
 	return mix(mix(a.x, b.x, f.y), mix(a.y, b.y, f.y), f.z);
+}
+
+// Tiny hollows at jittered lattice corners. The radius plus the maximum jitter
+// is less than one cell, so only the eight corners around the sample can contribute.
+float stock_pores(vec3 point) {
+	vec3 cell = floor(point);
+	vec3 f = fract(point);
+	float pore = 0.0;
+	for (int i = 0; i < 8; i++) {
+		vec3 corner = vec3(float(i & 1), float((i >> 1) & 1), float(i >> 2));
+		vec3 seed = (cell + corner) * 0.87;
+		vec3 jitter = vec3(fleck(seed), fleck(seed + 29.7), fleck(seed + 53.8));
+		vec3 to_pore = f - corner - (jitter - 0.5) * 0.69;
+		float radius = mix(0.18, 0.43, jitter.y * jitter.y);
+		float bowl = 1.0 - smoothstep(0.0, radius * radius, dot(to_pore, to_pore));
+		pore = max(pore, bowl * mix(0.43, 1.0, jitter.x));
+	}
+	return pore;
 }
 
 // Fade the finest grain once a pixel covers more than a fibre width.
@@ -53,33 +75,38 @@ void fragment() {
 		// Rolled, blackened foil: noisy paint breaks, axial scuffs and a shallow crimp,
 		// contrasted with exposed tin. The shine itself comes from the scene lights/sky.
 		vec2 radial = normalize(p.xz + vec2(0.0001));
-		float scuff = stock_noise(p * vec3(39.0, 3.0, 36.0));
-		float hammer = stock_noise(p * vec3(14.0, 21.0, 14.0));
-		float tear = stock_noise(p * vec3(8.0, 6.0, 8.0));
-		float exposed = smoothstep(0.45, 0.59,
-			dot(radial, vec2(0.93, 0.37)) + 0.27 * (tear - 0.5) + 0.14 * (scuff - 0.5));
-		float seam = smoothstep(0.994, 0.9995, dot(radial, vec2(0.91, 0.4146)));
-		vec3 tin = pigment.rgb * (0.66 + 0.39 * hammer + 0.19 * scuff);
-		ALBEDO = mix(dark_coat.rgb * (0.84 + 0.31 * tear), tin, exposed) * (1.0 - seam * 0.25);
-		METALLIC = mix(0.32, 0.69, exposed);
-		ROUGHNESS = mix(0.52, 0.32, exposed) + scuff * 0.13;
-		SPECULAR = 0.62;
-		NORMAL = grain_normal(NORMAL, VERTEX, relief * (0.54 * hammer + 0.27 * scuff - 0.22 * seam));
+		vec3 scratches = p * vec3(46.0, 3.2, 41.0);
+		float scuff = (stock_noise(scratches) - 0.5) * coverage(scratches);
+		float hammer = stock_noise(GRAIN_AXES * (p * vec3(14.5, 11.0, 14.5)));
+		float wrinkle = 1.0 - abs(2.0 * stock_noise(GRAIN_AXES * p * 8.3) - 1.0);
+		float tear = stock_noise(p * vec3(5.9, 4.7, 5.9));
+		float exposed = smoothstep(0.39, 0.62, dot(radial, vec2(0.93, 0.37))
+			+ 0.57 * (tear - 0.5) + 0.17 * scuff + exposed_bias);
+		float seam = smoothstep(0.994, 0.9995, dot(radial, vec2(0.91, 0.4146))) * (1.0 - exposed_bias);
+		vec3 tin = pigment.rgb * (0.76 + 0.53 * hammer + 0.20 * scuff);
+		ALBEDO = mix(dark_coat.rgb * (0.79 + 0.44 * tear), tin, exposed) * (1.0 - seam * 0.23);
+		METALLIC = mix(0.32, 0.72, exposed);
+		ROUGHNESS = mix(0.56, 0.28, exposed) + 0.15 * hammer + 0.085 * scuff;
+		SPECULAR = 0.61;
+		NORMAL = grain_normal(NORMAL, VERTEX,
+			relief * (0.57 * hammer + 0.38 * wrinkle + 0.25 * scuff - 0.22 * seam));
 	} else {
 		bool mineral = stock_kind == 1;
-		vec3 mid = p * (mineral ? vec3(15.3) : vec3(18.0, 26.0, 20.0));
-		vec3 fine = p * (mineral ? vec3(57.0) : vec3(36.0, 73.0, 43.0));
-		float mottling = stock_noise(p * 2.6 + vec3(4.3, 0.7, 1.1));
+		vec3 q = GRAIN_AXES * p;
+		vec3 mid = q * (mineral ? vec3(18.5) : vec3(17.0, 27.0, 22.0));
+		vec3 fine = GRAIN_AXES * mid * vec3(3.07, 1.85, 2.51);
+		vec3 pits = q * (mineral ? vec3(24.0, 23.0, 26.0) : vec3(30.0, 46.0, 38.0));
+		float cloud = stock_noise(q * 2.8 + vec3(4.3, 0.7, 1.1)) - 0.5;
 		float pulp = (stock_noise(mid) - 0.5) * coverage(mid);
-		float grain = (stock_noise(fine + vec3(5.0, 1.0, 7.0)) - 0.5) * coverage(fine);
-		float pinholes = smoothstep(0.16, 0.40, abs(pulp - grain * 0.31));
-		float tint = 1.0 + grain_strength * (pulp * 0.39 + grain * 0.29 - pinholes * 0.32
-			+ (mottling - 0.5) * (mineral ? 0.27 : 0.14));
+		float grit = (stock_noise(fine + vec3(5.0, 1.0, 7.0)) - 0.5) * coverage(fine);
+		float pinholes = stock_pores(pits + 11.4) * coverage(pits);
+		float tint = 1.0 + grain_strength * (pulp * 0.23 + grit * 0.44
+			- pinholes * (mineral ? 0.37 : 0.27) + cloud * (mineral ? 0.23 : 0.16));
 		ALBEDO = pigment.rgb * tint;
 		NORMAL = grain_normal(NORMAL, VERTEX,
-			relief * (0.67 * pulp + 0.25 * grain - 0.28 * pinholes));
-		AO = 1.0 - grain_strength * pinholes * 0.20;
-		ROUGHNESS = 0.94 + pinholes * 0.05;
+			relief * (0.56 * pulp + 0.29 * grit - 0.29 * pinholes));
+		AO = 1.0 - grain_strength * pinholes * 0.12;
+		ROUGHNESS = 0.92 + pinholes * 0.07;
 		SPECULAR = 0.18;
 	}
 }

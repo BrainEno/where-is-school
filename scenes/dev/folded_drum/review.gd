@@ -4,7 +4,7 @@ extends SceneTree
 
 const PREVIEW := preload("res://scenes/dev/folded_drum/preview.tscn")
 const FRAMES := [
-	{ "file": "folded_drum_01_reference_angle", "view": 0, "size": Vector2i(1280, 1440) },
+	{ "file": "folded_drum_01_reference_angle", "view": 0, "size": Vector2i(1280, 1560) },
 	{ "file": "folded_drum_02_right_louvres", "view": 3, "size": Vector2i(1600, 1000) },
 	{ "file": "folded_drum_03_mitered_pipes", "view": 2, "size": Vector2i(1600, 1000) },
 ]
@@ -196,7 +196,7 @@ func _capture(scene: Node, output: String) -> void:
 		_expect(size == desired and shades.size() > 100,
 			"%s: expected %s drawn pixels, got %s (%d swatches)" % [frame["file"], desired, size, shades.size()])
 		var file: String = frame["file"] + ".jpg"
-		var error := image.save_jpg(output.path_join(file), 0.93)
+		var error := image.save_jpg(output.path_join(file), 0.94)
 		_expect(error == OK, "cannot save %s: %s" % [file, error_string(error)])
 		if error == OK:
 			print("EVIDENCE " + JSON.stringify({"frame": file, "size": [size.x, size.y], "shows": {

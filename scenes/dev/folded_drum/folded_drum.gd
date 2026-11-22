@@ -8,14 +8,16 @@ const CardMesh := preload("res://scenes/dev/folded_drum/card_mesh.gd")
 const STOCK := preload("res://scenes/dev/folded_drum/card_stock.gdshader")
 const PIGMENTS := {
 	&"ivory": "dbcdb3", &"chalk": "e5dbc4", &"cream": "c9b898", &"cut": "b19671",
-	&"shade": "817160", &"base": "c8bfb0", &"ink": "29313f", &"glass": "27354c",
-	&"recess": "23242a", &"rib": "555451", &"blue": "344585", &"blue_light": "48639f",
-	&"teal": "35636b", &"dark_teal": "304c54", &"red": "ab3f4b", &"rose": "b94b6c",
+	&"shade": "817160", &"base": "cec7b9", &"ink": "29313f", &"glass": "27354c",
+	&"recess": "23242a", &"rib": "555451", &"blue": "39477d", &"blue_light": "4b6198",
+	&"teal": "3b5963", &"dark_teal": "364852", &"red": "a43e48", &"rose": "af4b68",
 	&"orange": "bf654c", &"yellow": "d1a34f", &"tube_inside": "7c7165",
 	&"louvre_back": "32302c", &"louvre_shadow": "565149", &"louvre_face": "a59b88",
-	&"louvre_cut": "b8ac96", &"foil": "c1bdb0", &"cut_tin": "968e83", &"lip_oxide": "763639",
+	&"louvre_cut": "b3a692", &"foil": "cac5b8", &"socket_foil": "b5ac9a", &"cut_tin": "968e83",
+	&"lip_oxide": "763639",
 }
 const MINERAL_STOCK := [&"base", &"rib", &"louvre_back", &"louvre_shadow", &"louvre_face", &"louvre_cut", &"cut_tin"]
+const PRINTED_STOCK := [&"teal", &"dark_teal", &"blue", &"blue_light", &"red", &"rose", &"orange", &"yellow"]
 const FLOORS := [2.28, 4.08, 5.88]
 const EAVE := 7.72
 
@@ -28,13 +30,18 @@ func _ready() -> void:
 		paper.resource_name = String(ink)
 		paper.shader = STOCK
 		paper.set_shader_parameter("pigment", Color.html(PIGMENTS[ink]))
-		if ink == &"foil":
+		if ink in [&"foil", &"socket_foil"]:
 			paper.set_shader_parameter("stock_kind", 2)
-			paper.set_shader_parameter("relief", 0.0065)
+			paper.set_shader_parameter("relief", 0.012 if ink == &"socket_foil" else 0.009)
+			if ink == &"socket_foil":
+				paper.set_shader_parameter("exposed_bias", 1.0)
 		elif ink in MINERAL_STOCK:
 			paper.set_shader_parameter("stock_kind", 1)
-			paper.set_shader_parameter("relief", 0.022 if ink == &"base" else 0.016)
-			paper.set_shader_parameter("grain_strength", 1.18)
+			paper.set_shader_parameter("relief", 0.014 if ink == &"base" else 0.012)
+			paper.set_shader_parameter("grain_strength", 1.12)
+		elif ink in PRINTED_STOCK:
+			paper.set_shader_parameter("relief", 0.007)
+			paper.set_shader_parameter("grain_strength", 0.72)
 		elif ink in [&"glass", &"recess"]:
 			paper.set_shader_parameter("relief", 0.003)
 			paper.set_shader_parameter("grain_strength", 0.48)
@@ -138,7 +145,7 @@ func _front(parent: Node3D) -> void:
 	wall.commit(parent, "ArcadeAndFrontPanels", _palette)
 	_folded_roof(parent, [-5.98, -3.41, -0.83, 1.75, 4.26], [0.48, 0.1, -0.03, 0.1, -0.20], true)
 	_tube(parent, "LongTube", Vector3(3.52, 4.70, 0.10), Vector3(96.0, -1.6, 0),
-		6.04, 0.81, Vector2(-0.49, 1.09))
+		6.61, 0.81, Vector2(-0.49, 1.09))
 	_tube(parent, "ShortTube", Vector3(-5.96, 4.75, 0.12), Vector3(95.0, -3.0, 0),
 		4.79, 0.73, Vector2(-0.24, 0.98))
 
@@ -235,7 +242,7 @@ func _side(parent: Node3D) -> void:
 	wall.commit(parent, "ScreenWallAndFoldedBays", _palette)
 	_folded_roof(parent, [-4.95, -2.48, 0.01, 2.51, 5.01], [-0.48, -0.09, 0.10, 0.04, 0.31], false)
 	var stanchion := CardMesh.new()
-	_cup(stanchion, Vector3(-3.80, 0, 0.18), 7.69, 13.16, 0.44)
+	_cup(stanchion, Vector3(-4.04, 0, 0.18), 7.69, 13.80, 0.44)
 	stanchion.commit(parent, "LongPaperStanchion", _palette)
 
 
@@ -314,7 +321,7 @@ func _tube(parent: Node3D, part_name: String, base: Vector3, aim: Vector3,
 	parent.add_child(barrel, false, Node.INTERNAL_MODE_BACK)
 	mount.roll([Vector2(r + 0.24, -0.18), Vector2(r + 0.24, 0.07), Vector2(r + 0.18, 0.22),
 		Vector2(r + 0.12, 0.236), Vector2(r * 0.95, 0.29)],
-		[&"cut", &"cream", &"cut_tin", &"chalk"], Vector3.ZERO, 1.0, 48)
+		[&"cut", &"cream", &"socket_foil", &"socket_foil"], Vector3.ZERO, 1.0, 48)
 	mount.commit(barrel, "ReinforcedSocket", _palette)
 	var model := CardMesh.new()
 	model.mitered_pipe([
@@ -384,10 +391,10 @@ func _round_hall(parent: Node3D) -> void:
 
 func _corner_tower(parent: Node3D) -> void:
 	var stack := CardMesh.new()
-	stack.roll([Vector2(0.96, 0.024), Vector2(1.10, 0.11), Vector2(1.24, 1.01)],
+	stack.roll([Vector2(0.96, 0.024), Vector2(1.10, 0.16), Vector2(1.25, 1.14)],
 		[&"ink", &"blue"], Vector3.ZERO, 1.16, 56)
-	var start := 0.79
-	var heights := [1.59, 1.44, 1.37, 1.32, 1.49]
+	var start := 0.99
+	var heights := [1.58, 1.37, 1.33, 1.29, 1.44]
 	for i: int in heights.size():
 		var r := 1.66 - i * 0.081
 		var top: float = start + heights[i]

@@ -70,7 +70,7 @@ jobs:
           capture_log="$RUNNER_TEMP/folded-capture.log"
           export VK_DRIVER_FILES=$(find /usr/share/vulkan/icd.d -type f -name 'lvp_icd*.json' -print -quit)
           test -n "$VK_DRIVER_FILES"
-          if ! xvfb-run -a -s '-screen 0 1800x1560x24' godot --path . --resolution 1280x1440 \
+          if ! xvfb-run -a -s '-screen 0 1800x1660x24' godot --path . --resolution 1280x1560 \
               --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy \
               --script res://scenes/dev/folded_drum/review.gd -- "capture=$RUNNER_TEMP/folded-frames" \
               > "$capture_log" 2>&1 || grep -Eq 'SCRIPT ERROR|^ERROR:' "$capture_log" ||
@@ -81,7 +81,7 @@ jobs:
             exit 1
           fi
           cat "$capture_log"
-          grep -E  '^Godot Engine|^Vulkan|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
+          grep -E '^Godot Engine|^Vulkan|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
             while IFS= read -r result; do echo "::notice title=Folded Drum viewport::$result"; done
       - name: Prepare exact-byte evidence for the artifact and check API
         id: pack

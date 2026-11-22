@@ -12,7 +12,7 @@
 
 左侧两根金属筒的红口环按斜面切出，环的上下缘在筒轴上不齐，斜面以内是实际的空腔。纸浆、砂眼和金属折皱用物体坐标生成；既改变颜色，也扰动表面法线，所以会随光照变化，而不是给截图加一层固定颗粒。主光从左上方打下，右侧的低强度掠射光用于读清百叶的薄边，檐下和接缝保留阴影。
 
-照片没拍到的背面用低调的回廊和窗带闭合；后立面、楼体进深及精确比例都是推定。整体约 21 × 14.8 × 21 个游戏单位（宽 × 高 × 深，含底板与外挑口），不是实测工程尺寸。
+照片没拍到的背面用低调的回廊和窗带闭合；后立面、楼体进深及精确比例都是推定。整体约 21 × 14.8 × 21.7 个游戏单位（宽 × 高 × 深，含底板与外挑口），不是实测工程尺寸。
 
 ## 来源及用途边界
 
@@ -26,7 +26,7 @@
 godot --headless --path . --import
 godot --headless --path . --script res://scenes/dev/folded_drum/review.gd
 # 截图需要窗口；Linux CI 可用 xvfb-run 包裹下面的命令。
-godot --path . --resolution 1280x1440 --rendering-method forward_plus \
+godot --path . --resolution 1280x1560 --rendering-method forward_plus \
   --audio-driver Dummy --script res://scenes/dev/folded_drum/review.gd -- capture="$(pwd)/build/folded-drum"
 ```
 
