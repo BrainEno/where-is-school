@@ -1,4 +1,4 @@
-[gd_scene load_steps=271 format=3]
+[gd_scene load_steps=272 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass"]
@@ -148,6 +148,9 @@ size = Vector3(0.3, 2.6, 2.6499999999999986)
 
 [sub_resource type="BoxMesh" id="BoxMesh_11"]
 size = Vector3(0.3, 2.6, 2.6499999999999986)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_12"]
+size = Vector3(0.36, 0.4, 1.1000000000000014)
 
 [sub_resource type="BoxMesh" id="BoxMesh_12"]
 size = Vector3(0.36, 0.4, 1.1000000000000014)
@@ -847,10 +850,16 @@ shape = SubResource("BoxShape3D_11")
 mesh = SubResource("BoxMesh_11")
 material_override = ExtResource("art_school_wall")
 
-[node name="SideDoorLintel" type="MeshInstance3D" parent="." groups=["camera_occluder"]]
+[node name="SideDoorLintel" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-11.15, 2.65, 15.8)
+collision_layer = 128
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SideDoorLintel"]
+shape = SubResource("BoxShape3D_12")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SideDoorLintel"]
 mesh = SubResource("BoxMesh_12")
-material_override = ExtResource("art_school_teal")
+material_override = ExtResource("art_school_wall")
 
 [node name="SchoolWallDado" type="StaticBody3D" parent="."]
 position = Vector3(-11.15, 0.6, -14.05)

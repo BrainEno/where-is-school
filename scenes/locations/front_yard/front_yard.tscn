@@ -1,4 +1,4 @@
-[gd_scene load_steps=194 format=3]
+[gd_scene load_steps=195 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="6_interactable"]
@@ -175,6 +175,9 @@ size = Vector3(0.3, 2.6, 15.049999999999994)
 
 [sub_resource type="BoxMesh" id="BoxMesh_18"]
 size = Vector3(0.3, 2.6, 15.049999999999994)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_19"]
+size = Vector3(0.36, 0.4, 1.1000000000000014)
 
 [sub_resource type="BoxMesh" id="BoxMesh_19"]
 size = Vector3(0.36, 0.4, 1.1000000000000014)
@@ -703,10 +706,16 @@ shape = SubResource("BoxShape3D_18")
 mesh = SubResource("BoxMesh_18")
 material_override = ExtResource("art_school_wall")
 
-[node name="SideDoorLintel" type="MeshInstance3D" parent="." groups=["camera_occluder"]]
+[node name="SideDoorLintel" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(15.15, 2.65, 15.8)
+collision_layer = 128
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SideDoorLintel"]
+shape = SubResource("BoxShape3D_19")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SideDoorLintel"]
 mesh = SubResource("BoxMesh_19")
-material_override = ExtResource("art_school_teal")
+material_override = ExtResource("art_school_wall")
 
 [node name="DeadTree0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-6.4, 3.55, 4.2)
@@ -911,7 +920,7 @@ destination_spawn = &"FromTeachingEntrance"
 destination_id = &"corridor"
 
 [node name="ToStreet" parent="Interactables" instance=ExtResource("7_location_exit")]
-position = Vector3(14.45, 0.9, 15.8)
+position = Vector3(14.75, 0.9, 15.8)
 interact_id = &"front_yard_to_street"
 prompt_key = "prompt.out_gate"
 radius = 1.25

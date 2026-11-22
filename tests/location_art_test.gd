@@ -92,7 +92,7 @@ const LOCATIONS := {
 		# 32 bodies (ground, apron, block, rails, the wall and gate, seven dead trees with a
 		# trunk and a fader box each), the glass entrance's 9, five anchor spheres and the
 		# pick boxes of eight outline meshes.
-		"shapes": 54,
+		"shapes": 55,
 		"interactables": 5,
 		"spawns": ["FromCorridor", "FromStreet"],
 		"exits": {
@@ -106,7 +106,7 @@ const LOCATIONS := {
 		# The school front became the school wall: seven pieces of wall and gate and its foot
 		# replace the block, its plinth, the entrance's return and end wall, the entrance's
 		# pavement and the glass entrance (9); the side door outlines two meshes, not three.
-		"shapes": 87,
+		"shapes": 88,
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

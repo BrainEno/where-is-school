@@ -506,8 +506,10 @@ def _school_wall(s, x, span, face):
     s.box("SideDoor", (x, DOOR_HEIGHT / 2, (d0 + d1) / 2), (0.1, DOOR_HEIGHT, d1 - d0), "metal", occ)
     s.box("SideDoorPier", (x, (h + 0.3) / 2, d1 + p / 2), (p, h + 0.3, p), "wall", occ)
     s.box("SchoolWallSouth", (x, h / 2, sum(south) / 2), (0.3, h, south[1] - south[0]), "wall", occ)
-    # the lintel over the side door, which keeps it a door and not a gap
-    s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.36, 0.4, d1 - d0), "wall", occ, False)
+    # The lintel over the side door, which keeps it a door and not a gap. Its collider is on
+    # the fade-only layer: nothing walks into it or clicks on it, but the camera occluder fader
+    # finds it, so it fades with the wall when the camera looks through the gate at the player.
+    s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.36, 0.4, d1 - d0), "wall", occ, True, FADE_ONLY_LAYER)
 
 
 def _teaching_front(s):
@@ -598,7 +600,8 @@ def build_front_yard():
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromTeachingEntrance",
          "id_dest": "corridor"},
         # Out through the side door; nobody has to swipe (the reader is only to look at).
-        {"name": "ToStreet", "pos": (14.45, 0.9, d_mid), "id": "front_yard_to_street",
+        # Close to the leaf, so the camera's line to it crosses the door and not the pier
+        {"name": "ToStreet", "pos": (14.75, 0.9, d_mid), "id": "front_yard_to_street",
          "prompt_key": "prompt.out_gate", "radius": 1.25,
          "support": ("../../SideDoor", "../../GatePierSouth", "../../SideDoorPier"),
          "outline": ("SideDoor/StageDoor/Frame", "SideDoor/StageDoor/Bars"),
