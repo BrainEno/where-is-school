@@ -1,0 +1,150 @@
+name: Narrative author build validation
+
+on:
+  # Read-only preflight on the actual feature branch, without opening a PR before
+  # the author flow and iOS compile/pack have been exercised.
+  push:
+    branches: [main, 'arena/**']
+    paths:
+      - '.github/workflows/authoring-ci.yml'
+      - 'scripts/dev/authoring/**'
+      - 'tools/authoring_build.py'
+      - 'tools/review_author_draft.*'
+      - 'tools/macos/ios/authoring/**'
+      - 'tests/authoring_*'
+  pull_request:
+    paths:
+      - '.github/workflows/authoring-ci.yml'
+      - '.github/actions/setup-godot/**'
+      - '.godot-version'
+      - 'scripts/dev/authoring/**'
+      - 'scripts/dialogue/**'
+      - 'scripts/ui/**'
+      - 'data/dialogue/**'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'tools/authoring_build.py'
+      - 'tools/review_author_draft.*'
+      - 'tools/export_mobile.py'
+      - 'tools/export_presets.py'
+      - 'tools/verify_build.py'
+      - 'tools/godot_pck.py'
+      - 'tools/macos/ios/**'
+      - 'tests/authoring_*'
+
+permissions:
+  contents: read
+
+jobs:
+  classroom:
+    name: Edit, trial and export in the real classroom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # The branch push checks the exact head; the PR also checks its merge with main.
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - name: Import project and validate staging rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/wis-author-ci-data"
+          printf 'XDG_DATA_HOME=%s\nWIS_TEST_AUTHOR_DRAFT=%s\n' \
+            "$XDG_DATA_HOME" "$RUNNER_TEMP/author-ci-draft.json" >> "$GITHUB_ENV"
+          godot --version
+          printf '::notice title=Classroom test revision::%s\n' "$(git rev-parse HEAD)"
+          python3 tests/authoring_tools_test.py
+          bash tools/ci_import_godot.sh "$RUNNER_TEMP/author-import"
+      - name: Validate operation guards, JSON round trip and local crash recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/author-patch.log"
+          result=0
+          timeout 90 godot --headless --path . --script res://tests/authoring_patch_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Author patch and journal::%s\n' "$failure"; done || true
+            exit 1
+          fi
+      - name: Test rendered desktop, landscape touch and desktop review
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LIBGL_ALWAYS_SOFTWARE=1
+          # Use the same real panel and room in both runs; the phone-sized run substitutes
+          # safe-area metrics, not a simulator or physical keyboard.
+          log="$RUNNER_TEMP/author-desktop.log"
+          result=0
+          timeout 180 xvfb-run -a --server-args="-screen 0 1600x900x24" godot --rendering-driver opengl3 --path . --script res://tests/authoring_classroom_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Rendered author classroom::%s\n' "$failure"; done || true
+            exit 1
+          fi
+          python3 tools/review_author_draft.py "${WIS_TEST_AUTHOR_DRAFT%.json}-pending.json" \
+            --output "$RUNNER_TEMP/author-pending"
+          python3 tools/review_author_draft.py "$WIS_TEST_AUTHOR_DRAFT" --output "$RUNNER_TEMP/author-review"
+          python3 - "$RUNNER_TEMP/author-review" "$RUNNER_TEMP/author-pending" <<'PY'
+          import json, sys
+          from pathlib import Path
+          output, pending_dir = map(Path, sys.argv[1:])
+          assert {path.name for path in pending_dir.iterdir()} == {"pending_followups.json"}
+          pending, = json.loads((pending_dir / "pending_followups.json").read_text())
+          assert [pending[key] for key in ("chapter", "conversation", "hub", "choice")] == ["prologue", "student", "st_reciting", "wait"]
+          assert pending["note"] and pending["node"].startswith("author_")
+          translations = json.loads((output / "pending_en.json").read_text())
+          assert len(translations) == 10
+          assert any(f"#{pending['node']}" in row["path"] for row in translations)
+          assert (output / "preview.diff").stat().st_size > 0
+          for locale in ("zh-CN", "en"):
+              candidate = (output / f"data/dialogue/{locale}/prologue.json").read_text()
+              assert pending["note"] not in candidate
+              rows = json.loads(candidate)["conversations"]["student"]["nodes"]
+              choices = {row["id"]: row for row in rows[0]["choices"]}
+              assert choices["wait"]["next"] == pending["node"] != choices["leave"]["next"]
+          PY
+          log="$RUNNER_TEMP/author-touch.log"
+          result=0
+          WIS_TEST_AUTHOR_DRAFT= timeout 150 godot --headless --path . --script res://tests/authoring_classroom_test.gd -- --mobile-preview |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Author touch layout::%s\n' "$failure"; done || true
+            exit 1
+          fi
+          git diff --exit-code -- data/dialogue
+  iphone:
+    name: Verify unsigned author and retail iPhone archives
+    runs-on: macos-26
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Verify author archive (no device profiles, no IPA)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          if ! python3 tools/export_mobile.py ios-unsigned --authoring --output "$RUNNER_TEMP/author-device" 2>&1 | tee "$RUNNER_TEMP/author-device.log"; then
+            grep -Ei 'error:|failed' "$RUNNER_TEMP/author-device.log" | tail -12 | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Author iOS archive::%s\n' "$failure"; done
+            exit 1
+          fi
+          printf '::notice title=Author archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/author-device/BUILD.json")"
+      - name: Verify retail archive has no author scripts or native bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! python3 tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
+            grep -Ei 'error:|failed|forbidden' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Retail iOS archive::%s\n' "$failure"; done
+            exit 1
+          fi
+          printf '::notice title=Retail archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/retail-device/BUILD.json")"

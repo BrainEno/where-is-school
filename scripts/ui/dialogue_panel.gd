@@ -89,6 +89,8 @@ signal skip_requested
 ## Show every line whole, without the typewriter (Settings > Text speed > Instant).
 ## Separate from `characters_per_second`, where 0 means "paused" to the tests.
 @export var instant_reveal: bool = false
+## A detached panel has no history, auto/skip or reading progress owner.
+var preview_only := false
 
 @export_category("Band")
 ## Fraction of the viewport width the reading band may use at most.
@@ -183,6 +185,8 @@ var _style_pressed: StyleBoxFlat = StyleBoxFlat.new()
 ## next one measures what that produced. Measuring in the same frame as the resize is
 ## how a panel ends up sized for the text it had a moment ago.
 var _layout_dirty: bool = false
+var _preview_bounds := Rect2()
+var _preview_scroll := -1.0
 var _layout_stage: int = 0
 ## The portrait for the line on screen, already resolved and cropped, or null.
 var _portrait_texture: Texture2D = null
@@ -250,7 +254,7 @@ func _ready() -> void:
 		_body_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 		_build_touch_footer()
 		set_text_scale(UiTextScale.current(self))
-	else:
+	elif not preview_only:
 		_build_mode_bar()
 	_warm_portrait_resources()
 	_queue_fit()
@@ -397,7 +401,7 @@ func _on_setting_changed(key: StringName) -> void:
 		return
 	if key == &"all" or key == &"text_size":
 		set_text_scale(UiTextScale.current(self))
-	if key == &"all" or key == &"text_speed":
+	if not preview_only and (key == &"all" or key == &"text_speed"):
 		set_reveal_speed(float(settings.call("reveal_characters_per_second")))
 
 
@@ -455,7 +459,8 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	_title_label.visible = not title.is_empty()
 
 	_body_label.text = String(line.get("text", ""))
-	if _touch_footer != null:
+	_preview_scroll = -1.0
+	if preview_only or _touch_footer != null:
 		_body_touch = -1
 		_body_label.get_v_scroll_bar().value = 0.0
 	set_choices([])
@@ -475,6 +480,30 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	refresh_static_text()
 	_update_hint_visibility()
 	_queue_fit()
+
+
+## Text-only redraw for a detached panel. Its caller has already matched the line
+## and option IDs; the choice buttons, their cursor/window, and portrait stay put.
+func update_preview_text(text: String, choices: PackedStringArray) -> void:
+	if not preview_only or choices.size() != _choice_buttons.size():
+		return
+	var position := _body_label.get_v_scroll_bar().value
+	var changed := _body_label.text != text
+	if changed:
+		_line["text"] = text
+		_body_label.text = text
+		_body_label.visible_characters = -1
+		_reveal_progress = float(text.length())
+		_revealing = false
+	for index in choices.size():
+		var label := "%d.  %s" % [index + 1, choices[index]]
+		if _choice_buttons[index].text != label:
+			_choice_buttons[index].text = label
+			changed = true
+	if changed:
+		if _preview_scroll < 0.0 and position > 0.0:
+			_preview_scroll = position
+		_queue_fit()
 
 
 func set_choices(choices: Array) -> void:
@@ -677,6 +706,8 @@ func _hint_text() -> String:
 		return L10n.t("ui.dialogue_skip_on_mouse" if _on_mouse() else "ui.dialogue_skip_on", modes)
 	# In manual mode the hint is exactly what it always was: the inputs for auto and skip
 	# are named by the mode bar at the start of the line, which never widens the band.
+	if preview_only:
+		return L10n.t("menu.continue") + "  [" + str(keys["advance"]) + "]"
 	if _on_mouse():
 		return L10n.t("ui.dialogue_continue_mouse", keys)
 	return L10n.t("ui.dialogue_continue_pad" if pad else "ui.dialogue_continue", keys)
@@ -701,6 +732,12 @@ func _process(delta: float) -> void:
 		refresh_static_text()
 	if _layout_dirty and visible:
 		_settle_layout()
+	elif visible and _preview_scroll >= 0.0:
+		# The containers resize after layout, not during it. Reapply the old
+		# offset once the scrollbar knows its new range and page height.
+		_body_label.get_content_height()
+		_body_label.get_v_scroll_bar().value = _preview_scroll
+		_preview_scroll = -1.0
 	if not _revealing:
 		return
 	var direction := 1.0
@@ -947,9 +984,10 @@ func _build_touch_footer() -> void:
 	_touch_footer.name = "TouchReading"
 	_touch_footer.add_theme_constant_override(&"separation", 10)
 	_hint_label.get_parent().add_child(_touch_footer)
-	_touch_button(&"auto", func() -> void: auto_toggle_requested.emit())
-	_touch_button(&"skip", func() -> void: skip_requested.emit())
-	_touch_button(&"log", func() -> void: backlog_requested.emit())
+	if not preview_only:
+		_touch_button(&"auto", func() -> void: auto_toggle_requested.emit())
+		_touch_button(&"skip", func() -> void: skip_requested.emit())
+		_touch_button(&"log", func() -> void: backlog_requested.emit())
 	_touch_page = Label.new()
 	_touch_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_touch_page.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -984,17 +1022,18 @@ func _touch_button(id: StringName, action: Callable) -> void:
 func _refresh_touch_footer() -> void:
 	if _touch_footer == null:
 		return
-	_touch_buttons[&"auto"].text = L10n.t("ui.dialogue_mode_auto")
-	_touch_buttons[&"skip"].text = L10n.t("ui.dialogue_mode_skip")
-	_touch_buttons[&"log"].text = L10n.t("settings.action.backlog")
 	_touch_buttons[&"continue"].text = L10n.t("menu.continue")
 	_touch_buttons[&"continue"].visible = not has_choices()
-	_touch_buttons[&"auto"].add_theme_color_override(
-		&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.AUTO else Palette.RED_INK
-	)
-	_touch_buttons[&"skip"].add_theme_color_override(
-		&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.SKIP else Palette.RED_INK
-	)
+	if not preview_only:
+		_touch_buttons[&"auto"].text = L10n.t("ui.dialogue_mode_auto")
+		_touch_buttons[&"skip"].text = L10n.t("ui.dialogue_mode_skip")
+		_touch_buttons[&"log"].text = L10n.t("settings.action.backlog")
+		_touch_buttons[&"auto"].add_theme_color_override(
+			&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.AUTO else Palette.RED_INK
+		)
+		_touch_buttons[&"skip"].add_theme_color_override(
+			&"font_color", Palette.RED_INK_LIT if _playback_mode == DialoguePlayback.Mode.SKIP else Palette.RED_INK
+		)
 	_touch_buttons[&"previous"].text = "‹"
 	_touch_buttons[&"next"].text = "›"
 	var paged := _choice_window_count > 0
@@ -1012,13 +1051,24 @@ func _refresh_touch_footer() -> void:
 # --- Layout -----------------------------------------------------------------
 
 
+## A detached preview can reserve room for an adjacent control without changing how
+## the real dialogue panel is laid out. An empty rect restores the normal safe area.
+func set_preview_bounds(bounds: Rect2) -> void:
+	if _preview_bounds == bounds:
+		return
+	_preview_bounds = bounds
+	_queue_fit()
+
+
 func _settle_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		return
 	var safe := MobileLayout.safe_rect(self)
+	if _preview_bounds.has_area():
+		safe = safe.intersection(_preview_bounds)
 	var margin := minf(safe.size.x * side_margin_ratio, side_margin_max)
-	var foot := bottom_margin
+	var foot := bottom_margin + viewport_size.y - safe.end.y if _preview_bounds.has_area() else bottom_margin
 	if _touch_footer != null:
 		margin = MobileLayout.EDGE
 		foot = viewport_size.y - safe.end.y + MobileLayout.EDGE
@@ -1053,10 +1103,11 @@ func _settle_layout() -> void:
 		offset_right = left + width
 		offset_bottom = -foot
 		offset_top = -foot - retained_height
-		# On touch, let the container lay out the width without a minimum height from
-		# the paragraph's *previous* wrap. Read the actual shaped height below.
-		_body_label.fit_content = _touch_footer == null
-		_body_label.scroll_active = false
+		# Touch and detached previews measure shaped height instead of letting the
+		# label's previous wrap impose a minimum height on the container.
+		_body_label.fit_content = _touch_footer == null and not preview_only
+		if not preview_only:
+			_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
 		# Measure with every option, then decide how many can be shown.
 		for button in _choice_buttons:
@@ -1070,13 +1121,15 @@ func _settle_layout() -> void:
 
 	var needed: float = _frame.get_combined_minimum_size().y
 	var body_height := _body_label.get_combined_minimum_size().y
-	if _touch_footer != null:
+	if _touch_footer != null or preview_only:
 		var content_height := float(_body_label.get_content_height())
 		needed += maxf(0.0, content_height - body_height)
 		body_height = maxf(content_height, body_height)
 	var scrolling := needed > max_height + 0.5
 	var height := max_height if scrolling else clampf(needed, min_height, max_height)
 	offset_top = -foot - height
+	if preview_only:
+		_body_label.scroll_active = scrolling
 	if scrolling:
 		# The body keeps the room that is left and scrolls; nothing is cut off and no
 		# type size is reduced to force the paragraph in.

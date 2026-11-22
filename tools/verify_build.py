@@ -256,7 +256,7 @@ def classify(path: str) -> Category:
 
 
 def verify(
-    entries: list[tuple[str, int]], header: dict[str, int]
+    entries: list[tuple[str, int]], header: dict[str, int], *, allowed_paths: frozenset[str] = frozenset()
 ) -> tuple[list[str], list[str]]:
     """Return (problems, warnings) for the whole build.
 
@@ -265,7 +265,7 @@ def verify(
     hard limit and an annotation at the warning line. The tests call the two halves directly,
     which is how the boundary cases stay testable without building a whole fake game.
     """
-    problems = verify_contents(entries)
+    problems = verify_contents(entries, allowed_paths=allowed_paths)
     budget_problems, warnings = verify_budgets(entries)
     problems.extend(budget_problems)
     # A readable PCK format does not mean this project's engine can open it.
@@ -283,7 +283,9 @@ def verify(
     return problems, warnings
 
 
-def verify_contents(entries: list[tuple[str, int]]) -> list[str]:
+def verify_contents(
+    entries: list[tuple[str, int]], *, allowed_paths: frozenset[str] = frozenset()
+) -> list[str]:
     """Directories that must not ship, directories that must, and the font stub."""
     problems: list[str] = []
     paths = [path for path, _ in entries]
@@ -292,8 +294,9 @@ def verify_contents(entries: list[tuple[str, int]]) -> list[str]:
     if not entries:
         problems.append("the pack contains no files at all")
 
-    for prefix in FORBIDDEN_PREFIXES:
-        leaked = [path for path in paths if path.startswith(prefix)]
+    # Native bridge files belong outside every PCK; desktop presets do not scan iOS plugins.
+    for prefix in (*FORBIDDEN_PREFIXES, "res://ios/plugins/"):
+        leaked = [path for path in paths if path.startswith(prefix) and path not in allowed_paths]
         if leaked:
             problems.append(
                 f"{len(leaked)} file(s) under {prefix} reached the build, "

@@ -1,0 +1,8 @@
+[config]
+name="WISAuthorFiles"
+binary="libWISAuthorFiles.a"
+initialization="wis_author_files_start"
+deinitialization="wis_author_files_stop"
+
+[dependencies]
+system=["UIKit.framework", "Foundation.framework"]
