@@ -113,6 +113,10 @@ func _ready() -> void:
 	var form_actions := _row(_content)
 	_rows["form_actions"] = form_actions
 	_button(form_actions, "apply", "保存新增")
+	# A plain-text edit is saved as it types, but on a phone the keyboard covers the footer
+	# and the status line: without a key of its own the player cannot say "done" and put
+	# the keyboard away. The same button flushes the draft.
+	_button(form_actions, "apply_text", "保存文字")
 	_button(form_actions, "cancel", "取消／还原字段")
 
 	status = Label.new()
@@ -409,6 +413,10 @@ func _apply_visibility() -> void:
 	_footer.visible = not _compact
 	_buttons["keyboard"].visible = _compact
 	_buttons["apply"].visible = _mode != "text"
+	# One key at a time: "save the new structure" while composing, "save this text" while
+	# editing a field, never both.
+	_buttons["apply_text"].visible = _mode == "text" and not _compact
+	_buttons["apply_text"].disabled = _blocked
 	body.visible = not _blocked and (not _compact or not in_reply)
 	body.custom_minimum_size.y = 64.0 if _compact else 110.0
 	new_reply.visible = editing and branching

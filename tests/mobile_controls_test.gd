@@ -100,8 +100,23 @@ func _title_and_settings() -> void:
 		_check.expect(scroll.scroll_vertical > origin, "Swiping a settings row did not scroll: start=%s clip=%s position=%s->%s flags=%s touch=%s" % [
 			start, scroll.get_global_rect(), origin, scroll.scroll_vertical, speed.mouse_filter, DisplayServer.is_touchscreen_available()])
 		_check.expect(speed.text == text, "Scrolling Settings changed reading speed")
-		await _tap_control(settings.get_row_control(&"back"))
-		_check.expect(not settings.is_open(), "Settings Back did not close the modal")
+		# A phone has no hint line naming the confirm input, so the screen itself must offer a
+	# visible way out of a row it has already changed. "完成" is that key: it is a real
+	# finger target, it says the change is stored, and it closes.
+		var done := settings.get_row_control(&"done") as Button
+		if _check.expect(done != null and done.is_visible_in_tree(), "Phone Settings has no Done key"):
+			_check_target(done, "Settings Done")
+			await _tap_control(done)
+			_check.expect(not settings.is_open(), "Settings Done did not close the modal")
+		await _tap_control(title.get_entry(&"settings"))
+		var reopened := title.get_settings_panel()
+		if _check.expect(reopened.is_open(), "Settings did not reopen after Done"):
+			var speed_row := reopened.get_row_control(&"text_speed") as Button
+			var before := speed_row.text
+			await _tap_control(speed_row)
+			_check.expect(speed_row.text != before, "Tapping a choice row on a phone changed nothing")
+			await _tap_control(reopened.get_row_control(&"back"))
+			_check.expect(not reopened.is_open(), "Settings Back did not close the modal")
 	title.queue_free()
 	await process_frame
 

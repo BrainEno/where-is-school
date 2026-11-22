@@ -5,6 +5,8 @@ extends CanvasLayer
 const Form := preload("res://scripts/story_editor/author_form.gd")
 const Preview := preload("res://scripts/story_editor/branch_preview.gd")
 const Exchange := preload("res://scripts/story_editor/author_exchange.gd")
+const LauncherTouch := preload("res://scripts/story_editor/launcher_touch.gd")
+const KeyboardArea := preload("res://scripts/story_editor/keyboard_area.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const PanelScene := preload("res://scenes/ui/dialogue_panel.tscn")
@@ -27,8 +29,7 @@ var _open := false
 var _trial := false
 var _original := false
 var _clear_armed := false
-var _touch := -1
-var _launcher_mouse := false
+var _launcher := LauncherTouch.new()
 var _live_tint: Color
 var _chapter := ""
 var _conversation := ""
@@ -385,6 +386,7 @@ func _action(id: String) -> void:
 				_prepare_form()
 				_save("填写后点「保存新增」。")
 		"apply": _apply_structure()
+		"apply_text": _apply_text()
 		"cancel": _return_to_fields()
 		"undo":
 			if _flush() and store.undo():
@@ -409,6 +411,21 @@ func _action(id: String) -> void:
 				_controls()
 			else:
 				_status("请先保存新增，或取消未完成的修改。")
+
+
+## "Save the text": flush the field and say so. The draft is already saved as it types
+## (`EDIT_DELAY`); this is the key that puts the keyboard away and tells the player the
+## sentence they just wrote is in the draft, which the phone layout has no other place for.
+func _apply_text() -> void:
+	if _mode != "text":
+		return
+	_drawer.hide_keyboard()
+	if _exchange.is_busy() or store.blocked != "":
+		return
+	_flush()
+	if _save_failed:
+		return
+	_status("文字已保存到草稿；「导出 JSON」把整份草稿给到「文件」。")
 
 
 func _apply_structure() -> void:
@@ -511,19 +528,8 @@ func close_editor() -> void:
 	get_tree().paused = false
 
 
-func _keyboard_height() -> int:
-	return DisplayServer.virtual_keyboard_get_height() if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD) else 0
-
-
 func _usable_rect() -> Rect2:
-	var area := MobileLayout.safe_rect(_entry).grow(-MobileLayout.EDGE)
-	if _open and MobileLayout.enabled:
-		var pixels := _keyboard_height()
-		if pixels > 0:
-			var scale_y := maxf(get_window().get_screen_transform().get_scale().y, 0.01)
-			var bottom := _entry.get_viewport_rect().end.y - float(pixels) / scale_y
-			area.size.y = maxf(70.0, minf(area.end.y, bottom) - area.position.y)
-	return area
+	return KeyboardArea.usable_rect(_entry, _open)
 
 
 func _fit() -> void:
@@ -536,7 +542,7 @@ func _fit() -> void:
 	_entry.position = Vector2(area.get_center().x - _entry.size.x / 2.0, area.position.y)
 	if _drawer == null or not _open:
 		return
-	var compact := MobileLayout.enabled and _keyboard_height() > 0
+	var compact := MobileLayout.enabled and KeyboardArea.height() > 0
 	_drawer.set_keyboard_compact(compact)
 	_drawer.fit_touch()
 	_back.reset_size()
@@ -561,36 +567,16 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if _trial:
 			_end_trial()
-		elif _keyboard_height() > 0:
+		elif KeyboardArea.height() > 0:
 			_drawer.hide_keyboard()
 		else:
 			close_editor()
 
 
-func _launcher_hit(point: Vector2) -> bool:
-	return _entry.visible and _entry.get_global_rect().has_point(point)
-
-
+## True when the launcher owns this event; the rule itself is `LauncherTouch`.
 func _owns_launcher_input(event: InputEvent) -> bool:
-	# Godot can send the emulated mouse pair ahead of the native screen pair.
-	# Let only the native release activate, so a cancelled touch never opens it.
-	if MobileLayout.is_emulated_mouse(event):
-		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-			var owned := _launcher_hit(event.position) if event.pressed else _launcher_mouse
-			_launcher_mouse = owned and event.pressed
-			return owned
-		return _launcher_mouse and event is InputEventMouseMotion
-	if event is InputEventScreenTouch:
-		if event.pressed and _launcher_hit(event.position):
-			if _touch < 0:
-				_touch = event.index
-			return true
-		if not event.pressed and event.index == _touch:
-			_touch = -1
-			if not event.canceled and _launcher_hit(event.position):
-				open_editor.call_deferred()
-			return true
-	return event is InputEventScreenDrag and event.index == _touch
+	return _launcher.handle(event, _entry, open_editor)
+
 
 func _unhandled_input(_event: InputEvent) -> void:
 	if _open:
@@ -599,7 +585,7 @@ func _unhandled_input(_event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT]:
-		_touch = -1
+		_launcher.forget()
 		_flush()
 
 

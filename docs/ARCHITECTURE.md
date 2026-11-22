@@ -860,13 +860,23 @@ checklist in that test's section of the pull request, because no CI runner opens
 runtime as the separate author app, in `scripts/story_editor/` (it moved there from
 `scripts/dev/authoring/`), and links the Files bridge on the device. It is off by default:
 `[authoring] story_editor` in `settings.cfg`, a row under *Settings → Story editor* (测试).
-The pause menu is the only installer — `sync_story_editor()` adds the `StoryEditor` autoload
-to the root when the switch is on and frees it when it is off — so a copy that never turns it
-on packs no overlay into the running scene and reads no draft. Drafts, the editor journal
-and the Files bridge exchange live in `user://story_editor/`, separate from
+The pause menu is the only installer — `sync_story_editor()` hands the switch to
+`StoryEditorEntry` (`scripts/ui/story_editor_entry.gd`), which adds the `StoryEditor`
+autoload to the root when the switch is on and frees it when it is off — so a copy that never
+turns it on packs no overlay into the running scene and reads no draft. Drafts, the editor
+journal and the Files bridge exchange live in `user://story_editor/`, separate from
 `user://save.json`. The desktop and Android presets still exclude both the folder and the
 bridge; `tools/export_mobile.py --authoring` remains the separate author app
 (`io.github.braineno.whereisschool.authoring`, no bridge on the simulator).
+
+**Confirming instead of closing (touch).** Settings stores every change as it is made, but a
+phone shows no hint line naming the confirm input, so a changed row had no visible key of its
+own. The screen now carries a full-width 「完成」 row beside 「返回」 on a touch layout
+(`settings.done`), which is a real finger target, says the change is already stored and only
+then closes. In the drawer, 「保存文字」 (`apply_text`, `scripts/story_editor/author_form.gd`)
+is the same answer for a text field: the draft is written as it types, and this key puts the
+keyboard away and reports that the sentence is in the draft. Both are additions; the
+keyboard and pad walk (`↑/↓`, `←/→`, Enter/A, Esc/B) is unchanged.
 
 ## 5j. The ground mark and the outline (implemented contract)
 

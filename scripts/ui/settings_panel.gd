@@ -39,6 +39,11 @@ var _rows: VBoxContainer = null
 var _status: Label = null
 var _title: Label = null
 var _back: Button = null
+## The touch screen's own "done" key, beside Back. On a phone the hint line that names the
+## confirm input is hidden (`settings.hint_keyboard` is a keyboard hint), so the way out of
+## a changed row otherwise has no visible key at all. Every change is already stored the
+## moment it is made; this key says so and closes, which is what the player is looking for.
+var _done: Button = null
 ## id -> the focusable control for that row.
 var _controls: Dictionary = {}
 var _capture_action := StringName()
@@ -102,6 +107,13 @@ func _ready() -> void:
 	_back.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_back.pressed.connect(close)
 	footer.add_child(_back)
+	_done = MenuStyle.page_entry("", MenuStyle.BODY_SIZE, 1.0)
+	_done.name = "Done"
+	_done.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_done.add_theme_color_override(&"font_color", MenuStyle.EMBER)
+	_done.pressed.connect(_on_done_pressed)
+	footer.add_child(_done)
+	_done.visible = MobileLayout.enabled
 
 	var settings := _settings()
 	if settings != null:
@@ -123,6 +135,14 @@ func open() -> void:
 	focus_row(&"text_size")
 
 
+## The touch screen's "done": say that the change is already stored, then leave. A pause
+## menu and the title both put the focus back where it came from, so the sentence is read
+## on the way out rather than while a modal is closing over it.
+func _on_done_pressed() -> void:
+	_status.text = L10n.t("settings.done_note")
+	close()
+
+
 func close() -> void:
 	if not visible:
 		return
@@ -139,10 +159,13 @@ func is_open() -> bool:
 ## `clear_read_log`, `sprint_mode`, `volume_master`,
 ## `volume_music`, `volume_sfx`, `ui_scale`, `fullscreen`, `language`,
 ## `open_logs`, `export_diagnostics`, `story_editor`,
-## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`.
+## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`, and the
+## touch-only `done`.
 func get_row_control(id: StringName) -> Control:
 	if id == &"back":
 		return _back
+	if id == &"done":
+		return _done
 	return _controls.get(id) as Control
 
 
@@ -151,6 +174,8 @@ func get_row_ids() -> Array[StringName]:
 	for id: Variant in _controls.keys():
 		ids.append(StringName(id))
 	ids.append(&"back")
+	if _done != null and _done.visible:
+		ids.append(&"done")
 	return ids
 
 
@@ -204,6 +229,8 @@ func _rebuild() -> void:
 	_controls.clear()
 	_title.text = L10n.t("settings.title")
 	_back.text = L10n.t("menu.back")
+	if _done != null:
+		_done.text = L10n.t("settings.done")
 
 	_heading("settings.section.text", true)
 	_choice_row(&"text_size", "settings.text_size", _text_size_options(), _current(&"text_size"))
@@ -275,7 +302,7 @@ func _link_focus() -> void:
 		var pad := _focusable(get_row_control(_bind_id(action, &"gamepad")))
 		if keys != null or pad != null:
 			grid.append([keys, pad])
-	for id: StringName in [&"restore_bindings", &"story_editor", &"back"]:
+	for id: StringName in [&"restore_bindings", &"story_editor", &"back", &"done"]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
 			grid.append([single, single])
@@ -831,7 +858,8 @@ func _refresh_status_hint() -> void:
 		"confirm": MenuStyle.key(self, &"ui_accept"),
 		"cancel": MenuStyle.key(self, &"ui_cancel"),
 	}
-	_status.text = "" if MobileLayout.enabled and InputHint.device(self) == InputHint.DEVICE_TOUCH else \
+	var touch := MobileLayout.enabled and InputHint.device(self) == InputHint.DEVICE_TOUCH
+	_status.text = L10n.t("settings.hint_touch", keys) if touch else \
 		L10n.t("settings.hint_pad" if pad else "settings.hint_keyboard", keys)
 
 
@@ -953,6 +981,7 @@ func _fit() -> void:
 	if MobileLayout.enabled:
 		MobileLayout.inset(_outer)
 		MobileLayout.enlarge(_back)
+		MobileLayout.enlarge(_done)
 		for control: Control in _controls.values():
 			MobileLayout.enlarge(control)
 	var width := minf(view.x - OUTER_MARGIN * 2.0, PANEL_MAX_WIDTH * maxf(_factor, 1.0))
@@ -991,6 +1020,8 @@ func _focused_id() -> StringName:
 		return StringName()
 	if owner_control == _back:
 		return &"back"
+	if owner_control == _done:
+		return &"done"
 	for id: Variant in _controls.keys():
 		if _controls[id] == owner_control:
 			return StringName(id)

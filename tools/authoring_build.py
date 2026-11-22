@@ -23,6 +23,10 @@ BOOTSTRAP = AUTHOR_DIR + "bootstrap.gd"
 SCRIPTS = frozenset(AUTHOR_DIR + name + ".gd" for name in (
     "bootstrap", "author_overlay", "author_form", "branch_preview", "dialogue_patch",
     "draft_store", "draft_journal", "author_exchange",
+    # Split out of author_overlay (#344 follow-up): the launcher's touch rule and the
+    # keyboard-aware usable area. They are preloaded by author_overlay, so a pack that
+    # omitted them would carry an editor that cannot open.
+    "launcher_touch", "keyboard_area",
 ))
 PACK_PATHS = frozenset("res://" + path.removesuffix(".gd") + suffix for path in SCRIPTS
                        for suffix in (".gd", ".gdc", ".gd.remap"))
