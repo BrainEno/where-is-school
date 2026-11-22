@@ -646,34 +646,15 @@ INK = (40, 38, 48)
 
 
 def stink_cloud(seed, radius=.34, colour=ACID):
-    """A cartoon stink cloud cut from coloured paper, on a slightly larger sheet of ink."""
-    lobes = 7 + seed % 3
-
-    def outline(scale):
-        pts = []
-        for i in range(lobes * 8):
-            a = math.tau * i / (lobes * 8)
-            bump = abs(math.cos(a * lobes / 2)) ** .6
-            r = radius * scale * (.78 + .22 * bump) * (1 + .06 * noise(a * 3, seed, seed))
-            pts.append((math.cos(a) * r * 1.25, math.sin(a) * r * .9))
-        return pts
-
+    """A soft, uneven three-dimensional wisp rather than a paper silhouette."""
     m = PaintMesh()
-    m.add(slab_polygon(outline(1.0), .012, rgb(colour), rgb(PAPER_CORE)))
-    m.add(slab_polygon(outline(1.09), .006, rgb(INK), rgb(INK)))
-    # Three stink squiggles printed on its face, both sides.
-    for k in range(3):
-        y0 = -.12 + .12 * k
-        line = [(-.2 + .4 * i / 10, (y0 + .025 * math.sin(i * 1.3 + k)) * radius / .34) for i in range(11)]
-        for zsign in (1, -1):
-            strip = PaintMesh()
-            for i in range(10):
-                (ax, ay), (bx, by) = line[i], line[i + 1]
-                w = .008
-                quad_pts = [(ax, ay - w, .0075 * zsign), (bx, by - w, .0075 * zsign), (bx, by + w, .0075 * zsign),
-                            (ax, ay + w, .0075 * zsign)]
-                strip.polygon(quad_pts, (0, 0, zsign))
-            m.add(strip, rgb(INK))
+    muted = mix(colour, (175, 174, 143), .65)
+    for i, (x, y, z, size) in enumerate(((0, 0, 0, 1), (-.48, -.06, .10, .65),
+                                         (.42, .13, -.12, .72))):
+        puff = ellipsoid((x * radius, y * radius, z * radius),
+                         (radius * size, radius * .67 * size, radius * .64 * size),
+                         rings=8, sides=12, wobble=.08, seed=seed + i)
+        m.add(puff, rgb(muted))
     return m
 
 

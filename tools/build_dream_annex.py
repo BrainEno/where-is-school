@@ -384,13 +384,11 @@ def chickens_and_smell(b, y):
     dream_stable.heap(b, y, child_path(y, "Heap"))
     dream_stable.flies(b, y)
     dream_stable.stink(b, y)
-    # The old ribbons stay, thicker and greener: the smell as something you could stand in.
+    # Sparse, soft traces among the drifting volumetric wisps.
     odor = b.bind("dream_odor", "res://assets/shaders/school/dream_odor.gdshader", "Shader")
     ribbon = quad(b, .8, 3.0)
-    for i, (x, z) in enumerate(((-31.7, 5.5), (-31.2, 5.9), (-33.0, 6.0), (-33.0, 8.3), (-32.9, 9.6),
-                                (-36.0, 13.0), (-24.0, 16.2), (-29.5, 12.5), (-30.4, 6.6), (-32.4, 7.2),
-                                (-34.6, 11.6), (-27.4, 14.2))):
-        tint = ((.74, .84, .2, 1.0), (.86, .76, .22, 1.0), (.56, .66, .2, 1.0))[i % 3]
+    for i, (x, z) in enumerate(((-31.7, 5.5), (-33.0, 8.3), (-30.4, 11.6), (-35.8, 12.8), (-25.4, 15.8))):
+        tint = ((.57, .61, .39, 1.0), (.62, .59, .40, 1.0), (.50, .55, .38, 1.0))[i % 3]
         mat = shader_material(b, "odor", odor, {"phase": i * .23, "tint": f"Color({tint[0]:g}, {tint[1]:g}, {tint[2]:g}, 1)"})
         b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.5, z)),
                rotation_degrees=vec3((0, i * 47 % 180, 0)), mesh=f'SubResource("{ribbon}")',
@@ -413,7 +411,12 @@ def village(b, y):
 
 def stable_yard(b):
     y = "StableYard"
-    b.node(y, ".")
+    # Move the complete yard west, away from the separate restroom volume.
+    # The connecting strip remains at the entrance so the route stays walkable.
+    b.node(y, ".", position=vec3((-4, 0, 0)))
+    slab(b, ".", "StableLaneConnector", (-24.8, -20.75), LANE_Z, G)
+    b.flat("StableLaneConnectorEarth", ".", plane(b, 4.05, LANE_Z[1]-LANE_Z[0]), "earth",
+           (-22.775, G + .004, sum(LANE_Z)/2))
     yard_ground(b, y)
     low_wall(b, y, "WallSouth", (LANE_X[0], LANE_X[1]), LANE_Z[1] + .15, True)
     low_wall(b, y, "WallWest", (HOUSE_Z[1], LANE_Z[1]), LANE_X[0] - .15, False)
@@ -424,11 +427,10 @@ def stable_yard(b):
     for i, (pos, size, yaw) in enumerate((((-31.2, G, 12.7), (3.0, 2.0), 4), ((-30.4, G, 9.8), (2.6, 2.2), -3),
                                           ((-25.0, G, 16.7), (3.4, 1.6), 0))):
         grain_mat(b, y, f"GrainMat{i}", pos, size, yaw)
-    old = {"coat": "apron_blue", "hair": "scarf_red", "skin": "skin_dim", "droop": True}
+    from stable_people import woman
     b.box("Stool", y, (-33.6, G + .12, 13.2), (.3, .24, .3), "stool")
-    figure(b, y, "OldWoman0", (-33.1, G + .02, 12.4), 90, old, pose="squat")
-    raker = figure(b, y, "OldWoman1", (-28.9, G, 9.6), -90, {**old, "hair": "scarf_blue", "coat": "coat_olive"},
-                   hand="rake", phase=.3)
+    woman(b, y, "OldWoman0", (-33.1, G, 12.4), 90, seated=True)
+    raker = woman(b, y, "OldWoman1", (-28.9, G, 9.6), -90)
     rake = motion_material(b, "rake", "rake", phase=.3)
     part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), rake)
     part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), rake)

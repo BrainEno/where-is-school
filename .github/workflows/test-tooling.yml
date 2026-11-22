@@ -72,6 +72,13 @@ jobs:
           .venv/bin/python tests/character_geometry_capture_test.py
           .venv/bin/python tests/mobile_tools_test.py
 
+      - name: Check draft markers and exercise the content gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          .venv/bin/python tests/content_placeholders_test.py
+          .venv/bin/python tools/check_content_placeholders.py
+
       - name: Verify Blender head geometry against the pinned basis
         shell: bash
         run: |

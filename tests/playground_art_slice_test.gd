@@ -214,6 +214,12 @@ func _run() -> void:
 	Harness.stage = "collision"
 	_check_collision()
 	Harness.stage = "colour system"
+	var earth := _yard.get_node_or_null(^"EarthYard") as Node3D
+	if earth == null or not earth.has_node(^"Soil") or not earth.has_node(^"EastRail0"):
+		_failures.append("The shared soil and perimeter rails are missing.")
+	elif not earth.find_children("*", "CollisionObject3D", true, false).is_empty() \
+			or not earth.find_children("*", "CollisionShape3D", true, false).is_empty():
+		_failures.append("The soil dressing must not alter walkable collision.")
 	_check_colour_system()
 	Harness.stage = "wall dressing"
 	_check_dressing()

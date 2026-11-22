@@ -1,4 +1,4 @@
-[gd_scene load_steps=234 format=3]
+[gd_scene load_steps=235 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://scenes/locations/playground/yard_tap.gd" id="staged_0"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/scenery.scn" id="yard_scenery"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/construction_site.tscn" id="building_site"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/earth_yard.tscn" id="earth_yard"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/backboard.tres" id="art_backboard"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ball.tres" id="art_ball"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/brass.tres" id="art_brass"]
@@ -1258,6 +1259,8 @@ position = Vector3(12, 0, -15.5)
 visible = false
 
 [node name="BuildingSite" parent="PlaygroundArt" instance=ExtResource("building_site")]
+
+[node name="EarthYard" parent="." instance=ExtResource("earth_yard")]
 
 [node name="Facade" type="Node3D" parent="ShedBody"]
 position = Vector3(3, -1.5, 0)

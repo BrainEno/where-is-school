@@ -32,7 +32,7 @@ PALETTES = {
     "archive": ((8.8, 6.9), 2.86, (199, 171, 126), (105, 71, 62), (162, 126, 88), (73, 51, 68)),
     "plan_room": ((8.8, 6.9), 2.86, (135, 154, 155), (54, 81, 91), (58, 103, 122), (48, 66, 83)),
     "projection_room": ((8.8, 6.9), 2.86, (96, 64, 81), (57, 44, 60), (74, 53, 71), (51, 42, 61)),
-    "computer_room": ((10.1, 7.2), 3.45, (103, 126, 120), (55, 73, 77), (65, 87, 81), (36, 55, 55)),
+    "computer_room": ((10.1, 7.2), 3.45, (139, 137, 153), (76, 80, 100), (92, 100, 111), (50, 48, 67)),
     "vacant_office": ((8.8, 6.9), 2.86, (216, 212, 200), (131, 130, 126), (188, 186, 180), (96, 93, 96)),
     "principal_office": ((9.2, 6.9), 2.86, (124, 89, 101), (61, 48, 76), (68, 63, 94), (54, 46, 69)),
 }
@@ -278,7 +278,48 @@ def terminal(b, p, slot, x, channel):
     b.flat("Raster", child_path(p, slot), quad(b,.562,.378), phosphor(b,channel), (0,.475,.410))
 
 
+def computer_room_atmosphere(b):
+    """A quiet retro-computer landscape on the west wall, not a new destination.
+
+    The existing raster and copper trace remain the room's inspection. These
+    shallow, collision-free shapes sit on the wall, above the workstations and
+    clear of the doorway; the old machines stay the focus at desk height.
+    """
+    b.pigments.update({
+        "lab_dusk": (80, 71, 102), "lab_horizon": (154, 112, 139),
+        "lab_sunset": (229, 174, 151), "lab_grid": (159, 155, 178),
+        "lab_frame": (78, 85, 101), "lab_mint": (152, 190, 177),
+    })
+    b.node("DuskMural", ".")
+    p = "DuskMural"
+    # A distant screen-landscape with physical depth, not an extra screen UI.
+    # The west wall's interior face is at x=-4.955.
+    b.box("Frame", p, (-4.92, 1.99, .50), (.045, 1.38, 3.35), "lab_frame")
+    b.box("Sky", p, (-4.89, 2.00, .50), (.018, 1.24, 3.20), "lab_dusk")
+    b.box("Horizon", p, (-4.875, 1.77, .50), (.012, .32, 3.20), "lab_horizon")
+    b.round("Sun", p, (-4.86, 2.15, .50), .31, .018, "lab_sunset", sides=32, rot=(0, 0, 90))
+    # Printed rows clip the lower sun and recede into a grid towards the horizon.
+    for i, y in enumerate((1.88, 1.96, 2.04)):
+        b.box(f"SunCut{i}", p, (-4.844, y, .50), (.012, .025, .66), "lab_dusk")
+    for i, y in enumerate((1.45, 1.51, 1.60, 1.70)):
+        b.box(f"GridRow{i}", p, (-4.84, y, .50), (.012, .012, 3.15), "lab_grid")
+    for i, z in enumerate((-.9, -.2, .5, 1.2, 1.9)):
+        end = .5 + (z - .5) * .18
+        dz, dy = end - z, .29
+        length = math.hypot(dz, dy)
+        angle = -math.degrees(math.atan2(dy, dz))
+        b.box(f"GridRay{i}", p, (-4.83, 1.595, (z + end) / 2),
+              (.012, .011, length), "lab_grid", rot=(angle, 0, 0))
+    # Small colour bars sit on the opposite end of the wall, like faded teaching
+    # aids, leaving negative space between them and the workstations.
+    for i, tone in enumerate(("lab_mint", "lab_sunset", "lab_horizon", "lab_dusk")):
+        b.box(f"TestBar{i}", p, (-4.91, 2.29, 2.70 + i*.18), (.035, .31, .13), tone)
+    b.node("DuskBounce", p, "OmniLight3D", position=vec3((-4.45, 2.12, .50)),
+           light_color=srgb((208, 150, 178)), light_energy=.22, omni_range=3.8)
+
+
 def computer_room(b):
+    computer_room_atmosphere(b)
     for i,(x,z,w) in enumerate(((-2.65,-2.51,3.62),(2.65,-2.51,3.62),(-2.65,.48,3.62))):
         p=table(b,f"Station{i}",(x,0,z),w,1.38,top="wood_light")
         terminal(b,p,"Left",-.87,i%3)
@@ -422,7 +463,7 @@ def room(r):
     # happens to be. The global camera and renderer don't change on arrival.
     ambient, key, strength, yaw = {
         "projection_room": ((182,160,191),(254,176,137),.49,18),
-        "computer_room": ((157,193,191),(209,234,211),.60,18),
+        "computer_room": ((180,173,197),(220,221,226),.60,18),
         "vacant_office": ((203,196,202),(247,235,215),.70,-40),
         "principal_office": ((177,160,191),(255,208,145),.89,-40),
     }.get(r.id, ((200,188,189),(255,220,169),.84,-40))

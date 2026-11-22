@@ -29,6 +29,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
+      - name: Check player-facing JSON for untracked placeholders
+        run: python3 tools/check_content_placeholders.py
+
       - uses: ./.github/actions/setup-godot
 
       - name: Static syntax check

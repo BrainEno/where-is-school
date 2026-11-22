@@ -15,9 +15,9 @@ name: Release build
 # - `pull_request` on anything that can change what gets packed: the build is a check, and
 #   a green run means the pull request did not break either export. Both zips are attached
 #   to the run so the change can be played before review.
-# - `workflow_dispatch`: build both platforms on demand, with no release, for "does it still
+# - `workflow_dispatch` on a branch: build both platforms on demand for "does it still
 #   export" and for handing an artifact to someone. Two artifacts, one per platform, and no
-#   release is created — a release is a decision, and this trigger is not one.
+#   release is created — only a tag can publish.
 # - tags `v*`: the same two builds plus one GitHub release carrying both. A tag with a dash
 #   in it (`v0.1.0-rc.1`) is published as a prerelease, because GitHub's "prerelease" mark is
 #   what a test build needs and what `latest` must not point at.
@@ -61,6 +61,9 @@ on:
       - "tests/verify_build_test.py"
       - "tests/release_pack_fixtures.py"
       - "tests/release_integrity_test.py"
+      - "tools/check_content_placeholders.py"
+      - "tools/content_placeholder_allowlist.json"
+      - "tests/content_placeholders_test.py"
       - ".github/workflows/release.yml"
   workflow_dispatch:
 
@@ -90,6 +93,16 @@ jobs:
       godot_version: ${{ steps.godot.outputs.version }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Check player-facing text before export
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            python3 tools/check_content_placeholders.py --release
+          else
+            python3 tools/check_content_placeholders.py
+          fi
 
       # The same local action every other workflow installs the engine with, so this build
       # cannot run on a different engine than the tests did. Its `step-id` publishes the

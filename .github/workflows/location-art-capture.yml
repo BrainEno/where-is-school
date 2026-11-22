@@ -229,7 +229,8 @@ jobs:
             *)
               detail=(return-route review_width=460)
               expect=2
-              if [ "$LOCATION" = playground ]; then expect=3; fi
+              # The street adds the ditch by the drain cover to its two return-route details.
+              if [ "$LOCATION" = playground ] || [ "$LOCATION" = street ]; then expect=3; fi
               if [ "$LOCATION/$SIDE" = playground/after ]; then
                 detail+=(return-board-focus)
                 expect=4
