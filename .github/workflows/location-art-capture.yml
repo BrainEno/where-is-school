@@ -36,6 +36,8 @@ on:
       - "data/inspections/*/site_interior.json"
       - "scenes/locations/container_yard/**"
       - "data/inspections/*/container_yard.json"
+      - "scenes/locations/port/**"
+      - "data/inspections/*/port.json"
       - "assets/shaders/school/**"
       - "tests/location_art_test.gd"
       - "tests/school_rooms_test.gd"
@@ -105,6 +107,8 @@ jobs:
           - {location: site_interior, side: forward-plus}
           - {location: container_yard, side: after}
           - {location: container_yard, side: forward-plus}
+          - {location: port, side: after}
+          - {location: port, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -209,6 +213,14 @@ jobs:
               width=1280
               expect=12
               ;;
+            port)
+              # The port: six fixed views (the quay from high up, the sea from the pier,
+              # the crane, the ship, the water from overhead, the truck), five follow-camera
+              # stances, and the yard's truck that takes you there (a stance and a view).
+              detail=(port review_width=380)
+              width=1280
+              expect=13
+              ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)
               width=1600
@@ -217,7 +229,8 @@ jobs:
             *)
               detail=(return-route review_width=460)
               expect=2
-              if [ "$LOCATION" = playground ]; then expect=3; fi
+              # The street adds the ditch by the drain cover to its two return-route details.
+              if [ "$LOCATION" = playground ] || [ "$LOCATION" = street ]; then expect=3; fi
               if [ "$LOCATION/$SIDE" = playground/after ]; then
                 detail+=(return-board-focus)
                 expect=4

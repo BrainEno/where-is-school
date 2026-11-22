@@ -25,7 +25,7 @@ comes from the manuscript.
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
 | `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: glass street entrance and directory on 01, biology and the old street exit on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
-| `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The road runs off its north end into the laid-flat sky; a blank sign stands out there. | 已实现 |
+| `street` | `scenes/locations/street/street.tscn` | School wall (west) with barred windows, a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The gutter is an open ditch under the school-side kerb: lined, its water holding a pale strip of sky, bare cracked earth on its road side, precast slabs over it from the crossing to the school entrance, and a drain cover higher than the water that runs to it. The road runs off its north end into the laid-flat sky; a blank sign stands out there, and a pale ribbed panel stands in the ditch's line. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | The yard (key location): red court, school back wall, shed, container, tree, fence with a gap, estate. This round adds a fence run that carries on past the open west edge and sinks into the sky, a 20 m floodlight mast standing in the sky, and one chair out there facing the yard. | 已实现 |
@@ -161,8 +161,8 @@ exploration, not implemented content; this plan places them only as far as the b
 |---|---|---|---|---|
 | Upstairs flats (via `residential/FromStair`) | Inside an ordinary home block | One landing, one open door | Separate scene | 建议新增 |
 | Shop interior (street) | Daily life with the shutter half up | One counter | Zone of the street (shallow) | 建议新增 |
-| Container yard | Named as a candidate space | Stacks as a maze of corridors, seen from above | Separate scene | 已确定但未实现 (candidate) |
-| Port-like area | Named as a candidate space | Edge of the world; water as the laid-flat sky | Separate scene | 已确定但未实现 (candidate) |
+| Container yard | Named as a candidate space | Stacks as a maze of corridors, seen from above | Separate scene (`container_yard`) | 已实现 (round 13; through the cut chain-link behind the schoolyard's blue container) |
+| Port-like area | Named as a candidate space | Edge of the world; water as the laid-flat sky | Separate scene (`port`) | 已实现 (round 14; by the truck in the container yard, its box bound for the dock) |
 | Road north of the street (past the blank sign) | The town that does not continue | A walk that ends in the sky | Extension of the street scene | 建议新增; whether it is ever walkable: 尚待作者决定 |
 
 ## 7. Future unstable or non-Euclidean links
@@ -219,7 +219,7 @@ flowchart LR
 | 1 | Prompt keys, unused spawns, CI registration of the new test | 建议新增 |
 | 2 | Stairwell and upper corridor | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | First candidate rooms | 已实现: laboratory and restroom; the staff office is another optional visit. The gym and later room order remain undecided. |
-| 4 | First periphery space | 已确定但未实现 (candidates); choice 尚待作者决定 |
+| 4 | First periphery spaces | 已实现: the container yard (round 13) and the port past it (round 14); their lines are still the owner's to write |
 | 5 | Unstable links; elliptical building | 建议新增 / 尚待作者决定 |
 
 ## Tests
@@ -236,6 +236,7 @@ Rebuild order for the dressed scenes:
 
 ```sh
 python3 scenes/environment/props/stage_art/source/paint_stage_textures.py
+python3 scenes/environment/props/stage_art/source/paint_street_ditch.py
 python3 tools/build_outdoor_locations.py street residential alley playground
 python3 scenes/environment/props/playground_art/source/build_playground_art.py
 python3 scenes/environment/props/stage_art/source/build_stage_art.py

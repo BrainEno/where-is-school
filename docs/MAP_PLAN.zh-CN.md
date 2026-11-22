@@ -19,7 +19,7 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | 起点（`PlayerStart`）。手绘风格教室；醒来与自习。 | 已实现 |
 | `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有临街玻璃入口与折叠目录；02 保留生物教室和旧街道出口；03 的上层长廊接成环。尽头的可选房间见下表。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
-| `street` | `scenes/locations/street/street.tscn` | 西侧是带铁栅窗的学校外墙，路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。道路北端直接伸进铺平的天空，那里立着一块空白路牌。 | 已实现 |
+| `street` | `scenes/locations/street/street.tscn` | 西侧是带铁栅窗的学校外墙，路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。学校一侧路缘下是一条明沟：沟壁有衬砌，水面映着一条发白的天空，靠马路一侧是干裂的裸土，从斑马线到学校入口一段盖着预制盖板，井盖比流向它的水还高。道路北端直接伸进铺平的天空，那里立着一块空白路牌，水沟的延长线上立着一块淡黄色的肋板。 | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | 三栋颜色都有点“不对”的楼（黄、玫瑰、灰绿）围成的院子；滑梯、花坛、晾衣绳、长椅、椅子、绿色动物；粉笔跳房子，其中一格被画了两次；楼顶有水箱和一根歪的天线；北楼有一扇不在窗格网格上的长条亮窗。 | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 两堵冷蓝色、带雨痕的墙夹着 7 米宽的巷子；西墙越过压顶继续往上，并向巷内倾斜；有一个带检修门的凹口；装着椅子的垃圾箱；通往操场的门，门后是光；近处尺度不对的剪影屋顶。 | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | 操场（重点地点）：红色球场、学校后墙、小屋、集装箱、树、有缺口的围栏、住宅区。本轮新增：一段越过开放西缘继续延伸、逐渐沉入天空的围栏；一根立在天空里的 20 米灯杆；一把面向操场的椅子。 | 已实现 |
@@ -150,8 +150,8 @@ flowchart TB
 |---|---|---|---|---|
 | 楼上住户（经 `residential/FromStair`） | 普通住宅楼的内部 | 一个楼梯平台，一扇开着的门 | 独立场景 | 建议新增 |
 | 商店内部（街道） | 卷帘门半开的日常 | 一个柜台 | 街道场景的浅区域 | 建议新增 |
-| 集装箱堆场 | 叙事圣经列出的候选空间 | 从高处看像迷宫一样的集装箱通道 | 独立场景 | 已确定但未实现（候选） |
-| 类似港口的区域 | 叙事圣经列出的候选空间 | 世界的边缘；把水面当作铺平的天空 | 独立场景 | 已确定但未实现（候选） |
+| 集装箱堆场 | 叙事圣经列出的候选空间 | 从高处看像迷宫一样的集装箱通道 | 独立场景（`container_yard`） | 已实现（第 13 轮；从操场蓝色集装箱后面剪开的铁丝网钻过去） |
+| 类似港口的区域 | 叙事圣经列出的候选空间 | 世界的边缘；把水面当作铺平的天空 | 独立场景（`port`） | 已实现（第 14 轮；爬进堆场里那辆卡车上开往码头的货柜） |
 | 街道北段（空白路牌之外） | 不再延续的城镇 | 走着走着走进天空 | 街道场景的延伸 | 建议新增；是否可走：尚待作者决定 |
 
 ## 7. 将来的不稳定 / 非欧几里得连接
@@ -203,7 +203,7 @@ flowchart LR
 | 1 | 提示键、未使用的出生点、新测试登记进 CI | 建议新增 |
 | 2 | 楼梯间和上层走廊 | 已实现：三层、共用折梯与保留的环路，见 [CORRIDOR_ART.md](CORRIDOR_ART.md) |
 | 3 | 第一批候选房间 | 已实现：实验室、厕所；教师办公室也是可选支路。体育馆和后续房间排序未定。 |
-| 4 | 第一个周边空间 | 已确定但未实现（候选）；选哪个：尚待作者决定 |
+| 4 | 第一批周边空间 | 已实现：集装箱堆场（第 13 轮）和它后面的港口（第 14 轮）；台词仍待作者撰写 |
 | 5 | 不稳定连接；椭圆形建筑 | 建议新增 / 尚待作者决定 |
 
 ## 测试
@@ -214,6 +214,7 @@ flowchart LR
 
 ```sh
 python3 scenes/environment/props/stage_art/source/paint_stage_textures.py
+python3 scenes/environment/props/stage_art/source/paint_street_ditch.py
 python3 tools/build_outdoor_locations.py street residential alley playground
 python3 scenes/environment/props/playground_art/source/build_playground_art.py
 python3 scenes/environment/props/stage_art/source/build_stage_art.py

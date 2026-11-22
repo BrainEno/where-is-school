@@ -671,6 +671,18 @@ def rear_stair_and_ground_wing(b):
     # Parent it to the wall so the usual occluder fade treats both as one surface.
     b.instance("WallGraffiti", child_path(g, "EntranceWallWest"), "wall_graffiti", (0, 1.2, 0.138))
     b.instance("GlassEntrance", g, "teaching_entrance", (ENTRANCE_X, GROUND_Y, ground_z[1]))
+    # A small permanently closed service gate on the exterior face. It is
+    # attached to the existing solid wall, not another exit or an interaction.
+    b.node("LockedServiceGate", g, position=vec3((-12.55, GROUND_Y, ground_z[1]+.14)))
+    gate = child_path(g, "LockedServiceGate")
+    b.box("Leaf", gate, (0, 1.02, 0), (1.04, 2.04, .045), "night_blue")
+    for side in (-1, 1):
+        b.box(f"Jamb{side}", gate, (side*.55, 1.08, .03), (.08, 2.16, .08), "entry_glaze")
+    b.box("Lintel", gate, (0, 2.14, .03), (1.18, .08, .08), "entry_glaze")
+    for i in range(6):
+        b.box(f"Bar{i}", gate, (-.42 + i*.168, 1.12, .05), (.035, 1.60, .035), "exit_steel")
+    b.box("Crossbar", gate, (0, 1.02, .07), (.95, .05, .04), "exit_steel")
+    b.box("Lock", gate, (.34, .97, .10), (.09, .13, .05), "brass_rule")
     # The west side opens onto the stable lane of tools/build_dream_annex.py.
     guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y, {"North": [entrance_x], "West": [apron_z]},
                 "entry_glaze", "brass_rule")
@@ -1116,6 +1128,8 @@ def courtyard_view():
         if name == "CourtFarHalf":
             pos = (pos[0], 0.012, pos[2])
         b.box(name, "Yard", pos, size, f"yard/{mat}")
+    b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
+    b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')
     court_landmarks(b, "Yard", material_prefix="yard/")
     b.node("SchoolPlinth", "Yard", position=vec3((0, 0.6, -19.9)))
     school_plinth_returns(b, "Yard/SchoolPlinth", material_prefix="yard/")

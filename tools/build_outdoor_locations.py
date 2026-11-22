@@ -340,10 +340,15 @@ def build_street():
     s.box("NoticeSheet", (9.32, 2.0, 2.0), (0.04, 0.6, 0.42), "paper", None, False)
     s.box("BinsA", (10.9, 0.55, -2), (0.7, 1.1, 0.7), "shutter")
     s.box("BinsB", (11.8, 0.55, -2), (0.7, 1.1, 0.7), "metal")
-    s.box("Gutter", (-9.2, 0.03, -8), (0.5, 0.06, 54), "metal", None, False)
-    s.box("DrainCover", (-9.2, 0.08, -30), (0.9, 0.1, 0.9), "metal", None, False)
-    # the standing water the gutter inspection is about: a short sheet on top of the gutter
-    s.box("GutterPool", (-9.2, 0.065, -22.0), (0.42, 0.01, 2.6), "glass", None, False)
+    # The gutter is an open ditch along the west kerb, 0.625 m wide (the kerb's face to
+    # x -9.1), its water 0.38 m down. Its lining, the bank and the slabs over it are the stage
+    # pass's (build_stage_art.py); the Road collider is left whole, so the walk is unchanged.
+    # `Gutter` is the water from the street's north end to the slabs at the crossing.
+    s.box("Gutter", (-9.4125, -0.385, -14.25), (0.625, 0.01, 43.5), "glass", None, False)
+    # The cover it runs towards sits on the road, higher than the water that runs to it.
+    s.box("DrainCover", (-9.4125, 0.03, -30), (0.64, 0.08, 0.8), "metal", None, False)
+    # the standing water the gutter inspection is about: backed up against the cover
+    s.box("GutterPool", (-9.4125, -0.375, -25.5), (0.625, 0.01, 8.2), "glass", None, False)
     # the camera on a bracket that the school wall conversation points out
     s.box("WallCameraBracket", (-10.8, 3.4, 6.0), (0.4, 0.06, 0.06), "metal", None, False)
     s.box("WallCamera", (-10.52, 3.32, 6.0), (0.3, 0.16, 0.18), "metal", None, False)

@@ -72,6 +72,13 @@ jobs:
           .venv/bin/python tests/character_geometry_capture_test.py
           .venv/bin/python tests/mobile_tools_test.py
 
+      - name: Check draft markers and exercise the content gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          .venv/bin/python tests/content_placeholders_test.py
+          .venv/bin/python tools/check_content_placeholders.py
+
       - name: Verify Blender head geometry against the pinned basis
         shell: bash
         run: |
@@ -130,13 +137,17 @@ jobs:
           # Every tools/*.py that exposes a standalone --check mode. Evidence readers
           # and export verifiers need real capture/build inputs and are not fabricated here.
           for tool in \
-            build_app_icon build_container_yard build_laboratory build_music_loop build_roof_collector build_sample_models \
+            build_app_icon build_container_yard build_laboratory build_music_loop build_port build_roof_collector build_sample_models \
             build_site_interior build_student_chair build_teaching_block check_agent_docs check_scene_order check_story_flags check_test_registration godot_sidecars \
             model_library prepare_classroom_student prepare_portraits prepare_q prepare_teacher_n repo_size \
             screenshot_evidence stamp_release_version subset_font
           do
             echo "=== tools/${tool}.py --check"
-            .venv/bin/python "tools/${tool}.py" --check
+            if ! .venv/bin/python "tools/${tool}.py" --check; then
+              # The job log is not always reachable; the annotation names the tool.
+              echo "::error title=python tool check::tools/${tool}.py --check failed"
+              exit 1
+            fi
           done
           .venv/bin/python tools/check_workflow_action_pins.py
           # Issue #292: the story-flag registry against the content; #291: no .tscn node

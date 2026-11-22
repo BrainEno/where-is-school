@@ -1,0 +1,138 @@
+name: Folded Drum dev review
+
+on:
+  push:
+    paths:
+      - 'scenes/dev/folded_drum/**'
+      - '.github/workflows/dev-building-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Verify and photograph the dev building
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      shards: ${{ steps.pack.outputs.shards }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: ./.github/actions/setup-godot
+      - name: Import the project and check the model and orbit controls headlessly
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnose() {
+            awk '/SCRIPT ERROR|Parse Error|^ERROR:|^WARNING:/{print; if (++count == 7) exit}
+                 /[[:space:]]at:.*\.gd:[0-9]+/{print}' "$1" |
+              while IFS= read -r line; do echo "::error title=Folded Drum $2::$line"; done
+          }
+          godot --version
+          # The first import can report resources queued for import. Judge the clean
+          # editor open after it has populated the cache, as in location-art-capture.
+          first=0
+          godot --headless --path . --import > "$RUNNER_TEMP/folded-import.log" 2>&1 || first=$?
+          if [ "$first" -ne 0 ]; then
+            echo "::notice title=Folded Drum import::Initial import exited $first; checking the editor after import."
+          fi
+          editor_log="$RUNNER_TEMP/folded-editor.log"
+          if ! godot --headless --editor --path . --quit > "$editor_log" 2>&1 ||
+              grep -Eq 'SCRIPT ERROR|Parse Error|^ERROR:' "$editor_log"; then
+            diagnose "$editor_log" editor
+            tail -n 35 "$editor_log"
+            exit 1
+          fi
+          test_log="$RUNNER_TEMP/folded-test.log"
+          if ! godot --headless --path . --script res://scenes/dev/folded_drum/review.gd > "$test_log" 2>&1 ||
+              grep -Eq 'SCRIPT ERROR|^ERROR:' "$test_log" || ! grep -q '^PASS:' "$test_log"; then
+            diagnose "$test_log" geometry
+            cat "$test_log"
+            exit 1
+          fi
+          cat "$test_log"
+          grep '^PASS:' "$RUNNER_TEMP/folded-test.log" | while IFS= read -r result; do
+            echo "::notice title=Folded Drum geometry and input::$result"
+          done
+      - name: Make Vulkan available for the project's default renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! compgen -G '/usr/share/vulkan/icd.d/lvp_icd*.json' > /dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq mesa-vulkan-drivers
+          fi
+      - name: Capture the three actual dev views in a Forward+ window
+        shell: bash
+        run: |
+          set -euo pipefail
+          capture_log="$RUNNER_TEMP/folded-capture.log"
+          export VK_DRIVER_FILES=$(find /usr/share/vulkan/icd.d -type f -name 'lvp_icd*.json' -print -quit)
+          test -n "$VK_DRIVER_FILES"
+          if ! xvfb-run -a -s '-screen 0 1800x1660x24' godot --path . --resolution 1280x1560 \
+              --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy \
+              --script res://scenes/dev/folded_drum/review.gd -- "capture=$RUNNER_TEMP/folded-frames" \
+              > "$capture_log" 2>&1 || grep -Eq 'SCRIPT ERROR|^ERROR:' "$capture_log" ||
+              ! grep -Eq '^Vulkan.*Forward\+' "$capture_log"; then
+            awk '/^SCRIPT ERROR|^ERROR:|^Vulkan/ {print; if (++count == 7) exit}' "$capture_log" |
+              while IFS= read -r line; do echo "::error title=Folded Drum capture::$line"; done
+            tail -n 35 "$capture_log"
+            exit 1
+          fi
+          cat "$capture_log"
+          grep -E '^Godot Engine|^Vulkan|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
+            while IFS= read -r result; do echo "::notice title=Folded Drum viewport::$result"; done
+      - name: Prepare exact-byte evidence for the artifact and check API
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=tools python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from dialogue_evidence_relay import pack
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          wanted = ("folded_drum_01_reference_angle", "folded_drum_02_right_louvres", "folded_drum_03_mitered_pipes")
+          problems, shards = pack([temp / "folded-capture.log"], temp / "folded-frames", temp / "folded-relay",
+                                  wanted=wanted, commit=os.environ["GITHUB_SHA"], run_id=int(os.environ["GITHUB_RUN_ID"]))
+          if problems:
+              raise SystemExit("\n".join(problems))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              print(f"shards={json.dumps(shards)}", file=output)
+          PY
+      - name: Upload review frames (not game assets)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: folded-drum-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/folded-relay/
+          if-no-files-found: error
+
+  relay:
+    # The check API is the repository's alternative where the artifact store is unreachable.
+    name: Relay Folded Drum views (${{ matrix.shard }})
+    needs: capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        shard: ${{ fromJSON(needs.capture.outputs.shards || '[]') }}
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: folded-drum-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/folded-relay
+      - run: |
+          set -euo pipefail
+          sed -n "$(( SHARD * 45 + 1 )),$(( (SHARD + 1) * 45 ))p" \
+            "$RUNNER_TEMP/folded-relay/queue.txt" > "$RUNNER_TEMP/shard.txt"
+          test -s "$RUNNER_TEMP/shard.txt"
+      - run: sed -n '1,9p' "$RUNNER_TEMP/shard.txt" | while read -r file part data; do echo "::notice title=relay $file $part::$data"; done
+      - run: sed -n '10,18p' "$RUNNER_TEMP/shard.txt" | while read -r file part data; do echo "::notice title=relay $file $part::$data"; done
+      - run: sed -n '19,27p' "$RUNNER_TEMP/shard.txt" | while read -r file part data; do echo "::notice title=relay $file $part::$data"; done
+      - run: sed -n '28,36p' "$RUNNER_TEMP/shard.txt" | while read -r file part data; do echo "::notice title=relay $file $part::$data"; done
+      - run: sed -n '37,45p' "$RUNNER_TEMP/shard.txt" | while read -r file part data; do echo "::notice title=relay $file $part::$data"; done

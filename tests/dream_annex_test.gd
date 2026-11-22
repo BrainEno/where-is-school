@@ -50,15 +50,15 @@ const WAITING_CROWD := {
 }
 const STENCH_SHADER := "res://assets/shaders/school/stench_haze.gdshader"
 const STENCH_POINTS := {
-	"the muck heap": [Vector3(-31.6, -3.4, 5.6), 0.99, 1.01],
-	"the yard": [Vector3(-31.0, -3.4, 13.4), 0.5, 0.95],
+	"the muck heap": [Vector3(-35.6, -3.4, 5.6), 0.99, 1.01],
+	"the yard": [Vector3(-35.0, -3.4, 13.4), 0.5, 0.95],
 	"the glass entrance": [Vector3(-20.0, -3.4, 18.2), -0.01, 0.01],
 	"the 01 gallery": [Vector3(-11.4, -3.4, 12.6), -0.01, 0.01],
-	"02 above the stalls": [Vector3(-31.6, 0.0, 5.6), -0.01, 0.01],
+	"02 above the stalls": [Vector3(-35.6, 0.0, 5.6), -0.01, 0.01],
 }
 const ENTRANCE_ROUTES := {
-	"the yard": Vector3(-31.0, -3.4, 13.4),
-	"the strip by the corner doorway": Vector3(-38.6, -3.4, 11.15),
+	"the yard": Vector3(-35.0, -3.4, 13.4),
+	"the strip by the corner doorway": Vector3(-42.6, -3.4, 11.15),
 	"the lane": Vector3(-24.0, -3.4, 17.4),
 	"the lane in front of the booth": Vector3(-13.62, -3.4, 12.25),
 	"the archive door landing": Vector3(-14.48, -3.4, 12.0),
@@ -93,6 +93,13 @@ func _run() -> void:
 		_check_pieces(annex, "corridor")
 		_check_spawns(corridor, annex)
 		_check_ticket_counter(corridor)
+		_check_stable_art(annex)
+		var stable := annex.get_node_or_null(^"StableYard") as Node3D
+		_check.expect(stable != null and is_equal_approx(stable.position.x, -4.0)
+			and annex.has_node(^"StableLaneConnector"), "Stable must be separated from the restroom with a connected lane.")
+		_check.expect(corridor.has_node(^"TeachingBlock/GroundFloor/GlassEntrance")
+			and corridor.has_node(^"TeachingBlock/GroundFloor/LockedServiceGate/Lock"),
+			"The glass entrance or closed service gate is missing.")
 		var exam := annex.get_node_or_null(^"ExamFloor")
 		if _check.expect(exam != null, "The annex has no ExamFloor."):
 			_check_candidates(exam, EXAM_CROWD, true)
@@ -126,6 +133,30 @@ func _run() -> void:
 	for _frame in 4:
 		await physics_frame
 	Harness.finish(self, _check.failures, "the exam dream draws, never acts, opens the stable yard and moves nothing.")
+
+
+func _check_stable_art(annex: Node) -> void:
+	for name: String in ["OldWoman0", "OldWoman1"]:
+		var person := annex.get_node_or_null(NodePath("StableYard/" + name)) as Node3D
+		if not _check.expect(person != null, "The stable lost " + name):
+			continue
+		for part: NodePath in [^"Feet", ^"Body/Coat", ^"Body/Head", ^"Body/ArmL", ^"Body/ArmR"]:
+			var piece := person.get_node_or_null(part) as MeshInstance3D
+			if not _check.expect(piece != null, name + " lost " + str(part)):
+				continue
+			var mesh := piece.mesh as ArrayMesh
+			var paint := piece.material_override as StandardMaterial3D
+			_check.expect(mesh != null and mesh.surface_get_array_index_len(0) > 100
+				and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
+				and paint != null and paint.vertex_color_use_as_albedo,
+				name + " lost its shaped, painted " + str(part))
+		_check.expect(person.get_node_or_null(^"Motion") is AnimationPlayer,
+			name + " lost its quiet visual motion")
+	var wisp := annex.get_node_or_null(^"StableYard/Stink0") as MultiMeshInstance3D
+	if _check.expect(wisp != null and wisp.multimesh != null, "The stable lost its wisps"):
+		var bounds := wisp.multimesh.mesh.get_aabb()
+		_check.expect(bounds.size.z > 0.15 and wisp.multimesh.instance_count <= 3,
+			"The smell must be sparse and three-dimensional")
 
 
 func _check_stench(corridor: Node) -> void:
