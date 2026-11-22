@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import platform
@@ -17,7 +18,7 @@ import verify_build
 ROOT = Path(__file__).resolve().parents[1]
 AUTHOR_ID = "io.github.braineno.whereisschool.authoring"
 AUTHOR_NAME = "Where Is School - Author"
-AUTHOR_DIR = "scripts/dev/authoring/"
+AUTHOR_DIR = "scripts/story_editor/"
 BOOTSTRAP = AUTHOR_DIR + "bootstrap.gd"
 SCRIPTS = frozenset(AUTHOR_DIR + name + ".gd" for name in (
     "bootstrap", "author_overlay", "author_form", "branch_preview", "dialogue_patch",
@@ -37,8 +38,10 @@ def configure_project(tree: Path, head: str, *, editor: bool = True) -> None:
     text = project.read_text(encoding="utf-8")
     if text.count('[autoload]\n') != 1 or text.count('config/name="where-is-school"') != 1:
         raise ValueError("Unexpected author project base; the retail settings were not modified")
-    if editor and any(not (tree / p).is_file() for p in SCRIPTS):
-        raise ValueError("The author pack requires all its tracked scripts")
+    if any(not (tree / p).is_file() for p in SCRIPTS):
+        # The retail iPhone pack carries the editor runtime too; a staged tree without it
+        # would ship a preset that points at nothing.
+        raise ValueError("The story editor pack requires all its tracked scripts")
     text = text.replace('config/name="where-is-school"', f'config/name={json.dumps(AUTHOR_NAME)}')
     if editor:
         # Last autoload, after GameState, Loc, Settings and Session are ready.
@@ -54,7 +57,7 @@ def configure_ios(text: str) -> str:
     header = f"[preset.{preset.index}]"
     start = text.index(header) + len(header)
     end = text.index("\n[", start)
-    excludes = [p.strip() for p in preset.exclude_filter.split(",") if p.strip() != "scripts/dev/*"]
+    excludes = [p.strip() for p in preset.exclude_filter.split(",") if p.strip()]
     # Godot scans .gdip files separately for Xcode integration. Keep plugin
     # source/binaries out of the resource pack, including in this variant.
     excludes.append("ios/plugins/*")
@@ -66,6 +69,10 @@ def configure_ios(text: str) -> str:
     for key, value in (("application/bundle_identifier", AUTHOR_ID), ("plugins/WISAuthorFiles", True)):
         text = export_presets.set_option(text, "iOS", key, value)
     return text
+
+
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def compile_files_bridge(tree: Path, *, simulator: bool) -> None:
@@ -82,6 +89,9 @@ def compile_files_bridge(tree: Path, *, simulator: bool) -> None:
                         "-c", BRIDGE / "FilesBridge.mm", "-o", object_file], check=True)
         subprocess.run(["xcrun", "libtool", "-static", "-o", destination / "libWISAuthorFiles.a", object_file], check=True)
     shutil.copyfile(BRIDGE / "FilesBridge.gdip", destination / "FilesBridge.gdip")
+    # Evidence for the release check: which bridge source this slice was built from.
+    manifest = {"source_sha256": file_sha256(BRIDGE / "FilesBridge.mm")}
+    (destination / "BUNDLE.json").write_text(json.dumps(manifest) + "\n", encoding="utf-8")
 
 
 def verify_pack(pack: Path) -> None:

@@ -2,11 +2,11 @@ extends CanvasLayer
 ## Attached only in the staged author project. Pauses the existing world, draws a
 ## detached DialoguePanel over it, and leaves the real controller and its state alone.
 
-const Form := preload("res://scripts/dev/authoring/author_form.gd")
-const Preview := preload("res://scripts/dev/authoring/branch_preview.gd")
-const Exchange := preload("res://scripts/dev/authoring/author_exchange.gd")
-const Store := preload("res://scripts/dev/authoring/draft_store.gd")
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
+const Form := preload("res://scripts/story_editor/author_form.gd")
+const Preview := preload("res://scripts/story_editor/branch_preview.gd")
+const Exchange := preload("res://scripts/story_editor/author_exchange.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const PanelScene := preload("res://scenes/ui/dialogue_panel.tscn")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const EDIT_DELAY := 0.32
@@ -110,6 +110,12 @@ func _button(id: String, caption: String, callback: Callable) -> Button:
 	button.pressed.connect(callback)
 	add_child(button)
 	return button
+
+
+## True while the drawer owns the screen. The pause menu and the tests ask before
+## closing or re-opening it.
+func is_editing() -> bool:
+	return _open
 
 
 func _allowed() -> bool:

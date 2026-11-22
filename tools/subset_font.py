@@ -144,7 +144,7 @@ def collect_characters(text_sources: tuple[str, ...] = TEXT_SOURCES) -> tuple[se
     for pattern in text_sources:
         for name in glob.glob(pattern, recursive=True):
             path = Path(name).as_posix()
-            if path.startswith("scripts/dev/authoring/") or path in AUTHOR_FIXTURES:
+            if path.startswith("scripts/story_editor/") or path in AUTHOR_FIXTURES:
                 continue
             text = Path(name).read_text(encoding="utf-8", errors="ignore")
             if name.endswith(".json"):

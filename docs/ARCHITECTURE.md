@@ -856,6 +856,18 @@ evidence is `tests/capture_editor_dock.gd`, which photographs it under Xvfb in C
 editor-only surface — the plugin class, the bottom panel — is covered by the manual
 checklist in that test's section of the pull request, because no CI runner opens an editor.
 
+**The player's copy (story editor switch).** The retail iPhone app carries the same editor
+runtime as the separate author app, in `scripts/story_editor/` (it moved there from
+`scripts/dev/authoring/`), and links the Files bridge on the device. It is off by default:
+`[authoring] story_editor` in `settings.cfg`, a row under *Settings → Story editor* (测试).
+The pause menu is the only installer — `sync_story_editor()` adds the `StoryEditor` autoload
+to the root when the switch is on and frees it when it is off — so a copy that never turns it
+on packs no overlay into the running scene and reads no draft. Drafts, the editor journal
+and the Files bridge exchange live in `user://story_editor/`, separate from
+`user://save.json`. The desktop and Android presets still exclude both the folder and the
+bridge; `tools/export_mobile.py --authoring` remains the separate author app
+(`io.github.braineno.whereisschool.authoring`, no bridge on the simulator).
+
 ## 5j. The ground mark and the outline (implemented contract)
 
 This round replaced both pointer cues after the owner rejected them: the floor-click mark

@@ -138,7 +138,7 @@ func is_open() -> bool:
 ## The focusable control of a row: `text_size`, `text_speed`, `auto_speed`, `skip_scope`,
 ## `clear_read_log`, `sprint_mode`, `volume_master`,
 ## `volume_music`, `volume_sfx`, `ui_scale`, `fullscreen`, `language`,
-## `open_logs`, `export_diagnostics`,
+## `open_logs`, `export_diagnostics`, `story_editor`,
 ## `bind_<action>_keyboard`, `bind_<action>_gamepad`, `restore_bindings`, `back`.
 func get_row_control(id: StringName) -> Control:
 	if id == &"back":
@@ -238,6 +238,7 @@ func _rebuild() -> void:
 	restore.pressed.connect(_on_restore_pressed)
 	_rows.add_child(restore)
 	_controls[&"restore_bindings"] = restore
+	_authoring_rows()
 
 	UiTextScale.apply(self, _factor)
 	if MobileLayout.enabled:
@@ -264,7 +265,7 @@ func _link_focus() -> void:
 	for id: StringName in [
 		&"text_size", &"text_speed", &"auto_speed", &"skip_scope", &"clear_read_log",
 		&"volume_master", &"volume_music", &"volume_sfx", &"ui_scale", &"fullscreen", &"language",
-		&"open_logs", &"export_diagnostics", &"sprint_mode",
+		&"open_logs", &"export_diagnostics", &"sprint_mode", &"story_editor",
 	]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
@@ -274,7 +275,7 @@ func _link_focus() -> void:
 		var pad := _focusable(get_row_control(_bind_id(action, &"gamepad")))
 		if keys != null or pad != null:
 			grid.append([keys, pad])
-	for id: StringName in [&"restore_bindings", &"back"]:
+	for id: StringName in [&"restore_bindings", &"story_editor", &"back"]:
 		var single := _focusable(get_row_control(id))
 		if single != null:
 			grid.append([single, single])
@@ -559,6 +560,8 @@ func _current(id: StringName) -> int:
 			return 1 if _is_fullscreen() else 0
 		&"language":
 			return _index_of(_language_options(), L10n.current)
+		&"story_editor":
+			return 1 if _story_editor_enabled() else 0
 	return 0
 
 
@@ -638,6 +641,9 @@ func _apply_choice(id: StringName, value: String) -> void:
 						DisplayServer.WINDOW_MODE_FULLSCREEN if wanted
 						else DisplayServer.WINDOW_MODE_WINDOWED
 					)
+		&"story_editor":
+			if settings != null:
+				settings.call("set_story_editor_enabled", value == "on")
 		&"language":
 			var loc := get_node_or_null(^"/root/Loc")
 			if loc != null:
@@ -728,6 +734,23 @@ func _disarm_clear_read_log() -> void:
 	_refresh_clear_read_log()
 
 
+## The switches for tools a player's copy may run. Separated from the controls above because
+## they are not about reading or steering the game. The editor's drafts live in their own
+## folder and never touch the save file, so turning this on cannot change an existing run.
+func _authoring_rows() -> void:
+	_heading("settings.section.authoring")
+	_choice_row(&"story_editor", "settings.story_editor", _on_off_options(), _current(&"story_editor"))
+	_rows.add_child(MenuStyle.paragraph(
+		L10n.t("settings.story_editor_note"), MenuStyle.SMALL_SIZE, _factor, MenuStyle.MUTED
+	))
+
+
+func _story_editor_enabled() -> bool:
+	var settings := _settings()
+	return settings != null and settings.has_method("is_story_editor_enabled") \
+		and bool(settings.call("is_story_editor_enabled"))
+
+
 func _diagnostics_rows() -> void:
 	_heading("settings.section.diagnostics")
 	_rows.add_child(MenuStyle.paragraph(
@@ -777,6 +800,9 @@ func _on_restore_pressed() -> void:
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key):
 		_queue_rebuild(&"text_size" if key == &"text_size" else &"")
+	elif key == &"story_editor":
+		# Another screen may have changed it; show the stored value here too.
+		_queue_rebuild(&"story_editor")
 
 
 func _on_bindings_changed() -> void:

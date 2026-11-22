@@ -32,6 +32,9 @@ signal closed
 # The notebook sits right under Resume, the thing most often opened from here; Settings
 # follows it (Down, Down, Enter from Resume) and the way out comes last.
 const ENTRIES: Array[StringName] = [&"resume", &"journal", &"settings", &"new_game", &"save_quit"]
+## Added after the five entries while Settings → Story editor is on. It is not part of
+## `ENTRIES`, so every existing order, focus walk and test keeps the five entries it knows.
+const STORY_ENTRY := &"story_editor"
 
 
 ## The paused world behind a wash, and the sheet the menu is set on: dark, its right edge
@@ -143,19 +146,7 @@ func _ready() -> void:
 		_entry_grid.add_theme_constant_override(&"h_separation", 6)
 		_entry_grid.add_theme_constant_override(&"v_separation", 4)
 	for id: StringName in ENTRIES:
-		var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
-		entry.name = String(id)
-		if _entry_grid != null:
-			entry.autowrap_mode = TextServer.AUTOWRAP_OFF
-		entry.pressed.connect(activate.bind(id))
-		if _entry_grid == null or id == &"resume":
-			_column.add_child(entry)
-		else:
-			if _entry_grid.get_parent() == null:
-				_column.add_child(_entry_grid)
-			entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			_entry_grid.add_child(entry)
-		_entries[id] = entry
+		_entries[id] = _make_entry(id)
 	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
 	_notice.name = "Notice"
 	_notice.visible = false
@@ -165,7 +156,7 @@ func _ready() -> void:
 
 	_settings_panel = SettingsPanel.new()
 	_root.add_child(_settings_panel)
-	_settings_panel.closed.connect(focus_entry.bind(&"settings"))
+	_settings_panel.closed.connect(_on_settings_closed)
 	_journal = JournalPanel.new()
 	_root.add_child(_journal)
 	_journal.closed.connect(_on_journal_closed)
@@ -189,10 +180,66 @@ func _ready() -> void:
 		_column.minimum_size_changed.connect(_fit_after_reflow, CONNECT_DEFERRED)
 		get_window().go_back_requested.connect(_on_mobile_back)
 	_refresh_texts()
+	# After the settings panel and the entries exist: a session started with the switch on
+	# shows the editor entry and installs the editor before the first pause.
+	sync_story_editor()
 
 
 func is_open() -> bool:
 	return _root != null and _root.visible
+
+
+## Where the Settings switch's install point lives. The editor is driven by the same
+## bootstrap as the separate author app, so this file names no editor node itself.
+const STORY_EDITOR_BOOTSTRAP := preload("res://scripts/story_editor/bootstrap.gd")
+
+
+## Installs the editor for this session when Settings → Story editor is on. The install is
+## idempotent: the pause menu is instantiated once per world, and every later call returns
+## the same node. Turning the switch off frees it, which also unloads any draft from memory.
+func sync_story_editor() -> void:
+	var settings := get_node_or_null(^"/root/Settings")
+	var wanted := settings != null and settings.has_method("is_story_editor_enabled") \
+		and bool(settings.call("is_story_editor_enabled"))
+	var existing := get_node_or_null(^"/root/StoryEditor")
+	if wanted and existing == null:
+		var editor: Node = STORY_EDITOR_BOOTSTRAP.new()
+		editor.name = "StoryEditor"
+		get_tree().root.add_child(editor)
+	elif not wanted and existing != null:
+		existing.queue_free()
+	if wanted:
+		get_story_entry()
+	elif _entries.has(STORY_ENTRY):
+		var button := _entries[STORY_ENTRY] as Button
+		_entries.erase(STORY_ENTRY)
+		button.queue_free()
+
+
+## The installed editor, or null when the switch is off.
+func get_story_editor() -> Node:
+	return get_node_or_null(^"/root/StoryEditor")
+
+
+## Opens the editor on the running world, if it is installed. The row above is only
+## offered while it is, so this is the click: no editor code is decided here.
+func open_story_editor() -> bool:
+	var editor := get_story_editor()
+	if editor == null or not editor.has_method("open_editor"):
+		return false
+	return bool(editor.call("open_editor"))
+
+
+## The editor entry, built on demand from the same factory every other entry uses. It is
+## created lazily so a session that never turns the switch on neither shows it nor pays
+## for its text; `sync_story_editor()` removes it again when the switch goes off.
+func get_story_entry() -> Button:
+	if _entries.has(STORY_ENTRY):
+		return _entries[STORY_ENTRY] as Button
+	var button := _make_entry(STORY_ENTRY)
+	button.pressed.connect(open_story_editor)
+	_entries[STORY_ENTRY] = button
+	return button
 
 
 func open() -> void:
@@ -284,6 +331,25 @@ func _on_journal_closed() -> void:
 	focus_entry(&"journal")
 
 
+## One entry button, placed where the five canonical entries go: Resume alone above the
+## pair grid, everything else in it. The editor entry uses the same factory so it cannot
+## drift in size, wrap or focus behaviour.
+func _make_entry(id: StringName) -> Button:
+	var entry := MenuStyle.page_entry("", MenuStyle.ENTRY_SIZE, _factor)
+	entry.name = String(id)
+	if _entry_grid != null:
+		entry.autowrap_mode = TextServer.AUTOWRAP_OFF
+	entry.pressed.connect(activate.bind(id))
+	if _entry_grid == null or id == &"resume":
+		_column.add_child(entry)
+	else:
+		if _entry_grid.get_parent() == null:
+			_column.add_child(_entry_grid)
+		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_entry_grid.add_child(entry)
+	return entry
+
+
 func get_entry(id: StringName) -> Button:
 	return _entries.get(id) as Button
 
@@ -321,6 +387,8 @@ func activate(id: StringName) -> void:
 			_settings_panel.open()
 		&"journal":
 			open_journal()
+		STORY_ENTRY:
+			open_story_editor()
 		&"new_game":
 			_pending = &"new_game"
 			_confirm.ask(
@@ -516,6 +584,11 @@ func _something_else_owns_cancel() -> bool:
 		var backlog := ui.get_node_or_null(^"%BacklogPanel") as BacklogPanel
 		if backlog != null and backlog.is_open():
 			return true
+	var editor := get_story_editor()
+	if editor != null:
+		var overlay := editor.get_node_or_null(^"AuthorOverlay")
+		if overlay != null and overlay.has_method("is_editing") and bool(overlay.call("is_editing")):
+			return true
 	return false
 
 
@@ -528,6 +601,8 @@ func _refresh_texts() -> void:
 		_notice.text = NewGameFailureText.describe(_failure)
 	for id: StringName in ENTRIES:
 		(_entries[id] as Button).text = L10n.t("menu.return_to_title" if id == &"save_quit" else "menu.%s" % id)
+	if _entries.has(STORY_ENTRY):
+		(_entries[STORY_ENTRY] as Button).text = L10n.t("menu.story_editor")
 	var unread := _journal.get_unread_count() if _journal != null else 0
 	if unread > 0:
 		(_entries[&"journal"] as Button).text = L10n.t("menu.journal_unread", {"count": unread})
@@ -558,11 +633,24 @@ func _on_locale_changed(_locale: String) -> void:
 	_fit()
 
 
+func _on_settings_closed() -> void:
+	# The switch can have changed while the screen was up; the entry follows it before the
+	# focus returns, so the new row is there for the next press.
+	sync_story_editor()
+	if _settings_panel.is_open():
+		return
+	focus_entry(&"settings")
+
+
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key) and _root != null:
 		_factor = MenuStyle.menu_text_scale(self)
 		UiTextScale.apply(_column, _factor)
 		UiTextScale.apply(_hint, _factor)
+		_fit()
+	elif key == &"story_editor":
+		sync_story_editor()
+		_refresh_texts()
 		_fit()
 
 

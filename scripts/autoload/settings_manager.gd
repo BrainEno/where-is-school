@@ -43,6 +43,9 @@ const SECTION_DISPLAY := SettingsStore.SECTION_DISPLAY
 const SECTION_INPUT := "input"
 const SECTION_META := "settings"
 const SECTION_CONTROLS := "controls"
+## Author tools that a player's copy may carry (issue: the story editor in the iPhone build).
+## `[authoring] story_editor` is off unless the player turns it on.
+const SECTION_AUTHORING := "authoring"
 const FORMAT_VERSION := 1
 
 const TEXT_SIZES: Array[StringName] = [&"standard", &"large", &"largest"]
@@ -102,6 +105,7 @@ var _auto_speed: StringName = DEFAULT_AUTO_SPEED
 var _skip_scope: StringName = DEFAULT_SKIP_SCOPE
 var _sprint_mode: StringName = DEFAULT_SPRINT_MODE
 var _ui_scale: StringName = DEFAULT_UI_SCALE
+var _story_editor := false
 var _volumes: Dictionary = {}
 ## The bus levels `default_bus_layout.tres` sets, read once: 100 % means "as mixed".
 var _bus_trim: Dictionary = {}
@@ -207,6 +211,21 @@ func set_skip_scope(value: StringName) -> void:
 	_skip_scope = value
 	_store(SECTION_TEXT, "skip_scope", String(value))
 	setting_changed.emit(&"skip_scope")
+
+
+## The story editor switch. Off is the player's game: no launcher, no overlay and no
+## draft reads. On, the world offers 「剧情编辑」; drafts live in `user://story_editor/`, apart
+## from the save file.
+func is_story_editor_enabled() -> bool:
+	return _story_editor
+
+
+func set_story_editor_enabled(value: bool) -> void:
+	if value == _story_editor:
+		return
+	_story_editor = value
+	_store(SECTION_AUTHORING, "story_editor", value)
+	setting_changed.emit(&"story_editor")
 
 
 func get_sprint_mode() -> StringName:
@@ -523,6 +542,7 @@ func load_settings() -> void:
 	_skip_scope = DEFAULT_SKIP_SCOPE
 	_sprint_mode = DEFAULT_SPRINT_MODE
 	_ui_scale = DEFAULT_UI_SCALE
+	_story_editor = false
 	for key: StringName in VOLUME_KEYS:
 		_volumes[key] = DEFAULT_VOLUME
 	for action: StringName in REBINDABLE_ACTIONS:
@@ -536,6 +556,14 @@ func load_settings() -> void:
 			config, SECTION_CONTROLS, "sprint_mode", SPRINT_MODES, DEFAULT_SPRINT_MODE
 		)
 		_ui_scale = _read_choice(config, SECTION_DISPLAY, "ui_scale", UI_SCALES, DEFAULT_UI_SCALE)
+		if config.has_section_key(SECTION_AUTHORING, "story_editor"):
+			var stored: Variant = config.get_value(SECTION_AUTHORING, "story_editor")
+			if stored is bool:
+				_story_editor = stored
+			else:
+				_load_problems.append(
+					"[%s] story_editor = %s is not true or false" % [SECTION_AUTHORING, str(stored)]
+				)
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
 		_load_bindings(config)
@@ -571,7 +599,9 @@ func _load_bindings(config: ConfigFile) -> void:
 ## and stays. Used by the tests so one check never inherits another's preferences.
 func reset_to_defaults() -> void:
 	var config := _open()
-	for section: String in [SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_CONTROLS, SECTION_META]:
+	for section: String in [
+		SECTION_TEXT, SECTION_AUDIO, SECTION_INPUT, SECTION_CONTROLS, SECTION_AUTHORING, SECTION_META
+	]:
 		if config.has_section(section):
 			config.erase_section(section)
 	if config.has_section_key(SECTION_DISPLAY, "ui_scale"):

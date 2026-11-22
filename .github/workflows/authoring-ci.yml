@@ -7,17 +7,18 @@ on:
     branches: [main, 'arena/**']
     paths:
       - '.github/workflows/authoring-ci.yml'
-      - 'scripts/dev/authoring/**'
+      - 'scripts/story_editor/**'
       - 'tools/authoring_build.py'
       - 'tools/review_author_draft.*'
       - 'tools/macos/ios/authoring/**'
       - 'tests/authoring_*'
+      - 'tests/story_editor_*'
   pull_request:
     paths:
       - '.github/workflows/authoring-ci.yml'
       - '.github/actions/setup-godot/**'
       - '.godot-version'
-      - 'scripts/dev/authoring/**'
+      - 'scripts/story_editor/**'
       - 'scripts/dialogue/**'
       - 'scripts/ui/**'
       - 'data/dialogue/**'
@@ -31,6 +32,7 @@ on:
       - 'tools/godot_pck.py'
       - 'tools/macos/ios/**'
       - 'tests/authoring_*'
+      - 'tests/story_editor_*'
 
 permissions:
   contents: read
@@ -67,6 +69,18 @@ jobs:
           if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
             grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Author patch and journal::%s\n' "$failure"; done || true
+            exit 1
+          fi
+      - name: Test the Settings switch and the pause entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/story-editor-switch.log"
+          result=0
+          timeout 180 godot --headless --path . --script res://tests/story_editor_setting_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked|^FAIL:' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Story editor switch::%s\n' "$failure"; done || true
             exit 1
           fi
       - name: Test rendered desktop, landscape touch and desktop review

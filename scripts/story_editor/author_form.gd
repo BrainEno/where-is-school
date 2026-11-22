@@ -3,7 +3,7 @@ extends PanelContainer
 ## the scroll list is not the order of nodes/choices in the content file.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 signal picked(field: String, id: String)
 signal action(id: String)
 signal buffer_changed
