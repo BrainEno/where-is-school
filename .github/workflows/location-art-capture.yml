@@ -437,6 +437,28 @@ jobs:
           godot --headless --editor --path . --quit > "${RUNNER_TEMP}/import-2.log" 2>&1 || true
           if grep -E "SCRIPT ERROR|Parse Error" "${RUNNER_TEMP}/import-2.log"; then exit 1; fi
 
+      - name: Verify the original gallery route and desktop and touch input before review
+        if: inputs.relay_ticket_evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify() {
+            local check="$1"; shift
+            local log="${RUNNER_TEMP}/ticket-${check}.log"
+            if ! godot --headless --path . --script "$@" > "$log" 2>&1 || \
+                grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:' "$log" || ! grep -q '^PASS:' "$log"; then
+              tail -n 45 "$log"
+              awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:)/ {print; if (++count == 6) exit}' "$log" \
+                | while IFS= read -r issue; do echo "::error title=${check}::${issue}"; done
+              exit 1
+            fi
+            grep -E '^PASS:|^TICKET SHOT:' "$log" \
+              | while IFS= read -r line; do echo "::notice title=${check}::${line}"; done
+          }
+          verify gallery res://tests/dream_annex_test.gd
+          verify desktop res://tests/ticket_counter_test.gd
+          verify touch res://tests/ticket_counter_test.gd -- --mobile-preview
+
       - name: Walk through the glass door and click the three faces
         shell: bash
         run: |

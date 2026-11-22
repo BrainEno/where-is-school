@@ -2956,7 +2956,7 @@ outline_size = 0
 modulate = Color(0.961, 0.941, 0.886, 1)
 
 [node name="TicketCounter" type="Node3D" parent="."]
-position = Vector3(-13, -3.4, 13.39)
+position = Vector3(-13.62, -3.4, 13.39)
 rotation_degrees = Vector3(0, 180, 0)
 
 [node name="Booth" type="StaticBody3D" parent="TicketCounter"]

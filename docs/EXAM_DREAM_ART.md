@@ -145,9 +145,9 @@ real spawn through the threshold, sends mouse events at all three faces, checks 
 the same camera frames their eyes and hair, then checks the facing interaction and walks
 on after controls return. Append `-- --mobile-preview` to exercise the touch path instead.
 With a window, `-- capture=<dir>` saves the approach and three clicked close-ups.
-The booth sits beyond the east edge of the deep entrance lintel and slightly inside
-its wall line, so the follow camera sees the clerks on turning right without depending
-on the lintel fading. To review the full-size frames without the artifact
+The booth sits slightly inside the wall line. The clerk heads clear the lintel in the
+follow camera on turning right, while the east end leaves the original gallery lane
+open to the blue stair. To review the full-size frames without the artifact
 store, dispatch `location-art-capture.yml` with `relay_ticket_evidence=true`, then
 `python3 tools/dialogue_evidence_relay.py fetch --run <id> --out build/ticket-frames`.
 The relay checks the commit and each JPEG's hash; the images stay out of Git.
