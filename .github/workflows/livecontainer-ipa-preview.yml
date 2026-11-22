@@ -8,6 +8,7 @@ on:
 
 permissions:
   actions: read
+  checks: write # Publish only the one-run public certificate while the job is live.
   contents: read
 
 jobs:
@@ -23,7 +24,9 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
-      - name: Create a one-run recipient key for the file transfer ticket
+      - name: Publish a one-run public certificate for the file transfer ticket
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -32,7 +35,11 @@ jobs:
           cd "$RUNNER_TEMP/wis-transfer"
           openssl req -new -x509 -newkey rsa:3072 -nodes -sha256 -days 1 \
             -subj '/CN=Where Is School one-file delivery' -keyout job.key -out job.pem 2>/dev/null
-          printf '::notice title=One-run delivery public certificate::%s\n' "$(base64 -w0 job.pem)"
+          gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" \
+            -f "name=IPA recipient $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" -f "head_sha=$GITHUB_SHA" \
+            -f "details_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            -f status=completed -f conclusion=neutral -f 'output[title]=One-run delivery public certificate' \
+            -f "output[summary]=$(base64 -w0 job.pem)" --jq '.id'
       - name: Recover the verified ciphertext from the macOS runner
         env:
           GH_TOKEN: ${{ github.token }}
