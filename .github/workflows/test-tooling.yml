@@ -136,7 +136,11 @@ jobs:
             screenshot_evidence stamp_release_version subset_font
           do
             echo "=== tools/${tool}.py --check"
-            .venv/bin/python "tools/${tool}.py" --check
+            if ! .venv/bin/python "tools/${tool}.py" --check; then
+              # The job log is not always reachable; the annotation names the tool.
+              echo "::error title=python tool check::tools/${tool}.py --check failed"
+              exit 1
+            fi
           done
           .venv/bin/python tools/check_workflow_action_pins.py
           # Issue #292: the story-flag registry against the content; #291: no .tscn node

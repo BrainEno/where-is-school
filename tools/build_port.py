@@ -176,7 +176,7 @@ def faces_mesh():
         x += 5.5
     for z in (-12.0, -17.0, -22.0):
         for sx in (-1, 1):
-            m.add(box((0.3, 1.1, 0.8), (PIER_X + sx * (PIER_W / 2 + 0.15), -1.0, z), bevel=0.05), (*RUBBER, 1.0))
+            m.add(box((0.3, 1.1, 0.8), (PIER_X + sx * (PIER_W / 2 + 0.15), -1.0, z)), (*RUBBER, 1.0))
     return m
 
 
@@ -398,7 +398,7 @@ def waiting():
 
 
 def build() -> Scene:
-    s = Scene()
+    s = Scene(RES)
     location = s.res("Script", "res://scripts/world/location_root.gd", "location")
     navigation = s.res("Script", "res://scripts/world/location_navigation.gd", "navigation")
     ambience = s.res("Script", "res://scripts/world/ambience_player.gd", "ambience")

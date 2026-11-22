@@ -123,7 +123,8 @@ def colour(c, a=1.0) -> str:
 class Scene:
     """Just enough of a text scene: ext resources, sub resources, nodes, mesh files."""
 
-    def __init__(self):
+    def __init__(self, res: str = RES):
+        self.base = res  # where `mesh` puts its files: `<base>/meshes/`
         self.ext: dict[str, str] = {}
         self.subs: list[str] = []
         self.nodes: list[str] = []
@@ -141,9 +142,9 @@ class Scene:
     def mesh(self, name: str, mesh) -> str:
         file_name = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).lower() + ".tres"
         if file_name in self.files:
-            raise SystemExit(f"two yard meshes would share {file_name}")
+            raise SystemExit(f"two meshes would share {file_name}")
         self.files[file_name] = f'[gd_resource type="ArrayMesh" format=3]\n\n[resource]\n_surfaces = {mesh.surface()}\n'
-        return self.res("ArrayMesh", f"{RES}/meshes/{file_name}", f"mesh_{file_name.removesuffix('.tres')}")
+        return self.res("ArrayMesh", f"{self.base}/meshes/{file_name}", f"mesh_{file_name.removesuffix('.tres')}")
 
     def node(self, name: str, parent: str | None, kind: str | None = None, *, instance: str | None = None,
              groups: list[str] | None = None, **props) -> str:
