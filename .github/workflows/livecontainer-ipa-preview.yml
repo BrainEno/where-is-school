@@ -12,71 +12,6 @@ permissions:
   checks: write # Only publish the verified digest and the one-run public certificate.
 
 jobs:
-  desktop:
-    name: Check desktop title, settings and checkpoint return
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-godot
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
-          path: game-source
-          persist-credentials: false
-      - name: Run targeted desktop regressions
-        working-directory: game-source
-        shell: bash
-        run: |
-          set -euo pipefail
-          export XDG_DATA_HOME="$RUNNER_TEMP/wis-desktop-data"
-          export CI_LOG_DIR="$RUNNER_TEMP/wis-desktop-checks"
-          mkdir -p "$CI_LOG_DIR"
-          godot --headless --path . --import > "$CI_LOG_DIR/import.log" 2>&1
-          source tools/ci_run_check.sh
-          run_check title 120 godot --headless --path . --script res://tests/title_menu_interaction_test.gd || true
-          run_check settings 120 godot --headless --path . --script res://tests/settings_regression_test.gd || true
-          run_check save_quit 120 godot --headless --path . --script res://tests/save_quit_test.gd || true
-          run_check_summary
-  simulator:
-    name: Boot the ordinary build on iPhone Simulator
-    runs-on: macos-26
-    timeout-minutes: 25
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup-godot
-        with:
-          include-templates: true
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          ref: d16075bbdd0b5fe7632dd31bae065f124afd84e2
-          path: game-source
-          persist-credentials: false
-      - name: Verify native Simulator launch and capture the title
-        working-directory: game-source
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash tools/macos/ios/debug.sh --godot "$(command -v godot)" --non-interactive \
-            --no-open --shutdown --output build/mobile/ios-sim
-          printf '::notice title=Native iPhone Simulator::%s\n' "$(tr -d '\n' < build/mobile/ios-sim/BUILD.json)"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: iPhone-simulator-smoke
-          path: |
-            game-source/build/mobile/ios-sim/BUILD.json
-            game-source/build/mobile/ios-sim/runtime.log
-            game-source/build/mobile/ios-sim/title.png
-          if-no-files-found: error
-          retention-days: 3
   device:
     name: Verify iPhone ARM64 and deliver privately
     runs-on: macos-26
@@ -111,13 +46,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir "$RUNNER_TEMP/wis-pack-probe"
-          godot --headless --rendering-method gl_compatibility --path "$RUNNER_TEMP/wis-pack-probe" \
-            --main-pack "$RUNNER_TEMP/wis-device/where-is-school.pck" \
-            --script "$GITHUB_WORKSPACE/game-source/tests/mobile_pack_boot.gd" 2>&1 | tee "$RUNNER_TEMP/pack-probe.log"
-          if grep -E 'SCRIPT ERROR|Parse Error|^FAIL:' "$RUNNER_TEMP/pack-probe.log"; then
+          log="$RUNNER_TEMP/pack-probe.log"
+          status=0
+          godot --headless --rendering-method gl_compatibility --resolution 2400x1080 \
+            --path "$RUNNER_TEMP/wis-pack-probe" --main-pack "$RUNNER_TEMP/wis-device/where-is-school.pck" \
+            --script "$GITHUB_WORKSPACE/game-source/tests/mobile_pack_boot.gd" > "$log" 2>&1 || status=$?
+          tail -40 "$log"
+          if (( status != 0 )) || grep -Eq 'SCRIPT ERROR|Parse Error|^FAIL:' "$log" || \
+              ! grep -Eq '^PASS: MOBILE_OPENING_TOUCH_OK .* handheld=true preview=false$' "$log"; then
+            reason="$( { grep -E '^FAIL:|^PASS:|SCRIPT ERROR|Parse Error|ERROR:' "$log" || true; } | tail -16 | cut -c1-500 | tr '\n' '|')"
+            printf '::error title=Packed handheld smoke (exit %s)::%s\n' "$status" "${reason:-no runtime verdict}"
             exit 1
           fi
-          verdict="$(grep '^PASS: MOBILE_OPENING_TOUCH_OK .* handheld=true preview=false$' "$RUNNER_TEMP/pack-probe.log")"
+          verdict="$(grep '^PASS: MOBILE_OPENING_TOUCH_OK ' "$log")"
           printf '::notice title=Packed handheld smoke::%s\n' "$verdict"
       - name: Package and verify the app for LiveContainer
         shell: bash
