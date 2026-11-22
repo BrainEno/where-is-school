@@ -117,6 +117,7 @@ SCENES = {
     "restroom_door": f"{PROPS}/restroom_door.tscn",
     "lab_door": f"{PROPS}/laboratory_entry_door.tscn",
     "teaching_entrance": f"{PROPS}/teaching_block_entrance.tscn",
+    "wall_graffiti": f"{PROPS}/wall_graffiti.tscn",
     **{r.id: f"{PROPS}/{r.id}_door.tscn" for r in THRESHOLDS},
 }
 
@@ -663,6 +664,9 @@ def rear_stair_and_ground_wing(b):
                        ("EntranceWallEast", (entrance_x[1], ground_x[1]))):
         solid_wall(b, g, name, (sum(ends)/2, GROUND_Y, ground_z[1]), ends[1]-ends[0],
                    base="entry_glaze", field="municipal_rose", height=2.83)
+    # Exterior face on the stable-lane side: paint sits 4 mm above the 0.11 m plaster face.
+    # Parent it to the wall so the usual occluder fade treats both as one surface.
+    b.instance("WallGraffiti", child_path(g, "EntranceWallWest"), "wall_graffiti", (0, 1.2, 0.138))
     b.instance("GlassEntrance", g, "teaching_entrance", (ENTRANCE_X, GROUND_Y, ground_z[1]))
     # The west side opens onto the stable lane of tools/build_dream_annex.py.
     guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y, {"North": [entrance_x], "West": [apron_z]},

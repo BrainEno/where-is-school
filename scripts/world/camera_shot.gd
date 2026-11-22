@@ -56,3 +56,6 @@ extends Resource
 @export var insert_bone: StringName = &""
 ## Optional development nameplate to hide only while this dialogue insert is held.
 @export var insert_nameplate_path: NodePath
+## Optional camera_occluder root, relative to the subject, that is part of the picture
+## (for example the plaster behind a mural). Do not fade it while aiming at the insert.
+@export var insert_backdrop_path: NodePath

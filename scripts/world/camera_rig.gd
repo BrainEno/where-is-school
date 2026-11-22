@@ -254,6 +254,8 @@ func _bind_insert(layer: Dictionary, subject: Node3D, shot: CameraShot) -> bool:
 	if anchor == null or not anchor.is_visible_in_tree() or shot.insert_eye_offset.length() <= 0.08:
 		return false
 	layer["insert_anchor"] = anchor
+	if not shot.insert_backdrop_path.is_empty():
+		layer["insert_backdrop"] = subject.get_node_or_null(shot.insert_backdrop_path) as Node3D
 	if not shot.insert_bone.is_empty():
 		var skeletons := CharacterAnimation.skeletons_in(anchor)
 		if skeletons.size() != 1:
@@ -295,6 +297,17 @@ func get_focus_subject() -> Node3D:
 	for layer: Dictionary in _focus_layers:
 		if float(layer["target"]) > 0.0 and _has_live_subject(layer):
 			return layer["subject"] as Node3D
+	return null
+
+
+## The authored backdrop of the insert being approached or held. It is allowed to
+## occlude the followed body in this composition, but it is still solid to movement and LOS.
+func get_insert_backdrop() -> Node3D:
+	for layer: Dictionary in _focus_layers:
+		var backdrop: Variant = layer.get("insert_backdrop")
+		if float(layer["target"]) > 0.0 and is_instance_valid(backdrop) \
+				and backdrop.is_inside_tree() and _has_live_subject(layer):
+			return backdrop as Node3D
 	return null
 
 
