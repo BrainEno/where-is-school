@@ -7,12 +7,15 @@ extends Node3D
 const CardMesh := preload("res://scenes/dev/folded_drum/card_mesh.gd")
 const STOCK := preload("res://scenes/dev/folded_drum/card_stock.gdshader")
 const PIGMENTS := {
-	&"ivory": "eee1c4", &"chalk": "f4ebd4", &"cream": "d9c6a5", &"cut": "b29a78",
-	&"shade": "877866", &"base": "bcb2a1", &"ink": "283346", &"glass": "263248",
-	&"recess": "19242f", &"rib": "53525a", &"blue": "34488d", &"blue_light": "4763a9",
-	&"teal": "376e72", &"dark_teal": "284f55", &"red": "ba4053", &"rose": "c75378",
-	&"orange": "b95841", &"yellow": "dbad59", &"tube_inside": "74584d",
+	&"ivory": "dbcdb3", &"chalk": "e5dbc4", &"cream": "c9b898", &"cut": "b19671",
+	&"shade": "817160", &"base": "c8bfb0", &"ink": "29313f", &"glass": "27354c",
+	&"recess": "23242a", &"rib": "555451", &"blue": "344585", &"blue_light": "48639f",
+	&"teal": "35636b", &"dark_teal": "304c54", &"red": "ab3f4b", &"rose": "b94b6c",
+	&"orange": "bf654c", &"yellow": "d1a34f", &"tube_inside": "7c7165",
+	&"louvre_back": "32302c", &"louvre_shadow": "565149", &"louvre_face": "a59b88",
+	&"louvre_cut": "b8ac96", &"foil": "c1bdb0", &"cut_tin": "968e83", &"lip_oxide": "763639",
 }
+const MINERAL_STOCK := [&"base", &"rib", &"louvre_back", &"louvre_shadow", &"louvre_face", &"louvre_cut", &"cut_tin"]
 const FLOORS := [2.28, 4.08, 5.88]
 const EAVE := 7.72
 
@@ -25,6 +28,16 @@ func _ready() -> void:
 		paper.resource_name = String(ink)
 		paper.shader = STOCK
 		paper.set_shader_parameter("pigment", Color.html(PIGMENTS[ink]))
+		if ink == &"foil":
+			paper.set_shader_parameter("stock_kind", 2)
+			paper.set_shader_parameter("relief", 0.0065)
+		elif ink in MINERAL_STOCK:
+			paper.set_shader_parameter("stock_kind", 1)
+			paper.set_shader_parameter("relief", 0.022 if ink == &"base" else 0.016)
+			paper.set_shader_parameter("grain_strength", 1.18)
+		elif ink in [&"glass", &"recess"]:
+			paper.set_shader_parameter("relief", 0.003)
+			paper.set_shader_parameter("grain_strength", 0.48)
 		_palette[ink] = paper
 	_site($Site)
 	_front($FrontWing)
@@ -124,8 +137,10 @@ func _front(parent: Node3D) -> void:
 			Vector3(x + 0.51, 0, 2.30 - i * 0.17), 1.05, 36)
 	wall.commit(parent, "ArcadeAndFrontPanels", _palette)
 	_folded_roof(parent, [-5.98, -3.41, -0.83, 1.75, 4.26], [0.48, 0.1, -0.03, 0.1, -0.20], true)
-	_tube(parent, "LongTube", Vector3(3.52, 4.70, 0.10), Vector3(96.0, -1.6, 0), 6.29, 0.81)
-	_tube(parent, "ShortTube", Vector3(-5.96, 4.75, 0.12), Vector3(95.0, -3.0, 0), 4.99, 0.73)
+	_tube(parent, "LongTube", Vector3(3.52, 4.70, 0.10), Vector3(96.0, -1.6, 0),
+		6.04, 0.81, Vector2(-0.49, 1.09))
+	_tube(parent, "ShortTube", Vector3(-5.96, 4.75, 0.12), Vector3(95.0, -3.0, 0),
+		4.79, 0.73, Vector2(-0.24, 0.98))
 
 
 func _screen(mesh: CardMesh, low: float, high: float, sill: float, head: float,
@@ -182,7 +197,9 @@ func _side(parent: Node3D) -> void:
 	var wall := CardMesh.new()
 	# The corner tower closes the join. Keep the side's solid return behind the
 	# front facade so it cannot mask the last ribs of the +Z elevation.
-	wall.box(Vector3(0.39, 4.97, -1.83), Vector3(12.76, 5.53, 3.57), &"ink")
+	# This core stops behind the openings. The outer face is put back only in the
+	# spandrels and between bays; no continuous wall masks the recesses.
+	wall.box(Vector3(0.39, 4.97, -2.13), Vector3(12.76, 5.53, 2.88), &"shade")
 	wall.box(Vector3(0.35, 0.93, -1.83), Vector3(12.46, 1.86, 3.36), &"shade")
 	for i: int in 4:
 		var y: float = FLOORS[i] if i < FLOORS.size() else EAVE
@@ -190,21 +207,29 @@ func _side(parent: Node3D) -> void:
 		wall.box(Vector3(0.28, y + 0.14, 0.48), Vector3(13.11, 0.05, 0.26), &"chalk")
 	for i: int in FLOORS.size():
 		var y: float = FLOORS[i]
-		_screen(wall, -6.16, -0.88 - i * 0.19, y + 0.16, y + 1.59, 22)
+		var top: float = FLOORS[i + 1] if i + 1 < FLOORS.size() else EAVE
+		var low := -5.98
+		var high: float = [-0.19, -0.42, -0.87][i]
+		var sill := y + 0.17
+		var head := top - 0.185
+		_side_panel(wall, low, 6.77, y + 0.13, sill, &"louvre_shadow")
+		_side_panel(wall, low, 6.77, head, top - 0.108, &"rib")
+		_side_panel(wall, high, 6.77, sill, head, &"ink")
+		_louvre_bay(parent, i, low, high, sill, head)
 		for j: int in 4:
 			var x := 0.11 + j * 1.65
-			wall.box(Vector3(x + 0.72, y + 0.88, 0.031), Vector3(1.44, 1.40, 0.16),
+			wall.box(Vector3(x + 0.72, y + 0.88, 0.204), Vector3(1.44, 1.40, 0.16),
 				&"recess" if i < 2 else (&"rib" if j % 2 == 0 else &"tube_inside"))
 			if i < 2:
 				var ink: StringName = &"rose" if (i + j) % 3 != 1 else &"yellow"
 				var depth := 0.98 + j * 0.08 - i * 0.14
-				wall.prism_x(x + 0.10, x + 1.43, [Vector2(0.116, y + 0.24),
-					Vector2(depth, y + 0.29), Vector2(0.13, y + 1.50)],
+				wall.prism_x(x + 0.10, x + 1.43, [Vector2(0.28, y + 0.24),
+					Vector2(depth, y + 0.29), Vector2(0.29, y + 1.50)],
 					&"blue", [&"blue_light", ink, &"ink"])
 				var edge_ink: StringName = &"cream" if ink == &"yellow" else &"orange"
 				wall.face(edge_ink, [Vector3(x + 0.10, y + 0.29, depth + 0.005),
-					Vector3(x + 0.14, y + 0.29, depth + 0.005), Vector3(x + 0.14, y + 1.50, 0.135),
-					Vector3(x + 0.10, y + 1.50, 0.135)], Vector3.BACK)
+					Vector3(x + 0.14, y + 0.29, depth + 0.005), Vector3(x + 0.14, y + 1.50, 0.295),
+					Vector3(x + 0.10, y + 1.50, 0.295)], Vector3.BACK)
 	wall.box(Vector3(-3.97, 1.16, -0.026), Vector3(2.83, 0.81, 0.165), &"recess")
 	wall.box(Vector3(6.56, 5.0, 0.16), Vector3(0.39, 5.48, 0.63), &"cream")
 	wall.commit(parent, "ScreenWallAndFoldedBays", _palette)
@@ -212,6 +237,47 @@ func _side(parent: Node3D) -> void:
 	var stanchion := CardMesh.new()
 	_cup(stanchion, Vector3(-3.80, 0, 0.18), 7.69, 13.16, 0.44)
 	stanchion.commit(parent, "LongPaperStanchion", _palette)
+
+
+func _side_panel(wall: CardMesh, low: float, high: float, sill: float, head: float, ink: StringName) -> void:
+	wall.box(Vector3((low + high) * 0.5, (sill + head) * 0.5, -0.225),
+		Vector3(high - low, head - sill, 0.91), ink)
+
+
+func _louvre_bay(parent: Node3D, level: int, low: float, high: float, sill: float, head: float) -> void:
+	var bay := CardMesh.new()
+	const MOUTH := 0.302
+	const REAR := -0.552
+	# The deep pocket is closed only at the back. Splayed workshop-cut jambs guide
+	# grazing light into the gaps between the free-standing angled blade noses.
+	bay.box(Vector3((low + high) * 0.5, (sill + head) * 0.5, REAR - 0.023),
+		Vector3(high - low, head - sill, 0.046), &"louvre_back")
+	for end: float in [low, high]:
+		var outward := Vector3.RIGHT if end == low else Vector3.LEFT
+		var inset := end + outward.x * 0.063
+		bay.face(&"louvre_shadow", [Vector3(end, sill, MOUTH), Vector3(end, head, MOUTH),
+			Vector3(inset, head - 0.043, REAR), Vector3(inset, sill + 0.043, REAR)], outward)
+		bay.box(Vector3(end, (sill + head) * 0.5, MOUTH - 0.016), Vector3(0.10, head - sill, 0.075), &"rib")
+	for edge: float in [sill, head]:
+		var outward := Vector3.UP if edge == sill else Vector3.DOWN
+		var inset := edge + outward.y * 0.043
+		bay.face(&"louvre_shadow", [Vector3(low, edge, MOUTH), Vector3(high, edge, MOUTH),
+			Vector3(high - 0.063, inset, REAR), Vector3(low + 0.063, inset, REAR)], outward)
+		bay.box(Vector3((low + high) * 0.5, edge, MOUTH - 0.025),
+			Vector3(high - low + 0.10, 0.075, 0.135), &"louvre_cut" if edge == sill else &"rib")
+	var count: int = [22, 21, 19][level]
+	var pitch := (high - low - 0.13) / count
+	for i: int in count:
+		var x := low + 0.075 + (i + 0.5) * pitch
+		var depth := MOUTH + 0.042 * sin(i * 2.17 + level)
+		# The two front facets are a narrow weathered edge and a much wider flank.
+		var blade := PackedVector2Array([Vector2(x + 0.027, -0.493), Vector2(x + 0.101, -0.493),
+			Vector2(x + 0.075, -0.231), Vector2(x - 0.028, depth - 0.015),
+			Vector2(x - 0.052, depth + 0.022), Vector2(x - 0.115, depth - 0.026)])
+		var blade_edge: StringName = &"louvre_face" if i % 5 == 1 else &"louvre_cut"
+		bay.prism_y(sill + 0.022, head - 0.032, blade,
+			[&"louvre_shadow", &"louvre_shadow", &"louvre_shadow", &"louvre_face", blade_edge, &"louvre_face"])
+	bay.commit(parent, "RecessedLouvres%d" % level, _palette)
 
 
 func _folded_roof(parent: Node3D, centers: Array[float], heights: Array[float], front: bool) -> void:
@@ -238,29 +304,27 @@ func _folded_roof(parent: Node3D, centers: Array[float], heights: Array[float], 
 	roof.commit(parent, "CutAndFoldedRoof", _palette)
 
 
-func _tube(parent: Node3D, part_name: String, base: Vector3, aim: Vector3, length: float, r: float) -> void:
+func _tube(parent: Node3D, part_name: String, base: Vector3, aim: Vector3,
+		length: float, r: float, miter: Vector2) -> void:
 	var mount := CardMesh.new()
 	var barrel := Node3D.new()
 	barrel.name = part_name
 	barrel.position = base
 	barrel.rotation_degrees = aim
 	parent.add_child(barrel, false, Node.INTERNAL_MODE_BACK)
-	mount.roll([Vector2(r + 0.22, -0.18), Vector2(r + 0.22, 0.09),
-		Vector2(r + 0.15, 0.25), Vector2(r * 0.92, 0.30)],
-		[&"cut", &"cream", &"ivory"], Vector3.ZERO, 1.0, 48)
+	mount.roll([Vector2(r + 0.24, -0.18), Vector2(r + 0.24, 0.07), Vector2(r + 0.18, 0.22),
+		Vector2(r + 0.12, 0.236), Vector2(r * 0.95, 0.29)],
+		[&"cut", &"cream", &"cut_tin", &"chalk"], Vector3.ZERO, 1.0, 48)
 	mount.commit(barrel, "ReinforcedSocket", _palette)
 	var model := CardMesh.new()
-	model.roll([Vector2(r, 0.20), Vector2(r, length - 0.16), Vector2(r + 0.055, length - 0.15),
-		Vector2(r + 0.055, length - 0.055), Vector2(r + 0.016, length), Vector2(r - 0.073, length),
-		Vector2(r - 0.105, length - 0.085), Vector2(r - 0.105, length - 0.28),
-		Vector2(r - 0.105, length - 1.2), Vector2(r - 0.09, 0.31)],
-		[&"ink", &"red", &"red", &"red", &"red", &"red", &"tube_inside", &"tube_inside", &"recess"],
-		Vector3.ZERO, 1.0, 64)
-	# Layers of pasted paper wrap the shell as polygons; their edges follow the actual barrel.
-	_arc(model, Vector3.ZERO, r + 0.013, 0.29, length - 0.17, 3, 27, &"cream", 64)
-	_arc(model, Vector3.ZERO, r + 0.018, 0.35, length - 0.18, 20, 23, &"ivory", 64)
-	_arc(model, Vector3.ZERO, r + 0.011, 0.46, length - 0.19, 40, 42, &"rib", 64)
-	model.commit(barrel, "OpenCardboardBarrel", _palette)
+	model.mitered_pipe([
+		Vector3(r, 0.19, 0), Vector3(r, length - 0.121, 1),
+		Vector3(r + 0.036, length - 0.086, 1), Vector3(r + 0.036, length - 0.028, 1),
+		Vector3(r + 0.017, length, 1), Vector3(r - 0.042, length, 1),
+		Vector3(r - 0.103, length, 1), Vector3(r - 0.116, length - 0.062, 1),
+		Vector3(r - 0.117, length - 0.94, 0.62), Vector3(r - 0.098, 0.31, 0),
+	], [&"foil", &"lip_oxide", &"red", &"red", &"red", &"cut_tin", &"lip_oxide", &"tube_inside", &"recess"], miter)
+	model.commit(barrel, "OpenMiteredMetal", _palette)
 
 
 func _arc(mesh: CardMesh, offset: Vector3, radius: float, bottom: float, top: float,
@@ -328,14 +392,14 @@ func _corner_tower(parent: Node3D) -> void:
 		var r := 1.66 - i * 0.081
 		var top: float = start + heights[i]
 		var offset := Vector3(-i * 0.050, 0, -i * 0.115)
-		stack.roll([Vector2(r - 0.16, start), Vector2(r - 0.012, start + 0.16),
-			Vector2(r - 0.006, top - 0.34), Vector2(r + 0.065, top - 0.20),
-			Vector2(r + 0.065, top - 0.078), Vector2(r - 0.014, top)],
+		stack.roll([Vector2(r - 0.10, start), Vector2(r + 0.014, start + 0.125),
+			Vector2(r - 0.009, top - 0.34), Vector2(r + 0.037, top - 0.16),
+			Vector2(r + 0.037, top - 0.072), Vector2(r - 0.015, top)],
 			[&"cut", &"ivory", &"ivory", &"cream", &"chalk"], offset, 1.12, 56)
 		if i < heights.size() - 1:
 			stack.roll([Vector2(r - 0.32, top - 0.06), Vector2(r - 0.32, top + 0.19)],
 				[&"shade"], offset, 1.12, 48)
-		start = top + 0.042
+		start = top + 0.027
 	stack.commit(parent, "FiveRoundedStoreys", _palette)
 	var spine := Node3D.new()
 	spine.name = "FoldedConnector"

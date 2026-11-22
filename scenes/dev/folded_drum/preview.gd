@@ -2,10 +2,13 @@ extends Node3D
 ## An orbit desk for the maquette, deliberately unrelated to the in-game camera and input map.
 
 # Focus in world units; azimuth and elevation in degrees; distance from focus.
+# The portrait view puts the irregular near tower and projecting pipes forward,
+# like the photo. The review captures the same camera without an editor overlay.
 const VIEWS := [
-	{ "focus": Vector3(-1.40, 3.98, 0.85), "orbit": Vector3(41, 30.5, 39.25) },
-	{ "focus": Vector3(-1.35, 2.30, -1.30), "orbit": Vector3(216, 47, 41.0) },
-	{ "focus": Vector3(-1.05, 4.55, 2.42), "orbit": Vector3(14, 23.4, 32.0) },
+	{ "focus": Vector3(-2.10, 4.06, 0.92), "orbit": Vector3(46, 31.8, 28.9), "fov": 50.8 },
+	{ "focus": Vector3(-1.35, 2.30, -1.30), "orbit": Vector3(216, 47, 41.0), "fov": 42.0 },
+	{ "focus": Vector3(-3.15, 4.64, 5.30), "orbit": Vector3(27.5, 23.8, 20.3), "fov": 44.0 },
+	{ "focus": Vector3(4.26, 5.06, -2.67), "orbit": Vector3(72, 23.5, 18.8), "fov": 39.2 },
 ]
 
 var _focus: Vector3
@@ -23,6 +26,7 @@ func show_view(index: int) -> void:
 	var view: Dictionary = VIEWS[index]
 	_focus = view["focus"]
 	_orbit = view["orbit"]
+	_camera.fov = view["fov"]
 	_place_camera()
 
 
@@ -51,6 +55,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_1, KEY_R: show_view(0)
 			KEY_2: show_view(1)
 			KEY_3: show_view(2)
+			KEY_4: show_view(3)
 			KEY_LEFT: _orbit.x -= 9.0
 			KEY_RIGHT: _orbit.x += 9.0
 			KEY_UP: _orbit.y += 5.0

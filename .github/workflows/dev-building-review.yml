@@ -55,22 +55,33 @@ jobs:
           grep '^PASS:' "$RUNNER_TEMP/folded-test.log" | while IFS= read -r result; do
             echo "::notice title=Folded Drum geometry and input::$result"
           done
-      - name: Capture the three actual dev views in a GL window
+      - name: Make Vulkan available for the project's default renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! compgen -G '/usr/share/vulkan/icd.d/lvp_icd*.json' > /dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq mesa-vulkan-drivers
+          fi
+      - name: Capture the three actual dev views in a Forward+ window
         shell: bash
         run: |
           set -euo pipefail
           capture_log="$RUNNER_TEMP/folded-capture.log"
-          if ! xvfb-run -a -s '-screen 0 1760x1120x24' godot --path . --resolution 1600x1000 \
-              --rendering-method gl_compatibility --audio-driver Dummy \
+          export VK_DRIVER_FILES=$(find /usr/share/vulkan/icd.d -type f -name 'lvp_icd*.json' -print -quit)
+          test -n "$VK_DRIVER_FILES"
+          if ! xvfb-run -a -s '-screen 0 1800x1560x24' godot --path . --resolution 1280x1440 \
+              --rendering-method forward_plus --rendering-driver vulkan --audio-driver Dummy \
               --script res://scenes/dev/folded_drum/review.gd -- "capture=$RUNNER_TEMP/folded-frames" \
-              > "$capture_log" 2>&1 || grep -Eq 'SCRIPT ERROR|^ERROR:' "$capture_log"; then
-            awk '/^SCRIPT ERROR|^ERROR:|^OpenGL/ {print; if (++count == 7) exit}' "$capture_log" |
+              > "$capture_log" 2>&1 || grep -Eq 'SCRIPT ERROR|^ERROR:' "$capture_log" ||
+              ! grep -Eq '^Vulkan.*Forward\+' "$capture_log"; then
+            awk '/^SCRIPT ERROR|^ERROR:|^Vulkan/ {print; if (++count == 7) exit}' "$capture_log" |
               while IFS= read -r line; do echo "::error title=Folded Drum capture::$line"; done
             tail -n 35 "$capture_log"
             exit 1
           fi
           cat "$capture_log"
-          grep -E '^Godot Engine|^OpenGL API|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
+          grep -E  '^Godot Engine|^Vulkan|^PASS:|^EVIDENCE ' "$RUNNER_TEMP/folded-capture.log" |
             while IFS= read -r result; do echo "::notice title=Folded Drum viewport::$result"; done
       - name: Prepare exact-byte evidence for the artifact and check API
         id: pack
@@ -84,7 +95,7 @@ jobs:
           from dialogue_evidence_relay import pack
 
           temp = Path(os.environ["RUNNER_TEMP"])
-          wanted = ("folded_drum_01_reference_angle", "folded_drum_02_roof_and_returns", "folded_drum_03_tubes_and_arcade")
+          wanted = ("folded_drum_01_reference_angle", "folded_drum_02_right_louvres", "folded_drum_03_mitered_pipes")
           problems, shards = pack([temp / "folded-capture.log"], temp / "folded-frames", temp / "folded-relay",
                                   wanted=wanted, commit=os.environ["GITHUB_SHA"], run_id=int(os.environ["GITHUB_RUN_ID"]))
           if problems:

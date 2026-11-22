@@ -96,6 +96,50 @@ func roll(profile: Array[Vector2], inks: Array[StringName], origin: Vector3 = Ve
 		face(inks.back(), rings.back(), Vector3.UP)
 
 
+## Folded louvre blades: extrude a convex XZ loop vertically with a pigment on each flank.
+func prism_y(bottom: float, top: float, outline: PackedVector2Array, edge_inks: Array[StringName]) -> void:
+	var lower: Array[Vector3] = []
+	var upper: Array[Vector3] = []
+	for point: Vector2 in outline:
+		lower.append(Vector3(point.x, bottom, point.y))
+		upper.append(Vector3(point.x, top, point.y))
+	face(edge_inks.front(), lower, Vector3.DOWN)
+	face(edge_inks.front(), upper, Vector3.UP)
+	for i: int in outline.size():
+		var j := (i + 1) % outline.size()
+		face(edge_inks[i], [lower[i], lower[j], upper[j], upper[i]])
+
+
+## Local +Y is the tube axis. A section is (radius, axial origin, share of final miter).
+## At each cut section the actual vertices follow y = axial_origin + slope.dot(xz).
+## Rings with the same axial origin and share form a planar elliptical annulus.
+func mitered_pipe(sections: Array[Vector3], inks: Array[StringName], slope: Vector2) -> void:
+	const SIDES := 64
+	var last: Array[Vector3] = []
+	var last_tangent: Array[Vector3] = []
+	for i: int in sections.size():
+		var section := sections[i]
+		var ring: Array[Vector3] = []
+		var tangent: Array[Vector3] = []
+		for j: int in SIDES:
+			var xy := Vector2.from_angle(TAU * j / SIDES) * section.x
+			var t := Vector2(-xy.y, xy.x)
+			ring.append(Vector3(xy.x, section.y + slope.dot(xy) * section.z, xy.y))
+			tangent.append(Vector3(t.x, slope.dot(t) * section.z, t.y))
+		if i > 0:
+			for j: int in SIDES:
+				var k := (j + 1) % SIDES
+				var na := (ring[j] - last[j]).cross(tangent[j] + last_tangent[j]).normalized()
+				var nb := (ring[k] - last[k]).cross(tangent[k] + last_tangent[k]).normalized()
+				face(inks[i - 1], [last[j], last[k], ring[k], ring[j]], Vector3.ZERO, [na, nb, nb, na])
+		else:
+			face(inks.front(), ring, Vector3.DOWN)
+		last = ring
+		last_tangent = tangent
+	# The only cap inside the bore is buried at the socket, more than four units away.
+	face(inks.back(), last, Vector3.UP)
+
+
 func commit(parent: Node3D, name: String, palette: Dictionary[StringName, Material]) -> MeshInstance3D:
 	var mesh := ArrayMesh.new()
 	for ink: StringName in _surfaces:
