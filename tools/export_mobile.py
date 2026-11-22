@@ -95,8 +95,8 @@ def check_presets(root: Path) -> None:
             "The game does not need Android permissions")
     require(android.get("screen/edge_to_edge") == "true" and android.get("screen/immersive_mode") == "false",
             "Keep Android system bars represented in the safe area")
-    require(ios.get("application/min_ios_version") == "15.0" and ios.get("application/targeted_device_family") == "3",
-            "iOS deployment must target both iPhone and iPad (universal device family)")
+    require(ios.get("application/min_ios_version") == "15.0" and ios.get("application/targeted_device_family") == "2",
+            "iOS deployment must target both iPhone and iPad (Godot iOS device-family enum 2)")
     settings = project_settings(root / "project.godot")
     require(settings.get("display/window/handheld/orientation") == "4", "Both landscape orientations are required")
     require(settings.get("rendering/renderer/rendering_method.mobile") == '"gl_compatibility"',
