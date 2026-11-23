@@ -70,8 +70,6 @@ var _focus: CameraFocusDirector = null
 var _interactions: OpeningInteractions = null
 ## The authored beats themselves (`PrologueBeats`); the `_beat_*` methods call into it.
 var _beats: PrologueBeats = null
-## Scene and event music selection; playback stays in the Music autoload.
-var _score: ScoreDirector = null
 ## Checkpoints, the boot-time restore and the unreadable-save notice (`OpeningSave`).
 var _saves := OpeningSave.new()
 ## Autosave is on by default: the game has no menu, so a checkpoint the player did not
@@ -120,11 +118,7 @@ func _ready() -> void:
 		self, _ui, _player, _locations, _bell_audio, _wake_audio, _flow, _game_state()
 	)
 
-	_score = ScoreDirector.new()
-	_score.name = "ScoreDirector"
-	add_child(_score)
-	_score.setup(_locations, _player, _game_state(), get_node_or_null(^"/root/Music"))
-
+	ScoreDirector.install(self, _locations, _player, _game_state(), get_node_or_null(^"/root/Music"))
 	_saves.bind(self, get_parent())
 
 	# A save, if the host has one, is applied *before* anything is asked about the
@@ -155,17 +149,6 @@ func _ready() -> void:
 		_saves.announce_problem(_ui, self)
 	if autostart:
 		start()
-
-
-## The beat and ending owners request overrides without taking over playback.
-func set_score_imagining(active: bool) -> void:
-	if _score != null:
-		_score.set_imagining(active)
-
-
-func show_score_ending() -> void:
-	if _score != null:
-		_score.show_ending()
 
 
 ## Loads the room the catalog declares as the start of the game. Shared by a new game

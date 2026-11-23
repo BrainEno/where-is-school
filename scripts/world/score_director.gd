@@ -35,6 +35,15 @@ var _imagining := false
 var _ending := false
 
 
+## Install before the first location or save restore, so every committed arrival is seen.
+static func install(director: Node, host: LocationHost, player: Node3D, state: Node,
+		music: Node) -> void:
+	var score := ScoreDirector.new()
+	score.name = "ScoreDirector"
+	director.add_child(score)
+	score.setup(host, player, state, music)
+
+
 func setup(host: LocationHost, player: Node3D, state: Node, music: Node) -> void:
 	_host = host
 	_player = player
