@@ -20,7 +20,7 @@ draws from:
 
 | Kind | Models | Instanced by |
 |---|---|---|
-| `classroom/` | 11 | `scenes/locations/classroom/classroom.tscn` |
+| `classroom/` | 11 | Kept in the model library; the current classroom uses a mix of the door GLB and purpose-built props. |
 | `corridor/` | 3 | `scenes/locations/corridor/corridor.tscn` |
 | `playground/` | 2 | `scenes/locations/playground/playground.tscn` |
 | `protagonist/` | 2 | `Protagonist_Character.glb`, the player (`player.tscn`, via `scenes/environment/characters/protagonist.tscn`); `protagonist.glb`, the former protagonist, seated in the classroom (`classroom_student.tscn`) |
@@ -73,6 +73,11 @@ because no scene in this project ever needs "all the wood" or "all the metal". I
 | `classroom_wall_clock` | 205.9 | 4916 | 7 | — | 0.47 × 0.47 × 0.14 | -0.235 | +0.235 |
 | `classroom_window_curtains` | 482.6 | 16016 | 7 | — | 1.96 × 1.48 × 0.18 | -1.422 | +0.055 |
 | `classroom_window_module` | 172.4 | 3704 | 7 | — | 1.78 × 1.42 × 0.24 | -0.742 | +0.680 |
+
+The retained `classroom_window_curtains.glb` and `classroom_biology_chart.glb` are reference
+models with no runtime scene or script dependency. All four presets leave those two out of the
+pack without removing their sources. The live curtain is procedural (`window_curtain.gd`), and
+the classroom's front wall uses its own dressing. The used door GLB stays in the pack.
 
 ### 2.2 `corridor/` — 3 models, 156 KiB
 

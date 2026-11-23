@@ -1,6 +1,6 @@
 # 游戏内剧情作者版
 
-作者版是独立的游戏副本。它加载同一间教室、同一个 NPC 和同一套对白面板。只有明确启动作者版才有「剧情编辑」入口；普通游戏没有入口和草稿代码。作者版的存档、设置和草稿都不与普通版共用。
+作者版是独立的游戏副本。它加载同一间教室、同一个 NPC 和同一套对白面板。iPhone 普通测试包也带同一套编辑器运行时，但**默认关闭**：在「设置 → 剧情编辑（测试）」打开开关后，暂停菜单才出现「剧情编辑」，关闭开关后入口消失。桌面与 Android 包不含编辑器。作者版的设置和草稿都不与普通版共用；编辑器的草稿与「文件」桥接放在 `user://story_editor/`。
 
 ## 桌面启动
 
@@ -35,7 +35,7 @@ python3 tools/review_author_draft.py /path/to/where-is-school-dialogue-draft.jso
 
 ## iPhone 构建与验收
 
-作者版 Bundle ID：`io.github.braineno.whereisschool.authoring`，和普通版可并存。CI 的 macOS 测试校验作者版和普通版的无签名归档（都不是可安装 IPA），并确认 UIKit 组件只在作者版链接。**CI 通过后**才从通过检查的干净提交，在受信任的 macOS + Xcode 环境签名；使用明确匹配该 Bundle ID 的 Development 或 Ad Hoc 描述文件，并包含目标设备。项目已有 `sign_ipa.py` 的三个受保护输入仍从私密环境提供；不要用聊天、PR 或公开构件传签名材料及设备描述文件。公开 `build-ios.yml` 的保护规则不变，不用它发作者版私密 IPA。
+作者版 Bundle ID：`io.github.braineno.whereisschool.authoring`，和普通版可并存。iPhone 普通测试包（`io.github.braineno.whereisschool`）同样链接 Files 桥接，因此开关打开后可直接用系统输入法编辑、用「文件」导出草稿。CI 的 macOS 测试校验作者版和普通版的无签名归档（都不是可安装 IPA），并确认 UIKit 组件只在作者版链接。**CI 通过后**才从通过检查的干净提交，在受信任的 macOS + Xcode 环境签名；使用明确匹配该 Bundle ID 的 Development 或 Ad Hoc 描述文件，并包含目标设备。项目已有 `sign_ipa.py` 的三个受保护输入仍从私密环境提供；不要用聊天、PR 或公开构件传签名材料及设备描述文件。公开 `build-ios.yml` 的保护规则不变，不用它发作者版私密 IPA。
 
 ```sh
 python3 tools/macos/ios/sign_ipa.py --authoring --distribution development \

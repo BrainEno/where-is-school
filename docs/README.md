@@ -50,7 +50,7 @@
 | [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
 | [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) | 地图规划中文阅读副本 | 阅读副本 | 内容 Agent | 2026-11-17 | 与 [MAP_PLAN.md](MAP_PLAN.md) 同步 |
 | [MODEL_LIBRARY.md](MODEL_LIBRARY.md) | 可复用模型库与放置状态台账 | 现行 | 工程 Agent | 2026-11-18 | 导入合同见 [ASSET_PIPELINE.md](ASSET_PIPELINE.md)；记录当前角色几何计数，旧审计仍为历史记录 |
-| [MOBILE_BUILDS.md](MOBILE_BUILDS.md) | 原生移动构建、签名与设备验收 | 现行 | 工程 Agent | 2026-11-18 | 独立按需 APK/IPA 工作流、Mac 模拟器与 Windows ADB 调试；桌面发布见 [RELEASE.md](RELEASE.md) |
+| [MOBILE_BUILDS.md](MOBILE_BUILDS.md) | 原生移动构建、签名与设备验收 | 现行 | 工程 Agent | 2026-11-18 | 持久触控和紧凑菜单；独立 APK/IPA 工作流、Mac 模拟器与 Windows ADB 调试；桌面发布见 [RELEASE.md](RELEASE.md) |
 | [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-18 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
 | [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
 | [NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md](NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md) | 剧情玩法评审、双语小试与回访切片 | 提案/待所有者 | 仓库所有者 | 2026-11-18 | 原基线 `76c5e77`，审计补核 `b8524c6` / `e143990`；不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) 或 [ARCHITECTURE.md](ARCHITECTURE.md) |

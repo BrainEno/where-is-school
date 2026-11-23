@@ -14,8 +14,8 @@ const BASE_META := &"ui_base_font_size"
 
 ## The multiplier in effect: the `Settings` autoload's, or 1 when there is none (a test
 ## that never registers it).
-static func current(node: Node) -> float:
-	var base := MobileLayout.TEXT_MULTIPLIER if MobileLayout.enabled else 1.0
+static func current(node: Node, handheld_multiplier: float = MobileLayout.TEXT_MULTIPLIER) -> float:
+	var base := handheld_multiplier if MobileLayout.enabled else 1.0
 	if node == null or not node.is_inside_tree():
 		return base
 	var settings := node.get_node_or_null(^"/root/Settings")

@@ -21,7 +21,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await _capture()
-	Harness.finish(self, _checks.failures, "Three gameplay/confirmation/title PNGs rendered from the same mobile-preview run")
+	Harness.finish(self, _checks.failures, "Gameplay, compact pause, confirmation and title rendered from the same mobile-preview run")
 
 
 func _capture() -> void:
@@ -38,7 +38,7 @@ func _capture() -> void:
 	loc.set_locale("zh-CN")
 	# A standalone SceneTree script does not boot the project's Settings autoload.
 	# Use the real mobile canvas scale and last-device detection, not a visibility override.
-	Harness.ensure_autoload(self, "Settings", "res://scripts/autoload/settings_manager.gd")
+	var settings := Harness.ensure_autoload(self, "Settings", "res://scripts/autoload/settings_manager.gd")
 	var save: Node = states["save"]
 	var flags := {
 		StoryFlags.MET_Q: true, StoryFlags.TEXTBOOK_MISSING: true, StoryFlags.EXPECTATION_PLAYED: true,
@@ -79,20 +79,25 @@ func _capture() -> void:
 	if not _checks.expect(at_rest, "Classroom never settled (next=%s beat=%s fade=%s dialogue=%s)" % [
 		director.next_step(), director.is_beat_active(), ui.fade.visible, ui.dialogue_panel.visible]):
 		return
-	if InputHint.device(stick) != InputHint.DEVICE_TOUCH:
-		# If the Xvfb pointer took focus, select touch in the unsafe notch area.
-		# The real device detector sees it, but it cannot act on the world or UI.
-		var unsafe := Vector2(MobileLayout.safe_rect(stick).position.x * 0.5, 20.0)
-		_touch(unsafe, true)
-		_touch(unsafe, false)
+	# Deliberately leave pointer hints as a host window may do. Visibility must not
+	# require first tapping some invisible area to switch to native touch hints.
+	settings.set_input_device(InputHint.DEVICE_MOUSE)
+	var touch_menu := ui.get_node(^"TouchActions/Pause") as Button
+	var use := ui.get_node(^"TouchActions/Use") as Button
 	if not _checks.expect(await Harness.wait_until(func() -> bool:
-		return stick.is_visible_in_tree() and shortcut.is_visible_in_tree(), 5.0),
+		return stick.is_visible_in_tree() and shortcut.is_visible_in_tree() \
+			and use.is_visible_in_tree() and touch_menu.is_visible_in_tree(), 5.0),
 		"No touch HUD in the settled classroom (device=%s, dialog=%s)" % [InputHint.device(stick), ui.dialogue_panel.visible]):
 		return
 	var point := stick.get_global_rect().get_center() + Vector2.UP * stick.size.x * 0.24
 	_touch(point, true)
 	await _shot("01_gameplay_joystick_and_return")
 	_touch(point, false)
+	await _tap(touch_menu)
+	if not _checks.expect(paused and pause.is_open(), "The touch menu did not open"):
+		return
+	await _shot("04_compact_pause_menu")
+	await _tap(pause.get_entry(&"resume"))
 	Harness.stage = "capture: return confirmation and title"
 	await _tap(shortcut)
 	var prompt := pause.get_confirm()

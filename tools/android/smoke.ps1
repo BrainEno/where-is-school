@@ -15,7 +15,7 @@ function Invoke-Adb {
     param([string[]]$Arguments)
     $result = & $Adb @route @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "adb $($Arguments[0]) failed ($LASTEXITCODE). Check the selected device and the log directory: $Output"
+        throw "adb $($Arguments -join ' ') failed ($LASTEXITCODE). Output: $($result -join ' '). Check the selected device and the log directory: $Output"
     }
     return $result
 }

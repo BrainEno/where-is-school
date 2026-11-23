@@ -34,7 +34,7 @@ PREVIEW = PACKAGE + ".preview"
 ANDROID_API = 36
 ANDROID_TOOLS = "36.1.0"
 UNSIGNED_TEAM = "0000000000"  # Used only to satisfy the Xcode project exporter.
-EXCLUDED = {"tests", "tools", "docs", "art", "scenes/dev", "scripts/dev", ".github", "addons"}
+EXCLUDED = {"tests", "tools", "docs", "art", "scenes/dev", "scripts/dev", ".github", "addons", "scripts/story_editor"}
 RELEASE_KEY = tuple("GODOT_ANDROID_KEYSTORE_RELEASE_" + k for k in ("PATH", "USER", "PASSWORD"))
 ORIENTATIONS = {"UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"}
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
@@ -80,7 +80,12 @@ def check_presets(root: Path) -> None:
         assert preset is not None
         require(preset.platform == platform and preset.export_path.endswith(target), f"Invalid {platform} target")
         paths = {part.strip().removesuffix("/*") for part in preset.exclude_filter.split(",")}
-        require(EXCLUDED <= paths, f"{platform} may ship developer content: {sorted(EXCLUDED - paths)}")
+        # iOS carries the story editor's runtime behind the Settings switch, so its pack
+        # may include scripts/story_editor/; the rest of the developer tree stays out.
+        required = EXCLUDED - {"scripts/story_editor"} if platform == "iOS" else EXCLUDED
+        require(required <= paths, f"{platform} may ship developer content: {sorted(required - paths)}")
+        if platform == "iOS" and "scripts/story_editor" in paths:
+            raise BuildError("The iOS preset must pack the story editor it links")
         require(preset.fields.get("export_filter") == "all_resources", f"{platform} might omit data-driven assets")
     android, ios = presets["Android"].options, presets["iOS"].options
     require(android.get("package/unique_name") == ios.get("application/bundle_identifier") == PACKAGE,
@@ -200,6 +205,8 @@ def verify_android_assets(archive: ZipFile, preview: bool) -> None:
     require(not any(path.startswith(f"assets/{folder}/") for path in paths for folder in EXCLUDED),
             "APK contains editor/developer files")
     problems, warnings = verify_build.verify(entries, header)
+    for problem in problems:
+        verify_build.annotate("error", "Android pack contents", problem)
     for warning in warnings:
         verify_build.annotate("warning", "Android build budget", warning)
     require(not problems, "; ".join(problems))
@@ -245,8 +252,11 @@ def verify_ios_app(
     sdk = "iphonesimulator" if simulator else "iphoneos"
     require(info.get("DTPlatformName") == sdk, f"Expected an {sdk} application")
     executable = app / info["CFBundleExecutable"]
-    require((b"WISAuthorFiles\0" in executable.read_bytes()) == authoring,
-            "Author Files bridge must only be linked into the author app")
+    # Both iPhone device apps of the same source can edit story text: the retail one only
+    # after Settings → Story editor is switched on. The author app also carries the bridge
+    # on the simulator; a retail simulator exercises the editor without the native bridge.
+    require((b"WISAuthorFiles\0" in executable.read_bytes()) == (authoring or not simulator),
+            "The story editor's Files bridge belongs to the iOS device apps")
     if authoring:
         require(info.get("CFBundleDisplayName") == authoring_build.AUTHOR_NAME, "Unexpected author app display name")
         require(not info.get("UIFileSharingEnabled"), "Do not expose the author app's entire data directory")
@@ -258,7 +268,7 @@ def verify_ios_app(
             "The built application does not contain the verified Godot pack")
 
 
-def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str]) -> Path:
+def build_simulator(xcode: tuple[str | Path, ...], out: Path, flags: list[str], *, simulator: bool = True) -> Path:
     products = out / "simulator"
     cmd = (*xcode, "-configuration", "Debug", "-sdk", "iphonesimulator", "-destination",
            "generic/platform=iOS Simulator", "-derivedDataPath", out / "DerivedData",
@@ -315,10 +325,18 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
                                 settings.read_text(encoding="utf-8"), flags=re.M)
         require(count == 1, "Cannot select the Compatibility renderer for the simulator")
         settings.write_text(source, encoding="utf-8")
-    if authoring:
-        require(sys.platform == "darwin", "The author iOS Files bridge needs macOS and full Xcode")
+    if authoring or not simulator:
+        # The device app of either variant carries the editor runtime: the author app in
+        # every run, the retail app once Settings → Story editor is switched on. The
+        # simulator has no bridge, so it mirrors the author app without it.
+        require(sys.platform == "darwin", "The story editor's iOS Files bridge needs macOS and full Xcode")
         authoring_build.compile_files_bridge(tree, simulator=simulator)
+    if authoring:
         text = authoring_build.configure_ios(text)
+    elif not simulator:
+        # The retail device app carries the editor runtime in its own bundle; this writes
+        # the same Files bridge plugin block the author preset uses, keeping the identity.
+        text = authoring_build.configure_bridge(text)
     project = out / f"{APP}.xcodeproj"
     (tree / "export_presets.cfg").write_text(configure(text, "iOS", {
         "application/app_store_team_id": args.team if signed else UNSIGNED_TEAM,
@@ -329,10 +347,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
     pack = out / f"{APP}.pck"
     require((project / "project.pbxproj").is_file() and pack.is_file(),
             "Godot did not produce the Xcode project and game pack")
-    if authoring:
-        authoring_build.verify_pack(pack)
-    else:
-        run(sys.executable, ROOT / "tools/verify_build.py", "--pck", pack)
+    authoring_build.verify_pack(pack)
     if args.target == "ios-project":
         return project
     xcode = ("xcodebuild", "-project", project, "-scheme", APP)
@@ -341,7 +356,7 @@ def ios(args: argparse.Namespace, tree: Path, text: str, version: str, out: Path
 
         version_pin = (ROOT / ".godot-version").read_text().strip()
         ensure_simulator_slice(out, APP, platform.machine(), version_pin, args.engine_version, no_download=args.no_download)
-        app = build_simulator(xcode, out, flags)
+        app = build_simulator(xcode, out, flags, simulator=simulator)
         verify_ios_app(app, pack, args.build, version, simulator=True, authoring=authoring)
         return app
     archive = out / f"{APP}.xcarchive"
