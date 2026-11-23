@@ -5,7 +5,7 @@
 project: metres, +Y up, faces -Z, no node scale, no cameras, no lights. §3 says where a
 model file lives. Until now both were prose: nothing in CI had ever looked inside a
 `.glb`, so a model could arrive with a camera in it, a 2x node scale that throws off every
-collision shape written against it, or 4K textures that blow the 24 MiB pack budget on
+collision shape written against it, or 4K textures that blow the 32 MiB pack budget on
 their own, and the first time anyone found out was a red export job weeks later.
 
 This tool is the reader. `--check` walks every `assets/models/**/*.glb` and fails on the
