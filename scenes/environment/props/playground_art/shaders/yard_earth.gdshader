@@ -65,14 +65,18 @@ void fragment() {
     float grit = grain(p * 23.0);
     float pebble = grain(p * 11.0 + 5.0);
     vec3 c = PALE * (1.0 + 0.09 * tone + 0.20 * (stain - 0.5) + 0.05 * (sweep - 0.5));
+    vec3 c_base = c;
     c *= 0.93 + 0.12 * grit;
     c *= 1.0 + 0.12 * smoothstep(0.86, 0.95, pebble) - 0.2 * (1.0 - smoothstep(0.05, 0.14, pebble));
+    vec3 c_grit = c;
     // Grime gathers along the sawn joints; their arrises are chipped here and there.
     c *= 1.0 - 0.14 * (1.0 - smoothstep(0.02, 0.14, edge));
     float chip = grain(p * 7.0 + 11.0);
     float width = 0.016 + 0.035 * chip * chip * chip * chip * chip * chip;
     float joint = 1.0 - smoothstep(0.011, width, edge);
+    vec3 c_prejoint = c;
     c = mix(c, JOINT, joint);
+    vec3 c_joint = c;
     // Cloud shadows, soft-edged and slow, the way they pass over a big flat yard.
     vec2 drift = (p - WIND * TIME) * 0.042;
     float cloud = fbm(drift);
@@ -81,4 +85,19 @@ void fragment() {
     ALBEDO = c;
     EMISSION = c * fill;
     ROUGHNESS = 1.0;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+    // TEMPORARY DIAGNOSTIC (round 20): 1.5 m bands along z, compatibility only.
+    int band = int(floor((p.y + 9.0) / 1.5));
+    if (band == 0) { ALBEDO = vec3(0.0, 0.5, 0.0); EMISSION = vec3(0.0); }
+    if (band == 1) { ALBEDO = PALE; EMISSION = vec3(0.0); }
+    if (band == 2) { ALBEDO = PALE; EMISSION = PALE * fill; }
+    if (band == 3) { ALBEDO = c_base; EMISSION = vec3(0.0); }
+    if (band == 4) { ALBEDO = c_grit; EMISSION = vec3(0.0); }
+    if (band == 5) { ALBEDO = c_prejoint; EMISSION = vec3(0.0); }
+    if (band == 6) { ALBEDO = c_joint; EMISSION = vec3(0.0); }
+    if (band == 7) { ALBEDO = vec3(0.5, 0.0, 0.0); EMISSION = vec3(0.0); }
+    if (band == 8) { ALBEDO = c; EMISSION = vec3(0.0); }
+    if (band == 9) { ALBEDO = vec3(shadow); EMISSION = vec3(0.0); }
+    if (band == 10) { ALBEDO = vec3(0.0, 0.0, 0.5); EMISSION = vec3(0.0); }
+#endif
 }
