@@ -157,11 +157,11 @@ def stall_dressing(b, body, w, d, stall_back, posts):
 # --- ground: a swept yard ---------------------------------------------------------------
 
 def yard_ground(b, y, yard_x, yard_z, house_x, house_z):
-    """Round 18: the yard is swept. A few droppings by the stalls, straw where it is used."""
-    variants = [shaped(b, f"Dung{k}", lambda k=k: sm.dung_pile(k + 3, 1.0 + .25 * (k % 2), k / 4))
+    """Round 18: the yard is swept. Three small droppings by the stalls, straw where it is used."""
+    variants = [shaped(b, f"Dung{k}", lambda k=k: sm.dung_pile(k + 3, .5 + .1 * (k % 2), .45 + k / 5))
                 for k in (1, 2)]
-    dung = coat(b, sheen=.05, roughness=.6)
-    for i, (x, z, k) in enumerate(((-32.6, 7.4, 0), (-32.9, 9.1, 1), (-31.9, 6.9, 1), (-29.4, 7.9, 0))):
+    dung = coat(b, sheen=.03, roughness=.9, fill=.22)
+    for i, (x, z, k) in enumerate(((-32.6, 7.4, 0), (-32.9, 9.1, 1), (-32.1, 6.6, 1))):
         place(b, f"Dung{i}", y, (x, G + .004, z), variants[k], dung, rot=(0, i * 77 % 360, 0))
     # Straw shaken out in front of the stalls and round the bales, not over the whole yard.
     for i, (area, count, seed) in enumerate(((((0, .9), (0, 5.4)), 160, 70), (((0, 2.0), (0, 1.0)), 60, 81))):
@@ -174,7 +174,8 @@ def yard_ground(b, y, yard_x, yard_z, house_x, house_z):
 
 def heap(b, y, parent):
     rid = shaped(b, "MuckHeap", sm.heap)
-    place(b, "Muck", parent, (0, 0, 0), rid, coat(b, sheen=.05, roughness=.7), shadow=True, scale=(.9, .8, .75))
+    place(b, "Muck", parent, (0, 0, 0), rid, coat(b, sheen=.04, roughness=.9, fill=.24), shadow=True,
+          scale=(.9, .75, .75))
     bay = shaped(b, "ManureBay", sp.manure_bay)
     place(b, "Bay", parent, (0, 0, .05), bay, coat(b, sheen=.05), shadow=True)
 

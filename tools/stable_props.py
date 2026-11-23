@@ -13,9 +13,9 @@ import math
 from stable_meshes import PaintMesh, mix, rgb, sweep  # also puts the site mesh kit on the path
 from site_mesh import box, cylinder, euler, fbm, noise, rand, smoothstep  # noqa: E402
 
-TIMBER = (132, 106, 80)
-TIMBER_DARK = (92, 72, 56)
-TIMBER_GREY = (150, 140, 126)
+TIMBER = (156, 128, 98)
+TIMBER_DARK = (116, 92, 70)
+TIMBER_GREY = (168, 158, 142)
 TIN = (128, 122, 116)
 RUST = (138, 90, 58)
 WIRE = (118, 118, 112)

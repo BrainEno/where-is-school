@@ -70,10 +70,10 @@ the one ink shadow, and replaces the rest:
   three quilts that drape over the wire with soft folds and printed motifs; raked grain on
   a tarp; and a board bay that keeps the muck heap in one place.
 - **Lit as matter**: everything new is drawn by `stable_coat.gdshader` (wrapped diffuse, a
-  soft coat sheen, a little fill in the stalls' shade), not by the hatched paper shader and
+  soft coat sheen, and a fill that stands in for the yard's bounce light so nothing in the stalls' shade turns black), not by the hatched paper shader and
   the ink hull, which is retired. The stalls are 2.8 m deep so a full-sized horse stands
   inside with its head over the door.
-- **Decluttered**: four droppings by the stalls instead of forty glossy piles; straw only in
+- **Decluttered**: three small, dry droppings by the stalls instead of forty glossy piles; straw only in
   front of the stalls and round the bales; no ground or wall stains; one small swarm of 26
   flies over the heap instead of 220 and a giant fly; two faint wisps and one trace of
   smell instead of five of each; no daze halos and no lamp over the heap. One grain mat,
@@ -85,7 +85,7 @@ the one ink shadow, and replaces the rest:
 | `DreamHouse/HalfDoor0`-`2` | Ledged, braced plank half doors with strap hinges and a bolt. | `stable_props.half_door()`. |
 | `DreamHouse/HorseShadow` | The empty middle stall has a horse's ink shadow painted on its back wall - a horse that is not there. | Cut-out slab in ink. |
 | `DreamHouse/StallBedding`, `StableYard/Straw0`-`1` | Clean bedding in the stalls; straw shaken out in front of them and round the bales. | One mesh of creased straw ribbons per area. |
-| `StableYard/Dung0`-`3`, `Heap/Muck`, `Heap/Bay` | A few droppings near the stalls; the muck heap kept in a three-sided board bay. | Matte, no highlight. |
+| `StableYard/Dung0`-`2`, `Heap/Muck`, `Heap/Bay` | A few small droppings near the stalls; the muck heap kept in a three-sided board bay. | Matte, no highlight. |
 | `StableYard/Coop` (`HenHouse`, `CoopHen0`-`1`), `YardHen0`-`2` | The hen house and its run, two hens inside and three pecking in the yard. | `stable_props.coop()`; sculpted hens peck about the neck in their material. |
 | `StableYard/Flies0` | A small swarm over the heap. | `stench_flies.gdshader`: each instance loops its own knot; wings flap as dithered film. |
 | `StableYard/OldWoman0`, `OldWoman1` | A seated woman and a raker beside the grain mat. | `tools/stable_people.py`, quiet native animation, no actor or collider. |

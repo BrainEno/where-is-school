@@ -520,10 +520,11 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.376, 0.306, 0.227, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_fac6700c1d81f91d"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_04f481c9509d485d"]
 shader = ExtResource("stable_coat")
-shader_parameter/sheen = 0.05
-shader_parameter/roughness = 0.6
+shader_parameter/sheen = 0.03
+shader_parameter/roughness = 0.9
+shader_parameter/fill = 0.22
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_coat_bf107caadaa997f8"]
 shader = ExtResource("stable_coat")
@@ -915,10 +916,11 @@ shader_parameter/graze_rate = 0.4705
 shader_parameter/phase = 0.83
 shader_parameter/sheen = 0.35
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_e1348c91f3964a09"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_85e1673e0916758b"]
 shader = ExtResource("stable_coat")
-shader_parameter/sheen = 0.05
-shader_parameter/roughness = 0.7
+shader_parameter/sheen = 0.04
+shader_parameter/roughness = 0.9
+shader_parameter/fill = 0.24
 
 [sub_resource type="ShaderMaterial" id="Mat_stench_flies_c62b80bea652e670"]
 shader = ExtResource("stench_flies")
@@ -5393,28 +5395,21 @@ cast_shadow = 0
 position = Vector3(-32.6, -3.396, 7.4)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = ExtResource("stable_dung1")
-material_override = SubResource("Mat_stable_coat_fac6700c1d81f91d")
+material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
 cast_shadow = 0
 
 [node name="Dung1" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(-32.9, -3.396, 9.1)
 rotation_degrees = Vector3(0, 77, 0)
 mesh = ExtResource("stable_dung2")
-material_override = SubResource("Mat_stable_coat_fac6700c1d81f91d")
+material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
 cast_shadow = 0
 
 [node name="Dung2" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-31.9, -3.396, 6.9)
+position = Vector3(-32.1, -3.396, 6.6)
 rotation_degrees = Vector3(0, 154, 0)
 mesh = ExtResource("stable_dung2")
-material_override = SubResource("Mat_stable_coat_fac6700c1d81f91d")
-cast_shadow = 0
-
-[node name="Dung3" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-29.4, -3.396, 7.9)
-rotation_degrees = Vector3(0, 231, 0)
-mesh = ExtResource("stable_dung1")
-material_override = SubResource("Mat_stable_coat_fac6700c1d81f91d")
+material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
 cast_shadow = 0
 
 [node name="Straw0" type="MeshInstance3D" parent="StableYard"]
@@ -6732,9 +6727,9 @@ position = Vector3(-31.75, -3.4, 5.4)
 
 [node name="Muck" type="MeshInstance3D" parent="StableYard/Heap"]
 position = Vector3(0, 0, 0)
-scale = Vector3(0.9, 0.8, 0.75)
+scale = Vector3(0.9, 0.75, 0.75)
 mesh = ExtResource("stable_muck_heap")
-material_override = SubResource("Mat_stable_coat_e1348c91f3964a09")
+material_override = SubResource("Mat_stable_coat_85e1673e0916758b")
 
 [node name="Bay" type="MeshInstance3D" parent="StableYard/Heap"]
 position = Vector3(0, 0, 0.05)

@@ -9,7 +9,8 @@ render_mode cull_back, diffuse_lambert_wrap;
 //
 // * `sheen` adds the soft grazing lift of a short coat or a feather (a rim, not a specular
 //   highlight), strongest on the coat's lit side.
-// * `fill` is a low self-light, so a form in a stall's shadow stays a shape rather than a hole.
+// * `fill` is a low self-light standing in for the bounce off the sunlit yard, so a form in a
+//   stall's shadow or the dusk sky's shade stays a shape rather than a black hole.
 //
 // Motion is the same as `stable_paint.gdshader`, with no skeleton or script. Vertex alpha is a
 // weight: 0.5 still, 0.5 -> 1 the share of the graze (or a hen's peck) about `neck_pivot`,
@@ -24,7 +25,7 @@ uniform float swish_rate = 0.5;
 uniform float phase = 0.0;
 uniform float sheen : hint_range(0.0, 1.0) = 0.25;
 uniform float roughness : hint_range(0.0, 1.0) = 0.85;
-uniform float fill : hint_range(0.0, 1.0) = 0.08;
+uniform float fill : hint_range(0.0, 1.0) = 0.3;
 
 vec3 to_linear(vec3 c) {
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
