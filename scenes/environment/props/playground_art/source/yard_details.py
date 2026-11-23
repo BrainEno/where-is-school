@@ -164,7 +164,7 @@ def shed_surroundings(b, art):
     hedge(b, art)
 
 
-HEDGE_SHIFT = (17.4, -17.9)
+HEDGE_SHIFT = (16.8, -17.9)
 
 
 def hedge(b, art, material_prefix=""):
@@ -173,7 +173,7 @@ def hedge(b, art, material_prefix=""):
     # Small overlapping rounded clusters keep the hedge irregular, low, and
     # close to the pale strip described by the ball interaction.
     # Authored round the hedge's old place (-17.2, 0.9) and carried with the shed in round
-    # 20 to (0.2, -17.9), behind the footings; mirrored in z so the tall side stays at the back.
+    # 20 to (-0.4, -17.9), behind the footings; mirrored in z so the tall side stays at the back.
     for i, (x, y, z, r) in enumerate(((-18.10, .34, .9, .39), (-17.57, .43, .73, .46),
                                       (-17.03, .37, .88, .42), (-16.55, .33, .65, .35),
                                       (-17.85, .60, .98, .33), (-17.27, .64, .95, .34),

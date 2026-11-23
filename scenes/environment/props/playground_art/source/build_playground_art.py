@@ -55,7 +55,7 @@ ART_INSTANCE = '[node name="PlaygroundArt" parent="." instance=ExtResource("yard
 # scenery-only materials are embedded in it as sub-resources, as the bake did.
 SCENERY_FILE = "scenery.tscn"
 # The tyre stack by the shed's footings (x, z): `TYRES` in tools/build_outdoor_locations.py.
-TYRES = (-1.9, -15.5)
+TYRES = (-2.4, -15.3)
 # These overrides belong only to the static yard scenery. Shared wall, prop and
 # distant-row colours stay addressable by path; do not ship these ones twice.
 SCENERY_MATERIALS = {

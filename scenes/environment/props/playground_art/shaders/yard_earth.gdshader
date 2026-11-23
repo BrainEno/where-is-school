@@ -4,7 +4,7 @@ render_mode diffuse_burley, specular_disabled;
 // Round 20: the yard round the court is plain cast concrete, laid in 2 m slabs on the
 // world grid (the court's own joints fall on the same even metres), with cloud shadows
 // drifting slowly across it, after the owner's two references: a tiled plane running to
-// the horizon under airbrushed shadows. Procedural and texture-free (no samplers, see
+// the horizon under airbrushed shadows. Procedural and texture-free (no texture inputs, see
 // tests/location_art_test.gd); the walking surface is still the yard slab below.
 // Kept no brighter than the `ground` material the HUD contrast test measures.
 varying vec2 ground_position;

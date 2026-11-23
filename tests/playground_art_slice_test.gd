@@ -63,9 +63,9 @@ const SOLIDS := {
 	"HoopFarRim": [Vector3(8.0, 2.6, -11.8), Vector3(0.05, 0.05, 0.45)],
 	"HoopFarFooting": [Vector3(8.0, 0.1, -11.5), Vector3(1.2, 0.2, 1.2)],
 	# Round 20: the shed moved to the north-east, against the fence beside the container.
-	"ShedBody": [Vector3(5.4, 1.5, -16.9), Vector3(6.0, 3.0, 3.1)],
-	"ShedFootingWest": [Vector3(-0.7, 0.2, -16.4), Vector3(1.4, 0.4, 1.4)],
-	"ShedFootingEast": [Vector3(1.65, 0.3, -16.4), Vector3(1.4, 0.6, 1.4)],
+	"ShedBody": [Vector3(4.8, 1.5, -16.9), Vector3(6.0, 3.0, 3.1)],
+	"ShedFootingWest": [Vector3(-1.3, 0.2, -16.4), Vector3(1.4, 0.4, 1.4)],
+	"ShedFootingEast": [Vector3(1.05, 0.3, -16.4), Vector3(1.4, 0.6, 1.4)],
 	# The saguaro in the cactus plot where the shed stood (position inside CactusPlot).
 	"CactusPlot/Saguaro": [Vector3(-0.3, 2.2, -0.25), Vector3(0.7, 4.4, 0.7)],
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],
@@ -88,10 +88,10 @@ const OCCLUDERS: Array[String] = [
 const INTERACTABLES := {
 	"pg_hoop_near": Vector3(-8.0, 1.4, 8.8), "pg_court_middle": Vector3(0.0, 0.9, 2.0),
 	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
-	"pg_shed_door": Vector3(5.4, 1.1, -14.55), "pg_ball_look": Vector3(0.65, 0.8, -15.7),
+	"pg_shed_door": Vector3(4.8, 1.1, -14.55), "pg_ball_look": Vector3(0.05, 0.8, -15.7),
 	"pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
-	"pg_tyre_look": Vector3(-1.3, 0.7, -15.2),
+	"pg_tyre_look": Vector3(-1.8, 0.7, -15.0),
 	"pg_tap": Vector3(-5.58, 1.08, 14.0),
 	"pg_site_look": Vector3(-22.6, 1.0, 13.2),
 }
@@ -124,7 +124,7 @@ const SPAWNS := {
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
 ## Godot 4.7.2 bake with the smaller shed and no return-board posts.
-const NAV_POLYGONS := 139
+const NAV_POLYGONS := 127
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [

@@ -902,8 +902,10 @@ def build_alley():
 
 # Round 20 layout: the shed in the north-east, against the fence before the teaching block,
 # beside the container; its tyres by its footings; the cactus plot where it used to stand.
-SHED_CENTRE = (5.4, 1.5, -16.9)
-TYRES = (-1.9, -15.5)
+# x leaves 0.6 m clear of the container's closed rear end, where the roof drop lands
+# (`RoofWayDown.HIDE`, (8.4, 0, -15.3) in the yard).
+SHED_CENTRE = (4.8, 1.5, -16.9)
+TYRES = (-2.4, -15.3)
 CACTUS_PLOT = (-16.0, 0.0, -4.0)
 
 
@@ -994,11 +996,11 @@ def build_playground(for_courtyard_view: bool = False):
         s.box("ShedWindow", (SHED_CENTRE[0] + 1.85, 1.9, face + 0.05), (1.2, 0.8, 0.1), "glass", None, False)
         s.box("ShedSheet", (SHED_CENTRE[0] + 1.85, 1.9, face + 0.1), (0.9, 0.5, 0.08), "paper", None, False)
     # two footings off the shed's west end, and the gap is only on the left one
-    s.box("ShedFootingWest", (-0.7, 0.2, -16.4), (1.4, 0.4, 1.4), "concrete")
-    s.box("ShedFootingEast", (1.65, 0.3, -16.4), (1.4, 0.6, 1.4), "concrete")
-    s.box("ShedHedge", (0.2, 0.55, -17.9), (2.6, 1.1, 1.4), "hedge", None, False)
-    s.box("PaleUnderHedge", (0.8, 0.45, -17.9), (0.9, 0.05, 0.16), "paper", None, False)
-    s.box("PingPongBall", (0.45, 0.16, -16.4), (0.06, 0.06, 0.06), "paper", None, False)
+    s.box("ShedFootingWest", (-1.3, 0.2, -16.4), (1.4, 0.4, 1.4), "concrete")
+    s.box("ShedFootingEast", (1.05, 0.3, -16.4), (1.4, 0.6, 1.4), "concrete")
+    s.box("ShedHedge", (-0.4, 0.55, -17.9), (2.6, 1.1, 1.4), "hedge", None, False)
+    s.box("PaleUnderHedge", (0.2, 0.45, -17.9), (0.9, 0.05, 0.16), "paper", None, False)
+    s.box("PingPongBall", (-0.15, 0.16, -16.4), (0.06, 0.06, 0.06), "paper", None, False)
 
     # climbing frame on the east side
     for i, z in enumerate((7.0, 9.0, 11.0)):
@@ -1077,7 +1079,7 @@ def build_playground(for_courtyard_view: bool = False):
          "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5,
          "shot": "res://assets/camera/shots/playground_shed.tres",
          "outline": ("ShedBody/Facade/Door", "ShedBody/Facade/Hasp", "ShedBody/Facade/Padlock")},
-        {"name": "BallLook", "pos": (0.65, 0.8, -15.7), "id": "pg_ball_look",
+        {"name": "BallLook", "pos": (0.05, 0.8, -15.7), "id": "pg_ball_look",
          "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4,
          "outline": ("PingPongBall",)},
         {"name": "TapLook", "pos": (-5.58, 1.08, 14.0), "id": "pg_tap",

@@ -665,7 +665,7 @@ func _capture_yard_checks() -> void:
 		_failures.append("The hoop was never offered as a target.")
 
 	await _wait_for_free(45.0)
-	_teleport(Vector3(-12.4, 0, -4.0), 90.0)
+	_teleport(Vector3(4.8, 0, -13.45), 0.0)  # round 20: the shed in the north-east corner, door south
 	if not await _wait_for_target(&"pg_shed_door", 30.0):
 		_failures.append("The shed door was never offered as a target.")
 	else:

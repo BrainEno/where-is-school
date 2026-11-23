@@ -816,25 +816,25 @@ material_override = ExtResource("art_hoop_net")
 cast_shadow = 0
 
 [node name="Tyre_0" type="MeshInstance3D" parent="Equipment"]
-position = Vector3(-1.9, 0.12, -15.5)
+position = Vector3(-2.4, 0.12, -15.3)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = SubResource("TorusMesh_art33")
 material_override = ExtResource("art_tyre")
 
 [node name="Tyre_1" type="MeshInstance3D" parent="Equipment"]
-position = Vector3(-1.85, 0.36, -15.5)
+position = Vector3(-2.35, 0.36, -15.3)
 rotation_degrees = Vector3(0, 20, 0)
 mesh = SubResource("TorusMesh_art33")
 material_override = ExtResource("art_tyre")
 
 [node name="Tyre_2" type="MeshInstance3D" parent="Equipment"]
-position = Vector3(-1.9, 0.6, -15.54)
+position = Vector3(-2.4, 0.6, -15.34)
 rotation_degrees = Vector3(0, 40, 0)
 mesh = SubResource("TorusMesh_art33")
 material_override = ExtResource("art_tyre")
 
 [node name="TyreLoose" type="MeshInstance3D" parent="Equipment"]
-position = Vector3(-0.8, 0.14, -14.6)
+position = Vector3(-1.3, 0.14, -14.4)
 rotation_degrees = Vector3(6, 0, 0)
 mesh = SubResource("TorusMesh_art33")
 material_override = ExtResource("art_tyre")
@@ -1180,49 +1180,49 @@ cast_shadow = 0
 [node name="HedgeLeaves" type="Node3D" parent="."]
 
 [node name="LeafCluster0" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(-0.7, 0.34, -17.9)
+position = Vector3(-1.3, 0.34, -17.9)
 mesh = SubResource("SphereMesh_art127")
 material_override = ExtResource("art_crown")
 cast_shadow = 0
 
 [node name="LeafCluster1" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(-0.17, 0.43, -17.73)
+position = Vector3(-0.77, 0.43, -17.73)
 mesh = SubResource("SphereMesh_art128")
 material_override = ExtResource("art_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster2" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(0.37, 0.37, -17.88)
+position = Vector3(-0.23, 0.37, -17.88)
 mesh = SubResource("SphereMesh_art129")
 material_override = ExtResource("art_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster3" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(0.85, 0.33, -17.65)
+position = Vector3(0.25, 0.33, -17.65)
 mesh = SubResource("SphereMesh_art130")
 material_override = ExtResource("art_crown")
 cast_shadow = 0
 
 [node name="LeafCluster4" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(-0.45, 0.6, -17.98)
+position = Vector3(-1.05, 0.6, -17.98)
 mesh = SubResource("SphereMesh_art131")
 material_override = ExtResource("art_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster5" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(0.13, 0.64, -17.95)
+position = Vector3(-0.47, 0.64, -17.95)
 mesh = SubResource("SphereMesh_art132")
 material_override = ExtResource("art_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster6" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(0.58, 0.58, -18.03)
+position = Vector3(-0.02, 0.58, -18.03)
 mesh = SubResource("SphereMesh_art133")
 material_override = ExtResource("art_crown")
 cast_shadow = 0
 
 [node name="LeafCluster7" type="MeshInstance3D" parent="HedgeLeaves"]
-position = Vector3(-0.08, 0.3, -18.38)
+position = Vector3(-0.68, 0.3, -18.38)
 mesh = SubResource("SphereMesh_art134")
 material_override = ExtResource("art_hedge")
 cast_shadow = 0
