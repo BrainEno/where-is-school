@@ -1,0 +1,105 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/cactus_plot_soil.tres" id="mesh_cactus_plot_soil"]
+[ext_resource type="StandardMaterial3D" path="res://scenes/environment/props/playground_art/materials/cactus_soil.tres" id="mat_cactus_soil"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/saguaro_stem.tres" id="mesh_saguaro_stem"]
+[ext_resource type="ShaderMaterial" path="res://scenes/environment/props/playground_art/materials/cactus_glow.tres" id="mat_cactus_glow"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/saguaro_spines.tres" id="mesh_saguaro_spines"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_legs.tres" id="mesh_girl_legs"]
+[ext_resource type="ShaderMaterial" path="res://scenes/environment/props/playground_art/materials/girl_glow.tres" id="mat_girl_glow"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_bodice.tres" id="mesh_girl_bodice"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_skirt.tres" id="mesh_girl_skirt"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_arms.tres" id="mesh_girl_arms"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_head.tres" id="mesh_girl_head"]
+[ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/girl_rope.tres" id="mesh_girl_rope"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(0.7, 4.4, 0.7)
+
+[sub_resource type="Animation" id="Animation_2"]
+resource_name = "Skip"
+length = 0.84
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Figure:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {"times": PackedFloat32Array(0, 0.07, 0.14, 0.21, 0.28, 0.35, 0.42, 0.49, 0.56, 0.63, 0.7, 0.77, 0.84), "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), "update": 0, "values": [Vector3(0, 0.075, 0), Vector3(0, 0.05138, 0), Vector3(0, 0.00711, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0.00711, 0), Vector3(0, 0.05138, 0), Vector3(0, 0.075, 0)]}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Figure/Rope:rotation_degrees")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {"times": PackedFloat32Array(0, 0.07, 0.14, 0.21, 0.28, 0.35, 0.42, 0.49, 0.56, 0.63, 0.7, 0.77, 0.84), "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), "update": 0, "values": [Vector3(0, 0, 0), Vector3(30, 0, 0), Vector3(60, 0, 0), Vector3(90, 0, 0), Vector3(120, 0, 0), Vector3(150, 0, 0), Vector3(180, 0, 0), Vector3(210, 0, 0), Vector3(240, 0, 0), Vector3(270, 0, 0), Vector3(300, 0, 0), Vector3(330, 0, 0), Vector3(360, 0, 0)]}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_3"]
+_data = {&"Skip": SubResource("Animation_2")}
+
+[node name="CactusPlot" type="Node3D"]
+
+[node name="Plot" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_cactus_plot_soil")
+material_override = ExtResource("mat_cactus_soil")
+cast_shadow = 0
+
+[node name="Saguaro" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-0.3, 2.2, -0.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Saguaro"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Stem" type="MeshInstance3D" parent="Saguaro"]
+position = Vector3(0, -2.18, 0)
+mesh = ExtResource("mesh_saguaro_stem")
+material_override = ExtResource("mat_cactus_glow")
+
+[node name="Spines" type="MeshInstance3D" parent="Saguaro"]
+position = Vector3(0, -2.18, 0)
+mesh = ExtResource("mesh_saguaro_spines")
+material_override = ExtResource("mat_cactus_glow")
+cast_shadow = 0
+
+[node name="Girl" type="Node3D" parent="."]
+position = Vector3(1.25, 0.05, 2.2)
+rotation_degrees = Vector3(0, -160, 0)
+
+[node name="Figure" type="Node3D" parent="Girl"]
+
+[node name="Legs" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_girl_legs")
+material_override = ExtResource("mat_girl_glow")
+
+[node name="Bodice" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_girl_bodice")
+material_override = ExtResource("mat_girl_glow")
+
+[node name="Skirt" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_girl_skirt")
+material_override = ExtResource("mat_girl_glow")
+
+[node name="Arms" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_girl_arms")
+material_override = ExtResource("mat_girl_glow")
+
+[node name="Head" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("mesh_girl_head")
+material_override = ExtResource("mat_girl_glow")
+
+[node name="Rope" type="MeshInstance3D" parent="Girl/Figure"]
+position = Vector3(0, 0.593, 0.095)
+mesh = ExtResource("mesh_girl_rope")
+material_override = ExtResource("mat_girl_glow")
+custom_aabb = AABB(-0.4, -0.643, -0.643, 0.8, 1.286, 1.286)
+
+[node name="Motion" type="AnimationPlayer" parent="Girl"]
+autoplay = "Skip"
+libraries = {&"": SubResource("AnimationLibrary_3")}

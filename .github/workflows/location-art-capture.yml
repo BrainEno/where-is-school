@@ -256,7 +256,9 @@ jobs:
               detail=(return-route review_width=460)
               expect=2
               # The street adds the ditch by the drain cover to its two return-route details.
-              if [ "$LOCATION" = playground ] || [ "$LOCATION" = street ]; then expect=3; fi
+              if [ "$LOCATION" = street ]; then expect=3; fi
+              # The playground: the shed, the court, the tap and (round 20) the cactus plot.
+              if [ "$LOCATION" = playground ]; then expect=4; fi
               ;;
           esac
           xvfb-run -a --server-args="-screen 0 1600x900x24" \

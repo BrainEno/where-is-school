@@ -301,7 +301,10 @@ const RETURN_SPOTS := {
 		["detail_trolley_guide", Vector3(-2.10, 0, 5.6)],
 	],
 	"playground": [
-		["detail_shed", Vector3(-12.12, 0, -4.0)],
+		# Round 20: the shed stands in the north-east corner, door to the south.
+		["detail_shed", Vector3(5.4, 0, -13.45)],
+		# The saguaro and the skipping girl in their square of soil, where the shed stood.
+		["detail_cactus_plot", Vector3(-13.4, 0, -1.4)],
 		["detail_concrete_court", Vector3(0.8, 0, 2.0)],
 		["detail_yard_tap", Vector3(-4.67, 0, 14.42)],
 	],

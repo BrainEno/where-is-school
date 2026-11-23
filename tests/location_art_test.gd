@@ -145,8 +145,9 @@ const LOCATIONS := {
 		# The look at the building under construction picks by its two gate leaves. The
 		# site's gate (the same two leaves) and the climb over the hoarding (the south sand
 		# pile) add a sphere each and three boxes. The way to the container yard (the bent
-		# chain-link behind the container) adds a sphere and a box.
-		"shapes": 99,
+		# chain-link behind the container) adds a sphere and a box. The saguaro in the
+		# cactus plot (round 20) is a camera-fading solid box.
+		"shapes": 100,
 		"interactables": 18, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
 		"exits": {
@@ -442,6 +443,15 @@ func _check_pieces(id: String, pieces: Array[MeshInstance3D]) -> void:
 					or "sampler" in earth.shader.code:
 				_failures.append("corridor: shared soil must use its texture-free yard-earth shader.")
 			continue
+		# Round 20: the saguaro and the skipping girl in the yard's cactus plot glow with their
+		# own texture-free shader (playground_art/shaders/cactus_glow.gdshader); nothing else.
+		if id == "corridor" and mesh.material_override is ShaderMaterial and _in_cactus_plot(mesh):
+			var glow := mesh.material_override as ShaderMaterial
+			if not glow.resource_path.begins_with(YARD_MATERIALS) or glow.shader == null \
+					or glow.shader.resource_path != "res://scenes/environment/props/playground_art/shaders/cactus_glow.gdshader" \
+					or "sampler" in glow.shader.code:
+				_failures.append("corridor: '%s' in the cactus plot must use the texture-free glow shader." % mesh.name)
+			continue
 		var material := mesh.material_override as BaseMaterial3D
 		var valid := material != null and material.resource_path.begins_with(STAGE_MATERIALS)
 		if id == "corridor" and material != null:
@@ -458,6 +468,15 @@ func _check_pieces(id: String, pieces: Array[MeshInstance3D]) -> void:
 			_failures.append("corridor: expected exactly one shared yard soil mesh, found %d." % soil_count)
 	for path: String in textures:
 		_check_texture(id, path)
+
+
+func _in_cactus_plot(node: Node) -> bool:
+	var parent := node.get_parent()
+	while parent != null:
+		if parent.name == &"CactusPlot":
+			return true
+		parent = parent.get_parent()
+	return false
 
 
 func _check_texture(id: String, path: String) -> void:

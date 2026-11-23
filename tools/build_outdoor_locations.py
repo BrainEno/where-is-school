@@ -900,6 +900,13 @@ def build_alley():
     return s
 
 
+# Round 20 layout: the shed in the north-east, against the fence before the teaching block,
+# beside the container; its tyres by its footings; the cactus plot where it used to stand.
+SHED_CENTRE = (5.4, 1.5, -16.9)
+TYRES = (-1.9, -15.5)
+CACTUS_PLOT = (-16.0, 0.0, -4.0)
+
+
 def build_playground(for_courtyard_view: bool = False):
     """The open yard.
 
@@ -961,7 +968,7 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("SouthGatePostEast", (2.0, 1.25, 19.6), (0.2, 2.5, 0.2), "metal", None, False)
     s.box("SouthGateLintel", (0.0, 2.45, 19.6), (4.2, 0.12, 0.12), "metal", None, False)
     s.box("SouthGateLight", (0.0, 1.6, 21.9), (3.6, 3.2, 0.1), "dusk", None, False)
-    # east side: flats, and the hedge that hides what is under the shed
+    # east side: the flats (the hedge that hides what is under the shed moved with it, round 20)
     s.box("EstateBlockEast", (24, 6.0, -2), (8, 12, 40), "brick", ["camera_occluder"])
 
     # the two hoops
@@ -972,21 +979,26 @@ def build_playground(for_courtyard_view: bool = False):
         s.box(f"{name}Rim", (x, 2.6, z - 0.3), (0.05, 0.05, 0.45), "metal")
         s.box(f"{name}Footing", (x, 0.1, z), (1.2, 0.2, 1.2), "concrete")
 
-    # the equipment shed on the west side
-    s.box("ShedBody", (-16.0, 1.5, -4.0), (4.0, 3.0, 6.0), "wall", ["camera_occluder"])
+    # The equipment shed, round 20: moved from the west side into the north-east of the yard,
+    # its back against the fence in front of the teaching block and its east end tucked in
+    # beside the blue container (the corner itself is the container's, with its cabin doors
+    # and ladder, so the shed takes the run of fence just west of it). The door now faces
+    # south, across the court. Its old place on the west side holds the cactus plot.
+    s.box("ShedBody", SHED_CENTRE, (6.0, 3.0, 3.1), "wall", ["camera_occluder"])
     # Both views use the actual roof slab. The yard art pass adds seams and a gutter
     # to it and replaces the distant door, glazing and sign with detailed wall trim.
-    s.box("ShedRoof", (-16.0, 3.1, -4.0), (4.4, 0.2, 6.4), "metal", None, False)
+    s.box("ShedRoof", (SHED_CENTRE[0], 3.1, SHED_CENTRE[2]), (6.4, 0.2, 3.5), "metal", None, False)
     if for_courtyard_view:
-        s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
-        s.box("ShedWindow", (-13.95, 1.9, -5.85), (0.1, 0.8, 1.2), "glass", None, False)
-        s.box("ShedSheet", (-13.9, 1.9, -5.85), (0.08, 0.5, 0.9), "paper", None, False)
-    # two footings, and the gap is only on the left one
-    s.box("ShedFootingWest", (-15.6, 0.2, -0.1), (1.4, 0.4, 1.4), "concrete")
-    s.box("ShedFootingEast", (-13.2, 0.3, -0.1), (1.4, 0.6, 1.4), "concrete")
-    s.box("ShedHedge", (-17.2, 0.55, 0.9), (2.6, 1.1, 1.4), "hedge", None, False)
-    s.box("PaleUnderHedge", (-16.6, 0.45, 0.9), (0.9, 0.05, 0.16), "paper", None, False)
-    s.box("PingPongBall", (-14.4, 0.16, -0.1), (0.06, 0.06, 0.06), "paper", None, False)
+        face = SHED_CENTRE[2] + 1.55
+        s.box("ShedDoor", (SHED_CENTRE[0], 1.1, face + 0.06), (1.1, 2.2, 0.12), "hedge", None, False)
+        s.box("ShedWindow", (SHED_CENTRE[0] + 1.85, 1.9, face + 0.05), (1.2, 0.8, 0.1), "glass", None, False)
+        s.box("ShedSheet", (SHED_CENTRE[0] + 1.85, 1.9, face + 0.1), (0.9, 0.5, 0.08), "paper", None, False)
+    # two footings off the shed's west end, and the gap is only on the left one
+    s.box("ShedFootingWest", (-0.7, 0.2, -16.4), (1.4, 0.4, 1.4), "concrete")
+    s.box("ShedFootingEast", (1.65, 0.3, -16.4), (1.4, 0.6, 1.4), "concrete")
+    s.box("ShedHedge", (0.2, 0.55, -17.9), (2.6, 1.1, 1.4), "hedge", None, False)
+    s.box("PaleUnderHedge", (0.8, 0.45, -17.9), (0.9, 0.05, 0.16), "paper", None, False)
+    s.box("PingPongBall", (0.45, 0.16, -16.4), (0.06, 0.06, 0.06), "paper", None, False)
 
     # climbing frame on the east side
     for i, z in enumerate((7.0, 9.0, 11.0)):
@@ -995,10 +1007,10 @@ def build_playground(for_courtyard_view: bool = False):
         s.box(f"FrameRung_{i}", (18.0, y, 9.0), (0.12, 0.12, 4.0), "metal", None, False)
     s.box("FrameTopBar", (18.0, 2.85, 9.0), (0.14, 0.14, 4.2), "metal", None, False)
 
-    # tyres stacked against the shed: the yard's older gym, painted over twice
+    # tyres stacked by the shed's footings: the yard's older gym, painted over twice
     for i, y in enumerate((0.12, 0.36, 0.6)):
-        s.box(f"TyreStack_{i}", (-15.2, y, 2.6), (1.0, 0.22, 0.42), "metal", None, False)
-    s.box("TyreLoose", (-14.1, 0.12, 3.5), (0.92, 0.22, 0.4), "metal", None, False)
+        s.box(f"TyreStack_{i}", (TYRES[0], y, TYRES[1]), (1.0, 0.22, 0.42), "metal", None, False)
+    s.box("TyreLoose", (TYRES[0] + 1.1, 0.12, TYRES[1] + 0.9), (0.92, 0.22, 0.4), "metal", None, False)
 
     # In the distant teaching-wing view keep the same cheap three-mesh silhouette.
     # The playable yard instances the full shell at the same footprint and roof height.
@@ -1018,9 +1030,10 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("SitupFootBar", (-20.4, 0.62, 10.2), (0.6, 0.5, 0.1), "metal", None, False)
 
     # birds: three silhouettes on the fence and one wire, still and unlit
-    for i, (x, y, z) in enumerate(((6.2, 2.12, -18.5), (7.1, 2.12, -18.5), (-3.0, 1.75, -18.5))):
+    # Two of them sit on the front edge of the shed roof, now that the shed has the fence.
+    for i, (x, y, z) in enumerate(((4.6, 3.26, -15.3), (5.5, 3.26, -15.25), (-3.0, 1.75, -18.5))):
         s.box(f"Bird_{i}", (x, y, z), (0.16, 0.12, 0.22), "metal", None, False)
-    s.box("BirdWire", (2.0, 2.9, -18.4), (16.0, 0.02, 0.02), "metal", None, False)
+    s.box("BirdWire", (2.0, 2.9, -18.55), (16.0, 0.02, 0.02), "metal", None, False)
 
     # Keep the standpipe solid. The art pass supplies a round pipe, bibcock and grating.
     s.box("TapPost", (-6.0, 0.9, 14.0), (0.16, 1.8, 0.16), "metal")
@@ -1039,6 +1052,9 @@ def build_playground(for_courtyard_view: bool = False):
             ("ContainerBody", "res://scenes/environment/props/playground_art/container.tscn", container_origin, 0),
             # Same origin, separate from the shell so occlusion fading never dissolves the resident.
             ("RoofEncounter", "res://scenes/locations/playground/roof_encounter.tscn", container_origin, 0),
+            # Round 20: where the shed stood, a square of soil let into the concrete, a giant
+            # saguaro in it and a girl skipping beside it (playground_art/source/cactus_plot.py).
+            ("CactusPlot", "res://scenes/environment/props/playground_art/cactus_plot.tscn", CACTUS_PLOT, 0),
         ])
 
     s.interactables = [
@@ -1057,11 +1073,11 @@ def build_playground(for_courtyard_view: bool = False):
          "inspection": "pg_frame", "radius": 1.5,
          "outline": tuple(f"FramePost_{i}" for i in range(3)) + tuple(f"FrameRung_{i}" for i in range(4))
                     + ("FrameTopBar",)},
-        {"name": "ShedLook", "pos": (-13.2, 1.1, -4.0), "id": "pg_shed_door",
+        {"name": "ShedLook", "pos": (SHED_CENTRE[0], 1.1, SHED_CENTRE[2] + 2.35), "id": "pg_shed_door",
          "route": "pg_shed", "prompt": "Try the shed", "radius": 1.5,
          "shot": "res://assets/camera/shots/playground_shed.tres",
          "outline": ("ShedBody/Facade/Door", "ShedBody/Facade/Hasp", "ShedBody/Facade/Padlock")},
-        {"name": "BallLook", "pos": (-14.2, 0.8, 0.6), "id": "pg_ball_look",
+        {"name": "BallLook", "pos": (0.65, 0.8, -15.7), "id": "pg_ball_look",
          "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4,
          "outline": ("PingPongBall",)},
         {"name": "TapLook", "pos": (-5.58, 1.08, 14.0), "id": "pg_tap",
@@ -1078,7 +1094,7 @@ def build_playground(for_courtyard_view: bool = False):
          "inspection": "pg_cabin_papers", "radius": 0.95,
          "shot": "res://assets/camera/shots/container_papers.tres",
          "outline": ("ContainerBody/Cabin/Papers/ClippedPage/Paper",)},
-        {"name": "TyreLook", "pos": (-14.6, 0.7, 2.9), "id": "pg_tyre_look",
+        {"name": "TyreLook", "pos": (TYRES[0] + 0.6, 0.7, TYRES[1] + 0.3), "id": "pg_tyre_look",
          "inspection": "pg_tyres", "radius": 1.4,
          # The ring tyres the art pass adds; the graybox stack they replace is hidden, and
          # hidden meshes are skipped, so listing both keeps the outline right either way.

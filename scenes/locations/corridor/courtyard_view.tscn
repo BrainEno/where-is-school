@@ -1,4 +1,4 @@
-[gd_scene load_steps=92 format=3]
+[gd_scene load_steps=93 format=3]
 
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_haze_floor.tres" id="art_school_haze_floor"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/ground.tres" id="yard_ground"]
@@ -23,6 +23,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/trunk.tres" id="yard_trunk"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/crown.tres" id="yard_crown"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/earth_yard.tscn" id="earth_yard"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/playground_art/cactus_plot_view.tscn" id="cactus_plot"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/court_line.tres" id="yard_court_line"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/court_key.tres" id="yard_court_key"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/hoop_net.tres" id="yard_hoop_net"]
@@ -69,19 +70,19 @@ size = Vector3(0.05, 0.05, 0.45)
 size = Vector3(1.2, 0.2, 1.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art14"]
-size = Vector3(4, 3, 6)
+size = Vector3(6, 3, 3.1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art15"]
-size = Vector3(4.4, 0.2, 6.4)
+size = Vector3(6.4, 0.2, 3.5)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art16"]
-size = Vector3(0.12, 2.2, 1.1)
+size = Vector3(1.1, 2.2, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art17"]
-size = Vector3(0.1, 0.8, 1.2)
+size = Vector3(1.2, 0.8, 0.1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art18"]
-size = Vector3(0.08, 0.5, 0.9)
+size = Vector3(0.9, 0.5, 0.08)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art19"]
 size = Vector3(1.4, 0.4, 1.4)
@@ -379,43 +380,43 @@ material_override = ExtResource("yard_concrete")
 cast_shadow = 0
 
 [node name="ShedBody" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-16, 1.5, -4)
+position = Vector3(5.4, 1.5, -16.9)
 mesh = SubResource("BoxMesh_art14")
 material_override = ExtResource("yard_shed_wall")
 cast_shadow = 0
 
 [node name="ShedRoof" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-16, 3.1, -4)
+position = Vector3(5.4, 3.1, -16.9)
 mesh = SubResource("BoxMesh_art15")
 material_override = ExtResource("yard_shed_roof")
 cast_shadow = 0
 
 [node name="ShedDoor" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-13.95, 1.1, -4)
+position = Vector3(5.4, 1.1, -15.29)
 mesh = SubResource("BoxMesh_art16")
 material_override = ExtResource("yard_door_green")
 cast_shadow = 0
 
 [node name="ShedWindow" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-13.95, 1.9, -5.85)
+position = Vector3(7.25, 1.9, -15.3)
 mesh = SubResource("BoxMesh_art17")
 material_override = ExtResource("yard_glass")
 cast_shadow = 0
 
 [node name="ShedSheet" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-13.9, 1.9, -5.85)
+position = Vector3(7.25, 1.9, -15.25)
 mesh = SubResource("BoxMesh_art18")
 material_override = ExtResource("yard_rota")
 cast_shadow = 0
 
 [node name="ShedFootingWest" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-15.6, 0.2, -0.1)
+position = Vector3(-0.7, 0.2, -16.4)
 mesh = SubResource("BoxMesh_art19")
 material_override = ExtResource("yard_concrete")
 cast_shadow = 0
 
 [node name="ShedFootingEast" type="MeshInstance3D" parent="Yard"]
-position = Vector3(-13.2, 0.3, -0.1)
+position = Vector3(1.65, 0.3, -16.4)
 mesh = SubResource("BoxMesh_art20")
 material_override = ExtResource("yard_concrete")
 cast_shadow = 0
@@ -499,13 +500,13 @@ material_override = ExtResource("yard_concrete")
 cast_shadow = 0
 
 [node name="Bird_0" type="MeshInstance3D" parent="Yard"]
-position = Vector3(6.2, 2.12, -18.5)
+position = Vector3(4.6, 3.26, -15.3)
 mesh = SubResource("BoxMesh_art28")
 material_override = ExtResource("yard_metal_ink")
 cast_shadow = 0
 
 [node name="Bird_1" type="MeshInstance3D" parent="Yard"]
-position = Vector3(7.1, 2.12, -18.5)
+position = Vector3(5.5, 3.26, -15.25)
 mesh = SubResource("BoxMesh_art28")
 material_override = ExtResource("yard_metal_ink")
 cast_shadow = 0
@@ -517,7 +518,7 @@ material_override = ExtResource("yard_metal_ink")
 cast_shadow = 0
 
 [node name="BirdWire" type="MeshInstance3D" parent="Yard"]
-position = Vector3(2, 2.9, -18.4)
+position = Vector3(2, 2.9, -18.55)
 mesh = SubResource("BoxMesh_art29")
 material_override = ExtResource("yard_metal_ink")
 cast_shadow = 0
@@ -535,6 +536,9 @@ material_override = ExtResource("yard_crown")
 cast_shadow = 0
 
 [node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]
+
+[node name="CactusPlot" parent="Yard" instance=ExtResource("cactus_plot")]
+position = Vector3(-16, 0, -4)
 
 [node name="Court" type="Node3D" parent="Yard"]
 
@@ -661,49 +665,49 @@ cast_shadow = 0
 [node name="HedgeLeaves" type="Node3D" parent="Yard"]
 
 [node name="LeafCluster0" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-18.1, 0.34, 0.9)
+position = Vector3(-0.7, 0.34, -17.9)
 mesh = SubResource("SphereMesh_art45")
 material_override = ExtResource("yard_crown")
 cast_shadow = 0
 
 [node name="LeafCluster1" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-17.57, 0.43, 0.73)
+position = Vector3(-0.17, 0.43, -17.73)
 mesh = SubResource("SphereMesh_art46")
 material_override = ExtResource("yard_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster2" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-17.03, 0.37, 0.88)
+position = Vector3(0.37, 0.37, -17.88)
 mesh = SubResource("SphereMesh_art47")
 material_override = ExtResource("yard_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster3" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-16.55, 0.33, 0.65)
+position = Vector3(0.85, 0.33, -17.65)
 mesh = SubResource("SphereMesh_art48")
 material_override = ExtResource("yard_crown")
 cast_shadow = 0
 
 [node name="LeafCluster4" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-17.85, 0.6, 0.98)
+position = Vector3(-0.45, 0.6, -17.98)
 mesh = SubResource("SphereMesh_art49")
 material_override = ExtResource("yard_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster5" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-17.27, 0.64, 0.95)
+position = Vector3(0.13, 0.64, -17.95)
 mesh = SubResource("SphereMesh_art50")
 material_override = ExtResource("yard_hedge")
 cast_shadow = 0
 
 [node name="LeafCluster6" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-16.82, 0.58, 1.03)
+position = Vector3(0.58, 0.58, -18.03)
 mesh = SubResource("SphereMesh_art51")
 material_override = ExtResource("yard_crown")
 cast_shadow = 0
 
 [node name="LeafCluster7" type="MeshInstance3D" parent="Yard/HedgeLeaves"]
-position = Vector3(-17.48, 0.3, 1.38)
+position = Vector3(-0.08, 0.3, -18.38)
 mesh = SubResource("SphereMesh_art52")
 material_override = ExtResource("yard_hedge")
 cast_shadow = 0

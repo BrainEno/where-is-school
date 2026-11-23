@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://scenes/environment/props/playground_art/shaders/cactus_glow.gdshader" id="1_glow"]
+
+[resource]
+resource_name = "girl_glow"
+shader = ExtResource("1_glow")
+shader_parameter/glow = 0.8
+shader_parameter/roughness = 0.9
+shader_parameter/sheen = 0.25
