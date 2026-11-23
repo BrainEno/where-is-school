@@ -8,6 +8,9 @@ render_mode diffuse_burley, specular_disabled;
 // tests/location_art_test.gd); the walking surface is still the yard slab below.
 // Kept no brighter than the `ground` material the HUD contrast test measures.
 varying vec2 ground_position;
+// The low self-light that keeps the slabs pale grey in the teaching block's dusk shadow,
+// where the lit-only formula went near-black (as `stable_earth.gdshader` does for its soil).
+uniform float fill : hint_range(0.0, 1.0) = 0.45;
 
 const float SLAB = 2.0;
 const vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
@@ -66,5 +69,6 @@ void fragment() {
     float shadow = smoothstep(0.50, 0.68, cloud);
     c *= mix(1.0, 0.56, shadow);
     ALBEDO = c;
+    EMISSION = c * fill;
     ROUGHNESS = 1.0;
 }
