@@ -822,6 +822,82 @@ def _head_geometry(document: dict, arrays: "_Arrays") -> tuple[np.ndarray, np.nd
     raise PrepareError("ST_Head_Skin/M_ST_Skin is missing, so the hair cannot be fitted")
 
 
+def _smooth_the_mouth_rim(document: dict, arrays: "_Arrays", moved: dict) -> None:
+    """Replace the stepped mouth rim with a smooth curve, on both sheets that share it.
+
+    The skin and the lip are separate meshes with separate vertex numbering -- the lip has
+    a few hundred vertices, the head a few thousand -- so the rim's identity is its
+    *position*, not its index. The lip's rim is re-derived as a smooth curve, and each of
+    the skin's opening vertices is moved to the curve point it already sits on. Nothing
+    else on either mesh moves, and every rim vertex keeps a partner at zero distance, so the
+    seam stays welded by construction rather than by a tolerance.
+    """
+    lip_base = lip_shape = None
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Head_Skin":
+            continue
+        for primitive in mesh["primitives"]:
+            if document["materials"][primitive["material"]]["name"] != "M_ST_Lip":
+                continue
+            lip_base = arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64)
+            lip_shape = arrays.read(primitive["indices"]).reshape(-1, 3)
+    if lip_base is None:
+        raise PrepareError("the lip is missing, so the mouth rim cannot be smoothed")
+    loop, target = geometry.mouth_rim_targets(lip_base, lip_shape)
+
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Head_Skin":
+            continue
+        for primitive in mesh["primitives"]:
+            if document["materials"][primitive["material"]]["name"] not in ("M_ST_Lip", "M_ST_Skin"):
+                continue
+            attributes = primitive["attributes"]
+            base = arrays.read(attributes["POSITION"]).astype(np.float64)
+            positions = base.copy()
+            if len(base) == len(lip_base):
+                positions[loop] = target          # the lip itself: same numbering
+            else:
+                # The head: match the opening's vertices to the rim by position.
+                for vertex, point in zip(loop, target):
+                    near = np.linalg.norm(base - lip_base[vertex], axis=1) < 1e-7
+                    positions[near] = point
+            shift = positions - base
+            arrays.write(attributes["POSITION"], positions)
+            for target_accessor in primitive.get("targets", []):
+                rows, deltas = arrays.read_morph_values(target_accessor)
+                arrays.write_morph_values(target_accessor, deltas + shift[rows])
+            key = "%s/%s" % (mesh["name"], document["materials"][primitive["material"]]["name"])
+            moved[key] = max(moved.get(key, 0.0), float(np.abs(shift).max()))
+
+
+def _tuck_the_teeth(document: dict, arrays: "_Arrays", moved: dict) -> None:
+    """Push the teeth behind the lip so the closed mouth shows no white bar."""
+    lip = None
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Head_Skin":
+            continue
+        for primitive in mesh["primitives"]:
+            if document["materials"][primitive["material"]]["name"] == "M_ST_Lip":
+                lip = arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64)
+    if lip is None:
+        raise PrepareError("the lip is missing, so the teeth cannot be placed behind it")
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Head_Skin":
+            continue
+        for primitive in mesh["primitives"]:
+            if document["materials"][primitive["material"]]["name"] != "M_ST_Teeth":
+                continue
+            attributes = primitive["attributes"]
+            base = arrays.read(attributes["POSITION"]).astype(np.float64)
+            positions = geometry.teacher_teeth(base, lip)
+            shift = positions - base
+            arrays.write(attributes["POSITION"], positions)
+            for target_accessor in primitive.get("targets", []):
+                rows, deltas = arrays.read_morph_values(target_accessor)
+                arrays.write_morph_values(target_accessor, deltas + shift[rows])
+            moved["ST_Head_Skin/M_ST_Teeth"] = float(np.abs(shift).max())
+
+
 def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
     arrays = _Arrays(document, binary)
     moved = {}
@@ -855,6 +931,9 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
             moved[mesh["name"]] = max(moved[mesh["name"]],
                                       float(np.abs(positions - base).max()))
 
+    _smooth_the_mouth_rim(document, arrays, moved)
+    _tuck_the_teeth(document, arrays, moved)
+
     # The hair is fitted to the skull, so it can only run once the head has been rewritten.
     skin = _head_geometry(document, arrays)
     for mesh in document["meshes"]:
@@ -878,6 +957,7 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
             # edge is a step in that map, and a step cannot be differentiated. It also
             # replaces the source's split strip normals, which the new form invalidates.
             del normals
+            positions = geometry.teacher_crown_part(positions)
             normals_out = geometry.normals(geometry.Geometry(positions, shape))
             arrays.write(attributes["POSITION"], positions)
             arrays.write(attributes["NORMAL"], normals_out)

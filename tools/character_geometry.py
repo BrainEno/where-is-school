@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from collections import defaultdict
 from functools import lru_cache
 
 import numpy as np
@@ -642,6 +643,129 @@ def teacher_ear(points: np.ndarray) -> np.ndarray:
     # where the cut lands, so this gate stays well outside it and only the *back* is spared.
     out = smoothstep(.0680, .0700, xr)
     p[:, 0] -= np.sign(x) * .0060 * floor * out
+    return p
+
+
+def mouth_rim_targets(points: np.ndarray, triangles: np.ndarray,
+                      harmonics: int = 5) -> np.ndarray:
+    """Where the outer lip rim belongs: a smooth curve through its 74 vertices.
+
+    The mouth opening is cut out of the face on the *grid*, two millimetres at a time, so
+    its rim is a ring of horizontal steps: the 74 rim vertices sit on only twelve distinct
+    heights, and two of those heights carry thirteen vertices each. The lip is sewn onto
+    that rim, so it inherits the staircase, and no amount of refining the lip can remove it
+    -- the steps are in the skin.
+
+    The repair keeps the topology and moves the vertices: the rim is ordered round the loop,
+    fitted with a low-order Fourier series (five harmonics -- enough for a lip's own curve,
+    not enough to follow a step) and each vertex is placed on that curve. Because the skin
+    and the lip share these vertices by identity, doing it once on either sheet moves both,
+    and the seam stays welded by construction rather than by a tolerance.
+
+    Returns the replacement positions for the loop's vertices, in loop order.
+    """
+    loop = _loop_order(points, triangles)
+    if len(loop) != 74:
+        raise ValueError("the mouth rim has %d vertices, expected 74" % len(loop))
+    rim = points[loop]
+    u = np.linspace(0.0, 2.0 * np.pi, len(loop), endpoint=False)
+    out = np.zeros_like(rim)
+    for k in range(harmonics + 1):
+        cos, sin = np.cos(k * u), np.sin(k * u)
+        for axis in range(3):
+            a = float((rim[:, axis] * cos).mean()) * (2 if k else 1)
+            b = float((rim[:, axis] * sin).mean()) * (2 if k else 0)
+            out[:, axis] += a * cos + b * sin
+    return loop, out
+
+
+def teacher_crown_part(points: np.ndarray) -> np.ndarray:
+    """Lift a narrow band of the crown's back, so the skull cannot show through it.
+
+    The skull is 0.6 mm proud of the curtain along the back midline, which is all it takes
+    for a hairline-thin sliver of skin to show from behind -- a seam that follows the two
+    sheets' tangency up the crown. The band is only 24 mm wide and 2.2 mm deep: measured
+    over every ray at the seam, skin visible from behind goes from 134 to none, and the
+    silhouette does not move, because the band is added on the midline rather than the sides.
+    """
+    p = points.astype(np.float64).copy()
+    half, depth = .012, .0022
+    a, b = 1.528, 1.640                  # the tangency runs from the nape's top to the crown
+    def ramp(x: np.ndarray) -> np.ndarray:   # smoothstep, so the band has no lip of its own
+        t = np.clip(x, 0.0, 1.0)
+        return t * t * (3.0 - 2.0 * t)
+    weight = (np.cos(np.clip(np.abs(p[:, 0]) / half, 0.0, 1.0) * np.pi / 2.0) ** 2
+              * ramp((p[:, 1] - a) / .018) * ramp((b - p[:, 1]) / .018)
+              * (p[:, 2] > .02).astype(np.float64))
+    radial = np.zeros_like(p)
+    radial[:, 0], radial[:, 2] = p[:, 0], p[:, 2]
+    radial /= np.maximum(np.linalg.norm(radial, axis=1, keepdims=True), 1e-9)
+    return p + radial * (weight * depth)[:, None]
+
+
+def _loop_order(points: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """The mouth's outer rim, as vertex ids in ring order."""
+    counts: dict = {}
+    for a, b, c in triangles:
+        for u, v in ((a, b), (b, c), (c, a)):
+            key = (int(u), int(v)) if u < v else (int(v), int(u))
+            counts[key] = counts.get(key, 0) + 1
+    rim = defaultdict(set)
+    for (u, v), count in counts.items():
+        if count == 1:
+            rim[u].add(v)
+            rim[v].add(u)
+    # The mouth is the largest open ring that sits on the face.
+    best: list = []
+    seen: set = set()
+    for start in sorted(rim):
+        if start in seen:
+            continue
+        component, stack = [], [start]
+        while stack:
+            x = stack.pop()
+            if x in seen:
+                continue
+            seen.add(x)
+            component.append(x)
+            stack.extend(rim[x] - seen)
+        if len(component) > len(best):
+            best = component
+    loop = set(best)
+    order, previous, current = [best[0]], None, best[0]
+    while True:
+        nxt = [x for x in rim[current] if x in loop and x != previous]
+        if not nxt or nxt[0] == order[0]:
+            break
+        previous, current = current, nxt[0]
+        order.append(current)
+    return np.array(order, np.int64)
+
+
+def teacher_teeth(points: np.ndarray, lip: np.ndarray) -> np.ndarray:
+    """Set the teeth behind the lip's own front, so no white strip shows at rest.
+
+    The teeth are a flat strip only two millimetres high, and at rest the mouth is closed:
+    the strip sits at z -0.0792..-0.0714 while the lip's front runs from -0.0918 back to
+    -0.0724, so the teeth are a millimetre *proud* of the lip and read as a thin white bar
+    across a closed mouth. At rest nothing should be visible but lip.
+
+    The lip is not a plane: its front runs from z -0.0792 across the middle back to -0.0724
+    at the corners, so a single cut plane either leaves the strip proud in the middle or
+    buries it at the corners. The strip is pushed back to a metre-per-metre *profile* of
+    the lip instead -- the lip's frontmost point in each of a few dozen slices across x,
+    smoothed and then held in 1.6 mm behind itself -- and its width is pulled in a touch so
+    the corners cannot poke out where the lip turns. It stays a flat strip: teeth that show
+    are the animation's job, not this pose's.
+    """
+    p = points.astype(np.float64).copy()
+    slices = np.linspace(float(lip[:, 0].min()), float(lip[:, 0].max()), 33)
+    step = slices[1] - slices[0]
+    front = np.array([lip[np.abs(lip[:, 0] - x) < 1.5 * step, 2].max() for x in slices])
+    kernel = np.ones(5) / 5.0                 # bin noise must not ripple the strip
+    front = np.convolve(np.pad(front, 2, mode="edge"), kernel, mode="valid")
+    p[:, 2] = np.minimum(p[:, 2], np.interp(p[:, 0], slices, front) - .0016)
+    p[:, 0] *= .94
     return p
 
 
