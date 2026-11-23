@@ -253,6 +253,9 @@ func _ready() -> void:
 		# prefix would disable scrolling even after the rest of the text was revealed.
 		_body_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 		_build_touch_footer()
+		var loc := get_node_or_null(^"/root/Loc")
+		if loc != null:
+			loc.connect(&"locale_changed", _refresh_touch_footer.unbind(1))
 		set_text_scale(UiTextScale.current(self))
 	elif not preview_only:
 		_build_mode_bar()
@@ -1022,7 +1025,7 @@ func _touch_button(id: StringName, action: Callable) -> void:
 func _refresh_touch_footer() -> void:
 	if _touch_footer == null:
 		return
-	_touch_buttons[&"continue"].text = L10n.t("menu.continue")
+	_touch_buttons[&"continue"].text = L10n.t("ui.dialogue_touch_continue")
 	_touch_buttons[&"continue"].visible = not has_choices()
 	if not preview_only:
 		_touch_buttons[&"auto"].text = L10n.t("ui.dialogue_mode_auto")

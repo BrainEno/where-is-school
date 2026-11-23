@@ -282,7 +282,8 @@ func get_noted_label() -> Label:
 func _refresh_noted_text() -> void:
 	if _noted_label == null or _noted_source < 0:
 		return
-	_noted_label.text = L10n.t("hud.noted", {
+	var key := "hud.noted_touch" if MobileLayout.enabled and InputHint.device(self) == InputHint.DEVICE_TOUCH else "hud.noted"
+	_noted_label.text = L10n.t(key, {
 		"badge": L10n.t(NarrativeEntry.badge_key_for(_noted_source)),
 		"key": InputHint.action_key(self, &"journal"),
 	})
