@@ -159,6 +159,13 @@ def stall_dressing(b, body, w, d, stall_back, posts):
 EARTH = "res://assets/shaders/school/stable_earth.gdshader"
 
 
+def earth_material(b, offset=None):
+    params = {"fill": .5}
+    if offset is not None:
+        params["ground_offset"] = f"Vector2({offset[0]:g}, {offset[1]:g})"
+    return _mat(b, "stable_earth", EARTH, params)
+
+
 def yard_ground(b, y):
     """Round 19: uneven earth like the playground's, loose straw, a few droppings and flies.
 
@@ -166,7 +173,7 @@ def yard_ground(b, y):
     """
     import stable_ground as sg
     earth = shaped(b, "YardEarth", sg.earth)
-    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .5}))
+    place(b, "YardEarth", y, (0, G, 0), earth, earth_material(b))
     loose = shaped(b, "LooseStraw", sg.straw)
     place(b, "LooseStraw", y, (0, G, 0), loose, coat(b, sheen=.15, fill=.42))
     # The stall fronts keep the round-18 straw shaken out of the stalls.

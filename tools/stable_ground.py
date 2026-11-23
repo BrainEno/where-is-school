@@ -11,9 +11,9 @@ geometry, in `StableYard`-local metres (the yard node sits 4 m west of the annex
   stands on the ground (the grain mat, the women, the coop, the bales, the hens) and to the
   old 4 mm plane inside the dream house and at the lane's mouth, so nothing floats or
   sinks and the connector's flat earth meets it without a step.
-* `earth()` is that relief as one smooth mesh over the yard and the lane, with a vertex
-  shade (hollows and damp patches darker) for `stable_earth.gdshader`, which paints the
-  playground's mineral mottle and grit on top. It has no collider.
+* `earth()` is that relief as one smooth mesh over the yard and the lane. The existing
+  vertex colours are retained in the mesh; `stable_earth.gdshader` now uses the original
+  playground soil pigment directly, without multiplying it by those colours. No collider.
 * `straw()` scatters loose straw: thin drifts against the walls, a few tufts kicked out
   across the yard and single strands everywhere, each lying on the relief.
 * `DUNG` is six droppings at irregular spots and sizes; `SWARMS` puts a handful of flies
@@ -86,7 +86,7 @@ def height(x, z):
 
 
 def _shade(x, z, h):
-    """Vertex shade for the earth shader: hollows and damp ground darker, crowns paler."""
+    """Retained vertex colours: hollows and damp ground darker, crowns paler."""
     dip = smoothstep(.05, .0, h)
     damp = smoothstep(.2, .65, fbm(x * .3 - 5, z * .3 + 2, 73, 3))
     # The ground nearest the stalls and the heap stays darker and damper.
