@@ -466,6 +466,9 @@ jobs:
           # The biology classroom's anomalies: the curtained window that opens on nothing and drops the
           # player into the yard, and the rear door that puts an unsupported staircase in the room.
           run_check classroom_anomaly 300 godot --headless --path . --script res://tests/classroom_anomaly_test.gd || status=1
+          # Round 21: the step through the open cut, chosen from across the room with a chair on the
+          # straight line to the lip, walks round the desks instead of silently doing nothing.
+          run_check classroom_curtain_route 180 godot --headless --path . --script res://tests/classroom_curtain_route_test.gd || status=1
           # Getting off the container roof while the resident watches (round 8): the choice, the
           # jump behind the north leaf searched for or stopped, and the yard tap's water.
           run_check roof_way_down 300 godot --headless --path . --script res://tests/roof_way_down_test.gd || status=1

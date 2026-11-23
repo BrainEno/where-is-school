@@ -68,6 +68,15 @@ const SOLIDS := {
 	"ShedFootingEast": [Vector3(1.05, 0.3, -16.4), Vector3(1.4, 0.6, 1.4)],
 	# The saguaro in the cactus plot where the shed stood (position inside CactusPlot).
 	"CactusPlot/Saguaro": [Vector3(-0.3, 2.2, -0.25), Vector3(0.7, 4.4, 0.7)],
+	# Round 21: the skipping girl is solid (a box round her and her rope's sweep).
+	"CactusPlot/GirlBody": [Vector3(1.25, 0.7, 2.2), Vector3(0.8, 1.3, 1.0)],
+	# Round 21: razor-wire fences close the open west edge (to the building site, whose
+	# hoarding takes over behind an invisible edge) and the gap east of the south fence;
+	# a threshold in the estate gate stops a body walking off the ground there.
+	"RazorWireWest": [Vector3(-22.75, 1.4, -6.35), Vector3(0.6, 2.8, 26.7)],
+	"SiteEdgeWest": [Vector3(-22.95, 1.4, 13.3), Vector3(0.2, 2.8, 12.6)],
+	"RazorWireEast": [Vector3(22.75, 1.4, 18.76), Vector3(0.6, 2.8, 1.52)],
+	"AlleyThreshold": [Vector3(0.0, 1.1, 19.6), Vector3(3.8, 2.2, 0.16)],
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_1": [Vector3(18.0, 1.4, 9.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_2": [Vector3(18.0, 1.4, 11.0), Vector3(0.14, 2.8, 0.14)],
@@ -91,7 +100,7 @@ const INTERACTABLES := {
 	"pg_shed_door": Vector3(4.8, 1.1, -14.55), "pg_ball_look": Vector3(0.05, 0.8, -15.7),
 	"pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
-	"pg_tyre_look": Vector3(-1.8, 0.7, -15.0),
+	"pg_tyre_look": Vector3(-1.8, 1.1, -15.0),
 	"pg_tap": Vector3(-5.58, 1.08, 14.0),
 	"pg_site_look": Vector3(-22.6, 1.0, 13.2),
 }
@@ -123,8 +132,9 @@ const SPAWNS := {
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
-## Godot 4.7.2 bake with the smaller shed and no return-board posts.
-const NAV_POLYGONS := 128
+## Godot 4.7.2 bake with the smaller shed, no return-board posts, and (round 21) the
+## razor-wire edges, the alley threshold and the skipping girl's box.
+const NAV_POLYGONS := 132
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [
@@ -490,7 +500,9 @@ func _check_dressing() -> void:
 		"PlaygroundArt/Court/LineCentre", "PlaygroundArt/Court/KeyNear",
 		"PlaygroundArt/Court/KeyFar", "PlaygroundArt/Equipment/Tyre_0",
 		"PlaygroundArt/Equipment/Tyre_1", "PlaygroundArt/Equipment/Tyre_2",
-		"PlaygroundArt/Equipment/TyreLoose",
+		"PlaygroundArt/Equipment/Tyre_3", "PlaygroundArt/Equipment/TyreLoose",
+		"ShedFootingWest/CoveredJunk", "ShedFootingEast/CoveredJunk",
+		"RazorWireWest/TopCoil0", "RazorWireWest/FootCoil0", "RazorWireEast/TopCoil0",
 	]:
 		if _yard.get_node_or_null(NodePath(path)) == null:
 			_failures.append("The painted replacement '%s' is missing." % path)
@@ -680,7 +692,7 @@ func _check_story_agreement() -> void:
 		"PlaygroundArt/HedgeLeaves/LeafCluster0": "the irregular hedge",
 		"ShedBody/Facade/ReclaimedPanel0": "the shed wall patches",
 		"ShedFootingWest/ConcreteBase": "the concrete footing",
-		"PlaygroundArt/Court/Crack0_0": "the sparse concrete cracks",
+		"PlaygroundArt/Court/Cracks": "the sparse concrete cracks",
 		"YardNoodleWrapper/Film": "the printed noodle packet on the bench",
 		"PlaygroundArt/Equipment/HoopFarNet": "the net on the far hoop",
 		"PlaygroundArt/Ground/HoopNearPatch": "the newer concrete the near hoop stands in",

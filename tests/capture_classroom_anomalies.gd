@@ -24,6 +24,10 @@ const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 const BRACE_TIME_SCALE := 0.1
 const RESIDENT_TIME_SCALE := 0.4
 const RESIDENT_CAPTURE_SECONDS := 12.0
+## The doorway shot is the yard's first draw after the drop: software Forward+ compiles
+## the yard's and the resident's pipelines then and game time stalls with it, so that
+## one capture gets a longer real-time window (round 21 added four yard materials).
+const FIRST_DRAW_CAPTURE_SECONDS := 28.0
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -39,7 +43,7 @@ var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 300.0, "capture_classroom_anomalies.gd")
+	Harness.arm_watchdog(self, 420.0, "capture_classroom_anomalies.gd")
 	call_deferred("_run")
 
 
@@ -78,12 +82,12 @@ func _run() -> void:
 	await _stand(Vector3(-5.8, 0.0, -0.8), Vector3.LEFT)
 	await _shot("01-windows.png")
 	await _stand(Vector3(-5.95, 0.0, -2.35), Vector3.LEFT)
-	_activate(&"window")
+	await _activate(&"window")
 	await create_timer(1.05).timeout
 	await _shot("02-laundry.png")
 	await _settle()
 	await _stand(Vector3(-5.8, 0.0, 2.22), Vector3.LEFT)
-	_activate(&"curtain")
+	await _activate(&"curtain")
 	if not await _choose(&"draw"):
 		_finish(["Couldn't choose to draw the curtain."])
 		return
@@ -93,7 +97,7 @@ func _run() -> void:
 		_finish(["A passed check didn't keep the player upstairs."])
 		return
 	await _shot("04-edge-held.png")
-	_activate(&"curtain")
+	await _activate(&"curtain")
 	# The braced drop is a 0.84 s clip that starts as the yard is first drawn. On software
 	# Forward+ that first draw can stall one frame for longer than the clip's remaining
 	# window (the tween then jumps to its end), so the drop plays in slow time until the
@@ -108,7 +112,7 @@ func _run() -> void:
 	# frames over the same threshold crossing, with the same budget in game time.
 	Engine.time_scale = RESIDENT_TIME_SCALE
 	await _capture_resident("19-collector-unfiltered.png", &"on_threshold",
-		RESIDENT_CAPTURE_SECONDS / RESIDENT_TIME_SCALE)
+		FIRST_DRAW_CAPTURE_SECONDS / RESIDENT_TIME_SCALE)
 	Engine.time_scale = 1.0
 	await _settle()
 	await _stand(COURT_COMPARE, Vector3.LEFT)
@@ -120,7 +124,7 @@ func _run() -> void:
 		_finish(["Couldn't load the classroom for the slip route."])
 		return
 	await _stand(Vector3(-5.83, 0.0, 2.16), Vector3.LEFT)
-	_activate(&"curtain")
+	await _activate(&"curtain")
 	if not await _choose(&"draw"):
 		_finish(["Couldn't choose to draw the curtain on the slip route."])
 		return
@@ -139,7 +143,7 @@ func _run() -> void:
 	await _shot("16-court-misprint.png")
 	var mark := container.get_node(^"Ladder/RoofMark") as Marker3D
 	await _stand(mark.global_position, Vector3.BACK)
-	_activate(&"pg_container_ladder")
+	await _activate(&"pg_container_ladder")
 	# The resident is in his doorway, so the ladder asks first (round 8): take the ladder.
 	if not await _choose(&"ladder"):
 		_finish(["The roof ladder did not offer the ladder while the resident watched."])
@@ -184,7 +188,7 @@ func _capture_rear_jump() -> void:
 			_dialogue.set_check_resolver(resolver)
 			seeded = true
 			break
-	_activate(&"pg_container_ladder")
+	await _activate(&"pg_container_ladder")
 	if not seeded or not await _choose(&"jump"):
 		_failures.append("The roof ladder did not offer the jump while the resident watched.")
 		return
@@ -280,6 +284,12 @@ func _activate(id: StringName) -> void:
 	if target == null:
 		_failures.append("The capture couldn't find '%s'." % id)
 		return
+	# A staged beat that is still winding down (on software Forward+ the roof and resident
+	# beats run slowly) keeps the controller off, and it then ignores the request outright.
+	if not await Harness.wait_until(func() -> bool: return _interaction.is_enabled(), 20.0):
+		_failures.append("The interaction controller was still off when '%s' was used." % id)
+	if not target.can_interact():
+		_failures.append("'%s' could not be used when the capture activated it." % id)
 	_interaction.request_activation(target)
 
 
@@ -455,6 +465,9 @@ func _compare_court(image: Image, name: String) -> void:
 
 
 func _finish(failures: Array) -> void:
+	# What went wrong earlier on the route usually explains the step that finally failed.
+	if failures != _failures:
+		failures = _failures + failures
 	var file := FileAccess.open(LOG_PATH, FileAccess.WRITE)
 	if file != null:
 		for name in _shots:

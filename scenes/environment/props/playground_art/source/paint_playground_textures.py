@@ -164,6 +164,10 @@ SEAM = [(3.0, 20.2), (3.3, 16.0), (3.1, 12.5), (3.9, 6.0), (4.6, -4.0), (4.9, -1
 POUR_B_X0, POUR_B_X1 = 2.5, 23.0
 POUR_B_Z0, POUR_B_Z1 = -20.0, 20.0
 POUR_B_PPM = 20.0
+# The basketball court's slab (CourtSurface plus its painted margin), world x and z.
+COURT_X0, COURT_X1 = -11.12, 11.12
+COURT_Z0, COURT_Z1 = -15.12, 11.12
+COURT_CRACK_PPM = 56.0
 
 
 def pour_b() -> Image.Image:
@@ -194,6 +198,13 @@ def seam() -> Image.Image:
     line = [(x - POUR_B_X0, POUR_B_Z1 - z) for x, z in SEAM]
     c.ink_line(line, width_m=0.06, wobble_m=0.04, color=(132, 122, 110), opacity=1.0, taper=False, broken=0.2, alpha_canvas=True)
     c.ink_line(line, width_m=0.028, wobble_m=0.02, color=(84, 76, 68), opacity=1.0, taper=False, broken=0.45, alpha_canvas=True)
+    # Round 21: the court is one pour laid over the seam, so the joint stops at its edge;
+    # on the court it comes up only as an aged crack (`court_cracks`).
+    s0, s1 = 0.0, COURT_X1 - POUR_B_X0
+    y0, y1 = POUR_B_Z1 - COURT_Z1, POUR_B_Z1 - COURT_Z0
+    rows = (c.height_m - np.arange(c.h)[:, None] / c.ppm)  # canvas y of each row
+    cols = np.arange(c.w)[None, :] / c.ppm
+    c.a = np.where((cols >= s0) & (cols <= s1) & (rows >= y0) & (rows <= y1), 0.0, c.a)
     return c.image(4, alpha="cut")
 
 
@@ -288,33 +299,107 @@ def _hairlines(value: np.ndarray, rng: np.random.Generator, count: int, shade: f
 
 
 def court_tile() -> Image.Image:
-    """Rough cement (4 x 4 m tile, four 2 m slabs): broom drag, open aggregate, pits.
+    """Rough cement (4 m tile of one continuous pour): broom drag, open aggregate, pits.
 
     The court is the yard's roughest surface: coarse stone broken open by years of rubber
-    soles, the fines worn out from between them, a broom drag across each pour and the sawn
-    joints chipped along their edges. Neutral grey, so the white paint stays the brightest
-    thing on it."""
+    soles, the fines worn out from between them, a broom drag across the pour. Round 21: the
+    owner wanted one big court, not slabs, so it has no sawn joints and no slab-to-slab
+    shifts in tone - its age is a few long cracks on their own decal (`court_cracks`).
+    Neutral grey, so the white paint stays the brightest thing on it."""
     ppm = 192.0
     n = int(4.0 * ppm)
     rng = np.random.default_rng(2103)
     base = COURT_SLAB[0] / 255.0
     v = np.full((n, n), base, np.float32)
-    v += (tile_noise(n, n, 150.0, rng) - 0.5) * 0.085   # broad stains and wet patches
+    v += (tile_noise(n, n, 150.0, rng) - 0.5) * 0.05    # broad stains (low: a 4 m repeat)
     v += (tile_noise(n, n, 34.0, rng) - 0.5) * 0.05     # trowel unevenness
     v += (tile_noise(n, n, 3.0, rng, stretch=(26.0, 1.0)) - 0.5) * 0.045  # the broom drag
-    half = n // 2
-    for (r, c), dv in zip(((0, 0), (0, 1), (1, 0), (1, 1)), (0.012, -0.01, -0.004, 0.008)):
-        v[r * half:(r + 1) * half, c * half:(c + 1) * half] += dv
     grain = rng.random((n, n)).astype(np.float32)
     v += np.where(grain > 0.975, 0.11, 0.0) - np.where(grain < 0.03, 0.09, 0.0)
     _discs(v, rng, 2600, (1.0, 2.6), (0.48, 0.62))   # pale quartz and limestone
     _discs(v, rng, 1500, (1.0, 2.4), (0.24, 0.32))   # dark basalt chips
     _discs(v, rng, 900, (0.7, 1.7), (0.16, 0.22), rim=0.05)  # pits where stones came out
     _hairlines(v, rng, 4, base - 0.1)
-    _joints(v, ppm, rng, core=0.17, width_px=2.4, chips=160, chip_shade=(0.25, 0.55))
     c = Canvas(4.0, 4.0, ppm, COURT_SLAB, seed=2103)
     c.rgb = np.clip(np.stack([v, v, v * (COURT_SLAB[2] / COURT_SLAB[0])], axis=-1), 0.0, 1.0).astype(np.float32)
     return c.image(28)
+
+
+def _crack_path(rng: np.random.Generator, start, heading: float, length: float, step: float = 0.22):
+    """A meandering crack in world x, z: mostly straight, kinking every so often."""
+    x, z = start
+    pts = [(x, z)]
+    a = heading
+    for _ in range(max(2, int(length / step))):
+        a += rng.normal(0.0, 0.16) + (rng.normal(0.0, 0.55) if rng.random() < 0.12 else 0.0)
+        x, z = x + math.cos(a) * step, z + math.sin(a) * step
+        if not (COURT_X0 + 0.2 < x < COURT_X1 - 0.2 and COURT_Z0 + 0.2 < z < COURT_Z1 - 0.2):
+            break
+        pts.append((x, z))
+    return pts
+
+
+# The court's cracks (world x, z start, heading in degrees, length m, branches). Few and
+# long, as a single old pour cracks: shrinkage from the edge, one across the middle, the
+# seam of the older yard coming up through the coat.
+COURT_CRACKS = (
+    ((-11.0, 3.6), 8.0, 5.2, 1),
+    ((-6.4, -14.9), 74.0, 4.1, 1),
+    ((11.0, -7.8), 186.0, 3.4, 0),
+    ((-3.2, -4.6), 28.0, 6.4, 2),
+    ((6.8, 10.9), 252.0, 2.8, 0),
+    ((-9.4, -9.6), 128.0, 2.2, 0),
+)
+
+
+def court_cracks() -> Image.Image:
+    """Aged cracks over the whole court (decal, alpha cut, x -11.12..11.12, z -15.12..11.12).
+
+    One canvas for the whole pour so nothing repeats: a few long, kinked cracks with a
+    branch or two, dark in the gap and a little darker at their broken lips, and the old
+    yard seam (`SEAM`) reflected through the court as one more crack."""
+    w_m, h_m = COURT_X1 - COURT_X0, COURT_Z1 - COURT_Z0
+    c = Canvas(w_m, h_m, COURT_CRACK_PPM, INK, seed=2141, alpha=0.0)
+    rng = np.random.default_rng(2141)
+
+    def pt(x, z):
+        return (x - COURT_X0, COURT_Z1 - z)
+
+    def crack(path, width):
+        line = [pt(x, z) for x, z in path]
+        c.ink_line(line, width_m=width * 2.4, wobble_m=0.018, color=(86, 86, 84), opacity=1.0,
+                   taper=True, broken=0.3, alpha_canvas=True)
+        c.ink_line(line, width_m=width, wobble_m=0.01, color=(50, 50, 49), opacity=1.0,
+                   taper=True, broken=0.12, alpha_canvas=True)
+
+    for start, heading, length, branches in COURT_CRACKS:
+        path = _crack_path(rng, start, math.radians(heading), length)
+        crack(path, 0.022)
+        for _ in range(branches):
+            if len(path) < 6:
+                break
+            k = int(rng.integers(2, len(path) - 3))
+            side = 1.0 if rng.random() < 0.5 else -1.0
+            x0, z0 = path[k]
+            x1, z1 = path[k + 1]
+            base = math.atan2(z1 - z0, x1 - x0)
+            crack(_crack_path(rng, path[k], base + side * rng.uniform(0.5, 1.0), rng.uniform(0.8, 2.2), 0.16), 0.014)
+    # The yard seam, where the court crosses it, as a finer crack that follows its line.
+    on_court = [(x, z) for x, z in SEAM if COURT_Z0 - 4.0 < z < COURT_Z1 + 4.0]
+    dense = []
+    for (xa, za), (xb, zb) in zip(on_court, on_court[1:]):
+        n = max(2, int(math.hypot(xb - xa, zb - za) / 0.25))
+        dense += [(xa + (xb - xa) * i / n, za + (zb - za) * i / n) for i in range(n)]
+    # Only where the coat has given way: two stretches, wandering off the old line.
+    drift = 0.0
+    for z_lo, z_hi in ((-12.6, -6.8), (-1.5, 6.4)):
+        stretch = []
+        for x, z in dense:
+            if z_lo < z < z_hi:
+                drift = max(-0.25, min(0.25, drift + rng.normal(0, 0.05)))
+                stretch.append((x + drift, z))
+        crack(stretch, 0.016)
+    return c.image(4, alpha="cut")
 
 
 def yard_slab() -> Image.Image:
@@ -887,6 +972,7 @@ TEXTURES = {
     "tap_runoff.png": tap_runoff,
     "hoop_net.png": hoop_net,
     "court_tile.png": court_tile,
+    "court_cracks.png": court_cracks,
     "yard_slab.png": yard_slab,
     "court_line.png": court_line,
     "key_area.png": key_area,

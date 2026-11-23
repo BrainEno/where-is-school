@@ -63,6 +63,7 @@ SAGUARO_BOX = (0.7, SAGUARO_HEIGHT, 0.7)
 # camera (from the south-east) sees her from behind with the saguaro beyond her.
 GIRL_AT = (1.25, PAVING, 2.2)
 GIRL_YAW = -160.0
+GIRL_BOX = (0.8, 1.3, 1.0)  # x across her, z the sweep of the rope in front and behind
 SKIP_PERIOD = 0.84
 HOP = 0.075
 
@@ -686,6 +687,13 @@ def build(view=False):
     mesh_node(s, "Stem", "Saguaro", s.mesh("saguaro_stem", lambda: stems), "cactus_glow", pos=foot)
     mesh_node(s, "Spines", "Saguaro", s.mesh("saguaro_spines", lambda: needles), "cactus_glow", pos=foot, shadow=False)
 
+    if not view:
+        # Round 21: she is solid. A box round her and the sweep of her rope, so the player
+        # walks round her instead of through her (pinned in playground_art_slice_test.gd).
+        box = s.sub("BoxShape3D", size=vec3(GIRL_BOX))
+        s.node("GirlBody", ".", "StaticBody3D",
+               position=vec3((GIRL_AT[0], GIRL_AT[1] + GIRL_BOX[1] / 2, GIRL_AT[2])))
+        s.node("CollisionShape3D", "GirlBody", "CollisionShape3D", shape=f'SubResource("{box}")')
     s.node("Girl", ".", "Node3D", position=vec3(GIRL_AT), rotation_degrees=vec3((0, GIRL_YAW, 0)))
     s.node("Figure", "Girl", "Node3D")
     fig = "Girl/Figure"

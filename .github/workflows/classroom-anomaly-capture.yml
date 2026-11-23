@@ -21,6 +21,8 @@ on:
       - "assets/materials/classroom/**"
       - "assets/shaders/playground/**"
       - "scenes/environment/characters/roof_collector*"
+      - "scenes/environment/characters/roof_collector_meshes/**"
+      - "tools/build_roof_collector.py"
       - "assets/camera/shots/container_*.tres"
       - "assets/camera/shots/playground_*.tres"
       - "data/inspections/*/playground.json"
