@@ -13,8 +13,14 @@ varying vec2 ground_position;
 // low self-light on top, so the concrete reads pale in the teaching block's shadow too.
 
 
+// A sine-free hash on a wrapped lattice. The usual fract(sin(dot(...)) * 43758.5) loses its
+// precision once the lattice runs into the hundreds (the grit is sampled at 23 per metre);
+// in the GL Compatibility renderer that drew the whole yard black while Forward+ was fine.
 float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    p = mod(p, 251.0);
+    vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float grain(vec2 p) {
@@ -55,8 +61,7 @@ void fragment() {
     float tone = hash(slab + 17.0) - 0.5;
     float stain = 0.6 * grain(p * 0.38 + 3.1) + 0.4 * grain(p * 0.9 + 7.7);
     float sweep = grain(vec2(p.x * 2.6, p.y * 0.7) + slab * 5.3);
-    // Grit and the exposed aggregate. Kept to the frequencies of the old earth formula
-    // (no hash of positions scaled past ~25): finer ones drew black in GL Compatibility.
+    // Grit and the exposed aggregate.
     float grit = grain(p * 23.0);
     float pebble = grain(p * 11.0 + 5.0);
     vec3 c = PALE * (1.0 + 0.09 * tone + 0.20 * (stain - 0.5) + 0.05 * (sweep - 0.5));
@@ -76,16 +81,4 @@ void fragment() {
     ALBEDO = c;
     EMISSION = c * fill;
     ROUGHNESS = 1.0;
-#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
-    // TEMPORARY DIAGNOSTIC (round 20): bands across the west yard, compatibility only.
-    int band = int(floor((p.y + 9.0) / 1.5));
-    if (band == 0) { ALBEDO = vec3(0.150, 0.157, 0.176); EMISSION = vec3(0.0); }
-    if (band == 1) { ALBEDO = vec3(0.5); EMISSION = vec3(0.0); }
-    if (band == 2) { ALBEDO = vec3(0.0); EMISSION = vec3(0.3); }
-    if (band == 3) { ALBEDO = vec3(grit * 0.5); EMISSION = vec3(0.0); }
-    if (band == 4) { ALBEDO = vec3(stain * 0.5); EMISSION = vec3(0.0); }
-    if (band == 5) { ALBEDO = vec3(cloud * 0.5); EMISSION = vec3(0.0); }
-    if (band == 6) { ALBEDO = vec3(tone + 0.5) * 0.5; EMISSION = vec3(0.0); }
-    if (band == 7) { ALBEDO = c * 3.0; EMISSION = vec3(0.0); }
-#endif
 }
