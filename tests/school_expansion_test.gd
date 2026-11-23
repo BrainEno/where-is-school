@@ -58,7 +58,7 @@ func _run() -> void:
 			_check_connected_landings()
 			await _visit_all()
 	_save.forget_all()
-	await _finish("three end restrooms, six room-specific trials of Orientation, unlock discipline, same-door returns and continue.")
+	await _finish("three end restrooms, six room-specific trials of Scrutiny/Inference, unlock discipline, same-door returns and continue.")
 
 
 func _run_tour() -> void:
@@ -167,7 +167,7 @@ func _visit_tour() -> void:
 			_check.expect(not _state.get_flag(StringName("annex.%s.aligned" % id), false)
 				and not _state.get_flag(StoryFlags.inspection_seen_flag(StringName("%s_threshold" % id)), false),
 				"Tour access recorded a clue or alignment for %s." % id)
-	_check.expect(_rolls.is_empty(), "Tour access rolled an Orientation check.")
+	_check.expect(_rolls.is_empty(), "Tour access rolled an ability check.")
 
 
 func _finish(message: String) -> void:

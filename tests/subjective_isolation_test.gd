@@ -130,9 +130,10 @@ func _check_validation_rejects_once() -> void:
 func _check_validation_rejects_check(ability_id: StringName) -> void:
 	var data := _content()
 	var node: Dictionary = (data["conversations"]["fantasy"]["nodes"] as Array)[1]
+	node.erase("next") # Isolate the subjective violation, not a check/next conflict.
 	node["check"] = {
 		"ability": String(ability_id), "difficulty": 9, "kind": "hidden",
-		"success": "b", "failure": "b",
+		"success": null, "failure": null,
 	}
 	var graph := _load("rejects_check_" + String(ability_id), data)
 	if graph == null:
@@ -180,9 +181,10 @@ func _check_runtime_refuses_check(ability_id: StringName) -> void:
 	Harness.clear_session_state(self)
 	var data := _content()
 	var node: Dictionary = (data["conversations"]["fantasy"]["nodes"] as Array)[1]
+	node.erase("next")
 	node["check"] = {
 		"ability": String(ability_id), "difficulty": 9, "kind": "visible",
-		"success": "b", "failure": "b",
+		"success": null, "failure": null,
 	}
 	var graph := _load("runtime_check_" + String(ability_id), data)
 	if graph == null:
@@ -201,8 +203,10 @@ func _check_runtime_refuses_check(ability_id: StringName) -> void:
 		_failures.append("A check was rolled inside a subjective conversation.")
 	if not _same_state(before, after):
 		_failures.append("A subjective check changed story state: %s" % _describe_diff(before, after))
-	if rejections.call() == 0:
-		_failures.append("Refusing the check did not report why.")
+	if rejections.call() != 1:
+		_failures.append("Refusing %s should report exactly one rejected attempt." % ability_id)
+	if runtime.is_active():
+		_failures.append("Refusing %s did not finish its terminal failure branch." % ability_id)
 
 
 ## The guards must not be so broad that a legitimate subjective scene stops
