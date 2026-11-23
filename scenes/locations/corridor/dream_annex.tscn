@@ -5654,9 +5654,9 @@ cast_shadow = 0
 
 [node name="StallLamp0" type="OmniLight3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.6, 2.5, -1.8833)
-light_color = Color(1, 0.769, 0.502, 1)
-light_energy = 0.42
-omni_range = 3.2
+light_color = Color(1, 0.8, 0.588, 1)
+light_energy = 0.95
+omni_range = 3.8
 
 [node name="Partition1" type="MeshInstance3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.1, 0.8, 0.9667)
@@ -5666,9 +5666,9 @@ cast_shadow = 0
 
 [node name="StallLamp1" type="OmniLight3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.6, 2.5, 0)
-light_color = Color(1, 0.769, 0.502, 1)
-light_energy = 0.42
-omni_range = 3.2
+light_color = Color(1, 0.8, 0.588, 1)
+light_energy = 0.95
+omni_range = 3.8
 
 [node name="Partition2" type="MeshInstance3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.1, 0.8, 2.8)
@@ -5678,9 +5678,9 @@ cast_shadow = 0
 
 [node name="StallLamp2" type="OmniLight3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.6, 2.5, 1.8833)
-light_color = Color(1, 0.769, 0.502, 1)
-light_energy = 0.42
-omni_range = 3.2
+light_color = Color(1, 0.8, 0.588, 1)
+light_energy = 0.95
+omni_range = 3.8
 
 [node name="BayHorse" type="MeshInstance3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.35, 0, -1.8833)

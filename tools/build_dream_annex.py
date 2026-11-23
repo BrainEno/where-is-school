@@ -298,7 +298,7 @@ def dream_house(b, y):
         z = (posts[i] + posts[i + 1]) / 2
         b.box(f"Partition{i}", body, (w / 2 - stall_back / 2, .8, posts[i + 1]), (stall_back, 1.6, .08), "timber")
         b.node(f"StallLamp{i}", body, "OmniLight3D", position=vec3((w / 2 - .9, 2.5, z)),
-               light_color=srgb((255, 196, 128)), light_energy=.42, omni_range=3.2)
+               light_color=srgb((255, 204, 150)), light_energy=.95, omni_range=3.8)
     # Round 18: sculpted horses with their heads over the half doors, grazing at their own pace.
     dream_stable.horse(b, body, "BayHorse", (w / 2 - 1.15, 0, (posts[0] + posts[1]) / 2), 90, dream_stable.sa.BAY,
                        graze=.62, phase=.1)
