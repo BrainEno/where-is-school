@@ -8,5 +8,5 @@ fov = 38.0
 glide_seconds = 0.45
 release_seconds = 0.62
 insert_anchor_path = NodePath("../../Props/SetSquare")
-insert_aim = Vector3(0.062, 0.012, 0.148)
-insert_eye_offset = Vector3(0.2, 0.462, 0.35)
+insert_aim = Vector3(0.01, 0.014, 0.176)
+insert_eye_offset = Vector3(0.16, 0.36, 0.28)
