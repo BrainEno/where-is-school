@@ -120,9 +120,8 @@ const SPAWNS := {
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
-## Recast polygon count varies with the shed footprint. Connectivity and clearance
-## below are the primary contract; this range catches an unexpectedly empty or fragmented bake.
-const NAV_POLYGON_RANGE := Vector2i(110, 200)
+## Godot 4.7.2 bake with the smaller shed and no return-board posts.
+const NAV_POLYGONS := 139
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [
@@ -790,9 +789,9 @@ func _check_navigation() -> LocationNavigation:
 		_failures.append("The schoolyard navigation never synchronized: %s" % navigation.describe_sync())
 		return null
 	var polygons := navigation.get_polygon_count()
-	if polygons < NAV_POLYGON_RANGE.x or polygons > NAV_POLYGON_RANGE.y:
+	if polygons != NAV_POLYGONS:
 		_failures.append(
-			"The yard and open cabin bake %d polygons; expected %d–%d." % [polygons, NAV_POLYGON_RANGE.x, NAV_POLYGON_RANGE.y]
+			"The yard and open cabin bake %d polygons; expected %d." % [polygons, NAV_POLYGONS]
 		)
 	var map := navigation.get_navigation_map()
 	var gate := _yard.get_node_or_null(^"SpawnPoints/FromAlley") as Node3D
@@ -831,7 +830,7 @@ func _check_navigation() -> LocationNavigation:
 		if marker != null and _route_gap(map, start, marker.global_position) > 0.5:
 			_failures.append("Spawn '%s' is cut off from the gate." % spawn_name)
 	_notes.append(
-		"nav polygons %d (range %d–%d), worst reach margin %.2f m" % [polygons, NAV_POLYGON_RANGE.x, NAV_POLYGON_RANGE.y, worst]
+		"nav polygons %d (expected %d), worst reach margin %.2f m" % [polygons, NAV_POLYGONS, worst]
 	)
 	return navigation
 
@@ -1099,6 +1098,10 @@ func _bright_albedo(material: BaseMaterial3D) -> Color:
 		if not patches.is_empty():
 			var bright := patches[int(0.9 * (patches.size() - 1))]
 			colour = Color(colour.r * bright.r, colour.g * bright.g, colour.b * bright.b)
+		elif material.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+			# No text-sized patch is even half opaque. A thin painted outline is
+			# not a solid white rectangle over the entire decal's bounding box.
+			colour = Color.BLACK
 	_albedo_cache[material.resource_path] = colour
 	return colour
 
