@@ -24,7 +24,9 @@ def build():
         row = []
         for i in range(93):
             x = -23 + i * .5
-            y = .05
+            # Flat, but for a few millimetres of float wave (a mesh with no height at all
+            # drew black in the GL Compatibility renderer).
+            y = .05 + .003 * ((i * 7 + j * 13) % 5 - 2) / 2
             row.append((x, y, z))
         rows.append(row)
     mesh = Mesh().grid(rows, outward=(0, 1, 0))

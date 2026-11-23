@@ -30,14 +30,16 @@ float grain(vec2 p) {
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0)), u.x), u.y);
 }
 
+// Unrolled, with the octave rotation written out: the GL Compatibility renderer drew the
+// looped version near-black.
 float fbm(vec2 p) {
-    float sum = 0.0;
-    float amp = 0.5;
-    for (int i = 0; i < 4; i++) {
-        sum += amp * grain(p);
-        p = mat2(vec2(1.6, 1.2), vec2(-1.2, 1.6)) * p;
-        amp *= 0.5;
-    }
+    float sum = 0.5 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.25 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.125 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.0625 * grain(p);
     return sum / 0.9375;
 }
 
