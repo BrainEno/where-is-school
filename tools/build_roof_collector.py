@@ -210,7 +210,7 @@ def jacket():
         if y < .0 and z > .0:
             c = _scale(c, .9)
         return c
-    return surface(field, .019, _shade(colour))
+    return surface(field, .021, _shade(colour))
 
 
 # --- the head ------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ def upper_arm(side, patched):
             if abs(y + .2) < .003 or abs(y + .09) < .003:
                 c = STITCH
         return c
-    return surface(field, .0125, _shade(colour))
+    return surface(field, .0142, _shade(colour))
 
 
 def forearm(side):
@@ -377,7 +377,7 @@ def forearm(side):
         if y > -.06:
             c = mix(c, _scale(c, .82), _fold_band(y, -.02, .04))
         return c
-    return surface(field, .0068, _shade(colour))
+    return surface(field, .0077, _shade(colour))
 
 
 # --- legs and boots ------------------------------------------------------------------------
@@ -414,7 +414,7 @@ def thigh(side, darned):
         if y < -.36:
             c = mix(c, _scale(c, .8), _fold_band(y, -.39, .05))
         return c
-    return surface(field, .015, _shade(colour))
+    return surface(field, .017, _shade(colour))
 
 
 def shin(side, darned):
@@ -445,7 +445,7 @@ def shin(side, darned):
             if abs(y + .17) < .003 or abs(y + .05) < .003:
                 c = STITCH
         return c
-    return surface(field, .0135, _shade(colour))
+    return surface(field, .0155, _shade(colour))
 
 
 def boot():
@@ -484,7 +484,7 @@ def boot():
         if y > .07:
             c = _scale(c, .8)  # the collar of the boot
         return c
-    return surface(field, .0095, _shade(colour))
+    return surface(field, .011, _shade(colour))
 
 
 # --- the scene -----------------------------------------------------------------------------

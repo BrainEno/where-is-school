@@ -85,7 +85,7 @@ def _scale(c, f):
 TYRE_R = 0.5        # outer radius
 BEAD_R = 0.285      # where the tyre meets the wheel
 HALF_W = 0.115      # half the section width (the stack's pitch is 2 * HALF_W + 0.01)
-SIDES = 128         # round the tyre
+SIDES = 96          # round the tyre
 BLOCKS = 32         # tread blocks round the tyre, per row
 
 
@@ -285,7 +285,7 @@ def covered_junk_west() -> PaintMesh:
         c = mix(c, DUST, .25 * smoothstep(.2, .8, n[1]) * smoothstep(.4, .9, noise(x * 9, z * 9, 215)))
         return _c(_ao(c, ao))
 
-    return surface(field, 0.037, paint)
+    return surface(field, 0.05, paint)
 
 
 def covered_junk_east() -> PaintMesh:
@@ -310,7 +310,7 @@ def covered_junk_east() -> PaintMesh:
         c = mix(c, DUST, .2 * smoothstep(.3, .9, noise(x * 7, z * 7, 225)))
         return _c(_ao(c, ao))
 
-    tarp = surface(field, 0.037, paint)
+    tarp = surface(field, 0.05, paint)
     # Two bricks holding it down: separate solids resting on the top.
     brick = Field([RBox((0, 0.032, 0), (0.11, 0.032, 0.055), r=0.006, k=0.01)])
 
@@ -346,7 +346,7 @@ GALVANISED = (150, 156, 160)
 GALV_DARK = (96, 100, 104)
 COIL_R = 0.3          # concertina loop radius
 LOOP_STEP = 0.11      # loops along the coil
-LOOP_POINTS = 30
+LOOP_POINTS = 22
 
 
 def razor_coil(length: float = 3.0, seed: int = 301) -> PaintMesh:
