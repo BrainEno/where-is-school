@@ -274,7 +274,7 @@ const PORT_YARD_VIEWS := [["yard_truck_tail", Vector3(13.0, 3.5, 16.0), Vector3(
 const STABLE_STANCES := [["stable_stance", Vector3(-35.0, -3.4, 13.4)]]
 const STABLE_VIEWS := [
 	["stable_overview", Vector3(-27.0, 3.6, 17.8), Vector3(-37.5, -2.4, 8.5)],
-	["bay_horse", Vector3(-33.5, -1.6, 4.6), Vector3(-37.0, -2.1, 5.7)],
+	["bay_horse", Vector3(-33.2, -0.9, 5.7), Vector3(-37.0, -2.0, 5.65)],
 	["grey_horse", Vector3(-34.0, -1.3, 11.0), Vector3(-37.4, -2.1, 9.2)],
 	["stall_front", Vector3(-32.6, -1.2, 7.6), Vector3(-38.0, -2.2, 7.5)],
 	["hen_house", Vector3(-31.0, -2.3, 10.4), Vector3(-33.2, -3.2, 7.6)],
