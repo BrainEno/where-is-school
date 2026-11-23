@@ -25,8 +25,7 @@ float grain(vec2 p) {
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0)), u.x), u.y);
 }
 
-// Unrolled, with the octave rotation written out: the GL Compatibility renderer drew the
-// looped version near-black.
+// Four octaves, each turned and doubled in frequency.
 float fbm(vec2 p) {
     float sum = 0.5 * grain(p);
     p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
@@ -43,8 +42,6 @@ void vertex() {
 }
 
 void fragment() {
-    // Locals, not global constants: the GL Compatibility renderer drew the slabs black with
-    // the colours declared at file scope.
     float SLAB = 2.0;
     vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
     vec3 JOINT = vec3(0.024, 0.025, 0.030);
@@ -56,21 +53,24 @@ void fragment() {
     float edge = min(min(f.x, SLAB - f.x), min(f.y, SLAB - f.y));
     // Each pour cured a shade apart; stains and the float's sweeps sit on top.
     float tone = hash(slab + 17.0) - 0.5;
-    float stain = fbm(p * 0.38 + 3.1);
+    float stain = 0.6 * grain(p * 0.38 + 3.1) + 0.4 * grain(p * 0.9 + 7.7);
     float sweep = grain(vec2(p.x * 2.6, p.y * 0.7) + slab * 5.3);
-    float grit = grain(p * 42.0);
+    // Grit and the exposed aggregate. Kept to the frequencies of the old earth formula
+    // (no hash of positions scaled past ~25): finer ones drew black in GL Compatibility.
+    float grit = grain(p * 23.0);
+    float pebble = grain(p * 11.0 + 5.0);
     vec3 c = PALE * (1.0 + 0.09 * tone + 0.20 * (stain - 0.5) + 0.05 * (sweep - 0.5));
     c *= 0.93 + 0.12 * grit;
-    // Exposed aggregate: pale and dark stones a few millimetres across.
-    float stone = hash(floor(p * 70.0));
-    c *= 1.0 + 0.16 * step(0.965, stone) - 0.28 * step(stone, 0.025);
+    c *= 1.0 + 0.12 * smoothstep(0.86, 0.95, pebble) - 0.2 * (1.0 - smoothstep(0.05, 0.14, pebble));
     // Grime gathers along the sawn joints; their arrises are chipped here and there.
     c *= 1.0 - 0.14 * (1.0 - smoothstep(0.02, 0.14, edge));
     float chip = grain(p * 7.0 + 11.0);
-    float joint = 1.0 - smoothstep(0.011, 0.016 + 0.035 * pow(chip, 6.0), edge);
+    float width = 0.016 + 0.035 * chip * chip * chip * chip * chip * chip;
+    float joint = 1.0 - smoothstep(0.011, width, edge);
     c = mix(c, JOINT, joint);
     // Cloud shadows, soft-edged and slow, the way they pass over a big flat yard.
-    float cloud = fbm((p - WIND * TIME) * 0.042);
+    vec2 drift = (p - WIND * TIME) * 0.042;
+    float cloud = fbm(drift);
     float shadow = smoothstep(0.50, 0.68, cloud);
     c *= mix(1.0, 0.56, shadow);
     ALBEDO = c;
