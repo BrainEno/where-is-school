@@ -116,7 +116,7 @@ func _stage_curtain(director: Node) -> Dictionary:
 	player.velocity = Vector3.ZERO
 	var mark := _approach.global_position
 	var reach := mark if already_open else mark + Vector3.RIGHT * 0.38
-	if not await Motion.walk_to(player, reach):
+	if not await Motion.walk_route_to(player, reach):
 		player.set_physics_process(physics)
 		state.set_flag(StoryFlags.CURTAIN_FALL_PENDING, pending)
 		return {}
