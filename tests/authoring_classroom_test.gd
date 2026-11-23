@@ -3,14 +3,14 @@ extends SceneTree
 ## new route, export it, then continue the original encounter without contamination.
 
 const Harness := preload("res://tests/test_harness.gd")
-const Bootstrap := preload("res://scripts/dev/authoring/bootstrap.gd")
-const Overlay := preload("res://scripts/dev/authoring/author_overlay.gd")
-const Form := preload("res://scripts/dev/authoring/author_form.gd")
-const Store := preload("res://scripts/dev/authoring/draft_store.gd")
-const Exchange := preload("res://scripts/dev/authoring/author_exchange.gd")
+const Bootstrap := preload("res://scripts/story_editor/bootstrap.gd")
+const Overlay := preload("res://scripts/story_editor/author_overlay.gd")
+const Form := preload("res://scripts/story_editor/author_form.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
+const Exchange := preload("res://scripts/story_editor/author_exchange.gd")
 const LogStore := preload("res://scripts/diagnostics/log_store.gd")
 const EventSchema := preload("res://scripts/diagnostics/event_schema.gd")
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
 const SAMPLE := "文案测试：一行。\n第二行，龘。"
@@ -119,6 +119,9 @@ func _open_at_student() -> bool:
 	_store.load_workspace()
 	var bootstrap := Bootstrap.new()
 	bootstrap._store = _store
+	# The retail app installs this autoload from the pause menu once Settings → Story
+	# editor is on; here the test installs it the way the menus do.
+	bootstrap.name = "StoryEditor"
 	root.add_child(bootstrap)
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 		var entry := _world.get_node_or_null(^"AuthorOverlay/EditStory") as Button
@@ -126,6 +129,7 @@ func _open_at_student() -> bool:
 	, 5), "Author bootstrap did not attach to the live game"):
 		return false
 	_overlay = _world.get_node(^"AuthorOverlay") as Overlay
+	_check.expect(bootstrap.has_overlay(), "The installed editor did not report its overlay")
 	var launch := _overlay.get_node(^"EditStory") as Button
 	if MobileLayout.enabled:
 		_check.expect(MobileLayout.safe_rect(launch).encloses(launch.get_global_rect()), "Author launcher is outside the OS safe area")
@@ -150,6 +154,10 @@ func _open_at_student() -> bool:
 
 
 func _edit_fields() -> void:
+	_drawer.set_keyboard_compact(true)
+	_check.expect(_drawer.button("apply_text").is_visible_in_tree(), "Compact text editor has no save key")
+	_check.expect(not _drawer.button("cancel").is_visible_in_tree(), "Compact editor shows conflicting cancel key")
+	_drawer.set_keyboard_compact(false)
 	Harness.stage = "mutating preview wording only"
 	var original := _panel.get_body_text()
 	var choice_before := _panel.find_child("Choice1", true, false)

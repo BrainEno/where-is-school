@@ -64,9 +64,15 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 | `NewGameFailureText` | [`scripts/ui/new_game_failure_text.gd`](../scripts/ui/new_game_failure_text.gd) | Turn a Session failure report into localized player-facing text; keep technical details in the log. |
 | `NotebookPaper` | [`scripts/ui/notebook_paper.gd`](../scripts/ui/notebook_paper.gd) | Draw the dialogue band's torn notebook sheet, rules, red margin and set-square wedge; never takes input; DialoguePanel sizes it and aligns its rules. |
 | `PauseMenu` | [`scripts/ui/pause_menu.gd`](../scripts/ui/pause_menu.gd) | In-game pause, notebook, settings and save/quit UI; Session owns the transactions. |
+| `PauseSheet` | [`scripts/ui/pause_sheet.gd`](../scripts/ui/pause_sheet.gd) | The pause menu's sheet and column placement: hand-cut desktop face, touch card on a phone. |
 | `SettingsPanel` | [`scripts/ui/settings_panel.gd`](../scripts/ui/settings_panel.gd) | Shared settings and binding editor; Settings applies and persists changes. |
 | `TitleScreen` | [`scripts/ui/title_screen.gd`](../scripts/ui/title_screen.gd) | Start/continue/settings/quit surface and save status; use Session for a new run. |
 | `UiTextScale` | [`scripts/ui/ui_text_scale.gd`](../scripts/ui/ui_text_scale.gd) | Apply the Settings text multiplier from an authored base size (`apply`, `set_base`, `scaled`); repeated scaling must not compound. |
+
+Phone-only button states and glyphs are the preload-only [handheld style](../scripts/ui/handheld_style.gd);
+input ownership and safe-area sizing stay with the touch controls and layout. The pause menu's
+[story editor entry](../scripts/ui/story_editor_entry.gd) binds the saved iOS opt-in to the optional
+runtime without preloading resources omitted from other exports.
 
 ### Dialogue and reading
 

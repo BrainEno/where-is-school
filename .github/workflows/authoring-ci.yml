@@ -7,17 +7,19 @@ on:
     branches: [main, 'arena/**']
     paths:
       - '.github/workflows/authoring-ci.yml'
-      - 'scripts/dev/authoring/**'
+      - 'scripts/story_editor/**'
       - 'tools/authoring_build.py'
       - 'tools/review_author_draft.*'
       - 'tools/macos/ios/authoring/**'
       - 'tests/authoring_*'
+      - 'tests/story_editor_*'
+      - 'tests/mobile_pack_boot.gd'
   pull_request:
     paths:
       - '.github/workflows/authoring-ci.yml'
       - '.github/actions/setup-godot/**'
       - '.godot-version'
-      - 'scripts/dev/authoring/**'
+      - 'scripts/story_editor/**'
       - 'scripts/dialogue/**'
       - 'scripts/ui/**'
       - 'data/dialogue/**'
@@ -31,6 +33,8 @@ on:
       - 'tools/godot_pck.py'
       - 'tools/macos/ios/**'
       - 'tests/authoring_*'
+      - 'tests/story_editor_*'
+      - 'tests/mobile_pack_boot.gd'
 
 permissions:
   contents: read
@@ -67,6 +71,19 @@ jobs:
           if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked' "$log"; then
             grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Author patch and journal::%s\n' "$failure"; done || true
+            exit 1
+          fi
+      - name: Test the Settings switch and the pause entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          export XDG_DATA_HOME="$RUNNER_TEMP/story-editor-settings-profile"
+          log="$RUNNER_TEMP/story-editor-switch.log"
+          result=0
+          timeout 180 godot --headless --path . --script res://tests/story_editor_setting_test.gd |& tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked|^FAIL:' "$log"; then
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|FAIL:' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Story editor switch::%s\n' "$failure"; done || true
             exit 1
           fi
       - name: Test rendered desktop, landscape touch and desktop review
@@ -132,19 +149,42 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild -version
-          if ! python3 tools/export_mobile.py ios-unsigned --authoring --output "$RUNNER_TEMP/author-device" 2>&1 | tee "$RUNNER_TEMP/author-device.log"; then
-            grep -Ei 'error:|failed' "$RUNNER_TEMP/author-device.log" | tail -12 | cut -c1-600 |
+          if ! python3 -u tools/export_mobile.py ios-unsigned --authoring --output "$RUNNER_TEMP/author-device" 2>&1 | tee "$RUNNER_TEMP/author-device.log"; then
+            grep -Ei 'Mobile export failed:|reached the build|SCRIPT ERROR|Parse Error|[[:space:]]error:' "$RUNNER_TEMP/author-device.log" | tail -12 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Author iOS archive::%s\n' "$failure"; done
             exit 1
           fi
           printf '::notice title=Author archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/author-device/BUILD.json")"
-      - name: Verify retail archive has no author scripts or native bridge
+      - name: Verify the retail archive includes the opt-in editor and device Files bridge
         shell: bash
         run: |
           set -euo pipefail
-          if ! python3 tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
-            grep -Ei 'error:|failed|forbidden' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
+          if ! python3 -u tools/export_mobile.py ios-unsigned --output "$RUNNER_TEMP/retail-device" 2>&1 | tee "$RUNNER_TEMP/retail-device.log"; then
+            grep -Ei 'Mobile export failed:|reached the build|SCRIPT ERROR|Parse Error|[[:space:]]error:' "$RUNNER_TEMP/retail-device.log" | tail -12 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Retail iOS archive::%s\n' "$failure"; done
             exit 1
           fi
           printf '::notice title=Retail archive::%s\n' "$(tr -d '\n' < "$RUNNER_TEMP/retail-device/BUILD.json")"
+      - name: Exercise the Settings opt-in inside the exported retail pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          pack=("$RUNNER_TEMP"/retail-device/*.pck)
+          test "${#pack[@]}" = 1 && test -f "${pack[0]}"
+          mkdir -p "$RUNNER_TEMP/retail-pack-tree" "$RUNNER_TEMP/retail-pack-home"
+          export HOME="$RUNNER_TEMP/retail-pack-home"
+          export XDG_DATA_HOME="$HOME/data"
+          export XDG_CONFIG_HOME="$HOME/config"
+          log="$RUNNER_TEMP/retail-pack-smoke.log"
+          result=0
+          python3 -c 'import subprocess, sys; sys.exit(subprocess.run(sys.argv[1:], timeout=110).returncode)' \
+            godot --headless --path "$RUNNER_TEMP/retail-pack-tree" --main-pack "${pack[0]}" \
+            --script "$GITHUB_WORKSPACE/tests/mobile_pack_boot.gd" 2>&1 | tee "$log" || result=$?
+          if (( result != 0 )) || grep -qE 'SCRIPT ERROR|ObjectDB instances leaked|^FAIL:' "$log" \
+              || ! grep -qE '^PASS: MOBILE_OPENING_TOUCH_OK .*handheld=true preview=false$' "$log"; then
+            printf '::error title=Retail pack opt-in::Engine exit %s (expected the handheld pack PASS marker)\n' "$result"
+            grep -m 12 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|ObjectDB instances leaked|^FAIL:|^ERROR:|TimeoutExpired' "$log" | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Retail pack opt-in::%s\n' "$failure"; done || true
+            exit 1
+          fi
+          printf '::notice title=Retail iOS pack opt-in::%s\n' "$(grep '^PASS: MOBILE_OPENING_TOUCH_OK ' "$log")"

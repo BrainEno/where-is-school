@@ -4,6 +4,7 @@ extends Control
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const Joystick := preload("res://scripts/ui/touch_joystick.gd")
+const HandheldStyle := preload("res://scripts/ui/handheld_style.gd")
 
 var _pause: Button
 var _return: Button
@@ -39,16 +40,14 @@ func _ready() -> void:
 	_stick.name = "Joystick"
 	_stick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_stick)
-	_pause = _button("Pause", _menu.open)
-	_return = _button("ReturnToTitle", _menu.request_return_to_title)
-	_use = _button("Use", _use_current)
+	_pause = _button("Pause", _menu.open, &"pause")
+	_return = _button("ReturnToTitle", _menu.request_return_to_title, &"title")
+	_use = _button("Use", _use_current, &"use", true)
 	_controls.assign([_return, _pause, _use, _stick])
 	_menu.opened.connect(_refresh)
 	_menu.closed.connect(_refresh)
-	# A physical controller on a handheld gets a clear screen until the next touch.
 	var settings := get_node_or_null(^"/root/Settings")
 	if settings != null:
-		settings.connect(&"input_device_changed", _refresh.unbind(1))
 		settings.connect(&"setting_changed", _on_setting_changed)
 	var loc := get_node_or_null(^"/root/Loc")
 	if loc != null:
@@ -58,13 +57,13 @@ func _ready() -> void:
 	_labels()
 
 
-func _button(node_name: String, action: Callable) -> Button:
+func _button(node_name: String, action: Callable, glyph: StringName, primary: bool = false) -> Button:
 	var button := MenuStyle.entry_button("", 23, UiTextScale.current(self))
 	button.name = node_name
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_stylebox_override(&"normal", MenuStyle.panel_style())
+	HandheldStyle.apply(button, primary, glyph)
 	button.pressed.connect(action)
 	add_child(button)
 	return button
@@ -72,7 +71,8 @@ func _button(node_name: String, action: Callable) -> Button:
 
 func _labels() -> void:
 	_pause.text = L10n.t("menu.touch_pause")
-	_return.text = L10n.t("menu.return_to_title")
+	_return.text = L10n.t("menu.touch_return")
+	_return.tooltip_text = L10n.t("menu.return_to_title")
 	_use.text = L10n.t("settings.action.interact")
 	_fit()
 
@@ -86,10 +86,13 @@ func _refresh() -> void:
 		return
 	var blocked := get_tree().paused or _menu.is_open() or _ui.backlog.is_open() \
 		or _ui.end_card.visible or _ui.fade.visible
-	visible = not blocked and InputHint.device(self) == InputHint.DEVICE_TOUCH
+	# Handheld HUD visibility follows gameplay, not the last input event. A host,
+	# trackpad or controller can change the hints without taking away touch buttons.
+	visible = not blocked
 	var exploring := visible and not _ui.dialogue_panel.visible and _player.is_control_enabled()
 	_stick.visible = exploring
-	_use.visible = exploring and _can_use()
+	_use.visible = exploring
+	_use.disabled = not exploring or not _can_use()
 	_return.visible = visible and _menu.get_entry(&"save_quit").visible
 	for id: int in _fingers:
 		var control := _fingers[id]
@@ -116,6 +119,12 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
+	# A new key or axis can take over even if hints already showed that device, since
+	# input_device_changed only describes a change of label family.
+	if _stick_finger >= 0 and InputBindings.detected_device(event, &"") in [
+		InputHint.DEVICE_KEYBOARD, InputHint.DEVICE_GAMEPAD
+	]:
+		_cancel_finger(_stick_finger)
 	# This UI is visited before the Player subtree in Main's _input phase. Swallow
 	# just the owned fingers so they never enter PointerNavigator's tap recognizer.
 	if event is InputEventScreenTouch:
@@ -124,6 +133,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if event.index == _stick_finger:
 			_steer(event.position)
+		else:
+			var button := _fingers[event.index] as Button
+			if button != null:
+				HandheldStyle.set_held(button, not button.disabled and _hit(button, event.position))
 
 
 func _touch(event: InputEventScreenTouch) -> void:
@@ -139,16 +152,21 @@ func _touch(event: InputEventScreenTouch) -> void:
 			return
 		get_viewport().set_input_as_handled()
 		# Multiple fingers in one hit area do not steal its original owner.
-		_fingers[id] = null if _fingers.values().has(control) else control
+		var unavailable := control is Button and (control as Button).disabled
+		_fingers[id] = null if unavailable or _fingers.values().has(control) else control
 		if _fingers[id] == _stick:
 			_stick_finger = id
 			_steer(event.position)
+		else:
+			var button := _fingers[id] as Button
+			if button != null and not button.disabled:
+				HandheldStyle.set_held(button, true)
 	elif _fingers.has(id):
 		get_viewport().set_input_as_handled()
 		var button := _fingers[id] as Button
 		_cancel_finger(id)
 		_fingers.erase(id)
-		if not event.canceled and button != null and _hit(button, event.position):
+		if not event.canceled and button != null and not button.disabled and _hit(button, event.position):
 			button.pressed.emit()
 
 
@@ -170,6 +188,9 @@ func _steer(point: Vector2) -> void:
 
 
 func _cancel_finger(id: int) -> void:
+	var button := _fingers[id] as Button
+	if is_instance_valid(button):
+		HandheldStyle.set_held(button, false)
 	_fingers[id] = null
 	if id == _stick_finger:
 		_stick_finger = -1

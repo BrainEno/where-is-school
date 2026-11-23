@@ -411,7 +411,12 @@ def village(b, y):
 
 def stable_yard(b):
     y = "StableYard"
-    b.node(y, ".")
+    # Move the complete yard west, away from the separate restroom volume.
+    # The connecting strip remains at the entrance so the route stays walkable.
+    b.node(y, ".", position=vec3((-4, 0, 0)))
+    slab(b, ".", "StableLaneConnector", (-24.8, -20.75), LANE_Z, G)
+    b.flat("StableLaneConnectorEarth", ".", plane(b, 4.05, LANE_Z[1]-LANE_Z[0]), "earth",
+           (-22.775, G + .004, sum(LANE_Z)/2))
     yard_ground(b, y)
     low_wall(b, y, "WallSouth", (LANE_X[0], LANE_X[1]), LANE_Z[1] + .15, True)
     low_wall(b, y, "WallWest", (HOUSE_Z[1], LANE_Z[1]), LANE_X[0] - .15, False)

@@ -5,13 +5,17 @@ extends RefCounted
 
 const DESIGN_SIZE := Vector2i(960, 720)
 const TEXT_MULTIPLIER := 1.3
+const MENU_TEXT_MULTIPLIER := 1.15
 const TARGET_POINTS := 48.0
 const EDGE := 12.0
 const TEST_SAFE_AREA := &"mobile_test_safe_area"
 const TEST_DENSITY := &"mobile_test_density"
 
 static var preview := OS.has_feature("editor") and "--mobile-preview" in OS.get_cmdline_user_args()
-static var enabled := OS.has_feature("mobile") or preview
+# The shipped mobile packs declare their layout, independently of input device or
+# how the app was launched. Native engine runs can still use their platform tags.
+static var enabled := OS.has_feature("wis_handheld") or OS.has_feature("ios") \
+	or OS.has_feature("android") or OS.has_feature("mobile") or preview
 
 
 static func safe_pixels(window: Window) -> Rect2:
@@ -24,6 +28,8 @@ static func safe_pixels(window: Window) -> Rect2:
 
 static func safe_rect(node: Node) -> Rect2:
 	var viewport := node.get_viewport()
+	if viewport == null:
+		return Rect2()
 	var view := viewport.get_visible_rect()
 	if not enabled or not viewport is Window:
 		return view
@@ -72,11 +78,19 @@ static func enlarge(control: Control) -> void:
 
 
 static func watch(node: Node, callback: Callable) -> void:
-	node.get_viewport().size_changed.connect(callback)
-	if enabled:
-		var settings := node.get_node_or_null(^"/root/Settings")
-		if settings != null:
-			settings.connect(&"mobile_area_changed", callback)
+	var viewport := node.get_viewport()
+	var settings := node.get_node_or_null(^"/root/Settings") if enabled else null
+	viewport.size_changed.connect(callback)
+	if settings != null:
+		settings.connect(&"mobile_area_changed", callback)
+	# The viewport and autoload outlive a detached scene. Remove callbacks before
+	# the node loses its tree, so a resize cannot lay out an orphaned menu.
+	node.tree_exiting.connect(func() -> void:
+		if is_instance_valid(viewport) and viewport.size_changed.is_connected(callback):
+			viewport.size_changed.disconnect(callback)
+		if is_instance_valid(settings) and settings.is_connected(&"mobile_area_changed", callback):
+			settings.disconnect(&"mobile_area_changed", callback)
+	)
 
 
 ## Keep full-screen backdrops full-screen; only move their content inside this rect.

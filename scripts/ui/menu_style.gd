@@ -51,6 +51,8 @@ const BRICK := Palette.BRICK
 const OCHRE := Palette.OCHRE
 const GROUND := Palette.GROUND
 
+const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
 const SERIF_PATH := "res://assets/fonts/NotoSerifSC-Regular.otf"
 
 const TITLE_SIZE := 30
@@ -64,6 +66,11 @@ const DISPLAY_SIZE := 52
 static var _serif_cache: Dictionary = {}
 static var _page_theme: Theme = null
 static var _dot_cache: Dictionary = {}
+
+
+## Keep the player's text-size preference without the reading band's larger default.
+static func menu_text_scale(node: Node) -> float:
+	return UiTextScale.current(node, MobileLayout.MENU_TEXT_MULTIPLIER)
 
 
 static func entry_button(text: String, size: int, factor: float) -> Button:
@@ -221,10 +228,10 @@ static func page_theme() -> Theme:
 ## bordered box of an error message.
 static func prompt_content_style() -> StyleBoxEmpty:
 	var box := StyleBoxEmpty.new()
-	box.content_margin_left = 48.0
-	box.content_margin_right = 44.0
-	box.content_margin_top = 34.0
-	box.content_margin_bottom = 28.0
+	box.content_margin_left = 26.0 if MobileLayout.enabled else 48.0
+	box.content_margin_right = 26.0 if MobileLayout.enabled else 44.0
+	box.content_margin_top = 22.0 if MobileLayout.enabled else 34.0
+	box.content_margin_bottom = 20.0 if MobileLayout.enabled else 28.0
 	return box
 
 

@@ -125,7 +125,7 @@ static constexpr NSUInteger fieldLimit = 8000; // Unicode scalar count, the same
     if (!self) return nil;
     NSFileManager *fs = NSFileManager.defaultManager;
     NSURL *documents = [fs URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask].firstObject;
-    _inbox = [[documents URLByAppendingPathComponent:@"authoring" isDirectory:YES]
+    _inbox = [[documents URLByAppendingPathComponent:@"story_editor" isDirectory:YES]
         URLByAppendingPathComponent:@"share" isDirectory:YES];
     if (!_inbox || ![fs createDirectoryAtURL:_inbox withIntermediateDirectories:YES attributes:nil error:nullptr]) {
         return nil;

@@ -18,8 +18,9 @@ extends SceneTree
 ##    path of every interactable still resolves.
 ## 3. **Still walkable.** The navigation bakes, and every spawn reaches every exit.
 ## 4. **Own materials, small textures.** Every mesh of the pass draws with a material
-##    from `stage_art/materials/`; every texture lives under `stage_art/textures/` or the
-##    yard's `playground_art/textures/`, at most 512 KiB and 2048 px.
+##    from `stage_art/materials/` or, for the visible yard, `playground_art/materials/`.
+##    The shared earth is the one texture-free yard shader material. Every texture lives
+##    under `stage_art/textures/` or `playground_art/textures/`, at most 512 KiB and 2048 px.
 ## 5. **The distance stays distant.** `StageArt/Distance` casts no shadow, and its sky
 ##    floor lies at least a metre under the lowest walkable floor.
 ## 6. **Never in the way of the camera.** From every standing spot (a 1 m grid over the
@@ -426,8 +427,21 @@ func _stage_pieces(id: String, location: Node) -> Array[MeshInstance3D]:
 
 func _check_pieces(id: String, pieces: Array[MeshInstance3D]) -> void:
 	var textures := {}
+	var soil_count := 0
 	for mesh in pieces:
 		_checks += 1
+		# The shared earth yard is a procedural ShaderMaterial, not a BaseMaterial3D.
+		# Permit only its exact texture-free shader on the expected soil node; don't
+		# silently admit arbitrary shaders or bypass checks for the rest of the yard.
+		if id == "corridor" and mesh.name == &"Soil" and mesh.get_parent().name == &"EarthYard":
+			soil_count += 1
+			var earth := mesh.material_override as ShaderMaterial
+			if earth == null or earth.resource_path != YARD_MATERIALS + "yard_earth.tres" \
+					or earth.shader == null \
+					or earth.shader.resource_path != "res://scenes/environment/props/playground_art/shaders/yard_earth.gdshader" \
+					or "sampler" in earth.shader.code:
+				_failures.append("corridor: shared soil must use its texture-free yard-earth shader.")
+			continue
 		var material := mesh.material_override as BaseMaterial3D
 		var valid := material != null and material.resource_path.begins_with(STAGE_MATERIALS)
 		if id == "corridor" and material != null:
@@ -438,6 +452,10 @@ func _check_pieces(id: String, pieces: Array[MeshInstance3D]) -> void:
 			continue
 		if material.albedo_texture != null:
 			textures[material.albedo_texture.resource_path] = true
+	if id == "corridor":
+		_checks += 1
+		if soil_count != 1:
+			_failures.append("corridor: expected exactly one shared yard soil mesh, found %d." % soil_count)
 	for path: String in textures:
 		_check_texture(id, path)
 

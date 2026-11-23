@@ -155,6 +155,15 @@ func _check_wall(wall: StaticBody3D, subject: StagedInteractable, paint: MeshIns
 	_check.expect(wall.is_in_group("camera_occluder") and paint.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
 		"Pigment should fade with the wall and cast no shadow.")
 	var plaster := wall.get_node(^"Plaster") as MeshInstance3D
+	var coat := plaster.material_override as StandardMaterial3D
+	_check.expect(coat != null and coat.albedo_texture != null and coat.normal_enabled
+		and coat.normal_texture != null and coat.normal_scale > 0.0 and coat.roughness >= .9,
+		"The sprayed wall needs matte, textured plaster with real normal relief.")
+	var centre := plaster.to_local(paint.global_position)
+	_check.expect(coat != null and coat.uv1_triplanar and not coat.uv1_world_triplanar
+		and coat.uv1_scale.is_equal_approx(Vector3(0.5, 0.5, 0.5)) and coat.uv1_offset.is_zero_approx()
+		and is_zero_approx(centre.x) and is_zero_approx(centre.y),
+		"The pigment's baked pores must align to the plaster's local 2 m projection.")
 	var paint_box := (wall.global_transform.affine_inverse() * paint.global_transform) * paint.get_aabb()
 	var band := plaster.transform * plaster.get_aabb()
 	var gap := paint_box.position.z - band.end.z
@@ -166,6 +175,11 @@ func _check_wall(wall: StaticBody3D, subject: StagedInteractable, paint: MeshIns
 		and material.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA
 		and paint.mesh.get_surface_count() == 1 and paint.mesh.get_faces().size() > 6,
 		"Expected one contour-shaped surface with the imported clear-background paint.")
+	_check.expect(material != null and material.albedo_texture != null
+		and material.albedo_texture.get_width() >= 336 and material.albedo_texture.get_height() >= 387
+		and coat != null and coat.albedo_texture != null and coat.normal_texture != null
+		and coat.albedo_texture.get_width() >= 256 and coat.normal_texture.get_width() >= 128,
+		"Budgeted paint and plaster textures must retain the close-up's minimum detail.")
 	_check.expect(subject.get_outline_meshes() == [paint] and subject.get_pick_shapes().size() == 1
 		and subject.collision_layer == Interactable.INTERACTION_LAYER and subject.collision_mask == 0,
 		"The pick/outline should cover just the paint, without adding physical collision.")

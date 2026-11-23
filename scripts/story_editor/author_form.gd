@@ -3,7 +3,7 @@ extends PanelContainer
 ## the scroll list is not the order of nodes/choices in the content file.
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
-const Patch := preload("res://scripts/dev/authoring/dialogue_patch.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 signal picked(field: String, id: String)
 signal action(id: String)
 signal buffer_changed
@@ -113,6 +113,10 @@ func _ready() -> void:
 	var form_actions := _row(_content)
 	_rows["form_actions"] = form_actions
 	_button(form_actions, "apply", "保存新增")
+	# A plain-text edit is saved as it types, but on a phone the keyboard covers the footer
+	# and the status line: without a key of its own the player cannot say "done" and put
+	# the keyboard away. The same button flushes the draft.
+	_button(form_actions, "apply_text", "保存文字")
 	_button(form_actions, "cancel", "取消／还原字段")
 
 	status = Label.new()
@@ -384,7 +388,12 @@ func hide_keyboard() -> void:
 
 
 func _apply_visibility() -> void:
-	var editing := not _compact and not _blocked
+	# A phone with its keyboard up is the compact drawer: the pickers and the structure keys
+	# step aside to leave the field the room, but the text field's own confirm key must stay
+	# on screen. It is the only way to put the keyboard away and say the sentence is stored,
+	# and without it a plain-text edit could be typed but never applied.
+	var compact := _compact
+	var editing := not _blocked and not compact
 	var branching := _mode == "choice"
 	var replying := branching and new_reply.button_pressed
 	var in_reply := reply.has_focus()
@@ -395,7 +404,9 @@ func _apply_visibility() -> void:
 	var composing_round := _mode == "followup"
 	for key: String in ["chapter", "conversation", "node"]:
 		_rows[key].visible = editing and not composing_round
-	_rows["form_actions"].visible = editing
+	# The action row keeps the text field's confirm key on a compact drawer; in every other
+	# mode it only exists where its keys do.
+	_rows["form_actions"].visible = not _blocked and (editing or (compact and _mode == "text"))
 	_rows["field"].visible = editing and _mode == "text"
 	var round_visible := editing and composing_round
 	_rows["line"].visible = round_visible
@@ -406,16 +417,22 @@ func _apply_visibility() -> void:
 	_rows["target"].visible = editing and branching
 	_followup_actions.visible = editing and _mode == "text"
 	_structure.visible = editing and _mode == "text"
-	_footer.visible = not _compact
-	_buttons["keyboard"].visible = _compact
-	_buttons["apply"].visible = _mode != "text"
-	body.visible = not _blocked and (not _compact or not in_reply)
-	body.custom_minimum_size.y = 64.0 if _compact else 110.0
+	_footer.visible = not compact
+	_buttons["keyboard"].visible = compact
+	_buttons["apply"].visible = _mode != "text" and not compact
+	# One key at a time: "save the new structure" while composing, "save this text" while
+	# editing a field, never both. In the compact drawer only the text one is left, and it
+	# is what the player presses to keep the sentence and lower the keyboard.
+	_buttons["apply_text"].visible = _mode == "text"
+	_buttons["apply_text"].disabled = _blocked
+	_buttons["cancel"].visible = not compact
+	body.visible = not _blocked and (not compact or not in_reply)
+	body.custom_minimum_size.y = 64.0 if compact else 110.0
 	new_reply.visible = editing and branching
-	reply.visible = (editing and replying) or (_compact and in_reply)
+	reply.visible = (editing and replying) or (compact and in_reply)
 	reply.custom_minimum_size.y = body.custom_minimum_size.y
-	status.visible = not _compact
-	if _compact:
+	status.visible = not compact
+	if compact:
 		_scroll.set_deferred("scroll_vertical", 0)
 
 

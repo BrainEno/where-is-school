@@ -46,11 +46,11 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# One face on the page: the hint and the line under Continue in the serif too.
 	theme = MenuStyle.page_theme()
-	_factor = UiTextScale.current(self)
+	_factor = MenuStyle.menu_text_scale(self)
 	queue_redraw()
 	_column = VBoxContainer.new()
 	_column.name = "Column"
-	_column.add_theme_constant_override(&"separation", 10)
+	_column.add_theme_constant_override(&"separation", 6 if MobileLayout.enabled else 10)
 	_touch_scroll = MobileLayout.add_menu_column(self, _column)
 	if _touch_scroll != null:
 		_touch_scroll.get_v_scroll_bar().value_changed.connect(queue_redraw.unbind(1))
@@ -58,9 +58,11 @@ func _ready() -> void:
 		_display_name(), MenuStyle.DISPLAY_SIZE, _factor, MenuStyle.PAPER, 0.7, 4
 	)
 	_title.name = "Title"
+	if MobileLayout.enabled:
+		_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_column.add_child(_title)
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 40.0)
+	gap.custom_minimum_size = Vector2(0.0, 22.0 if MobileLayout.enabled else 40.0)
 	_column.add_child(gap)
 	_notice = MenuStyle.paragraph("", MenuStyle.BODY_SIZE, _factor, MenuStyle.WARN)
 	_notice.name = "Notice"
@@ -473,7 +475,7 @@ func _on_locale_changed(_locale: String) -> void:
 
 func _on_setting_changed(key: StringName) -> void:
 	if UiTextScale.is_text_size_key(key):
-		_factor = UiTextScale.current(self)
+		_factor = MenuStyle.menu_text_scale(self)
 		UiTextScale.apply(_column, _factor)
 		UiTextScale.apply(_hint, _factor)
 		_refit()
@@ -493,6 +495,8 @@ func _fit() -> void:
 	# notice and the largest text size need the room, never into the hint line.
 	var left := minf(view.x * 0.085, 160.0)
 	var width := minf(view.x - left * 2.0, 720.0 * factor)
+	if MobileLayout.enabled:
+		width = minf(width, 500.0 * factor)
 	_column.custom_minimum_size = Vector2(width, 0.0)
 	_column.size = Vector2(width, 0.0)
 	if MobileLayout.enabled:
