@@ -30,6 +30,7 @@ extends SceneTree
 ## `port` frames the 港口 past the yard's truck: the quay, the pier, the crane, the ship, the sea.
 ## `front-yard` frames the 前操场 outside the teaching block: dirt, dead trees, the 伸缩门, the
 ## 小门 and its 刷卡机, then the same gate from the street.
+## `stable-yard` frames the stable yard behind 01 closely: the horses, the hen house and hens.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -268,6 +269,19 @@ const STREET_GATE_VIEWS := [
 ]
 const PORT_YARD_STANCES := [["yard_truck", Vector3(8.6, 0.0, 11.8)]]
 const PORT_YARD_VIEWS := [["yard_truck_tail", Vector3(13.0, 3.5, 16.0), Vector3(6.0, 1.8, 11.8)]]
+## The stable yard behind 01 (round 18): the yard from the lane, then close views of the two
+## horses over their half doors, the stall front, the hen house with its hens, one hen, and
+## the muck bay. Fixed views are in the corridor's world coordinates.
+const STABLE_STANCES := [["stable_stance", Vector3(-35.0, -3.4, 13.4)]]
+const STABLE_VIEWS := [
+	["stable_overview", Vector3(-27.0, 3.6, 17.8), Vector3(-37.5, -2.4, 8.5)],
+	["bay_horse", Vector3(-34.0, -1.3, 7.4), Vector3(-37.4, -2.1, 5.6)],
+	["grey_horse", Vector3(-34.0, -1.3, 11.0), Vector3(-37.4, -2.1, 9.2)],
+	["stall_front", Vector3(-32.6, -1.2, 7.6), Vector3(-38.0, -2.2, 7.5)],
+	["hen_house", Vector3(-31.0, -2.3, 10.4), Vector3(-33.2, -3.2, 7.6)],
+	["hen", Vector3(-32.9, -2.85, 9.0), Vector3(-33.7, -3.2, 7.9)],
+	["muck_bay", Vector3(-32.8, -2.0, 8.2), Vector3(-35.0, -3.0, 5.6)],
+]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const BOARD_STANCE := Vector3(12.45, 0, 3.2)
@@ -314,6 +328,7 @@ var _container_yard := false
 var _port := false
 var _front_yard := false
 var _annex_thresholds := false
+var _stable_yard := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -363,6 +378,8 @@ func _initialize() -> void:
 			_port = true
 		elif arg == "front-yard":
 			_front_yard = true
+		elif arg == "stable-yard":
+			_stable_yard = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -447,6 +464,9 @@ func _run() -> void:
 	elif _front_yard:
 		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
 		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
+	elif _stable_yard:
+		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", STABLE_STANCES, STABLE_VIEWS,
+			"stable_yard")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

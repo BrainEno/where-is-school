@@ -14,10 +14,13 @@ extends SceneTree
 ## 5. The stink stable's smell filter (`StenchHaze`, in the corridor beside the annex) is a
 ##    world filter under the outline, off until the protagonist nears the stalls, and gone
 ##    again on the far side of the yard and on the other floors.
+## 6. The stable animals are sculpted (round 18): each horse and hen is one dense painted
+##    surface on `stable_coat.gdshader`, not boxes or cut paper, and the yard stays sparse.
 
 const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const OFFICE := "res://scenes/locations/staff_office/staff_office.tscn"
+const COAT_SHADER := "res://assets/shaders/school/stable_coat.gdshader"
 const REQUIRED: Array[NodePath] = [
 	^"DreamAnnex/Escalator/Tilt/Belt",
 	^"DreamAnnex/Totem",
@@ -152,11 +155,37 @@ func _check_stable_art(annex: Node) -> void:
 				name + " lost its shaped, painted " + str(part))
 		_check.expect(person.get_node_or_null(^"Motion") is AnimationPlayer,
 			name + " lost its quiet visual motion")
+	_check_stable_animals(annex)
 	var wisp := annex.get_node_or_null(^"StableYard/Stink0") as MultiMeshInstance3D
 	if _check.expect(wisp != null and wisp.multimesh != null, "The stable lost its wisps"):
 		var bounds := wisp.multimesh.mesh.get_aabb()
 		_check.expect(bounds.size.z > 0.15 and wisp.multimesh.instance_count <= 3,
 			"The smell must be sparse and three-dimensional")
+
+
+func _check_stable_animals(annex: Node) -> void:
+	var animals: Dictionary = {
+		"DreamHouse/BayHorse": 15000, "DreamHouse/BayHorse/Limbs": 15000,
+		"DreamHouse/GreyHorse": 15000, "DreamHouse/GreyHorse/Limbs": 15000,
+		"Coop/CoopHen0": 9000, "Coop/CoopHen1": 9000,
+		"YardHen0": 9000, "YardHen1": 9000, "YardHen2": 9000,
+	}
+	for path: String in animals:
+		var animal := annex.get_node_or_null(NodePath("StableYard/" + path)) as MeshInstance3D
+		if not _check.expect(animal != null, "The stable lost " + path):
+			continue
+		var mesh := animal.mesh as ArrayMesh
+		var coat := animal.material_override as ShaderMaterial
+		_check.expect(mesh != null and mesh.get_surface_count() == 1
+			and mesh.surface_get_array_index_len(0) > int(animals[path])
+			and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0,
+			path + " is not one dense, painted, sculpted surface")
+		_check.expect(coat != null and coat.shader != null and coat.shader.resource_path == COAT_SHADER
+			and animal.material_overlay == null, path + " is not lit by the coat shader alone")
+	var flies := annex.get_node_or_null(^"StableYard/Flies0") as MultiMeshInstance3D
+	_check.expect(flies != null and flies.multimesh.instance_count <= 40, "The swarm crowds the yard again")
+	for name: String in ["GiantFly", "DazeHalo0", "Dung6", "WallStain0", "Smell1"]:
+		_check.expect(annex.find_child(name, true, false) == null, "The yard is cluttered again: " + name)
 
 
 func _check_stench(corridor: Node) -> void:
