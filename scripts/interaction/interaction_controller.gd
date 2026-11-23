@@ -34,6 +34,8 @@ const CAMERA_SEE_THROUGH_LIMIT := 6
 ## the meshes, so this only absorbs a coplanar surface, the way the outline mask's own key
 ## pull does.
 const CAMERA_DEPTH_TOLERANCE := 0.01
+## Bound overlapping hotspots while still looking beyond their anchor spheres.
+const POINTER_CANDIDATE_LIMIT := 64
 
 @export var player_path: NodePath = ^".."
 @export var sensor_path: NodePath = ^"../InteractionSensor"
@@ -140,42 +142,45 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 	var space := _player.get_world_3d().direct_space_state if _player.get_world_3d() != null else null
 	if space == null:
 		return null
-	# A hotspot that is switched off — a companion waiting to be asked along, a door still
-	# locked, a prop that is out of the story — is not a wall. The pointer looks past it at
-	# whatever is behind, instead of answering every click with nothing.
+	# The first physics hit is often an oversized proximity sphere, not the thing
+	# drawn under the cursor. Inspect all overlapping areas and prefer actual mesh
+	# bounds; only use an anchor sphere when no drawn target was hit. In particular,
+	# a window's sphere must not steal a click on a person in front of it.
 	var excluded: Array[RID] = []
-	for attempt in 4:
+	var best: Interactable = null
+	var best_depth := INF
+	var fallback: Interactable = null
+	for _attempt in POINTER_CANDIDATE_LIMIT:
 		var query := PhysicsRayQueryParameters3D.create(from, far_point, Interactable.INTERACTION_LAYER)
 		query.collide_with_areas = true
 		query.collide_with_bodies = false
-		if not excluded.is_empty():
-			query.exclude = excluded
+		query.exclude = excluded
 		var hit := space.intersect_ray(query)
 		if hit.is_empty():
-			return null
+			break
+		var passed: RID = hit.get("rid", RID())
+		if not passed.is_valid():
+			break
+		excluded.append(passed)
 		var candidate := hit.get("collider") as Interactable
 		if candidate == null or not candidate.can_interact():
-			var passed: RID = hit.get("rid", RID())
-			if not passed.is_valid():
-				return null
-			excluded.append(passed)
 			continue
-		if require_reach and not _in_reach(candidate):
-			return null
-		if not _has_line_of_sight(candidate):
-			return null
 		if not is_drawn_at_screen_ray(from, direction, candidate):
-			# The area is there, the object is not: an opaque surface is drawn in front of
-			# it at this pixel, so the outline mask shows nothing here and neither may the
-			# pointer. Look past it, as past a switched-off hotspot: something drawn in
-			# front of the wall may still be under the cursor.
-			var hidden: RID = hit.get("rid", RID())
-			if not hidden.is_valid():
-				return null
-			excluded.append(hidden)
 			continue
-		return candidate
-	return null
+		var depth := _nearest_box_entry(from, direction.normalized(), candidate.get_outline_meshes())
+		if depth >= 0.0 and depth < best_depth:
+			best = candidate
+			best_depth = depth
+		elif depth < 0.0 and fallback == null:
+			fallback = candidate
+	var selected := best if best != null else fallback
+	# Resolve what the player pointed at before applying reach. Otherwise an
+	# out-of-reach person could make hover fall through to a window behind them.
+	# A remote click can approach around obstacles; activation still checks sight.
+	if selected != null and require_reach:
+		if not _in_reach(selected) or not _has_line_of_sight(selected):
+			return null
+	return selected
 
 
 ## Whether the camera sees `candidate` along this pixel's ray, by the rule the outline mask
