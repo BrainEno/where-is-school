@@ -908,9 +908,13 @@ SHED_CENTRE = (4.8, 1.5, -16.9)
 TYRES = (-2.4, -15.3)
 CACTUS_PLOT = (-16.0, 0.0, -4.0)
 # The razor-wire fences on the open edges (round 21): (body centre, body size). The west
-# one runs from the school plinth to the south fence; the east one fills the gap between
-# the flats' south face (z 18) and the south fence.
-RAZOR_WIRE_WEST = ((-22.75, 1.4, -0.09), (0.6, 2.8, 39.22))
+# one runs from the school plinth to the building site's north side (z 7); the east one
+# fills the gap between the flats' south face (z 18) and the south fence. Along the site
+# (z 7 to the south fence) the hoarding is the fence and the edge is a thin invisible body:
+# it keeps clear of the gate and climb anchors at x -22.6, and with nothing drawn on it it
+# hides neither the gate nor the sand pile from the pointer (interaction_controller.gd).
+RAZOR_WIRE_WEST = ((-22.75, 1.4, -6.35), (0.6, 2.8, 26.7))
+SITE_EDGE_WEST = ((-22.95, 1.4, 13.3), (0.2, 2.8, 12.6))
 RAZOR_WIRE_EAST = ((22.75, 1.4, 18.76), (0.6, 2.8, 1.52))
 
 
@@ -985,6 +989,7 @@ def build_playground(for_courtyard_view: bool = False):
     # (the alley exit), but a threshold stops a body walking through it off the ground.
     s.box("RazorWireWest", RAZOR_WIRE_WEST[0], RAZOR_WIRE_WEST[1], "metal")
     s.box("RazorWireEast", RAZOR_WIRE_EAST[0], RAZOR_WIRE_EAST[1], "metal")
+    s.box("SiteEdgeWest", SITE_EDGE_WEST[0], SITE_EDGE_WEST[1], "metal")
     s.box("AlleyThreshold", (0.0, 1.1, 19.6), (3.8, 2.2, 0.16), "metal")
 
     # the two hoops

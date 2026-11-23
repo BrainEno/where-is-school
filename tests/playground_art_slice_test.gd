@@ -70,9 +70,11 @@ const SOLIDS := {
 	"CactusPlot/Saguaro": [Vector3(-0.3, 2.2, -0.25), Vector3(0.7, 4.4, 0.7)],
 	# Round 21: the skipping girl is solid (a box round her and her rope's sweep).
 	"CactusPlot/GirlBody": [Vector3(1.25, 0.7, 2.2), Vector3(0.8, 1.3, 1.0)],
-	# Round 21: razor-wire fences close the open west edge and the gap east of the south
-	# fence; a threshold in the estate gate stops a body walking off the ground there.
-	"RazorWireWest": [Vector3(-22.75, 1.4, -0.09), Vector3(0.6, 2.8, 39.22)],
+	# Round 21: razor-wire fences close the open west edge (to the building site, whose
+	# hoarding takes over behind an invisible edge) and the gap east of the south fence;
+	# a threshold in the estate gate stops a body walking off the ground there.
+	"RazorWireWest": [Vector3(-22.75, 1.4, -6.35), Vector3(0.6, 2.8, 26.7)],
+	"SiteEdgeWest": [Vector3(-22.95, 1.4, 13.3), Vector3(0.2, 2.8, 12.6)],
 	"RazorWireEast": [Vector3(22.75, 1.4, 18.76), Vector3(0.6, 2.8, 1.52)],
 	"AlleyThreshold": [Vector3(0.0, 1.1, 19.6), Vector3(3.8, 2.2, 0.16)],
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],

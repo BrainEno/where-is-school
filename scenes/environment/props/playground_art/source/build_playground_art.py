@@ -68,7 +68,7 @@ TRES_MESHES = {
 # The razor-wire fences' bodies (tools/build_outdoor_locations.py): name -> centre, size,
 # and which way is out of the yard (-1 west, +1 east).
 RAZOR_FENCES = {
-    "RazorWireWest": ((-22.75, 1.4, -0.09), (0.6, 2.8, 39.22), -1),
+    "RazorWireWest": ((-22.75, 1.4, -6.35), (0.6, 2.8, 26.7), -1),
     "RazorWireEast": ((22.75, 1.4, 18.76), (0.6, 2.8, 1.52), 1),
 }
 # Four tyres stack against the shed wall (a flat-laid truck tyre is 0.26 m high).
@@ -294,7 +294,7 @@ REPOINT: list[tuple[str, str]] = [
     (r"PingPongBall", "ball"),
     (r"FramePost_\d/MeshInstance3D|FrameRung_\d|FrameTopBar", "frame_yellow"),
     (r"TyreStack_\d|TyreLoose", "tyre"),
-    (r"RazorWire(West|East)/MeshInstance3D|AlleyThreshold/MeshInstance3D", "fence_panel_tall"),
+    (r"(RazorWire(West|East)|SiteEdgeWest|AlleyThreshold)/MeshInstance3D", "fence_panel_tall"),
     # Low-detail version emitted only for build_teaching_block's distant view.
     (r"ContainerBody/MeshInstance3D", "container"),
     (r"ContainerDoorLine", "shutter"),
@@ -316,7 +316,7 @@ REPOINT: list[tuple[str, str]] = [
 HIDE = re.compile(
     r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
     r"|SchoolPlinth/MeshInstance3D|TapPost/MeshInstance3D"
-    r"|RazorWire(West|East)/MeshInstance3D|AlleyThreshold/MeshInstance3D"
+    r"|(RazorWire(West|East)|SiteEdgeWest|AlleyThreshold)/MeshInstance3D"
 )
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
