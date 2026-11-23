@@ -12,8 +12,8 @@ geometry, in `StableYard`-local metres (the yard node sits 4 m west of the annex
   old 4 mm plane inside the dream house and at the lane's mouth, so nothing floats or
   sinks and the connector's flat earth meets it without a step.
 * `earth()` is that relief as one smooth mesh over the yard and the lane. The existing
-  vertex colours are retained in the mesh; `stable_earth.gdshader` now uses the original
-  playground soil pigment directly, without multiplying it by those colours. No collider.
+  vertex colours are retained in the mesh; `stable_earth.gdshader` paints it with the
+  front yard's packed-dirt texture in world space (round 22), not those colours. No collider.
 * `straw()` scatters loose straw: thin drifts against the walls, a few tufts kicked out
   across the yard and single strands everywhere, each lying on the relief.
 * `DUNG` is six droppings at irregular spots and sizes; `SWARMS` puts a handful of flies
@@ -41,7 +41,7 @@ SETTLED = (
     (-29.8, -27.4, 5.3, 7.1, .1),          # the coop
     (-33.35, -32.15, 4.6, 10.4, .35),      # the swept strip along the stall fronts
     (-40.0, -38.9, 16.95, 18.3, .15),      # the stacked bales
-    (-33.0, -30.5, 4.6, 6.4, .2),          # the manure bay
+    (-40.2, -38.3, 12.2, 14.7, .2),        # the manure bay (round 22: the back corner)
 )
 HENS = ((-29.7, 7.9), (-28.5, 8.1), (-30.3, 9.3))
 EASE = .45
@@ -90,7 +90,7 @@ def _shade(x, z, h):
     dip = smoothstep(.05, .0, h)
     damp = smoothstep(.2, .65, fbm(x * .3 - 5, z * .3 + 2, 73, 3))
     # The ground nearest the stalls and the heap stays darker and damper.
-    near = max(math.exp(-((x + 32.6) / 1.4) ** 2) * (1.0 if z < 11.5 else 0.0), math.exp(-(math.hypot(x + 31.75, z - 5.4) / 1.6) ** 2))
+    near = max(math.exp(-((x + 32.6) / 1.4) ** 2) * (1.0 if z < 11.5 else 0.0), math.exp(-(math.hypot(x + 39.25, z - 13.45) / 1.6) ** 2))
     v = 1.0 - .1 * dip - .1 * damp - .1 * near + .06 * smoothstep(.05, .09, h)
     return (v, v * .985, v * .97)
 
@@ -145,7 +145,9 @@ def straw(seed=19):
     """Loose straw over the yard and lane: drifts at the walls, tufts, and single strands."""
     spots = []
     # Drifts along the foot of the walls, where the wind leaves it.
-    spots += _drift([(-39.9, 15.0), (-39.9, 11.0)], 90, seed, .35)
+    # The west-wall drift stops short of the manure bay in the corner (round 22).
+    spots += _drift([(-39.9, 16.7), (-39.9, 14.85)], 45, seed, .35)
+    spots += _drift([(-39.9, 12.05), (-39.9, 10.6)], 35, seed + 5, .3)
     spots += _drift([(-38.5, 18.2), (-31.0, 18.25), (-26.0, 18.2)], 110, seed + 10, .3)
     spots += _drift([(-33.0, 4.85), (-27.4, 4.8)], 45, seed + 20, .28)
     # A few tufts dropped from a fork, at no particular place.

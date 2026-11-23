@@ -1932,7 +1932,7 @@ size = Vector3(2.42, 0.21, 0.48)
 size = Vector3(3.93, 3.3, 9.14)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art538"]
-size = Vector3(3.97, 0.94, 9.18)
+size = Vector3(3.97, 0.95, 9.18)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art539"]
 size = Vector3(3.93, 2.14, 9.14)
@@ -14787,7 +14787,7 @@ position = Vector3(0, 1.65, 0)
 shape = SubResource("BoxShape3D_art537")
 
 [node name="Plinth" type="MeshInstance3D" parent="GroundFloor/RestroomExterior"]
-position = Vector3(0, 0.47, 0)
+position = Vector3(0, 0.475, 0)
 mesh = SubResource("BoxMesh_art538")
 material_override = SubResource("Mat_entry_glaze")
 
@@ -14802,7 +14802,7 @@ mesh = SubResource("BoxMesh_art540")
 material_override = SubResource("Mat_arch_chalk")
 
 [node name="Roof" type="MeshInstance3D" parent="GroundFloor/RestroomExterior"]
-position = Vector3(0, 3.28, 0)
+position = Vector3(0, 3.305, 0)
 mesh = SubResource("BoxMesh_art541")
 material_override = SubResource("Mat_roof")
 cast_shadow = 0

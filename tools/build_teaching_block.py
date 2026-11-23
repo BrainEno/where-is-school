@@ -763,6 +763,7 @@ def rear_stair_and_ground_wing(b):
 WASH_X = (-30.85, GROUND_X[0] - 0.12)
 WASH_Z = (5.52, GROUND_Z[1] + 0.11)
 WASH_HEIGHT = 3.3
+ROOF_PROUD = .025
 
 
 def restroom_exterior(b, parent):
@@ -771,10 +772,13 @@ def restroom_exterior(b, parent):
     w, d, h = x1 - x0, z1 - z0, WASH_HEIGHT
     p = b.shell("RestroomExterior", parent, ((x0 + x1) / 2, GROUND_Y, (z0 + z1) / 2), groups=("camera_occluder",))
     b.shape("Solid", p, (0, h / 2, 0), (w, h, d))
-    b.box("Plinth", p, (0, .47, 0), (w + .04, .94, d + .04), "entry_glaze", shadow=True)
+    # Round 22: the plinth stops 1 cm above the gallery dado so their tops never share a plane.
+    b.box("Plinth", p, (0, .475, 0), (w + .04, .95, d + .04), "entry_glaze", shadow=True)
     b.box("Plaster", p, (0, (.94 + h - .22) / 2, 0), (w, h - .22 - .94, d), "rose_plaster", shadow=True)
     b.box("Cornice", p, (0, h - .11, 0), (w + .08, .22, d + .08), "arch_chalk", shadow=True)
-    b.box("Roof", p, (0, h - .02, 0), (w - .3, .04, d - .3), "roof")
+    # Round 22: the roof membrane used to end exactly at the cornice top (both at h), and the
+    # two faces fought over the whole roof as the camera moved. It now sits 2.5 cm proud.
+    b.box("Roof", p, (0, h + ROOF_PROUD - .02, 0), (w - .3, .04, d - .3), "roof")
     for i, (x, z, sw, sd) in enumerate(((0, -d / 2 + .06, w + .1, .14), (0, d / 2 - .06, w + .1, .14),
                                         (-w / 2 + .06, 0, .14, d - .1), (w / 2 - .06, 0, .14, d - .1))):
         b.box(f"Coping{i}", p, (x, h + .1, z), (sw, .2, sd), "arch_chalk", shadow=True)
