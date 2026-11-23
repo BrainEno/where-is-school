@@ -11,12 +11,7 @@ varying vec2 ground_position;
 // Toon diffuse, like the court and yard materials (`diffuse_mode = 3`): under the low dusk
 // sun a Lambert/Burley falloff left the slabs near-black beside the lit court. `fill` is a
 // low self-light on top, so the concrete reads pale in the teaching block's shadow too.
-uniform float fill : hint_range(0.0, 1.0) = 0.25;
 
-const float SLAB = 2.0;
-const vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
-const vec3 JOINT = vec3(0.024, 0.025, 0.030);
-const vec2 WIND = vec2(0.30, 0.11);  // metres per second: one shadow crosses in minutes
 
 float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -48,6 +43,13 @@ void vertex() {
 }
 
 void fragment() {
+    // Locals, not global constants: the GL Compatibility renderer drew the slabs black with
+    // the colours declared at file scope.
+    float SLAB = 2.0;
+    vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
+    vec3 JOINT = vec3(0.024, 0.025, 0.030);
+    vec2 WIND = vec2(0.30, 0.11);  // metres per second: one shadow crosses in minutes
+    float fill = 0.25;
     vec2 p = ground_position;
     vec2 slab = floor(p / SLAB);
     vec2 f = p - slab * SLAB;
