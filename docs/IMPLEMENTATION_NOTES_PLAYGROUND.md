@@ -124,6 +124,50 @@ as are the prompts (`prompt.port`, `prompt.port_out`) and the place name. Review
 from `tests/capture_locations.gd -- port` (the `port` capture job: six fixed views, five
 follow-camera stances, and the truck on the yard's apron).
 
+### The art pass on the port and the container yard (round 17)
+
+The owner asked for the roughest-looking models and scenes to be worked over, and picked the
+port and the container yard first. Nothing that you walk on or click changed: the colliders,
+the navigation, the anchors and their ids are as they were. What changed is what you see:
+
+- **The feeder ship** (`build_port.py`, `ship_mesh`, `ship_cargo_mesh`, `ship_house_mesh`)
+  was one prism of the deck outline with a white box on it. It is now a lofted hull: a raked
+  and flared bow, a raised forecastle with its windlass, winches, bitts and foremast, the
+  sheer rising toward the bow, the bilge turning in at the keel. It is painted in crisp bands
+  (red antifouling, a black boot-top, the dark hull with rust runs and scrapes, a white sheer
+  strake), with a white deck line, a rubbing strake, draft marks and fairleads where the
+  mooring lines come aboard. The hatches have coamings and covers, the boxes on them have
+  end frames and, toward the quay, corrugated sides, and yellow lashing bridges stand between
+  the bays. The house has a poop, four decks of single windows with railings, a bridge whose
+  wings reach the ship's sides, a mast with radar scanners, a banded funnel with exhausts,
+  and a freefall lifeboat on its ramp off the stern. The ship is split into three meshes so
+  that none of them passes the 384 KiB warning line for a model.
+- **The quay crane** (`crane_mesh`): the legs are box girders with corner flanges and
+  yellow-and-black feet. Bogies with buffers and wheel sets carry them. There are sill and
+  portal beams with K-braces and X-braces, a number board, a caged ladder with rest
+  platforms, walkways and handrails along the boom, lights at the boom tip, cross-tied
+  A-frame legs with paired stays and a red light on top, a panelled and louvred machinery
+  house, a glazed driver's cab under the trolley, and a festoon cable.
+- **The truck** (`build_container_yard.py`, `truck_mesh`), shared by the yard and the port,
+  has gained:
+  - on the cab: a roof fairing, a sun visor, a slatted grille, lamps and indicators, door
+    seams and steps, mirror arms, mudguards, a fuel tank and an exhaust stack;
+  - on the trailer: landing legs, side guards, mud flaps and a number plate.
+- **The container yard's edges.** The yard was a slab floating in the background colour.
+  - Past its edges the same asphalt runs on into the fog (`Outskirts`).
+  - Behind the back wall and the west fence stand the rest of the terminal (`FarStacks`):
+    rows of stacks that climb away from the wall, a long shed with roller doors, and
+    floodlight towers.
+  - Two of the port's own quay cranes stand far off as flat dark shapes. The yard refers to
+    `port/meshes/crane.tres`, so the yard's own `crane.tres` is gone.
+  - The back wall is precast concrete: panels between columns, a coping, rust and water run
+    down from the top, a dirty foot, and wire on cranked brackets. Its collider is the same
+    box as before.
+  - The chain-link fences have posts, a top rail and a bottom wire (`Edges/FenceFrame`).
+
+Review frames: the port capture adds `stern` and `bow`, and the yard capture adds
+`back_wall` and `far_edge`.
+
 Adding an anchor means: add the geometry and the `Interactables` entry in
 `tools/build_outdoor_locations.py`, regenerate, then add the inspection (or a
 conversation route and its conversation) in **both** languages.
