@@ -522,7 +522,10 @@ func request_path_to(destination: Vector3) -> bool:
 ## the current walk as it was, when the map has no route.
 func _route_to(map: RID, target: Vector3) -> bool:
 	var path := NavigationServer3D.map_get_path(map, global_position, target, true)
-	if path.size() < 2:
+	# A nonempty path can terminate at the edge of a disconnected island. Never
+	# accept that partial route as a promise that the requested destination is reachable.
+	var snapped_target := NavigationServer3D.map_get_closest_point(map, target)
+	if path.size() < 2 or path[-1].distance_to(snapped_target) > 0.25:
 		return false
 	_path_active = true
 	_path_target = target

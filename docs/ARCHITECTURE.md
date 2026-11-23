@@ -300,8 +300,9 @@ other conversation plays that one.
 `InteractionController` resolves one target per physics frame from two inputs:
 
 - a screen-space ray from the camera through the pointer, restricted to the
-  interaction layer, with the same reach and line-of-sight rules as facing, plus one rule
-  of its own: the object has to be *drawn* at that pixel (`is_drawn_at_screen_ray`);
+  interaction layer, with the same reach and line-of-sight rules as facing for hover;
+  remote clicks need only the camera view initially and validate the player's sight on
+  approach. The object must be *drawn* at that pixel (`is_drawn_at_screen_ray`);
 - the facing/distance score that existed before, among objects in the eye's sight *and*
   drawn somewhere on screen (`is_seen_by_camera`, the anchor-sphere rule below): what has
   no outline gets no prompt and no E.
@@ -320,7 +321,9 @@ find the sheet while the outline, correctly, drew nothing.
   between hides the object at that pixel. This is per pixel, so a partly covered object is
   pointable on its uncovered part only, and asking again gives the same answer.
 - *On its anchor sphere, off the object*: it counts while any part is in view - a ray to the
-  centre or a corner of one of its boxes reaches the box first.
+  centre or a corner of one of its boxes reaches the box first. When hotspots overlap,
+  an eligible mesh-bounds hit takes priority over an anchor-only hit, and the nearest
+  mesh-bounds hit wins. These are still bounding boxes, not pixel-accurate silhouettes.
 - *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, drawn
   with at least one material that writes depth - anything but an alpha-blended
   `BaseMaterial3D` (a `ShaderMaterial`, or no material, counts as opaque). A collider with
@@ -400,7 +403,8 @@ velocity, applies gravity, calls `move_and_slide()` and turns the visual; manual
 and path following both feed it a direction. A walk is started with
 `request_path_to(point)`, which refuses (returns false) when control is locked, when
 the map has no geometry, when the point is more than 0.75 m off the mesh horizontally
-or more than 1.5 m off it vertically, or when `map_get_path()` produces no route. The
+or more than 1.5 m off it vertically, or when `map_get_path()` produces no complete route
+(the endpoint must reach the snapped destination). The
 route that comes back is kept and walked in order: each physics frame the body steers
 at the next corner, dropping any corner it has arrived at (`waypoint_radius`, 0.35 m).
 The body follows the route itself rather than asking the `NavigationAgent3D` for a next
@@ -417,10 +421,12 @@ world. One click resolves to exactly one of three outcomes:
 
 1. an interactable under the cursor (picked with the same ray the hover uses, but
    without the reach limit, because a click may legitimately name something across the
-   room) becomes the target: find a spot inside its radius that is on the mesh, has a
-   real route and keeps line of sight, walk there, then **re-validate** — still valid,
-   still enabled, still in reach — and call
+   room and the player's current sight may be blocked) becomes the target: find a spot
+   inside the controller's actual reach that is on the mesh, has a complete route and
+   keeps line of sight, walk there, then **re-validate** — still valid, still enabled,
+   still in reach and visible to the player — and call
    `InteractionController.request_activation()`, the same call E makes. Activation
+   may happen earlier when the moving player reaches a clear usable position. Activation
    happens at most once, and the pending target is dropped on arrival, on failure, on
    cancellation, and on any location change;
 2. otherwise, walkable ground under the cursor is a destination: the ray only tests

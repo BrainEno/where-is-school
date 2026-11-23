@@ -113,6 +113,8 @@ func _run() -> void:
 	await _check_declared_backing_is_seen_through()
 	await _check_bag_on_a_desk()
 	await _check_eye_heights()
+	await _check_overlapping_pointer_targets()
+	await _check_remote_pointer_ignores_player_obstruction()
 	await _check_approach_spot_refuses_a_blocked_view()
 	await _check_canopy_hides_from_the_camera()
 	await _check_partial_cover_is_per_pixel()
@@ -161,8 +163,8 @@ func _assert_blocked(target: Interactable, what: String, wall: StaticBody3D) -> 
 		_failures.append("The line of sight went through %s." % what)
 	if _interaction.has_line_of_sight(target):
 		_failures.append("The controller reports a clear view through %s." % what)
-	if _find_target_on_screen(target) != Vector2.ZERO:
-		_failures.append("The pointer selected a target behind %s." % what)
+	if _find_target_on_screen(target, true) != Vector2.ZERO:
+		_failures.append("The in-reach pointer selected a target behind %s." % what)
 	# Face it, with the pointer parked where it can claim nothing.
 	_interaction.set_mouse_override(Vector2(2.0, 2.0))
 	await _physics_frames(4)
@@ -293,12 +295,63 @@ func _check_eye_heights() -> void:
 	_clean_up()
 
 
+## A broad window-like anchor overlaps a person, but its own mesh is behind the
+## person. The actual drawn target, not whichever sphere is hit first, must win.
+func _check_overlapping_pointer_targets() -> void:
+	await _reset()
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera == null:
+		_failures.append("Pointer overlap test has no camera.")
+		return
+	var screen := _player.get_viewport().get_visible_rect().size * 0.5
+	var from := camera.project_ray_origin(screen)
+	var ray := camera.project_ray_normal(screen).normalized()
+	var actor := _make_drawn_probe(&"pointer_person", from + ray * 5.0, Vector3.ONE * 0.5)
+	actor.radius = 0.3
+	var window := _make_drawn_probe(&"pointer_window", from + ray * 4.8, Vector3.ONE)
+	window.radius = 2.0
+	var window_mesh := window.get_node("Drawn") as MeshInstance3D
+	window_mesh.global_position = from + ray * 7.0
+	actor.rebuild_pick_shapes()
+	window.rebuild_pick_shapes()
+	var old_mask := _interaction.occluder_mask
+	_interaction.occluder_mask = 0
+	if not await Harness.wait_until(
+		func() -> bool: return _interaction.get_target_at_screen_position(screen, false) == actor, 2.0
+	):
+		_failures.append("A broad window anchor stole the click from the visible person.")
+	actor.interaction_enabled = false
+	if not await Harness.wait_until(
+		func() -> bool: return _interaction.get_target_at_screen_position(screen, false) == window, 2.0
+	):
+		_failures.append("Disabling the front target did not expose the window behind it.")
+	_interaction.occluder_mask = old_mask
+	_clean_up()
+
+
+## The camera can see over a collider which blocks the character's eye. Remote
+## clicks must still name the target; E and immediate interaction stay sight-gated.
+func _check_remote_pointer_ignores_player_obstruction() -> void:
+	await _reset()
+	var target := _make_probe(&"pointer_blocked_eye", Vector3(0.0, 0.9, -1.6))
+	_make_wall(Vector3(0.0, 1.2, -0.6), Vector3(4.0, 2.4, 0.2))
+	if not await Harness.wait_until(func() -> bool: return not _interaction.has_line_of_sight(target), 2.0):
+		_failures.append("Remote pointer fixture did not block the player's sight.")
+	var screen := _screen_of(target.global_position)
+	if not await Harness.wait_until(
+		func() -> bool: return _interaction.get_target_at_screen_position(screen, false) == target, 2.0
+	):
+		_failures.append("Camera-visible target could not be selected for an approach around an obstruction.")
+	elif _interaction.get_target_at_screen_position(screen, true) == target:
+		_failures.append("A blocked target became immediately usable through the obstruction.")
+	_clean_up()
+
+
 # --- case 6: where the character would stand ---------------------------------
 
 
-## The approach-spot search asks the same question. A wall between the room and the
-## object means there is no standing position that can see it, so a click neither walks
-## nor activates, and says why.
+## A wall blocks immediate use from the player's side. A remote click may start
+## looking for a route around it, but it must never activate through that wall.
 func _check_approach_spot_refuses_a_blocked_view() -> void:
 	await _reset()
 	var target := _make_probe(&"occlusion_approach", Vector3(0.0, 0.9, -1.2))
@@ -318,13 +371,12 @@ func _check_approach_spot_refuses_a_blocked_view() -> void:
 		_failures.append("A standing spot on the room side could see the target through the wall.")
 	_activated.clear()
 	_navigator.click_at_screen_position(_screen_of(target.global_position))
+	if _activated.has(&"occlusion_approach"):
+		_failures.append("A click immediately used a target through the wall.")
+	# If a route around the wall was offered, do not allow it to move the player
+	# before the E-key assertion, which is specifically about the blocked side.
+	_navigator.cancel()
 	await _physics_frames(4)
-	if _navigator.is_approaching():
-		_failures.append("The navigator approached a target it could not see. %s" % _explain(target))
-	if _player.is_path_active():
-		_failures.append("The character started walking at a target behind a wall. %s" % _explain(target))
-	if _navigator.get_last_rejection().is_empty():
-		_failures.append("A click on a target behind a wall was refused without saying why.")
 	await _push_e()
 	if _activated.has(&"occlusion_approach"):
 		_failures.append("E used a target behind a wall.")
@@ -438,7 +490,7 @@ func _make_wall(position: Vector3, size: Vector3, drawn: bool = false) -> Static
 ## Where on screen the pointer is over this object, by asking the same question the
 ## pointer asks. Scanned rather than projected: a projection is a guess about a camera
 ## transform, and this test should fail about the rule, not about the camera.
-func _find_target_on_screen(target: Interactable) -> Vector2:
+func _find_target_on_screen(target: Interactable, require_reach: bool = false) -> Vector2:
 	var rect := _player.get_viewport().get_visible_rect().size
 	for x_step in 20:
 		for y_step in 14:
@@ -446,7 +498,7 @@ func _find_target_on_screen(target: Interactable) -> Vector2:
 				rect.x * (0.02 + 0.96 * float(x_step) / 19.0),
 				rect.y * (0.02 + 0.96 * float(y_step) / 13.0)
 			)
-			if _interaction.get_target_at_screen_position(screen, false) == target:
+			if _interaction.get_target_at_screen_position(screen, require_reach) == target:
 				return screen
 	return Vector2.ZERO
 

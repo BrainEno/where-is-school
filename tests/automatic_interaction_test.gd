@@ -137,6 +137,14 @@ func _check_click_distant_person() -> void:
 	if not await _stand_far_from(q, 3.2, 4.6):
 		_failures.append("Could not find a spot 3-4.6 m from the person with a clear view of it.")
 		return
+	# The hotspot's sensor radius is not the player's interaction reach. A tiny
+	# sensor around the real seated person must still offer a reachable standing spot.
+	var old_radius := q.radius
+	q.radius = 0.1
+	var spot: Variant = _navigator._find_approach_spot(q)
+	q.radius = old_radius
+	if spot == null or not _interaction.is_in_reach_at(spot, q):
+		_failures.append("A small hotspot around the classroom person has no usable approach spot.")
 	_activations.clear()
 	_approaches_activated.clear()
 	var screen := _screen_of(q.global_position)
@@ -820,7 +828,9 @@ func _stand_near(target: Interactable, min_distance: float, max_distance: float)
 				yaw = deg_to_rad(0.01)
 			_player.teleport(Transform3D(Basis(Vector3.UP, yaw), Vector3(snapped.x, snapped.y + 0.05, snapped.z)))
 			await _physics_frames(3)
-			if _screen_for_target(target) != Vector2.ZERO:
+			# Remote picking no longer implies the player can use the object from
+			# this stance. The immediate-activation cases need both conditions.
+			if _interaction.has_line_of_sight(target) and _screen_for_target(target) != Vector2.ZERO:
 				return true
 	return false
 
