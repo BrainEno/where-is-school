@@ -106,6 +106,12 @@ func _title_and_settings() -> void:
 	if _check.expect(settings.is_open(), "Tap did not open Settings"):
 		_check_target(settings.get_row_control(&"back"), "Settings Back")
 		_check.expect(settings.get_row_control(&"fullscreen") == null, "Phone Settings exposes desktop fullscreen")
+		_check.expect(MobileLayout.safe_rect(settings).encloses(settings.get_panel().get_global_rect()),
+			"Settings panel escaped the safe area")
+		_check.expect(settings.find_child("TouchControlsHelp", true, false) != null,
+			"Settings does not explain the phone controls")
+		_check.expect(settings.get_row_control(&"bind_interact_keyboard") == null,
+			"Touch settings exposes keyboard bindings as mobile controls")
 		var scroll := settings.get_scroll()
 		var speed := settings.get_row_control(&"text_speed") as Button
 		var text := speed.text
@@ -118,10 +124,11 @@ func _title_and_settings() -> void:
 			start, scroll.get_global_rect(), origin, scroll.scroll_vertical, speed.mouse_filter, DisplayServer.is_touchscreen_available()])
 		_check.expect(speed.text == text, "Scrolling Settings changed reading speed")
 		# A phone has no hint line naming the confirm input, so the screen itself must offer a
-	# visible way out of a row it has already changed. "完成" is that key: it is a real
-	# finger target, it says the change is stored, and it closes.
+		# visible way out of a row it has already changed. Confirm closes the panel;
+		# preference changes are persisted when they are made, not by the button.
 		var done := settings.get_row_control(&"done") as Button
 		if _check.expect(done != null and done.is_visible_in_tree(), "Phone Settings has no Done key"):
+			_check.expect(done.text == L10n.t("settings.touch_confirm"), "Phone settings needs a visible Confirm")
 			_check_target(done, "Settings Done")
 			await _tap_control(done)
 			_check.expect(not settings.is_open(), "Settings Done did not close the modal")
@@ -134,8 +141,12 @@ func _title_and_settings() -> void:
 				"Reopening Settings kept the previous scroll position over the first rows")
 			await _tap_control(speed_row)
 			_check.expect(speed_row.text != before, "Tapping a choice row on a phone changed nothing")
-			await _tap_control(reopened.get_row_control(&"back"))
-			_check.expect(not reopened.is_open(), "Settings Back did not close the modal")
+			var saved_speed: StringName = _settings.call("get_text_speed")
+			await _tap_control(reopened.get_row_control(&"done"))
+			_settings.call("load_settings")
+			_check.expect(_settings.call("get_text_speed") == saved_speed,
+				"Confirm did not preserve the changed setting across reload")
+			_check.expect(not reopened.is_open(), "Settings Confirm did not close the modal")
 	title.queue_free()
 	await process_frame
 
@@ -421,6 +432,9 @@ func _pause_navigation() -> void:
 	var use := _ui.get_node(^"TouchActions/Use") as Button
 	_check.expect(touch_menu.icon != null and _return_button().icon != null and use.icon != null,
 		"The HUD buttons lost their phone glyphs")
+	_settings.call("set_input_device", &"touch")
+	_ui.hud.show_noted(0)
+	_check.expect(not _ui.hud.get_noted_text().contains("["), "Touch notebook notice exposes a keyboard shortcut")
 	var before := _nav.get_world_click_event_count()
 	await _tap_control(touch_menu)
 	if not _check.expect(_pause.is_open() and paused, "Touch Menu did not pause the scene tree"):
@@ -460,6 +474,11 @@ func _reading() -> void:
 	panel.advance_requested.connect(func() -> void: continued[0] += 1)
 	var footer := panel.find_child("TouchReading", true, false)
 	var next_line := footer.get_node(^"Continue") as Button
+	var loc := root.get_node(^"Loc")
+	loc.call("set_locale", "zh-CN")
+	_check.expect(next_line.text == "继续", "Chinese dialogue button should read only Continue")
+	loc.call("set_locale", "en")
+	_check.expect(next_line.text == "Continue", "English dialogue button is not localized")
 	_check_target(next_line, "Dialogue Continue")
 	var before := _nav.get_world_click_event_count()
 	await _tap_control(next_line)

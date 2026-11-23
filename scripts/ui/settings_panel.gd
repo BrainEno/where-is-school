@@ -236,7 +236,7 @@ func _rebuild(keep_scroll: bool = true) -> void:
 	_title.text = L10n.t("settings.title")
 	_back.text = L10n.t("menu.back")
 	if _done != null:
-		_done.text = L10n.t("settings.done")
+		_done.text = L10n.t("settings.touch_confirm")
 
 	_heading("settings.section.text", true)
 	_choice_row(&"text_size", "settings.text_size", _text_size_options(), _current(&"text_size"))
@@ -256,23 +256,30 @@ func _rebuild(keep_scroll: bool = true) -> void:
 	_choice_row(&"language", "settings.language", _language_options(), _current(&"language"))
 	_diagnostics_rows()
 	_heading("settings.section.controls")
-	_choice_row(&"sprint_mode", "settings.sprint_mode", _sprint_mode_options(), _current(&"sprint_mode"))
-	_binding_header()
-	for action: StringName in _rebindable():
-		_binding_row(action)
-	var restore := MenuStyle.entry_button(
-		L10n.t("settings.restore_bindings"), MenuStyle.BODY_SIZE, _factor
-	)
-	restore.name = "RestoreBindings"
-	MenuStyle.style_form_entry(restore)
-	restore.autowrap_mode = TextServer.AUTOWRAP_OFF
-	restore.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var before_restore := Control.new()
-	before_restore.custom_minimum_size = Vector2(0.0, 6.0)
-	_rows.add_child(before_restore)
-	restore.pressed.connect(_on_restore_pressed)
-	_rows.add_child(restore)
-	_controls[&"restore_bindings"] = restore
+	if MobileLayout.enabled:
+		var touch_help := MenuStyle.paragraph(L10n.t("settings.touch_controls"), MenuStyle.BODY_SIZE, _factor)
+		touch_help.name = "TouchControlsHelp"
+		_rows.add_child(touch_help)
+	# Keep keyboard/controller binding controls available when an external device is
+	# actually in use, without presenting those bindings as phone instructions.
+	if not MobileLayout.enabled or InputHint.device(self) != InputHint.DEVICE_TOUCH:
+		_choice_row(&"sprint_mode", "settings.sprint_mode", _sprint_mode_options(), _current(&"sprint_mode"))
+		_binding_header()
+		for action: StringName in _rebindable():
+			_binding_row(action)
+		var restore := MenuStyle.entry_button(
+			L10n.t("settings.restore_bindings"), MenuStyle.BODY_SIZE, _factor
+		)
+		restore.name = "RestoreBindings"
+		MenuStyle.style_form_entry(restore)
+		restore.autowrap_mode = TextServer.AUTOWRAP_OFF
+		restore.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		var before_restore := Control.new()
+		before_restore.custom_minimum_size = Vector2(0.0, 6.0)
+		_rows.add_child(before_restore)
+		restore.pressed.connect(_on_restore_pressed)
+		_rows.add_child(restore)
+		_controls[&"restore_bindings"] = restore
 	if not MobileLayout.enabled:
 		_authoring_rows()
 
@@ -874,6 +881,8 @@ func _on_bindings_changed() -> void:
 
 
 func _on_device_changed(_device: StringName) -> void:
+	# Do not rebuild under a finger between touch-down and touch-up. The next
+	# open() rebuilds the controls section for the current input device.
 	_refresh_status_hint()
 
 
