@@ -79,16 +79,54 @@ the one ink shadow, and replaces the rest:
   smell instead of five of each; no daze halos and no lamp over the heap. One grain mat,
   and the bales are stacked out of the way at the lane's west end.
 
+### Round 19 (2026-11-11): two women at work, the restroom's outside, trodden earth
+
+The owner found the two yard figures coarse and could not tell what they were doing, saw
+no outside to the restroom that should stand beside the yard, and asked for the yard to be
+the same uneven soil as the playground, with straw, a few droppings and some flies.
+
+- **The women** (`tools/stable_workers.py`, placed by `tools/stable_people.py`) are
+  signed-distance sculpts in the same kit as the animals: old women in padded jackets with
+  side-fastened plackets and knot buttons, sleeve covers, aprons and head cloths, cloth
+  shoes with white soles, faces with eyes, brows and mouths, and hands that close on what
+  they hold (about 16 000 triangles each, five meshes). Each does one job you can read
+  from across the yard: `OldWoman1` bends from the hip and draws a long wooden grain rake
+  through the grain mat (`Rake`: her back, weight and arms swing over a 3.2 s stroke and
+  the rake's teeth stay on the grain, solved in `rake_keys()`); `OldWoman0` sits on a
+  low stool and shakes a round bamboo sieve of grain over her knees (`Sift`, 1.2 s), a
+  basket of grain and a tied sack beside her. One native `AnimationPlayer` each; no
+  script, actor or collider. They are lit by `stable_coat.gdshader` like the animals.
+- **The restroom's outside** (`RestroomExterior` in `teaching_block.tscn`, from
+  `tools/build_teaching_block.py`) fills the 4 m between the gallery's end wall and the
+  yard's east edge, from the yard's north wall to the facade line on the lane: the
+  facade's plinth, rose plaster and chalk cornice, a flat roof behind a coping, three high
+  frosted windows lit from inside on the yard side and one on the lane, an extract grille
+  and a downpipe. It is one camera-fading body, so the follow camera sees through it, and
+  it closes the lane's north edge where it used to open onto nothing.
+- **Trodden earth** (`tools/stable_ground.py`): `YardEarth` is one relief mesh over the
+  yard and the lane, a few centimetres of swells, lumps and trodden hollows above the
+  unchanged flat walking slabs (no collider), easing flat under the things that stand on
+  the ground and at the lane's mouth. `stable_earth.gdshader` paints the playground soil's
+  mineral mottle and grit over a vertex shade that darkens hollows and the damp ground by
+  the stalls.
+- **Straw, droppings, flies**: `LooseStraw` lies on the relief - drifts at the foot of the
+  walls, seven tufts at no particular place and single strands everywhere; six droppings
+  (`Dung0`-`5`) of three shapes at irregular spots, sizes and turns; small swarms of 7, 5
+  and 6 flies (`Flies1`-`3`) over three of them, and the heap's swarm cut to 16, so the
+  yard has 34 flies in all.
+
 | Piece | What it is | How it is drawn |
 |---|---|---|
 | `DreamHouse/BayHorse`, `GreyHorse` (each with `Limbs`) | Two horses with their heads over the half doors, grazing slowly at their own pace and swishing their tails. | Sculpted trunk and head, then legs, mane and tail (two meshes per horse, under the model warning line). `stable_coat.gdshader`. |
 | `DreamHouse/HalfDoor0`-`2` | Ledged, braced plank half doors with strap hinges and a bolt. | `stable_props.half_door()`. |
 | `DreamHouse/HorseShadow` | The empty middle stall has a horse's ink shadow painted on its back wall - a horse that is not there. | Cut-out slab in ink. |
-| `DreamHouse/StallBedding`, `StableYard/Straw0`-`1` | Clean bedding in the stalls; straw shaken out in front of them and round the bales. | One mesh of creased straw ribbons per area. |
-| `StableYard/Dung0`-`2`, `Heap/Muck`, `Heap/Bay` | A few small droppings near the stalls; the muck heap kept in a three-sided board bay. | Matte, no highlight. |
+| `DreamHouse/StallBedding`, `StableYard/Straw0`-`1`, `LooseStraw` | Clean bedding in the stalls; straw shaken out in front of them and round the bales; loose straw blown over the yard (round 19). | One mesh of creased straw ribbons per area, laid on the relief. |
+| `StableYard/YardEarth` | Uneven, trodden earth over the yard and lane (round 19). | `stable_ground.earth()`, `stable_earth.gdshader`; no collider. |
+| `StableYard/Dung0`-`5`, `Heap/Muck`, `Heap/Bay` | Six droppings at random spots; the muck heap kept in a three-sided board bay. | Matte, no highlight. |
 | `StableYard/Coop` (`HenHouse`, `CoopHen0`-`1`), `YardHen0`-`2` | The hen house and its run, two hens inside and three pecking in the yard. | `stable_props.coop()`; sculpted hens peck about the neck in their material. |
-| `StableYard/Flies0` | A small swarm over the heap. | `stench_flies.gdshader`: each instance loops its own knot; wings flap as dithered film. |
-| `StableYard/OldWoman0`, `OldWoman1` | A seated woman and a raker beside the grain mat. | `tools/stable_people.py`, quiet native animation, no actor or collider. |
+| `StableYard/Flies0`-`3` | A small swarm over the heap and a few flies over three droppings (34 in all). | `stench_flies.gdshader`: each instance loops its own knot; wings flap as dithered film. |
+| `StableYard/OldWoman0`, `OldWoman1` | A seated woman shaking a sieve of grain, and a woman raking the grain mat (round 19). | Sculpted in `tools/stable_workers.py`, placed by `tools/stable_people.py`; `stable_coat.gdshader`; one native loop each, no actor or collider. |
+| `RestroomExterior` (in `teaching_block.tscn`) | The restroom's outside beside the yard: plaster, frosted windows, a grille and a downpipe (round 19). | Boxes in the facade's materials; one camera-fading collider. |
 | `StableYard/QuiltLine/Quilt0`-`2`, `GrainMat0`, `HayStack/HayBale0`-`2` | Quilts that block the view of the doorway; grain drying; a stack of bales. | `stable_props.quilt()`, `grain_mat()`, `hay_bale()`. |
 | `StableYard/Stink0`, `Smell0` | Two faint wisps and one trace of smell over the heap. | `stench_wisp.gdshader`; `dream_odor.gdshader`. |
 | `StenchHaze` (in `corridor.tscn`) | A restrained hint of the original yellow-green air, distortion and ink, which clears on walking away. | `stench_haze.gdshader` on a full-screen sheet in a `world_filter` CanvasLayer at layer -3 (under the concussion paste-up, the outline and the UI). `stench_haze.gd` eases `stench` from the protagonist's distance to the stall fronts and the heap: full within 2.4 m, nothing past 9.5 m or on another floor. Hidden at 0. |

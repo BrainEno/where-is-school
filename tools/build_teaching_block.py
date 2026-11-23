@@ -750,7 +750,56 @@ def rear_stair_and_ground_wing(b):
     b.instance("Door", p, "lab_door", (-0.06, 0, 0))
     b.box("EnamelLintel", p, (0, 2.36, 0.23), (2.42, 0.21, 0.48), "fern_blue", shadow=True)
     lamp(b, "BorrowedLight", p, (0, 2.28, 0.34), 0.60)
+    restroom_exterior(b, g)
 
+
+
+# The restroom's outside, round 19. The restroom door at the gallery's west end leads into a
+# room of its own (scenes/locations/restroom); from the stable yard and lane the owner saw
+# only the back of that end wall and the void behind it. This is the room's outer shell,
+# between the end wall and the yard's east edge: one blocking, camera-fading body with a
+# plinth, the facade's rose plaster and chalk cornice, a flat roof behind a coping, high
+# frosted windows lit from inside, an extract grille and a downpipe.
+WASH_X = (-30.85, GROUND_X[0] - 0.12)
+WASH_Z = (5.52, GROUND_Z[1] + 0.11)
+WASH_HEIGHT = 3.3
+
+
+def restroom_exterior(b, parent):
+    x0, x1 = WASH_X
+    z0, z1 = WASH_Z
+    w, d, h = x1 - x0, z1 - z0, WASH_HEIGHT
+    p = b.shell("RestroomExterior", parent, ((x0 + x1) / 2, GROUND_Y, (z0 + z1) / 2), groups=("camera_occluder",))
+    b.shape("Solid", p, (0, h / 2, 0), (w, h, d))
+    b.box("Plinth", p, (0, .47, 0), (w + .04, .94, d + .04), "entry_glaze", shadow=True)
+    b.box("Plaster", p, (0, (.94 + h - .22) / 2, 0), (w, h - .22 - .94, d), "rose_plaster", shadow=True)
+    b.box("Cornice", p, (0, h - .11, 0), (w + .08, .22, d + .08), "arch_chalk", shadow=True)
+    b.box("Roof", p, (0, h - .02, 0), (w - .3, .04, d - .3), "roof")
+    for i, (x, z, sw, sd) in enumerate(((0, -d / 2 + .06, w + .1, .14), (0, d / 2 - .06, w + .1, .14),
+                                        (-w / 2 + .06, 0, .14, d - .1), (w / 2 - .06, 0, .14, d - .1))):
+        b.box(f"Coping{i}", p, (x, h + .1, z), (sw, .2, sd), "arch_chalk", shadow=True)
+    west, south = -w / 2, d / 2
+    # Three high frosted lights along the yard side, one on the lane side: a washroom's windows.
+    # Each is built facing its local +Z and turned onto its face.
+    for i, (pos, yaw) in enumerate([((west, 2.38, z), -90) for z in (-.9, 1.6, 3.4)] + [((-.55, 2.38, south), 0)]):
+        b.node(f"Light{i}", p, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+        q = child_path(p, f"Light{i}")
+        b.box("Frame", q, (0, 0, .02), (1.02, .6, .04), "night_blue")
+        b.box("Frost", q, (0, 0, .045), (.92, .5, .02), "wash_frost")
+        b.box("Mullion", q, (0, 0, .06), (.03, .5, .02), "night_blue")
+        b.box("Sill", q, (0, -.33, .06), (1.12, .05, .12), "arch_chalk")
+    # An extract grille with a hood of slats, low on the yard side.
+    b.box("GrilleFrame", p, (west - .03, 1.55, -2.6), (.06, .46, .46), "night_blue")
+    for k in range(5):
+        b.box(f"Slat{k}", p, (west - .07, 1.38 + k * .085, -2.6), (.06, .022, .4), "exit_steel", rot=(0, 0, 32))
+    # A downpipe from a roof outlet, down the yard corner to a small gully.
+    px, pz = west - .09, south - .3
+    b.box("Outlet", p, (px + .03, h - .32, pz), (.16, .1, .12), "exit_steel")
+    b.box("Downpipe", p, (px, (h - .32) / 2 + .08, pz), (.09, h - .4, .09), "exit_steel", shadow=True)
+    b.box("Shoe", p, (px - .06, .1, pz), (.2, .07, .09), "exit_steel")
+    b.box("Gully", p, (px - .14, .01, pz), (.24, .02, .24), "night_blue")
+    for k, y in enumerate((.8, 1.7, 2.6)):
+        b.box(f"Bracket{k}", p, (px + .05, y, pz), (.06, .04, .13), "night_blue")
 
 def room_portal(b, parent, name, pos, yaw, scene, trim, plaster):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
@@ -996,6 +1045,8 @@ def teaching_block():
     b.mat("transom", transparency=1, cull_mode=2, albedo_color="Color(0.68, 0.57, 0.44, 0.79)",
           emission_enabled="true", emission="Color(0.72, 0.53, 0.33, 1)", emission_energy_multiplier="0.25")
     b.mat("lamp_tube", shading_mode=0, albedo_color="Color(0.88, 0.75, 0.51, 1)")
+    b.mat("wash_frost", albedo_color="Color(0.74, 0.82, 0.8, 1)", roughness="0.35", emission_enabled="true",
+          emission="Color(0.82, 0.9, 0.86, 1)", emission_energy_multiplier="0.6")
     ruled = b.bind("ruled_floor_tile", f"{STAGE}/textures/corridor_floor_far.png", "Texture2D")
     spans = {"lower": MAIN_Z[1]-MAIN_Z[0], "lower_turn": EAST_END-MAIN_X[1],
              "upper": UPPER_Z[1]-UPPER_Z[0], "upper_turn": 18.25-UPPER_X[1]}
