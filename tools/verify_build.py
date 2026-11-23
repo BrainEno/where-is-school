@@ -202,17 +202,13 @@ CATEGORIES = (
     ),
 )
 
-# The whole pack. The baseline is 1.37 MiB of 256 files, so the hard limit leaves room for
-# roughly eleven more times the content the game has today — several more locations with
-# furniture, textures and sound — while 8 MiB is an early signal that a release doubled.
-# The number the old check used (16 MiB) was the hard limit until the release reached 15.97 MiB
-# with the cast still incomplete. The owner raised it to 24 MiB when teacher B's model (about
-# 1 MiB packed) joined the build for the imagined lesson. At 23.94 MiB the front yard (round 16,
-# about 0.9 MiB of textures and meshes) did not fit, and the owner raised it to 32 MiB so later
-# locations have room too. The 8 MiB warning line is unchanged, so every release still says it
-# is past it.
+# The 8 MiB warning remains an early growth signal. The owner approved raising the
+# hard limit only after a real export with all 14 supplied score MP3s: a clean Linux
+# export on the pinned 4.7.2 source measured 35.87 MiB of packed entries (37,826,848
+# bytes including the PCK directory). 40 MiB gives it modest headroom without changing
+# the per-file limits. Earlier limits were 16, 24 and then 32 MiB.
 PACK_WARN_BYTES = 8 * MiB
-MAX_PACK_BYTES = 32 * MiB
+MAX_PACK_BYTES = 40 * MiB
 
 BY_NAME = {category.name: category for category in CATEGORIES}
 

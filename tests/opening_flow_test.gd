@@ -67,6 +67,7 @@ func _run() -> void:
 		Harness.finish(self, ["State autoloads are unavailable."], "")
 		return
 	Harness.clear_session_state(self)
+	Harness.ensure_autoload(self, "Music", "res://scripts/autoload/music_player.gd")
 	_settings = Harness.ensure_autoload(self, "Settings", SETTINGS_SCRIPT)
 	Harness.ensure_autoload(self, "Session", SESSION_SCRIPT)
 	if _settings != null:
@@ -443,6 +444,9 @@ func _run() -> void:
 											_failures.append(
 												"The end-of-slice card is not using its locale key."
 											)
+										var music := root.get_node_or_null(^"Music")
+										if music == null or not String(music.get_track_path()).ends_with("11_end_card.mp3"):
+											_failures.append("The end card did not start its score.")
 										_end_card_reached = true
 
 	_dump_state()
@@ -476,6 +480,11 @@ func _run() -> void:
 func _on_subjective_changed(active: bool) -> void:
 	var observed: int = _narrative.count_for_source(NarrativeEntry.Source.OBSERVED)
 	if active:
+		if bool(_game_state.get_flag(StoryFlags.IMAGINE_B_CHOSEN, false)) \
+				and not bool(_game_state.get_flag(StoryFlags.EXPECTATION_PLAYED, false)):
+			var music := root.get_node_or_null(^"Music")
+			if music == null or not String(music.get_track_path()).ends_with("08_imagined_lesson.mp3"):
+				_failures.append("The imagined conversation did not start its score.")
 		_saw_subjective = true
 		_observed_at_subjective_start = observed
 	elif _observed_at_subjective_start >= 0:

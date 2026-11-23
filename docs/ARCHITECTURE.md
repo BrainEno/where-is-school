@@ -994,65 +994,27 @@ validating every language and every chapter however the runtime loads them.
 
 ## 5m. The background music (implemented contract)
 
-One recorded guitar take, one player, one bus. The recording is the owner's own: a solo
-fingerpicked improvisation, 46.738 s, mono, 48 kHz, 16-bit, peak −8.7 dBFS, no clipping and
-no DC offset. It is not a sample library and not a stock track, and it is not synthesised
-like the room tones and the cues — it is a performance, and the pipeline is built to leave
-it alone.
+`Music` (`scripts/autoload/music_player.gd`) owns one `AudioStreamPlayer` on the
+existing Music bus and keeps its -6 dB player level and -6 dB bus trim. It starts
+`01_classroom_wake.mp3`; `ScoreDirector` selects the track on committed location
+arrivals, prologue state changes and the ending. The imagined lesson temporarily
+overrides the room and the ending is one-shot, without restarting at its natural end.
+The stable yard is part of the corridor, so its score uses the player's position, not a
+fabricated location transition. The three A/B files are included but not selected by
+random or invented story flags. Unmapped locations retain the previous track.
 
-**The source is kept, and kept out of the build.** The recording as delivered lives at
-`art/audio/Guitar_loop_01.wav`, byte-identical (`art/audio/.gdignore` keeps the engine from
-importing it, and the export preset excludes `art/`). The game ships a derived file,
-`assets/audio/music/guitar_ambient_loop_01.wav`, and nothing in `assets/` is the only copy
-of the music.
-
-**The loop is made by a script, not by hand.** `tools/build_music_loop.py` drops the
-0.396 s of room noise the take opens with, keeping the 0.30 s nearest the first note inside
-the loop; keeps the 0.07 s the take has after its last note rather than padding silence onto
-the end; and crossfades the tail into the material immediately before the loop start, so the
-last sample of the file continues into its first the way the take did one loop earlier. The
-seam measures −72 dBFS, i.e. eight 16-bit LSB, rather than a click.
-`python3 tools/build_music_loop.py --check` runs in CI and fails if the committed WAV drifts
-from a fresh build, exactly as the sample models do. No normalisation, limiting, EQ, reverb
-or noise reduction is applied: the take's own dynamics and room are the point, and
-"improving" them would be a second authorship of someone else's performance.
-
-**Looping is an import setting.** The sidecar
-`assets/audio/music/guitar_ambient_loop_01.wav.import` carries `edit/loop_mode=2`,
-`edit/loop_begin=0` and `edit/loop_end=2224446`, so the stream that loads in the game *is*
-a loop. Nothing duplicates the stream and sets `loop_mode` at runtime — that pattern exists
-in `scripts/world/ambience_player.gd` for the generated room tones, and it is deliberately
-not copied here. `tests/music_test.gd` reads the sidecar and asserts the loaded stream
-carries the points, so a lost import setting fails a test instead of producing music that
-stops after 46 seconds in someone's playthrough.
-
-**The player is an autoload, and it is the only one.** `Music`
-(`scripts/autoload/music_player.gd`) creates a single `AudioStreamPlayer` in `_ready()`,
-starts the track with a 3 s fade-in, and survives scene changes because autoloads outlive
-`change_scene_*()`. `play_track()` returns `false` when the requested track is already
-playing, so a scene that calls it on entry cannot restart the music, and there is no second
-player to overlap with. `stop()` fades out; `stop(true)` cuts.
-
-**It cannot drown the game and cannot be turned down by accident.** The player sits on a
-`Music` bus defined in `default_bus_layout.tres` (trimmed −6 dB), and the player's own
-`volume_db` starts at −6 dB. The two gains add to −12 dB, putting the recording's −8.7 dBFS
-peak near −20.7 dBFS. That is 6 dB louder than the first shipped mix, after the owner reported
-it too quiet, while retaining 12 dB of attenuation as a background bed. Every other sound
-(`CueAudio`'s cues, the ambience beds, dialogue blips) is on `Master`, so
-`Music.set_volume_db()` moves the guitar and changes nothing else. `tests/music_test.gd`
-asserts both halves of that: the cue volumes do not move, and the cue players are not on the
-music bus.
-
-**What it does not do yet.** There is no playlist, no per-room music, and no ducking during
-dialogue — the game's dialogue is text, there is no voice track to talk over, and a ducking
-path with nothing to duck for would be untested machinery. There is also no settings screen;
-`set_volume_db()` is the dial such a screen would call. Music does not pause with the tree
-(`process_mode = ALWAYS`), because a silent pause is a decision nobody has made yet.
-
-`tests/music_test.gd` covers the import settings, the stream's format and length, the single
-player, the scene change, the independent dial, and that seeking past the loop end wraps
-instead of stopping. It cannot hear the result: whether the loop is seamless to an ear, and
-whether −12 dB of total gain is the right level in a real room, are reviews for the owner.
+The supplied MP3s are not edited or level-adjusted. `Music` sets `AudioStreamMP3.loop`
+for the 13 looping tracks, with offset zero and no beat loop, fade or timer at the seam;
+`11_end_card.mp3` is non-looping. Scene changes do not restart an already-playing track.
+`stop()` retains its existing optional fade for other callers. `tests/score_test.gd`
+checks track selection and playback, while `tests/music_test.gd` retains the single-player,
+volume and cleanup checks. Encoded seams and the final mix still need listening review.
+The older guitar loop remains in the tree as a historical asset, not the default score:
+`art/audio/Guitar_loop_01.wav` is the owner's 48 kHz mono recording; the retained
+`tools/build_music_loop.py` trims the opening and crossfades its derived WAV seam without
+normalising it. `tests/music_test.gd` still checks its explicit import loop points and the
+player's `AudioRelease` cleanup. Music continues when the tree is paused. See
+`ASSET_PROVENANCE.md` for the new files' source and unverified rights.
 
 ## 5n. Reading modes, the read log, and sprint as a toggle (implemented contract)
 
@@ -1201,7 +1163,8 @@ below are from that tool, and the per-category policy is written in
   with a warning line and a hard limit. No category's hard limit is above the 2 MiB ceiling
   every single file already had, so the table only tightens the rule. The pack total has
   an 8 MiB warning line and a hard limit of 16 MiB, raised by the owner to 24 MiB when
-  teacher B's model joined the build and to 32 MiB for the front yard (round 16).
+  teacher B's model joined the build, to 32 MiB for the front yard (round 16), and to
+  40 MiB after the 14 score MP3s brought a clean source-build export to 35.87 MiB.
 - **Excluded from the build, and checked as excluded:** `docs/` (documents and captured
   screenshots), `tests/` (the test suite and its capture scripts), `tools/` (build and
   content scripts), `art/` (the editable `.blend` sources), `addons/` (the narrative editor

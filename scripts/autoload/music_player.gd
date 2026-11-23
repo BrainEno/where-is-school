@@ -1,55 +1,23 @@
 extends Node
-## The game's background music: one loop, one player, owned by the scene tree's root.
-##
-## The track is a real recording — `art/audio/Guitar_loop_01.wav`, trimmed and crossfaded by
-## `tools/build_music_loop.py` into `assets/audio/music/guitar_ambient_loop_01.wav`. It is
-## imported *as a loop*: `edit/loop_mode=2` with explicit loop points in the `.import`
-## sidecar, so the stream that loads here already repeats. Nothing in this script duplicates
-## the WAV, sets `loop_mode` at runtime or otherwise pretends: a missing import setting would
-## show up as music that stops after 46 seconds, which `tests/music_test.gd` fails on.
-##
-## Why an autoload and not a node in each location: the music has to survive a scene change.
-## A player inside `classroom.tscn` restarts with the room, so walking to the corridor would
-## restart the take — and two rooms' players would overlap for a frame. As an autoload the
-## player exists once, for the whole session, and `play_track()` refuses to restart what is
-## already playing.
-##
-## It cannot drown anything out, and it cannot be turned down by accident along with the
-## rest: the player sits on its own `Music` bus (`default_bus_layout.tres`), so
-## `set_volume_db()` moves the music and leaves `CueAudio`'s cues on `Master` where they are.
-## The shipped level is a bed, not a scene, and leaves the recording ample headroom.
-##
-## Loaded as the `Music` autoload. Callers look it up by path (`/root/Music`) or use the
-## `Music` global, exactly as they do with `CueAudio`.
-##
-## It also lets go of the track when the game quits (#67). A stopped playback is only freed
-## after the audio thread has mixed once more, and quitting stops the driver before that
-## mix, so a track still playing at quit outlived everything: every run, the game's and
-## each headless check's, ended with "2 ObjectDB instances were leaked"
-## (`AudioStreamPlaybackWAV` and this `AudioStreamWAV`) and "1 resources still in use"
-## naming this file. When this node is freed it stops the music and waits for that mix
-## (`AudioRelease`). It always waits, even when the music is off: at quit a node's children
-## are freed last to first, so the scene and the autoloads after this one in
-## `project.godot` are gone already, and this one mix lets go of whatever they stopped too.
-## `CueAudio`, freed after this, waits for its own voices.
+## The one background-music player for the whole session. Scene/beat selection is
+## owned by ScoreDirector; this node owns playback and the existing Music bus/dial.
+## Score files are already mixed and looped: never fade or alter their level here.
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
 
-## The one track. A `res://` path, so no machine's absolute path can leak into a build.
-const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
+## The startup and ending tracks. Other score paths are chosen by ScoreDirector.
+const TRACK_PATH := "res://assets/audio/music/score/01_classroom_wake.mp3"
+const END_TRACK_PATH := "res://assets/audio/music/score/11_end_card.mp3"
 
 ## Bus the player is attached to. `default_bus_layout.tres` gives it a fixed -6 dB trim;
 ## the player's own `volume_db` is the independent music dial.
 const BUS_NAME := &"Music"
 
-## Where the music dial starts, on top of the -6 dB bus trim: -12 dB of total gain, which
-## puts the recording's -8.7 dBFS peak near -20.7 dBFS. Six decibels louder than the
-## original mix, while still leaving the guitar a background bed.
+## The existing music dial, unchanged: -6 dB on top of the -6 dB bus trim.
 const DEFAULT_VOLUME_DB := -6.0
 
-## Floor the fade-in starts from, and the fade lengths.
+## The existing optional stop fade; score starts and loops do not fade.
 const SILENT_DB := -60.0
-const FADE_IN_SECONDS := 3.0
 const FADE_OUT_SECONDS := 1.2
 
 var _player: AudioStreamPlayer
@@ -91,10 +59,20 @@ func play_track(path: String = TRACK_PATH) -> bool:
 		OfflineDiagnostics.note("assets.load_failed", {"kind": "music"})
 		push_error("Music: '%s' could not be loaded; the background music is silent." % path)
 		return false
+	_kill_tween()
+	# The score is stored as MP3. Set the stream loop explicitly, not a timer or
+	# a fade: the decoder wraps at the stream boundary. The end card is one-shot.
+	if stream is AudioStreamMP3:
+		var mp3 := stream as AudioStreamMP3
+		mp3.loop = path != END_TRACK_PATH
+		mp3.loop_offset = 0.0
+		# Godot's beat-synchronised MP3 loop applies a short crossfade internally.
+		# Disable that path: these files use their full, pre-prepared boundaries.
+		mp3.bpm = 0.0
+		mp3.beat_count = 0
 	_player.stream = stream
-	_player.volume_db = SILENT_DB
+	_player.volume_db = _volume_db
 	_player.play()
-	_fade_to(_volume_db, FADE_IN_SECONDS)
 	return true
 
 
@@ -124,7 +102,7 @@ func is_playing() -> bool:
 
 ## The music dial, independent of every other sound in the game: 0.0 dB is the recording at
 ## its own level, negative is quieter. Values above the default are allowed — a player in a
-## quiet room may want the guitar louder — but `DEFAULT_VOLUME_DB` is what ships.
+## quiet room may want the music louder — but `DEFAULT_VOLUME_DB` is what ships.
 func set_volume_db(db: float) -> void:
 	_build()
 	_volume_db = db

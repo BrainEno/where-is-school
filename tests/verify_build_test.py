@@ -129,6 +129,8 @@ def test_every_category_has_a_ceiling() -> None:
 
 
 def test_pack_totals() -> None:
+    check(vb.MAX_PACK_BYTES == 40 * vb.MiB, "the approved 40 MiB pack limit changed")
+    check(vb.BY_NAME["audio"].hard == 2 * vb.MiB, "the per-audio-file limit changed")
     chunk = vb.BY_NAME["other"].warn  # exactly at the warning line of its category
     count = vb.MAX_PACK_BYTES // chunk
     entries = [(f"res://.godot/exported/x/file{i}.bin", chunk) for i in range(count)]

@@ -44,9 +44,14 @@ have different jobs:
 
 | Where | Class | Ceiling | Enforced by |
 |---|---|---|---|
-| `assets/**` | **runtime**: the engine imports it | 2 MiB per file, 32 MiB per pack (16, then 24 MiB until raised by the owner), as shipped | `tools/verify_build.py` on the exported PCK, every PR |
+| `assets/**` | **runtime**: the engine imports it | 2 MiB per file, 40 MiB per pack (previously 16, 24 and 32 MiB), as shipped | `tools/verify_build.py` on the exported PCK, every PR |
 | `art/**`, `scenes/dev/**`, `docs/**` | **source / scratch / evidence**: never shipped | 12 MiB per file | `tools/repo_size.py --check`, every PR |
 | anywhere else | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
+
+The owner approved the increase to 40 MiB after a clean Godot 4.7.2 source-build
+Linux export with all 14 score MP3s measured 35.87 MiB of packed entries (PCK file
+37,826,848 bytes). The 2 MiB per-file runtime limit and 12 MiB repository limit are
+unchanged. A standard release export still needs to verify the final artifact.
 
 `tools/repo_size.py` has **no exception list**. An exception list is how the 67 MiB file got
 in: a file that needs an exception needs a decision, and the decision is this ADR being
