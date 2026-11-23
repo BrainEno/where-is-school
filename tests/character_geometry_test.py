@@ -253,9 +253,18 @@ class RefinedCharacterTests(unittest.TestCase):
             self.assertGreater(discarded[:, :, 1].min(), 1.53)
             self.assertLess(discarded[:, :, 2].max(), -.046)
             self.assertEqual(len(before - retained), 520 if material == "M_ST_Hair" else 208)
-            displacement = np.linalg.norm(old["POSITION"][kept] - new["POSITION"], axis=1)
-            self.assertGreater(displacement.max(), .001)
-            self.assertLess(displacement.max(), .013)
+            # The shipped hair is the source pass plus the crop, so what is checked here is
+            # the pair: the source vertices survive in order and the crop is real.
+            shipped = new["POSITION"]
+            self.assertEqual(len(shipped), len(kept))
+            # The crown is a shell either way, so the median barely moves; what the crop
+            # changes is the *hem*: the lowest lock rises, and the mass that hung beside
+            # the jaw is gone. Count what is left below the ear, which is the readable test.
+            below = lambda points: int((points[:, 1] < 1.500).sum())
+            self.assertLess(below(shipped), below(old["POSITION"][kept]) * .45,
+                            "the crop did not take length off the bob")
+            # Nothing hangs below the ear lobe, which is what made it a bob.
+            self.assertGreater(float(shipped[:, 1].min()), 1.465)
             np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
             top = old["POSITION"][kept, 1] > 1.632
             np.testing.assert_array_equal(old["POSITION"][kept[top]], new["POSITION"][top])
@@ -308,8 +317,11 @@ class RefinedCharacterTests(unittest.TestCase):
     def test_runtime_models_stay_within_the_existing_hard_budget(self) -> None:
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
-        for (doc, _binary, surfaces), limit in zip(self.outputs, [64604, 62340]):
-            self.assertEqual(doc["asset"]["extras"]["geometry_revision"], 2)
+        for (doc, _binary, surfaces), limit, revision in zip(
+                self.outputs, [64604, 62340], [2, 3]):
+            # Revision 3 is the teacher's resting face, expression shapes and crop; the
+            # seated student is unchanged at revision 2.
+            self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)
             self.assertLess(sum(len(part["triangles"]) for part in surfaces.values()), limit)
 
     def test_existing_scale_and_sole_contracts_are_preserved(self) -> None:

@@ -58,6 +58,27 @@ re-export from Blender can go through the same pass:
    are NOT copied). It locally softens the supplied bob's corners and offsets its hem,
    adds rolled cuffs, makes millimetric jaw/cheek asymmetry edits, and reverses the six
    inward eye surfaces' winding and normals, removing production two-sided culling.
+
+8. **Facial shape keys that have a job are kept (geometry revision 3).** Step 2 dropped
+   all fifteen, which is why she had a dead face: `CharacterLookApplier` can only blink
+   when `look.blink_shapes` names a shape the mesh carries, and N's listed none. The two
+   blinks are kept (a blink displaces 130 of 9,469 head vertices -- 2 KiB as sparse data,
+   which is how the owner's export already stores it), together with `Brow_Compress`,
+   `Frown` and `Mouth_Close`, which are the shapes her resting expression is set from.
+   The other ten stay out.
+
+9. **The resting face is sculpted (geometry revision 3, `character_geometry.teacher_expression`).**
+   Measured against the proportions in `docs/CHARACTER_MODEL_STANDARD.md`, the source face
+   was anatomically sound -- eye line 0.52 of face height, nose base 0.249, jaw 0.72 of the
+   cranium width -- except that the eyes were 24.3 mm wide on a 148 mm face (5.4 eyes
+   across where the count should be 5) and the face carried no expression at all. So the
+   change is anatomical first: the upper lid is brought down 5.5 mm over the pupil and
+   thickened 2.6 mm above the lash line, which turns a hole in the head into a heavy-lidded
+   eye; the aperture opens 2.2 mm sideways at the corners; the brows tilt (inner ends up
+   3.8 mm, tails down), which is the skew that reads as worry; the mouth corners drop 3 mm
+   and the mouth line shortens; the jaw angle narrows 9 % and the cheeks flatten. Skin
+   weights, topology, vertex count and the jaw/eye/lip attachment surfaces are untouched,
+   and every kept shape key follows the same warp, so a blink moves the lid that moved.
    It does not add bones or claim articulated fingers. Joint names/rest transforms,
    inverse binds, the other skin weights and the four authored loops are kept.
    Steps 1-6 describe the original preparation, not an unchanged-geometry claim for this
@@ -114,6 +135,14 @@ UNSUPPORTED_MATERIAL_EXTENSIONS = (
     "KHR_materials_sheen", "KHR_materials_clearcoat", "KHR_materials_specular",
 )
 ## (mesh name, material name) -> absolute error bound in metres.
+# Kept shape keys, per mesh. N's export carries fifteen; these five are the ones with a
+# job. Order matters: it is the blend-shape order the runtime indexes.
+SHAPES = {
+    "ST_Head_Skin": ("Eye_Blink_L", "Eye_Blink_R", "Brow_Compress", "Frown", "Mouth_Close"),
+    "ST_Eyebrow_L": ("Brow_Compress", "Frown"),
+    "ST_Eyebrow_R": ("Brow_Compress", "Frown"),
+}
+
 SIMPLIFY = {
     ("ST_Head_Skin", "M_ST_Skin"): 0.0002,
     ("ST_Eye_L", "M_ST_Sclera"): 0.0002,
@@ -189,6 +218,34 @@ def read_accessor(document: dict, binary: bytes, index: int) -> np.ndarray:
     return values
 
 
+def shape_names(mesh: dict) -> list:
+    """Target names, which the Blender exporter stores on the mesh as extras."""
+    extras = mesh.get("extras") or {}
+    return list(extras.get("targetNames") or [])
+
+
+def read_morph(document: dict, binary: bytes, accessor_index: int) -> tuple[np.ndarray, np.ndarray]:
+    """A sparse morph target as (indices, displacements)."""
+    accessor = document["accessors"][accessor_index]
+    if "sparse" not in accessor:
+        values = read_accessor(document, binary, accessor_index)
+        return np.arange(len(values)), values
+    count = accessor["count"]
+    sparse_block = accessor["sparse"]
+    index_info, value_info = sparse_block["indices"], sparse_block["values"]
+    index_view = document["bufferViews"][index_info["bufferView"]]
+    value_view = document["bufferViews"][value_info["bufferView"]]
+    index_dtype = np.dtype(CT[index_info["componentType"]])
+    indices = np.frombuffer(binary, dtype=index_dtype, count=sparse_block["count"],
+                            offset=index_view.get("byteOffset", 0) + index_info.get("byteOffset", 0))
+    width = NC[accessor["type"]]
+    # Sparse values inherit the accessor's own componentType and type (glTF 2.0, 3.6.2.4).
+    value_dtype = np.dtype(CT[accessor["componentType"]])
+    values = np.frombuffer(binary, dtype=value_dtype, count=sparse_block["count"] * width,
+                           offset=value_view.get("byteOffset", 0) + value_info.get("byteOffset", 0))
+    return indices.astype(np.int64), values.reshape(-1, width).astype(np.float64)
+
+
 # --- writing -----------------------------------------------------------------
 
 
@@ -200,7 +257,11 @@ class Builder:
         self._inputs: dict[bytes, int] = {}
 
     def add(self, values: np.ndarray, kind: str, component: int, target: int | None = None,
-            normalized: bool = False, bounds: bool = False) -> int:
+            normalized: bool = False, bounds: bool = False,
+            sparse_index: np.ndarray | None = None) -> int:
+        """Append an accessor. With `sparse_index`, only those rows are stored."""
+        if sparse_index is not None:
+            return self._add_sparse(values, kind, component, target, sparse_index)
         values = np.ascontiguousarray(values, dtype=CT[component])
         while len(self.binary) % 4:
             self.binary.append(0)
@@ -218,6 +279,41 @@ class Builder:
             accessor["min"] = [float(x) for x in rows.min(axis=0)]
             accessor["max"] = [float(x) for x in rows.max(axis=0)]
         self.accessors.append(accessor)
+        return len(self.accessors) - 1
+
+    def _add_sparse(self, values: np.ndarray, kind: str, component: int,
+                    target: int | None, rows: np.ndarray) -> int:
+        """Morph data as a sparse accessor: most vertices never move in a given shape.
+
+        A blink displaces 130 of 9,469 head vertices. Storing all 9,469 would cost
+        114 KiB for that one shape; the sparse form costs 2 KiB and is core glTF 2.0
+        (section 3.6.2.4) -- it is what the owner's export already does.
+        """
+        rows = np.asarray(rows, dtype=np.int64)
+        order = np.argsort(rows)
+        # `values` already holds one row per displaced vertex, in `rows` order.
+        rows, subset = rows[order], np.asarray(values)[order]
+        index_component = 5125 if rows.max(initial=0) >= 65536 else 5123
+        indices = np.ascontiguousarray(rows, dtype=CT[index_component])
+        payload = np.ascontiguousarray(subset, dtype=CT[component])
+        parts = []
+        for block in (indices, payload):
+            while len(self.binary) % 4:
+                self.binary.append(0)
+            start = len(self.binary)
+            self.binary.extend(block.tobytes())
+            self.views.append({"buffer": 0, "byteOffset": start, "byteLength": block.nbytes,
+                               "target": target})
+            parts.append(len(self.views) - 1)
+        width = NC[kind]
+        self.accessors.append({
+            "componentType": component, "count": int(len(values)), "type": kind,
+            "sparse": {
+                "count": int(len(rows)),
+                "indices": {"bufferView": parts[0], "componentType": index_component},
+                "values": {"bufferView": parts[1]},
+            },
+        })
         return len(self.accessors) - 1
 
     def add_time(self, times: np.ndarray) -> int:
@@ -328,6 +424,13 @@ def _moves(values: np.ndarray, rest: list[float], path: str) -> bool:
     return bool(np.any(np.abs(keys - reference) > CONSTANT_EPSILON))
 
 
+def _surface_warp(name: str):
+    """The sculpt a mesh gets, as a field, so shape keys can follow it."""
+    if name == "ST_Head_Skin" or name.startswith("ST_Eyebrow_"):
+        return geometry.teacher_face
+    return None
+
+
 def _refine_surface(name: str, material: str, positions: np.ndarray, normals: np.ndarray,
                     joints: np.ndarray, weights: np.ndarray, indices: np.ndarray,
                     binds: np.ndarray) -> tuple:
@@ -425,6 +528,11 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
         if old_index not in mesh_map:
             continue
         primitives = []
+        # Shape keys the runtime actually drives: the two blinks (CharacterLookApplier
+        # needs them to blink at all) and the three that set her resting face. The other
+        # ten -- Brow_Raise, Jaw_Open, Mouth_Open -- stay out; nothing plays them and each
+        # costs its own sparse displacement buffer.
+        kept_shapes = SHAPES.get(mesh["name"], ())
         for primitive in mesh["primitives"]:
             attributes = primitive["attributes"]
             if set(attributes) != {"POSITION", "NORMAL", "JOINTS_0", "WEIGHTS_0"}:
@@ -437,6 +545,14 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             weights = read_accessor(document, binary, attributes["WEIGHTS_0"])
             indices = read_accessor(document, binary, primitive["indices"]).ravel()
             material_name = document["materials"][primitive["material"]]["name"]
+            # Morph deltas are read before the mesh is simplified or re-sculpted: they are
+            # re-based on whatever vertices survive, below.
+            names = shape_names(mesh)
+            wanted = [(slot, name) for slot, name in enumerate(names) if name in kept_shapes]
+            deltas = {}
+            for slot, name in wanted:
+                target = primitive.get("targets", [])[slot]
+                deltas[name] = read_morph(document, binary, target["POSITION"])
             bound = SIMPLIFY.get((mesh["name"], material_name))
             if bound is not None:
                 before = (len(positions), len(indices) // 3)
@@ -448,15 +564,31 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
                 indices = remap[indices]
                 positions, normals = positions[kept], normals[kept]
                 joints, weights = joints[kept], weights[kept]
+                rebased = {}
+                for name, (indices_of, values_of) in deltas.items():
+                    keep = remap[indices_of] >= 0
+                    rebased[name] = (remap[indices_of][keep], values_of[keep])
+                deltas = rebased
                 report["simplified"]["%s/%s" % (mesh["name"], material_name)] = {
                     "vertices": [before[0], len(positions)],
                     "triangles": [before[1], len(indices) // 3],
                     "error_m": round(reached, 6),
                 }
+            before_refine = positions.copy()
             positions, normals, joints, weights, indices = _refine_surface(
                 mesh["name"], material_name, positions, normals, joints, weights, indices, binds)
+            if deltas and len(positions) != len(before_refine):
+                raise PrepareError("%s: a re-sculpt that changes topology cannot carry the "
+                                   "source shape keys" % mesh["name"])
+            if deltas:
+                warp = _surface_warp(mesh["name"])
+                if warp is not None:
+                    deltas = {name: (indices_of,
+                                     geometry.deform_delta(before_refine[indices_of],
+                                                           values_of, warp))
+                              for name, (indices_of, values_of) in deltas.items()}
             index_type = 5123 if len(positions) < 65536 else 5125
-            primitives.append({
+            primitive_out = {
                 "attributes": {
                     "POSITION": out.add(positions, "VEC3", 5126, ARRAY_BUFFER, bounds=True),
                     "NORMAL": out.add(normals, "VEC3", 5126, ARRAY_BUFFER),
@@ -467,8 +599,19 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
                 "indices": out.add(indices.reshape(-1, 1), "SCALAR", index_type,
                                    ELEMENT_ARRAY_BUFFER),
                 "material": material_map[primitive["material"]],
-            })
-        meshes.append({"name": mesh["name"], "primitives": primitives})
+            }
+            if deltas:
+                order = [name for name in kept_shapes if name in deltas]
+                primitive_out["targets"] = [
+                    {"POSITION": out.add(deltas[name][1].astype(np.float32), "VEC3", 5126,
+                                         ARRAY_BUFFER, sparse_index=deltas[name][0])}
+                    for name in order]
+            primitives.append(primitive_out)
+        record = {"name": mesh["name"], "primitives": primitives}
+        if any("targets" in primitive for primitive in primitives):
+            # Blender's exporter keeps the names here; Godot reads them as blend shape names.
+            record["extras"] = {"targetNames": list(kept_shapes)}
+        meshes.append(record)
 
     # Nodes: unchanged transforms, minus the floor, with the mesh indices remapped.
     nodes = []
@@ -541,7 +684,7 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 2},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 3},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],
@@ -559,9 +702,146 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
     return data, report
 
 
+# Geometry revision 3 lives here: after the baked Blender stroke layer, so it edits what
+# that layer leaves instead of being overwritten by it. Each entry is a pure field over
+# bind-space positions and changes no topology, which is what makes a post-pass possible.
+RESTING = {
+    "ST_Head_Skin": geometry.teacher_expression,
+    "ST_Eyebrow_L": geometry.teacher_expression,
+    "ST_Eyebrow_R": geometry.teacher_expression,
+}
+SILHOUETTE = {"ST_Hair": geometry.teacher_crop}
+# The eyeballs are not face-shaped (no lid, no brow), so they take their own small field.
+EYEBALLS = {"ST_Eye_L": geometry.teacher_eyeball, "ST_Eye_R": geometry.teacher_eyeball}
+
+
+class _Arrays:
+    """Read and write accessors in place, over a copy of the binary chunk.
+
+    Everything this pass needs is an in-place rewrite of arrays that already have the
+    right count: positions, normals, and the sparse values of a morph target. Nothing is
+    added or removed, so every accessor, view and stride the file declares stays valid.
+    """
+
+    def __init__(self, document: dict, binary: bytes) -> None:
+        self.document = document
+        self.views = document["bufferViews"]
+        self.blocks = [bytearray(binary[v.get("byteOffset", 0):
+                                         v.get("byteOffset", 0) + v["byteLength"]])
+                       for v in self.views]
+
+    def _shape(self, index: int):
+        accessor = self.document["accessors"][index]
+        width = NC[accessor["type"]]
+        dtype = np.dtype(CT[accessor["componentType"]])
+        view = self.views[accessor["bufferView"]]
+        stride = view.get("byteStride") or dtype.itemsize * width
+        return accessor, view, dtype, width, stride
+
+    def read(self, index: int) -> np.ndarray:
+        accessor, view, dtype, width, stride = self._shape(index)
+        raw = np.frombuffer(bytes(self.blocks[accessor["bufferView"]]), dtype=np.uint8,
+                            count=stride * accessor["count"],
+                            offset=accessor.get("byteOffset", 0))
+        return raw.reshape(accessor["count"], stride)[:, :dtype.itemsize * width].copy().view(
+            dtype).reshape(accessor["count"], width)
+
+    def write(self, index: int, values: np.ndarray) -> None:
+        accessor, view, dtype, width, stride = self._shape(index)
+        head = accessor.get("byteOffset", 0)
+        width_bytes = dtype.itemsize * width
+        rows = np.frombuffer(bytes(self.blocks[accessor["bufferView"]]),
+                             dtype=np.uint8).reshape(-1, stride).copy()
+        flat = np.ascontiguousarray(values, dtype=dtype).reshape(accessor["count"], width)
+        rows[:, head:head + width_bytes] = flat.view(np.uint8).reshape(
+            accessor["count"], width_bytes)
+        self.blocks[accessor["bufferView"]] = bytearray(rows.tobytes())
+
+    def read_morph_values(self, target: dict) -> tuple[np.ndarray, np.ndarray]:
+        accessor = self.document["accessors"][target["POSITION"]]
+        sparse = accessor["sparse"]
+        index_info = sparse["indices"]
+        index_view = self.views[index_info["bufferView"]]
+        rows = np.frombuffer(bytes(self.blocks[index_info["bufferView"]]),
+                             dtype=np.dtype(CT[index_info["componentType"]]),
+                             count=sparse["count"],
+                             # The block is already this view's slice, so only the
+                             # accessor's own offset is added here.
+                             offset=index_info.get("byteOffset", 0)).astype(np.int64)
+        value_info = sparse["values"]
+        value_view = self.views[value_info["bufferView"]]
+        values = np.frombuffer(bytes(self.blocks[value_info["bufferView"]]),
+                               dtype=np.dtype(CT[accessor["componentType"]]),
+                               count=sparse["count"] * NC[accessor["type"]],
+                               offset=value_info.get("byteOffset", 0)
+                               ).reshape(-1, NC[accessor["type"]]).astype(np.float64)
+        return rows, values
+
+    def write_morph_values(self, target: dict, values: np.ndarray) -> None:
+        accessor = self.document["accessors"][target["POSITION"]]
+        sparse = accessor["sparse"]
+        value_info = sparse["values"]
+        view = self.views[value_info["bufferView"]]
+        start = value_info.get("byteOffset", 0)
+        dtype = np.dtype(CT[accessor["componentType"]])
+        flat = np.ascontiguousarray(values, dtype=dtype).reshape(-1)
+        block = np.frombuffer(bytes(self.blocks[value_info["bufferView"]]), dtype=np.uint8).copy()
+        block[start:start + flat.nbytes] = flat.view(np.uint8)
+        self.blocks[value_info["bufferView"]] = bytearray(block.tobytes())
+
+    def packed(self) -> bytes:
+        out = bytearray()
+        for view, block in zip(self.views, self.blocks):
+            out.extend(bytes(-len(out) % 4))
+            view["byteOffset"], view["byteLength"] = len(out), len(block)
+            out.extend(block)
+            assert view["byteOffset"] + view["byteLength"] == len(out)
+        self.document["buffers"][0]["byteLength"] = len(out)
+        return bytes(out)
+
+
+def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
+    arrays = _Arrays(document, binary)
+    moved = {}
+    for mesh in document["meshes"]:
+        callback = (RESTING.get(mesh["name"]) or SILHOUETTE.get(mesh["name"])
+                    or EYEBALLS.get(mesh["name"]))
+        if callback is None:
+            continue
+        for primitive in mesh["primitives"]:
+            attributes = primitive["attributes"]
+            base = arrays.read(attributes["POSITION"]).astype(np.float64)
+            normals = arrays.read(attributes["NORMAL"]).astype(np.float64)
+            if mesh["name"] in SILHOUETTE or mesh["name"] in EYEBALLS:
+                positions = callback(base)
+                _, normals_out = geometry.deform(base, normals, callback)
+                for target in primitive.get("targets", []):
+                    rows, deltas = arrays.read_morph_values(target)
+                    arrays.write_morph_values(target, callback(base[rows] + deltas)
+                                              - callback(base[rows]))
+            else:
+                positions, normals_out = callback(base, normals)
+                for target in primitive.get("targets", []):
+                    rows, deltas = arrays.read_morph_values(target)
+                    arrays.write_morph_values(
+                        target, geometry.deform_delta(base[rows], deltas,
+                                                      geometry.teacher_expression_field))
+            arrays.write(attributes["POSITION"], positions)
+            arrays.write(attributes["NORMAL"], normals_out)
+            moved.setdefault(mesh["name"], 0.0)
+            moved[mesh["name"]] = max(moved[mesh["name"]],
+                                      float(np.abs(positions - base).max()))
+    report["resting_channel_m"] = {name: round(value, 6) for name, value in moved.items()}
+    # `packed()` has just rewritten every view's offset, so the GLB header and JSON chunk
+    # have to be re-serialised around the new binary rather than reused.
+    return write_glb(document, arrays.packed())
+
+
 def prepare(source: bytes) -> tuple[bytes, dict]:
     basis, report = prepare_base(source)
-    data = apply(basis, "n")
+    sculpted = apply(basis, "n")
+    document, binary = load_glb(sculpted)
+    data = _resting_channel(document, binary, report)
     report["bytes"] = len(data)
     return data, report
 
