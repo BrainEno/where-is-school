@@ -150,10 +150,10 @@ size = Vector3(0.3, 2.6, 2.6499999999999986)
 size = Vector3(0.3, 2.6, 2.6499999999999986)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_12"]
-size = Vector3(0.36, 0.4, 1.1000000000000014)
+size = Vector3(0.5, 0.5, 1.1400000000000015)
 
 [sub_resource type="BoxMesh" id="BoxMesh_12"]
-size = Vector3(0.36, 0.4, 1.1000000000000014)
+size = Vector3(0.5, 0.5, 1.1400000000000015)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_13"]
 size = Vector3(0.5, 1.2, 43.9)
@@ -2083,7 +2083,7 @@ mesh = SubResource("BoxMesh_art31")
 material_override = ExtResource("art_wall_coping")
 
 [node name="StageCoping" type="MeshInstance3D" parent="SideDoorLintel"]
-position = Vector3(0, 0.25, 0)
+position = Vector3(0, 0.3, 0)
 mesh = SubResource("BoxMesh_art32")
 material_override = ExtResource("art_wall_coping")
 

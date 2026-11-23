@@ -509,7 +509,10 @@ def _school_wall(s, x, span, face):
     # The lintel over the side door, which keeps it a door and not a gap. Its collider is on
     # the fade-only layer: nothing walks into it or clicks on it, but the camera occluder fader
     # finds it, so it fades with the wall when the camera looks through the gate at the player.
-    s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.36, 0.4, d1 - d0), "wall", occ, True, FADE_ONLY_LAYER)
+    # It is as wide as its coping (build_stage_art.py), so a sight line that crosses the
+    # coping crosses the collider too.
+    s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.5, 0.5, d1 - d0 + 0.04), "wall", occ, True,
+          FADE_ONLY_LAYER)
 
 
 def _teaching_front(s):

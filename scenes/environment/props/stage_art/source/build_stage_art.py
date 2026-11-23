@@ -328,7 +328,7 @@ def school_wall_art(b: Builder, *, street: bool) -> None:
         b.flat("StageCoping", wall, box(b, (0.42, 0.1, length)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
     for pier_name, depth in (("GatePierNorth", pier), ("GatePierSouth", d0 - g1), ("SideDoorPier", pier)):
         b.flat("StageCap", pier_name, box(b, (pier + 0.12, 0.12, depth + 0.12)), "wall_coping", (0, (h + 0.3) / 2 + 0.06, 0), shadow=True)
-    b.flat("StageCoping", "SideDoorLintel", box(b, (0.48, 0.1, d1 - d0 + 0.02)), "wall_coping", (0, 0.25, 0), shadow=True)
+    b.flat("StageCoping", "SideDoorLintel", box(b, (0.48, 0.1, d1 - d0 + 0.02)), "wall_coping", (0, 0.3, 0), shadow=True)
     # a blank plaque on the gate's north pier, on the street face: the school's name would go here
     if street:
         b.flat("StagePlaque", "GatePierNorth", box(b, (0.03, 0.9, 0.42)), "pale", (pier / 2 + 0.015, 0.25, 0), shadow=True)
