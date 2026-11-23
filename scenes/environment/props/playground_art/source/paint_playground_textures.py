@@ -665,20 +665,41 @@ def row_mountain() -> Image.Image:
     h, w = c.h, c.w
     ys = np.linspace(5.0, 0.0, h, dtype=np.float32)[:, None]
     xs = np.linspace(0.0, 16.0, w, dtype=np.float32)[None, :]
-    # Light from the left. Buttresses and gullies run down the slopes: noise drawn long in
-    # the vertical, folded into creases (|n - 0.5|) so each rib has a lit and a dark side.
-    ribs = tile_noise(w, h, 18.0, rng, stretch=(0.7, 3.0))
-    folds = np.abs(ribs - 0.5) * 2.0
-    side = np.gradient(ribs, axis=1) * 60.0
+    # Light from the left. The rock breaks into big flat faces (the nearest of scattered
+    # seeds, each face a tilted plane with its own tone): broad facets, not streaks. Faces
+    # on the peak's west flank catch the light; the long ridge running east mostly turns
+    # away, with a lit face here and there. Cracks run along the face edges.
+    pts = np.stack([rng.uniform(0.0, 16.0, 150), rng.uniform(0.0, 5.0, 150) ** 0.8 * 5.0 ** 0.2], axis=1)
+    pts[:, 1] *= 1.0 + 0.6 * (pts[:, 1] / 5.0)  # longer faces up high, smaller scree below
+    near = np.full((h, w), np.inf, dtype=np.float32)
+    second = np.full((h, w), np.inf, dtype=np.float32)
+    owner = np.zeros((h, w), dtype=np.int32)
+    for k, (px, py) in enumerate(pts):
+        # Stretched vertically, so the faces read as buttresses falling from the ridge.
+        d = np.hypot((xs - px) * 1.0, (ys - py) * 0.55)
+        closer = d < near
+        second = np.where(closer, near, np.minimum(second, d))
+        owner = np.where(closer, k, owner)
+        near = np.where(closer, d, near)
+    peak_side = np.clip((3.8 - pts[:, 0]) / 3.5, -1.0, 1.0)
+    tone = 0.5 + 0.4 * peak_side + rng.normal(0.0, 0.2, len(pts))
+    tilt_x, tilt_y = rng.normal(0.0, 0.35, len(pts)), rng.normal(0.0, 0.25, len(pts))
+    face = tone[owner] + tilt_x[owner] * (xs - pts[owner, 0]) + tilt_y[owner] * (ys - pts[owner, 1])
     fine = tile_noise(w, h, 5.0, rng)
     blocks = tile_noise(w, h, 40.0, rng)
-    lit = smoothstep(0.05, 0.6, -side + (fine - 0.5) * 0.6 + (blocks - 0.5) * 0.8 + (8.0 - xs) * 0.02)
-    gully = smoothstep(0.18, 0.04, folds) * smoothstep(0.2, 1.4, ys)
+    face = face + (fine - 0.5) * 0.18 + (blocks - 0.5) * 0.25
+    lit = smoothstep(0.45, 0.85, face)
+    shade = smoothstep(0.3, -0.05, face)
     c.paint(MOUNTAIN_LIT, lit, 0.9)
-    c.paint(MOUNTAIN_DARK, gully, 0.85)
-    c.paint(MOUNTAIN_DARK, smoothstep(0.62, 0.8, blocks) * (1.0 - lit), 0.5)
-    strata = 0.5 + 0.5 * np.sin(ys * 7.0 + (fine - 0.5) * 2.0 + xs * 0.05)
-    c.paint(MOUNTAIN_DARK, smoothstep(0.92, 1.0, strata) * (1.0 - lit) * smoothstep(1.0, 2.5, ys), 0.4)
+    c.paint(MOUNTAIN_DARK, shade, 0.7)
+    crack = smoothstep(0.035, 0.01, second - near) * smoothstep(0.3, 1.0, ys) * smoothstep(0.55, 0.75, blocks + 0.3 * fine)
+    c.paint(MOUNTAIN_DARK, crack, 0.5)
+    # A few deep gullies falling from the ridge notches, and faint strata across the faces.
+    ribs = tile_noise(w, h, 28.0, rng, stretch=(0.6, 3.0))
+    gully = smoothstep(0.06, 0.0, np.abs(ribs - 0.5)) * smoothstep(0.8, 2.2, ys) * (1.0 - lit)
+    c.paint(MOUNTAIN_DARK, gully, 0.6)
+    strata = 0.5 + 0.5 * np.sin(ys * 6.0 + (fine - 0.5) * 1.5 + xs * 0.06)
+    c.paint(MOUNTAIN_DARK, smoothstep(0.94, 1.0, strata) * (1.0 - lit) * smoothstep(1.0, 2.5, ys), 0.3)
     # Scree and haze at the foot, where it stands on the sky.
     c.paint(MOUNTAIN_FOOT, smoothstep(0.9, 0.1, ys), 0.6)
     c.a = np.minimum(c.a, shape)
