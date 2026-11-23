@@ -571,12 +571,15 @@ def fence_frame_mesh():
 
 
 def far_stacks_mesh():
-    """Past the back wall and the west fence, the rest of the terminal: rows of stacks of
-    every colour, a shed with a ribbed roof, a reefer row with its gantry of plugs. Simple
+    """Past the back wall and the west fence, the rest of the terminal: rows of stacks in
+    muted yard colours, a shed with a ribbed roof and roller doors, floodlight towers. Simple
     boxes; the fog does the rest."""
     m = sm.PaintMesh()
-    palette = tuple(COLOURS.values()) + ((0.78, 0.78, 0.76), (0.24, 0.42, 0.33), (0.5, 0.5, 0.52),
-                                         (0.86, 0.66, 0.2))
+    # The yard's own blues and reds and a grey, pulled toward the fog: the terminal past the
+    # wall is backdrop and must not compete with the maze.
+    haze = (0.36, 0.35, 0.42)
+    palette = tuple(sm.mix(c, haze, 0.45) for c in (COLOURS["blue"], COLOURS["blue_deep"], COLOURS["red"],
+                                                    COLOURS["red_dark"], (0.55, 0.55, 0.57), COLOURS["blue"]))
 
     def stack(x, z, yaw, length, tiers, seed):
         rot = euler((0, yaw, 0))
