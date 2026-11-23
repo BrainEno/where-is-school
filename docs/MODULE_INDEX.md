@@ -165,6 +165,7 @@ runtime without preloading resources omitted from other exports.
 | Public type | Source | Responsibility / reuse boundary |
 |---|---|---|
 | `ActorPresence` | [`scripts/world/actor_presence.gd`](../scripts/world/actor_presence.gd) | Shared presence skeleton: signal wiring, the room's actor lookup and flag reads; Q/N/B subclasses keep their own placement rules. |
+| `ScoreDirector` | [`scripts/world/score_director.gd`](../scripts/world/score_director.gd) | Selects the Music autoload's track from committed locations, prologue beats and ending; no second player. |
 | `AmbiencePlayer` | [`scripts/world/ambience_player.gd`](../scripts/world/ambience_player.gd) | Per-location looping ambience and fade-in; session-wide background music belongs to Music. |
 | `BPresence` | [`scripts/world/b_presence.gd`](../scripts/world/b_presence.gd) | Rebuild B's presence from existing story state when locations are instantiated. |
 | `CameraFocusDirector` | [`scripts/world/camera_focus_director.gd`](../scripts/world/camera_focus_director.gd) | Engage/release interaction shots at the player-lock boundary; hover must not move the camera. |

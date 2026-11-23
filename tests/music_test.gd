@@ -1,5 +1,5 @@
 extends SceneTree
-## The background music: the imported loop, the one player that owns it, and the dial.
+## The retained guitar import, plus the score player, bus, dial and cleanup.
 ##
 ## A headless run has no speakers, and this is not a listening test. What it pins down is
 ## everything that can regress silently around a music bed:
@@ -9,14 +9,14 @@ extends SceneTree
 ##    `loop_mode` at runtime would leave this failing, which is the point: the requirement is
 ##    an import setting, not a boolean in a `_ready()`;
 ## 2. the stream is the recording's own format — 48 kHz, mono, not resampled, not downmixed;
-## 3. one player exists, it is the autoload's, and it starts itself once;
+## 3. one player exists, it is the autoload's, and the classroom score starts once;
 ## 4. `play_track()` asked for the track that is already playing does not restart it, and a
 ##    scene change does not restart it either (that is why the player is an autoload);
-## 5. the music sits on its own `Music` bus, so its dial moves the guitar and nothing else —
+## 5. the music sits on its own `Music` bus, so its dial moves the music and nothing else —
 ##    the interaction cues stay on `Master` at their own levels;
 ## 6. the default is the shipped -6 dB dial: 6 dB louder than the first bed, with at
 ##    least 10 dB of total attenuation left;
-## 7. `stop()` stops and `play_track()` starts again, and seeking past the loop end wraps
+## 7. `stop()` stops and `play_track()` starts again, and seeking past the score loop end wraps
 ##    instead of falling silent;
 ## 8. a music player that is freed - which is what quitting does to the autoload - hands
 ##    its playbacks back (#67): freed while playing, after a `seek()` restarted the
@@ -36,6 +36,7 @@ const MusicScript := preload("res://scripts/autoload/music_player.gd")
 const CueAudioScript := preload("res://scripts/audio/cue_audio.gd")
 
 const TRACK_PATH := "res://assets/audio/music/guitar_ambient_loop_01.wav"
+const DEFAULT_TRACK_PATH := "res://assets/audio/music/score/01_classroom_wake.mp3"
 const TRACK_SIDECAR := "res://assets/audio/music/guitar_ambient_loop_01.wav.import"
 const BUS_NAME := &"Music"
 const SAMPLE_RATE := 48000
@@ -200,10 +201,10 @@ func _check_single_player() -> void:
 	var player: AudioStreamPlayer = players[0]
 	_expect(player.playing, "the music did not start itself")
 	_expect(
-		String(music.get_track_path()) == TRACK_PATH,
+		String(music.get_track_path()) == DEFAULT_TRACK_PATH,
 		"the player holds '%s'" % String(music.get_track_path())
 	)
-	_expect(player.stream.resource_path == TRACK_PATH, "the player holds another stream")
+	_expect(player.stream.resource_path == DEFAULT_TRACK_PATH, "the player holds another stream")
 
 	# Asking for the track that is already playing must not restart it.
 	var before := player.get_playback_position()

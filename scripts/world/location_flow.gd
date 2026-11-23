@@ -362,6 +362,9 @@ func _finish_slice(exit: LocationExit) -> void:
 			title = L10n.t(title_key)
 		if L10n.has_key(body_key):
 			body = L10n.t(body_key)
+	var score := _host.get_node_or_null(^"ScoreDirector") as ScoreDirector
+	if score != null:
+		score.show_ending()
 	_ui.end_card.present(title, body, L10n.t("ui.end_hint"))
 
 

@@ -163,6 +163,9 @@ func expectation() -> void:
 ## The imagined lesson itself, inside a beat the caller holds: the title card, the
 ## subjective conversation (whose hubs always offer a way out), the disclaimer.
 func _imagine_b() -> void:
+	var score := _director.get_node_or_null(^"ScoreDirector") as ScoreDirector
+	if score != null:
+		score.set_imagining(true)
 	_ui.overlay.show_localized_overlay("overlay.expect_title", "overlay.expect_body")
 	await _director.wait_seconds(0.7)
 	await _director.play_conversation(&"expected_b")
@@ -175,6 +178,8 @@ func _imagine_b() -> void:
 	await _director.wait_seconds(EXPECTATION_DISCLAIMER_SECONDS)
 	await _ui.overlay.hide_overlay()
 	_game_state.set_flag(StoryFlags.EXPECTATION_PLAYED, true)
+	if is_instance_valid(score):
+		score.set_imagining(false)
 
 
 func bell() -> void:

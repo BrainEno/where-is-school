@@ -118,6 +118,7 @@ func _ready() -> void:
 		self, _ui, _player, _locations, _bell_audio, _wake_audio, _flow, _game_state()
 	)
 
+	ScoreDirector.install(self, _locations, _player, _game_state(), get_node_or_null(^"/root/Music"))
 	_saves.bind(self, get_parent())
 
 	# A save, if the host has one, is applied *before* anything is asked about the
