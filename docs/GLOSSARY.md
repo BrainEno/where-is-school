@@ -1,7 +1,7 @@
 # 术语表：游戏文字用词、玩家称呼、代码 id 与 autoload 对照
 
 > **状态：** 现行
-> **最后核对：** 2026-11-21
+> **最后核对：** 2026-11-11（第 16 轮：前操场、校门、小门）
 > **负责人：** 文档 Agent
 > **取代者：** 无；本页是 #230 要求的对照表，与 [README.md](README.md)、[ARCHITECTURE.md](ARCHITECTURE.md) 互补
 
@@ -17,7 +17,8 @@
 |---|---|---|---|
 | `classroom` | 教室 | Classroom | 生物课教室，序章所在 |
 | `corridor` | 走廊 | Corridor | 三层教学楼的走廊；旧文档写作 walkway |
-| `street` | 街上 | Street | 校门外的街 |
+| `front_yard` | 前操场 | Front yard | 第 16 轮新增：教学楼玻璃门外、校门以内的土操场，两边都是操场，没有马路；场景由 `tools/build_outdoor_locations.py` 生成 |
+| `street` | 街上 | Street | 校门外的街；第 16 轮起只能从校门旁的小门出来，不再从教学楼直接到街上 |
 | `residential` | 居民楼 | The flats | 几栋居民楼和楼间的居民院；不叫「小区」/ estate |
 | `alley` | 小巷 | Alley | 居民楼后面，尽头是通往操场的栅栏门 |
 | `playground` | 操场 | Playground | 旧文档写作 schoolyard；台词里英文多用 the yard |
@@ -51,6 +52,14 @@
 | 铁门 / 小铁门 | metal gate / the small gate | | 作者改稿（06）：巷子尽头通往球场、学生平时进出的那扇小门（`alley_to_playground`）；`objective.alley`「尽头有一道小铁门」 |
 | 栅栏门 / 铁栅门 | alley gate | estate gate | 作者改稿（06）：小铁门旁边那扇更大的伸缩式栅栏门，几乎从不对学生开放 |
 | 防火门 | fire door | | 操场回教学楼的门，与「小铁门」不同 |
+| 前操场 | front yard | 前院、院子、校园 | 第 16 轮：教学楼正门（玻璃门）外到校门之间的土操场（`front_yard`）；与后面的「操场」（`playground`）是两个地点 |
+| 校门 | school gate | 大门（单说时）、正门 | 前操场通往街上的那道门洞：一扇伸缩门加旁边一扇小门。「出校门」（`prompt.out_gate`）指从小门出去 |
+| 伸缩门 | retractable gate | 推拉门、闸门、栅栏门（指校门时） | 校门那扇停车场式的电动伸缩门，铝格子折叠、带机头和轨道，平时关着、不能走。场景节点 `RetractableGate`（网格 `stage_art/meshes/retractable_gate_*.tres`）；检视 `front_yard_gate`。与小巷尽头的「栅栏门」是两扇门 |
+| 小门 / 刷卡小门 | side door | 侧门、小铁门（指校门时） | 伸缩门旁边只容一个人过的小门，平时开着，不用刷卡也能过。场景节点 `SideDoor`；前操场出口 `front_yard_to_street`，街上回来是 `street_back_to_school`。与小巷的「小铁门」不同 |
+| 刷卡机 | card reader | 打卡机、门禁 | 小门里面（前操场一侧）立柱上的刷卡机，只能看（`front_yard_card_reader`），不刷也能过 |
+| 枯树 | dead tree | 死树、秃树 | 前操场上没有叶子的干树，靠校门的几棵从街上隔墙也看得到；检视 `front_yard_dead_tree` |
+| 围墙 | school wall | 校墙（新写时） | 校门两边的砖墙，把前操场和街隔开；街那一侧有墙裙（`SchoolWallDado`）。旧台词里的「校墙」保留不改 |
+| 栏杆 | railing | 栅栏（指前操场时） | 前操场南北两头的铁栏杆（`NorthRail` / `SouthRail`），挡路但看得过去 |
 | 上锁的门 | locked door | 后门、service door | 作者定名（第 7 轮）：小巷里挂着坏 U 形锁的那扇（`alley_service_door` / `alley_door`）。只改检视标题；检视正文和日志记录仍按作者原句写「铁门」，不与「小铁门」混用 |
 | 交还牌 | return plate | | 街边、巷口的小牌子 |
 | 交还板 | return board | | 操场上那块板，与交还牌是不同物件 |
@@ -84,7 +93,7 @@
 
 ## 4. 内容文件：章节
 
-`data/dialogue/<locale>/<章节>.json` 共 8 章，`data/inspections/<locale>/<地点>.json` 共 17 份（按位置 id 命名）。对话章节与地点不是一一对应：
+`data/dialogue/<locale>/<章节>.json` 共 8 章，`data/inspections/<locale>/<地点>.json` 共 21 份（按位置 id 命名）。对话章节与地点不是一一对应：
 
 | 章节 | 内容 |
 |---|---|

@@ -50,7 +50,12 @@ sys.path.insert(0, str(HERE))
 from paint_stage_textures import DISTANCE  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "tools"))
-from build_outdoor_locations import STREET_SCHOOL_Z  # noqa: E402
+from build_outdoor_locations import (  # noqa: E402
+    DOOR_HEIGHT, FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER, SCHOOL_SOUTH_Z,
+    SCHOOL_WALL_H, SCHOOL_WALL_X, STREET_DOOR_Z, STREET_GATE_Z, STREET_SCHOOL_Z, YARD_WALL_X,
+)
+
+import front_yard_meshes as yard_meshes  # noqa: E402
 
 LOC = ROOT / "scenes" / "locations"
 MARKER = '[node name="StageArt" type="Node3D" parent="."]'
@@ -86,6 +91,11 @@ DITCH_FLOOR = -0.62
 DITCH_OPEN_Z = (-36.0, 7.5)
 DITCH_OPEN = DITCH_OPEN_Z[1] - DITCH_OPEN_Z[0]
 EARTH_W = 4.8
+
+# The front yard's trodden line, from the glass entrance's apron to the side door.
+YARD_PATH_X = (-9.6, YARD_WALL_X - 0.2)
+YARD_PATH_LEN = YARD_PATH_X[1] - YARD_PATH_X[0]
+GATE_HEAD = 0.55
 
 # name -> spec, in the yard builder's vocabulary (color, texture, triplanar, scale, offset,
 # cut, cull_off, outline, unshaded).
@@ -147,6 +157,34 @@ MATERIALS: dict[str, dict] = {
     "ditch_slab_new": tiled((192, 186, 178), "plaster_tile"),
     "ditch_grate": {"texture": stex("ditch_grate"), "triplanar": "world", "scale": (5.0, 5.0, 5.0), "outline": True},
     "ditch_panel": {"color": (220, 226, 160), "outline": True},
+    # The school wall (围墙) and the gate in it, seen from the street and from the front yard
+    # (docs/GLOSSARY.md). White facing tiles over a 1.2 m world tile, a red-brown coping.
+    "school_wall": {"color": (238, 234, 228), "texture": stex("wall_tiles"), "triplanar": "world",
+                    "scale": (1 / 1.2, 1 / 1.2, 1 / 1.2), "outline": True},
+    "wall_coping": tiled((142, 82, 70)),
+    "gate_steel": {"color": (200, 204, 212), "specular": 1, "roughness": 0.6},
+    "gate_head": tiled((214, 216, 222), "metal_tile", 0.5),
+    "gate_led": {"color": (232, 82, 60), "unshaded": True},
+    "gate_track": {"color": (84, 86, 96)},
+    "door_steel": {"color": (60, 76, 104), "outline": True},
+    "door_bars": {"color": (66, 82, 110)},
+    "reader_case": {"color": (46, 48, 58), "outline": True},
+    "reader_face": {"texture": stex("card_reader")},
+    # the front yard (前操场): packed dirt on a 4 m world tile, the trodden line across it,
+    # dead trees, dead grass, a low railing to the sports ground beyond.
+    "yard_dirt": {"texture": stex("yard_dirt"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
+    "yard_path": {"texture": stex("yard_path"), "cut": 0.5, "scale": (1.0, YARD_PATH_LEN / 6.0, 1.0)},
+    "tree_trunk": {"color": (92, 82, 78), "outline": True},
+    "tree_bark": {"color": (98, 88, 82), "outline": True},
+    "tree_twig": {"color": (112, 100, 94)},
+    "dry_grass": {"texture": stex("dry_grass"), "cut": 0.5, "cull_off": True},
+    "yard_rail": {"color": (74, 92, 88)},
+    "goal_white": {"color": (226, 222, 214), "outline": True},
+    "yard_school_windows": {"texture": stex("window_tile"), "cut": 0.5,
+                            "scale": ((STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]) / 8.0, 11.4 / 6.5, 1.0)},
+    "yard_school_windows_south": {"texture": stex("window_tile"), "cut": 0.5,
+                                  "scale": ((SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]) / 8.0, 11.4 / 6.5, 1.0)},
+    "front_yard_distance": {"texture": stex("distance_front_yard"), "unshaded": True},
     # the courtyard
     "court_concrete": tiled((132, 124, 120), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
@@ -235,6 +273,193 @@ def return_plate(b: Builder, parent: str, name: str, pos, *, yaw=90, reverse=Fal
         b.flat(f"CornerPin{index}", p, pin, "metal_ink", (x, 0.234, 0.113), (90, 0, 0))
 
 
+# --- the school wall, its gate, and the front yard ---------------------------------------------
+
+# The front yard's x minus this is the street's: the same wall, seen from either side.
+YARD_TO_STREET = YARD_WALL_X - SCHOOL_WALL_X
+WALL_PATHS = r"(SchoolWall|SchoolWallSouth|GatePierNorth|GatePierSouth|SideDoorPier|SideDoorLintel)/MeshInstance3D"
+
+
+def imported(b: Builder, name: str, parent: str, mesh: str, mat: str, pos, rot=None, shadow=True) -> None:
+    """A mesh from `front_yard_meshes.py` (stage_art/meshes/<mesh>.tres)."""
+    b.stage_meshes = getattr(b, "stage_meshes", set()) | {mesh}
+    props = {"position": vec3(pos)}
+    if rot is not None:
+        props["rotation_degrees"] = vec3(rot)
+    props["mesh"] = f'ExtResource("stagemesh_{mesh}")'
+    props["material_override"] = f'ExtResource("art_{mat}")'
+    if not shadow:
+        props["cast_shadow"] = "0"
+    b.node(name, parent, "MeshInstance3D", **props)
+
+
+def dead_tree(b: Builder, parent: str, name: str, pos, variant: str, yaw: float) -> str:
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = f"{parent}/{name}"
+    imported(b, "Trunk", p, f"dead_tree_{variant}_trunk", "tree_trunk", (0, 0, 0))
+    imported(b, "Bark", p, f"dead_tree_{variant}_bark", "tree_bark", (0, 0, 0))
+    imported(b, "Twig", p, f"dead_tree_{variant}_twig", "tree_twig", (0, 0, 0))
+    return p
+
+
+def tuft(b: Builder, parent: str, name: str, pos, yaw: float, size: float = 0.45) -> None:
+    """Dead grass: two crossed cards."""
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    card = yard.quad(b, size, size)
+    for i in range(2):
+        b.flat(f"Card{i}", f"{parent}/{name}", card, "dry_grass", (0, size / 2, 0), (0, i * 90, 0))
+
+
+def school_wall_art(b: Builder, *, street: bool) -> None:
+    """The wall's coping and pier caps, the retractable gate and the side door.
+
+    Everything hangs under the wall's own bodies (camera occluders), so it fades with them.
+    In each body's frame the gate and door turn to face the side the player is on: yaw 90
+    faces east (the street), -90 west (the yard). Seen from either side, the gate's head
+    (机头) is at the south end, by the pier between it and the side door."""
+    h, pier = SCHOOL_WALL_H, GATE_PIER
+    yaw = 90 if street else -90
+    south = -1.0 if street else 1.0  # which way local +x runs, in terms of south
+    span = (-36.0, 19.6) if street else (FRONT_YARD_Z[0] + 0.3, FRONT_YARD_Z[1] - 0.3)
+    g0, g1 = STREET_GATE_Z
+    d0, d1 = STREET_DOOR_Z
+    lengths = {"SchoolWall": g0 - pier - span[0], "SchoolWallSouth": span[1] - d1 - pier}
+    for wall, length in lengths.items():
+        b.flat("StageCoping", wall, box(b, (0.42, 0.1, length)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    for pier_name, depth in (("GatePierNorth", pier), ("GatePierSouth", d0 - g1), ("SideDoorPier", pier)):
+        b.flat("StageCap", pier_name, box(b, (pier + 0.12, 0.12, depth + 0.12)), "wall_coping", (0, (h + 0.3) / 2 + 0.06, 0), shadow=True)
+    b.flat("StageCoping", "SideDoorLintel", box(b, (0.48, 0.1, d1 - d0 + 0.02)), "wall_coping", (0, 0.3, 0), shadow=True)
+    # a blank plaque on the gate's north pier, on the street face: the school's name would go here
+    if street:
+        b.flat("StagePlaque", "GatePierNorth", box(b, (0.03, 0.9, 0.42)), "pale", (pier / 2 + 0.015, 0.25, 0), shadow=True)
+    # the retractable gate, shut: lattice from the north pier, the head against the south one
+    length = g1 - g0
+    lattice = length - GATE_HEAD
+    b.node("StageGate", "RetractableGate", position=vec3((0, -GATE_HEIGHT / 2, 0)), rotation_degrees=vec3((0, yaw, 0)))
+    g = "RetractableGate/StageGate"
+    mesh = f"retractable_gate_{int(round(lattice * 100))}"
+    if south > 0:
+        imported(b, "Lattice", g, mesh, "gate_steel", (-length / 2, 0, 0))
+    else:
+        imported(b, "Lattice", g, mesh, "gate_steel", (length / 2, 0, 0), (0, 180, 0))
+    hx = south * (length / 2 - GATE_HEAD / 2)
+    b.flat("Head", g, box(b, (GATE_HEAD, 1.72, 0.38)), "gate_head", (hx, 0.92, 0), shadow=True)
+    b.flat("HeadCap", g, box(b, (GATE_HEAD + 0.06, 0.06, 0.44)), "metal_ink", (hx, 1.81, 0))
+    b.flat("HeadLed", g, box(b, (0.36, 0.07, 0.012)), "gate_led", (hx, 1.52, 0.196))
+    b.flat("HeadWheels", g, box(b, (GATE_HEAD - 0.06, 0.08, 0.3)), "metal_ink", (hx, 0.04, 0))
+    b.flat("Track", g, box(b, (length + pier, 0.025, 0.12)), "gate_track", (0, 0.0125, 0))
+    # the side door: its frame and its leaf of bars, shut
+    b.node("StageDoor", "SideDoor", position=vec3((0, -DOOR_HEIGHT / 2, 0)), rotation_degrees=vec3((0, yaw, 0)))
+    imported(b, "Frame", "SideDoor/StageDoor", "side_door_frame", "door_steel", (0, 0, 0))
+    imported(b, "Bars", "SideDoor/StageDoor", "side_door_bars", "door_bars", (0, 0, 0))
+    if street:
+        return
+    # Inside the door, on its pier: the card reader (刷卡机), a box with its face, its conduit
+    # running down the pier into the ground. Only to look at; the door opens without it.
+    r = "SideDoorPier/StageCardReader"
+    b.node("StageCardReader", "SideDoorPier", position=vec3((-pier / 2 - 0.002, 1.3 - (h + 0.3) / 2, 0)),
+           rotation_degrees=vec3((0, -90, 0)))
+    b.flat("Body", r, box(b, (0.15, 0.21, 0.055)), "reader_case", (0, 0, 0.0275), shadow=True)
+    b.flat("Face", r, yard.quad(b, 0.12, 0.16), "reader_face", (0, 0, 0.0565))
+    b.flat("Hood", r, box(b, (0.17, 0.02, 0.08)), "reader_case", (0, 0.115, 0.04))
+    b.flat("Conduit", r, box(b, (0.025, 1.2, 0.025)), "metal_ink", (0.05, -0.705, 0.0125))
+
+
+def front_yard_nodes() -> Builder:
+    b = Builder()
+    A = "StageArt"
+    b.nodes.append(MARKER + "\n")
+    distance(b, A, "front_yard", "front_yard_distance", -1.6)
+    cutouts(b, A, [
+        ("RowFlats", "row_flats", (-6.0, -50.0), 30, 1.3),
+        ("RowPylon", "row_pylon", (16.0, -44.0), 40, 1.0),
+        ("RowTower", "row_tower", (-26.0, -58.0), 20, 1.5),
+    ], -1.6)
+    # The sports ground past the railings, north and south: the same dirt into the haze, a
+    # few more dead trees, and a football goal with no net, far off to the north.
+    beyond = f"{A}/Beyond"
+    b.node("Beyond", A)
+    z0, z1 = FRONT_YARD_Z
+    b.flat("NorthGround", beyond, yard.plane(b, 70.0, 34.0), "yard_dirt", (2.0, -0.005, z0 - 17.0))
+    b.flat("SouthGround", beyond, yard.plane(b, 70.0, 30.0), "yard_dirt", (2.0, -0.005, z1 + 15.0))
+    far = [(-2.5, -14.5, "b", 0), (8.5, -19.0, "a", 90), (-8.0, -25.0, "c", 180), (15.0, -12.5, "c", 270),
+           (2.5, -31.0, "a", 0), (-4.0, 39.5, "a", 180), (8.0, 44.0, "b", 0), (17.0, 40.0, "c", 90)]
+    for i, (x, z, variant, yaw_) in enumerate(far):
+        dead_tree(b, beyond, f"Tree{i}", (x, 0.0, z), variant, yaw_)
+    goal = f"{beyond}/Goal"
+    b.node("Goal", beyond, position=vec3((4.0, 0.0, -27.0)), rotation_degrees=vec3((0, 8, 0)))
+    post = box(b, (0.1, 2.44, 0.1))
+    for i, x in enumerate((-3.66, 3.66)):
+        b.flat(f"Post{i}", goal, post, "goal_white", (x, 1.22, 0), shadow=True)
+        b.flat(f"Stay{i}", goal, box(b, (0.06, 0.06, 1.6)), "goal_white", (x, 0.03, -0.8))
+    b.flat("Bar", goal, box(b, (7.42, 0.1, 0.1)), "goal_white", (0, 2.44, 0), shadow=True)
+    # Past the school wall, the street the side door goes out to, where the street scene has
+    # it (its x + YARD_TO_STREET): the pavement under the wall, the road and its broken centre
+    # line, the far pavement, and the rose flats and the ochre shop across it. Out of reach.
+    street = f"{A}/PastTheGate"
+    b.node("PastTheGate", A)
+    sx = YARD_TO_STREET
+    b.flat("Pavement", street, yard.plane(b, 1.4, 70.0), "pavement", (sx - 10.6, 0.07, -2.0))
+    b.flat("Road", street, yard.plane(b, 19.9, 70.0), "street_asphalt", (sx + 0.05, -0.004, -2.0))
+    b.flat("CentreLine", street, yard.plane(b, 0.4, 56.0), "road_dash", (sx - 0.6, 0.002, -8.0))
+    b.flat("FarPavement", street, yard.plane(b, 8.0, 70.0), "pavement", (sx + 13.0, 0.07, -2.0))
+    b.flat("FarKerb", street, box(b, (0.35, 0.24, 70.0)), "kerb", (sx + 8.9, 0.12, -2.0))
+    for name, mat, pos, size in (("FlatsA", "flats_rose", (17.0, 5.5, 6.0), (10.0, 11.0, 16.0)),
+                                 ("FlatsB", "flats_rose", (16.0, 7.0, -12.0), (8.0, 14.0, 14.0)),
+                                 ("Shop", "shop_ochre", (14.0, 3.6, -24.0), (8.0, 7.2, 10.0))):
+        b.flat(name, street, box(b, size), mat, (sx + pos[0], pos[1], pos[2]), shadow=True)
+    # The yard's own trees, each inside its fader box (the generator's DeadTreeN body).
+    bw, bh = FRONT_YARD_TREE_BOX
+    for i, (_x, _z, variant, yaw_) in enumerate(FRONT_YARD_TREES):
+        dead_tree(b, f"DeadTree{i}", "StageTree", (0, -(bh / 2 - 0.1), 0), variant, yaw_)
+    # the railings (their graybox hidden); the trodden line from the entrance to the side door
+    rail_len = YARD_WALL_X + 0.15 + 11.0
+    for rail in ("NorthRail", "SouthRail"):
+        imported(b, "StageRail", rail, f"yard_railing_{int(round(rail_len * 100))}", "yard_rail", (-rail_len / 2, -0.6, 0))
+    d_mid = sum(STREET_DOOR_Z) / 2.0
+    b.node("Ground", A)
+    b.flat("Path", f"{A}/Ground", yard.plane(b, 2.4, YARD_PATH_LEN), "yard_path",
+           ((YARD_PATH_X[0] + YARD_PATH_X[1]) / 2, 0.003, d_mid), (0, 90, 0))
+    # dead grass along the foot of the walls and railings, and round the trees
+    rng_pts = []
+    for i in range(14):
+        rng_pts.append((-9.2 + i * 1.83 + 0.4 * ((i * 7) % 3 - 1), z0 + 0.55 + 0.15 * (i % 2)))
+        rng_pts.append((-8.9 + i * 1.79 + 0.35 * ((i * 5) % 3 - 1), z1 - 0.55 - 0.15 * (i % 2)))
+    for i, z in enumerate((-6.0, -2.4, 1.6, 5.2, 19.8, 23.0, 26.8, 30.0)):
+        rng_pts.append((YARD_WALL_X - 0.5 - 0.15 * (i % 2), z))
+    for x, z, _v, _y in FRONT_YARD_TREES:
+        rng_pts += [(x + 0.55, z - 0.3), (x - 0.4, z + 0.5)]
+    for i, (x, z) in enumerate(rng_pts):
+        tuft(b, f"{A}/Ground", f"Tuft{i}", (x, 0.0, z), (i * 47) % 180, 0.38 + 0.12 * ((i * 3) % 4) / 3)
+    # the teaching block's windows, as on the street before (children of the occluders)
+    width = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
+    b.flat("StageWindows", "SchoolBlock", yard.quad(b, width, 11.4), "yard_school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
+    south = SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]
+    b.flat("StageWindows", "SchoolBlockSouth", yard.quad(b, south, 11.4), "yard_school_windows_south",
+           (5.006, 0.5, 0.0), (0, 90, 0))
+    school_wall_art(b, street=False)
+    return b
+
+
+FRONT_YARD = {
+    "scene": LOC / "front_yard" / "front_yard.tscn",
+    "environment": environment(SKY, COOL, 1.0, 0.8, 0.003, 1.0),
+    "sun": sun(-48, 38, 0.5),
+    "by_material": {
+        "outdoor_concrete.tres": "pavement",
+        "wall_paint.tres": "school_teal",
+        "metal_dark.tres": "metal_ink",
+        "outdoor_soil.tres": "yard_dirt",
+    },
+    "by_path": {
+        r"SchoolPlinth(South)?/MeshInstance3D": "plinth_ivory",
+        WALL_PATHS: "school_wall",
+    },
+    "hidden": [r"(RetractableGate|SideDoor|NorthRail|SouthRail)/MeshInstance3D", r"DeadTree\d+(Trunk)?/MeshInstance3D"],
+    "nodes": front_yard_nodes,
+}
+
+
 # --- the street ---------------------------------------------------------------------------------
 
 
@@ -311,15 +536,29 @@ def street_nodes() -> Builder:
     b.node("Road", A)
     b.flat("CentreLine", f"{A}/Road", yard.plane(b, 0.4, 56.0), "road_dash", (-0.6, 0.004, -8.0))
     b.flat("Crossing", f"{A}/Road", yard.plane(b, 18.4, 3.0), "road_zebra", (-0.5, 0.005, 9.5))
-    # The school's barred windows, painted on its long wall (a child of the occluder).
+    # Over the wall (west): the front yard's dirt, two of its dead trees where they stand in
+    # the yard, and the teaching block across it, all where the front yard has them
+    # (that scene's x minus YARD_TO_STREET). Nothing over there can be walked to.
+    beyond = f"{A}/OverTheWall"
+    b.node("OverTheWall", A)
+    b.flat("YardDirt", beyond, yard.plane(b, 60.0, 56.0), "yard_dirt", (SCHOOL_WALL_X - 30.2, -0.005, -8.0))
+    for i, (x, z, variant, yaw) in enumerate(FRONT_YARD_TREES):
+        if z < 19.0:
+            dead_tree(b, beyond, f"Tree{i}", (x - YARD_TO_STREET, 0.0, z), variant, yaw)
+    block = f"{beyond}/TeachingBlock"
     width = STREET_SCHOOL_Z[1] - STREET_SCHOOL_Z[0]
-    b.flat("StageWindows", "SchoolBlock", yard.quad(b, width, 11.4), "school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
     mid = sum(STREET_SCHOOL_Z) / 2.0
-    return_plate(b, "SchoolBlock", "StageReturnPlate", (5.004, -4.92, -10.8 - mid))
-    # A receipt hatch farther down the plinth. The lip, not the school wall, is pickable.
+    b.node("TeachingBlock", beyond, position=vec3((-16.0 - YARD_TO_STREET, 6.5, mid)))
+    b.flat("Mass", block, box(b, (10.0, 13.0, width)), "school_teal", (0, 0, 0), shadow=True)
+    b.flat("Windows", block, yard.quad(b, width, 11.4), "yard_school_windows", (5.006, 0.5, 0.0), (0, 90, 0))
+    school_wall_art(b, street=True)
+    # The return plate, on the school wall now where it was on the school's front.
+    wall_mid = (-36.0 + STREET_GATE_Z[0] - GATE_PIER) / 2.0
+    return_plate(b, "SchoolWall", "StageReturnPlate", (0.154, 1.58 - SCHOOL_WALL_H / 2, -10.8 - wall_mid))
+    # A receipt hatch farther down the wall's foot. The lip, not the wall, is pickable.
     name = "StageReceiptSlot"
-    b.node(name, "SchoolPlinth", position=vec3((5.104, 0.34, -24.7 - mid)), rotation_degrees=vec3((0, 90, 0)))
-    p = "SchoolPlinth/" + name
+    b.node(name, "SchoolWallDado", position=vec3((0.254, 0.34, -24.7 - wall_mid)), rotation_degrees=vec3((0, 90, 0)))
+    p = "SchoolWallDado/" + name
     b.flat("Housing", p, box(b, (0.92, 0.48, 0.104)), "shutter_blue", (0, 0, 0.053), shadow=True)
     b.flat("Slot", p, box(b, (0.68, 0.052, 0.024)), "metal_ink", (-0.022, 0.082, 0.109))
     b.flat("DripEdge", p, box(b, (0.85, 0.048, 0.154)), "school_teal", (0, 0.193, 0.082))
@@ -343,14 +582,15 @@ STREET = {
         "shutter_metal.tres": "shutter_blue",
     },
     "by_path": {
-        r"SchoolPlinth/MeshInstance3D": "plinth_ivory",
+        r"SchoolWallDado/MeshInstance3D": "plinth_ivory",
+        WALL_PATHS: "school_wall",
         r"Kerb(East|West)/MeshInstance3D": "kerb",
         r"ShopBlock/MeshInstance3D": "shop_ochre",
         r"Gutter|GutterPool": "ditch_water",
         r"DrainCover": "ditch_grate",
     },
     # The graybox road is redrawn around the ditch (street_ditch); its collider stays.
-    "hidden": [r"Road/MeshInstance3D"],
+    "hidden": [r"Road/MeshInstance3D", r"(RetractableGate|SideDoor)/MeshInstance3D"],
     "nodes": street_nodes,
 }
 
@@ -470,7 +710,7 @@ ALLEY = {
     "nodes": alley_nodes,
 }
 
-SCENES = {"street": STREET, "residential": RESIDENTIAL, "alley": ALLEY}
+SCENES = {"front_yard": FRONT_YARD, "street": STREET, "residential": RESIDENTIAL, "alley": ALLEY}
 
 
 # --- scene surgery ------------------------------------------------------------------------------
@@ -491,7 +731,7 @@ def is_stage_block(block: str) -> bool:
         return path.startswith("StageArt/") or name.startswith("Stage") or "/Stage" in path
     if head.startswith("[sub_resource") and re.search(r'id="\w+_art\d+"', head):
         return True
-    return head.startswith("[ext_resource") and 'id="art_' in head
+    return head.startswith("[ext_resource") and ('id="art_' in head or 'id="stagemesh_' in head)
 
 
 def apply(text: str, cfg: dict) -> tuple[str, set[str]]:
@@ -549,6 +789,8 @@ def finish(text: str, used: set[str], b: Builder) -> str:
 
     text = re.sub(r'\[ext_resource type="StandardMaterial3D" path="res://assets/materials/[^"]+" id="([^"]+)"\]\n', keep, text)
     new_ext = "".join(f'[ext_resource type="Material" path="{RES}/materials/{m}.tres" id="art_{m}"]\n' for m in sorted(used))
+    new_ext += "".join(f'[ext_resource type="ArrayMesh" path="{RES}/meshes/{m}.tres" id="stagemesh_{m}"]\n'
+                       for m in sorted(getattr(b, "stage_meshes", ())))
     first_sub = text.index("\n[sub_resource")
     text = text[: first_sub + 1] + new_ext + "\n" + text[first_sub + 1 :]
     first_node = text.index("\n[node ")
@@ -573,6 +815,8 @@ def main() -> None:
     for name, spec in MATERIALS.items():
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
     print(f"wrote {len(MATERIALS)} materials to {MAT_DIR.relative_to(ROOT)}")
+    meshes = yard_meshes.write_all([STREET_GATE_Z[1] - STREET_GATE_Z[0] - GATE_HEAD], [YARD_WALL_X + 0.15 + 11.0])
+    print(f"wrote {len(meshes)} meshes to {yard_meshes.MESH_DIR.relative_to(ROOT)}")
     for name in names:
         cfg = SCENES[name]
         text, used = apply(cfg["scene"].read_text(), cfg)

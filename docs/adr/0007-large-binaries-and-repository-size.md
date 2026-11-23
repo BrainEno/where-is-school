@@ -44,7 +44,7 @@ have different jobs:
 
 | Where | Class | Ceiling | Enforced by |
 |---|---|---|---|
-| `assets/**` | **runtime**: the engine imports it | 2 MiB per file, 24 MiB per pack (16 MiB until raised by the owner), as shipped | `tools/verify_build.py` on the exported PCK, every PR |
+| `assets/**` | **runtime**: the engine imports it | 2 MiB per file, 32 MiB per pack (16, then 24 MiB until raised by the owner), as shipped | `tools/verify_build.py` on the exported PCK, every PR |
 | `art/**`, `scenes/dev/**`, `docs/**` | **source / scratch / evidence**: never shipped | 12 MiB per file | `tools/repo_size.py --check`, every PR |
 | anywhere else | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
 

@@ -95,7 +95,7 @@ the classroom's front wall uses its own dressing. The used door GLB stays in the
 | `playground_tyre_stack` | 136.4 | 4016 | 2 | — | 1.84 × 0.77 × 1.06 | +0.030 | +0.799 |
 
 The 16 models are 2.4 MiB and 60,908 triangles together — 15 % of the then 16 MiB release
-budget (24 MiB since the imagined lesson) (§9 of the pipeline document) if a scene ever placed all of them at once. One file,
+budget (24 MiB since the imagined lesson, 32 MiB since round 16) (§9 of the pipeline document) if a scene ever placed all of them at once. One file,
 `classroom_window_curtains` at 482.6 KiB, is over the model category's 384 KiB warning
 line, and that is the only note `--check` prints about this set.
 

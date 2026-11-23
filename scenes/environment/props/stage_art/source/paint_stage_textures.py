@@ -375,6 +375,7 @@ DISTANCE = {
     "street": (200.0, (0.0, -10.0), (-21.0, 22.0, -42.0, 20.0)),
     "residential": (200.0, (0.0, -10.0), (-23.5, 21.0, -40.0, 18.0)),
     "alley": (160.0, (0.0, -4.0), (-8.7, 4.2, -23.0, 15.0)),
+    "front_yard": (200.0, (2.0, 12.0), (-12.0, 16.0, -9.0, 33.0)),
 }
 
 TEXTURES = {
@@ -392,6 +393,7 @@ TEXTURES = {
     "distance_street.png": lambda: distance_floor(*DISTANCE["street"], seed=3142),
     "distance_residential.png": lambda: distance_floor(*DISTANCE["residential"], seed=3143, glow=(98, 88, 84), belt=(92, 84, 92)),
     "distance_alley.png": lambda: distance_floor(*DISTANCE["alley"], seed=3144, glow=(110, 86, 74), belt=(88, 76, 96), bands=(3.0, 10.0, 24.0)),
+    "distance_front_yard.png": lambda: distance_floor(*DISTANCE["front_yard"], seed=3145, glow=(112, 94, 80), belt=(94, 84, 92)),
 }
 
 

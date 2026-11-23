@@ -129,7 +129,7 @@ func _run() -> void:
 					_check.expect(_player.global_position.distance_to(front_step) < 0.12,
 						"Leaving the classroom did not land on the hall side of the front door.")
 		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
-			if await _use_exit(&"school_gate", &"street", &"FromCorridor"):
+			if await _use_exit(&"school_gate", &"front_yard", &"FromCorridor"):
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
@@ -143,7 +143,7 @@ func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, masonry and divided windows, older exits and both peek inputs still work; "
-		+ "the 01 glass entrance is passable and connected to the street; the rear stair and hidden laboratory still work; "
+		+ "the 01 glass entrance is passable and connected to the front yard, and the yard's side door to the street; the rear stair and hidden laboratory still work; "
 		+ "directory poses and the wall's shortened revisit survive resuming a checkpoint.")
 
 
@@ -336,15 +336,15 @@ func _check_rear_door(corridor: LocationRoot, bay: StaticBody3D) -> void:
 
 
 func _check_glass_entrance() -> void:
-	Harness.stage = "01 glass entrance from the street"
-	var street := _host.get_current()
-	var street_facade := street.get_node_or_null(^"SchoolGlassEntrance") as Node3D
-	if not _check.expect(street_facade != null, "The street still has no glass school entrance."):
+	Harness.stage = "01 glass entrance from the front yard"
+	var yard := _host.get_current()
+	var yard_facade := yard.get_node_or_null(^"SchoolGlassEntrance") as Node3D
+	if not _check.expect(yard_facade != null, "The front yard has no glass school entrance."):
 		return
-	var entrance_scene := street_facade.scene_file_path
-	if not await _walk(Vector3(-8.4, 0, 15.8), "street side of the glass entrance"):
+	var entrance_scene := yard_facade.scene_file_path
+	if not await _walk(Vector3(-8.4, 0, 15.8), "front yard side of the glass entrance"):
 		return
-	if not await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
+	if not await _use_exit(&"front_yard_back_inside", &"corridor", &"FromTeachingEntrance"):
 		return
 	var inside := _host.get_current()
 	var doorway := inside.get_node_or_null(ENTRANCE) as Node3D
@@ -404,11 +404,16 @@ func _check_glass_entrance() -> void:
 		if not _check.expect(doorway.to_local(_player.global_position).z > 1.0,
 			"The click accepted the hall side instead of crossing to the apron."):
 			return
-		if await _use_exit(&"teaching_entrance_to_street", &"street", &"FromCorridor"):
-			_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
-			if await _walk(Vector3(-8.4, 0, 15.8), "back to the main gate"):
-				if await _use_exit(&"street_back_to_school", &"corridor", &"FromTeachingEntrance"):
-					DirectoryCase.check_return(_host.get_current(), _check)
+		if await _use_exit(&"teaching_entrance_to_street", &"front_yard", &"FromCorridor"):
+			# Across the front yard and out of the side door: the school wall is the street's.
+			if await _walk(Vector3(13.3, 0, 15.8), "front yard to the side door"):
+				if await _use_exit(&"front_yard_to_street", &"street", &"FromCorridor"):
+					_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
+					if await _walk(Vector3(-9.5, 0, 15.8), "back to the side door"):
+						if await _use_exit(&"street_back_to_school", &"front_yard", &"FromStreet"):
+							if await _walk(Vector3(-8.4, 0, 15.8), "back across the front yard"):
+								if await _use_exit(&"front_yard_back_inside", &"corridor", &"FromTeachingEntrance"):
+									DirectoryCase.check_return(_host.get_current(), _check)
 
 
 ## A long click from outside should turn through the opening, not across a sill.

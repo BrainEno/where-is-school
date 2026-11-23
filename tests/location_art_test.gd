@@ -69,8 +69,8 @@ const LOCATIONS := {
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
-			"school_gate": "street/FromCorridor",
-			"teaching_entrance_to_street": "street/FromCorridor",
+			"school_gate": "front_yard/FromCorridor",
+			"teaching_entrance_to_street": "front_yard/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
 			"to_laboratory": "laboratory/FromCorridor",
 			"to_staff_office": "staff_office/FromCorridor",
@@ -85,14 +85,33 @@ const LOCATIONS := {
 			"to_restroom_03": "restroom_03/FromCorridor",
 		},
 	},
+	# Out of the teaching block: the front yard (前操场), the school wall with the gate in it,
+	# and the street past the gate's side door (round 16; docs/GLOSSARY.md).
+	"front_yard": {
+		"scene": "res://scenes/locations/front_yard/front_yard.tscn",
+		"stage": true,
+		# 32 bodies (ground, apron, block, rails, the wall and gate, seven dead trees with a
+		# trunk and a fader box each), the glass entrance's 9, five anchor spheres and the
+		# pick boxes of eight outline meshes.
+		"shapes": 55,
+		"interactables": 5,
+		"spawns": ["FromCorridor", "FromStreet"],
+		"exits": {
+			"front_yard_back_inside": "corridor/FromTeachingEntrance",
+			"front_yard_to_street": "street/FromCorridor",
+		},
+	},
 	"street": {
 		"scene": "res://scenes/locations/street/street.tscn",
 		"stage": true,
-		"shapes": 94, # Original 93 plus the southern works barrier.
+		# The school front became the school wall: seven pieces of wall and gate and its foot
+		# replace the block, its plinth, the entrance's return and end wall, the entrance's
+		# pavement and the glass entrance (9); the side door outlines two meshes, not three.
+		"shapes": 88,
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
-			"street_back_to_school": "corridor/FromTeachingEntrance",
+			"street_back_to_school": "front_yard/FromStreet",
 			"street_to_residential": "residential/FromStreet",
 		},
 	},

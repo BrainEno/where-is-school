@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "front_yard_card_reader": {
+    "title": "刷卡机",
+    "prompt": "看刷卡机",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·小门里面的刷卡机，红灯亮着，没有人刷卡"
+  },
+  "front_yard_gate": {
+    "title": "伸缩门",
+    "prompt": "看伸缩门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·校门的伸缩门关着，像停车场门口那种，机头靠在小门那边"
+  },
+  "front_yard_dead_tree": {
+    "title": "枯树",
+    "prompt": "看枯树",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·一棵枯树，一片叶子也没有"
+  }
+}

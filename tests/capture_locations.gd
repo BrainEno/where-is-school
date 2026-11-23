@@ -28,6 +28,8 @@ extends SceneTree
 ## `construction-site` frames the yard's 建造中的大楼 (docs/GLOSSARY.md) the same way.
 ## `container-yard` frames the 集装箱堆场 past the yard: overhead, the tyre stairs, the planks.
 ## `port` frames the 港口 past the yard's truck: the quay, the pier, the crane, the ship, the sea.
+## `front-yard` frames the 前操场 outside the teaching block: dirt, dead trees, the 伸缩门, the
+## 小门 and its 刷卡机, then the same gate from the street.
 ## Output: res://docs/screenshots/map_art/<label>/<location>_<nn>_<spot>.jpg and an
 ## index, LOCATIONS.md, in the same folder. `docs/` is ignored by the importer.
 
@@ -36,6 +38,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const OUT_ROOT := "res://docs/screenshots/map_art"
 const LOCATIONS := [
 	["corridor", "res://scenes/locations/corridor/corridor.tscn"],
+	["front_yard", "res://scenes/locations/front_yard/front_yard.tscn"],
 	["street", "res://scenes/locations/street/street.tscn"],
 	["residential", "res://scenes/locations/residential/residential.tscn"],
 	["alley", "res://scenes/locations/alley/alley.tscn"],
@@ -239,6 +242,23 @@ const PORT_STANCES := [
 	["under_crane", Vector3(14.0, 0.0, -1.2)],
 	["pier_end", Vector3(-15.0, 0.0, -24.6)],
 ]
+## The front yard (前操场) and the school gate (校门) from both sides (docs/GLOSSARY.md).
+const FRONT_YARD_STANCES := [
+	["side_door", Vector3(13.2, 0.0, 15.8)],
+	["path", Vector3(3.0, 0.0, 15.8)],
+	["trees", Vector3(-3.5, 0.0, 2.0)],
+]
+const FRONT_YARD_VIEWS := [
+	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
+	["gate_inside", Vector3(6.0, 2.6, 21.0), Vector3(15.0, 1.1, 13.5)],
+	["card_reader", Vector3(12.6, 1.7, 18.4), Vector3(14.85, 1.25, 16.6)],
+	["dead_trees", Vector3(4.0, 3.0, 12.0), Vector3(-7.0, 3.0, 0.0)],
+	["entrance", Vector3(2.0, 3.2, 21.0), Vector3(-10.6, 1.6, 15.8)],
+]
+const STREET_GATE_VIEWS := [
+	["street_gate", Vector3(-2.0, 2.4, 18.6), Vector3(-11.0, 1.3, 12.0)],
+	["over_the_wall", Vector3(2.0, 9.0, 6.0), Vector3(-20.0, 2.0, 2.0)],
+]
 const PORT_YARD_STANCES := [["yard_truck", Vector3(8.6, 0.0, 11.8)]]
 const PORT_YARD_VIEWS := [["yard_truck_tail", Vector3(13.0, 3.5, 16.0), Vector3(6.0, 1.8, 11.8)]]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
@@ -285,6 +305,7 @@ var _construction_site := false
 var _site_interior := false
 var _container_yard := false
 var _port := false
+var _front_yard := false
 var _annex_thresholds := false
 
 var _main: Node = null
@@ -333,6 +354,8 @@ func _initialize() -> void:
 			_container_yard = true
 		elif arg == "port":
 			_port = true
+		elif arg == "front-yard":
+			_front_yard = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -414,6 +437,9 @@ func _run() -> void:
 		await _capture_views(out_dir, "port", ^"Crane", PORT_STANCES, [], "port_walk")
 		await _capture_views(out_dir, "container_yard", ^"Interactables/ToPort", PORT_YARD_STANCES, PORT_YARD_VIEWS,
 			"port_yard_truck")
+	elif _front_yard:
+		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
+		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
 	elif _school_details and SCHOOL_SCENES.has(_only):
 		await _capture_location(_only, SCHOOL_SCENES[_only], out_dir)
 	else:

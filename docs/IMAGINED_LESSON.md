@@ -98,7 +98,7 @@ it back (0.9 s). The room's geometry, materials and lights are never touched.
 Three skinned instances of a 49,466-triangle model and one full-screen pass with nine screen
 reads, only while the scene is on; when it is off everything is hidden and not processing.
 The model adds about 1 MiB to the pack; the owner raised the pack's hard limit from 16 to
-24 MiB for it (`tools/verify_build.py`, warning line unchanged at 8 MiB). B is now a
+24 MiB for it (`tools/verify_build.py`, warning line unchanged at 8 MiB; 32 MiB since round 16). B is now a
 registered runtime character in `art/character_rig_audit/runtime_model_manifest.json`.
 
 ## Evidence

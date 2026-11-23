@@ -18,8 +18,9 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 | 地点 id | 场景 | 现状 | 状态 |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | 起点（`PlayerStart`）。手绘风格教室；醒来与自习。 | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有临街玻璃入口与折叠目录；02 保留生物教室和旧街道出口；03 的上层长廊接成环。尽头的可选房间见下表。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
-| `street` | `scenes/locations/street/street.tscn` | 西侧是带铁栅窗的学校外墙，路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。学校一侧路缘下是一条明沟：沟壁有衬砌，水面映着一条发白的天空，靠马路一侧是干裂的裸土，从斑马线到学校入口一段盖着预制盖板，井盖比流向它的水还高。道路北端直接伸进铺平的天空，那里立着一块空白路牌，水沟的延长线上立着一块淡黄色的肋板。 | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有玻璃入口（出去是前操场）与折叠目录；02 保留生物教室和旧的出口（也通往前操场）；03 的上层长廊接成环。尽头的可选房间见下表。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
+| `front_yard` | `scenes/locations/front_yard/front_yard.tscn` | 第 16 轮新增。从 01 玻璃门出来是前操场：裸露的黄土地，踩出来的小路，边上是枯草，没有马路。七棵枯树；南北两头是矮栏杆，栏杆外还是土操场，所以教学楼两边都是操场。东边是围墙和校门：一扇停车场式的伸缩门，关着；旁边只容一人通过的小门，门里的门垛上装着刷卡机。刷卡机只能看，不刷卡也能过小门。三处检视，正文待作者撰写。 | 已实现 |
+| `street` | `scenes/locations/street/street.tscn` | 第 16 轮起只能从校门旁的小门出来。西侧是围墙，南端是校门，墙脚一道象牙色墙裙；墙那边是前操场的土地、枯树和带铁栅窗的教学楼，远远立着，走不过去。路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。学校一侧路缘下是一条明沟：沟壁有衬砌，水面映着一条发白的天空，靠马路一侧是干裂的裸土，从斑马线到校门一段盖着预制盖板，井盖比流向它的水还高。道路北端直接伸进铺平的天空，那里立着一块空白路牌，水沟的延长线上立着一块淡黄色的肋板。 | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | 三栋颜色都有点“不对”的楼（黄、玫瑰、灰绿）围成的院子；滑梯、花坛、晾衣绳、长椅、椅子、绿色动物；粉笔跳房子，其中一格被画了两次；楼顶有水箱和一根歪的天线；北楼有一扇不在窗格网格上的长条亮窗。 | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 两堵冷蓝色、带雨痕的墙夹着 7 米宽的巷子；西墙越过压顶继续往上，并向巷内倾斜；有一个带检修门的凹口；装着椅子的垃圾箱；通往操场的门，门后是光；近处尺度不对的剪影屋顶。 | 已实现 |
 | `playground` | `scenes/locations/playground/playground.tscn` | 操场（重点地点）：红色球场、学校后墙、小屋、集装箱、树、有缺口的围栏、住宅区。本轮新增：一段越过开放西缘继续延伸、逐渐沉入天空的围栏；一根立在天空里的 20 米灯杆；一把面向操场的椅子。 | 已实现 |
@@ -37,6 +38,7 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 flowchart LR
   classroom["教室（起点）"]
   corridor["走廊"]
+  front_yard["前操场"]
   street["街道"]
   residential["居民区院子"]
   alley["小巷"]
@@ -48,9 +50,11 @@ flowchart LR
 
   classroom -- "classroom_door → FromClassroom" --> corridor
   corridor -- "back_to_classroom → FromCorridor" --> classroom
-  corridor -- "school_gate → FromCorridor" --> street
-  corridor -- "teaching_entrance_to_street → FromCorridor" --> street
-  street -- "street_back_to_school → FromTeachingEntrance" --> corridor
+  corridor -- "school_gate → FromCorridor" --> front_yard
+  corridor -- "teaching_entrance_to_street → FromCorridor" --> front_yard
+  front_yard -- "front_yard_back_inside → FromTeachingEntrance" --> corridor
+  front_yard -- "front_yard_to_street → FromCorridor" --> street
+  street -- "street_back_to_school → FromStreet" --> front_yard
   corridor -- "to_schoolyard → FromCorridor" --> playground
   playground -- "pg_to_corridor → FromSchoolyard" --> corridor
   street -- "street_to_residential → FromStreet" --> residential
@@ -77,7 +81,9 @@ flowchart LR
 | 红色消防门和下行楼梯 | 走廊，一层东翼 | 操场入口和返程平台 | 已实现 |
 | 玻璃后的球场、篮架和器材棚 | 走廊，操场侧 | 走到操场之前就能看到同一个操场 | 已实现 |
 | 立在天空里的空白路牌 | 街道北端之外 | 不用墙也能标出可走范围的尽头 | 已实现 |
-| 带铁栅窗的学校外墙 | 街道西侧 | 人在校外，学校依然在场 | 已实现 |
+| 围墙、校门，墙那边的教学楼 | 街道西侧 | 人在校外，学校依然在场 | 已实现 |
+| 伸缩门、小门和刷卡机 | 前操场东侧 | 出去的路只容一个人 | 已实现 |
+| 黄土上的枯树 | 前操场 | 教学楼两边都是操场，什么也不长 | 已实现 |
 | 不在网格上的长条亮窗 | 居民区北楼 | 普通楼里唯一不对劲的地方 | 已实现 |
 | 水箱、歪天线 | 居民区楼顶 | 轮廓；从高处一看就是住宅 | 已实现 |
 | 倾斜的西墙、门后的光 | 小巷 | 收窄；巷子尽头的目标 | 已实现 |
@@ -92,7 +98,7 @@ flowchart LR
 | 未使用的出生点 `playground/FromSchool` | 没有出口指向它；与 `FromCorridor` 几乎重复 | 建议新增：删除，或留给将来从教学楼内部进入操场的门 |
 | `residential/FromStair` 在一个只能看的平台上 | 西侧楼梯目前不通往任何地方 | 建议新增：这段楼梯是“楼上住户”（第 6 节）的天然入口；在那之前保持不用 |
 | 提示不符：小巷 → 院子显示“回到街上” | 复用了 `prompt.back_to_street` | 建议新增：`prompt.back_to_courtyard`（两种语言） |
-| 从街道回到学校 | 提示使用 `prompt.back_inside`；回程出生点在 01 玻璃门外。 | 已实现 |
+| 回到学校 | 前操场的玻璃门出口用 `prompt.back_inside`，回到 01 玻璃门内；街上的小门用 `prompt.back_to_school`，回到前操场。 | 已实现 |
 | 提示：院子 → 小巷显示“继续走”（`prompt.milestone`） | 键名来自小巷还是终点的时候 | 建议新增：改键名，文字可以不变 |
 | 目标文字是氛围性的（“没有什么要求你去任何地方”） | 有意为之，不承担引路功能 | 保留；是否有地点需要明确目标：尚待作者决定 |
 | 走廊与街道都是单面舞台 | 镜头永远看不到街道东侧、走廊西侧 | 对等距跟随镜头可以接受；新房间也按同样视角制作 |
@@ -174,6 +180,7 @@ flowchart TB
 |---|---|---|---|
 | 教室 | 醒来；看似平常的一天 | 课桌、黑板、门 | 已实现 |
 | 走廊 | 离开；第一次出现不对的透视 | 布告栏、广播、清洁车、玻璃、在窗边等待；折梯与实验室回角的检修钮 | 已实现 |
+| 前操场 | 出了楼，还在墙里 | 枯树、关着的伸缩门、刷卡机 | 已实现（检视正文：尚待作者决定） |
 | 街道 | 在校外，但学校仍是最大的东西 | 告示杆、垃圾桶、摄像头、水洼 | 已实现 |
 | 居民区 | 偶然听见的别人的家常 | 动物、污渍、晾晒的衣服、椅子 | 已实现（动物的作用：尚待作者决定） |
 | 小巷 | 压迫；路在收窄 | 垃圾箱和里面的椅子、告示、检修门 | 已实现 |
@@ -215,9 +222,10 @@ flowchart LR
 ```sh
 python3 scenes/environment/props/stage_art/source/paint_stage_textures.py
 python3 scenes/environment/props/stage_art/source/paint_street_ditch.py
-python3 tools/build_outdoor_locations.py street residential alley playground
+python3 scenes/environment/props/stage_art/source/paint_front_yard.py
+python3 tools/build_outdoor_locations.py front_yard street residential alley playground
 python3 scenes/environment/props/playground_art/source/build_playground_art.py
 python3 scenes/environment/props/stage_art/source/build_stage_art.py
 ```
 
-街道、住宅庭院和巷道的舞台脚本可重复运行。教学楼请单独执行 `python3 tools/build_teaching_block.py`。
+前操场、街道、住宅庭院和巷道的舞台脚本可重复运行；前操场的网格（`front_yard_meshes.py`）也由它写出。教学楼请单独执行 `python3 tools/build_teaching_block.py`。

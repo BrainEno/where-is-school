@@ -52,6 +52,8 @@ on:
       - ".github/workflows/location-art-capture.yml"
       - "scenes/locations/corridor/**"
       - "scenes/locations/street/**"
+      - "scenes/locations/front_yard/**"
+      - "data/inspections/*/front_yard.json"
       - "scenes/locations/residential/**"
       - "scenes/locations/alley/**"
       - "scenes/locations/playground/**"
@@ -109,6 +111,8 @@ jobs:
           - {location: container_yard, side: forward-plus}
           - {location: port, side: after}
           - {location: port, side: forward-plus}
+          - {location: front_yard, side: after}
+          - {location: front_yard, side: forward-plus}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -220,6 +224,15 @@ jobs:
               detail=(port review_width=380)
               width=1280
               expect=13
+              ;;
+            front_yard)
+              # The front yard (前操场): three follow-camera stances (the side door, the
+              # trodden path, the dead trees), five fixed views (overhead, the gate from
+              # inside, the card reader, the trees, the glass entrance), and the same gate
+              # from the street (two views: the gate, and over the wall).
+              detail=(front-yard review_width=380)
+              width=1280
+              expect=10
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

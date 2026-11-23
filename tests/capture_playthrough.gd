@@ -339,6 +339,16 @@ func _run() -> void:
 			_teleport(Vector3(0, 0, 5.4), 0.0)
 			await _wait_for_target(&"school_gate", 30.0)
 			await _press(KEY_E)
+			# Out of the teaching block into the front yard, then out of the gate's side door.
+			if await _wait_for_location("front_yard", 40.0):
+				await _wait(1.2)
+				await _shot("14a_front_yard", "The front yard outside the teaching block: dirt, dead trees, the school wall.")
+				await _wait_for_free(60.0)
+				_teleport(Vector3(13.3, 0, 15.8), -90.0)
+				if not await _wait_for_target(&"front_yard_to_street", 30.0):
+					_failures.append("The front yard's side door was never offered.")
+				await _shot("14b_school_gate", "The school gate from inside: the retractable gate, the side door, the card reader.")
+				await _press(KEY_E)
 			if await _wait_for_location("street", 40.0):
 				await _drive_until(func() -> bool: return not _dialogue.is_busy(), 60.0, "the street arrival line")
 				await _wait(0.8)
