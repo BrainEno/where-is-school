@@ -925,7 +925,7 @@ func _check_inspection_agreement() -> void:
 		"Stage/Lectern/Body/Register": "the register in its plastic cover",
 		"Stage/Lectern/Body/LessonPapers": "the lesson papers on the lectern",
 		"Furniture/DeskB2/DeskMarks": "the cut-in name, the sticker and the groove",
-		"Props/SetSquare/TapeRepair": "the browned tape on the split corner",
+		"Props/SetSquare/TapeRepair": "the browned tape round the broken right-angle leg",
 		"TimetableSheet/Face": "the timetable's printed face",
 	}
 	for path: String in expectations:

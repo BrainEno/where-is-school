@@ -82,7 +82,7 @@
 | （窗帘对白）前窗很普通，绳子上晾着衣服；后窗拉着窗帘 | `window_view.png` 只有窗 0 那三分之一（s 3.0–4.5 m）画了晾晒的衣服；`Anomalies/BackCurtain`（程序生成的 `WindowCurtain`，`curtain_blackout`）挂在离西墙 0.18 m 的轨道上，宽 3.3 m，从 3.14 m 垂到地面，遮住 z 0.95–3.45 的墙洞 |
 | （窗帘对白）蓝帘后是房间的尽头，不是另一扇窗 | 西墙的可见网格、饰线和碰撞都在开口处断开（y 0–3.2，z 0.95–3.45）。帘后只露出近黑的世界背景，没有玻璃、窗框、纸面或背景板。挡板只在合帘时启用；`VoidStep` 是墙外的非实心触发区，跨过边缘与主动选择下落共用演出。前窗没有布帘遮挡。 |
 | 另一扇门从来不会打开，除非使用特殊的手段 | `WallEast/RearDoor`（`classroom_rear_door.tscn`，`classroom_door.tscn` 的白色变体），只是普通检视（`classroom_rear_door`）；不会打开，本教室不放置楼梯 |
-| 三角尺有前臂长，清漆发白，裂开的角用已经变褐的胶带补过，补过的角朝向教室 | `set_square.tscn` 现在平放（0.55 × 0.42 m；原棱柱的尺寸轴写反了），`TapeRepair` 改为褐色胶带，并加了墨线刻度。低矮教师桌移除后，它放在讲桌倾斜的桌面上（`Props/SetSquare`，随桌面倾斜，压在点名册上） |
+| 三角尺有前臂长，清漆发白，中间挖空成一个三角框，直角边裂过，用已经变褐的胶带缠了几圈 | `set_square.tscn` 平放（0.55 × 0.42 m），是绕着三角形洞的木框；直角边断成两块实体，裂口错开几毫米，三圈歪斜的胶带（`TapeRepair`、`TapeRepairLap`、`TapeRepairTop`、`TapeEnd`）绕着这条边缠过正面、外侧和背面，保留墨线刻度。低矮教师桌移除后，它放在讲桌倾斜的桌面上（`Props/SetSquare`，随桌面倾斜，压在点名册上） |
 | 自己的课桌上有被刮掉的名字、撕了一半的贴纸、前沿一道磨出的凹槽 | `Furniture/DeskB2/DeskMarks` 贴花 |
 | 讲台（`classroom_teacher_desk` 检视）：比课桌高很多，上面有塑料封皮的点名册、教案和三角尺 | `Stage/Lectern` 的 `Body/Register`、`Body/LessonPapers` 和放在上面的三角尺。低矮教师桌（`teacher_desk.tscn`）不再放进教室，包装场景仍保留在项目中 |
 | 课程表上有咖啡杯印，老师名字被圆珠笔划掉 | `TimetableSheet/Face` |
