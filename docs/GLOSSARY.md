@@ -1,7 +1,7 @@
 # 术语表：游戏文字用词、玩家称呼、代码 id 与 autoload 对照
 
 > **状态：** 现行
-> **最后核对：** 2026-11-11（第 16 轮：前操场、校门、小门）
+> **最后核对：** 2026-11-11（第 19 轮：马棚院子、厕所外墙；第 16 轮：前操场、校门、小门）
 > **负责人：** 文档 Agent
 > **取代者：** 无；本页是 #230 要求的对照表，与 [README.md](README.md)、[ARCHITECTURE.md](ARCHITECTURE.md) 互补
 
@@ -58,6 +58,8 @@
 | 小门 / 刷卡小门 | side door | 侧门、小铁门（指校门时） | 伸缩门旁边只容一个人过的小门，平时开着，不用刷卡也能过。场景节点 `SideDoor`；前操场出口 `front_yard_to_street`，街上回来是 `street_back_to_school`。与小巷的「小铁门」不同 |
 | 刷卡机 | card reader | 打卡机、门禁 | 小门里面（前操场一侧）立柱上的刷卡机，只能看（`front_yard_card_reader`），不刷也能过 |
 | 枯树 | dead tree | 死树、秃树 | 前操场上没有叶子的干树，靠校门的几棵从街上隔墙也看得到；检视 `front_yard_dead_tree` |
+| 马棚 / 马棚院子 | stable / stable yard | 马厩、牲口棚、农家院 | 考试梦里一楼玻璃门西边那条小路尽头的院子（`DreamAnnex/StableYard`）：马棚、鸡窝、晾被子的绳、两个干活的老太太（一个筛谷子，一个耙谷子）；第 19 轮起地面是和操场一样起伏的土 |
+| 厕所外墙 | the restroom's outside wall | 厕所后墙、卫生间外墙 | 第 19 轮：一楼厕所（`restroom`）在走廊西头那道墙后面，它的外墙就挨着马棚院子东边和小路北边，有高处的磨砂小窗、排风口和落水管（`TeachingBlock/GroundFloor/RestroomExterior`）；只是外观，不能从外面进 |
 | 围墙 | school wall | 校墙（新写时） | 校门两边的砖墙，把前操场和街隔开；街那一侧有墙裙（`SchoolWallDado`）。旧台词里的「校墙」保留不改 |
 | 栏杆 | railing | 栅栏（指前操场时） | 前操场南北两头的铁栏杆（`NorthRail` / `SouthRail`），挡路但看得过去 |
 | 上锁的门 | locked door | 后门、service door | 作者定名（第 7 轮）：小巷里挂着坏 U 形锁的那扇（`alley_service_door` / `alley_door`）。只改检视标题；检视正文和日志记录仍按作者原句写「铁门」，不与「小铁门」混用 |

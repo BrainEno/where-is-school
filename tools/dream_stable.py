@@ -154,20 +154,43 @@ def stall_dressing(b, body, w, d, stall_back, posts):
         place(b, f"HalfDoor{i}", body, (w / 2 - .12, 0, zc), door, coat(b, sheen=.05), shadow=True)
 
 
-# --- ground: a swept yard ---------------------------------------------------------------
+# --- ground: trodden earth -------------------------------------------------------------
 
-def yard_ground(b, y, yard_x, yard_z, house_x, house_z):
-    """Round 18: the yard is swept. Three small droppings by the stalls, straw where it is used."""
+EARTH = "res://assets/shaders/school/stable_earth.gdshader"
+
+
+def yard_ground(b, y):
+    """Round 19: uneven earth like the playground's, loose straw, a few droppings and flies.
+
+    `stable_ground.py` owns the geometry; the walking slabs underneath stay flat.
+    """
+    import stable_ground as sg
+    earth = shaped(b, "YardEarth", sg.earth)
+    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .5}))
+    loose = shaped(b, "LooseStraw", sg.straw)
+    place(b, "LooseStraw", y, (0, G, 0), loose, coat(b, sheen=.15, fill=.42))
+    # The stall fronts keep the round-18 straw shaken out of the stalls.
+    front = shaped(b, "Straw0", lambda: sp.straw_patch(((0, .9), (0, 5.4)), 160, 70, .008))
+    place(b, "Straw0", y, (sg.HOUSE_X[1], G, sg.HOUSE_Z[0] + .2), front, coat(b, sheen=.1))
+    bales = shaped(b, "Straw1", lambda: sp.straw_patch(((0, 2.0), (0, 1.0)), 60, 81, .008))
+    place(b, "Straw1", y, (-40.0, G, 16.9), bales, coat(b, sheen=.1))
     variants = [shaped(b, f"Dung{k}", lambda k=k: sm.dung_pile(k + 3, .5 + .1 * (k % 2), .45 + k / 5))
-                for k in (1, 2)]
-    dung = coat(b, sheen=.03, roughness=.9, fill=.22)
-    for i, (x, z, k) in enumerate(((-32.6, 7.4, 0), (-32.9, 9.1, 1), (-32.1, 6.6, 1))):
-        place(b, f"Dung{i}", y, (x, G + .004, z), variants[k], dung, rot=(0, i * 77 % 360, 0))
-    # Straw shaken out in front of the stalls and round the bales, not over the whole yard.
-    for i, (area, count, seed) in enumerate(((((0, .9), (0, 5.4)), 160, 70), (((0, 2.0), (0, 1.0)), 60, 81))):
-        rid = shaped(b, f"Straw{i}", lambda a=area, n=count, s=seed: sp.straw_patch(a, n, s, .008))
-        at = ((house_x[1], G, house_z[0] + .2), (-40.0, G, 16.9))[i]
-        place(b, f"Straw{i}", y, at, rid, coat(b, sheen=.1))
+                for k in (1, 2, 3)]
+    dung = coat(b, sheen=.06, roughness=.85, fill=.3)
+    for i in range(len(sg.DUNG)):
+        pos, variant, scale, yaw = sg.dung_at(i)
+        place(b, f"Dung{i}", y, (pos[0], G + pos[1], pos[2]), variants[variant], dung, rot=(0, yaw, 0),
+              scale=(scale, scale * (.8 + .3 * (i % 3) / 2), scale))
+    fly = shaped(b, "Fly", lambda: sm.fly(2.0))
+    for k, (index, count, spread) in enumerate(sg.SWARMS):
+        pos, _, _, _ = sg.dung_at(index)
+        rng = random.Random(300 + k)
+        xs = [((rng.uniform(-spread, spread), rng.uniform(-.06, .12), rng.uniform(-spread, spread)),
+               rng.uniform(0, math.tau), rng.uniform(.85, 1.15)) for _ in range(count)]
+        mat = flies_mat(b, swarm=.11, swarm_rate=2.6 + .3 * k, phase=.23 * k)
+        reach = spread + .3
+        multimesh(b, f"Flies{k + 1}", y, (pos[0], G + pos[1] + .22, pos[2]), fly, mat, xs,
+                  (-reach, -.3, -reach, 2 * reach, .7, 2 * reach))
 
 
 # --- the heap, its flies and its smell ---------------------------------------------------
@@ -185,7 +208,7 @@ def flies(b, y):
     rid = shaped(b, "Fly", lambda: sm.fly(2.0))
     rng = random.Random(77)
     xs = [((rng.uniform(-.6, .6), rng.uniform(-.3, .4), rng.uniform(-.5, .5)), rng.uniform(0, math.tau),
-           rng.uniform(.8, 1.2)) for _ in range(26)]
+           rng.uniform(.8, 1.2)) for _ in range(16)]
     reach = .6 + .45 * 1.5 + .1
     mat = flies_mat(b, swarm=.45, swarm_rate=2.2, phase=0.0)
     multimesh(b, "Flies0", y, (HEAP[0], G + 1.0, HEAP[2] + .1), rid, mat, xs, (-reach, -1.0, -reach, 2 * reach, 2.0,
