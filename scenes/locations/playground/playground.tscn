@@ -1991,7 +1991,7 @@ camera_shot = ExtResource("shot_4")
 outline_paths = PackedStringArray("../../ContainerBody/Cabin/Papers/ClippedPage/Paper")
 
 [node name="TyreLook" parent="Interactables" instance=ExtResource("12_interactable")]
-position = Vector3(-1.7999999999999998, 0.7, -15.0)
+position = Vector3(-1.7999999999999998, 1.1, -15.0)
 interact_id = &"pg_tyre_look"
 inspection_id = &"pg_tyres"
 radius = 1.4

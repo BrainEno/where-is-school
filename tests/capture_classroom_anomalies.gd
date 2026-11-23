@@ -24,6 +24,10 @@ const COURT_COMPARE := Vector3(5.5, 0.03, -10.0)
 const BRACE_TIME_SCALE := 0.1
 const RESIDENT_TIME_SCALE := 0.4
 const RESIDENT_CAPTURE_SECONDS := 12.0
+## The doorway shot is the yard's first draw after the drop: software Forward+ compiles
+## the yard's and the resident's pipelines then and game time stalls with it, so that
+## one capture gets a longer real-time window (round 21 added four yard materials).
+const FIRST_DRAW_CAPTURE_SECONDS := 28.0
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -39,7 +43,7 @@ var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 300.0, "capture_classroom_anomalies.gd")
+	Harness.arm_watchdog(self, 420.0, "capture_classroom_anomalies.gd")
 	call_deferred("_run")
 
 
@@ -108,7 +112,7 @@ func _run() -> void:
 	# frames over the same threshold crossing, with the same budget in game time.
 	Engine.time_scale = RESIDENT_TIME_SCALE
 	await _capture_resident("19-collector-unfiltered.png", &"on_threshold",
-		RESIDENT_CAPTURE_SECONDS / RESIDENT_TIME_SCALE)
+		FIRST_DRAW_CAPTURE_SECONDS / RESIDENT_TIME_SCALE)
 	Engine.time_scale = 1.0
 	await _settle()
 	await _stand(COURT_COMPARE, Vector3.LEFT)

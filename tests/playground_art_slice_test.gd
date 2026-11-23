@@ -100,7 +100,7 @@ const INTERACTABLES := {
 	"pg_shed_door": Vector3(4.8, 1.1, -14.55), "pg_ball_look": Vector3(0.05, 0.8, -15.7),
 	"pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
-	"pg_tyre_look": Vector3(-1.8, 0.7, -15.0),
+	"pg_tyre_look": Vector3(-1.8, 1.1, -15.0),
 	"pg_tap": Vector3(-5.58, 1.08, 14.0),
 	"pg_site_look": Vector3(-22.6, 1.0, 13.2),
 }
@@ -132,8 +132,9 @@ const SPAWNS := {
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
-## Godot 4.7.2 bake with the smaller shed and no return-board posts.
-const NAV_POLYGONS := 128
+## Godot 4.7.2 bake with the smaller shed, no return-board posts, and (round 21) the
+## razor-wire edges, the alley threshold and the skipping girl's box.
+const NAV_POLYGONS := 132
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [

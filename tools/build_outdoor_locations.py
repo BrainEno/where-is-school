@@ -1115,7 +1115,7 @@ def build_playground(for_courtyard_view: bool = False):
          "inspection": "pg_cabin_papers", "radius": 0.95,
          "shot": "res://assets/camera/shots/container_papers.tres",
          "outline": ("ContainerBody/Cabin/Papers/ClippedPage/Paper",)},
-        {"name": "TyreLook", "pos": (TYRES[0] + 0.6, 0.7, TYRES[1] + 0.3), "id": "pg_tyre_look",
+        {"name": "TyreLook", "pos": (TYRES[0] + 0.6, 1.1, TYRES[1] + 0.3), "id": "pg_tyre_look",
          "inspection": "pg_tyres", "radius": 1.4,
          # The ring tyres the art pass adds; the graybox stack they replace is hidden, and
          # hidden meshes are skipped, so listing both keeps the outline right either way.
