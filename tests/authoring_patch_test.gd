@@ -170,12 +170,13 @@ func _test_store_patch() -> void:
 	_check_conflict(base, entry)
 	var saved := Store.new(_directory)
 	saved.load_workspace()
-	_check.expect(saved.export_json() == store.export_json() and saved.buffer == store.buffer,
-		"Newest slot lost changes or the unfinished input buffer")
+	_check.expect(saved.export_json() == store.export_json() and saved.buffer == store.buffer and saved.recovery_notice().is_empty(),
+		"Newest slot lost changes or a healthy older slot was misreported as damaged")
 	_check.expect(Journal.write_checked(_directory.path_join("draft-0.json"), "{torn") == OK, "Cannot write torn fixture")
 	var recovered := Store.new(_directory)
 	recovered.load_workspace()
-	_check.expect(recovered.export_json() == first and recovered.buffer.is_empty(), "Did not recover intact older slot")
+	_check.expect(recovered.export_json() == first and recovered.buffer.is_empty() and not recovered.recovery_notice().is_empty(),
+		"Did not recover and report the intact older slot")
 	_check.expect(store.undo() and store.export_json() == first, "Undo did not restore the previous validated draft")
 
 

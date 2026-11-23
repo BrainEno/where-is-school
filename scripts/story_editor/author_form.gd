@@ -4,9 +4,12 @@ extends PanelContainer
 
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
+const SEARCH_LENGTH := 120
+
 signal picked(field: String, id: String)
 signal action(id: String)
 signal buffer_changed
+signal query_changed(text: String)
 
 var body: TextEdit
 var reply: TextEdit
@@ -16,6 +19,9 @@ var round_context: Label
 var status: Label
 var _columns: VBoxContainer
 var _toolbar: HBoxContainer
+var _title: Label
+var _query_edit: LineEdit
+var _search_open := false
 var _footer: HBoxContainer
 var _structure: HBoxContainer
 var _followup_actions: HBoxContainer
@@ -55,10 +61,11 @@ func _ready() -> void:
 	_columns.add_theme_constant_override("separation", 5)
 	add_child(_columns)
 	_toolbar = _row(_columns)
-	var title := Label.new()
-	title.text = "剧情编辑 · 中文"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_toolbar.add_child(title)
+	_title = Label.new()
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_toolbar.add_child(_title)
+	set_preview_source(false)
 	_button(_toolbar, "keyboard", "收键盘")
 	_button(_toolbar, "close", "回游戏")
 
@@ -71,6 +78,7 @@ func _ready() -> void:
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.add_theme_constant_override("separation", 5)
 	_scroll.add_child(_content)
+	_build_navigation()
 	_picker("chapter", "章节")
 	_picker("conversation", "会话")
 	_picker("node", "节点")
@@ -117,7 +125,7 @@ func _ready() -> void:
 	# and the status line: without a key of its own the player cannot say "done" and put
 	# the keyboard away. The same button flushes the draft.
 	_button(form_actions, "apply_text", "保存文字")
-	_button(form_actions, "cancel", "取消／还原字段")
+	_button(form_actions, "cancel", "放弃输入")
 
 	status = Label.new()
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -126,7 +134,7 @@ func _ready() -> void:
 	_columns.add_child(status)
 	_footer = _row(_columns)
 	_button(_footer, "original", "看原文")
-	_button(_footer, "trial", "试走")
+	_button(_footer, "trial", "从头试走")
 	_button(_footer, "export", "导出 JSON")
 	set_mode("text", "")
 	fit_touch()
@@ -136,6 +144,61 @@ func _ready() -> void:
 		if not _native_fields:
 			body.mouse_filter = Control.MOUSE_FILTER_STOP
 			reply.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _build_navigation() -> void:
+	var nav := _row(_content)
+	_rows["navigation"] = nav
+	_button(nav, "current_line", "当前台词")
+	_button(nav, "find", "查找")
+	_button(nav, "trial_here", "本句试走")
+	var query := _row(_content)
+	_rows["query"] = query
+	if _native_fields:
+		_button(query, "edit_query", "输入查找词")
+	else:
+		_query_edit = LineEdit.new()
+		_query_edit.name = "FindQuery"
+		_query_edit.placeholder_text = "台词、选项、说话人 ID"
+		_query_edit.max_length = SEARCH_LENGTH
+		_query_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_query_edit.text_changed.connect(func(text: String) -> void: query_changed.emit(text))
+		query.add_child(_query_edit)
+	_picker("match", "结果")
+
+
+func toggle_search() -> bool:
+	set_search(not _search_open)
+	if _search_open and _query_edit != null:
+		_query_edit.grab_focus()
+	return _search_open
+
+
+func is_search_open() -> bool:
+	return _search_open
+
+
+func set_search(value: bool) -> void:
+	_search_open = value
+	if not value and _query_edit != null and _query_edit.has_focus():
+		hide_keyboard()
+	_apply_visibility()
+
+
+func set_query(text: String) -> void:
+	if _query_edit != null:
+		if _query_edit.text != text:
+			_query_edit.text = text
+	else:
+		var control := button("edit_query")
+		control.text = "输入查找词" if text.is_empty() else "查找：" + text
+		control.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+
+
+func set_preview_source(original: bool) -> void:
+	_title.text = "剧情编辑 · 原文" if original else "剧情编辑 · 草稿"
+	if _buttons.has("original"):
+		button("original").text = "看草稿" if original else "看原文"
 
 
 static func make_font(base: Font) -> Font:
@@ -237,11 +300,14 @@ func replace_options(key: String, entries: Array, selection: String) -> void:
 		var index := picker.item_count
 		picker.add_item(entry["label"])
 		picker.set_item_metadata(index, entry["id"])
+		picker.get_popup().set_item_tooltip(index, entry.get("hint", ""))
 		if entry["id"] == selection:
 			active = index
+	picker.tooltip_text = ""
 	if picker.item_count > 0:
 		picker.select(active)
-	picker.disabled = picker.item_count == 0
+		picker.tooltip_text = entries[active].get("hint", "")
+	picker.disabled = picker.item_count == 0 or (key == "match" and picker.item_count == 1)
 	_busy = false
 
 
@@ -381,7 +447,7 @@ func set_keyboard_compact(enabled: bool) -> void:
 
 func hide_keyboard() -> void:
 	var focus := get_viewport().gui_get_focus_owner()
-	if focus == body or focus == reply:
+	if focus != null and (focus == body or focus == reply or focus == _query_edit):
 		focus.release_focus()
 	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
 		DisplayServer.virtual_keyboard_hide()
@@ -397,21 +463,27 @@ func _apply_visibility() -> void:
 	var branching := _mode == "choice"
 	var replying := branching and new_reply.button_pressed
 	var in_reply := reply.has_focus()
+	var in_query := _query_edit != null and _query_edit.has_focus()
+	var finding := _search_open and not _blocked and _mode == "text"
+	_rows["navigation"].visible = editing and _mode == "text"
+	_rows["query"].visible = finding and (not compact or in_query)
+	_rows["match"].visible = finding and not compact
+	_buttons["find"].text = "关闭查找" if finding else "查找"
 	if _native_fields:
 		_buttons["edit_body"].visible = editing
 		_buttons["edit_body"].text = body_caption()
 		_buttons["edit_reply"].visible = editing and replying
 	var composing_round := _mode == "followup"
 	for key: String in ["chapter", "conversation", "node"]:
-		_rows[key].visible = editing and not composing_round
+		_rows[key].visible = editing and _mode == "text"
 	# The action row keeps the text field's confirm key on a compact drawer; in every other
 	# mode it only exists where its keys do.
-	_rows["form_actions"].visible = not _blocked and (editing or (compact and _mode == "text"))
+	_rows["form_actions"].visible = editing or (not _blocked and compact and not in_query and _mode == "text")
 	_rows["field"].visible = editing and _mode == "text"
 	var round_visible := editing and composing_round
 	_rows["line"].visible = round_visible
 	_round_actions.visible = round_visible
-	round_context.visible = round_visible
+	round_context.visible = editing and _mode != "text"
 	round_placeholder.visible = round_visible
 	_rows["speaker"].visible = editing and (_mode == "insert" or replying or round_visible)
 	_rows["target"].visible = editing and branching
@@ -426,7 +498,8 @@ func _apply_visibility() -> void:
 	_buttons["apply_text"].visible = _mode == "text"
 	_buttons["apply_text"].disabled = _blocked
 	_buttons["cancel"].visible = not compact
-	body.visible = not _blocked and (not compact or not in_reply)
+	_buttons["cancel"].text = "放弃输入" if _mode == "text" else "取消新增"
+	body.visible = not _blocked and (not compact or not (in_reply or in_query))
 	body.custom_minimum_size.y = 64.0 if compact else 110.0
 	new_reply.visible = editing and branching
 	reply.visible = (editing and replying) or (compact and in_reply)
@@ -443,4 +516,6 @@ func fit_touch() -> void:
 		else:
 			control.custom_minimum_size.y = 33.0
 	if MobileLayout.enabled:
+		if _query_edit != null:
+			MobileLayout.enlarge(_query_edit)
 		_scroll.scroll_deadzone = roundi(MobileLayout.hit_size(self) / 6.0)

@@ -133,7 +133,9 @@ func get_current_node_id() -> StringName:
 	return _node.node_id
 
 
-func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
+## A detached author trial may start later in the graph. Conditions use the supplied
+## state; skipped nodes and their effects are not replayed. Gameplay omits `first_node`.
+func start(graph: DialogueGraph, conversation_id: StringName, first_node: StringName = &"") -> bool:
 	if _active:
 		_note("dialogue.start_refused", {"reason": "busy"})
 		push_error("DialogueRuntime.start: a conversation is already running.")
@@ -147,6 +149,8 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 		_note("dialogue.start_refused", {"reason": "unknown_conversation"})
 		push_error("DialogueRuntime.start: unknown conversation '%s'." % conversation_id)
 		return false
+	if first_node != &"" and not conversation.nodes.has(first_node):
+		return false
 	if _game_state == null or _narrative_state == null:
 		_note("dialogue.start_refused", {"reason": "no_state"})
 		push_error("DialogueRuntime.start: GameState/NarrativeState autoloads are unavailable.")
@@ -159,14 +163,10 @@ func start(graph: DialogueGraph, conversation_id: StringName) -> bool:
 	_lines_presented = 0
 	_note("dialogue.started")
 	conversation_started.emit(conversation_id)
-	_enter_node(conversation.start_id)
+	_enter_node(conversation.start_id if first_node == &"" else first_node)
 	if not _active and _lines_presented == 0:
-		# The graph ended during this call: the first node was skipped (or did not
-		# exist) and nothing followed it. `conversation_finished` has already been
-		# emitted, so a caller that starts a conversation and then waits for it to
-		# end has to check `is_active()`/`is_busy()` after this returns. Say so
-		# here, where the cause is still visible, instead of leaving the caller to
-		# hang with no explanation.
+		# Completion is synchronous when all nodes are skipped. Callers waiting for
+		# the end must check is_active()/is_busy() after start returns.
 		_note("dialogue.no_line")
 		push_warning(
 			("DialogueRuntime: conversation '%s' started and finished without showing "

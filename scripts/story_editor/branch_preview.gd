@@ -48,7 +48,8 @@ func show_node(graph: DialogueGraph, conversation: String, node_id: String) -> v
 func has_line() -> bool:
 	return not _last_shape.is_empty()
 
-func start(graph: DialogueGraph, conversation: String, flags: Dictionary, knowledge: Dictionary, seed_value: int) -> bool:
+func start(graph: DialogueGraph, conversation: String, flags: Dictionary, knowledge: Dictionary,
+		seed_value: int, first_node: String = "") -> bool:
 	stop()
 	_flags = Flags.new()
 	_flags.replace_snapshot(flags)
@@ -59,7 +60,7 @@ func start(graph: DialogueGraph, conversation: String, flags: Dictionary, knowle
 	_runtime.line_changed.connect(_line)
 	_runtime.choices_changed.connect(_choices)
 	_runtime.conversation_finished.connect(_finished)
-	return _runtime.start(graph, StringName(conversation))
+	return _runtime.start(graph, StringName(conversation), StringName(first_node))
 
 
 func _line(line: Dictionary) -> void:
