@@ -24,7 +24,7 @@ from build_teaching_block import (
     child_path, plane, quad, slab, srgb, vec3,
 )
 import dream_stable
-from dream_figures import PEOPLE, figure, motion_material, part, shader_material, swivel_chair
+from dream_figures import PEOPLE, figure, shader_material, swivel_chair
 from exam_crowd import exam_candidates, waiting_candidates
 from fixture_geometry import FixtureBuild
 from ticket_clerks import PRESS_Z, STATIONS, build_clerk, stamp_loop
@@ -240,13 +240,10 @@ def low_wall(b, parent, name, a, z_or_x, along_x, height=1.25):
 def yard_ground(b, y):
     slab(b, y, "Lane", LANE_X, LANE_Z, G)
     slab(b, y, "Yard", YARD_X, YARD_Z, G)
-    b.flat("LaneEarth", y, plane(b, LANE_X[1] - LANE_X[0], LANE_Z[1] - LANE_Z[0]), "earth",
-           (sum(LANE_X) / 2, G + .004, sum(LANE_Z) / 2))
-    b.flat("YardEarth", y, plane(b, YARD_X[1] - YARD_X[0], YARD_Z[1] - YARD_Z[0]), "earth",
-           (sum(YARD_X) / 2, G + .004, sum(YARD_Z) / 2))
     # Everything past the wall is village ground, never walkable.
     b.box("VillageGround", y, (-49.5, G - .13, 6), (45, .2, 40), "earth_dark")
-    dream_stable.yard_ground(b, y, YARD_X, YARD_Z, HOUSE_X, HOUSE_Z)
+    # Round 19: the yard and lane are uneven earth over the flat slabs (tools/stable_ground.py).
+    dream_stable.yard_ground(b, y)
 
 
 def quilts(b, y):
@@ -403,13 +400,11 @@ def stable_yard(b):
     quilts(b, y)
     # Round 18: one mat of grain between the two women, so the middle of the yard stays open.
     dream_stable.grain(b, y, "GrainMat0", (-31.2, G, 12.7), (3.0, 2.0), 4)
-    from stable_people import woman
-    b.box("Stool", y, (-33.6, G + .12, 13.2), (.3, .24, .3), "stool")
-    woman(b, y, "OldWoman0", (-33.1, G, 12.4), 90, seated=True)
-    raker = woman(b, y, "OldWoman1", (-28.8, G, 12.9), -90)
-    rake = motion_material(b, "rake", "rake", phase=.3)
-    part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), rake)
-    part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), rake)
+    # Round 19: two sculpted women at work - one shakes grain through a sieve on a low stool,
+    # the other draws a grain rake through it (tools/stable_workers.py, tools/stable_people.py).
+    import stable_people
+    stable_people.sifter(b, y, "OldWoman0", (-33.1, G, 12.4), 90)
+    stable_people.raker(b, y, "OldWoman1", (-28.6, G, 12.9), -90)
     # The bales are stacked out of the way at the lane's west end, and stand solid.
     stack = solid(b, "HayStack", y, (-39.45, G, 17.62), (1.0, 1.0, 1.1), fade=False)
     for i, (pos, yaw) in enumerate((((0, 0, -.27), 0), ((0, 0, .27), 2), ((0, .45, 0), 84))):

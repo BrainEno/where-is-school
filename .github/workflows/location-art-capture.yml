@@ -239,11 +239,13 @@ jobs:
               ;;
             stable_yard)
               # The stable yard behind 01, in the live corridor: one follow-camera stance and
-              # seven fixed views (the yard from the lane, each horse over its half door, the
-              # stall front, the hen house, one hen, the muck bay). The same views on the base.
+              # ten fixed views (the yard from the lane, each horse over its half door, the
+              # stall front, the hen house, one hen, the muck bay, and since round 19 the two
+              # women at work, the restroom's outside wall and the earth underfoot). The same
+              # views on the base.
               detail=(stable-yard review_width=360)
               width=1280
-              expect=8
+              expect=11
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

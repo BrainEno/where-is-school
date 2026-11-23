@@ -280,6 +280,9 @@ const STABLE_VIEWS := [
 	["hen_house", Vector3(-31.0, -2.3, 10.4), Vector3(-33.2, -3.2, 7.6)],
 	["hen", Vector3(-32.9, -2.85, 9.0), Vector3(-33.7, -3.2, 7.9)],
 	["muck_bay", Vector3(-32.8, -2.0, 8.2), Vector3(-35.0, -3.0, 5.6)],
+	["workers", Vector3(-31.2, -1.5, 16.0), Vector3(-34.9, -2.75, 12.6)],
+	["restroom_wall", Vector3(-38.6, -0.4, 14.6), Vector3(-30.9, -1.9, 9.8)],
+	["yard_ground", Vector3(-33.0, -2.1, 11.8), Vector3(-35.6, -3.35, 9.0)],
 ]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)

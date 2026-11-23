@@ -103,6 +103,7 @@ func _run() -> void:
 		_check.expect(corridor.has_node(^"TeachingBlock/GroundFloor/GlassEntrance")
 			and corridor.has_node(^"TeachingBlock/GroundFloor/LockedServiceGate/Lock"),
 			"The glass entrance or closed service gate is missing.")
+		_check_restroom_shell(corridor)
 		var exam := annex.get_node_or_null(^"ExamFloor")
 		if _check.expect(exam != null, "The annex has no ExamFloor."):
 			_check_candidates(exam, EXAM_CROWD, true)
@@ -139,22 +140,44 @@ func _run() -> void:
 
 
 func _check_stable_art(annex: Node) -> void:
-	for name: String in ["OldWoman0", "OldWoman1"]:
+	# Round 19: two sculpted women at work, each with her tool and one looping native clip.
+	var workers: Dictionary = {"OldWoman0": [&"Sift", ^"Body/Sieve"], "OldWoman1": [&"Rake", ^"Rake"]}
+	for name: String in workers:
+		var spec: Array = workers[name]
 		var person := annex.get_node_or_null(NodePath("StableYard/" + name)) as Node3D
 		if not _check.expect(person != null, "The stable lost " + name):
 			continue
+		var indices := 0
 		for part: NodePath in [^"Feet", ^"Body/Coat", ^"Body/Head", ^"Body/ArmL", ^"Body/ArmR"]:
 			var piece := person.get_node_or_null(part) as MeshInstance3D
 			if not _check.expect(piece != null, name + " lost " + str(part)):
 				continue
 			var mesh := piece.mesh as ArrayMesh
-			var paint := piece.material_override as StandardMaterial3D
-			_check.expect(mesh != null and mesh.surface_get_array_index_len(0) > 100
+			var paint := piece.material_override as ShaderMaterial
+			if _check.expect(mesh != null and mesh.get_surface_count() == 1
 				and (mesh.surface_get_format(0) & Mesh.ARRAY_FORMAT_COLOR) != 0
-				and paint != null and paint.vertex_color_use_as_albedo,
-				name + " lost its shaped, painted " + str(part))
-		_check.expect(person.get_node_or_null(^"Motion") is AnimationPlayer,
-			name + " lost its quiet visual motion")
+				and paint != null and paint.shader != null and paint.shader.resource_path == COAT_SHADER,
+				name + " lost its sculpted, painted " + str(part)):
+				indices += mesh.surface_get_array_index_len(0)
+		_check.expect(indices > 30000, name + " is a coarse stand-in again, not a sculpted figure")
+		var tool := person.get_node_or_null(spec[1]) as MeshInstance3D
+		_check.expect(tool != null and tool.mesh != null, name + " lost the tool that says what she is doing")
+		var motion := person.get_node_or_null(^"Motion") as AnimationPlayer
+		var arm := person.get_node_or_null(^"Body/ArmR") as Node3D
+		if not _check.expect(motion != null and motion.is_playing() and motion.current_animation == spec[0]
+				and arm != null and tool != null, name + " no longer works on a loop"):
+			continue
+		var clip := motion.get_animation(spec[0])
+		_check.expect(clip.loop_mode == Animation.LOOP_LINEAR, name + "'s work no longer loops")
+		motion.seek(0.0, true)
+		var rest_arm := arm.rotation_degrees
+		var rest_tool := tool.global_position
+		motion.seek(clip.length * 0.25, true)
+		_check.expect(rest_arm.distance_to(arm.rotation_degrees) > 3.0
+			and rest_tool.distance_to(tool.global_position) > 0.025,
+			name + "'s arms and tool do not move together through the work")
+		motion.play()
+	_check.expect(annex.get_node_or_null(^"StableYard/Stool") == null, "The box stool is back")
 	_check_stable_animals(annex)
 	var wisp := annex.get_node_or_null(^"StableYard/Stink0") as MultiMeshInstance3D
 	if _check.expect(wisp != null and wisp.multimesh != null, "The stable lost its wisps"):
@@ -182,10 +205,45 @@ func _check_stable_animals(annex: Node) -> void:
 			path + " is not one dense, painted, sculpted surface")
 		_check.expect(coat != null and coat.shader != null and coat.shader.resource_path == COAT_SHADER
 			and animal.material_overlay == null, path + " is not lit by the coat shader alone")
-	var flies := annex.get_node_or_null(^"StableYard/Flies0") as MultiMeshInstance3D
-	_check.expect(flies != null and flies.multimesh.instance_count <= 40, "The swarm crowds the yard again")
+	# Round 19: a few flies over the heap and some of the droppings, never a cloud.
+	var fly_count := 0
+	for swarm in annex.find_children("Flies*", "MultiMeshInstance3D", true, false):
+		fly_count += (swarm as MultiMeshInstance3D).multimesh.instance_count
+	_check.expect(fly_count >= 20 and fly_count <= 40, "%d flies: the yard wants a few, not a swarm" % fly_count)
+	for index in 6:
+		_check.expect(annex.get_node_or_null(NodePath("StableYard/Dung%d" % index)) != null,
+			"The yard lost dropping %d" % index)
+	var earth := annex.get_node_or_null(^"StableYard/YardEarth") as MeshInstance3D
+	if _check.expect(earth != null and earth.mesh != null, "The stable yard lost its earth"):
+		var relief := earth.mesh.get_aabb()
+		_check.expect(relief.size.y > 0.04 and relief.size.y < 0.12 and relief.size.x > 19.0,
+			"The yard's earth is flat again, or heaves out of the walking slab")
+		_check.expect(earth.find_children("*", "CollisionObject3D", true, false).is_empty(),
+			"The yard's relief added a collider")
+	var straw := annex.get_node_or_null(^"StableYard/LooseStraw") as MeshInstance3D
+	_check.expect(straw != null and straw.mesh != null and straw.mesh.get_aabb().size.x > 12.0,
+		"The yard lost its scattered straw")
 	for name: String in ["GiantFly", "DazeHalo0", "Dung6", "WallStain0", "Smell1"]:
 		_check.expect(annex.find_child(name, true, false) == null, "The yard is cluttered again: " + name)
+
+
+func _check_restroom_shell(corridor: Node) -> void:
+	# Round 19: the restroom behind the gallery's end wall has an outside, seen from the yard.
+	var shell := corridor.get_node_or_null(^"TeachingBlock/GroundFloor/RestroomExterior") as StaticBody3D
+	if not _check.expect(shell != null and shell.is_in_group(&"camera_occluder"),
+			"The restroom has no camera-fading outer shell beside the stable yard."):
+		return
+	var solid := shell.get_node(^"Solid") as CollisionShape3D
+	var half := (solid.shape as BoxShape3D).size * .5
+	var bounds := solid.global_transform * AABB(-half, half * 2.0)
+	var door := corridor.get_node_or_null(^"Interactables/RestroomDoor") as Node3D
+	_check.expect(bounds.position.x > -31.0 and bounds.end.x < -26.8 and bounds.position.z < 6.0
+		and bounds.end.z < 14.68 and bounds.size.y > 3.0,
+		"The restroom shell must fill the gap between the yard and the end wall, clear of the lane.")
+	if door != null:
+		_check.expect(door.global_position.x > bounds.end.x + .4, "The restroom shell covers its own door.")
+	for part: String in ["Plaster", "Light0/Frost", "Downpipe"]:
+		_check.expect(shell.get_node_or_null(NodePath(part)) is MeshInstance3D, "The restroom shell lost its " + part)
 
 
 func _check_stench(corridor: Node) -> void:
