@@ -124,7 +124,7 @@ const SPAWNS := {
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
 ## Godot 4.7.2 bake with the smaller shed and no return-board posts.
-const NAV_POLYGONS := 127
+const NAV_POLYGONS := 128
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [
