@@ -83,8 +83,10 @@ void fragment() {
 #if CURRENT_RENDERER == RENDERER_COMPATIBILITY
     // The GL Compatibility renderer (mobile, and the "after" captures) gives this flat mesh the
     // ambient term only, no sun, and the filmic toe then crushes a pale grey to black: a probe
-    // of plain PALE measured 17/255 there against ~80 in Forward+. A stronger self-light
-    // brings it back to the Forward+ look.
+    // of plain PALE measured 17/255 there against ~80 in Forward+. The albedo is lifted into
+    // the range of the brown earth this replaced (0.27-0.50, which read ~75/255 there), with
+    // a stronger self-light on top.
+    ALBEDO = min(c * 2.8, vec3(1.0));
     EMISSION = c * 0.9;
 #endif
 }
