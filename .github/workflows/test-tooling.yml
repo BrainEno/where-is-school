@@ -34,6 +34,24 @@ jobs:
           set -euo pipefail
           python3 tools/check_commit_messages.py --range "${BASE_SHA}..${HEAD_SHA}"
 
+  story-documents:
+    name: Story document import boundaries and roundtrip
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Reject unsafe chapter paths and preserve author text
+        shell: bash
+        run: |
+          set -euo pipefail
+          # These import/roundtrip tests need only the Python standard library, not Godot.
+          python3 --version
+          python3 tests/story_doc_paths_test.py
+          python3 tests/story_doc_test.py
+          python3 tools/story_doc.py roundtrip
+
   tooling:
     name: Test registration and Python tool reproducibility
     runs-on: ubuntu-24.04
