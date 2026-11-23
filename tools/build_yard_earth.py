@@ -26,17 +26,23 @@ def build():
             row.append((x, y, z))
         rows.append(row)
     mesh = Mesh().grid(rows, outward=(0, 1, 0))
-    parts = ['''[gd_scene load_steps=8 format=3]
+    # The soil was added after the painted court and originally covered it. Cut
+    # out the actual court footprint instead of lifting the court above the
+    # player's feet. The 0.5 m grid aligns exactly with its four boundaries.
+    visible = []
+    for i in range(0, len(mesh.indices), 3):
+        tri = mesh.indices[i:i + 3]
+        x = sum(mesh.points[k][0] for k in tri) / 3
+        z = sum(mesh.points[k][2] for k in tri) / 3
+        if not (-11 < x < 11 and -15 < z < 11):
+            visible.extend(tri)
+    mesh.indices = visible
+    parts = ['''[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/yard_earth.tres" id="EarthMaterial"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/metal_ink.tres" id="Iron"]
-[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/court_line.tres" id="Chalk"]
 [sub_resource type="ArrayMesh" id="EarthMesh"]
 _surfaces = ''' + mesh.surface() + '''
-[sub_resource type="BoxMesh" id="CourtWidth"]
-size = Vector3(22, 0.01, 0.09)
-[sub_resource type="BoxMesh" id="CourtLength"]
-size = Vector3(0.09, 0.01, 26)
 [sub_resource type="BoxMesh" id="Bar"]
 size = Vector3(0.045, 2.55, 0.045)
 [node name="EarthYard" type="Node3D"]
@@ -45,16 +51,6 @@ mesh = SubResource("EarthMesh")
 material_override = ExtResource("EarthMaterial")
 cast_shadow = 0
 ''']
-    # Faint chalk marks remain readable on the packed earth.
-    for name, x, z, mesh_id in (("South", 0, 11, "CourtWidth"), ("North", 0, -15, "CourtWidth"),
-                                 ("Centre", 0, -2, "CourtWidth"), ("West", -11, -2, "CourtLength"),
-                                 ("East", 11, -2, "CourtLength")):
-        parts.append(f'''[node name="Court{name}" type="MeshInstance3D" parent="."]
-position = Vector3({x}, 0.09, {z})
-mesh = SubResource("{mesh_id}")
-material_override = ExtResource("Chalk")
-cast_shadow = 0
-''')
     # Vertical rails reinforce the enclosure; leave existing gates and the west
     # construction-site approach clear. No collider is added to an existing route.
     for side, x in (('East', 22.6), ('West', -22.6)):

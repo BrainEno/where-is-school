@@ -216,6 +216,15 @@ func _run() -> void:
 	elif not earth.find_children("*", "CollisionObject3D", true, false).is_empty() \
 			or not earth.find_children("*", "CollisionShape3D", true, false).is_empty():
 		_failures.append("The soil dressing must not alter walkable collision.")
+	if earth != null:
+		var soil := earth.get_node_or_null(^"Soil") as MeshInstance3D
+		if soil != null and soil.mesh != null:
+			var faces := soil.mesh.get_faces()
+			for point: Vector2 in [Vector2(0, 0), Vector2(-8, -10), Vector2(8, 8), Vector2(10.5, -14.5)]:
+				if _segment_hits_mesh(faces, Vector3(point.x, 1, point.y), Vector3(point.x, -1, point.y)):
+					_failures.append("Soil covers the concrete court at %s." % point)
+			if not _segment_hits_mesh(faces, Vector3(16, 1, 0), Vector3(16, -1, 0)):
+				_failures.append("Soil outside the court was accidentally removed.")
 	_check_colour_system()
 	Harness.stage = "wall dressing"
 	_check_dressing()
