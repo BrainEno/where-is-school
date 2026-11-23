@@ -1,11 +1,15 @@
-"""Shaped meshes for the stink stable behind 01 (docs/EXAM_DREAM_ART.md, round 10).
+"""Shaped meshes for the stable yard behind 01 (docs/EXAM_DREAM_ART.md, round 10).
+
+Since round 18 the horses and hens are sculpted in `stable_animals.py` and the yard's
+dressing is modelled in `stable_props.py`; this module keeps the dung, the heap, the
+straw, the flies, the smell and the ink silhouette, and the kit those modules share.
 
 Pure Python, no engine: `build_dream_annex.py` writes each mesh as its own text
 ArrayMesh under `scenes/locations/corridor/stable_meshes/`, because the dream annex
 scene is already most of the release's 1 MiB budget for one scene.
 
 Every mesh carries RGBA8 vertex colour. RGB is the painted colour field (sRGB). Alpha
-is a motion weight read by `stable_paint.gdshader` / `stable_ink.gdshader` /
+is a motion weight read by `stable_paint.gdshader` / `stable_coat.gdshader` /
 `stench_flies.gdshader`, so a whole animal moves without a skeleton or a script:
 
 * 0.5        still;
@@ -24,15 +28,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scenes/environment/props/playground_art/source"))
 
 from site_mesh import (  # noqa: E402 - the kit lives beside the playground art
-    IDENTITY, Mesh, _surface, add, apply, cross, cylinder, dot, euler, fbm, lerp, mul, noise, norm, rand,
-    rock, smoothstep, sub, tube,
+    IDENTITY, Mesh, _surface, add, cylinder, euler, fbm, mul, noise, rand, rock, smoothstep, sub, tube,
 )
 
 STILL = 0.5
 WING = 0.0
-# The horse frame: +Z forward, +Y up, origin on the ground between the hooves.
-NECK_PIVOT = (0.0, 1.30, 0.50)
-TAIL_PIVOT = (0.0, 1.36, -0.93)
 
 
 def rgb(c, a=STILL):
@@ -161,46 +161,6 @@ def ellipsoid(center, radii, rings=10, sides=18, wobble=0.0, seed=0):
     return m
 
 
-def cut_strip(base, tips, thickness, face, edge):
-    """Cut paper: quads from a base polyline out to a jagged tip polyline, with thickness.
-
-    `base` and `tips` are the same length. The two faces get `face`, the cut edge `edge`.
-    """
-    m = PaintMesh()
-    n = len(base)
-    # Offset direction: the normal of the strip's own plane (from its first quad).
-    plane = norm(cross(sub(base[min(1, n - 1)], base[0]), sub(tips[0], base[0])))
-    h = mul(plane, thickness / 2)
-    front_b = [add(p, h) for p in base]
-    front_t = [add(p, h) for p in tips]
-    back_b = [sub(p, h) for p in base]
-    back_t = [sub(p, h) for p in tips]
-    for i in range(n - 1):
-        for quad_pts, out, col in (
-            ((front_b[i], front_b[i + 1], front_t[i + 1], front_t[i]), plane, face),
-            ((back_b[i], back_b[i + 1], back_t[i + 1], back_t[i]), mul(plane, -1), face),
-        ):
-            m.mark()
-            m.polygon([quad_pts[0], quad_pts[1], quad_pts[2]], out)
-            m.polygon([quad_pts[0], quad_pts[2], quad_pts[3]], out)
-            m.paint(lambda p, nn, c=col: c)
-    # The cut edge all round the tips, and the two ends.
-    ring = [*zip(front_t, back_t)]
-    for i in range(n - 1):
-        (a, b), (c, d) = ring[i], ring[i + 1]
-        mid = mul(add(add(a, b), add(c, d)), .25)
-        inner = mul(add(base[i], base[i + 1]), .5)
-        m.mark()
-        m.polygon([a, c, d, b], sub(mid, inner))
-        m.paint(lambda p, nn, col=edge: col)
-    for i, j in ((0, 1), (n - 1, n - 2)):
-        out = sub(base[i], base[j])
-        m.mark()
-        m.polygon([front_b[i], front_t[i], back_t[i], back_b[i]], out)
-        m.paint(lambda p, nn, col=edge: col)
-    return m
-
-
 def triangulate(poly):
     """Ear clipping for a simple 2-D polygon (any winding). Returns index triples."""
     pts = list(poly)
@@ -260,164 +220,6 @@ def slab_polygon(outline, depth, face, edge, *, back=None):
         m.polygon([(*a, h), (*b, h), (*b, -h), (*a, -h)], out)
         m.paint(lambda p, n, cc=edge: cc)
     return m
-
-
-# --- the horses -----------------------------------------------------------------------
-
-
-BAY = {"coat": (128, 74, 44), "shade": (98, 54, 34), "points": (34, 28, 26), "mane": (30, 25, 24),
-       "mane_edge": (226, 214, 176), "blaze": (236, 228, 212), "hoof": (54, 46, 40), "muzzle": (70, 46, 36)}
-GREY = {"coat": (178, 174, 166), "shade": (128, 126, 122), "points": (92, 88, 86), "mane": (232, 228, 214),
-        "mane_edge": (60, 58, 66), "blaze": (206, 204, 198), "hoof": (66, 62, 60), "muzzle": (96, 90, 88)}
-EYE = (16, 13, 12)
-NOSTRIL = (36, 26, 24)
-EAR_IN = (58, 40, 34)
-
-BODY = (
-    (-0.99, 1.31, 0.03, 0.03, 0.03),
-    (-0.96, 1.31, 0.13, 0.16, 0.16),
-    (-0.89, 1.29, 0.22, 0.25, 0.27),
-    (-0.77, 1.27, 0.27, 0.30, 0.33),
-    (-0.58, 1.25, 0.29, 0.31, 0.36),
-    (-0.36, 1.22, 0.28, 0.33, 0.38),
-    (-0.10, 1.21, 0.30, 0.35, 0.39),
-    (0.16, 1.22, 0.30, 0.36, 0.38),
-    (0.38, 1.25, 0.27, 0.37, 0.34),
-    (0.55, 1.26, 0.23, 0.33, 0.30),
-    (0.68, 1.22, 0.19, 0.27, 0.26),
-    (0.76, 1.18, 0.12, 0.18, 0.18),
-    (0.80, 1.16, 0.03, 0.04, 0.04),
-)
-NECK = ((0, 1.24, 0.42), (0, 1.48, 0.64), (0, 1.72, 0.84), (0, 1.90, 0.96), (0, 1.97, 1.0))
-NECK_R = ((.16, .27), (.14, .23), (.115, .18), (.10, .14), (.09, .12))
-HEAD = ((0, 1.99, 0.96), (0, 1.92, 1.06), (0, 1.80, 1.22), (0, 1.68, 1.36), (0, 1.60, 1.45), (0, 1.585, 1.475))
-HEAD_R = ((.085, .12), (.09, .14), (.078, .105), (.068, .082), (.066, .074), (.05, .05))
-
-
-def _neck_weight(p):
-    a = NECK_PIVOT
-    b = HEAD[0]
-    axis = sub(b, a)
-    t = dot(sub(p, a), axis) / dot(axis, axis)
-    return smoothstep(0.05, 0.95, t)
-
-
-def _horse_colour(look, p, part, seed):
-    coat, shade = look["coat"], look["shade"]
-    x, y, z = p
-    c = coat
-    if part in ("body", "muscle", "neck", "head"):
-        # Painted fields, not gradients: the belly and the inside of the legs a step darker.
-        if y < 0.95 + 0.05 * math.sin(z * 7):
-            c = shade
-        if look is GREY:
-            spot = fbm(x * 7 + seed, z * 7 + y * 5, seed + 3, 3)
-            if spot > 0.18 and y > 0.9:
-                c = mix(coat, (236, 234, 228), 0.65)
-            elif spot < -0.32:
-                c = shade
-    if part == "head":
-        if z > 1.36:
-            c = look["muzzle"]
-        if look is BAY and abs(x) < 0.03 + 0.02 * (z - 1.0) and 1.05 < z < 1.36 and y > 1.68:
-            c = look["blaze"]
-    if part == "leg":
-        c = look["points"] if (look is BAY and y < 0.58) or y < 0.36 else coat
-        if look is GREY and y < 0.58:
-            c = look["points"]
-        if look is BAY and y < 0.2 and x > 0 and z < 0:
-            c = look["blaze"]  # one white sock, hind right
-    w = STILL
-    if part in ("neck", "head", "ear", "mane", "eye"):
-        w = STILL + 0.5 * (1.0 if part in ("head", "ear", "eye") else _neck_weight(p))
-    return rgb(c, w)
-
-
-def horse(look, seed=0):
-    """About 9k triangles: lofted barrel, neck and head; muscled legs; cut-paper mane and tail."""
-    m = PaintMesh()
-
-    def bulge(a, z):
-        # The shoulder and the quarters stand out on the sides of the barrel.
-        side = abs(math.cos(a)) ** 3 * (1 if math.sin(a) > -0.2 else 0.4)
-        return side * (0.07 * math.exp(-((z - 0.42) / 0.12) ** 2) + 0.08 * math.exp(-((z + 0.66) / 0.16) ** 2))
-
-    m.add(loft_z(BODY, sides=34, per=3, bulge=bulge), lambda p, n: _horse_colour(look, p, "body", seed))
-    m.add(sweep(NECK, NECK_R, sides=22, per=3), lambda p, n: _horse_colour(look, p, "neck", seed))
-    m.add(sweep(HEAD, HEAD_R, sides=20, per=3), lambda p, n: _horse_colour(look, p, "head", seed))
-    # Jaw: the round cheek under the head.
-    for sx in (-1, 1):
-        m.add(ellipsoid((sx * .045, 1.90, 1.06), (.05, .085, .09), 8, 12),
-              lambda p, n: _horse_colour(look, p, "head", seed))
-    for sx in (-1, 1):
-        # Shoulder and thigh masses, then the legs.
-        m.add(ellipsoid((sx * .17, 1.14, .46), (.1, .27, .17), 9, 14),
-              lambda p, n: _horse_colour(look, p, "muscle", seed))
-        m.add(ellipsoid((sx * .17, 1.06, -.64), (.13, .3, .23), 9, 14),
-              lambda p, n: _horse_colour(look, p, "muscle", seed))
-        x = sx * .15
-        fore = ((x, 1.02, .50), (x, .80, .53), (x, .54, .55), (x, .44, .555), (x, .23, .555), (x, .135, .585),
-                (x, .085, .61))
-        hind = ((x, 1.10, -.62), (x, .86, -.56), (x, .63, -.71), (x, .53, -.755), (x, .26, -.74), (x, .145, -.70),
-                (x, .085, -.675))
-        for path, radii in ((fore, (.10, .075, .056, .052, .039, .044, .046)),
-                            (hind, (.13, .105, .068, .058, .041, .044, .046))):
-            m.add(sweep(path, radii, sides=14, per=3), lambda p, n: _horse_colour(look, p, "leg", seed))
-            # Knee / hock and fetlock knuckles.
-            for k in (3, 5):
-                m.add(ellipsoid(path[k], (radii[k] * 1.08, radii[k] * 1.25, radii[k] * 1.12), 6, 10),
-                      lambda p, n: _horse_colour(look, p, "leg", seed))
-            hx, _, hz = path[-1]
-            m.add(cylinder(.058, .085, 16, top=.047, center=(hx, .0425, hz + .01)), rgb(look["hoof"]))
-        # Ears, eyes, nostrils.
-        ear_base, ear_tip = (sx * .05, 2.02, .985), (sx * .075, 2.17, .955)
-        m.add(sweep((ear_base, lerp(ear_base, ear_tip, .5), ear_tip), ((.03, .022), (.026, .018), (.004, .004)),
-                    sides=8, per=2), lambda p, n: _horse_colour(look, p, "ear", seed))
-        m.add(ellipsoid((sx * .083, 1.895, 1.115), (.016, .022, .026), 6, 10), rgb(EYE, 1.0))
-        m.add(ellipsoid((sx * .036, 1.585, 1.462), (.011, .016, .013), 5, 8), rgb(NOSTRIL, 1.0))
-    # The mane: one jagged sheet of cut paper along the crest, falling to the off side.
-    crest = catmull([(0, 1.62, 0.36), (0, 1.80, 0.62), (0, 1.98, 0.84), (0, 2.08, 0.97)], 6)
-    base, tips = [], []
-    for i, (x, y, z) in enumerate(crest):
-        k = i / (len(crest) - 1)
-        reach = (.13 if i % 2 else .24) * (1 - .3 * k)
-        base.append((.02, y - .015, z))
-        tips.append((.09 + reach * .45, y - .03 - reach * .85, z - .05 - .03 * (i % 3)))
-    m.add(cut_strip(base, tips, .018, rgb(look["mane"]), rgb(look["mane_edge"])))
-    m.weight(lambda p: STILL + 0.5 * _neck_weight(p))
-    # Forelock between the ears.
-    fb = [(-.03, 2.03, .99), (0, 2.04, 1.0), (.03, 2.03, .99)]
-    ft = [(-.04, 1.9, 1.05), (.0, 1.86, 1.07), (.035, 1.91, 1.05)]
-    m.add(cut_strip(fb, ft, .012, rgb(look["mane"]), rgb(look["mane_edge"])))
-    m.weight(lambda p: 1.0)
-    # The tail: three tasselled sheets of paper fanned round the dock.
-    dock = ((0, 1.38, -.95), (0, 1.30, -1.03), (0, 1.18, -1.07))
-    m.add(sweep(dock, (.05, .045, .04), sides=10, per=2), rgb(look["mane"]))
-    m.weight(_tail_weight)
-    for fan in (-28, 0, 28):
-        rot = euler((0, fan, 0))
-        base, tips = [], []
-        steps = 9
-        for i in range(steps):
-            k = i / (steps - 1)
-            y = 1.22 - .62 * k
-            zz = -1.08 - .1 * math.sin(k * 2.2)
-            half = .035 + .07 * math.sin(k * math.pi * .85)
-            jag = (.05 if i % 2 else 0)
-            base.append(_rot_about(rot, (-half, y, zz), TAIL_PIVOT))
-            tips.append(_rot_about(rot, (half, y - jag, zz - .01), TAIL_PIVOT))
-        m.add(cut_strip(base, tips, .012, rgb(look["mane"]), rgb(look["mane_edge"])))
-        m.weight(_tail_weight)
-    return m
-
-
-def _rot_about(rotation, p, pivot):
-    return add(apply(rotation, sub(p, pivot)), pivot)
-
-
-def _tail_weight(p):
-    drop = max(0.0, min(1.0, (TAIL_PIVOT[1] - p[1] + .04) / 0.78))
-    return STILL - 0.5 * smoothstep(0.0, 1.0, drop)
 
 
 # --- dung ----------------------------------------------------------------------------
@@ -603,38 +405,6 @@ def fly(scale=1.0):
     return m
 
 
-def giant_fly():
-    """A fly the size of a dog, circling the heap: the same fly, pasted in at the wrong scale."""
-    m = PaintMesh()
-    thorax = ((0, .30, .08), (0, .33, .0), (0, .31, -.1))
-    m.add(sweep(thorax, (.13, .14, .12), sides=18, per=3), rgb(FLY_BODY))
-    m.add(ellipsoid((0, .28, -.3), (.14, .12, .24), 10, 18),
-          lambda p, n: rgb(FLY_SHEEN if math.sin(p[2] * 40) > 0 else FLY_BODY))
-    m.add(ellipsoid((0, .3, .18), (.1, .09, .07), 8, 14), rgb(FLY_BODY))
-    for sx in (-1, 1):
-        # Compound eyes: big domes chequered into facets.
-        m.add(ellipsoid((sx * .07, .32, .21), (.065, .075, .06), 10, 16),
-              lambda p, n: rgb(FLY_EYE if (int(p[1] * 90) + int(p[2] * 90) + int(p[0] * 90)) % 2 else
-                               mix(FLY_EYE, (232, 120, 70), .5), 1.0))
-        # Legs: three a side, kneeled out and down.
-        for k, z in enumerate((.06, -.02, -.1)):
-            hip = (sx * .08, .25, z)
-            knee = (sx * .26, .32, z + (.05 - .05 * k))
-            foot = (sx * .32, .0, z + (.12 - .12 * k))
-            m.add(sweep((hip, knee, foot), (.016, .013, .006), sides=6, per=3), rgb(FLY_BODY))
-        # Wings: cut film with ink veins, marked to flap.
-        outline = [(sx * .05, .42, .0), (sx * .42, .5, -.14), (sx * .5, .47, -.38), (sx * .36, .43, -.52),
-                   (sx * .12, .42, -.22)]
-        m.mark()
-        for poly, out in ((outline, (0, 1, 0)), (list(reversed(outline)), (0, -1, 0))):
-            for i in range(1, len(poly) - 1):
-                m.polygon([poly[0], poly[i], poly[i + 1]], out)
-        m.paint(lambda p, n: rgb(FLY_WING if fbm(p[0] * 14, p[2] * 14, 3, 2) > -.25 else (60, 64, 70), WING))
-    # Proboscis.
-    m.add(sweep(((0, .26, .22), (0, .16, .27), (0, .1, .25)), (.02, .016, .03), sides=8, per=2), rgb((64, 50, 42)))
-    return m
-
-
 # --- smell, painted ----------------------------------------------------------------------
 
 
@@ -658,35 +428,6 @@ def stink_cloud(seed, radius=.34, colour=ACID):
     return m
 
 
-def daze_halo(stars=3):
-    """The knocked-out spiral and its orbiting stars, cut from paper, flat in XZ."""
-    m = PaintMesh()
-    # Spiral strip.
-    inner, outer = [], []
-    turns, steps = 2.2, 70
-    for i in range(steps):
-        t = i / (steps - 1)
-        a = t * turns * math.tau
-        r = .03 + .19 * t
-        w = .012 + .01 * t
-        inner.append((math.cos(a) * (r - w), 0, math.sin(a) * (r - w)))
-        outer.append((math.cos(a) * (r + w), 0, math.sin(a) * (r + w)))
-    sp = cut_strip(inner, outer, .01, rgb(MUSTARD), rgb(INK))
-    m.add(sp)
-    # Stars.
-    for k in range(stars):
-        pts = []
-        for i in range(10):
-            a = math.tau * i / 10 + math.pi / 2
-            r = .07 if i % 2 == 0 else .03
-            pts.append((math.cos(a) * r, math.sin(a) * r))
-        star = slab_polygon(pts, .012, rgb(ACID if k % 2 else (246, 236, 120)), rgb(INK))
-        a = math.tau * k / stars
-        m.add(star, None, rotation=euler((0, -a * 57.3 + 90, 0)), offset=(math.cos(a) * .3, .06 * math.sin(a * 2),
-                                                                           math.sin(a) * .3))
-    return m
-
-
 def horse_silhouette():
     """Side profile of a horse in (z, y), for the ink shadow painted on the stall wall."""
     return [
@@ -696,15 +437,3 @@ def horse_silhouette():
         (0.38, 0.84), (0.42, 0.02), (0.32, 0.02), (0.28, 0.84), (-0.4, 0.86), (-0.62, 0.84), (-0.66, 0.02),
         (-0.76, 0.02), (-0.76, 0.6), (-0.82, 0.02), (-0.92, 0.02), (-0.95, 0.84),
     ]
-
-
-def stain(seed, radius, colour):
-    """A hard-edged painted puddle of smell on the ground (flat, a millimetre thick)."""
-    pts = []
-    n = 40
-    for i in range(n):
-        a = math.tau * i / n
-        r = radius * (1 + .35 * fbm(math.cos(a) * 1.4 + seed, math.sin(a) * 1.4, seed, 3))
-        pts.append((math.cos(a) * r, math.sin(a) * r * .8))
-    m = slab_polygon(pts, .002, rgb(colour), rgb(colour))
-    return PaintMesh().merge(m, euler((-90, 0, 0)))

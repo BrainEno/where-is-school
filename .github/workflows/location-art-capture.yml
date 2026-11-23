@@ -112,6 +112,8 @@ jobs:
           - {location: port, side: forward-plus}
           - {location: front_yard, side: after}
           - {location: front_yard, side: forward-plus}
+          - {location: stable_yard, side: before}
+          - {location: stable_yard, side: after}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -234,6 +236,14 @@ jobs:
               detail=(front-yard review_width=380)
               width=1280
               expect=10
+              ;;
+            stable_yard)
+              # The stable yard behind 01, in the live corridor: one follow-camera stance and
+              # seven fixed views (the yard from the lane, each horse over its half door, the
+              # stall front, the hen house, one hen, the muck bay). The same views on the base.
+              detail=(stable-yard review_width=360)
+              width=1280
+              expect=8
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)

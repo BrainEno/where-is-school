@@ -144,38 +144,6 @@ def figure(b, parent, name, pos, yaw, look, *, pose="stand", body=None, hand=Non
     return p
 
 
-def horse(b, parent, name, pos, yaw, coat, phase=0.0):
-    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
-    p = child_path(parent, name)
-    part(b, "Body", p, (0, 1.22, -.15), (.56, .62, 1.55), coat, shadow=True)
-    for i, (x, z) in enumerate(((-.17, .45), (.17, .45), (-.17, -.75), (.17, -.75))):
-        part(b, f"Leg{i}", p, (x, .47, z), (.13, .92, .14), coat, shadow=True)
-        part(b, f"Hoof{i}", p, (x, .05, z), (.15, .10, .16), "hoof")
-    part(b, "Tail", p, (0, 1.05, -.98), (.09, .66, .10), "mane")
-    head = motion_material(b, coat, "graze", phase=phase)
-    mane = motion_material(b, "mane", "graze", phase=phase)
-    for part_name, centre, size, mat in (("Neck", (0, 1.62, .66), (.27, .58, .34), head),
-                                         ("Head", (0, 1.86, .98), (.24, .29, .58), head),
-                                         ("Muzzle", (0, 1.78, 1.25), (.21, .2, .12), head),
-                                         ("Mane", (0, 1.83, .58), (.07, .44, .32), mane),
-                                         ("EarL", (-.07, 2.06, .78), (.05, .11, .05), mane),
-                                         ("EarR", (.07, 2.06, .78), (.05, .11, .05), mane)):
-        part(b, part_name, p, centre, size, mat, shadow=True)
-
-
-def hen(b, parent, name, pos, yaw, coat, phase):
-    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
-    p = child_path(parent, name)
-    part(b, "Body", p, (0, .2, 0), (.19, .17, .27), coat)
-    part(b, "Tail", p, (0, .29, -.15), (.11, .12, .06), coat)
-    for i, x in enumerate((-.04, .04)):
-        part(b, f"Leg{i}", p, (x, .06, 0), (.02, .12, .02), "beak")
-    for part_name, centre, size, colour in (("Head", (0, .33, .14), (.09, .10, .1), coat),
-                                            ("Comb", (0, .40, .14), (.025, .04, .07), "comb"),
-                                            ("Beak", (0, .32, .2), (.03, .025, .04), "beak")):
-        part(b, part_name, p, centre, size, motion_material(b, colour, "peck", phase=phase))
-
-
 def swivel_chair(b, parent, name, pos, yaw, phase, motion="swivel", look=None):
     """An office chair turned away, drifting on its gas lift.
 

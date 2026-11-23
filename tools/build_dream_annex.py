@@ -24,7 +24,7 @@ from build_teaching_block import (
     child_path, plane, quad, slab, srgb, vec3,
 )
 import dream_stable
-from dream_figures import PEOPLE, figure, hen, motion_material, part, shader_material, swivel_chair
+from dream_figures import PEOPLE, figure, motion_material, part, shader_material, swivel_chair
 from exam_crowd import exam_candidates, waiting_candidates
 from fixture_geometry import FixtureBuild
 from ticket_clerks import PRESS_Z, STATIONS, build_clerk, stamp_loop
@@ -249,30 +249,14 @@ def yard_ground(b, y):
     dream_stable.yard_ground(b, y, YARD_X, YARD_Z, HOUSE_X, HOUSE_Z)
 
 
-def grain_mat(b, parent, name, pos, size, yaw):
-    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
-    p = child_path(parent, name)
-    w, d = size
-    b.box("Tarp", p, (0, .01, 0), (w + .16, .01, d + .16), "cobalt")
-    b.box("Grain", p, (0, .03, 0), (w, .035, d), "grain")
-    for i in range(int(d / .22)):
-        b.box(f"Ridge{i}", p, (0, .05, -d / 2 + .11 + i * .22), (w - .1, .012, .05), "grain_ridge")
-
-
 def quilts(b, y):
     q = solid(b, "QuiltLine", y, (-37.8, G, 12.0), (4.8, 1.85, .12))
     for i, x in enumerate((-2.45, 2.45)):
         b.box(f"Pole{i}", q, (x, 1.05, 0), (.07, 2.1, .07), "timber", shadow=True)
     b.box("Wire", q, (0, 2.0, 0), (4.9, .015, .015), "wire")
-    for i, (x, base, pattern) in enumerate(((-1.6, "quilt_red", "peony"), (0, "quilt_teal", "quilt_yellow"),
-                                            (1.6, "quilt_pink", "leaf"))):
-        b.box(f"Quilt{i}", q, (x, 1.12, 0), (1.5, 1.72, .045), base, shadow=True)
-        for k in range(5):
-            px, py = x - .5 + (k % 3) * .5, .62 + (k // 3) * .7 + (k % 2) * .18
-            if pattern == "quilt_yellow":
-                b.box(f"Check{i}_{k}", q, (x, .45 + k * .33, .026), (1.5, .09, .006), pattern)
-            else:
-                b.round(f"Flower{i}_{k}", q, (px, py, .026), .13, .006, pattern, sides=10, rot=(90, 0, 0))
+    # Round 18: three modelled quilts folded over the wire, with soft folds and printed motifs.
+    for i, x in enumerate((-1.6, 0, 1.6)):
+        dream_stable.quilt(b, q, f"Quilt{i}", (x, 2.0, 0), i)
 
 
 def dream_house(b, y):
@@ -282,8 +266,9 @@ def dream_house(b, y):
     w, d = x1 - x0, z1 - z0
     cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
     body = solid(b, h, y, (cx, G, cz), (w, HOUSE_TOP, d), fade=False)
-    # 1F: stalls open to the east; 2F: a lit ticket hall that nobody can reach.
-    stall_back = 2.0
+    # 1F: stalls open to the east; 2F: a lit ticket hall that nobody can reach. The stalls are
+    # deep enough (round 18) for a full-sized horse to stand in, head over the half door.
+    stall_back = 2.8
     b.box("WestWall", body, (-w / 2 + .12, HOUSE_STOREY / 2, 0), (.24, HOUSE_STOREY, d), "mud_wall", shadow=True)
     b.box("NorthWall", body, (0, HOUSE_STOREY / 2, -d / 2 + .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
     b.box("SouthWall", body, (0, HOUSE_STOREY / 2, d / 2 - .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
@@ -311,15 +296,14 @@ def dream_house(b, y):
         b.box(f"Post{i}", body, (w / 2 - .1, HOUSE_STOREY / 2, z), (.2, HOUSE_STOREY, .2), "timber", shadow=True)
     for i in range(3):
         z = (posts[i] + posts[i + 1]) / 2
-        b.box(f"HalfDoor{i}", body, (w / 2 - .12, .62, z), (.08, 1.2, d / 3 - .3), "timber", shadow=True)
         b.box(f"Partition{i}", body, (w / 2 - stall_back / 2, .8, posts[i + 1]), (stall_back, 1.6, .08), "timber")
         b.node(f"StallLamp{i}", body, "OmniLight3D", position=vec3((w / 2 - .9, 2.5, z)),
-               light_color=srgb((255, 196, 128)), light_energy=.42, omni_range=3.2)
-    # Round 10: shaped horses with their heads over the half doors; the grey one is dazed.
-    dream_stable.horse(b, body, "BayHorse", (w / 2 - .9, 0, (posts[0] + posts[1]) / 2), 90, dream_stable.sm.BAY,
+               light_color=srgb((255, 204, 150)), light_energy=.95, omni_range=3.8)
+    # Round 18: sculpted horses with their heads over the half doors, grazing at their own pace.
+    dream_stable.horse(b, body, "BayHorse", (w / 2 - 1.15, 0, (posts[0] + posts[1]) / 2), 90, dream_stable.sa.BAY,
                        graze=.62, phase=.1)
-    dream_stable.horse(b, body, "GreyHorse", (w / 2 - .92, 0, (posts[2] + posts[3]) / 2), 82, dream_stable.sm.GREY,
-                       graze=.16, phase=.55, swish=.12, dazed=True)
+    dream_stable.horse(b, body, "GreyHorse", (w / 2 - 1.17, 0, (posts[2] + posts[3]) / 2), 84, dream_stable.sa.GREY,
+                       graze=.34, phase=.55, swish=.2, rate=.05)
     dream_stable.stall_dressing(b, body, w, d, stall_back, posts)
     # The only way in: a small doorway at the south-west corner, easy to walk past.
     b.box("CornerDoorway", body, (-w / 2 + .75, 1.0, d / 2 + .004), (.82, 1.96, .02), "void")
@@ -368,31 +352,24 @@ def sky_escalator(b, parent, base):
 
 
 def chickens_and_smell(b, y):
-    # Coop and hens; flies over the heap; the smell as ribbons that never thin out.
+    # Round 18: a modelled hen house with a wire run, sculpted hens, and the muck kept in a bay.
     coop = solid(b, "Coop", y, (-28.6, G, 6.2), (2.2, 1.3, 1.6))
-    b.box("CoopRoof", coop, (0, 1.36, 0), (2.4, .08, 1.8), "roof_tin", shadow=True)
-    for i, x in enumerate((-1.05, 1.05)):
-        b.box(f"CoopPost{i}", coop, (x, .65, .75), (.07, 1.3, .07), "timber")
-    b.box("CoopMesh", coop, (0, .65, .79), (2.1, 1.2, .01), "coop_wire")
-    b.box("CoopBack", coop, (0, .65, -.75), (2.1, 1.3, .08), "timber")
-    for i, (x, z, yaw, coat) in enumerate(((-.5, .1, 30, "hen"), (.4, -.2, -60, "hen_brown"), (.1, .3, 150, "hen"))):
-        hen(b, coop, f"CoopHen{i}", (x, 0, z), yaw, coat, i * .29)
-    for i, (x, z, yaw, coat) in enumerate(((-30.2, 8.0, 20, "hen"), (-29.4, 8.9, 200, "hen_brown"),
-                                           (-31.0, 9.4, 95, "hen"))):
-        hen(b, y, f"YardHen{i}", (x, G, z), yaw, coat, i * .41 + .2)
+    dream_stable.coop(b, coop)
+    white, brown = dream_stable.sa.WHITE_HEN, dream_stable.sa.BROWN_HEN
+    dream_stable.hens(b, coop, (("CoopHen0", (.35, 0, .25), 200, brown, .0),
+                                ("CoopHen1", (.78, 0, -.12), -70, white, .37)))
+    dream_stable.hens(b, y, (("YardHen0", (-29.7, G, 7.9), 20, white, .21),
+                             ("YardHen1", (-28.5, G, 8.1), 205, brown, .58),
+                             ("YardHen2", (-30.3, G, 9.3), 95, brown, .83)))
     b.node("Heap", y, position=vec3(dream_stable.HEAP))
     dream_stable.heap(b, y, child_path(y, "Heap"))
     dream_stable.flies(b, y)
     dream_stable.stink(b, y)
-    # Sparse, soft traces among the drifting volumetric wisps.
+    # One faint trace of the smell over the heap.
     odor = b.bind("dream_odor", "res://assets/shaders/school/dream_odor.gdshader", "Shader")
-    ribbon = quad(b, .8, 3.0)
-    for i, (x, z) in enumerate(((-31.7, 5.5), (-33.0, 8.3), (-30.4, 11.6), (-35.8, 12.8), (-25.4, 15.8))):
-        tint = ((.57, .61, .39, 1.0), (.62, .59, .40, 1.0), (.50, .55, .38, 1.0))[i % 3]
-        mat = shader_material(b, "odor", odor, {"phase": i * .23, "tint": f"Color({tint[0]:g}, {tint[1]:g}, {tint[2]:g}, 1)"})
-        b.node(f"Smell{i}", y, "MeshInstance3D", position=vec3((x, G + 1.5, z)),
-               rotation_degrees=vec3((0, i * 47 % 180, 0)), mesh=f'SubResource("{ribbon}")',
-               material_override=b.surface(mat), cast_shadow=0)
+    mat = shader_material(b, "odor", odor, {"phase": 0.0, "tint": "Color(0.6, 0.6, 0.45, 1)"})
+    b.node("Smell0", y, "MeshInstance3D", position=vec3((dream_stable.HEAP[0], G + 1.5, dream_stable.HEAP[2] + .3)),
+           mesh=f'SubResource("{quad(b, .6, 2.4)}")', material_override=b.surface(mat), cast_shadow=0)
 
 
 def village(b, y):
@@ -424,18 +401,19 @@ def stable_yard(b):
     low_wall(b, y, "WallNorthEast", (YARD_Z[0] - .3, 5.52), YARD_X[1] + .15, False)
     dream_house(b, y)
     quilts(b, y)
-    for i, (pos, size, yaw) in enumerate((((-31.2, G, 12.7), (3.0, 2.0), 4), ((-30.4, G, 9.8), (2.6, 2.2), -3),
-                                          ((-25.0, G, 16.7), (3.4, 1.6), 0))):
-        grain_mat(b, y, f"GrainMat{i}", pos, size, yaw)
+    # Round 18: one mat of grain between the two women, so the middle of the yard stays open.
+    dream_stable.grain(b, y, "GrainMat0", (-31.2, G, 12.7), (3.0, 2.0), 4)
     from stable_people import woman
     b.box("Stool", y, (-33.6, G + .12, 13.2), (.3, .24, .3), "stool")
     woman(b, y, "OldWoman0", (-33.1, G, 12.4), 90, seated=True)
-    raker = woman(b, y, "OldWoman1", (-28.9, G, 9.6), -90)
+    raker = woman(b, y, "OldWoman1", (-28.8, G, 12.9), -90)
     rake = motion_material(b, "rake", "rake", phase=.3)
     part(b, "Rake", raker, (.26, .62, .62), (.04, .04, 1.3), rake)
     part(b, "RakeHead", raker, (.26, .08, 1.24), (.5, .12, .05), rake)
-    for i, (x, z) in enumerate(((-32.4, 10.1), (-32.5, 11.0), (-32.6, 10.55))):
-        b.box(f"HayBale{i}", y, (x, G + .25 + (.5 if i == 2 else 0), z), (.9, .5, .55), "straw", shadow=True)
+    # The bales are stacked out of the way at the lane's west end, and stand solid.
+    stack = solid(b, "HayStack", y, (-39.45, G, 17.62), (1.0, 1.0, 1.1), fade=False)
+    for i, (pos, yaw) in enumerate((((0, 0, -.27), 0), ((0, 0, .27), 2), ((0, .45, 0), 84))):
+        dream_stable.bale(b, stack, f"HayBale{i}", pos, yaw)
     chickens_and_smell(b, y)
     village(b, y)
     # A metro pictogram where the lane leaves the glass entrance: a horse and an arrow.
