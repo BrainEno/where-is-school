@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode diffuse_burley, specular_disabled;
+render_mode diffuse_toon, specular_disabled;
 
 // Round 20: the yard round the court is plain cast concrete, laid in 2 m slabs on the
 // world grid (the court's own joints fall on the same even metres), with cloud shadows
@@ -8,9 +8,10 @@ render_mode diffuse_burley, specular_disabled;
 // tests/location_art_test.gd); the walking surface is still the yard slab below.
 // Kept no brighter than the `ground` material the HUD contrast test measures.
 varying vec2 ground_position;
-// The low self-light that keeps the slabs pale grey in the teaching block's dusk shadow,
-// where the lit-only formula went near-black (as `stable_earth.gdshader` does for its soil).
-uniform float fill : hint_range(0.0, 1.0) = 0.45;
+// Toon diffuse, like the court and yard materials (`diffuse_mode = 3`): under the low dusk
+// sun a Lambert/Burley falloff left the slabs near-black beside the lit court. `fill` is a
+// low self-light on top, so the concrete reads pale in the teaching block's shadow too.
+uniform float fill : hint_range(0.0, 1.0) = 0.25;
 
 const float SLAB = 2.0;
 const vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
