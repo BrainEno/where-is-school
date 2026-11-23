@@ -78,6 +78,42 @@ func graph_for(chapter: String, original: bool = false) -> DialogueGraph:
 	return (_original_graphs if original else _graphs).get(chapter)
 
 
+## Search the validated draft, including new lines and choices. Results carry IDs, not
+## a menu index or a copy of the whole field, so a jump always opens the real field.
+func find_fields(query: String, limit: int) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	var needle := query.strip_edges().to_lower()
+	if needle.is_empty() or limit <= 0:
+		return found
+	for chapter: String in chapter_ids():
+		for conversation: String in conversation_ids(chapter):
+			for row: Dictionary in nodes_for(chapter, conversation):
+				var node: String = row["id"]
+				var text: String = row.get("text", "")
+				var keys := "%s %s %s %s" % [chapter, conversation, node, row["speaker"]]
+				if keys.to_lower().contains(needle) or text.to_lower().contains(needle):
+					found.append(_match_field(chapter, conversation, node, "", text, needle))
+					if found.size() >= limit:
+						return found
+				for option: Dictionary in Patch.choices_at(row):
+					var id: String = option["id"]
+					text = option["text"]
+					if id.to_lower().contains(needle) or text.to_lower().contains(needle):
+						found.append(_match_field(chapter, conversation, node, id, text, needle))
+						if found.size() >= limit:
+							return found
+	return found
+
+
+func _match_field(chapter: String, conversation: String, node: String, choice: String,
+		text: String, needle: String) -> Dictionary:
+	var plain := text.replace("\n", " ")
+	var offset := maxi(0, plain.to_lower().find(needle) - 8)
+	var excerpt := plain.substr(offset, 34)
+	return {"chapter": chapter, "conversation": conversation, "node": node, "choice": choice,
+		"sample": ("…" if offset > 0 else "") + excerpt}
+
+
 func choice_targets(chapter: String, conversation: String, hub: String) -> Array:
 	var graph := graph_for(chapter)
 	var entry := graph.get_conversation(StringName(conversation)) if graph != null else null
@@ -148,6 +184,9 @@ func set_text(chapter: String, conversation: String, node: String, choice: Strin
 		return false
 	if before == value:
 		return true
+	if not Patch.authored_text(value):
+		error = "请输入 1–8000 字符，不能只留空白。"
+		return false
 	return _commit(chapter, {"kind": "text", "conversation": conversation, "node": node,
 		"choice": choice, "before": before, "text": value})
 
@@ -250,10 +289,14 @@ func _commit(chapter: String, operation: Dictionary) -> bool:
 	var before := _entries
 	if not _install(all):
 		return false
+	_remember_undo(before)
+	return true
+
+
+func _remember_undo(before: Dictionary) -> void:
 	_undo.push_back(before)
 	if _undo.size() > UNDO_LIMIT:
 		_undo.pop_front()
-	return true
 
 
 func _install(entries: Dictionary) -> bool:
@@ -296,11 +339,13 @@ func undo() -> bool:
 
 
 func reset() -> bool:
-	if not blocked.is_empty():
-		return false
-	_undo.clear()
-	buffer = {}
-	return _install({})
+	if blocked.is_empty() and not _entries.is_empty():
+		var before := _entries
+		if _install({}):
+			_remember_undo(before)
+			buffer = {}
+			return true
+	return false
 
 
 func portable_draft() -> Dictionary:
@@ -314,6 +359,20 @@ func save_editor_state() -> bool:
 	if not blocked.is_empty():
 		return false
 	return _journal.save({"draft": portable_draft(), "buffer": buffer, "exported": exported_digest})
+
+
+func recovery_notice() -> String:
+	return _journal.recovery_notice
+
+
+func has_save_error() -> bool:
+	return _journal.last_error != OK
+
+
+func save_problem() -> String:
+	if _journal.last_error == ERR_INVALID_PARAMETER:
+		return "草稿超出本机保存上限。"
+	return "草稿未写入本机（错误 %d）。" % _journal.last_error
 
 
 func export_json() -> String:

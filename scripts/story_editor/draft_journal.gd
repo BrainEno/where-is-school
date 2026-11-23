@@ -9,6 +9,8 @@ var _directory: String
 var _sequence := 0
 var _digest := ""
 var problem := ""
+var recovery_notice := ""
+var last_error: Error = OK
 
 
 func _init(directory: String = DIRECTORY) -> void:
@@ -19,39 +21,51 @@ func recover() -> Dictionary:
 	_sequence = 0
 	_digest = ""
 	problem = ""
+	recovery_notice = ""
+	last_error = OK
 	var latest: Dictionary = {}
-	var existed := false
+	var unreadable := 0
 	for index in 2:
 		var path := _slot(index)
-		existed = existed or FileAccess.file_exists(path)
+		if not FileAccess.file_exists(path):
+			continue
 		var wrapper := Patch.read_json(path)
 		var generation: Variant = wrapper.get("generation")
 		var body: Variant = wrapper.get("body")
 		if not (generation is float or generation is int) or not is_finite(float(generation)) \
-				or generation != int(generation) or generation <= _sequence or generation > 2_000_000_000 \
+				or generation != int(generation) or generation <= 0 or generation > 2_000_000_000 \
 				or not body is String or body.sha256_text() != wrapper.get("sha256"):
+			unreadable += 1
 			continue
 		var value: Variant = JSON.parse_string(body)
 		if not value is Dictionary or not value.get("draft") is Dictionary:
+			unreadable += 1
 			continue
-		_sequence = int(generation)
-		_digest = wrapper["sha256"]
-		latest = value
-	if existed and latest.is_empty():
-		problem = "两个草稿文件都无法校验。未覆盖原文件。"
+		if generation > _sequence:
+			_sequence = int(generation)
+			_digest = wrapper["sha256"]
+			latest = value
+	if unreadable > 0:
+		if latest.is_empty():
+			problem = "未找到可校验的草稿。已保留原文件。"
+		else:
+			recovery_notice = "一份草稿损坏，已恢复可读取的版本。"
 	return latest
 
 
 func save(payload: Dictionary) -> bool:
 	if not problem.is_empty():
+		last_error = ERR_FILE_CORRUPT
 		return false
+	last_error = OK
 	var body := JSON.stringify(payload, "", true, true)
 	var digest := body.sha256_text()
 	if _digest == digest:
 		return true
 	var next := _sequence + 1
 	var wrapped := JSON.stringify({"generation": next, "body": body, "sha256": digest})
-	if write_checked(_slot(next % 2), wrapped) != OK:
+	last_error = write_checked(_slot(next % 2), wrapped)
+	if last_error != OK:
 		return false
 	_sequence = next
 	_digest = digest

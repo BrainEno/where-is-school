@@ -160,9 +160,15 @@ func _check_editor_in_pack(menu: PauseMenu, world: Node, settings: Node) -> bool
 		return false
 	panel.get_scroll().ensure_control_visible(toggle)
 	await process_frame
+	var legacy_stage := SettingsStore.PATH + ".tmp"
+	if DirAccess.make_dir_absolute(legacy_stage) != OK:
+		_fail("could not arrange the legacy settings staging obstruction")
+		return false
 	await _tap(toggle)
+	DirAccess.remove_absolute(legacy_stage)
 	var persisted := ConfigFile.new()
-	if not settings.is_story_editor_enabled() or persisted.load("user://settings.cfg") != OK 			or persisted.get_value("authoring", "story_editor", false) != true:
+	if not settings.is_story_editor_enabled() or persisted.load(SettingsStore.PATH) != OK \
+			or persisted.get_value("authoring", "story_editor", false) != true:
 		_fail("the mobile settings tap did not save the editor switch")
 		return false
 	await _tap(panel.get_row_control(&"done"))

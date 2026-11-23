@@ -73,7 +73,7 @@ func load_errors() -> Array[String]:
 
 func _load_saved_locale() -> String:
 	var config := ConfigFile.new()
-	if config.load(SettingsStore.PATH) != OK:
+	if SettingsStore.read(config) != OK:
 		return ""
 	return String(config.get_value(SETTINGS_SECTION, SETTINGS_KEY, ""))
 

@@ -54,10 +54,14 @@ func _run() -> void:
 		_check.expect(not live_events.is_empty(), "The real classroom did not record a dialogue event")
 		_try_world_input()
 		await _edit_fields()
+		_test_find_and_validation()
 		await _edit_branches()
 		await _walk_draft()
 		await _edit_followups()
 		_export_round_trip()
+		_test_clear_and_undo()
+		_test_stale_form()
+		_test_local_save_failure()
 		_check.expect(_snapshot() == before, "Editor or trial changed live story, camera, saves, reveals, or history")
 		_check.expect(_dialogue_events() == live_events, "Trial emitted gameplay diagnostics into the real session")
 		_send_action(&"ui_cancel")
@@ -188,6 +192,72 @@ func _edit_fields() -> void:
 	_check.expect(is_equal_approx(scroll.value, 20.0), "Changing an option reset the current reading position")
 
 
+func _test_find_and_validation() -> void:
+	Harness.stage = "search does not retarget pending text"
+	_drawer.button("current_line").pressed.emit()
+	_check.expect(_drawer.selected("node") == "st_reciting" and _drawer.selected("field").is_empty(),
+		"Jump to the live line did not select its body")
+	_drawer.button("find").pressed.emit()
+	var query := _drawer.find_child("FindQuery", true, false) as LineEdit
+	var hits := _drawer.find_child("Pick_match", true, false) as OptionButton
+	if not _check.expect(query != null and hits != null and query.is_visible_in_tree(), "Find did not expose its query"):
+		return
+	query.text = "no-author-test-result"
+	query.text_changed.emit(query.text)
+	_check.expect(hits.disabled and hits.item_count == 1, "No-results search left a stale target")
+	query.text = OPTION
+	query.text_changed.emit(query.text)
+	_check.expect(not hits.disabled and hits.item_count == 2, "Search did not find the edited option exactly once")
+	var before := _panel.get_body_text()
+	_enter(_drawer.body, " \n")
+	_drawer.button("apply_text").pressed.emit()
+	_check.expect("未应用" in _drawer.status.text and "文字已保存" not in _drawer.status.text,
+		"Invalid text was reported as saved")
+	_check.expect(_store.buffer.get("dirty") == true and _store.buffer.get("text") == " \n",
+		"Invalid input was not kept in the editable journal buffer")
+	_pick("match", "0")
+	_check.expect(_drawer.selected("field").is_empty() and _drawer.body.text == " \n" and _panel.get_body_text() == before,
+		"A search result retargeted rejected input or changed the validated preview")
+	_export_while_rejected()
+	_overlay.close_editor()
+	_check.expect(not paused, "A rejected but backed-up field trapped the author in the editor")
+	_store = Store.new(_directory)
+	_store.load_workspace()
+	_overlay.store = _store
+	_overlay.open_editor()
+	_check.expect(_drawer.body.text == " \n" and _panel.get_body_text() == before,
+		"A fresh workspace lost rejected input or applied it to the preview")
+	_drawer.button("cancel").pressed.emit()
+	_check.expect(_drawer.body.text == before, "Discard input did not restore the applied field")
+	_drawer.button("find").pressed.emit()
+	_pick("match", "0")
+	_check.expect(_drawer.selected("field") == "leave" and _drawer.body.text == OPTION and not query.is_visible_in_tree(),
+		"Opening a search result did not select its option text and close Find")
+	_drawer.button("find").pressed.emit()
+	query.text = "CORRIDOR_SPEAKER"
+	query.text_changed.emit(query.text)
+	_pick("match", "0")
+	_check.expect(_drawer.selected("chapter") == "corridor" and _drawer.selected("conversation") == "corridor_speaker"
+			and _drawer.selected("node") == "cs_1", "Find did not jump across chapters by conversation ID")
+	_drawer.button("current_line").pressed.emit()
+	_check.expect(_drawer.selected("node") == "st_reciting" and _panel.get_body_text() == before,
+		"Current line did not return across chapters to the edited live node")
+
+
+func _export_while_rejected() -> void:
+	_check.expect(_drawer.button("export").text == "导出已应用", "Export did not disclose the unapplied field")
+	_drawer.button("export").pressed.emit()
+	var pickers := _overlay.find_children("*", "FileDialog", true, false)
+	if not _check.expect(pickers.size() == 1, "A rejected field blocked export of the rest of the draft"):
+		return
+	var dialog := pickers[0] as FileDialog
+	var path := ProjectSettings.globalize_path(_directory.path_join("applied-only.json"))
+	dialog.hide()
+	dialog.file_selected.emit(path)
+	_check.expect(FileAccess.get_file_as_string(path) == _store.export_json() and _store.buffer.get("dirty") == true,
+		"Export serialized rejected input or removed it from the local buffer")
+
+
 func _edit_branches() -> void:
 	Harness.stage = "editing graph through drawer"
 	_pick("node", "st_1")
@@ -195,6 +265,15 @@ func _edit_branches() -> void:
 	_enter(_drawer.body, INSERT)
 	_drawer.action.emit("apply")
 	_check.expect(_drawer.selected("node").begins_with(Patch.ID_PREFIX), "Inserted line was not selected in the drawer")
+	_drawer.action.emit("original")
+	_check.expect(not _panel.visible and _drawer.button("trial_here").disabled and "原文没有" in _drawer.status.text,
+		"Original comparison did not explain the missing source for a draft-only node")
+	_drawer.action.emit("original")
+	_drawer.button("trial_here").pressed.emit()
+	_check.expect(_panel.visible and not _drawer.visible and _panel.get_body_text() == INSERT,
+		"Trial from the selected node restarted the conversation or ignored the draft")
+	_send_action(&"ui_cancel")
+	_check.expect(_drawer.visible and paused, "Selected-node trial did not return to the same edit")
 	_pick("node", "st_reciting")
 	_drawer.action.emit("choice")
 	_enter(_drawer.body, "新增选项测试")
@@ -373,6 +452,71 @@ func _export_round_trip() -> void:
 	var restored := Store.new(_directory)
 	restored.load_workspace()
 	_check.expect(restored.export_json() == _store.export_json(), "Fresh workspace lost the authored changes")
+
+
+func _test_clear_and_undo() -> void:
+	Harness.stage = "clear requires confirmation and can be undone"
+	var prior := _store.export_json()
+	_drawer.button("clear").pressed.emit()
+	_check.expect(_store.export_json() == prior, "First press erased the draft")
+	_drawer.button("clear").pressed.emit()
+	_check.expect(not _store.has_exportable_changes(), "Confirmed clear did not reset the draft")
+	_drawer.button("undo").pressed.emit()
+	var restored := Store.new(_directory)
+	restored.load_workspace()
+	_check.expect(_store.export_json() == prior and restored.export_json() == prior, "Undo clear did not restore the draft on disk")
+
+
+func _test_stale_form() -> void:
+	Harness.stage = "a stale structure form cannot be applied as ordinary text"
+	var prior := _store.export_json()
+	_overlay.close_editor()
+	_store.buffer = {"chapter": "prologue", "conversation": "student", "node": "st_reciting",
+		"mode": "insert", "text": "Obsolete insert buffer; this node has choices."}
+	_check.expect(_store.save_editor_state(), "Could not record a stale-form fixture")
+	_overlay.open_editor()
+	_check.expect("未恢复原表单" in _drawer.status.text and _drawer.body.text != _store.buffer["text"],
+		"Obsolete insert input was presented as editable text at its old anchor")
+	_overlay.close_editor()
+	_check.expect(_store.export_json() == prior, "Opening an incompatible form applied its text to the draft")
+	_overlay.open_editor()
+
+
+func _test_local_save_failure() -> void:
+	Harness.stage = "blocked local save allows safe retry and explicit temporary exit"
+	var directory := _directory.path_join("blocked")
+	for slot in ["draft-0.json", "draft-1.json"]:
+		_check.expect(DirAccess.make_dir_recursive_absolute(directory.path_join(slot)) == OK, "Could not block journal slot")
+	var workspace := Store.new(directory)
+	workspace.load_workspace()
+	_overlay.close_editor()
+	_overlay.store = workspace
+	_overlay.open_editor()
+	_enter(_drawer.body, SAMPLE)
+	_drawer.button("apply_text").pressed.emit()
+	_check.expect(workspace.has_save_error() and _panel.get_body_text() == SAMPLE
+			and "文字已保存" not in _drawer.status.text, "Write failure falsely acknowledged a preview-only edit")
+	_drawer.button("close").pressed.emit()
+	_check.expect(paused and _overlay.is_editing() and "会丢稿" in _drawer.status.text, "First exit did not warn about unsaved work")
+	_drawer.button("close").pressed.emit()
+	_check.expect(not paused and not _overlay.is_editing(), "Author could not temporarily leave on persistent failure")
+	_overlay.open_editor()
+	_check.expect(_drawer.body.text == SAMPLE and "未写入" in _drawer.status.text, "Temporary exit lost the in-memory work")
+	for slot in ["draft-0.json", "draft-1.json"]:
+		DirAccess.remove_absolute(directory.path_join(slot))
+	_drawer.button("apply_text").pressed.emit()
+	var reloaded := Store.new(directory)
+	reloaded.load_workspace()
+	_check.expect(not workspace.has_save_error() and reloaded.editable_text("prologue", "student", "st_reciting", "") == SAMPLE,
+		"Retry did not make the retained input durable")
+	_overlay.close_editor()
+	_overlay.store = _store
+	_overlay.open_editor()
+	for index in 2:
+		var path := directory.path_join("draft-%d.json" % index)
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	DirAccess.remove_absolute(directory)
 
 
 func _dialogue_events() -> Array:

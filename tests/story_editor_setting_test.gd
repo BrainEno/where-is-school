@@ -15,6 +15,7 @@ const Harness := preload("res://tests/test_harness.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
 const SettingsScript := preload("res://scripts/autoload/settings_manager.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
 
 const TIMEOUT_SECONDS := 150.0
 const DRAFT_DIR := "user://story_editor"
@@ -39,6 +40,8 @@ func _run() -> void:
 	loc.set_locale("zh-CN")
 	var settings := Harness.ensure_autoload(self, "Settings", "res://scripts/autoload/settings_manager.gd")
 	check.expect(not settings.is_story_editor_enabled(), "A fresh settings file must start with the story editor off")
+	settings.set_volume(&"music", 37)
+	_check_interrupted_swap(check, settings, loc)
 	var world := await _boot_world(check)
 	await _check_off_by_default(check, world)
 	await _check_entry_follows_switch(check, world, settings)
@@ -111,7 +114,12 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 				and row.size.y >= MobileLayout.hit_size(row),
 			"The Story editor row is outside the safe area or smaller than a finger")
 	_check_blocked_write(check, panel, settings)
+	# A legacy fixed stage must never block an update or be overwritten by it.
+	var legacy_stage := SETTINGS_PATH + ".tmp"
+	check.expect(DirAccess.make_dir_absolute(legacy_stage) == OK, "Could not arrange the legacy stage fixture")
 	panel.cycle(&"story_editor", 1)
+	check.expect(DirAccess.dir_exists_absolute(legacy_stage), "Saving removed the unrelated legacy stage directory")
+	DirAccess.remove_absolute(legacy_stage)
 	await process_frame
 	check.expect(panel.get_status_text() == L10n.t("settings.done_note"), "A stored switch gave no saved feedback")
 	check.expect(bool(settings.call("is_story_editor_enabled")), "The row did not turn the switch on")
@@ -140,15 +148,43 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 
 func _check_blocked_write(check: Harness.Checker, panel: SettingsPanel, settings: Node) -> void:
 	var prior := FileAccess.get_file_as_bytes(SETTINGS_PATH)
-	var stage := SettingsStore.STAGING_PATH
-	if not check.expect(DirAccess.make_dir_absolute(stage) == OK, "Could not create the blocked-write fixture"):
+	var backup := SettingsStore.BACKUP_PATH
+	if not check.expect(DirAccess.make_dir_absolute(backup) == OK, "Could not create the blocked-write fixture"):
 		return
 	panel.cycle(&"story_editor", 1)
 	var row := panel.get_row_control(&"story_editor") as Button
 	check.expect(not settings.is_story_editor_enabled() and row.text.contains(L10n.t("settings.off")),
 		"An unsaved switch was applied")
 	check.expect(panel.get_status_text() == L10n.t("settings.save_failed"), "Write failure was not shown in Settings")
-	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior, "A refused stage changed the previous preferences")
+	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior, "A refused swap changed the previous preferences")
+	DirAccess.remove_absolute(backup)
+
+
+func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) -> void:
+	Harness.stage = "settings survive a refused publication and interrupted rollback"
+	var prior := FileAccess.get_file_as_bytes(SETTINGS_PATH)
+	var candidate := SettingsStore.open()
+	candidate.set_value("authoring", "story_editor", true)
+	var stage := SETTINGS_PATH + ".test-stage"
+	if not check.expect(not prior.is_empty() and candidate.save(stage) == OK, "Could not stage fixture preferences"):
+		return
+	var refuse_stage := func(from: String, to: String) -> Error:
+		return ERR_FILE_CANT_WRITE if from == stage else DirAccess.rename_absolute(from, to)
+	check.expect(SettingsStore._publish(stage, refuse_stage) == ERR_FILE_CANT_WRITE,
+		"A failed publication reported success")
+	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior and not FileAccess.file_exists(SettingsStore.BACKUP_PATH),
+		"Failure did not restore the previous settings byte for byte")
+	var refuse_primary := func(from: String, to: String) -> Error:
+		return ERR_FILE_CANT_WRITE if to == SETTINGS_PATH else DirAccess.rename_absolute(from, to)
+	check.expect(SettingsStore._publish(stage, refuse_primary) == ERR_FILE_CANT_WRITE,
+		"An interrupted swap reported success")
+	check.expect(not FileAccess.file_exists(SETTINGS_PATH) and FileAccess.get_file_as_bytes(SettingsStore.BACKUP_PATH) == prior,
+		"An interrupted swap lost the previous settings")
+	settings.load_settings()
+	check.expect(settings.get_volume(&"music") == 37 and not settings.is_story_editor_enabled()
+			and loc._load_saved_locale() == "zh-CN", "Settings and Loc did not both read the backup")
+	check.expect(SettingsStore.write(SettingsStore.open()) == OK and FileAccess.file_exists(SETTINGS_PATH)
+			and not FileAccess.file_exists(SettingsStore.BACKUP_PATH), "Next write did not recover from an interrupted swap")
 	DirAccess.remove_absolute(stage)
 
 
@@ -159,6 +195,7 @@ func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: N
 	check.expect(config.get_value("authoring", "story_editor", false) == true,
 		"The switch was not written to [authoring] story_editor")
 	check.expect(config.get_value("display", "locale", "") == "zh-CN", "Saving the switch dropped the language")
+	check.expect(config.get_value("audio", "music", -1) == 37, "Saving the switch dropped the volume")
 	var restarted := SettingsScript.new()
 	root.add_child(restarted)
 	check.expect(restarted.is_story_editor_enabled(), "A fresh Settings instance lost the stored switch")
@@ -180,11 +217,31 @@ func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: N
 	check.expect(not paused, "The player could not resume after turning the editor off")
 
 	check.expect(settings.set_story_editor_enabled(true), "Could not re-enable the editor")
-	check.expect(await Harness.wait_until(func() -> bool: return world.has_node(^"AuthorOverlay"), 5.0),
-		"Re-enabling did not attach the editor")
+	if check.expect(await Harness.wait_until(func() -> bool: return world.has_node(^"AuthorOverlay"), 5.0),
+			"Re-enabling did not attach the editor"):
+		await _check_removal_with_blocked_draft(check, world, settings)
+
+
+func _check_removal_with_blocked_draft(check: Harness.Checker, world: Node, settings: Node) -> void:
+	Harness.stage = "uninstalling the editor hands back the world even after a refused journal write"
+	var directory := DRAFT_DIR.path_join("removal-test")
+	for slot in ["draft-0.json", "draft-1.json"]:
+		check.expect(DirAccess.make_dir_recursive_absolute(directory.path_join(slot)) == OK, "Could not block the journal")
+	var workspace := Store.new(directory)
+	workspace.load_workspace()
+	var overlay := world.get_node(^"AuthorOverlay")
+	var live_panel := (world.get_node(^"GameUI") as GameUI).dialogue_panel
+	var tint := live_panel.modulate
+	overlay.store = workspace
+	overlay.open_editor()
+	var drawer := overlay.get_node(^"AuthorDrawer")
+	drawer.body.text = "Temporary text that cannot be saved."
+	drawer.button("apply_text").pressed.emit()
+	check.expect(paused and workspace.has_save_error(), "The removal fixture did not block writes")
 	settings.reset_to_defaults()
 	check.expect(not settings.is_story_editor_enabled(), "Restore defaults left the story editor on")
 	await _expect_removed(check, world, "Resetting to defaults")
+	check.expect(not paused and live_panel.modulate == tint, "Uninstalling the overlay left the world frozen or dialogue hidden")
 
 
 func _expect_removed(check: Harness.Checker, world: Node, label: String) -> void:

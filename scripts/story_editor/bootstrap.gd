@@ -37,7 +37,8 @@ func open_editor() -> bool:
 func release_overlay() -> void:
 	if not is_instance_valid(_overlay) or _overlay.is_queued_for_deletion():
 		return
-	_overlay.close_editor()
+	# Disabling the mode releases the pause even if a final draft write fails.
+	_overlay.close_editor(true)
 	_overlay.hide()
 	_overlay.queue_free()
 	_overlay.get_parent().remove_child(_overlay)

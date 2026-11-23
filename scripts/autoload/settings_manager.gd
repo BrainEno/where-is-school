@@ -473,8 +473,8 @@ func _encoded(events: Array) -> PackedStringArray:
 func load_settings() -> void:
 	_load_problems.clear()
 	var config := ConfigFile.new()
-	var loaded := config.load(SETTINGS_PATH)
-	if loaded != OK and FileAccess.file_exists(SETTINGS_PATH):
+	var loaded := SettingsStore.read(config)
+	if loaded != OK and SettingsStore.exists():
 		# A file that is there but does not parse is damage, not a first run: say so.
 		_load_problems.append(
 			"%s could not be read (error %d); every setting is at its default"

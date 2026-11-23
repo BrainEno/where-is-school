@@ -21,7 +21,7 @@ AUTHOR_NAME = "Where Is School - Author"
 AUTHOR_DIR = "scripts/story_editor/"
 BOOTSTRAP = AUTHOR_DIR + "bootstrap.gd"
 SCRIPTS = frozenset(AUTHOR_DIR + name + ".gd" for name in (
-    "bootstrap", "author_overlay", "author_form", "branch_preview", "dialogue_patch",
+    "bootstrap", "author_overlay", "author_form", "author_catalog", "branch_preview", "dialogue_patch",
     "draft_store", "draft_journal", "author_exchange",
     # Split out of author_overlay (#344 follow-up): the launcher's touch rule and the
     # keyboard-aware usable area. They are preloaded by author_overlay, so a pack that

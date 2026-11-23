@@ -26,7 +26,7 @@ extends RefCounted
 
 ## The whole preferences file. One file, not one per subsystem.
 const PATH := "user://settings.cfg"
-const STAGING_PATH := PATH + ".tmp"
+const BACKUP_PATH := PATH + ".bak"
 
 ## `[display] locale` - the language choice, owned by `Loc`. `Settings` never writes it and
 ## deliberately preserves it (`reset_to_defaults()` leaves it alone).
@@ -34,36 +34,96 @@ const SECTION_DISPLAY := "display"
 const KEY_LOCALE := "locale"
 
 
-## True when the file exists, whether or not it parses. A file that is there and does not
-## parse is damage to report, not a first run (see `Settings.load_settings()`).
 static func exists() -> bool:
-	return FileAccess.file_exists(PATH)
+	return FileAccess.file_exists(PATH) or FileAccess.file_exists(BACKUP_PATH)
 
 
-## The file as it is now. A write path loads this, changes its own keys, and saves it, so a
-## key another owner wrote survives. A missing file is not an error here: `ConfigFile` starts
-## empty, which is exactly what a first run looks like.
+## An interrupted fallback swap may have moved the old file aside without publishing
+## the new one. Both owners must read the same fallback before changing their keys.
+static func read(config: ConfigFile) -> Error:
+	var path := BACKUP_PATH if not FileAccess.file_exists(PATH) and FileAccess.file_exists(BACKUP_PATH) else PATH
+	return config.load(path)
+
+
+## A missing file is a first run: the ConfigFile starts empty.
 static func open() -> ConfigFile:
 	var config := ConfigFile.new()
-	config.load(PATH)
+	read(config)
 	return config
 
 
-## Publish a complete file in one same-directory rename. A refused stage or swap leaves
-## the previous settings in place: never truncate it to save one toggle.
 static func write(config: ConfigFile) -> Error:
-	var error := config.save(STAGING_PATH)
+	# Never reuse a fixed staging name: a remnant from another run (even a directory)
+	# must not make every subsequent settings change fail.
+	var stage := PATH + ".tmp-" + Crypto.new().generate_random_bytes(12).hex_encode()
+	var error := config.save(stage)
 	if error != OK:
-		return error
-	var staged := ConfigFile.new()
-	error = staged.load(STAGING_PATH)
-	if error == OK and staged.encode_to_text() != config.encode_to_text():
-		error = ERR_FILE_CORRUPT
-	if error == OK:
-		error = DirAccess.rename_absolute(STAGING_PATH, PATH)
-	if error != OK:
-		DirAccess.remove_absolute(STAGING_PATH)
+		_warn_save("write staging file", error)
+	else:
+		var staged := ConfigFile.new()
+		error = staged.load(stage)
+		if error == OK and not _same_values(config, staged):
+			error = ERR_FILE_CORRUPT
+		if error != OK:
+			_warn_save("verify staged preferences", error)
+		else:
+			error = _publish(stage, DirAccess.rename_absolute)
+	if error != OK and FileAccess.file_exists(stage):
+		DirAccess.remove_absolute(stage)
 	return error
+
+
+static func _warn_save(step: String, error: Error) -> void:
+	push_warning("SettingsStore: could not %s (error %d: %s)." % [step, error, error_string(error)])
+
+
+## Verify each key and its serialized value, not their order in the engine's maps.
+static func _same_values(expected: ConfigFile, staged: ConfigFile) -> bool:
+	var sections := expected.get_sections()
+	if sections.size() != staged.get_sections().size():
+		return false
+	for section: String in sections:
+		var keys := expected.get_section_keys(section)
+		if not staged.has_section(section) or keys.size() != staged.get_section_keys(section).size():
+			return false
+		for key: String in keys:
+			if not staged.has_section_key(section, key) or \
+					var_to_str(expected.get_value(section, key)) != var_to_str(staged.get_value(section, key)):
+				return false
+	return true
+
+
+## Always rename onto a vacant name. Some engines/filesystems cannot replace an
+## existing file, or delete it before moving the new one. Preserve the old file first.
+## `move_file` lets the regression test fail exactly one step of the swap.
+static func _publish(stage: String, move_file: Callable) -> Error:
+	var moved_previous := FileAccess.file_exists(PATH)
+	if moved_previous:
+		if FileAccess.file_exists(BACKUP_PATH):
+			# A previous swap reached publish but did not clean up. Only retire that
+			# backup if the preferred file is itself readable.
+			if ConfigFile.new().load(PATH) != OK:
+				_warn_save("verify previous preferences; backup kept", ERR_FILE_CORRUPT)
+				return ERR_FILE_CORRUPT
+			var cleanup := DirAccess.remove_absolute(BACKUP_PATH)
+			if cleanup != OK:
+				_warn_save("retire earlier backup", cleanup)
+				return cleanup
+		var aside: Error = move_file.call(PATH, BACKUP_PATH)
+		if aside != OK:
+			_warn_save("back up previous preferences", aside)
+			return aside
+	var error: Error = move_file.call(stage, PATH)
+	if error != OK:
+		_warn_save("publish staged preferences", error)
+		if moved_previous:
+			var rollback: Error = move_file.call(BACKUP_PATH, PATH)
+			if rollback != OK:
+				_warn_save("restore previous preferences; backup kept", rollback)
+		return error
+	if FileAccess.file_exists(BACKUP_PATH) and DirAccess.remove_absolute(BACKUP_PATH) != OK:
+		push_warning("SettingsStore: preferences saved; old backup could not be removed.")
+	return OK
 
 
 ## The value of `[section] key` when it is one of `allowed`; otherwise `fallback`, and a
