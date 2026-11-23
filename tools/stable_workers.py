@@ -40,12 +40,12 @@ GRAIN_DEEP = (184, 138, 62)
 HEMP = (176, 156, 116)
 
 LOOKS = {
-    # A navy padded jacket with grey sleeve covers, a faded red head cloth, a brown apron.
-    "raker": dict(jacket=(56, 70, 102), sleeve=(122, 128, 132), trousers=(50, 50, 56), apron=(122, 96, 72),
-                  cloth=(158, 62, 54), cloth_band=(122, 44, 40), hair=(120, 116, 112), seed=11),
-    # A maroon-brown jacket, a blue apron and the white towel of a field worker's head.
-    "sifter": dict(jacket=(116, 76, 64), sleeve=(104, 120, 138), trousers=(58, 62, 72), apron=(70, 98, 128),
-                   cloth=(226, 220, 204), cloth_band=(92, 120, 160), hair=(96, 92, 90), seed=23),
+    # A faded indigo padded jacket with grey sleeve covers, a red head cloth, a tan apron.
+    "raker": dict(jacket=(96, 116, 150), sleeve=(160, 166, 168), trousers=(86, 86, 96), apron=(160, 128, 96),
+                  cloth=(196, 82, 68), cloth_band=(150, 56, 48), hair=(150, 146, 140), seed=11),
+    # A faded rust jacket, a blue apron and the white towel of a field worker's head.
+    "sifter": dict(jacket=(164, 104, 84), sleeve=(132, 152, 172), trousers=(88, 92, 106), apron=(96, 132, 166),
+                   cloth=(232, 228, 214), cloth_band=(100, 132, 176), hair=(130, 126, 122), seed=23),
 }
 
 HIP_STAND = .80

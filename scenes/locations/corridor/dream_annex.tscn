@@ -529,24 +529,24 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.376, 0.306, 0.227, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_earth_a8d6b2435ae24265"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_10be2e213a673cc8"]
 shader = ExtResource("stable_earth")
-shader_parameter/fill = 0.16
+shader_parameter/fill = 0.34
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_e084f1f293d57631"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_2ea4776f0150e094"]
 shader = ExtResource("stable_coat")
-shader_parameter/sheen = 0.12
-shader_parameter/fill = 0.3
+shader_parameter/sheen = 0.15
+shader_parameter/fill = 0.42
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_coat_bf107caadaa997f8"]
 shader = ExtResource("stable_coat")
 shader_parameter/sheen = 0.1
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_04f481c9509d485d"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_95c887d58f59d9d0"]
 shader = ExtResource("stable_coat")
-shader_parameter/sheen = 0.03
-shader_parameter/roughness = 0.9
-shader_parameter/fill = 0.22
+shader_parameter/sheen = 0.06
+shader_parameter/roughness = 0.85
+shader_parameter/fill = 0.3
 
 [sub_resource type="ShaderMaterial" id="Mat_stench_flies_3130b622a62f2697"]
 shader = ExtResource("stench_flies")
@@ -888,16 +888,16 @@ shader = ExtResource("stable_coat")
 shader_parameter/sheen = 0.15
 shader_parameter/roughness = 0.95
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_0b40297417d4e499"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_e8d355f332f15bf3"]
 shader = ExtResource("stable_coat")
-shader_parameter/sheen = 0.12
+shader_parameter/sheen = 0.2
 shader_parameter/roughness = 0.95
-shader_parameter/fill = 0.34
+shader_parameter/fill = 0.5
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_fa9e9a0831689d2f"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_c327b19f2693cd54"]
 shader = ExtResource("stable_coat")
 shader_parameter/sheen = 0.08
-shader_parameter/fill = 0.3
+shader_parameter/fill = 0.42
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_coat_54b5c2fe9c3c3a81"]
 shader = ExtResource("stable_coat")
@@ -5450,13 +5450,13 @@ cast_shadow = 0
 [node name="YardEarth" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(0, -3.4, 0)
 mesh = ExtResource("stable_yard_earth")
-material_override = SubResource("Mat_stable_earth_a8d6b2435ae24265")
+material_override = SubResource("Mat_stable_earth_10be2e213a673cc8")
 cast_shadow = 0
 
 [node name="LooseStraw" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(0, -3.4, 0)
 mesh = ExtResource("stable_loose_straw")
-material_override = SubResource("Mat_stable_coat_e084f1f293d57631")
+material_override = SubResource("Mat_stable_coat_2ea4776f0150e094")
 cast_shadow = 0
 
 [node name="Straw0" type="MeshInstance3D" parent="StableYard"]
@@ -5472,67 +5472,67 @@ material_override = SubResource("Mat_stable_coat_bf107caadaa997f8")
 cast_shadow = 0
 
 [node name="Dung0" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-32.48, -3.3913, 7.15)
+position = Vector3(-32.48, -3.39, 7.15)
 rotation_degrees = Vector3(0, 23, 0)
-scale = Vector3(1, 0.8, 1)
+scale = Vector3(1.35, 1.08, 1.35)
 mesh = ExtResource("stable_dung1")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Dung1" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-31.15, -3.3905, 9.85)
+position = Vector3(-31.15, -3.3897, 9.85)
 rotation_degrees = Vector3(0, 141, 0)
-scale = Vector3(0.8, 0.76, 0.8)
+scale = Vector3(1.1, 1.045, 1.1)
 mesh = ExtResource("stable_dung2")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Dung2" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(-35.3, -3.3872, 14.25)
 rotation_degrees = Vector3(0, 260, 0)
-scale = Vector3(0.7, 0.77, 0.7)
+scale = Vector3(0.95, 1.045, 0.95)
 mesh = ExtResource("stable_dung3")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Dung3" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-29.75, -3.3582, 10.95)
+position = Vector3(-29.75, -3.3507, 10.95)
 rotation_degrees = Vector3(0, 77, 0)
-scale = Vector3(0.6, 0.48, 0.6)
+scale = Vector3(0.8, 0.64, 0.8)
 mesh = ExtResource("stable_dung2")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Dung4" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-38.15, -3.3578, 16.1)
+position = Vector3(-38.15, -3.3502, 16.1)
 rotation_degrees = Vector3(0, 312, 0)
-scale = Vector3(0.9, 0.855, 0.9)
+scale = Vector3(1.2, 1.14, 1.2)
 mesh = ExtResource("stable_dung1")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Dung5" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-30.55, -3.3899, 17.05)
+position = Vector3(-30.55, -3.3891, 17.05)
 rotation_degrees = Vector3(0, 199, 0)
-scale = Vector3(0.75, 0.825, 0.75)
+scale = Vector3(1, 1.1, 1)
 mesh = ExtResource("stable_dung3")
-material_override = SubResource("Mat_stable_coat_04f481c9509d485d")
+material_override = SubResource("Mat_stable_coat_95c887d58f59d9d0")
 cast_shadow = 0
 
 [node name="Flies1" type="MultiMeshInstance3D" parent="StableYard"]
-position = Vector3(-32.48, -3.1713, 7.15)
+position = Vector3(-32.48, -3.17, 7.15)
 multimesh = SubResource("MultiMesh_art126")
 material_override = SubResource("Mat_stench_flies_3130b622a62f2697")
 cast_shadow = 0
 
 [node name="Flies2" type="MultiMeshInstance3D" parent="StableYard"]
-position = Vector3(-31.15, -3.1705, 9.85)
+position = Vector3(-31.15, -3.1697, 9.85)
 multimesh = SubResource("MultiMesh_art127")
 material_override = SubResource("Mat_stench_flies_32fb016e75ecec53")
 cast_shadow = 0
 
 [node name="Flies3" type="MultiMeshInstance3D" parent="StableYard"]
-position = Vector3(-38.15, -3.1378, 16.1)
+position = Vector3(-38.15, -3.1302, 16.1)
 multimesh = SubResource("MultiMesh_art128")
 material_override = SubResource("Mat_stench_flies_2289332a6134d866")
 cast_shadow = 0
@@ -6672,7 +6672,7 @@ rotation_degrees = Vector3(0, 90, 0)
 [node name="Feet" type="MeshInstance3D" parent="StableYard/OldWoman0"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman0_feet")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Body" type="Node3D" parent="StableYard/OldWoman0"]
 position = Vector3(0, 0.36, 0)
@@ -6681,48 +6681,48 @@ rotation_degrees = Vector3(16, 0, 0)
 [node name="Coat" type="MeshInstance3D" parent="StableYard/OldWoman0/Body"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman0_coat")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Head" type="MeshInstance3D" parent="StableYard/OldWoman0/Body"]
 position = Vector3(0, 0.485, 0.012)
 mesh = ExtResource("stable_old_woman0_head")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="ArmL" type="MeshInstance3D" parent="StableYard/OldWoman0/Body"]
 position = Vector3(-0.165, 0.405, -0.012)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman0_arm_l")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="ArmR" type="MeshInstance3D" parent="StableYard/OldWoman0/Body"]
 position = Vector3(0.165, 0.405, -0.012)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman0_arm_r")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Stool" type="MeshInstance3D" parent="StableYard/OldWoman0"]
 position = Vector3(0, 0, -0.02)
 mesh = ExtResource("stable_low_stool")
-material_override = SubResource("Mat_stable_coat_fa9e9a0831689d2f")
+material_override = SubResource("Mat_stable_coat_c327b19f2693cd54")
 
 [node name="Sieve" type="MeshInstance3D" parent="StableYard/OldWoman0/Body"]
 position = Vector3(0, 0.374, 0.4337)
 rotation_degrees = Vector3(-16, 0, 0)
 mesh = ExtResource("stable_bamboo_sieve")
-material_override = SubResource("Mat_stable_coat_fa9e9a0831689d2f")
+material_override = SubResource("Mat_stable_coat_c327b19f2693cd54")
 custom_aabb = AABB(-0.4, -0.2, -0.4, 0.8, 0.4, 0.8)
 
 [node name="Basket" type="MeshInstance3D" parent="StableYard/OldWoman0"]
 position = Vector3(0.52, 0, 0.3)
 rotation_degrees = Vector3(0, 20, 0)
 mesh = ExtResource("stable_grain_basket")
-material_override = SubResource("Mat_stable_coat_fa9e9a0831689d2f")
+material_override = SubResource("Mat_stable_coat_c327b19f2693cd54")
 
 [node name="Sack" type="MeshInstance3D" parent="StableYard/OldWoman0"]
 position = Vector3(-0.5, 0, 0.02)
 rotation_degrees = Vector3(0, -30, 0)
 mesh = ExtResource("stable_grain_sack")
-material_override = SubResource("Mat_stable_coat_fa9e9a0831689d2f")
+material_override = SubResource("Mat_stable_coat_c327b19f2693cd54")
 
 [node name="Motion" type="AnimationPlayer" parent="StableYard/OldWoman0"]
 autoplay = "Sift"
@@ -6735,7 +6735,7 @@ rotation_degrees = Vector3(0, -90, 0)
 [node name="Feet" type="MeshInstance3D" parent="StableYard/OldWoman1"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman1_feet")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Body" type="Node3D" parent="StableYard/OldWoman1"]
 position = Vector3(0, 0.8, 0)
@@ -6744,30 +6744,30 @@ rotation_degrees = Vector3(26, 0, 0)
 [node name="Coat" type="MeshInstance3D" parent="StableYard/OldWoman1/Body"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman1_coat")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Head" type="MeshInstance3D" parent="StableYard/OldWoman1/Body"]
 position = Vector3(0, 0.485, 0.012)
 mesh = ExtResource("stable_old_woman1_head")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="ArmL" type="MeshInstance3D" parent="StableYard/OldWoman1/Body"]
 position = Vector3(-0.165, 0.405, -0.012)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman1_arm_l")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="ArmR" type="MeshInstance3D" parent="StableYard/OldWoman1/Body"]
 position = Vector3(0.165, 0.405, -0.012)
 rotation_degrees = Vector3(0, 0, 0)
 mesh = ExtResource("stable_old_woman1_arm_r")
-material_override = SubResource("Mat_stable_coat_0b40297417d4e499")
+material_override = SubResource("Mat_stable_coat_e8d355f332f15bf3")
 
 [node name="Rake" type="MeshInstance3D" parent="StableYard/OldWoman1"]
 position = Vector3(0.07, 0.76, 0.58)
 rotation_degrees = Vector3(39.7323, 0, 0)
 mesh = ExtResource("stable_grain_rake")
-material_override = SubResource("Mat_stable_coat_fa9e9a0831689d2f")
+material_override = SubResource("Mat_stable_coat_c327b19f2693cd54")
 custom_aabb = AABB(-0.4, -1.2, -0.8, 0.8, 1.6, 2.4)
 
 [node name="Motion" type="AnimationPlayer" parent="StableYard/OldWoman1"]

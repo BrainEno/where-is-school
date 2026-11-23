@@ -166,9 +166,9 @@ def yard_ground(b, y):
     """
     import stable_ground as sg
     earth = shaped(b, "YardEarth", sg.earth)
-    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .16}))
+    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .34}))
     loose = shaped(b, "LooseStraw", sg.straw)
-    place(b, "LooseStraw", y, (0, G, 0), loose, coat(b, sheen=.12, fill=.3))
+    place(b, "LooseStraw", y, (0, G, 0), loose, coat(b, sheen=.15, fill=.42))
     # The stall fronts keep the round-18 straw shaken out of the stalls.
     front = shaped(b, "Straw0", lambda: sp.straw_patch(((0, .9), (0, 5.4)), 160, 70, .008))
     place(b, "Straw0", y, (sg.HOUSE_X[1], G, sg.HOUSE_Z[0] + .2), front, coat(b, sheen=.1))
@@ -176,7 +176,7 @@ def yard_ground(b, y):
     place(b, "Straw1", y, (-40.0, G, 16.9), bales, coat(b, sheen=.1))
     variants = [shaped(b, f"Dung{k}", lambda k=k: sm.dung_pile(k + 3, .5 + .1 * (k % 2), .45 + k / 5))
                 for k in (1, 2, 3)]
-    dung = coat(b, sheen=.03, roughness=.9, fill=.22)
+    dung = coat(b, sheen=.06, roughness=.85, fill=.3)
     for i in range(len(sg.DUNG)):
         pos, variant, scale, yaw = sg.dung_at(i)
         place(b, f"Dung{i}", y, (pos[0], G + pos[1], pos[2]), variants[variant], dung, rot=(0, yaw, 0),

@@ -36,7 +36,7 @@ def _figure(b, parent, name, kind, pos, yaw):
     lean = sw.SIT_LEAN if seated else sw.RAKE_LEAN
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     root = child_path(parent, name)
-    cloth = coat(b, sheen=.12, roughness=.95, fill=.34)
+    cloth = coat(b, sheen=.2, roughness=.95, fill=.5)
     skin_and_cloth = cloth
 
     def piece(label, path, at=(0, 0, 0), rot=None):
@@ -57,7 +57,7 @@ def raker(b, parent, name, pos, yaw):
     root, _ = _figure(b, parent, name, "raker", pos, yaw)
     _, _, reach, rest = sw.raker_pose()
     rid = shaped(b, "GrainRake", lambda: sw.rake(reach, rest))
-    place(b, "Rake", root, sw.RAKE_GRIP, rid, coat(b, sheen=.08, fill=.3), rot=(rest, 0, 0), shadow=True,
+    place(b, "Rake", root, sw.RAKE_GRIP, rid, coat(b, sheen=.08, fill=.42), rot=(rest, 0, 0), shadow=True,
           aabb=(-.4, -1.2, -.8, .8, 1.6, 2.4))
     keys = sw.rake_keys()
     motion_loop(b, root, "Rake", sw.RAKE_PERIOD, {
@@ -74,7 +74,7 @@ def raker(b, parent, name, pos, yaw):
 def sifter(b, parent, name, pos, yaw):
     """She sits on a low stool and shakes a bamboo sieve of grain over her knees."""
     root, body = _figure(b, parent, name, "sifter", pos, yaw)
-    dressing = coat(b, sheen=.08, fill=.3)
+    dressing = coat(b, sheen=.08, fill=.42)
     place(b, "Stool", root, (0, 0, -.02), shaped(b, "LowStool", sw.stool), dressing, shadow=True)
     at = sw.body_local(sw.SIEVE_AT, (0, sw.HIP_SIT, 0), sw.SIT_LEAN)
     place(b, "Sieve", body, at, shaped(b, "BambooSieve", sw.sieve), dressing, rot=(-sw.SIT_LEAN, 0, 0), shadow=True,

@@ -77,7 +77,7 @@ def relief(x, z):
     lane_path = math.exp(-((z - 16.4 - .5 * math.sin(x * .37)) / .9) ** 2) if z > LANE_Z[0] - .3 else 0.0
     stall_path = math.exp(-((x + 31.8 + .4 * math.sin(z * .5)) / .8) ** 2) if z < LANE_Z[0] + .6 else 0.0
     trodden = max(lane_path, stall_path) * (.6 + .4 * fbm(x * .9, z * .9, 71, 2))
-    return .036 + .032 * swell + .014 * lump - .022 * trodden
+    return .04 + .04 * swell + .016 * lump - .025 * trodden
 
 
 def height(x, z):
@@ -91,7 +91,7 @@ def _shade(x, z, h):
     damp = smoothstep(.2, .65, fbm(x * .3 - 5, z * .3 + 2, 73, 3))
     # The ground nearest the stalls and the heap stays darker and damper.
     near = max(math.exp(-((x + 32.6) / 1.4) ** 2) * (1.0 if z < 11.5 else 0.0), math.exp(-(math.hypot(x + 31.75, z - 5.4) / 1.6) ** 2))
-    v = 1.0 - .16 * dip - .18 * damp - .16 * near + .08 * smoothstep(.04, .07, h)
+    v = 1.0 - .1 * dip - .1 * damp - .1 * near + .06 * smoothstep(.05, .09, h)
     return (v, v * .985, v * .97)
 
 
@@ -145,15 +145,15 @@ def straw(seed=19):
     """Loose straw over the yard and lane: drifts at the walls, tufts, and single strands."""
     spots = []
     # Drifts along the foot of the walls, where the wind leaves it.
-    spots += _drift([(-39.9, 15.0), (-39.9, 11.0)], 70, seed, .35)
-    spots += _drift([(-38.5, 18.2), (-31.0, 18.25), (-26.0, 18.2)], 85, seed + 10, .3)
+    spots += _drift([(-39.9, 15.0), (-39.9, 11.0)], 90, seed, .35)
+    spots += _drift([(-38.5, 18.2), (-31.0, 18.25), (-26.0, 18.2)], 110, seed + 10, .3)
     spots += _drift([(-33.0, 4.85), (-27.4, 4.8)], 45, seed + 20, .28)
     # A few tufts dropped from a fork, at no particular place.
-    for k, (x, z, n) in enumerate(((-34.6, 9.6, 26), (-30.8, 10.4, 18), (-36.3, 15.6, 22), (-28.6, 15.9, 16),
-                                   (-35.2, 13.1, 14), (-31.7, 14.3, 12), (-37.6, 17.1, 20))):
+    for k, (x, z, n) in enumerate(((-34.6, 9.6, 36), (-30.8, 10.4, 26), (-36.3, 15.6, 30), (-28.6, 15.9, 22),
+                                   (-35.2, 13.1, 20), (-31.7, 14.3, 18), (-37.6, 17.1, 28))):
         spots += _drift([(x, z)], n, seed + 30 + k, .32 + .1 * (k % 3))
     # Single strands everywhere, thinning toward the lane's mouth.
-    for i in range(190):
+    for i in range(260):
         x = LANE_X[0] + .2 + (LANE_X[1] - LANE_X[0] - 1.5) * rand(i, seed + 90) ** 1.3
         z = YARD_Z[0] + .2 + (LANE_Z[1] - YARD_Z[0] - .4) * rand(i, seed + 91)
         if z < LANE_Z[0] and x > YARD_X[1] - .1:
@@ -169,8 +169,8 @@ def straw(seed=19):
             continue  # inside the dream house; it has its own bedding
         c = mix(STRAW, STRAW_PALE, rand(i, seed + 4)) if rand(i, seed + 7) > .3 else STRAW_DARK
         c = mix(c, (150, 128, 84), .25 * rand(i, seed + 8))  # trodden, weathered
-        length = .07 + .16 * rand(i, seed + 3) ** 1.5
-        m.add(strand(length, .0065 + .002 * rand(i, seed + 5)), rgb(c),
+        length = .09 + .18 * rand(i, seed + 3) ** 1.5
+        m.add(strand(length, .009 + .004 * rand(i, seed + 5)), rgb(c),
               rotation=euler((rand(i, seed + 6) * 14 - 7, rand(i, seed + 9) * 360, rand(i, seed + 11) * 10 - 5)),
               offset=(x, height(x, z) + .004 + .006 * rand(i, seed + 2), z))
     return m
@@ -180,12 +180,12 @@ def straw(seed=19):
 
 # (x, z, variant, scale, yaw) - where they happened to fall, not a pattern.
 DUNG = (
-    (-32.48, 7.15, 0, 1.0, 23),
-    (-31.15, 9.85, 1, .8, 141),
-    (-35.3, 14.25, 2, .7, 260),
-    (-29.75, 10.95, 1, .6, 77),
-    (-38.15, 16.1, 0, .9, 312),
-    (-30.55, 17.05, 2, .75, 199),
+    (-32.48, 7.15, 0, 1.35, 23),
+    (-31.15, 9.85, 1, 1.1, 141),
+    (-35.3, 14.25, 2, .95, 260),
+    (-29.75, 10.95, 1, .8, 77),
+    (-38.15, 16.1, 0, 1.2, 312),
+    (-30.55, 17.05, 2, 1.0, 199),
 )
 # (dropping index, fly count, spread) - only some droppings draw flies.
 SWARMS = ((0, 7, .16), (1, 5, .12), (4, 6, .15))
