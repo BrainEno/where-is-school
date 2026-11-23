@@ -2,8 +2,8 @@
 
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_escalator.gdshader" id="dream_escalator"]
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_motion.gdshader" id="dream_motion"]
-[ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/yard_earth.tres" id="stable_yard_earth"]
 [ext_resource type="Shader" path="res://assets/shaders/school/stable_earth.gdshader" id="stable_earth"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/yard_earth.tres" id="stable_yard_earth"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/loose_straw.tres" id="stable_loose_straw"]
 [ext_resource type="Shader" path="res://assets/shaders/school/stable_coat.gdshader" id="stable_coat"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/straw0.tres" id="stable_straw0"]
@@ -517,11 +517,10 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.435, 0.427, 0.475, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_earth"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.502, 0.408, 0.298, 1)
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_f622af2af40bdd01"]
+shader = ExtResource("stable_earth")
+shader_parameter/fill = 0.5
+shader_parameter/ground_offset = Vector2(-18.75, 16.565)
 
 [sub_resource type="StandardMaterial3D" id="Mat_earth_dark"]
 diffuse_mode = 3
@@ -1892,7 +1891,7 @@ size = Vector3(4.05, 0.1, 3.77)
 size = Vector3(4.05, 0.27, 3.77)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_art120"]
-size = Vector2(4.05, 3.77)
+size = Vector2(4, 3.77)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art121"]
 size = Vector3(19.45, 0.1, 3.77)
@@ -1937,10 +1936,10 @@ size = Vector3(19.45, 1.25, 0.3)
 size = Vector3(19.45, 1.15, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art131"]
-size = Vector3(19.51, 0.1, 0.3)
+size = Vector3(19.45, 0.1, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art132"]
-size = Vector3(19.43, 0.3, 0.3)
+size = Vector3(19.43, 0.3, 0.32)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art133"]
 size = Vector3(0.3, 1.25, 8.05)
@@ -1949,22 +1948,22 @@ size = Vector3(0.3, 1.25, 8.05)
 size = Vector3(0.3, 1.15, 8.05)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art135"]
-size = Vector3(0.3, 0.1, 8.11)
+size = Vector3(0.3, 0.1, 8.05)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art136"]
-size = Vector3(0.3, 0.3, 8.03)
+size = Vector3(0.32, 0.3, 8.03)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art137"]
 size = Vector3(6.27, 1.25, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art138"]
-size = Vector3(6.27, 1.15, 0.3)
+size = Vector3(6.25, 1.15, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art139"]
-size = Vector3(6.33, 0.1, 0.3)
+size = Vector3(6.25, 0.1, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art140"]
-size = Vector3(6.25, 0.3, 0.3)
+size = Vector3(6.23, 0.3, 0.32)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art141"]
 size = Vector3(0.3, 1.25, 1.22)
@@ -1973,10 +1972,10 @@ size = Vector3(0.3, 1.25, 1.22)
 size = Vector3(0.3, 1.15, 1.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art143"]
-size = Vector3(0.3, 0.1, 1.28)
+size = Vector3(0.3, 0.1, 1.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art144"]
-size = Vector3(0.3, 0.3, 1.2)
+size = Vector3(0.32, 0.3, 1.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art145"]
 size = Vector3(7, 6, 5.8)
@@ -5404,9 +5403,9 @@ material_override = SubResource("Mat_upper_concrete")
 cast_shadow = 0
 
 [node name="StableLaneConnectorEarth" type="MeshInstance3D" parent="."]
-position = Vector3(-22.775, -3.396, 16.565)
+position = Vector3(-22.75, -3.396, 16.565)
 mesh = SubResource("PlaneMesh_art120")
-material_override = SubResource("Mat_earth")
+material_override = SubResource("Mat_stable_earth_f622af2af40bdd01")
 cast_shadow = 0
 
 [node name="Lane" type="StaticBody3D" parent="StableYard"]
@@ -5602,18 +5601,18 @@ position = Vector3(0, 0.625, 0)
 shape = SubResource("BoxShape3D_art137")
 
 [node name="Mud" type="MeshInstance3D" parent="StableYard/WallNorth"]
-position = Vector3(0, 0.575, 0)
+position = Vector3(-0.01, 0.575, 0)
 mesh = SubResource("BoxMesh_art138")
 material_override = SubResource("Mat_mud_wall")
 
 [node name="Cap" type="MeshInstance3D" parent="StableYard/WallNorth"]
-position = Vector3(0, 1.21, 0)
+position = Vector3(-0.01, 1.21, 0)
 mesh = SubResource("BoxMesh_art139")
 material_override = SubResource("Mat_mud_cap")
 cast_shadow = 0
 
 [node name="Lime" type="MeshInstance3D" parent="StableYard/WallNorth"]
-position = Vector3(0, 0.45, 0)
+position = Vector3(-0.01, 0.45, 0)
 mesh = SubResource("BoxMesh_art140")
 material_override = SubResource("Mat_lime")
 cast_shadow = 0

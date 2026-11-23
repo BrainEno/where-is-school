@@ -226,15 +226,23 @@ def exam_floor(b):
 
 # --- behind 01: the stable yard and the dream house ----------------------------------------
 
-def low_wall(b, parent, name, a, z_or_x, along_x, height=1.25):
+def low_wall(b, parent, name, a, z_or_x, along_x, height=1.25, *, end_trim=0.0):
     lo, hi = a
     length = hi - lo
     pos = ((lo + hi) / 2, G, z_or_x) if along_x else (z_or_x, G, (lo + hi) / 2)
     size = (length, height, .3) if along_x else (.3, height, length)
     p = solid(b, name, parent, pos, size)
-    b.box("Mud", p, (0, height / 2 - .05, 0), (size[0], height - .1, size[2]), "mud_wall", shadow=True)
-    b.box("Cap", p, (0, height - .04, 0), (size[0] + .06 * along_x, .1, size[2] + .06 * (not along_x)), "mud_cap")
-    b.box("Lime", p, (0, .45, 0), (size[0] - .02 * along_x, .3, size[2] - .02 * (not along_x)), "lime")
+    # Trim the visual end where it would overlap the perpendicular return, but keep
+    # the original collision shape. Adjoining caps stop at their wall ends as well.
+    visual = (size[0] - end_trim * along_x, size[1], size[2] - end_trim * (not along_x))
+    dx = -end_trim / 2 if along_x and end_trim else 0.0
+    dz = -end_trim / 2 if not along_x and end_trim else 0.0
+    b.box("Mud", p, (dx, height / 2 - .05, dz), (visual[0], height - .1, visual[2]), "mud_wall", shadow=True)
+    b.box("Cap", p, (dx, height - .04, dz), (visual[0], .1, visual[2]), "mud_cap")
+    # The stripe must sit just outside the mud, not share its two long faces.
+    b.box("Lime", p, (dx, .45, dz),
+          (visual[0] - .02 if along_x else visual[0] + .02, .3,
+           visual[2] + .02 if along_x else visual[2] - .02), "lime")
 
 
 def yard_ground(b, y):
@@ -389,12 +397,17 @@ def stable_yard(b):
     # The connecting strip remains at the entrance so the route stays walkable.
     b.node(y, ".", position=vec3((-4, 0, 0)))
     slab(b, ".", "StableLaneConnector", (-24.8, -20.75), LANE_Z, G)
-    b.flat("StableLaneConnectorEarth", ".", plane(b, 4.05, LANE_Z[1]-LANE_Z[0]), "earth",
-           (-22.775, G + .004, sum(LANE_Z)/2))
+    # The connector is a flat walking surface, but shares the yard's soil pigment.
+    # Its plane is centred in annex coordinates; the yard itself is shifted 4 m west.
+    connector_x, connector_z = -22.75, sum(LANE_Z) / 2
+    connector_soil = dream_stable.earth_material(b, (connector_x + 4, connector_z))
+    # Meet the relief at x = -24.75 rather than overlapping its last five centimetres.
+    b.flat("StableLaneConnectorEarth", ".", plane(b, 4.0, LANE_Z[1]-LANE_Z[0]), connector_soil,
+           (connector_x, G + .004, connector_z))
     yard_ground(b, y)
     low_wall(b, y, "WallSouth", (LANE_X[0], LANE_X[1]), LANE_Z[1] + .15, True)
     low_wall(b, y, "WallWest", (HOUSE_Z[1], LANE_Z[1]), LANE_X[0] - .15, False)
-    low_wall(b, y, "WallNorth", (HOUSE_X[1], YARD_X[1] + .02), YARD_Z[0] - .15, True)
+    low_wall(b, y, "WallNorth", (HOUSE_X[1], YARD_X[1] + .02), YARD_Z[0] - .15, True, end_trim=.02)
     low_wall(b, y, "WallNorthEast", (YARD_Z[0] - .3, 5.52), YARD_X[1] + .15, False)
     dream_house(b, y)
     quilts(b, y)
