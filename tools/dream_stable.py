@@ -166,7 +166,7 @@ def yard_ground(b, y):
     """
     import stable_ground as sg
     earth = shaped(b, "YardEarth", sg.earth)
-    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .34}))
+    place(b, "YardEarth", y, (0, G, 0), earth, _mat(b, "stable_earth", EARTH, {"fill": .5}))
     loose = shaped(b, "LooseStraw", sg.straw)
     place(b, "LooseStraw", y, (0, G, 0), loose, coat(b, sheen=.15, fill=.42))
     # The stall fronts keep the round-18 straw shaken out of the stalls.

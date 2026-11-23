@@ -529,9 +529,9 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.376, 0.306, 0.227, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_earth_10be2e213a673cc8"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_8e76a807725f1c9f"]
 shader = ExtResource("stable_earth")
-shader_parameter/fill = 0.34
+shader_parameter/fill = 0.5
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_coat_2ea4776f0150e094"]
 shader = ExtResource("stable_coat")
@@ -5450,7 +5450,7 @@ cast_shadow = 0
 [node name="YardEarth" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(0, -3.4, 0)
 mesh = ExtResource("stable_yard_earth")
-material_override = SubResource("Mat_stable_earth_10be2e213a673cc8")
+material_override = SubResource("Mat_stable_earth_8e76a807725f1c9f")
 cast_shadow = 0
 
 [node name="LooseStraw" type="MeshInstance3D" parent="StableYard"]

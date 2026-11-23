@@ -7,7 +7,7 @@ render_mode cull_back, diffuse_burley, specular_disabled;
 // a broad mineral mottle and a fine grit, here multiplied by the mesh's vertex shade, which
 // darkens hollows and the damp ground by the stalls. `fill` is the low self-light the other
 // stable materials use, so the soil keeps its colour under the dusk sky instead of going black.
-uniform float fill : hint_range(0.0, 1.0) = 0.34;
+uniform float fill : hint_range(0.0, 1.0) = 0.5;
 
 varying vec2 ground_position;
 
