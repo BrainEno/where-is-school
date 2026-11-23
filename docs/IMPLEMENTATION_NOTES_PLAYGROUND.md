@@ -156,7 +156,7 @@ the navigation, the anchors and their ids are as they were. What changed is what
 - **The container yard's edges.** The yard was a slab floating in the background colour.
   - Past its edges the same asphalt runs on into the fog (`Outskirts`).
   - Behind the back wall and the west fence stand the rest of the terminal (`FarStacks`):
-    rows of stacks that climb away from the wall, a long shed with roller doors, and
+    rows of stacks in the yard's blues and reds pulled toward the fog (backdrop, not a second maze) that climb away from the wall, a long shed with roller doors, and
     floodlight towers.
   - Two of the port's own quay cranes stand far off as flat dark shapes. The yard refers to
     `port/meshes/crane.tres`, so the yard's own `crane.tres` is gone.
