@@ -67,15 +67,12 @@ POUR_B = (99, 95, 88)
 POUR_B_LIGHT = (106, 102, 94)
 POUR_B_DARK = (91, 87, 81)
 PATCH = (81, 81, 79)  # the newer concrete the hoop poles stand in
-# The court: oxide red; its far half is the same paint a shade darker (inspection text).
-COURT = (152, 86, 66)
-COURT_LIGHT = (164, 98, 76)
-COURT_DARK = (136, 76, 60)
-KEY = (80, 94, 114)  # the keys: a piece of the sky colour put down on the ground
-KEY_LIGHT = (90, 104, 124)
-KEY_DARK = (70, 82, 100)
-KEY_LINE = (176, 168, 150)  # a dimmer bone than the court lines: the keys sit under the prompt
-LINE = (222, 214, 192)
+# Neutral, dark enough for HUD contrast: rough grey concrete with white paint.
+COURT = (110, 110, 108)
+COURT_LIGHT = (126, 126, 123)
+COURT_DARK = (88, 88, 86)
+KEY_LINE = (227, 227, 222)
+LINE = (232, 231, 225)
 # Things standing in the yard.
 IVORY = (220, 208, 180)
 OCHRE = (132, 96, 48)  # the block under the bench: saturated rather than light
@@ -191,14 +188,13 @@ def seam() -> Image.Image:
 
 
 def court_tile() -> Image.Image:
-    """Court paint (4 x 4 m tile): roller passes in one direction, then a few cross strokes."""
+    """Rough concrete in a tile; fine aggregate and two quiet hairline cracks."""
     c = Canvas(4.0, 4.0, 128.0, COURT, seed=2103)
-    planes(c, COURT_LIGHT, COURT_DARK, 40, (1.4, 3.0), (0.35, 0.7), angle=0.0, opacity=0.4)
-    planes(c, COURT_LIGHT, COURT_DARK, 10, (0.6, 1.2), (0.2, 0.4), angle=1.4, opacity=0.25)
-    c.mottle(rgb(COURT_DARK), 1.2, 0.2)
-    specks(c, COURT_DARK, 0.006, opacity=0.5)
+    planes(c, COURT_LIGHT, COURT_DARK, 45, (0.12, 0.48), (0.06, 0.23), angle=None, opacity=0.32)
+    c.mottle(rgb(COURT_DARK), 0.32, 0.16)
+    specks(c, COURT_DARK, 0.008, opacity=0.55)
     make_tileable(c)
-    return c.image(12)
+    return c.image(16)
 
 
 def court_line() -> Image.Image:
@@ -215,7 +211,7 @@ def court_line() -> Image.Image:
     pts2 = [(x + rng.uniform(-0.05, 0.05), y + (0.0 if x < 0.2 or x > 7.8 else rng.uniform(-0.008, 0.008))) for x, y in pts]
     c.ink_line(pts2, width_m=0.08, wobble_m=0.004, color=LINE, opacity=1.0, taper=False, alpha_canvas=True)
     c.rgb[:] = rgb(LINE)
-    planes(c, (232, 226, 206), (204, 196, 174), 30, (0.5, 1.6), (0.04, 0.08), angle=0.0, opacity=0.5, bristles=5)
+    planes(c, (244, 244, 239), (213, 213, 208), 30, (0.5, 1.6), (0.04, 0.08), angle=0.0, opacity=0.5, bristles=5)
     return c.image(6, alpha="cut")
 
 
@@ -231,21 +227,13 @@ def make_wrap_horizontal(c: Canvas) -> None:
 
 
 def key_area() -> Image.Image:
-    """One key (5 x 3.2 m): a slab of the sky colour with a brushed bone outline that does
-    not quite close at one corner."""
-    c = Canvas(5.0, 3.2, 48.0, KEY, seed=2105, alpha=0.0)
-    fill = c.rect_mask(0.08, 0.08, 4.92, 3.12, rough=0.35, cell_m=0.12, blur_m=0.02)
-    c.paint_alpha(KEY, fill, 1.0)
-    planes(c, KEY_LIGHT, KEY_DARK, 30, (1.0, 2.4), (0.25, 0.5), angle=0.0, opacity=0.4, bristles=10)
-    c.a = np.minimum(c.a, fill)
-    rng = c.rng
+    """White boundary of a key; no coloured fill on the concrete."""
+    c = Canvas(5.0, 3.2, 48.0, KEY_LINE, seed=2105, alpha=0.0)
     corners = [(0.12, 0.1), (4.9, 0.12), (4.88, 3.1), (0.1, 3.08)]
     for i in range(4):
         a, b = corners[i], corners[(i + 1) % 4]
-        if i == 3:
-            b = (b[0] + 0.02, b[1] + (a[1] - b[1]) * 0.18)  # the gap at one corner
-        mid = ((a[0] + b[0]) / 2 + rng.uniform(-0.03, 0.03), (a[1] + b[1]) / 2 + rng.uniform(-0.03, 0.03))
-        c.ink_line([a, mid, b], width_m=0.07, wobble_m=0.015, color=KEY_LINE, opacity=1.0, taper=False, broken=0.2, alpha_canvas=True)
+        c.ink_line([a, b], width_m=0.08, wobble_m=0.009, color=KEY_LINE,
+                   opacity=1.0, taper=False, broken=0.08, alpha_canvas=True)
     return c.image(10, alpha="cut")
 
 
@@ -374,25 +362,6 @@ def rota_sheet() -> Image.Image:
     for s0, y0 in ((0.0, 0.42), (0.78, 0.42), (0.0, 0.0), (0.78, 0.0)):
         tape = c.rect_mask(s0, y0, s0 + 0.12, y0 + 0.08, rough=0.2, cell_m=0.01)
         c.paint((214, 204, 170), tape, 0.6)
-    return c.image(16)
-
-
-def notice_sheet() -> Image.Image:
-    """The notice board by the bench (1.8 x 1.1 m): a teal board, three sheets pinned at
-    different angles, one torn off leaving its corner."""
-    c = Canvas(1.8, 1.1, 128.0, (64, 96, 102), seed=2111)
-    planes(c, (74, 108, 114), (54, 84, 90), 14, (0.5, 1.2), (0.1, 0.2), angle=0.0, opacity=0.4, bristles=8)
-    rng = c.rng
-    for (cx, cy, w, h, ang) in ((0.42, 0.62, 0.42, 0.56, -0.05), (1.02, 0.5, 0.36, 0.5, 0.06), (1.46, 0.7, 0.3, 0.3, -0.12)):
-        ca, sa = math.cos(ang), math.sin(ang)
-        pts = [(cx + ca * dx - sa * dy, cy + sa * dx + ca * dy) for dx, dy in ((-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2))]
-        c.paint((228, 222, 202), c.polygon_mask(pts, rough=0.2, cell_m=0.02), 1.0)
-        for k in range(5):
-            y = cy + h / 2 - 0.08 - k * 0.07
-            c.ink_line([(cx - w / 2 + 0.05, y), (cx + w / 2 - 0.06 - rng.uniform(0, 0.1), y + rng.uniform(-0.01, 0.01))], width_m=0.008, wobble_m=0.006, color=(80, 78, 74))
-        c.ink_line([(cx, cy + h / 2 - 0.02), (cx + 0.005, cy + h / 2 - 0.03)], width_m=0.025, wobble_m=0.0, color=VERMILION, taper=False)
-    torn = c.polygon_mask([(1.3, 0.12), (1.42, 0.12), (1.3, 0.24)], rough=0.3, cell_m=0.01)
-    c.paint((228, 222, 202), torn, 1.0)
     return c.image(16)
 
 
@@ -733,7 +702,6 @@ TEXTURES = {
     "fence_gap.png": lambda: chain_link(11.0, 2.0, 2117, gap=(5.5, 0.9, 1.75)),
     "backboard.png": backboard,
     "rota_sheet.png": rota_sheet,
-    "notice_sheet.png": notice_sheet,
     "tyre.png": tyre,
     "wall_patches.png": wall_patches,
     "container_gesture.png": container_gesture,

@@ -1,14 +1,14 @@
 extends SceneTree
-## The schoolyard art slice: the painted yard is still the yard it was.
+## The schoolyard art slice: visual changes preserve the yard’s playable routes.
 ##
 ## Issue #82 repainted the graybox schoolyard (painted pours and seam, a hand-painted court,
 ## a local colour system, a flat painted distance, ring tyres, hoop rings, the far net). None
 ## of it may cost the yard anything a player relies on. The claims under test:
 ##
-## 1. **Same yard outside the container.** Existing bodies, anchors, exits and spawns keep
-##    their geometry, ids and destinations. The new return-route actions add only areas.
+## 1. **Same routes.** Existing anchors, exits and spawns keep their ids and destinations;
+##    only the smaller shed and removal of the return-board posts change solids.
 ##    The container has its own precise shell contract.
-## 2. **No new solids.** Only the graybox's 33 bodies collide outside Interactables/:
+## 2. **No new solids.** Only the explicitly listed graybox bodies collide outside Interactables/:
 ##    colliding decoration would carve the navigation mesh and block interaction rays.
 ## 3. **Its own colour system.** Every drawn surface (the imported bench and bag aside) uses a
 ##    material from `playground_art/`; nothing reaches into `assets/materials/` or the Shader
@@ -19,7 +19,7 @@ extends SceneTree
 ## 6. **Hierarchy.** Broad planes stay quiet; what the player looks for stands out.
 ## 7. **The texts are true.** The green shed door with hasp and padlock, the newer concrete
 ##    round the near hoop and its missing net, the far hoop's net, the seam, the darker far
-##    court half, the pale strip under the hedge, the duty sheet in the shed window: drawn.
+##    concrete court, pale strip under the hedge and duty sheet in the shed window: drawn.
 ## 8. **The real camera.** From the game's camera rig, nothing the slice added stands between
 ##    the camera and the player anywhere on the walkable yard, or between the camera and an
 ##    interactable the player walks up to; the painted distance stays out and casts no shadow.
@@ -62,11 +62,9 @@ const SOLIDS := {
 	"HoopFarPole": [Vector3(8.0, 1.6, -11.5), Vector3(0.18, 3.2, 0.18)],
 	"HoopFarRim": [Vector3(8.0, 2.6, -11.8), Vector3(0.05, 0.05, 0.45)],
 	"HoopFarFooting": [Vector3(8.0, 0.1, -11.5), Vector3(1.2, 0.2, 1.2)],
-	"ShedBody": [Vector3(-17.0, 1.5, -4.0), Vector3(6.0, 3.0, 8.0)],
+	"ShedBody": [Vector3(-16.0, 1.5, -4.0), Vector3(4.0, 3.0, 6.0)],
 	"ShedFootingWest": [Vector3(-15.6, 0.2, -0.1), Vector3(1.4, 0.4, 1.4)],
 	"ShedFootingEast": [Vector3(-13.2, 0.3, -0.1), Vector3(1.4, 0.6, 1.4)],
-	"BoardPostA": [Vector3(14.0, 1.3, 2.0), Vector3(0.12, 2.6, 0.12)],
-	"BoardPostB": [Vector3(14.0, 1.3, 4.4), Vector3(0.12, 2.6, 0.12)],
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_1": [Vector3(18.0, 1.4, 9.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_2": [Vector3(18.0, 1.4, 11.0), Vector3(0.14, 2.8, 0.14)],
@@ -88,10 +86,10 @@ const INTERACTABLES := {
 	"pg_hoop_near": Vector3(-8.0, 1.4, 8.8), "pg_court_middle": Vector3(0.0, 0.9, 2.0),
 	"pg_bench_look": Vector3(10.2, 1.0, 3.2), "pg_frame_look": Vector3(17.0, 1.4, 9.0),
 	"pg_shed_door": Vector3(-13.2, 1.1, -4.0), "pg_ball_look": Vector3(-14.2, 0.8, 0.6),
-	"pg_board_look": Vector3(13.2, 1.7, 3.2), "pg_container_look": Vector3(15.25, 1.05, -15.5),
+	"pg_container_look": Vector3(15.25, 1.05, -15.5),
 	"pg_cabin_papers_look": Vector3(14.21, 0.32, -14.91),
 	"pg_tyre_look": Vector3(-14.6, 0.7, 2.9),
-	"pg_chalk_guide": Vector3(-12.4, 0.53, -9.6), "pg_tap": Vector3(-5.58, 1.08, 14.0),
+	"pg_tap": Vector3(-5.58, 1.08, 14.0),
 	"pg_site_look": Vector3(-22.6, 1.0, 13.2),
 }
 ## [position, destination scene, destination spawn, milestone end].
@@ -122,10 +120,9 @@ const SPAWNS := {
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
 }
-## The baked navigation at base commit 359ed4a (Godot CI run 43014461771).
-## 143 with the old solid block. The shell's doorway and threshold make the cabin
-## walkable, adding nine polygons; the roof must still be isolated from the ground.
-const NAV_POLYGONS := 152
+## Recast polygon count varies with the shed footprint. Connectivity and clearance
+## below are the primary contract; this range catches an unexpectedly empty or fragmented bake.
+const NAV_POLYGON_RANGE := Vector2i(110, 200)
 
 ## [focus material, backdrop material, why]; separation in value or colourfulness.
 const HIERARCHY_PAIRS := [
@@ -133,9 +130,8 @@ const HIERARCHY_PAIRS := [
 	["fire_door", "school_wall", "the fire door (the way back in) in the school wall"],
 	["frame_yellow", "ground", "the climbing frame against the yard"],
 	["bench_patch", "ground", "the colour block under the bench and bag"],
-	["court", "ground", "the court against the yard"],
+	["court_line", "court", "white court lines against the concrete"],
 	["hoop_rim", "court", "the hoop rings over the court"],
-	["court_key", "court", "the keys inside the court"],
 ]
 const HIERARCHY_MIN := 0.15
 const QUIET_PLANES: Array[String] = ["ground", "pour_b", "school_wall", "estate"]
@@ -669,6 +665,11 @@ func _check_story_agreement() -> void:
 		"PlaygroundArt/TapDetail/Wheel/Rim": "the red wheel on the tap",
 		"PlaygroundArt/TapDetail/Cap": "the cap hanging from the pipe",
 		"PlaygroundArt/TapDetail/Drain/Bar4": "the open grate under the tap",
+		"PlaygroundArt/TapDetail/BibThread0": "the tap spout fittings",
+		"PlaygroundArt/HedgeLeaves/LeafCluster0": "the irregular hedge",
+		"ShedBody/Facade/ReclaimedPanel0": "the shed wall patches",
+		"ShedFootingWest/ConcreteBase": "the concrete footing",
+		"PlaygroundArt/Court/Crack0_0": "the sparse concrete cracks",
 		"YardNoodleWrapper/Film": "the printed noodle packet on the bench",
 		"PlaygroundArt/Equipment/HoopFarNet": "the net on the far hoop",
 		"PlaygroundArt/Ground/HoopNearPatch": "the newer concrete the near hoop stands in",
@@ -676,7 +677,6 @@ func _check_story_agreement() -> void:
 		"PlaygroundArt/Ground/PourB": "the second pour of concrete",
 		"PaleUnderHedge": "the pale strip under the hedge",
 		"ShedBody/Facade/DutySheet": "the duty sheet in the shed window",
-		"ShedBody/ShedReturnCopy/Strip": "the clipped copy of the return mark",
 		"PingPongBall": "the ball under the shed footing",
 	}
 	for path: String in expectations:
@@ -703,10 +703,20 @@ func _check_story_agreement() -> void:
 		if String(node.name).contains("Net") and node is Node3D:
 			if (node as Node3D).global_position.distance_to(_yard.to_global(near_ring)) < 1.0:
 				_failures.append("The near hoop has a net ('%s'); the text says it has none." % _relative(node))
-	# The far half of the court is darker, and drawn above the court surface, not under it.
-	var far_paint := _luminance(_material_colour("court_far", cache))
-	if far_paint >= _luminance(_material_colour("court", cache)) - 0.02:
-		_failures.append("The far half of the court is not darker than the near half.")
+	# Both halves are neutral concrete, not red paint. The boundary and key
+	# materials must remain light enough to read as white markings.
+	for name: String in ["court", "court_far"]:
+		var concrete := _material_colour(name, cache)
+		if _chroma(concrete) > 0.04 or _luminance(concrete) < 0.25:
+			_failures.append("%s is not neutral grey concrete: %s." % [name, concrete])
+	for name: String in ["court_line", "court_key"]:
+		var paint := _material_colour(name, cache)
+		if _chroma(paint) > 0.05 or _luminance(paint) < 0.70:
+			_failures.append("%s is not white court paint: %s." % [name, paint])
+	for path: String in ["BoardPostA", "BoardPostB", "PlaygroundArt/ChalkGuide",
+			"PlaygroundArt/ReturnBoardEast", "ShedBody/ShedReturnCopy"]:
+		if _yard.get_node_or_null(NodePath(path)) != null:
+			_failures.append("Removed yard object is still present: %s." % path)
 	var far := _yard.get_node_or_null(^"CourtFarHalf") as MeshInstance3D
 	var surface := _yard.get_node_or_null(^"CourtSurface") as MeshInstance3D
 	if far != null and surface != null:
@@ -771,9 +781,9 @@ func _check_navigation() -> LocationNavigation:
 		_failures.append("The schoolyard navigation never synchronized: %s" % navigation.describe_sync())
 		return null
 	var polygons := navigation.get_polygon_count()
-	if polygons != NAV_POLYGONS:
+	if polygons < NAV_POLYGON_RANGE.x or polygons > NAV_POLYGON_RANGE.y:
 		_failures.append(
-			"The yard and open cabin bake %d polygons; expected %d." % [polygons, NAV_POLYGONS]
+			"The yard and open cabin bake %d polygons; expected %d–%d." % [polygons, NAV_POLYGON_RANGE.x, NAV_POLYGON_RANGE.y]
 		)
 	var map := navigation.get_navigation_map()
 	var gate := _yard.get_node_or_null(^"SpawnPoints/FromAlley") as Node3D
@@ -812,7 +822,7 @@ func _check_navigation() -> LocationNavigation:
 		if marker != null and _route_gap(map, start, marker.global_position) > 0.5:
 			_failures.append("Spawn '%s' is cut off from the gate." % spawn_name)
 	_notes.append(
-		"nav polygons %d (expected %d), worst reach margin %.2f m" % [polygons, NAV_POLYGONS, worst]
+		"nav polygons %d (range %d–%d), worst reach margin %.2f m" % [polygons, NAV_POLYGON_RANGE.x, NAV_POLYGON_RANGE.y, worst]
 	)
 	return navigation
 

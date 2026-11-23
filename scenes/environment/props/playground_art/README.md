@@ -1,8 +1,8 @@
 # Schoolyard art slice (issue #82)
 
 The first hand-made visual slice of the schoolyard (`scenes/locations/playground/`).
-The art pass leaves the graybox route and collision layout in place, except for the
-hollow container and its roof-to-ground ladder documented below. The bench keeps its
+The art pass preserves the yard routes, except for the resized shed and the removed
+return-board posts; the hollow container and its roof-to-ground ladder are documented below. The bench keeps its
 collider; the noodle film replaces a backpack whose box was already inside that collider. `tests/playground_art_slice_test.gd`
 guards the surrounding yard.
 
@@ -14,11 +14,11 @@ involved.
 
 | Files | Made by | How |
 | --- | --- | --- |
-| `textures/*.png` (31) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2130), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
+| `textures/*.png` (30) | `source/paint_playground_textures.py` | Procedural painting from fixed seeds (2101–2130), using the classroom painter's brush vocabulary (`art/classroom/paint_classroom_textures.py`, imported read-only). The fictional print on the films, paper and sign is drawn with the existing Noto Sans SC source. It is deterministic: the same command on Pillow 11.3 / NumPy 2.2 repaints byte-identical files. |
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
 | `materials/*.tres` | `source/build_playground_art.py` | Shared `StandardMaterial3D` palette: toon and a shared ink outline. The overrides used only by the scenery are embedded there. |
 | `meshes/*.mesh`, `noodle_wrapper.tscn` | `source/yard_details.py`, `source/build_playground_art.py` | Shaped bedding, paper and wrapper film in native compressed `ArrayMesh` resources. Their UVs, surfaces and node paths are unchanged. |
-| `scenery.scn` | `source/build_playground_art.py` and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals and scenery-only materials. Still carries the round-8 construction site, hidden by `playground.tscn` until the next bake drops it. No external download or new paint tile. |
+| `scenery.scn` | `source/build_playground_art.py` and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals and scenery-only materials. The construction site is a separate text-scene instance. No external download or new paint tile. |
 | `construction_site.tscn`, `meshes/site/*.tres`, `materials/site/*.tres` | `source/construction_site.py` (layout), `source/site_meshes.py` (parts), `source/site_mesh.py` (mesh kit) | The building under construction as a text scene that instances generated `ArrayMesh` resources (`meshes/site/*.tres`, one file per mesh, so the scene stays small) with vertex colours (grime, rust, wet sand). Rebuilds with plain Python, no engine: `python3 scenes/environment/props/playground_art/source/construction_site.py`. The materials reuse the yard's ground, metal and plaster tiles. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
@@ -41,7 +41,7 @@ python3 tools/build_outdoor_locations.py playground
 (`PlaygroundArt` node), so it can never be applied twice. The render-only
 `PlaygroundArt` branch is saved as the compressed `scenery.scn` instance. Fittings
 attached to occluding bodies stay in the location scene, so they still fade with
-those bodies. The node paths, physics, interactables and camera rig do not change.
+those bodies. The art pass itself adds no collision; the graybox defines the smaller shed and removes the two retired interaction anchors.
 
 The Python sources own the scenery geometry and colours; do not edit the binary
 bakes directly. The temporary OBJ imports and private scenery material files are
@@ -128,9 +128,9 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
   pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up
   through the court paint. The near hoop stands in a cooler patch of newer concrete with
   four filled bolt holes.
-- **Court.** Oxide-red paint with hand-brushed bone lines and dusty-blue keys (one key
-  outline, in a dimmer bone, does not quite close). The far half is darker: it was painted later. In the
-  graybox, `CourtFarHalf` sat 1 mm *under* the court surface; it now sits above it.
+- **Court.** Rough neutral-grey concrete, with a few non-repeating fine cracks and
+  hand-brushed white boundary and key lines. Both halves share the same concrete texture;
+  the slightly darker far overlay is lifted above the surface to prevent z-fighting.
 - **A few isolated colour accents**, each on something the player is meant to find:
   - the yellow climbing frame and hoop rings
   - the green shed door, with its hasp and brass padlock
@@ -153,7 +153,7 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
 | --- | --- |
 | Ink (lines, metal) | `#2B2622` / `#3A3430` |
 | Older pour / newer pour / hoop patch | `#6B6356` / `#635F58` / `#51514F` |
-| Court / far half / keys / key outline / lines | `#985642` / darker ×0.84 / `#505E72` / `#B0A896` / `#DED6C0` |
+| Court / far half / keys / key outline / lines | `#6E6E6C` / darker ×0.91 / white outlines `#E3E3DE` / lines `#E8E7E1` |
 | Block under the bench | `#846030` |
 | School wall / plinth | `#789694` / `#DCD0B4` |
 | Shed / roof / door | `#CCBEA4` / `#684E5A` / `#567040` |

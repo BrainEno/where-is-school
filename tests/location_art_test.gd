@@ -146,8 +146,8 @@ const LOCATIONS := {
 		# site's gate (the same two leaves) and the climb over the hoarding (the south sand
 		# pile) add a sphere each and three boxes. The way to the container yard (the bent
 		# chain-link behind the container) adds a sphere and a box.
-		"shapes": 108,
-		"interactables": 20, # The new paper read is separate from the view through the doorway.
+		"shapes": 99,
+		"interactables": 18, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",

@@ -110,7 +110,7 @@ MATERIALS: dict[str, dict] = {
     "pour_b": {"texture": tex("pour_b"), "cut": 0.5},
     "seam": {"texture": tex("seam"), "cut": 0.5},
     "court": {"texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
-    "court_far": {"color": (214, 206, 212), "texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
+    "court_far": {"color": (232, 232, 232), "texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
     "court_line": {"texture": tex("court_line"), "cut": 0.5, "scale": (3.0, 1.0, 1.0)},
     "court_key": {"texture": tex("key_area"), "cut": 0.5},
     "hoop_patch": {"texture": tex("hoop_patch"), "cut": 0.5},
@@ -140,7 +140,6 @@ MATERIALS: dict[str, dict] = {
     "hoop_net": {"texture": tex("hoop_net"), "cut": 0.4, "cull_off": True},
     "frame_yellow": {"color": YELLOW, "outline": True},
     "tyre": {"texture": tex("tyre"), "outline": True},
-    "notice": {"texture": tex("notice_sheet"), "triplanar": "local", "scale": (1.0, 1 / 1.1, -1 / 1.8), "offset": (0.0, 0.5, 0.5)},
     "container": {"color": (48, 92, 146), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.58, 0.58, 0.58)},
     "container_rib": {"color": (60, 111, 164), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.72, 0.72, 0.72)},
     "container_frame": {"color": (51, 71, 97), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.73, 0.73, 0.73), "outline": True},
@@ -148,7 +147,6 @@ MATERIALS: dict[str, dict] = {
     "container_steel": {"color": (139, 161, 169), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.9, 0.9, 0.9)},
     "container_deck": {"color": (117, 83, 63), "texture": tex("metal_tile"), "triplanar": "local", "scale": (1.6, 0.8, 0.8)},
     "container_bedding": {"texture": tex("sheet_weave"), "cull_off": True},
-    "pale_paper_edge": {"color": (228, 218, 192)},
     "container_blanket": {"texture": tex("blanket_weave"), "cull_off": True},
     "old_newsprint": {"texture": tex("old_newsprint"), "cull_off": True},
     "noodle_film": {"texture": tex("noodle_film"), "roughness": 0.58, "specular": 0},
@@ -260,7 +258,6 @@ REPOINT: list[tuple[str, str]] = [
     (r"ShedHedge", "hedge"),
     (r"PaleUnderHedge", "pale"),
     (r"PingPongBall", "ball"),
-    (r"BoardSheet", "notice"),
     (r"FramePost_\d/MeshInstance3D|FrameRung_\d|FrameTopBar", "frame_yellow"),
     (r"TyreStack_\d|TyreLoose", "tyre"),
     # Low-detail version emitted only for build_teaching_block's distant view.
@@ -272,7 +269,7 @@ REPOINT: list[tuple[str, str]] = [
     # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
     (r"TapPost/MeshInstance3D", "exit_steel"),
     (
-        r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D|BoardPost[AB]/MeshInstance3D|BoardBacking"
+        r"BackBars_\d_\d|FencePostGap(West|East)/MeshInstance3D"
         r"|FitnessPost_\d/MeshInstance3D|FitnessBar(High|Low)|SitupFrame/MeshInstance3D|SitupFootBar"
         r"|Bird_\d|BirdWire"
         r"|SouthGatePost(West|East)|SouthGateLintel",
@@ -432,6 +429,21 @@ def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> No
     flat("KeyNear", f"{parent}/Court", key, "court_key", (0, 0.02, 7.2))
     flat("KeyFar", f"{parent}/Court", key, "court_key", (0, 0.02, -11.2), (0, 180, 0))
 
+    # A handful of fine, non-repeating fissures. These lie below the white paint,
+    # and are shared with the view from the teaching wing.
+    cracks = (
+        ((-8.8, 6.8), (-8.30, 6.36), (-8.15, 5.90), (-7.75, 5.62)),
+        ((3.5, -5.1), (3.72, -5.56), (3.61, -5.95), (4.05, -6.32)),
+        ((7.0, 1.5), (7.34, 1.29), (7.65, 1.36)),
+    )
+    for i, path in enumerate(cracks):
+        for j, (a, c) in enumerate(zip(path, path[1:])):
+            dx, dz = c[0] - a[0], c[1] - a[1]
+            mesh = b.mesh("BoxMesh", size=vec3((math.hypot(dx, dz), 0.002, 0.024)))
+            flat(f"Crack{i}_{j}", f"{parent}/Court", mesh, "concrete_patch",
+                 ((a[0] + c[0]) / 2, 0.018, (a[1] + c[1]) / 2),
+                 (0, -math.degrees(math.atan2(dz, dx)), 0))
+
     # The same boards, rings and painted boundaries read from inside the school.
     b.node("Equipment", parent)
     rim = b.mesh("TorusMesh", inner_radius="0.2", outer_radius="0.235", rings="24", ring_segments="6")
@@ -439,101 +451,6 @@ def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> No
     flat("HoopFarRing", f"{parent}/Equipment", rim, "hoop_rim", (8.0, 2.6, -12.02), shadow=True)
     net = b.mesh("CylinderMesh", top_radius="0.215", bottom_radius="0.15", height="0.42", radial_segments="16", rings="1", cap_top="false", cap_bottom="false")
     flat("HoopFarNet", f"{parent}/Equipment", net, "hoop_net", (8.0, 2.39, -12.02))
-
-
-def route_mark(b: Builder, parent: str, name: str, center, mat: str, *, mirrored=False, scale=1.0) -> None:
-    """One long stroke, two short strokes at the same end. Local +Z is the printed face."""
-    x, y, z = center
-    sign = -1 if mirrored else 1
-    for i, (dx, dy, width, height) in enumerate(((0, 0.075, 0.46, 0.055),
-                                                 (0.075, -0.022, 0.045, 0.15),
-                                                 (0.181, -0.001, 0.052, 0.11))):
-        b.flat(f"{name}Stroke{i}", parent, b.mesh("BoxMesh", size=vec3((width * scale, height * scale, 0.006))),
-               mat, (x + sign * dx * scale, y + dy * scale, z + (0.002 if i else 0)))
-
-
-def route_arrow(b: Builder, parent: str, name: str, center, mat: str, *, direction=1, scale=1.0) -> None:
-    x, y, z = center
-    b.flat(name + "Shaft", parent, b.mesh("BoxMesh", size=vec3((0.41 * scale, 0.038 * scale, 0.006))),
-           mat, (x, y, z))
-    for index, side in enumerate((-1, 1)):
-        b.flat(f"{name}Head{index}", parent, b.mesh("BoxMesh", size=vec3((0.15 * scale, 0.035 * scale, 0.006))),
-               mat, (x + direction * 0.173 * scale, y + side * 0.044 * scale, z + 0.004 + 0.001 * index),
-               (0, 0, -side * direction * 40))
-
-
-def _return_board(b: Builder, parent: str) -> None:
-    # A low, pitched reading surface: the two faces stay below the player's waist,
-    # so neither hides the capsule in the follow camera. Keep the old post spacing,
-    # solids and approach from the bench. Both faces point at the real gates.
-    post = b.mesh("BoxMesh", size=vec3((0.12, 0.86, 0.12)))
-    for name in ("BoardPostA", "BoardPostB"):
-        b.flat("ReturnBoardSupport", name, post, "metal_ink", (0, -0.87, 0), shadow=True)
-    for i, (width, y) in enumerate(((0.56, 0.32), (0.14, 0.80))):
-        rail = b.mesh("BoxMesh", size=vec3((width, 0.064, 2.46)))
-        b.flat(f"ReturnBoardRail{i}", parent, rail, "exit_frame", (14, y, 3.2))
-    for side, sign in (("East", 1), ("West", -1)):
-        name = "ReturnBoard" + side
-        b.node(name, parent, position=vec3((14.0 + sign * 0.15, 0.56, 3.2)),
-               rotation_degrees=vec3((-33, sign * 90, 0)), scale=vec3((1.0, 0.42, 1.0)))
-        p = f"{parent}/{name}"
-
-        def box(part, pos, size, mat, rot=None):
-            b.flat(part, p, b.mesh("BoxMesh", size=vec3(size)), mat, pos, rot)
-
-        box("Case", (0, 0, 0), (1.92, 1.16, 0.10), "exit_frame")
-        box("Lip", (0, 0.545, 0.065), (1.99, 0.10, 0.19), "exit_steel")
-        box("Paper", (-0.015, 0.145, 0.065), (1.72, 0.72, 0.018), "pale")
-        box("BackingStrip", (0.065, -0.31, 0.064), (1.50, 0.28, 0.017), "container_steel", (0, 0, -2))
-        box("Rail", (0, -0.49, 0.069), (1.78, 0.075, 0.11), "container_oxide")
-        box("UpperRule", (-0.02, 0.26, 0.081), (1.58, 0.025, 0.008), "exit_frame")
-        route_mark(b, p, "Header", (0.04, 0.382, 0.085), "exit_frame", scale=0.85)
-        route_arrow(b, p, "ToStairs", (sign * 0.49, 0.025, 0.087), "fire_door", direction=sign)
-        route_arrow(b, p, "ToEstateGate", (-sign * 0.49, 0.025, 0.087), "exit_frame", direction=-sign)
-        # Real pictograms; the fold and the strip aren't decorative pseudo-writing.
-        for i in range(3):
-            box(f"Stair{i}", (sign * (0.073 + i * 0.05), 0.005 + i * 0.04, 0.087),
-                (0.063, 0.041, 0.012), "fire_door")
-        for i in (-1, 1):
-            box(f"GatePost{i + 1}", (-sign * 0.15 + i * 0.063, 0.05, 0.087),
-                (0.026, 0.123, 0.012), "exit_frame")
-        box("GateLintel", (-sign * 0.15, 0.119, 0.087), (0.153, 0.023, 0.012), "exit_frame")
-        route_mark(b, p, "OldStamp", (-0.44, -0.316, 0.087), "exit_frame", mirrored=True, scale=0.74)
-        box("Fold", (0.72, -0.249, 0.085), (0.175, 0.105, 0.014), "container_bedding", (0, 0, -17))
-        for i, x in enumerate((-0.77, 0.74)):
-            box(f"PaperClip{i}", (x, 0.425, 0.093), (0.053, 0.108, 0.035), "brass", (0, 0, -6 + 10 * i))
-
-
-def _yard_return_details(b: Builder, parent: str) -> None:
-    _return_board(b, parent)
-    # The clipped copy against the old duty sheet can be compared from the shed door.
-    b.node("ShedReturnCopy", "ShedBody", position=vec3((3.151, 0.295, -2.15)),
-           rotation_degrees=vec3((0, 90, 0)))
-    p = "ShedBody/ShedReturnCopy"
-    b.flat("Strip", p, b.mesh("BoxMesh", size=vec3((0.48, 0.198, 0.009))), "pale", (0, 0, 0), (0, 0, -7))
-    route_mark(b, p, "BackStamp", (0.038, 0.009, 0.013), "exit_frame", mirrored=True, scale=0.62)
-    b.flat("RoundPunch", p, b.mesh("CylinderMesh", top_radius="0.021", bottom_radius="0.021", height="0.004",
-                                  radial_segments="12"), "metal_ink", (0.187, 0.036, 0.013), (90, 0, 0))
-    b.flat("SlottedPunch", p, b.mesh("BoxMesh", size=vec3((0.027, 0.067, 0.004))), "metal_ink", (0.184, -0.037, 0.013))
-    b.flat("Crease", p, b.mesh("BoxMesh", size=vec3((0.073, 0.015, 0.007))), "pale_paper_edge",
-           (0.180, -0.040, 0.018), (0, 0, 29))
-
-    # A low marking kit parked off the court at the shed's edge, not a new obstacle.
-    b.node("ChalkGuide", parent, position=vec3((-12.7, 0.005, -9.6)), rotation_degrees=vec3((0, 18, 0)))
-    p = f"{parent}/ChalkGuide"
-    b.flat("Foot", p, b.mesh("BoxMesh", size=vec3((1.18, 0.074, 0.76))), "plinth", (0, 0.037, 0))
-    b.flat("Caddy", p, b.mesh("BoxMesh", size=vec3((0.88, 0.155, 0.42))), "door_green", (-0.05, 0.1515, 0.025), shadow=True)
-    b.flat("Offcut", p, b.mesh("BoxMesh", size=vec3((0.81, 0.018, 0.38))), "pale", (0.01, 0.238, 0.02), (0, -8, 0))
-    b.flat("Guide", p, b.mesh("BoxMesh", size=vec3((0.70, 0.039, 0.21))), "exit_steel", (0, 0.269, 0.044))
-    reel = b.mesh("CylinderMesh", top_radius="0.125", bottom_radius="0.125", height="0.059", radial_segments="14")
-    b.flat("CordReel", p, reel, "container_oxide", (-0.19, 0.318, 0.031))
-    b.flat("RoundPunch", p, b.mesh("CylinderMesh", top_radius="0.034", bottom_radius="0.034", height="0.007",
-                                  radial_segments="12"), "metal_ink", (0.165, 0.291, 0.044))
-    b.flat("SlottedPunch", p, b.mesh("BoxMesh", size=vec3((0.045, 0.007, 0.103))), "metal_ink", (0.278, 0.291, 0.044))
-    # The exposed end of the offcut is ruled by the two chalk rubbings, not a second prop.
-    rub = b.mesh("CylinderMesh", top_radius="0.032", bottom_radius="0.032", height="0.004", radial_segments="12")
-    b.flat("RoundRubbing", p, rub, "concrete_patch", (0.147, 0.249, 0.173))
-    b.flat("SlotRubbing", p, b.mesh("BoxMesh", size=vec3((0.086, 0.004, 0.038))), "concrete_patch", (0.264, 0.249, 0.181))
 
 
 def build_nodes() -> Builder:
@@ -593,6 +510,7 @@ def build_nodes() -> Builder:
     b.flat("TyreLoose", f"{A}/Equipment", tyre, "tyre", (-14.1, 0.14, 3.5), (6, 0, 0), shadow=True)
     yard_details.shed(b)
     yard_details.tap(b, A)
+    yard_details.shed_surroundings(b, A)
 
     # Decals on the occluder bodies: children of the body, so they fade with it.
     b.flat("WallPatches", "SchoolBackWall", quad(b, 6.0, 2.4), "wall_patches", (4.0, -3.0, 1.006))
@@ -603,7 +521,6 @@ def build_nodes() -> Builder:
     # Separate art sibling: FireDoor and FireStep retain their original pick boxes.
     b.node("DoorFittings", A, position=vec3((-3, 1.3, -19.9)))
     school_exit_fittings(b, f"{A}/DoorFittings", 1.4, 2.6, 0.07, inside=False)
-    _yard_return_details(b, A)
     # Behind the container the chain-link is cut and one sheet bent back into the yard: the
     # way through to the container yard (`ToContainerYard`, whose outline is this sheet). A
     # child of the fence, not of the art layer, so it stays text and fades with the fence.
@@ -796,9 +713,8 @@ def apply(text: str) -> tuple[str, set[str]]:
                 block = re.sub(r'material_override = ExtResource\("[^"]+"\)', f'material_override = ExtResource("art_{mat}")', block)
                 used.add(mat)
                 repointed.add(path)
-            if HIDE.fullmatch(path) or path in (
-                "BoardSheet", "BoardBacking", "BoardPostA/MeshInstance3D", "BoardPostB/MeshInstance3D",
-            ):
+            if HIDE.fullmatch(path) or path in ("ShedHedge", "ShedFootingWest/MeshInstance3D",
+                                               "ShedFootingEast/MeshInstance3D"):
                 block = block.replace(head, head + "\nvisible = false", 1)
             if path == "CourtFarHalf":
                 block = block.replace("position = Vector3(0, 0.008, -9.5)", "position = Vector3(0, 0.012, -9.5)")

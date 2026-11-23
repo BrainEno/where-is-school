@@ -1,16 +1,12 @@
 extends SceneTree
 ## End-to-end on the shipped locations. Use the real capsule, lookup, pointer,
-## E input and exits; only the initial spawn and the two deterministic dice cases
-## are fixtures. Neither inspection nor outcome flags are handed to the player.
+## E input and exits; only the initial spawn and deterministic dice are fixtures.
+## No inspection or outcome flags are handed to the player.
 
 const Harness = preload("res://tests/test_harness.gd")
 const STREET := "res://scenes/locations/street/street.tscn"
 const SHED := &"pg_shed"
-const COMPARE := &"compare_return"
-const ROLL_NODE := &"ps_return_check"
 const SHED_STANCE := Vector3(-12.12, 0, -4.0)
-const BOARD_STANCE := Vector3(12.45, 0, 3.2)
-const GUIDE_STANCE := Vector3(-11.48, 0, -9.6)
 
 var _check := Harness.Checker.new()
 var _state: Node
@@ -64,7 +60,7 @@ func _run() -> void:
 	AudioRelease.wait_for_mix()
 	await process_frame # Release stopped playbacks on the main thread before exit.
 	Harness.finish(self, _check.failures,
-		"four locations walked, seven props read, two locales, both seeded comparisons, and exits on either result.")
+		"four locations walked, bilingual court inspection, shed choices, and both yard exits.")
 
 
 func _start_in_street(sequence: OpeningSequence) -> bool:
@@ -111,86 +107,46 @@ func _walk_return_route() -> void:
 
 
 func _check_choices_and_notes() -> void:
-	Harness.stage = "tap and shed before reading the board"
+	Harness.stage = "tap and the retained shed interaction"
 	if await _inspect(&"pg_tap", &"pg_tap", Vector3(-4.67, 0, 14.42)):
 		await _dismiss()
-	if not await _open_shed(false):
+	_check.expect(_host.get_current().find_interactable(&"pg_board_look") == null,
+		"The removed return board is still interactable.")
+	_check.expect(_host.get_current().find_interactable(&"pg_chalk_guide") == null,
+		"The removed marking kit is still interactable.")
+	if not await _open_shed() or not await _select_and_close(&"leave"):
 		return
-	if not await _select_and_close(&"leave"):
-		return
+	_check.expect(_rolls.is_empty(), "Leaving the shed unexpectedly rolled a check.")
 
-	Harness.stage = "independent bilingual board inspection and repeat"
-	if not await _inspect(&"pg_board_look", &"pg_return_board", BOARD_STANCE, true):
+	Harness.stage = "bilingual court inspection and repeat"
+	var stance := Vector3(0.8, 0, 2.0)
+	if not await _inspect(&"pg_court_middle", &"pg_court", stance):
 		return
-	var board := _host.get_current().find_interactable(&"pg_board_look")
-	_check.expect(await Harness.wait_until(func() -> bool:
-		return _player.camera_rig.get_focus_subject() == board and _player.camera_rig.get_focus_weight() > 0.85, 4.0),
-		"Reading the board did not engage its dedicated shot.")
-	_check.expect(String(_last_line.get("text", "")).contains("fire door"), "The board did not give a way back to school.")
-	_expect_note(&"saw_pg_return_board")
+	_check.expect(String(_last_line.get("text", "")).contains("grey concrete"), "The court description is stale.")
+	_expect_note(&"saw_pg_court")
 	await _dismiss()
 	var note_count: int = _notes.get_entries().size()
 	_loc.set_locale("zh-CN")
-	_check.expect(_dialogue.get_interact_prompt(board) == "读操场交还板", "The board's Chinese prompt was lost.")
-	if not await _inspect(&"pg_board_look", &"pg_return_board", BOARD_STANCE):
+	if not await _inspect(&"pg_court_middle", &"pg_court", stance):
 		return
-	_check.expect(_last_line.get("variant") == "repeat" and String(_last_line.get("text", "")).contains("防火门"),
-		"The second read did not show the Chinese repeat line.")
-	_check.expect(_notes.get_entries().size() == note_count, "A repeat read duplicated the board's note.")
+	_check.expect(_last_line.get("variant") == "repeat" and String(_last_line.get("text", "")).contains("白线"),
+		"The Chinese court repeat is missing or stale.")
+	_check.expect(_notes.get_entries().size() == note_count, "A repeat read duplicated the court note.")
 	await _dismiss()
-	_check.expect(await Harness.wait_until(func() -> bool:
-		return _player.camera_rig.get_focus_weight() < 0.01, 4.0), "The return-board shot held the camera after dismissal.")
 	_loc.set_locale("en")
 
-	var before_flags: Dictionary = _state.get_snapshot()
-	var before_notes: Dictionary = _notes.to_snapshot()
-	var resolver := CheckResolver.new()
-	# One fixed sum is deliberately marginal: 6 + 3 < 10, but the guide supplies +1.
-	# Search seeds, not playthroughs, so no randomness enters the test verdict.
-	var seed_found := false
-	for candidate in 128:
-		resolver.set_session_seed(candidate)
-		if resolver.dice_total_for("pg_shed/ps_return_check") == 6:
-			seed_found = true
-			break
-	if not _check.expect(seed_found, "No deterministic marginal dice fixture."):
-		return
-	_dialogue.set_check_resolver(resolver)
-	var key := StoryFlags.check_record_flag(SHED, ROLL_NODE)
-
-	Harness.stage = "declining the available comparison never rolls it"
-	if not await _open_shed(true) or not await _select_and_close(&"leave"):
-		return
-	_check.expect(_rolls.is_empty() and _state.get_flag(key, null) == null,
-		"Leaving the shed rolled or recorded the unchosen comparison.")
-
-	Harness.stage = "failed comparison does not lock the estate gate"
-	if not await _compare(false, 0, &"pg_return_unclear"):
-		return
-	var failure_record: Dictionary = _state.get_flag(key, {}).duplicate(true)
+	Harness.stage = "the original shed checks still work"
+	for choice in [&"frame", &"count"]:
+		if not await _open_shed():
+			return
+		if not _check.expect(_dialogue.get_runtime().get_available_choice_ids().has(choice),
+			"The shed no longer offers %s." % choice) or not await _select_and_close(choice):
+			return
+	_check.expect(_rolls.size() == 2 and _state.get_flag(StoryFlags.PLAYGROUND_CHECKED, false),
+		"The original shed checks did not resolve and record their outcome.")
 	if not await _exit(&"pg_back_to_alley", Vector3(0.12, 0, 17.12), &"alley", &"FromPlayground"):
 		return
-	if not await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley"):
-		return
-	if not await _inspect(&"pg_chalk_guide", &"pg_chalk_guide", GUIDE_STANCE):
-		return
-	_expect_note(&"saw_pg_chalk_guide")
-	await _dismiss()
-	if not await _open_shed(false):
-		return
-	_check.expect(_rolls.size() == 1 and _state.get_flag(key, {}) == failure_record,
-		"Returning to the yard or finding the guide changed the recorded failure.")
-	if not await _select_and_close(&"leave"):
-		return
-
-	# An independent pass starting before the attempt, for the other outcome.
-	_state.replace_snapshot(before_flags)
-	_notes.restore_snapshot(before_notes)
-	Harness.stage = "guide bonus and school return on success"
-	if not await _inspect(&"pg_chalk_guide", &"pg_chalk_guide", GUIDE_STANCE):
-		return
-	await _dismiss()
-	if await _compare(true, 1, &"pg_return_match"):
+	if await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley"):
 		await _exit(&"pg_to_corridor", Vector3(-3.0, 0, -18.07), &"corridor", &"FromSchoolyard")
 
 
@@ -260,7 +216,7 @@ func _exit(id: StringName, stance: Vector3, location: StringName, spawn: StringN
 		"%s did not let the player through to %s/%s." % [id, location, spawn])
 
 
-func _open_shed(offer_comparison: bool) -> bool:
+func _open_shed() -> bool:
 	if not await _use(&"pg_shed_door", SHED_STANCE):
 		return false
 	var runtime := _dialogue.get_runtime()
@@ -273,27 +229,7 @@ func _open_shed(offer_comparison: bool) -> bool:
 		return false
 	var offered := runtime.get_available_choice_ids()
 	return _check.expect(runtime.get_active_conversation_id() == SHED and offered.has(&"leave")
-		and offered.has(&"frame") and offered.has(&"count") and offered.has(COMPARE) == offer_comparison,
-		"Wrong shed choices (comparison expected: %s): %s." % [offer_comparison, offered])
-
-
-func _compare(success: bool, modifier: int, note: StringName) -> bool:
-	if not await _open_shed(true):
-		return false
-	var roll_count := _rolls.size()
-	if not await _select_and_close(COMPARE):
-		return false
-	if not _check.expect(_rolls.size() == roll_count + 1, "Comparison did not resolve exactly once."):
-		return false
-	var result: Dictionary = _rolls.back()
-	_check.expect(result.get("ability") == &"orientation" and result.get("die") == 6
-		and result.get("kind") == "visible" and result.get("modifier") == modifier and result.get("success") == success,
-		"Unexpected comparison result: %s." % result)
-	_expect_note(note)
-	_check.expect(not _state.get_flag(StoryFlags.PLAYGROUND_CHECKED, false),
-		"Comparing the strip incorrectly completed the existing shed/ball beat.")
-	print("return route: die=%s modifier=%s success=%s note=%s" % [result.get("die"), modifier, success, note])
-	return true
+		and not offered.has(&"compare_return"), "Wrong shed choices: %s." % [offered])
 
 
 func _select_and_close(choice: StringName) -> bool:
