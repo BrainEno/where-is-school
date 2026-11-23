@@ -17,7 +17,7 @@ const SOURCES: Array[Vector3] = [
 	Vector3(-37.0, -3.4, 5.9),
 	Vector3(-37.0, -3.4, 7.5),
 	Vector3(-37.0, -3.4, 9.3),
-	Vector3(-35.6, -3.4, 5.4),
+	Vector3(-43.25, -3.4, 13.45),
 ]
 ## Full strength within this distance of a source (metres, on the ground plane).
 const FULL_RANGE := 2.4
