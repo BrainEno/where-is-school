@@ -76,4 +76,16 @@ void fragment() {
     ALBEDO = c;
     EMISSION = c * fill;
     ROUGHNESS = 1.0;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+    // TEMPORARY DIAGNOSTIC (round 20): bands across the west yard, compatibility only.
+    int band = int(floor((p.y + 9.0) / 1.5));
+    if (band == 0) { ALBEDO = vec3(0.150, 0.157, 0.176); EMISSION = vec3(0.0); }
+    if (band == 1) { ALBEDO = vec3(0.5); EMISSION = vec3(0.0); }
+    if (band == 2) { ALBEDO = vec3(0.0); EMISSION = vec3(0.3); }
+    if (band == 3) { ALBEDO = vec3(grit * 0.5); EMISSION = vec3(0.0); }
+    if (band == 4) { ALBEDO = vec3(stain * 0.5); EMISSION = vec3(0.0); }
+    if (band == 5) { ALBEDO = vec3(cloud * 0.5); EMISSION = vec3(0.0); }
+    if (band == 6) { ALBEDO = vec3(tone + 0.5) * 0.5; EMISSION = vec3(0.0); }
+    if (band == 7) { ALBEDO = c * 3.0; EMISSION = vec3(0.0); }
+#endif
 }
