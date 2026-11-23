@@ -15,6 +15,7 @@ const Harness := preload("res://tests/test_harness.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
 const SettingsScript := preload("res://scripts/autoload/settings_manager.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
 
 const TIMEOUT_SECONDS := 150.0
 const DRAFT_DIR := "user://story_editor"
@@ -216,11 +217,31 @@ func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: N
 	check.expect(not paused, "The player could not resume after turning the editor off")
 
 	check.expect(settings.set_story_editor_enabled(true), "Could not re-enable the editor")
-	check.expect(await Harness.wait_until(func() -> bool: return world.has_node(^"AuthorOverlay"), 5.0),
-		"Re-enabling did not attach the editor")
+	if check.expect(await Harness.wait_until(func() -> bool: return world.has_node(^"AuthorOverlay"), 5.0),
+			"Re-enabling did not attach the editor"):
+		await _check_removal_with_blocked_draft(check, world, settings)
+
+
+func _check_removal_with_blocked_draft(check: Harness.Checker, world: Node, settings: Node) -> void:
+	Harness.stage = "uninstalling the editor hands back the world even after a refused journal write"
+	var directory := DRAFT_DIR.path_join("removal-test")
+	for slot in ["draft-0.json", "draft-1.json"]:
+		check.expect(DirAccess.make_dir_recursive_absolute(directory.path_join(slot)) == OK, "Could not block the journal")
+	var workspace := Store.new(directory)
+	workspace.load_workspace()
+	var overlay := world.get_node(^"AuthorOverlay")
+	var live_panel := (world.get_node(^"GameUI") as GameUI).dialogue_panel
+	var tint := live_panel.modulate
+	overlay.store = workspace
+	overlay.open_editor()
+	var drawer := overlay.get_node(^"AuthorDrawer")
+	drawer.body.text = "Temporary text that cannot be saved."
+	drawer.button("apply_text").pressed.emit()
+	check.expect(paused and workspace.has_save_error(), "The removal fixture did not block writes")
 	settings.reset_to_defaults()
 	check.expect(not settings.is_story_editor_enabled(), "Restore defaults left the story editor on")
 	await _expect_removed(check, world, "Resetting to defaults")
+	check.expect(not paused and live_panel.modulate == tint, "Uninstalling the overlay left the world frozen or dialogue hidden")
 
 
 func _expect_removed(check: Harness.Checker, world: Node, label: String) -> void:

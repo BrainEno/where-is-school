@@ -172,22 +172,29 @@ func _select_from_live() -> void:
 	_original = false
 	_catalog.locate_live(_controller)
 	var saved := store.buffer
-	var unfinished := String(saved.get("mode", "text")) != "text" or bool(saved.get("dirty", false))
+	var saved_mode := String(saved.get("mode", "text"))
+	var unfinished := saved_mode != "text" or bool(saved.get("dirty", false))
 	var use_live := not unfinished and not _save_failed and not _catalog.live.is_empty()
 	_catalog.select_address(_catalog.live if use_live else saved)
 	var requested := _catalog.address()
 	_catalog.sync()
-	var matches := unfinished and requested == _catalog.address()
-	var restored := String(saved.get("mode", "text")) if matches else "text"
-	if restored == "insert" and not Patch.can_insert(_catalog.selected_node()) \
-			or restored == "choice" and not Patch.can_add_choice(_catalog.selected_node()) \
-			or restored == "followup" and _catalog.choice.is_empty():
-		restored = "text"
-	_mode = restored if restored in ["text", "insert", "choice", "followup"] else "text"
-	_pending_text = matches and _mode == "text" and bool(saved.get("dirty", false))
-	_prepare_form(saved if matches else {})
+	var restore := unfinished and requested == _catalog.address()
+	match saved_mode:
+		"text": restore = restore and not _catalog.selected_node().is_empty()
+		"insert": restore = restore and Patch.can_insert(_catalog.selected_node())
+		"choice": restore = restore and Patch.can_add_choice(_catalog.selected_node())
+		"followup": restore = restore and not _catalog.choice.is_empty()
+		_: restore = false
+	# Never put a stale structural form's text into a different, writable field.
+	_mode = saved_mode if restore else "text"
+	_pending_text = restore and _mode == "text"
+	_prepare_form(saved if restore else {})
 	_render()
-	_status("已恢复未完成的编辑。" if matches else store.recovery_notice())
+	var note := store.recovery_notice()
+	if unfinished:
+		var form_note := "已恢复未完成的编辑。" if restore else "未恢复原表单：目标已变更。"
+		note = form_note if note.is_empty() else note + "\n" + form_note
+	_status(note)
 
 
 func _prepare_form(backing: Dictionary = {}) -> void:
@@ -503,11 +510,11 @@ func _export_finished(digest: String, note: String) -> void:
 	_status(note)
 
 
-func close_editor() -> void:
-	if not _open or _exchange.is_busy():
+func close_editor(for_removal: bool = false) -> void:
+	if not _open or (_exchange.is_busy() and not for_removal):
 		return
 	_flush() # Invalid/unfinished work remains in the draft journal, not the preview graph.
-	if _save_failed and Time.get_ticks_msec() >= _leave_until:
+	if not for_removal and _save_failed and Time.get_ticks_msec() >= _leave_until:
 		_leave_until = Time.get_ticks_msec() + CONFIRM_MSEC
 		_status("4 秒内再点「回游戏」；退出应用或关闭编辑会丢稿。")
 		return

@@ -60,6 +60,7 @@ func _run() -> void:
 		await _edit_followups()
 		_export_round_trip()
 		_test_clear_and_undo()
+		_test_stale_form()
 		_test_local_save_failure()
 		_check.expect(_snapshot() == before, "Editor or trial changed live story, camera, saves, reveals, or history")
 		_check.expect(_dialogue_events() == live_events, "Trial emitted gameplay diagnostics into the real session")
@@ -217,11 +218,44 @@ func _test_find_and_validation() -> void:
 	_pick("match", "0")
 	_check.expect(_drawer.selected("field").is_empty() and _drawer.body.text == " \n" and _panel.get_body_text() == before,
 		"A search result retargeted rejected input or changed the validated preview")
+	_export_while_rejected()
+	_overlay.close_editor()
+	_check.expect(not paused, "A rejected but backed-up field trapped the author in the editor")
+	_store = Store.new(_directory)
+	_store.load_workspace()
+	_overlay.store = _store
+	_overlay.open_editor()
+	_check.expect(_drawer.body.text == " \n" and _panel.get_body_text() == before,
+		"A fresh workspace lost rejected input or applied it to the preview")
 	_drawer.button("cancel").pressed.emit()
 	_check.expect(_drawer.body.text == before, "Discard input did not restore the applied field")
+	_drawer.button("find").pressed.emit()
 	_pick("match", "0")
-	_check.expect(_drawer.selected("field") == "leave" and _drawer.body.text == OPTION and not query.visible,
+	_check.expect(_drawer.selected("field") == "leave" and _drawer.body.text == OPTION and not query.is_visible_in_tree(),
 		"Opening a search result did not select its option text and close Find")
+	_drawer.button("find").pressed.emit()
+	query.text = "CORRIDOR_SPEAKER"
+	query.text_changed.emit(query.text)
+	_pick("match", "0")
+	_check.expect(_drawer.selected("chapter") == "corridor" and _drawer.selected("conversation") == "corridor_speaker"
+			and _drawer.selected("node") == "cs_1", "Find did not jump across chapters by conversation ID")
+	_drawer.button("current_line").pressed.emit()
+	_check.expect(_drawer.selected("node") == "st_reciting" and _panel.get_body_text() == before,
+		"Current line did not return across chapters to the edited live node")
+
+
+func _export_while_rejected() -> void:
+	_check.expect(_drawer.button("export").text == "导出已应用", "Export did not disclose the unapplied field")
+	_drawer.button("export").pressed.emit()
+	var pickers := _overlay.find_children("*", "FileDialog", true, false)
+	if not _check.expect(pickers.size() == 1, "A rejected field blocked export of the rest of the draft"):
+		return
+	var dialog := pickers[0] as FileDialog
+	var path := ProjectSettings.globalize_path(_directory.path_join("applied-only.json"))
+	dialog.hide()
+	dialog.file_selected.emit(path)
+	_check.expect(FileAccess.get_file_as_string(path) == _store.export_json() and _store.buffer.get("dirty") == true,
+		"Export serialized rejected input or removed it from the local buffer")
 
 
 func _edit_branches() -> void:
@@ -431,6 +465,21 @@ func _test_clear_and_undo() -> void:
 	var restored := Store.new(_directory)
 	restored.load_workspace()
 	_check.expect(_store.export_json() == prior and restored.export_json() == prior, "Undo clear did not restore the draft on disk")
+
+
+func _test_stale_form() -> void:
+	Harness.stage = "a stale structure form cannot be applied as ordinary text"
+	var prior := _store.export_json()
+	_overlay.close_editor()
+	_store.buffer = {"chapter": "prologue", "conversation": "student", "node": "st_reciting",
+		"mode": "insert", "text": "Obsolete insert buffer; this node has choices."}
+	_check.expect(_store.save_editor_state(), "Could not record a stale-form fixture")
+	_overlay.open_editor()
+	_check.expect("未恢复原表单" in _drawer.status.text and _drawer.body.text != _store.buffer["text"],
+		"Obsolete insert input was presented as editable text at its old anchor")
+	_overlay.close_editor()
+	_check.expect(_store.export_json() == prior, "Opening an incompatible form applied its text to the draft")
+	_overlay.open_editor()
 
 
 func _test_local_save_failure() -> void:

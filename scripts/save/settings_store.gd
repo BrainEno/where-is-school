@@ -41,7 +41,7 @@ static func exists() -> bool:
 ## An interrupted fallback swap may have moved the old file aside without publishing
 ## the new one. Both owners must read the same fallback before changing their keys.
 static func read(config: ConfigFile) -> Error:
-	var path := BACKUP_PATH if not FileAccess.file_exists(PATH) and exists() else PATH
+	var path := BACKUP_PATH if not FileAccess.file_exists(PATH) and FileAccess.file_exists(BACKUP_PATH) else PATH
 	return config.load(path)
 
 
@@ -57,20 +57,24 @@ static func write(config: ConfigFile) -> Error:
 	# must not make every subsequent settings change fail.
 	var stage := PATH + ".tmp-" + Crypto.new().generate_random_bytes(12).hex_encode()
 	var error := config.save(stage)
-	if error == OK:
+	if error != OK:
+		_warn_save("write staging file", error)
+	else:
 		var staged := ConfigFile.new()
 		error = staged.load(stage)
 		if error == OK and not _same_values(config, staged):
 			error = ERR_FILE_CORRUPT
-	if error != OK:
-		push_warning("SettingsStore: could not stage or verify preferences (%s)." % error_string(error))
-	else:
-		error = _publish(stage, DirAccess.rename_absolute)
 		if error != OK:
-			push_warning("SettingsStore: could not replace preferences (%s)." % error_string(error))
+			_warn_save("verify staged preferences", error)
+		else:
+			error = _publish(stage, DirAccess.rename_absolute)
 	if error != OK and FileAccess.file_exists(stage):
 		DirAccess.remove_absolute(stage)
 	return error
+
+
+static func _warn_save(step: String, error: Error) -> void:
+	push_warning("SettingsStore: could not %s (error %d: %s)." % [step, error, error_string(error)])
 
 
 ## Verify each key and its serialized value, not their order in the engine's maps.
@@ -99,17 +103,23 @@ static func _publish(stage: String, move_file: Callable) -> Error:
 			# A previous swap reached publish but did not clean up. Only retire that
 			# backup if the preferred file is itself readable.
 			if ConfigFile.new().load(PATH) != OK:
+				_warn_save("verify previous preferences; backup kept", ERR_FILE_CORRUPT)
 				return ERR_FILE_CORRUPT
 			var cleanup := DirAccess.remove_absolute(BACKUP_PATH)
 			if cleanup != OK:
+				_warn_save("retire earlier backup", cleanup)
 				return cleanup
 		var aside: Error = move_file.call(PATH, BACKUP_PATH)
 		if aside != OK:
+			_warn_save("back up previous preferences", aside)
 			return aside
 	var error: Error = move_file.call(stage, PATH)
 	if error != OK:
-		if moved_previous and move_file.call(BACKUP_PATH, PATH) != OK:
-			push_warning("SettingsStore: previous preferences remain in settings.cfg.bak.")
+		_warn_save("publish staged preferences", error)
+		if moved_previous:
+			var rollback: Error = move_file.call(BACKUP_PATH, PATH)
+			if rollback != OK:
+				_warn_save("restore previous preferences; backup kept", rollback)
 		return error
 	if FileAccess.file_exists(BACKUP_PATH) and DirAccess.remove_absolute(BACKUP_PATH) != OK:
 		push_warning("SettingsStore: preferences saved; old backup could not be removed.")
