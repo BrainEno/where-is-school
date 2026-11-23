@@ -79,12 +79,38 @@ def dump_json(data: dict) -> str:
     return json.dumps(data, ensure_ascii=False, indent=2) + "\n"
 
 
+def chapter_path(kind: str, locale: str, chapter: str) -> Path:
+    """Only address existing master chapters, with neither locale redirected by links.
+
+    Validate both targets before even reading a chapter: checking the mirror only when
+    it is written would let an unsafe later target leave the master partly updated.
+    The checkout itself may be reached through a symlink, but its data paths may not
+    alias another chapter or escape their expected locale directory.
+    """
+    if kind not in ("dialogue", "inspections") or locale not in (MASTER, MIRROR):
+        raise DocError("不支持的章节类型或语言")
+    if not re.fullmatch(r"[a-z][a-z0-9_]*", chapter):
+        raise DocError(f"章节「{chapter}」不是合法 id；请保留导出文档中的章节名")
+    for language in (MASTER, MIRROR):
+        target = DATA / kind / language / f"{chapter}.json"
+        try:
+            expected = ROOT.resolve() / "data" / kind / language / f"{chapter}.json"
+            resolved = target.resolve()
+        except (OSError, RuntimeError) as exc:
+            raise DocError(f"章节「{chapter}」的 {language} 路径无法安全解析；请检查文件和目录链接") from exc
+        if resolved != expected:
+            raise DocError(f"章节「{chapter}」的 {language} 路径不安全；不允许链接重定向章节文件或目录")
+    if not (DATA / kind / MASTER / f"{chapter}.json").is_file():
+        raise DocError(f"不认识的章节「{chapter}」；请保留导出文档中的章节名，新增章节需先由维护者建立")
+    return DATA / kind / locale / f"{chapter}.json"
+
+
 def dialogue_path(locale: str, chapter: str) -> Path:
-    return DATA / "dialogue" / locale / f"{chapter}.json"
+    return chapter_path("dialogue", locale, chapter)
 
 
 def inspection_path(locale: str, chapter: str) -> Path:
-    return DATA / "inspections" / locale / f"{chapter}.json"
+    return chapter_path("inspections", locale, chapter)
 
 
 def chapters(kind: str) -> list[str]:
