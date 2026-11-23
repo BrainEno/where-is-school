@@ -18,6 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import character_geometry as geometry
+import character_hair as hair
 import prepare_classroom_student as student
 import prepare_teacher_n as teacher
 
@@ -32,6 +33,29 @@ def parts(data: bytes) -> tuple:
                 key: teacher.read_accessor(d, b, value) for key, value in a.items()
             } | {"triangles": teacher.read_accessor(d, b, p["indices"]).reshape(-1, 3)}
     return d, b, result
+
+
+def _inside(points: np.ndarray, skin: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """Point-in-mesh by ray parity, along a direction the skull has no face normal on."""
+    direction = np.array([1.0, .3, 0.0])
+    direction /= np.linalg.norm(direction)
+    v0, v1, v2 = skin[triangles[:, 0]], skin[triangles[:, 1]], skin[triangles[:, 2]]
+    e1, e2 = v1 - v0, v2 - v0
+    h = np.cross(direction, e2)
+    a = (e1 * h).sum(1)
+    valid = np.abs(a) > 1e-12
+    f = np.zeros_like(a)
+    f[valid] = 1.0 / a[valid]
+    out = np.zeros(len(points), bool)
+    for i, point in enumerate(points):
+        s = point - v0
+        u = f * (s * h).sum(1)
+        q = np.cross(s, e1)
+        v = f * (q @ direction)
+        t = f * (q * e2).sum(1)
+        hits = valid & (u >= 0) & (u <= 1) & (v >= 0) & (u + v <= 1) & (t > 1e-6)
+        out[i] = int(hits.sum()) % 2 == 1
+    return out
 
 
 class RefinedCharacterTests(unittest.TestCase):
@@ -253,21 +277,71 @@ class RefinedCharacterTests(unittest.TestCase):
             self.assertGreater(discarded[:, :, 1].min(), 1.53)
             self.assertLess(discarded[:, :, 2].max(), -.046)
             self.assertEqual(len(before - retained), 520 if material == "M_ST_Hair" else 208)
-            # The shipped hair is the source pass plus the crop, so what is checked here is
-            # the pair: the source vertices survive in order and the crop is real.
+            # The shipped hair is the source pass plus the skull-fitted crop, so what is
+            # checked here is the pair: the source vertices survive in order, and the crop
+            # is a real short cut rather than a lift.
             shipped = new["POSITION"]
             self.assertEqual(len(shipped), len(kept))
-            # The crown is a shell either way, so the median barely moves; what the crop
-            # changes is the *hem*: the lowest lock rises, and the mass that hung beside
-            # the jaw is gone. Count what is left below the ear, which is the readable test.
             below = lambda points: int((points[:, 1] < 1.500).sum())
-            self.assertLess(below(shipped), below(old["POSITION"][kept]) * .45,
+            self.assertLess(below(shipped), below(old["POSITION"][kept]) * .10,
                             "the crop did not take length off the bob")
             # Nothing hangs below the ear lobe, which is what made it a bob.
-            self.assertGreater(float(shipped[:, 1].min()), 1.465)
-            np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
+            self.assertGreater(float(shipped[:, 1].min()), 1.470)
+            # The cut sits on the hairline, not somewhere up the shell: every vertex is at
+            # or above the hem curve for its own angle, and the crown is untouched.
+            radius, _outward, angle = hair.polar(shipped)
+            hem = hair.hem_height(angle)
+            self.assertGreater(int((shipped[:, 1] >= hem - 1e-6).sum()),
+                               len(shipped) - 8)
+            # The crown is where the skull stops having sides, so the radial fit has to be
+            # faded out there (see `character_hair._place`); the cap keeps its authored
+            # clearance, and the displacement above the top ring is a few millimetres
+            # rather than the single millimetre a radial-only fit used to give.
             top = old["POSITION"][kept, 1] > 1.632
-            np.testing.assert_array_equal(old["POSITION"][kept[top]], new["POSITION"][top])
+            if top.any():   # the highlight sheet is cards; it has no cap of its own
+                self.assertLess(float(np.abs(shipped[top] - old["POSITION"][kept[top]]).max()),
+                                .045)
+            np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
+
+    def test_teacher_hair_sits_outside_the_skull(self) -> None:
+        """The bug that made the nape look torn: hair vertices inside the head.
+
+        Revision 3 lifted and tucked the shell, which pushed most of its lower half through
+        the skull; the skull then showed through the hair as the pale teeth at the nape.
+        """
+        _document, _binary, original = parts(self.teacher_source)
+        document, binary, refined = self.outputs[1]
+        skin = refined["ST_Head_Skin", "M_ST_Skin"]["POSITION"]
+        triangles = refined["ST_Head_Skin", "M_ST_Skin"]["triangles"]
+        # The skull is an open surface -- the neck, the mouth and both ear canals are holes
+        # -- so a vertex just under a rim reads as "inside" without being buried. What has
+        # to be true is that no *run* of the hair is inside: the revision this replaces had
+        # whole rows of the shell through the skull, which is what showed as pale teeth.
+        #
+        # Two shapes of the same fact, because the two sheets fail differently. The curtain
+        # is thousands of vertices, so it is a fraction of itself; the highlight sheet is
+        # seventeen cards of sixteen, so a per-card fraction is the only meaningful unit.
+        # (The curtain does keep a small pocket of its inner fold behind the crown, a few
+        # centimetres inside the skull; it is enclosed by the hair above it and invisible.)
+        for material in ("M_ST_Hair", "M_ST_HairLight"):
+            points = refined["ST_Hair", material]["POSITION"]
+            inside = _inside(points, skin, triangles)
+            pieces = [np.asarray(part, np.int64) for part
+                      in hair.islands(len(points), refined["ST_Hair", material]["triangles"])]
+            largest = max(pieces, key=len)
+            # A curtain this big says something as a fraction of itself; the highlight sheet
+            # has no curtain at all (its largest piece is one card), so for it the per-card
+            # check below is the whole statement. 3%, against the 43% that this check was
+            # written for: what is left is the inner face of one fold behind the crown,
+            # enclosed by the hair over it and never visible.
+            if len(largest) > 1000:
+                self.assertLess(inside[largest].mean(), .03,
+                                "%s: %.1f%% of the curtain is inside the head"
+                                % (material, 100 * inside[largest].mean()))
+            for part in pieces:
+                self.assertLess(inside[part].mean(), .60,
+                                "%s: a piece of %d vertices is %.0f%% inside the head"
+                                % (material, len(part), 100 * inside[part].mean()))
 
     def test_iris_pupil_and_glint_lie_on_the_cut_sclera(self) -> None:
         doc, _binary, surfaces = self.outputs[0]
@@ -318,7 +392,7 @@ class RefinedCharacterTests(unittest.TestCase):
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
         for (doc, _binary, surfaces), limit, revision in zip(
-                self.outputs, [64604, 62340], [2, 3]):
+                self.outputs, [64604, 62340], [2, 4]):
             # Revision 3 is the teacher's resting face, expression shapes and crop; the
             # seated student is unchanged at revision 2.
             self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)

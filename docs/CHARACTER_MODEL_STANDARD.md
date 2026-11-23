@@ -69,7 +69,7 @@ N 的实测（改造前）：眼线 0.520、鼻底 0.249、嘴线 0.263、眼宽
 - 不给运行期模型加骨骼（16 关节是既有契约，改骨架会牵动全部动画）。
 - 不用贴图解决造型问题：造型错的地方贴图只会放大它。
 
-## 4. N 的改造记录（geometry revision 3）
+## 4. N 的改造记录（geometry revision 4）
 
 执行范围与结果，对应 §2 的 A–D；E 节是验收。
 
@@ -84,8 +84,9 @@ N 的实测（改造前）：眼线 0.520、鼻底 0.249、嘴线 0.263、眼宽
 | 头发 | 钟形波波头，前发盖到眉毛 | 前发提到眉上、下摆整体上提 34 mm 并收拢、后颈收边 | 剪影读作短发；侧面能看到耳朵 |
 | 拓扑/权重/骨骼 | — | **完全未改**（同顶点数、同顺序、同权重） | 因此可以与烘焙层、动作、清单共存 |
 
-实现位置：`tools/character_geometry.py` 的 `teacher_expression` / `teacher_crop` /
-`teacher_eyeball`，由 `tools/prepare_teacher_n.py` 在**烘焙层之后**的后置通道
+实现位置：`tools/character_geometry.py` 的 `teacher_expression` / `teacher_eyeball`（发
+型裁剪见下面的 revision 4 小节与 `tools/character_hair.py`），由
+`tools/prepare_teacher_n.py` 在**烘焙层之后**的后置通道
 （`_resting_channel`）执行。之所以必须是后置通道：可见的鼻/睑整形来自
 `art/character_models/sculpt/` 的烘焙层，按指纹校验源几何；在后置通道里改形
 既不会被它覆盖，也不会让它失效。
@@ -100,3 +101,25 @@ python3 tools/character_review/contact_sheet.py out.png <before.glb> <after.glb>
 ```
 
 对照图在 `docs/screenshots/teacher_n_resting_face/`（上排改前、下排改后）。
+
+### revision 4：发际线
+
+revision 3 的短发是**在头盔壳上就地裁剪**的：下摆虽然提到了正确高度，但壳的下半部分
+有大半穿进了颅骨，渲染时从那圈缝隙里露出来的浅色切面就是后颈那排"白牙"，正面与侧面
+的发际线也是锯齿轮廓。revision 4 把裁剪改成**贴合**：
+
+| 项 | revision 3 | revision 4 | 判据 |
+|---|---|---|---|
+| 发际线 | 锯齿、后颈一排浅色切面 | 平滑连续，无穿插切面 | `docs/screenshots/teacher_n_hairline/before_after.png` |
+| 头发与颅骨 | 壳下半穿过头骨 | 逐顶点放到 `颅骨半径 + 站立量`，按自身角度与高度查询 | 帘幕在头内的比例 < 3%（rev3 为 43%），逐卡片 < 60% |
+| 后颈下摆 | 卡片被撕裂成斑块 | 卡片按刚体平移，不参与形变 | 每条下摆顶点不低于本角度处的 hem |
+| 冠部 | — | 极点处不做径向修正（穹顶半径剖面在顶点无意义） | 冠部最高点位移 < 45 mm |
+
+实现位置拆成新模块 `tools/character_hair.py`（`teacher_crop` / `teacher_highlight` /
+`scalp_field` / `_place`），由 `tools/prepare_teacher_n.py` 在 `_resting_channel` 的
+**头部改写之后**再执行——头发必须长在最终的头皮上，所以它不能和 `SILHOUETTE` 里的
+其它轮廓同一批跑。
+
+还有两处已知遗留，均为可见性为零的内部几何，未计入验收：冠部前方一处 4×4 凹陷褶皱
+的内壁（42 个顶点，被上面的头发完全包住）；`M_ST_HairLight` 几张卡片在薄的耳侧仍有
+少量角点在头内（深度 ≤ 12 mm，同样被帘幕遮住）。

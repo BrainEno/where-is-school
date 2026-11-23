@@ -119,6 +119,7 @@ import sys
 import numpy as np
 
 import character_geometry as geometry
+import character_hair as hair
 from character_sculpt import apply
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -684,7 +685,7 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 3},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 4},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],
@@ -710,7 +711,12 @@ RESTING = {
     "ST_Eyebrow_L": geometry.teacher_expression,
     "ST_Eyebrow_R": geometry.teacher_expression,
 }
-SILHOUETTE = {"ST_Hair": geometry.teacher_crop}
+# The crop needs the head it sits on: `character_hair.teacher_crop` fits the shell to the
+# skull, so the hair is a second stage after the head has been rewritten (see
+# `_resting_channel`) rather than an entry here.
+SILHOUETTE: dict = {}
+HAIR_PARTS = {"M_ST_Hair": hair.teacher_crop,
+              "M_ST_HairLight": hair.teacher_highlight}
 # The eyeballs are not face-shaped (no lid, no brow), so they take their own small field.
 EYEBALLS = {"ST_Eye_L": geometry.teacher_eyeball, "ST_Eye_R": geometry.teacher_eyeball}
 
@@ -800,6 +806,20 @@ class _Arrays:
         return bytes(out)
 
 
+def _head_geometry(document: dict, arrays: "_Arrays") -> tuple[np.ndarray, np.ndarray]:
+    """The head's skin surface as the hair has to sit on it: after the resting pass."""
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Head_Skin":
+            continue
+        for primitive in mesh["primitives"]:
+            material = document["materials"][primitive["material"]]["name"]
+            if material != "M_ST_Skin":
+                continue
+            return (arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64),
+                    arrays.read(primitive["attributes"]["NORMAL"]).astype(np.float64))
+    raise PrepareError("ST_Head_Skin/M_ST_Skin is missing, so the hair cannot be fitted")
+
+
 def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
     arrays = _Arrays(document, binary)
     moved = {}
@@ -831,6 +851,36 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
             moved.setdefault(mesh["name"], 0.0)
             moved[mesh["name"]] = max(moved[mesh["name"]],
                                       float(np.abs(positions - base).max()))
+
+    # The hair is fitted to the skull, so it can only run once the head has been rewritten.
+    skin = _head_geometry(document, arrays)
+    for mesh in document["meshes"]:
+        if mesh["name"] != "ST_Hair":
+            continue
+        for primitive in mesh["primitives"]:
+            callback = HAIR_PARTS.get(document["materials"][primitive["material"]]["name"])
+            if callback is None:
+                raise PrepareError("ST_Hair has a part with no fitted style")
+            attributes = primitive["attributes"]
+            base = arrays.read(attributes["POSITION"]).astype(np.float64)
+            normals = arrays.read(attributes["NORMAL"]).astype(np.float64)
+            shape = arrays.read(primitive["indices"]).reshape(-1, 3)
+
+            def fit(points, _skin=skin, _shape=shape, _callback=callback):
+                return _callback(points, _skin, _shape)
+
+            positions = fit(base)
+            # The hair is re-shaped wholesale, so its normals are recomputed from the new
+            # surface instead of being carried through the map's Jacobian: pinning the cut
+            # edge is a step in that map, and a step cannot be differentiated. It also
+            # replaces the source's split strip normals, which the new form invalidates.
+            del normals
+            normals_out = geometry.normals(geometry.Geometry(positions, shape))
+            arrays.write(attributes["POSITION"], positions)
+            arrays.write(attributes["NORMAL"], normals_out)
+            name = "%s/%s" % (mesh["name"], document["materials"][primitive["material"]]["name"])
+            moved[name] = float(np.abs(positions - base).max())
+
     report["resting_channel_m"] = {name: round(value, 6) for name, value in moved.items()}
     # `packed()` has just rewritten every view's offset, so the GLB header and JSON chunk
     # have to be re-serialised around the new binary rather than reused.
