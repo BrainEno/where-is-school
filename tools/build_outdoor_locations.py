@@ -907,6 +907,11 @@ def build_alley():
 SHED_CENTRE = (4.8, 1.5, -16.9)
 TYRES = (-2.4, -15.3)
 CACTUS_PLOT = (-16.0, 0.0, -4.0)
+# The razor-wire fences on the open edges (round 21): (body centre, body size). The west
+# one runs from the school plinth to the south fence; the east one fills the gap between
+# the flats' south face (z 18) and the south fence.
+RAZOR_WIRE_WEST = ((-22.75, 1.4, -0.09), (0.6, 2.8, 39.22))
+RAZOR_WIRE_EAST = ((22.75, 1.4, 18.76), (0.6, 2.8, 1.52))
 
 
 def build_playground(for_courtyard_view: bool = False):
@@ -972,6 +977,15 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("SouthGateLight", (0.0, 1.6, 21.9), (3.6, 3.2, 0.1), "dusk", None, False)
     # east side: the flats (the hedge that hides what is under the shed moved with it, round 20)
     s.box("EstateBlockEast", (24, 6.0, -2), (8, 12, 40), "brick", ["camera_occluder"])
+    # Round 21: the yard's open edges, closed. The owner could walk off the west side (and
+    # the gap between the east flats and the south fence): a prison fence of chain-link
+    # under concertina razor wire, with a second coil along its foot on the yard side,
+    # stands on each. The art pass hangs the posts, mesh and coils on these bodies and hides
+    # their boxes; the body is as deep as the foot coil. The estate gate keeps its way out
+    # (the alley exit), but a threshold stops a body walking through it off the ground.
+    s.box("RazorWireWest", RAZOR_WIRE_WEST[0], RAZOR_WIRE_WEST[1], "metal")
+    s.box("RazorWireEast", RAZOR_WIRE_EAST[0], RAZOR_WIRE_EAST[1], "metal")
+    s.box("AlleyThreshold", (0.0, 1.1, 19.6), (3.8, 2.2, 0.16), "metal")
 
     # the two hoops
     for name, x in (("HoopNear", -8.0), ("HoopFar", 8.0)):
@@ -1100,7 +1114,7 @@ def build_playground(for_courtyard_view: bool = False):
          "inspection": "pg_tyres", "radius": 1.4,
          # The ring tyres the art pass adds; the graybox stack they replace is hidden, and
          # hidden meshes are skipped, so listing both keeps the outline right either way.
-         "outline": tuple(f"PlaygroundArt/Equipment/Tyre_{i}" for i in range(3))
+         "outline": tuple(f"PlaygroundArt/Equipment/Tyre_{i}" for i in range(4))
                     + ("PlaygroundArt/Equipment/TyreLoose",)},
         # The building under construction stands too tall for the default framing; this
         # shot backs the camera off and lifts its aim until the whole shell is in view.

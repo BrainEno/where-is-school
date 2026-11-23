@@ -68,6 +68,13 @@ const SOLIDS := {
 	"ShedFootingEast": [Vector3(1.05, 0.3, -16.4), Vector3(1.4, 0.6, 1.4)],
 	# The saguaro in the cactus plot where the shed stood (position inside CactusPlot).
 	"CactusPlot/Saguaro": [Vector3(-0.3, 2.2, -0.25), Vector3(0.7, 4.4, 0.7)],
+	# Round 21: the skipping girl is solid (a box round her and her rope's sweep).
+	"CactusPlot/GirlBody": [Vector3(1.25, 0.7, 2.2), Vector3(0.8, 1.3, 1.0)],
+	# Round 21: razor-wire fences close the open west edge and the gap east of the south
+	# fence; a threshold in the estate gate stops a body walking off the ground there.
+	"RazorWireWest": [Vector3(-22.75, 1.4, -0.09), Vector3(0.6, 2.8, 39.22)],
+	"RazorWireEast": [Vector3(22.75, 1.4, 18.76), Vector3(0.6, 2.8, 1.52)],
+	"AlleyThreshold": [Vector3(0.0, 1.1, 19.6), Vector3(3.8, 2.2, 0.16)],
 	"FramePost_0": [Vector3(18.0, 1.4, 7.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_1": [Vector3(18.0, 1.4, 9.0), Vector3(0.14, 2.8, 0.14)],
 	"FramePost_2": [Vector3(18.0, 1.4, 11.0), Vector3(0.14, 2.8, 0.14)],
@@ -490,7 +497,9 @@ func _check_dressing() -> void:
 		"PlaygroundArt/Court/LineCentre", "PlaygroundArt/Court/KeyNear",
 		"PlaygroundArt/Court/KeyFar", "PlaygroundArt/Equipment/Tyre_0",
 		"PlaygroundArt/Equipment/Tyre_1", "PlaygroundArt/Equipment/Tyre_2",
-		"PlaygroundArt/Equipment/TyreLoose",
+		"PlaygroundArt/Equipment/Tyre_3", "PlaygroundArt/Equipment/TyreLoose",
+		"ShedFootingWest/CoveredJunk", "ShedFootingEast/CoveredJunk",
+		"RazorWireWest/TopCoil0", "RazorWireWest/FootCoil0", "RazorWireEast/TopCoil0",
 	]:
 		if _yard.get_node_or_null(NodePath(path)) == null:
 			_failures.append("The painted replacement '%s' is missing." % path)
@@ -680,7 +689,7 @@ func _check_story_agreement() -> void:
 		"PlaygroundArt/HedgeLeaves/LeafCluster0": "the irregular hedge",
 		"ShedBody/Facade/ReclaimedPanel0": "the shed wall patches",
 		"ShedFootingWest/ConcreteBase": "the concrete footing",
-		"PlaygroundArt/Court/Crack0_0": "the sparse concrete cracks",
+		"PlaygroundArt/Court/Cracks": "the sparse concrete cracks",
 		"YardNoodleWrapper/Film": "the printed noodle packet on the bench",
 		"PlaygroundArt/Equipment/HoopFarNet": "the net on the far hoop",
 		"PlaygroundArt/Ground/HoopNearPatch": "the newer concrete the near hoop stands in",

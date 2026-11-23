@@ -1199,6 +1199,17 @@ def courtyard_view():
             raise ValueError(f"No yard material for {path}")
         if name == "CourtFarHalf":
             pos = (pos[0], 0.012, pos[2])
+        if name.startswith("ShedFooting"):
+            # Round 21: as in the yard, the footing's base shows under junk covered with a
+            # blanket (west) or a tarpaulin (east): playground_art/source/yard_junk.py.
+            side = name.removeprefix("ShedFooting").lower()
+            b.box(f"{name}Base", "Yard", (pos[0], 0.045, pos[2]), (1.46, 0.09, 1.46), "yard/concrete")
+            mesh = b.bind(f"junk_{side}", f"{YARD}/meshes/yard_junk/covered_junk_{side}.tres", "Mesh")
+            b.nodes.append(f'[node name="{name}Junk" type="MeshInstance3D" parent="Yard"]\n'
+                           f'transform = Transform3D({"0, 0, -1, 0, 1, 0, 1, 0, 0" if side == "east" else "1, 0, 0, 0, 1, 0, 0, 0, 1"}, '
+                           f'{pos[0]:g}, 0, {pos[2]:g})\n'
+                           f'mesh = {mesh}\nmaterial_override = {b.surface("yard/yard_junk")}\n')
+            continue
         b.box(name, "Yard", pos, size, f"yard/{mat}")
     b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
     b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')

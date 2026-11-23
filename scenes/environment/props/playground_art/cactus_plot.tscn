@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="ArrayMesh" path="res://scenes/environment/props/playground_art/meshes/cactus_plot/cactus_plot_soil.tres" id="mesh_cactus_plot_soil"]
 [ext_resource type="StandardMaterial3D" path="res://scenes/environment/props/playground_art/materials/cactus_soil.tres" id="mat_cactus_soil"]
@@ -16,7 +16,10 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(0.7, 4.4, 0.7)
 
-[sub_resource type="Animation" id="Animation_2"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(0.8, 1.3, 1)
+
+[sub_resource type="Animation" id="Animation_3"]
 resource_name = "Skip"
 length = 0.84
 loop_mode = 1
@@ -35,8 +38,8 @@ tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {"times": PackedFloat32Array(0, 0.07, 0.14, 0.21, 0.28, 0.35, 0.42, 0.49, 0.56, 0.63, 0.7, 0.77, 0.84), "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1), "update": 0, "values": [Vector3(0, 0, 0), Vector3(30, 0, 0), Vector3(60, 0, 0), Vector3(90, 0, 0), Vector3(120, 0, 0), Vector3(150, 0, 0), Vector3(180, 0, 0), Vector3(210, 0, 0), Vector3(240, 0, 0), Vector3(270, 0, 0), Vector3(300, 0, 0), Vector3(330, 0, 0), Vector3(360, 0, 0)]}
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_3"]
-_data = {&"Skip": SubResource("Animation_2")}
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4"]
+_data = {&"Skip": SubResource("Animation_3")}
 
 [node name="CactusPlot" type="Node3D"]
 
@@ -62,6 +65,12 @@ position = Vector3(0, -2.18, 0)
 mesh = ExtResource("mesh_saguaro_spines")
 material_override = ExtResource("mat_cactus_glow")
 cast_shadow = 0
+
+[node name="GirlBody" type="StaticBody3D" parent="."]
+position = Vector3(1.25, 0.7, 2.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GirlBody"]
+shape = SubResource("BoxShape3D_2")
 
 [node name="Girl" type="Node3D" parent="."]
 position = Vector3(1.25, 0.05, 2.2)
@@ -102,4 +111,4 @@ custom_aabb = AABB(-0.4, -0.643, -0.643, 0.8, 1.286, 1.286)
 
 [node name="Motion" type="AnimationPlayer" parent="Girl"]
 autoplay = "Skip"
-libraries = {&"": SubResource("AnimationLibrary_3")}
+libraries = {&"": SubResource("AnimationLibrary_4")}

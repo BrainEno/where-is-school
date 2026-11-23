@@ -156,11 +156,12 @@ def shed_surroundings(b, art):
     """Low leafy clusters and worn footing covers; original collision stays intact."""
     for side, height in (("West", 0.4), ("East", 0.6)):
         parent = "ShedFooting" + side
-        # Keep the text's gap and its two physical footings, while breaking the
-        # featureless brown cubes into a concrete base and chipped top courses.
-        _box(b, parent, "ConcreteBase", (1.36, height - 0.06, 1.36), (0, -0.03, 0), "concrete")
-        _box(b, parent, "WornCap", (1.28, 0.06, 1.27), (0.02, height / 2 - 0.03, -0.02), "concrete_patch")
-        _box(b, parent, "Joint", (1.31, 0.012, 0.025), (0, height / 2 + 0.001, 0.16), "plinth", (0, 5, 0))
+        # Keep the text's gap and its two physical footings (colliders unchanged). Round 21:
+        # the bare cubes are junk under a blanket and a tarpaulin (source/yard_junk.py);
+        # the concrete base still shows below the hem, where the ball is caught.
+        _box(b, parent, "ConcreteBase", (1.46, 0.09, 1.46), (0, 0.045 - height / 2, 0), "concrete")
+        b.flat("CoveredJunk", parent, f"covered_junk_{side.lower()}", "yard_junk", (0, -height / 2, 0),
+               (0, 90 if side == "East" else 0, 0), shadow=True, imported=True)
     hedge(b, art)
 
 

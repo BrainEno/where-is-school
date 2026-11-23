@@ -56,6 +56,23 @@ ART_INSTANCE = '[node name="PlaygroundArt" parent="." instance=ExtResource("yard
 SCENERY_FILE = "scenery.tscn"
 # The tyre stack by the shed's footings (x, z): `TYRES` in tools/build_outdoor_locations.py.
 TYRES = (-2.4, -15.3)
+# Sculpted text meshes written by source/yard_junk.py (round 21), under `meshes/`.
+TRES_MESHES = {
+    "truck_tyre": "yard_junk/truck_tyre.tres",
+    "covered_junk_west": "yard_junk/covered_junk_west.tres",
+    "covered_junk_east": "yard_junk/covered_junk_east.tres",
+    "razor_coil": "yard_junk/razor_coil.tres",
+    "razor_coil_short": "yard_junk/razor_coil_short.tres",
+    "wire_post": "yard_junk/wire_post.tres",
+}
+# The razor-wire fences' bodies (tools/build_outdoor_locations.py): name -> centre, size,
+# and which way is out of the yard (-1 west, +1 east).
+RAZOR_FENCES = {
+    "RazorWireWest": ((-22.75, 1.4, -0.09), (0.6, 2.8, 39.22), -1),
+    "RazorWireEast": ((22.75, 1.4, 18.76), (0.6, 2.8, 1.52), 1),
+}
+# Four tyres stack against the shed wall (a flat-laid truck tyre is 0.26 m high).
+TYRE_PITCH = 0.245
 # These overrides belong only to the static yard scenery. Shared wall, prop and
 # distant-row colours stay addressable by path; do not ship these ones twice.
 SCENERY_MATERIALS = {
@@ -117,7 +134,9 @@ MATERIALS: dict[str, dict] = {
     "pour_b": {"texture": tex("pour_b"), "cut": 0.5},
     "seam": {"texture": tex("seam"), "cut": 0.5},
     "court": {"texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
-    "court_far": {"color": (232, 232, 232), "texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
+    # Round 21: the far half is the same pour (it no longer reads as a second slab).
+    "court_far": {"texture": tex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
+    "court_cracks": {"texture": tex("court_cracks"), "cut": 0.5},
     "court_line": {"texture": tex("court_line"), "cut": 0.5, "scale": (3.0, 1.0, 1.0)},
     "court_key": {"texture": tex("key_area"), "cut": 0.5},
     "hoop_patch": {"texture": tex("hoop_patch"), "cut": 0.5},
@@ -147,6 +166,9 @@ MATERIALS: dict[str, dict] = {
     "hoop_net": {"texture": tex("hoop_net"), "cut": 0.4, "cull_off": True},
     "frame_yellow": {"color": YELLOW, "outline": True},
     "tyre": {"texture": tex("tyre"), "outline": True},
+    # Round 21: the sculpted tyres and covered junk (source/yard_junk.py) carry their paint.
+    "yard_junk": {"vertex": True, "outline": True},
+    "razor_wire": {"vertex": True, "cull_off": True, "roughness": 0.45},
     "container": {"color": (48, 92, 146), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.58, 0.58, 0.58)},
     "container_rib": {"color": (60, 111, 164), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.72, 0.72, 0.72)},
     "container_frame": {"color": (51, 71, 97), "texture": tex("metal_tile"), "triplanar": "local", "scale": (0.73, 0.73, 0.73), "outline": True},
@@ -208,6 +230,8 @@ def material_tres(name: str, spec: dict) -> str:
         lines += ["shading_mode = 0", "disable_receive_shadows = true"]
     else:
         lines += [f"diffuse_mode = {spec.get('diffuse', 3)}", f"specular_mode = {spec.get('specular', 2)}"]
+    if spec.get("vertex"):
+        lines += ["vertex_color_use_as_albedo = true", "vertex_color_is_srgb = true"]
     lines.append(f"albedo_color = {srgb(spec.get('color', (255, 255, 255)))}")
     if "texture" in spec:
         lines.append('albedo_texture = ExtResource("2_tex")')
@@ -270,6 +294,7 @@ REPOINT: list[tuple[str, str]] = [
     (r"PingPongBall", "ball"),
     (r"FramePost_\d/MeshInstance3D|FrameRung_\d|FrameTopBar", "frame_yellow"),
     (r"TyreStack_\d|TyreLoose", "tyre"),
+    (r"RazorWire(West|East)/MeshInstance3D|AlleyThreshold/MeshInstance3D", "fence_panel_tall"),
     # Low-detail version emitted only for build_teaching_block's distant view.
     (r"ContainerBody/MeshInstance3D", "container"),
     (r"ContainerDoorLine", "shutter"),
@@ -291,6 +316,7 @@ REPOINT: list[tuple[str, str]] = [
 HIDE = re.compile(
     r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
     r"|SchoolPlinth/MeshInstance3D|TapPost/MeshInstance3D"
+    r"|RazorWire(West|East)/MeshInstance3D|AlleyThreshold/MeshInstance3D"
 )
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
@@ -359,7 +385,7 @@ class Builder:
         self.node(name, parent, "MeshInstance3D", **props)
 
     def mesh_resources(self, extension: str = "mesh") -> list[str]:
-        return [f'[ext_resource type="Mesh" path="{RES}/meshes/{name}.{extension}" id="mesh_{name}"]'
+        return [f'[ext_resource type="Mesh" path="{RES}/meshes/{TRES_MESHES.get(name, f"{name}.{extension}")}" id="mesh_{name}"]'
                 for name in sorted(self.imported_meshes)]
 
 
@@ -439,20 +465,9 @@ def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> No
     flat("KeyNear", f"{parent}/Court", key, "court_key", (0, 0.02, 7.2))
     flat("KeyFar", f"{parent}/Court", key, "court_key", (0, 0.02, -11.2), (0, 180, 0))
 
-    # A handful of fine, non-repeating fissures. These lie below the white paint,
-    # and are shared with the view from the teaching wing.
-    cracks = (
-        ((-8.8, 6.8), (-8.30, 6.36), (-8.15, 5.90), (-7.75, 5.62)),
-        ((3.5, -5.1), (3.72, -5.56), (3.61, -5.95), (4.05, -6.32)),
-        ((7.0, 1.5), (7.34, 1.29), (7.65, 1.36)),
-    )
-    for i, path in enumerate(cracks):
-        for j, (a, c) in enumerate(zip(path, path[1:])):
-            dx, dz = c[0] - a[0], c[1] - a[1]
-            mesh = b.mesh("BoxMesh", size=vec3((math.hypot(dx, dz), 0.002, 0.024)))
-            flat(f"Crack{i}_{j}", f"{parent}/Court", mesh, "concrete_patch",
-                 ((a[0] + c[0]) / 2, 0.018, (a[1] + c[1]) / 2),
-                 (0, -math.degrees(math.atan2(dz, dx)), 0))
+    # A few long, aged cracks across the one pour (round 21), on one court-sized decal
+    # under the paint. Shared with the view from the teaching wing.
+    flat("Cracks", f"{parent}/Court", plane(b, 22.24, 26.24), "court_cracks", (0, 0.0195, -2))
 
     # The same boards, rings and painted boundaries read from inside the school.
     b.node("Equipment", parent)
@@ -461,6 +476,29 @@ def court_landmarks(b: Builder, parent: str, *, material_prefix: str = "") -> No
     flat("HoopFarRing", f"{parent}/Equipment", rim, "hoop_rim", (8.0, 2.6, -12.02), shadow=True)
     net = b.mesh("CylinderMesh", top_radius="0.215", bottom_radius="0.15", height="0.42", radial_segments="16", rings="1", cap_top="false", cap_bottom="false")
     flat("HoopFarNet", f"{parent}/Equipment", net, "hoop_net", (8.0, 2.39, -12.02))
+
+
+def razor_fences(b: Builder) -> None:
+    """Round 21: the prison fence on the yard's open edges, hung on its own bodies (not the
+    art layer, which carries no collision and is checked against the camera): posts every
+    2.5 m with their arms cranked outward, chain-link, concertina razor wire along the arms
+    and a second coil along the foot on the yard side. The body's box is hidden."""
+    for body, (centre, size, out) in RAZOR_FENCES.items():
+        length = size[2]
+        ground = -centre[1]
+        line = out * 0.2  # the posts and mesh stand toward the outer side of the 0.6 m body
+        b.flat("ChainLink", body, quad(b, length, 2.2), "fence_panel_tall", (line, ground + 1.1, 0), (0, 90, 0))
+        posts = max(1, round(length / 2.5))
+        for i in range(posts + 1):
+            b.flat(f"Post{i}", body, "wire_post", "razor_wire", (line, ground, -length / 2 + length * i / posts),
+                   (0, 0 if out < 0 else 180, 0), shadow=True, imported=True)
+        # Coils of a fixed length, overlapping a little where the run does not divide evenly.
+        coil, span = ("razor_coil", 3.0) if length >= 3.0 else ("razor_coil_short", 1.5)
+        count = max(1, math.ceil(length / span - 0.05))
+        for i in range(count):
+            z = -length / 2 + length / count * (i + 0.5)
+            b.flat(f"TopCoil{i}", body, coil, "razor_wire", (out * 0.47, ground + 2.62, z), imported=True)
+            b.flat(f"FootCoil{i}", body, coil, "razor_wire", (-out * 0.02, ground + 0.29, z), imported=True)
 
 
 def build_nodes() -> Builder:
@@ -515,13 +553,17 @@ def build_nodes() -> Builder:
     b.flat("Seam", f"{A}/Ground", plane(b, 20.5, 40.0), "seam", (12.75, 0.024, 0.0))
 
     court_landmarks(b, A)
-    tyre = b.mesh("TorusMesh", inner_radius="0.27", outer_radius="0.5", rings="24", ring_segments="10")
-    for i, y in enumerate((0.12, 0.36, 0.6)):
-        b.flat(f"Tyre_{i}", f"{A}/Equipment", tyre, "tyre", (TYRES[0] + (0.05 if i == 1 else 0.0), y, TYRES[1] - (0.04 if i == 2 else 0.0)), (0, 20 * i, 0), shadow=True)
-    b.flat("TyreLoose", f"{A}/Equipment", tyre, "tyre", (TYRES[0] + 1.1, 0.14, TYRES[1] + 0.9), (6, 0, 0), shadow=True)
+    # Sculpted truck tyres with their worn yellow wheels: four stacked, one lying flat.
+    for i, (dx, dz) in enumerate(((0.0, 0.0), (0.05, -0.02), (-0.03, -0.05), (0.04, 0.01))):
+        b.flat(f"Tyre_{i}", f"{A}/Equipment", "truck_tyre", "yard_junk",
+               (TYRES[0] + dx, 0.129 + TYRE_PITCH * i, TYRES[1] + dz), (0, 37 * i, 0), shadow=True, imported=True)
+    b.flat("TyreLoose", f"{A}/Equipment", "truck_tyre", "yard_junk", (TYRES[0] + 1.1, 0.135, TYRES[1] + 0.9),
+           (2, 64, 0), shadow=True, imported=True)
     yard_details.shed(b)
     yard_details.tap(b, A)
     yard_details.shed_surroundings(b, A)
+
+    razor_fences(b)
 
     # Decals on the occluder bodies: children of the body, so they fade with it.
     b.flat("WallPatches", "SchoolBackWall", quad(b, 6.0, 2.4), "wall_patches", (4.0, -3.0, 1.006))

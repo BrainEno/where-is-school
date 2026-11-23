@@ -33,6 +33,8 @@ Use the stable Godot editor from `.godot-version` (`--engine /path/to/godot` if 
 ```sh
 python3 -m venv /tmp/paint && /tmp/paint/bin/pip install pillow==11.3.0 numpy==2.2.6
 /tmp/paint/bin/python scenes/environment/props/playground_art/source/paint_playground_textures.py
+# The sculpted tyres, covered junk and razor-wire pieces (round 21; numpy as well).
+/tmp/paint/bin/python scenes/environment/props/playground_art/source/yard_junk.py
 # To rebuild the yard, regenerate the graybox first, then re-apply the art pass.
 python3 tools/build_outdoor_locations.py playground
 /tmp/paint/bin/python scenes/environment/props/playground_art/source/build_playground_art.py
@@ -42,7 +44,8 @@ python3 tools/build_outdoor_locations.py playground
 (`PlaygroundArt` node), so it can never be applied twice. The render-only
 `PlaygroundArt` branch is saved as the text `scenery.tscn` instance. Fittings
 attached to occluding bodies stay in the location scene, so they still fade with
-those bodies. The art pass itself adds no collision; the graybox defines the smaller shed and removes the two retired interaction anchors.
+those bodies. The art pass itself adds no collision (the razor-wire fences hang on the graybox's
+`RazorWireWest`/`RazorWireEast` bodies, which close the yard's open edges); the graybox defines the smaller shed and removes the two retired interaction anchors.
 
 The Python sources own the scenery geometry and colours; do not edit the binary
 bakes directly. The temporary OBJ imports and private scenery material files are
