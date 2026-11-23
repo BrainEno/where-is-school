@@ -49,8 +49,8 @@ have different jobs:
 | anywhere else | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
 
 The owner approved the increase to 40 MiB after a clean Godot 4.7.2 source-build
-Linux export with all 14 score MP3s measured 35.87 MiB of packed entries (PCK file
-37,826,848 bytes). The 2 MiB per-file runtime limit and 12 MiB repository limit are
+Linux export with all 14 score MP3s measured 36.95 MiB of packed entries (PCK file
+38,957,488 bytes). The 2 MiB per-file runtime limit and 12 MiB repository limit are
 unchanged. A standard release export still needs to verify the final artifact.
 
 `tools/repo_size.py` has **no exception list**. An exception list is how the 67 MiB file got

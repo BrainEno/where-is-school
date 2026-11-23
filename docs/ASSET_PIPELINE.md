@@ -261,7 +261,7 @@ only tighten it. The pack total has a **40 MiB hard limit** and an **8 MiB warni
 The limit was 16 MiB (the old flat check's number) until the release reached 15.97 MiB; the
 owner raised it to 24 MiB when teacher B's model joined the build for the imagined lesson, and
 to 32 MiB when the front yard (round 16) found the pack at 23.94 MiB. The owner approved
-40 MiB after a clean 4.7.2 source-build export with the 14 score MP3s measured 35.87 MiB
+40 MiB after a clean 4.7.2 source-build export with the 14 score MP3s measured 36.95 MiB
 of packed entries. Per-file limits are unchanged; verify the standard release export too.
 
 **A warning does not fail the release; a hard limit does.** Warnings are printed and

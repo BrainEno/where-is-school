@@ -204,7 +204,7 @@ CATEGORIES = (
 
 # The 8 MiB warning remains an early growth signal. The owner approved raising the
 # hard limit only after a real export with all 14 supplied score MP3s: a clean Linux
-# export on the pinned 4.7.2 source measured 35.87 MiB of packed entries (37,826,848
+# export on the pinned 4.7.2 source measured 36.95 MiB of packed entries (38,957,488
 # bytes including the PCK directory). 40 MiB gives it modest headroom without changing
 # the per-file limits. Earlier limits were 16, 24 and then 32 MiB.
 PACK_WARN_BYTES = 8 * MiB
