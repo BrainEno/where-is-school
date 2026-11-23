@@ -617,6 +617,34 @@ def teacher_eyeball(points: np.ndarray) -> np.ndarray:
     return p
 
 
+def teacher_ear(points: np.ndarray) -> np.ndarray:
+    """Cut the concha into the ear.
+
+    Measured off the source, the ear is one smooth convex dome: frontmost at its rim
+    (|x| = 80 mm) and shallowing towards the middle, with no bowl anywhere. That is why it
+    reads as a flat oval pasted on the skull -- the concha, the one feature that makes an
+    ear an ear and the only part of it that catches shadow, is simply absent.
+
+    The bowl is cut about the region the source already treats as its middle: centred at
+    y 1.5335, z 0.0140, about 9 mm across, pressed inward toward the skull by up to 6 mm and
+    fading out before the rim so the helix is left standing as a lip. It is applied to the
+    outward half of the shell only; the flat plate on the skull side stays where it is.
+    """
+    p = points.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    xr = np.abs(x)
+    # The bowl's floor, in the ear's own (y, z): a radial falloff, not a separable one,
+    # because the concha is round and a product of two bells puts its corners back up.
+    r = np.hypot((y - 1.5335) / .0092, (z - .0140) / .0082)
+    floor = np.clip(1.0 - r * r, 0.0, 1.0) ** 1.5
+    # Only the outward half of the shell: the back plate is flat against the skull and
+    # moving it would open a gap at the jaw. Within that half the bowl's own falloff decides
+    # where the cut lands, so this gate stays well outside it and only the *back* is spared.
+    out = smoothstep(.0680, .0700, xr)
+    p[:, 0] -= np.sign(x) * .0060 * floor * out
+    return p
+
+
 def teacher_expression_field(points: np.ndarray) -> np.ndarray:
     """The resting-face field as positions only, for warping a morph delta.
 

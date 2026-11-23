@@ -685,7 +685,7 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 4},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 5},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],
@@ -719,6 +719,8 @@ HAIR_PARTS = {"M_ST_Hair": hair.teacher_crop,
               "M_ST_HairLight": hair.teacher_highlight}
 # The eyeballs are not face-shaped (no lid, no brow), so they take their own small field.
 EYEBALLS = {"ST_Eye_L": geometry.teacher_eyeball, "ST_Eye_R": geometry.teacher_eyeball}
+# Each ear is its own thin shell, mirrored; the fit is symmetric, so one field does both.
+EARS = {"ST_Ear_L": geometry.teacher_ear, "ST_Ear_R": geometry.teacher_ear}
 
 
 class _Arrays:
@@ -825,14 +827,15 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
     moved = {}
     for mesh in document["meshes"]:
         callback = (RESTING.get(mesh["name"]) or SILHOUETTE.get(mesh["name"])
-                    or EYEBALLS.get(mesh["name"]))
+                    or EYEBALLS.get(mesh["name"]) or EARS.get(mesh["name"]))
         if callback is None:
             continue
         for primitive in mesh["primitives"]:
             attributes = primitive["attributes"]
             base = arrays.read(attributes["POSITION"]).astype(np.float64)
             normals = arrays.read(attributes["NORMAL"]).astype(np.float64)
-            if mesh["name"] in SILHOUETTE or mesh["name"] in EYEBALLS:
+            if (mesh["name"] in SILHOUETTE or mesh["name"] in EYEBALLS
+                    or mesh["name"] in EARS):
                 positions = callback(base)
                 _, normals_out = geometry.deform(base, normals, callback)
                 for target in primitive.get("targets", []):

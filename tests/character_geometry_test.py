@@ -343,6 +343,50 @@ class RefinedCharacterTests(unittest.TestCase):
                                 "%s: a piece of %d vertices is %.0f%% inside the head"
                                 % (material, len(part), 100 * inside[part].mean()))
 
+    def test_teacher_ear_has_a_concha(self) -> None:
+        """The ear is a shell whose middle is the bowl, not the highest part of the dome.
+
+        The source ear is one smooth convex dome -- frontmost at its rim and shallowing
+        inward -- so it read as a flat oval pasted on the skull. The concha is what makes
+        an ear read, and it is the one place where the front face must be *nearer* the
+        skull than the cartilage around it.
+        """
+        _document, _binary, original = parts(self.teacher_source)
+        _document, _binary, refined = self.outputs[1]
+        for side in ("L", "R"):
+            before = original["ST_Ear_" + side, "M_ST_Skin"]["POSITION"]
+            after = refined["ST_Ear_" + side, "M_ST_Skin"]["POSITION"]
+            self.assertEqual(len(before), len(after))
+            # The bowl is dug about the ear's own middle: 9 mm across at y 1.5335.
+            bowl = (np.abs(after[:, 1] - 1.5345) < .005) & (np.abs(after[:, 2] - .0140) < .005)
+            radius = np.abs(after[:, 0])
+            self.assertGreater(float(np.median(radius[bowl])), float(radius[~bowl].min()),
+                               "the concha floor is not inside the rim")
+            depth = float((radius[bowl] - np.abs(before[:, 0])[bowl]).min())
+            self.assertLess(depth, -.0025,
+                            "the concha is not a bowl (floor moved %.2f mm inwards)" % (depth * 1e3))
+            # A bowl, not a squeeze. The source ear was convex, so its middle was the
+            # *shallowest* part; afterwards the middle must be the deepest, by a real
+            # margin, and the cut must die out before the helix.
+            was = np.abs(before[:, 0])
+            now = np.abs(after[:, 0])
+            floor = np.argmin(now - was)          # the deepest point of the cut
+            self.assertLess(float(now[floor] - was[floor]), -.0035,
+                            "the concha is not deep enough to read")
+            self.assertLess(float(now[floor]), float(now.max()),
+                            "the deepest cut is not inside the ear's front face")
+            # The old dome was frontmost in the middle; the bowl has to have taken that
+            # distinction away, which is the whole read of a concha.
+            room = np.hypot(before[:, 1] - 1.5335, before[:, 2] - .0140) < .006
+            self.assertLess(float(now[room].max()), float(now.max()),
+                            "the middle of the ear is still the front of a dome")
+            rim = was > was.max() - .001
+            self.assertLess(float(np.abs(after[rim] - before[rim]).max()), .002,
+                            "the helix rim moved")
+            self.assertLess(float(np.abs(after - before).max()), .007)
+            np.testing.assert_array_equal(original["ST_Ear_" + side, "M_ST_Skin"]["JOINTS_0"],
+                                          refined["ST_Ear_" + side, "M_ST_Skin"]["JOINTS_0"])
+
     def test_iris_pupil_and_glint_lie_on_the_cut_sclera(self) -> None:
         doc, _binary, surfaces = self.outputs[0]
         names = {n["name"]: doc["meshes"][n["mesh"]]["name"] for n in doc["nodes"] if "mesh" in n}
@@ -392,7 +436,7 @@ class RefinedCharacterTests(unittest.TestCase):
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
         for (doc, _binary, surfaces), limit, revision in zip(
-                self.outputs, [64604, 62340], [2, 4]):
+                self.outputs, [64604, 62340], [2, 5]):
             # Revision 3 is the teacher's resting face, expression shapes and crop; the
             # seated student is unchanged at revision 2.
             self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)
