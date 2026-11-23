@@ -43,16 +43,14 @@ const SPEAKER_PROFILES: Dictionary = {
 		"gain_db": -0.5,
 		"description": "Distracted classmate, low and reserved.",
 	},
-	&"voice_orientation": {
-		"pitch_scale": 0.90,
-		"gain_db": 1.0,
-		"description": "Inner directional voice, resonant internal timbre.",
-	},
-	&"voice_whimsy": {
-		"pitch_scale": 1.06,
-		"gain_db": 0.5,
-		"description": "Inner voice of fancy, light and quick, a little too sure of itself.",
-	},
+	# Placeholder acoustic settings only: no new voice performance or clips are
+	# authored by registering the six voices. Imagination keeps its former preset.
+	&"voice_insight": {"pitch_scale": 0.90, "gain_db": 1.0},
+	&"voice_scrutiny": {"pitch_scale": 0.90, "gain_db": 1.0},
+	&"voice_echo": {"pitch_scale": 0.90, "gain_db": 1.0},
+	&"voice_imagination": {"pitch_scale": 1.06, "gain_db": 0.5},
+	&"voice_inference": {"pitch_scale": 0.90, "gain_db": 1.0},
+	&"voice_resonance": {"pitch_scale": 0.90, "gain_db": 1.0},
 }
 
 @export var controller_path: NodePath = ^"../DialogueController"

@@ -142,7 +142,7 @@ static func is_valid_difficulty(value: int) -> bool:
 
 
 ## One readable line for logs and failure reports:
-## "orientation 3 + 2d6 (4+6) 10 + 0 = 13 vs 9 (success)".
+## "scrutiny 3 + 2d6 (4+6) 10 + 0 = 13 vs 9 (success)".
 static func describe(result: Dictionary) -> String:
 	var faces: Array = result.get("dice", [])
 	var face_text := ""

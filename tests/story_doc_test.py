@@ -109,6 +109,31 @@ def main() -> int:
     subjective.insert(node + 1, "效果：设旗 b_imagined = true")
     refused(subjective, names, "主观会话不能设旗", "flag in a subjective scene")
 
+    # Author tooling uses the same six identities and subjective boundary as Godot.
+    expected_voices = {
+        "洞察": "insight", "细察": "scrutiny", "回声": "echo",
+        "臆想": "imagination", "推演": "inference", "共鸣": "resonance",
+    }
+    expect(set(names.ability) == set(expected_voices.values()), "author tooling does not expose exactly six voices")
+    for label, ability_id in expected_voices.items():
+        expect(names.ability_id(label, "fixture") == ability_id, f"wrong ability identity for {label}")
+        expect(names.speaker_id(label, "fixture") == "voice_" + ability_id, f"wrong speaker identity for {label}")
+    for retired in ("路感", "异想天开", "orientation", "whimsy"):
+        try:
+            names.ability_id(retired, "fixture")
+        except sd.DocError:
+            pass
+        else:
+            FAILURES.append(f"retired ability is still accepted by the author tool: {retired}")
+    expect(sd.IMAGINATION_ABILITIES == ("imagination",), "subjective author-tool whitelist drifted")
+    check_line = line_index(voice, "检定：臆想 ")
+    for label in expected_voices:
+        if label == "臆想":
+            continue
+        blocked = list(voice)
+        blocked[check_line] = blocked[check_line].replace("检定：臆想 ", f"检定：{label} ", 1)
+        refused(blocked, names, "主观会话只能带「臆想」检定", f"{label} check inside a fantasy")
+
     # Every script survives the .docx layer unchanged.
     with tempfile.TemporaryDirectory() as scratch:
         for name, lines in sd.build_all(names).items():

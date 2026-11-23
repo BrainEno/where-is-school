@@ -51,6 +51,7 @@ func _run() -> void:
 	_check_failure_branch_is_not_a_wall()
 	_check_terminal_branch()
 	_check_conditions_with_dictionary_flags()
+	_check_shipped_preparations()
 	Harness.finish(self, _failures, "checks parse strictly and resolve through one shared core.")
 
 
@@ -59,7 +60,7 @@ func _run() -> void:
 
 func _check_block(overrides: Dictionary = {}) -> Dictionary:
 	var block := {
-		"ability": "orientation",
+		"ability": "scrutiny",
 		"difficulty": 11,
 		"kind": "visible",
 		"success": "good",
@@ -194,7 +195,7 @@ func _check_parsing() -> void:
 	if node.check.is_empty():
 		_failures.append("The check block did not survive parsing.")
 		return
-	if String(node.check["ability"]) != "orientation":
+	if String(node.check["ability"]) != "scrutiny":
 		_failures.append("The check lost its ability id.")
 	if int(node.check["difficulty"]) != 11:
 		_failures.append("The check lost its difficulty.")
@@ -267,7 +268,7 @@ func _check_resolution() -> void:
 		return
 	if String(result.get("kind", "")) != "visible":
 		_failures.append("The result lost the visible kind.")
-	if int(result.get("ability_value", -1)) != _abilities.get_value(&"orientation"):
+	if int(result.get("ability_value", -1)) != _abilities.get_value(&"scrutiny"):
 		_failures.append("The result did not use the ability's value.")
 	if int(result.get("difficulty", -1)) != 11:
 		_failures.append("The result did not carry the node's difficulty.")
@@ -375,3 +376,140 @@ func _check_terminal_branch() -> void:
 	runtime.advance()
 	if runtime.is_active():
 		_failures.append("The explicit null branch did not finish immediately.")
+
+
+# --- authored preparations --------------------------------------------------
+
+
+func _check_shipped_preparations() -> void:
+	var library := DialogueLibrary.load_all(_abilities)
+	if not library.is_valid():
+		_failures.append("Preparation checks cannot load shipped content: " + library.describe_errors())
+		return
+	library.set_locale("en")
+	var cases := [
+		[&"q_after_dismissal", &"ad_square_check", &"saw_set_square"],
+		[&"classroom_curtain", &"cc_edges_check", &"seen:classroom_window"],
+		[&"classroom_curtain_void", &"cv_balance_check", &"curtain_edges_examined"],
+		[&"pg_shed", &"ps_ledger_check", &"seen:staff_office_rota"],
+		[&"pg_ball", &"pb_boundary_check", &"playground_shadow_measured"],
+	]
+	for entry: Array in cases:
+		var conversation_id: StringName = entry[0]
+		var node_id: StringName = entry[1]
+		var flag: StringName = entry[2]
+		var node: DialogueGraph.DialogueNode = library.get_conversation(conversation_id).nodes[node_id]
+		var key := "%s/%s" % [conversation_id, node_id]
+		# One point below the threshold, so the +1 has an observable effect on this
+		# *fresh* attempt without changing its seed, difficulty or dice.
+		var seed_value := _seed_for_total(key, int(node.check["difficulty"]) - _abilities.get_value(node.check["ability"]) - 1)
+		if seed_value < 0:
+			continue
+		Harness.clear_session_state(self)
+		var plain := _at_shipped_node(library, conversation_id, node_id, seed_value).get_last_check().duplicate(true)
+		Harness.clear_session_state(self)
+		_game_state.set_flag(flag, true)
+		var helped := _at_shipped_node(library, conversation_id, node_id, seed_value).get_last_check().duplicate(true)
+		if plain.get("modifier") != 0 or helped.get("modifier") != 1 \
+				or plain.get("dice") != helped.get("dice") or plain.get("difficulty") != helped.get("difficulty") \
+				or int(helped.get("total", 0)) != int(plain.get("total", 0)) + 1 \
+				or plain.get("success") != false or helped.get("success") != true:
+			_failures.append("%s is not a specific +1 preparation on a fresh check." % key)
+
+		Harness.clear_session_state(self)
+		plain = _at_shipped_node(library, conversation_id, node_id, seed_value).get_last_check().duplicate(true)
+		_game_state.set_flag(flag, true)
+		# Scene/save restore must not make the newly learned preparation retroactive.
+		_game_state.replace_snapshot(_game_state.get_snapshot())
+		var replay := _at_shipped_node(library, conversation_id, node_id, seed_value + 999).get_last_check().duplicate(true)
+		if replay.get("reused", false) != true:
+			_failures.append("%s rerolled after learning its preparation." % key)
+		replay.erase("reused")
+		if replay != plain:
+			_failures.append("%s recalculated an already recorded attempt." % key)
+	_check_curtain_choice_prepares(library)
+	_check_shadow_choice_prepares(library)
+
+
+func _at_shipped_node(
+	library: DialogueLibrary, conversation_id: StringName, node_id: StringName, seed_value: int
+) -> DialogueRuntime:
+	var graph := library.get_graph(conversation_id)
+	var conversation := graph.get_conversation(conversation_id)
+	var original := conversation.start_id
+	conversation.start_id = node_id # In-memory fixture; never write the authored table.
+	var runtime := DialogueRuntime.new(_game_state, _narrative, null, _abilities, CheckResolver.new(seed_value))
+	if not runtime.start(graph, conversation_id):
+		_failures.append("Could not start shipped preparation check %s/%s." % [conversation_id, node_id])
+	conversation.start_id = original
+	return runtime
+
+
+func _seed_for_total(key: String, total: int) -> int:
+	for candidate: int in range(512):
+		if CheckResolver.new(candidate).dice_total_for(key) == total:
+			return candidate
+	_failures.append("Could not realize dice total %d for %s." % [total, key])
+	return -1
+
+
+func _check_curtain_choice_prepares(library: DialogueLibrary) -> void:
+	for choice_id: StringName in [&"draw", &"leave", &"edges"]:
+		for success: bool in [false, true]:
+			Harness.clear_session_state(self)
+			var seed_value := _seed_for_total("classroom_curtain/cc_edges_check", 12 if success else 2)
+			if seed_value < 0:
+				continue
+			var runtime := DialogueRuntime.new(_game_state, _narrative, null, _abilities, CheckResolver.new(seed_value))
+			runtime.start(library.get_graph(&"classroom_curtain"), &"classroom_curtain")
+			if _game_state.get_flag(StoryFlags.CURTAIN_EDGES_EXAMINED, false) == true:
+				_failures.append("Listing the curtain options already granted preparation.")
+			var index := runtime.get_available_choice_ids().find(choice_id)
+			if index < 0 or not runtime.choose(index):
+				_failures.append("The existing curtain option %s disappeared." % choice_id)
+				continue
+			var examined := choice_id == &"edges"
+			if _game_state.get_flag(StoryFlags.CURTAIN_EDGES_EXAMINED, false) != examined:
+				_failures.append("Curtain preparation was granted by the wrong option.")
+			if examined and runtime.get_last_check().get("success") != success:
+				_failures.append("The curtain choice did not exercise both observation outcomes.")
+			var danger := _at_shipped_node(library, &"classroom_curtain_void", &"cv_balance_check", seed_value)
+			if danger.get_last_check().get("modifier") != (1 if examined else 0):
+				_failures.append("The void check ignored cautious examination, or rewarded a blind draw.")
+
+
+func _check_shadow_choice_prepares(library: DialogueLibrary) -> void:
+	for success: bool in [false, true]:
+		Harness.clear_session_state(self)
+		var seed_value := _seed_for_total("pg_ball/pb_ledger_check", 12 if success else 2)
+		if seed_value < 0:
+			continue
+		var runtime := DialogueRuntime.new(_game_state, _narrative, null, _abilities, CheckResolver.new(seed_value))
+		runtime.start(library.get_graph(&"pg_ball"), &"pg_ball")
+		runtime.advance() # The existing second line offers reach / shadow / leave.
+		var index := runtime.get_available_choice_ids().find(&"shadow")
+		if index < 0 or not runtime.choose(index):
+			_failures.append("The ball no longer offers the shadow approach.")
+			continue
+		var shadow := runtime.get_last_check().duplicate(true)
+		for _step in range(8):
+			if not runtime.is_active():
+				break
+			runtime.advance()
+		if runtime.is_active() or shadow.get("success") != success:
+			_failures.append("The shadow approach did not finish along its expected branch.")
+		if _game_state.get_flag(StoryFlags.PLAYGROUND_SHADOW_MEASURED, false) != success:
+			_failures.append("A failed shadow comparison was treated as a measurement.")
+		var again := DialogueRuntime.new(_game_state, _narrative, null, _abilities, CheckResolver.new(seed_value))
+		again.start(library.get_graph(&"pg_ball"), &"pg_ball")
+		again.advance()
+		var ids := again.get_available_choice_ids()
+		if ids.has(&"shadow") or not ids.has(&"reach"):
+			_failures.append("Preparing with the shadow rerolled it or removed the alternate approach.")
+			continue
+		again.choose(ids.find(&"reach"))
+		if again.get_last_check().get("modifier") != (1 if success else 0):
+			_failures.append("The measured shadow did not prepare the later reach.")
+		var flag := StoryFlags.check_record_flag(&"pg_ball", &"pb_ledger_check")
+		if _game_state.get_flag(flag, {}) != shadow:
+			_failures.append("Trying the alternate approach changed the saved shadow check.")

@@ -7,6 +7,7 @@ extends Node
 ## `SaveCodec` (ADR 0005).
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+const VoiceMigration := preload("res://scripts/rpg/inner_voice_migration.gd")
 
 signal story_flag_changed(flag: StringName, previous_value: Variant, new_value: Variant)
 signal story_state_replaced
@@ -42,7 +43,7 @@ func get_snapshot() -> Dictionary:
 
 
 func replace_snapshot(snapshot: Dictionary) -> void:
-	_story_flags = snapshot.duplicate(true)
+	_story_flags = VoiceMigration.migrate_flags(snapshot)
 	story_state_replaced.emit()
 
 

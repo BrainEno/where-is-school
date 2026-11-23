@@ -545,11 +545,11 @@ func _case_edit_ability_text() -> void:
 	var structure := String(model.get("structure_text", ""))
 	_expect(structure.contains("数值"), "只读结构里没有数值：%s" % structure.left(160))
 	_expect(
-		store.set_field(_field(model, "name"), "en", "Orientation, revised"),
+		store.set_field(_field(model, "name"), "en", "Test voice, revised"),
 		"英文声音名称没写进去。"
 	)
 	_expect(
-		store.set_field(_field(model, "name"), "zh-CN", "路感（改）"),
+		store.set_field(_field(model, "name"), "zh-CN", "测试声音（改）"),
 		"中文声音名称没写进去。"
 	)
 	_expect(
@@ -569,7 +569,7 @@ func _case_edit_ability_text() -> void:
 	reloaded.open("abilities")
 	var reloaded_model := reloaded.ability_model(ability_id)
 	_expect(
-		String(_field(reloaded_model, "name")["values"]["zh-CN"]) == "路感（改）",
+		String(_field(reloaded_model, "name")["values"]["zh-CN"]) == "测试声音（改）",
 		"重新读出来的声音名称不对。"
 	)
 	# The same rule the registry enforces at start-up applies before a save: a Chinese

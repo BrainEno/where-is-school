@@ -509,6 +509,15 @@ versioned slot: see ADR 0005.)
   hidden checks that ship today. The shipped `orientation` description still says "one
   voice", which becomes the owner's copy edit at that point.
 
+**Later roster migration (#280, 2026-11-23):** Phase 6a above records the original
+engineering work, not the current voice count. Six owner-confirmed voices are now
+registered with provisional value 3; 19 existing checks have reviewed semantic
+owners, and five preparations have +1 modifiers. Resonance is reserved for suitable
+authored content. No growth system or new monologue is implied. The preload-only
+`inner_voice_migration.gd` relabels known saved results without recalculating them
+and attributes old passive uses by stable fired-rule ids. See the
+[content contract](../data/dialogue_schema/README.md#six-voice-registry-and-reviewed-attempts-280).
+
 ### Phase 6a.1 — Bilingual content editing in the editor (delivered in this round)
 - `addons/narrative_editor/` is an EditorPlugin dock: pick a chapter, pick a conversation
   and node (or an inspection, or an inner voice), search by node id, speaker or text in

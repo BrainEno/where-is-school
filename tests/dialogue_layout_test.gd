@@ -238,7 +238,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 
 	# 7. Consecutive inner voices: subjective, imagined, no role.
 	var voice_line := _line(
-		prose_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true
+		prose_en, "scrutiny", "Scrutiny", "", NarrativeEntry.Source.IMAGINED, true
 	)
 	await _show(voice_line)
 	_measure("%s inner voice" % tag, layout_size, true)
@@ -250,7 +250,7 @@ func _run_cases(size: Vector2i, samples: Dictionary, prefix: String) -> void:
 	# 7b. The longest inner voice and the longest spoken line in the prologue. Either may
 	# scroll at the small sizes; what is checked is that each scrolls exactly when it does
 	# not fit.
-	await _show(_line(voice_en, "orientation", "Orientation", "", NarrativeEntry.Source.IMAGINED, true))
+	await _show(_line(voice_en, "scrutiny", "Scrutiny", "", NarrativeEntry.Source.IMAGINED, true))
 	_measure("%s longest inner voice" % tag, layout_size, false)
 	await _show(_line(beat_en, "q", "Q", "role.q", NarrativeEntry.Source.REPORTED, false))
 	_measure("%s longest spoken line" % tag, layout_size, false)
@@ -579,15 +579,15 @@ func _check_overlay(size: Vector2i) -> void:
 	root.add_child(overlay)
 	await process_frame
 	overlay.present(
-		&"orientation",
-		"Orientation",
+		&"scrutiny",
+		"Scrutiny",
 		{
 			"dice": [4],
 			"modifier": 2,
 			"difficulty": 12,
 			"success": true,
 			"kind": "visible",
-			"ability": "orientation",
+			"ability": "scrutiny",
 		}
 	)
 	await process_frame

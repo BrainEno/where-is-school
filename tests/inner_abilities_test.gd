@@ -9,11 +9,49 @@ extends SceneTree
 ##   structural check would catch);
 ## - its passive rules have real triggers and start with the correct voice's hidden
 ##   check in every language;
-## - it is reachable in shipped content, either through a passive rule or through a
-##   check the player can choose;
+## - each authored check keeps its semantic owner; the one reserved voice stays
+##   registered without inventing an unrelated check to make a coverage number;
 ## - the runtime presentation uses the translated name, not the raw id.
 
 const Harness = preload("res://tests/test_harness.gd")
+const VoiceMigration = preload("res://scripts/rpg/inner_voice_migration.gd")
+const EXPECTED_NAMES := {
+	&"insight": ["Insight", "洞察"],
+	&"scrutiny": ["Scrutiny", "细察"],
+	&"echo": ["Echo", "回声"],
+	&"imagination": ["Imagination", "臆想"],
+	&"inference": ["Inference", "推演"],
+	&"resonance": ["Resonance", "共鸣"],
+}
+## Independent content contract, not read from the production migration table.
+const CHECK_OWNERS := {
+	"voice_notice/vn_1": &"insight",
+	"voice_arrival/va_1": &"inference",
+	"voice_hoop/vh_1": &"scrutiny",
+	"pg_shed/ps_boundary_check": &"scrutiny",
+	"pg_shed/ps_ledger_check": &"scrutiny",
+	"pg_ball/pb_boundary_check": &"scrutiny",
+	"pg_ball/pb_ledger_check": &"inference",
+	"pg_roof_jump/prj_check": &"inference",
+	"q_after_dismissal/ad_square_check": &"echo",
+	"expected_b/e3_whimsy": &"imagination",
+	"classroom_curtain/cc_edges_check": &"scrutiny",
+	"classroom_curtain_void/cv_balance_check": &"scrutiny",
+	"classroom_rear_door_borrow/rdb_check": &"inference",
+	"align_archive/bearing": &"inference",
+	"align_plan_room/bearing": &"inference",
+	"align_projection_room/bearing": &"scrutiny",
+	"align_computer_room/bearing": &"inference",
+	"align_vacant_office/bearing": &"scrutiny",
+	"align_principal_office/bearing": &"inference",
+}
+const PREPARATIONS := {
+	"q_after_dismissal/ad_square_check": "saw_set_square",
+	"classroom_curtain/cc_edges_check": "seen:classroom_window",
+	"classroom_curtain_void/cv_balance_check": "curtain_edges_examined",
+	"pg_shed/ps_ledger_check": "seen:staff_office_rota",
+	"pg_ball/pb_boundary_check": "playground_shadow_measured",
+}
 
 var _failures: Array[String] = []
 var _abilities: InnerAbilities = null
@@ -49,8 +87,9 @@ func _run() -> void:
 	_check_rules()
 	_check_coverage()
 	_check_presentation_names()
+	_check_shipped_allocations()
 
-	Harness.finish(self, _failures, "every inner voice is valued, translated, and used.")
+	Harness.finish(self, _failures, "six voices are registered and translated; all 19 checks keep their reviewed owner.")
 
 
 # --- cases ------------------------------------------------------------------
@@ -58,11 +97,19 @@ func _run() -> void:
 
 func _check_shape() -> void:
 	var ids := _abilities.get_ability_ids()
-	# How many voices ship is a content decision, so this test does not pin the count:
-	# it pins that each registered voice is complete on its own. The multi-voice
-	# plumbing itself is exercised with fixture voices in tests/multi_voice_test.gd.
-	if ids.is_empty():
-		_failures.append("No inner voice is registered at all.")
+	# Pin the owner's content roster here, not in the generic loader: the isolated
+	# two-voice fixtures still prove that the plumbing is not hard-coded to six.
+	var expected: Array = EXPECTED_NAMES.keys()
+	expected.sort()
+	if ids != expected:
+		_failures.append("The shipped roster is not exactly the owner's six voices: %s." % str(ids))
+	for retired: StringName in [&"orientation", &"whimsy"]:
+		if _abilities.has_ability(retired) or _abilities.get_ability_for_speaker(
+			StringName("voice_%s" % retired)
+		) != null:
+			_failures.append("A retired voice is still registered or aliased: %s." % retired)
+		if FileAccess.file_exists("res://data/characters/voice_%s.tres" % retired):
+			_failures.append("A retired character profile still ships: %s." % retired)
 	var speakers: Dictionary = {}
 	for ability_id: StringName in ids:
 		var ability := _abilities.get_ability(ability_id)
@@ -75,6 +122,10 @@ func _check_shape() -> void:
 			)
 		if _abilities.get_value(ability_id) != ability.value:
 			_failures.append("Ability '%s' does not read back its own value." % ability_id)
+		if ability.value != 3:
+			_failures.append("Registry migration changed the provisional base value for %s." % ability_id)
+		if not VoiceDirector.SPEAKER_PROFILES.has(ability.speaker_id):
+			_failures.append("No acoustic preset is registered for %s." % ability.speaker_id)
 		# The speaker is the only link between a voice and its presentation, so it has
 		# to be unique and to point back at this exact ability.
 		if String(ability.speaker_id).is_empty():
@@ -130,6 +181,8 @@ func _check_bilingual() -> void:
 	var identity: Dictionary = {}
 	for ability_id: StringName in ids:
 		english[ability_id] = _abilities.get_ability(ability_id).display_name
+		if EXPECTED_NAMES.has(ability_id) and english[ability_id] != EXPECTED_NAMES[ability_id][0]:
+			_failures.append("The English name changed for %s." % ability_id)
 		english_descriptions[ability_id] = _abilities.get_ability(ability_id).description
 		if _abilities.get_ability(ability_id).description.strip_edges().is_empty():
 			_failures.append("Ability '%s' has no description in the active language." % ability_id)
@@ -141,6 +194,8 @@ func _check_bilingual() -> void:
 	for ability_id: StringName in ids:
 		var ability := _abilities.get_ability(ability_id)
 		var zh_name := ability.display_name
+		if EXPECTED_NAMES.has(ability_id) and zh_name != EXPECTED_NAMES[ability_id][1]:
+			_failures.append("The Chinese name changed for %s." % ability_id)
 		if zh_name.strip_edges().is_empty():
 			_failures.append("Ability '%s' has no Chinese name." % ability_id)
 		if zh_name == String(english[ability_id]):
@@ -171,16 +226,17 @@ func _check_rules() -> void:
 		_failures.append("Passive rules cannot be checked without a loaded dialogue library.")
 		return
 	var rules := _abilities.get_rules()
-	# Three rules are enough to prove the mechanism with the voice that ships: an
-	# inspection trigger, a second inspection trigger, and a location trigger. Fewer
-	# would mean a voice that never speaks unprompted.
-	if rules.size() < 3:
-		_failures.append("Expected at least three passive rules, found %d." % rules.size())
+	# Keep the three authored rules and their save identities. Registration alone
+	# does not author more interruptions for the other voices.
+	if rules.size() != VoiceMigration.PASSIVE_OWNERS.size():
+		_failures.append("The three authored passive rules changed identity or count.")
 	var seen: Dictionary = {}
 	for rule: InnerAbilities.PassiveRule in rules:
 		if seen.has(rule.rule_id):
 			_failures.append("Passive rule '%s' is defined twice." % rule.rule_id)
 		seen[rule.rule_id] = true
+		if VoiceMigration.PASSIVE_OWNERS.get(rule.rule_id) != rule.ability_id:
+			_failures.append("Passive '%s' lost its reviewed owner." % rule.rule_id)
 		if not _abilities.has_ability(rule.ability_id):
 			_failures.append("Rule '%s' names unknown voice '%s'." % [rule.rule_id, rule.ability_id])
 		if not InnerAbilities.TRIGGER_KINDS.has(rule.trigger_kind):
@@ -226,9 +282,9 @@ func _check_rule_link(
 		_failures.append("%s: '%s' must open with its own voice's check." % [label, rule.conversation_id])
 
 
-## Each voice must be reachable in shipped content, and only through itself: a check
-## labelled 'orientation' that actually rolls something else would be invisible to a player
-## and to this test unless the ids are compared.
+## Authored checks must use their own voice; resonance is registered but deliberately
+## awaits interpersonal content. Giving a spatial check its name would mislead a player
+## unless the test compares the identities.
 func _check_coverage() -> void:
 	if _library == null:
 		return
@@ -258,10 +314,11 @@ func _check_coverage() -> void:
 							% [conversation_id, node_id, target]
 						)
 	for ability_id: StringName in _abilities.get_ability_ids():
-		if not used.has(ability_id):
-			_failures.append(
-				"Voice '%s' exists but nothing in the content ever uses it." % ability_id
-			)
+		if ability_id == &"resonance":
+			if used.has(ability_id):
+				_failures.append("An unauthorised interpersonal check was added to fill resonance coverage.")
+		elif not used.has(ability_id):
+			_failures.append("Authored voice '%s' lost its reachable content." % ability_id)
 
 
 func _check_presentation_names() -> void:
@@ -280,3 +337,49 @@ func _check_presentation_names() -> void:
 			)
 	if not _abilities.get_name_for_speaker(&"q").is_empty():
 		_failures.append("An ordinary classmate was resolved as an inner voice.")
+
+
+## Every existing attempt is reviewed independently. Replacing a whole chapter with
+## insight, adding a sixth kind of check, or moving an old save key must fail here.
+func _check_shipped_allocations() -> void:
+	if VoiceMigration.CHECK_ABILITIES.size() != CHECK_OWNERS.size():
+		_failures.append("The compatibility map does not cover exactly the 19 shipped attempts.")
+	for locale: String in L10n.LOCALES:
+		_abilities.set_locale(locale)
+		var found: Dictionary = {}
+		for graph: DialogueGraph in _library.get_graphs_for(locale):
+			for conversation_id: StringName in graph.get_conversation_ids():
+				var conversation := graph.get_conversation(conversation_id)
+				for node_id: StringName in conversation.order:
+					var node: DialogueGraph.DialogueNode = conversation.nodes[node_id]
+					if node.speaker_id in [&"voice_orientation", &"voice_whimsy"]:
+						_failures.append("%s: retired speaker in %s/%s." % [locale, conversation_id, node_id])
+					if node.check.is_empty():
+						continue
+					var key := "%s/%s" % [conversation_id, node_id]
+					found[key] = true
+					if not CHECK_OWNERS.has(key):
+						_failures.append("Unreviewed check added: %s/%s." % [locale, key])
+						continue
+					var expected: StringName = CHECK_OWNERS[key]
+					if node.check["ability"] != expected:
+						_failures.append("%s/%s should use %s, not %s." % [locale, key, expected, node.check["ability"]])
+					var flag := StoryFlags.check_record_flag(conversation_id, node_id)
+					if VoiceMigration.CHECK_ABILITIES.get(flag) != expected:
+						_failures.append("The saved result for %s migrates to another voice." % key)
+					if _characters.is_inner_voice(node.speaker_id) and node.speaker_id != StringName("voice_%s" % expected):
+						_failures.append("The speaker and check disagree in %s/%s." % [locale, key])
+					if _characters.is_inner_voice(node.speaker_id):
+						var line := DialogueRuntime.compose_line(conversation, node, _characters, _abilities)
+						if line.get("speaker_name") != _abilities.get_ability(expected).display_name:
+							_failures.append("%s/%s does not display its translated voice name." % [locale, key])
+					var modifiers: Array = node.check.get("modifiers", [])
+					if PREPARATIONS.has(key):
+						if modifiers.size() != 1 or String(modifiers[0].get("flag", "")) != PREPARATIONS[key] \
+								or int(modifiers[0].get("value", 0)) != 1:
+							_failures.append("%s/%s lost its one specific +1 preparation." % [locale, key])
+					elif not modifiers.is_empty():
+						_failures.append("An unreviewed preparation was added in %s/%s." % [locale, key])
+		if found.size() != CHECK_OWNERS.size():
+			_failures.append("%s has %d checks, expected %d stable identities." % [locale, found.size(), CHECK_OWNERS.size()])
+	_abilities.set_locale("en")

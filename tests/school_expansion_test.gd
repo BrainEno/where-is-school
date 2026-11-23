@@ -318,7 +318,7 @@ func _study(id: StringName, marker: StringName, success: bool, observation_stanc
 	var rolled: Dictionary = _rolls.back()
 	var record: Dictionary = _state.get_flag(record_key, {}).duplicate(true)
 	_check.expect(not record.is_empty() and door.is_open() == success and rolled.get("success") == success
-		and rolled.get("kind") == "visible" and rolled.get("ability") == &"orientation", "%s rolled or unlocked wrongly: %s" % [id, rolled])
+		and rolled.get("kind") == "visible" and rolled.get("ability") == (&"scrutiny" if id in [&"projection_room", &"vacant_office"] else &"inference"), "%s rolled or unlocked wrongly: %s" % [id, rolled])
 	if not success:
 		if not await _manual(slide, slide_stance, route, &"wrong"):
 			return false

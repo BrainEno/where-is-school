@@ -2,21 +2,41 @@
   "format_version": 1,
   "max_passive_per_session": 2,
   "abilities": {
-    "orientation": {
+    "insight": {
       "value": 3,
-      "speaker": "voice_orientation",
+      "speaker": "voice_insight",
       "max_passive": 2
     },
-    "whimsy": {
+    "scrutiny": {
       "value": 3,
-      "speaker": "voice_whimsy",
+      "speaker": "voice_scrutiny",
+      "max_passive": 2
+    },
+    "echo": {
+      "value": 3,
+      "speaker": "voice_echo",
+      "max_passive": 2
+    },
+    "imagination": {
+      "value": 3,
+      "speaker": "voice_imagination",
       "max_passive": 1
+    },
+    "inference": {
+      "value": 3,
+      "speaker": "voice_inference",
+      "max_passive": 2
+    },
+    "resonance": {
+      "value": 3,
+      "speaker": "voice_resonance",
+      "max_passive": 2
     }
   },
   "passives": [
     {
       "id": "alley_notice_orientation",
-      "ability": "orientation",
+      "ability": "insight",
       "trigger": {
         "kind": "inspection",
         "id": "alley_notices"
@@ -26,7 +46,7 @@
     },
     {
       "id": "playground_hoop_orientation",
-      "ability": "orientation",
+      "ability": "scrutiny",
       "trigger": {
         "kind": "inspection",
         "id": "pg_hoop"
@@ -36,7 +56,7 @@
     },
     {
       "id": "playground_arrival_orientation",
-      "ability": "orientation",
+      "ability": "inference",
       "trigger": {
         "kind": "location",
         "id": "playground"

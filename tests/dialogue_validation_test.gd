@@ -134,7 +134,7 @@ func _orphan_after_choice() -> Dictionary:
 func _orphan_after_check() -> Dictionary:
 	return _graph("orphan_after_check", [
 		{"id": "roll", "speaker": "q", "text": "Fixture roll.",
-		 "check": {"ability": "orientation", "difficulty": 8, "kind": "hidden",
+		 "check": {"ability": "scrutiny", "difficulty": 8, "kind": "hidden",
 				   "success": "ok", "failure": "bad"}},
 		{"id": "orphan", "speaker": "q", "text": "Fixture orphan.", "next": null},
 		{"id": "ok", "speaker": "q", "text": "Fixture ok.", "next": null},
@@ -168,7 +168,7 @@ func _valid_shared_hub() -> Dictionary:
 func _valid_check_branches() -> Dictionary:
 	return _graph("valid_check_branches", [
 		{"id": "k1", "speaker": "q", "text": "Fixture roll.",
-		 "check": {"ability": "orientation", "difficulty": 8, "kind": "visible",
+		 "check": {"ability": "scrutiny", "difficulty": 8, "kind": "visible",
 				   "success": "k2", "failure": "k3"}},
 		{"id": "k2", "speaker": "q", "text": "Fixture success.", "next": null},
 		{"id": "k3", "speaker": "q", "text": "Fixture failure.", "next": null},
@@ -193,7 +193,7 @@ func _focus_without_target() -> Dictionary:
 func _valid_final_check() -> Dictionary:
 	return _graph("valid_final_check", [
 		{"id": "fc1", "speaker": "q", "text": "Fixture roll.",
-		 "check": {"ability": "orientation", "difficulty": 10, "kind": "visible",
+		 "check": {"ability": "scrutiny", "difficulty": 10, "kind": "visible",
 				   "success": null, "failure": null}},
 	])
 

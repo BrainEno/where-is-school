@@ -49,10 +49,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "One sheet has shrunk. A hole is still a hole.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 10,
             "kind": "visible",
             "success": "aligned",
@@ -167,10 +167,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "Trace the turn from the landing, not the longest line.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 10,
             "kind": "visible",
             "success": "aligned",
@@ -285,10 +285,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Watch the bottom corner. The largest frame just looks nearest.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 11,
             "kind": "visible",
             "success": "aligned",
@@ -403,10 +403,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "A shift of one notch. Let the row touch the edge first.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 11,
             "kind": "visible",
             "success": "aligned",
@@ -521,10 +521,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "The ink and the pressure are two different things.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 10,
             "kind": "visible",
             "success": "aligned",
@@ -639,10 +639,10 @@
         },
         {
           "id": "bearing",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "Don’t take the middle for the place everyone is facing.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 11,
             "kind": "visible",
             "success": "aligned",

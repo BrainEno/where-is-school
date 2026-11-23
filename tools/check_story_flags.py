@@ -65,7 +65,6 @@ WRITE_ONLY: dict[str, str] = {
     "playground_rota_smudged": "playground check outcome; a use for the yard's results is planned (#283)",
     "playground_tag_found": "playground check outcome; a use for the yard's results is planned (#283)",
     "playground_ball_stuck": "playground check outcome; a use for the yard's results is planned (#283)",
-    "playground_shadow_measured": "playground check outcome; a use for the yard's results is planned (#283)",
 }
 
 CONST = re.compile(r'^const ([A-Z][A-Z0-9_]*): StringName = &"([^"]+)"', re.M)

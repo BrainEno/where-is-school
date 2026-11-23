@@ -249,7 +249,7 @@ func _rear_door(succeeds: bool) -> void:
 	# A success may be followed by the corridor's own arrival line; nothing comes before.
 	_checks.expect(not _played.is_empty() and _played[0] == REAR_CONVERSATION
 		and _played.count(REAR_CONVERSATION) == 1 and _rolls[0].get("success") == succeeds
-		and _rolls[0].get("kind") == "visible" and _rolls[0].get("ability") == &"orientation",
+		and _rolls[0].get("kind") == "visible" and _rolls[0].get("ability") == &"inference",
 		"The rear door did not play its one visible check: %s %s." % [str(_played), str(_rolls)])
 	var record: Variant = _state.get_flag(StoryFlags.check_record_flag(REAR_CONVERSATION, REAR_CHECK), null)
 	_checks.expect(record is Dictionary, "The rear-door check was not recorded.")
@@ -438,7 +438,7 @@ func _drain(done: Callable, seconds: float = 20.0) -> bool:
 func _resolver_for(succeeds: bool, conversation_id: StringName, node_id: StringName, key: String) -> CheckResolver:
 	var conversation := _dialogue.get_dialogue_library().get_conversation(conversation_id)
 	var node: DialogueGraph.DialogueNode = conversation.nodes[node_id]
-	var ability := _dialogue.get_abilities().get_value(&"orientation")
+	var ability := _dialogue.get_abilities().get_value(node.check["ability"])
 	for seed_value: int in range(64):
 		var resolver := CheckResolver.new(seed_value)
 		if (resolver.dice_total_for(key) + ability >= int(node.check["difficulty"])) == succeeds:

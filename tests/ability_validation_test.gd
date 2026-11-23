@@ -224,7 +224,7 @@ func _case_translation_exceptions() -> void:
 	# 3. The declaration outlived the reason: the field was translated after all.
 	text = _base_text_copy()
 	entry = _localised(text, "zh-CN", ability_id)
-	entry["name"] = "路感（已经翻译了）"
+	entry["name"] = "测试声音（已经翻译了）"
 	entry["untranslated_fields"] = ["name"]
 	registry = _load("copy_declared_but_translated", _base_structure_copy(), text)
 	_expect_error(
