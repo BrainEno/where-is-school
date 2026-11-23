@@ -17,7 +17,6 @@ extends SceneTree
 ## the same camera and live scene. The close overview uses only those wings' bounds.
 ## Pass `return-route` for matched gameplay-camera details of the street, courtyard,
 ## alley and yard. The coordinates are valid on both sides of the art change.
-## `return-board-focus` adds the board's authored focus on the current scene.
 ## `school-details` uses matched hall, lab and fitted-room stances.
 ## Add `school-focus` for authored CameraShots, including the updated wet bench.
 ## `review_width=400` additionally writes compact copies for inline CI review.
@@ -270,7 +269,6 @@ const PORT_YARD_STANCES := [["yard_truck", Vector3(8.6, 0.0, 11.8)]]
 const PORT_YARD_VIEWS := [["yard_truck_tail", Vector3(13.0, 3.5, 16.0), Vector3(6.0, 1.8, 11.8)]]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
-const BOARD_STANCE := Vector3(12.45, 0, 3.2)
 const RETURN_SPOTS := {
 	"street": [
 		["detail_return_plate", Vector3(-9.15, 0, -10.8)],
@@ -286,8 +284,8 @@ const RETURN_SPOTS := {
 		["detail_trolley_guide", Vector3(-2.10, 0, 5.6)],
 	],
 	"playground": [
-		["detail_return_board", BOARD_STANCE],
-		["detail_line_kit", Vector3(-11.48, 0, -9.6)],
+		["detail_shed", Vector3(-12.12, 0, -4.0)],
+		["detail_concrete_court", Vector3(0.8, 0, 2.0)],
 		["detail_yard_tap", Vector3(-4.67, 0, 14.42)],
 	],
 }
@@ -304,7 +302,6 @@ var _quality := 0.9
 var _only := ""
 var _teaching_wing := false
 var _return_route := false
-var _return_board_focus := false
 var _school_details := false
 var _school_focus := false
 var _dream_annex := false
@@ -347,8 +344,6 @@ func _initialize() -> void:
 			_school_details = true
 		elif arg == "school-focus":
 			_school_focus = true
-		elif arg == "return-board-focus":
-			_return_board_focus = true
 		elif arg == "dream-annex":
 			_dream_annex = true
 		elif arg == "annex-thresholds":
@@ -503,8 +498,6 @@ func _capture_location(location_id: String, scene_path: String, out_dir: String)
 		_save(out_dir, shot_name)
 		_lines.append("- `%s.jpg` (%s) at %s" % [shot_name, spot[0], str(spot[1])])
 		index += 1
-	if _return_board_focus and location_id == "playground":
-		await _capture_board_focus(current, out_dir)
 	if _school_details and location_id == "laboratory":
 		await _lab_end_plate(out_dir)
 	if _school_focus:
@@ -603,10 +596,6 @@ func _lab_end_plate(out_dir: String) -> void:
 	_lines.append("- `laboratory_plate_detail_bench_end.jpg` (matched low camera, not gameplay).")
 	(_rig as CameraRig).camera.make_current()
 	camera.queue_free()
-
-
-func _capture_board_focus(current: LocationRoot, out_dir: String) -> void:
-	await _capture_focus(current, out_dir, &"pg_board_look", BOARD_STANCE, "playground_shot_detail_board_focus")
 
 
 func _capture_focus(current: LocationRoot, out_dir: String, id: StringName, feet: Vector3, name: String) -> void:

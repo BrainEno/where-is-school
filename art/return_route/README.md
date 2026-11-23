@@ -1,5 +1,7 @@
 # Equipment return line — outdoor interaction pass
 
+> Historical design note: the yard return board, marking kit and dependent shed comparison have since been removed. Street and alley details and the tap remain.
+
 English source. [Simplified Chinese reading copy](README.zh-CN.md).
 
 The street, courtyard, alley and yard are one playable loop, not four rooms to fill uniformly. Keep their long sight lines and open middle. Cream enamel, blue-grey iron and a single ochre lip sit against the established palettes. Marks are small and functional: one rail, two unequal ticks at one end, and an arrow. Flipping that pattern makes a bad sign recognizable without adding a new door or asserting anything about how the school works.

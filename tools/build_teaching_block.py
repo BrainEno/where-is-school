@@ -22,6 +22,7 @@ from build_playground_art import (  # noqa: E402
     Builder, HIDE, court_landmarks, material_for, plane, quad, school_exit_fittings,
     school_plinth_returns, srgb, vec3,
 )
+import yard_details  # noqa: E402
 from build_outdoor_locations import BAKE_ONLY_LAYER, PLAYER_ONLY_LAYER, build_playground  # noqa: E402
 from school_annex_layout import (  # noqa: E402
     ARCHIVE, PLAN_ROOM, PROJECTION, COMPUTER, VACANT, PRINCIPAL, WASH_02, WASH_03, THRESHOLDS,
@@ -1137,7 +1138,7 @@ def courtyard_view():
     prefixes = ("Hoop", "Shed", "Container", "Frame", "FencePostGap", "Bird", "Tree", "SouthGate")
     named = {"YardGround", "CourtSurface", "CourtFarHalf", "SouthFenceWest", "SouthFenceEast"}
     for name, pos, size, _, _, body, _ in build_playground(for_courtyard_view=True).boxes:
-        if not (name in named or name.startswith(prefixes)) or HIDE.fullmatch(name):
+        if not (name in named or name.startswith(prefixes)) or HIDE.fullmatch(name) or name == "ShedHedge":
             continue
         # The full-height estate blocks and the yard back wall are absent from this
         # cutaway. They would slice the hall camera's view or cover the fire stair.
@@ -1151,6 +1152,7 @@ def courtyard_view():
     b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
     b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')
     court_landmarks(b, "Yard", material_prefix="yard/")
+    yard_details.hedge(b, "Yard", material_prefix="yard/")
     b.node("SchoolPlinth", "Yard", position=vec3((0, 0.6, -19.9)))
     school_plinth_returns(b, "Yard/SchoolPlinth", material_prefix="yard/")
     foundations(b)
