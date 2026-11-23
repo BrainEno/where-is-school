@@ -97,6 +97,7 @@ func _run() -> void:
 		_check_spawns(corridor, annex)
 		_check_ticket_counter(corridor)
 		_check_stable_art(annex)
+		_check_stable_surfaces(annex)
 		var stable := annex.get_node_or_null(^"StableYard") as Node3D
 		_check.expect(stable != null and is_equal_approx(stable.position.x, -4.0)
 			and annex.has_node(^"StableLaneConnector"), "Stable must be separated from the restroom with a connected lane.")
@@ -184,6 +185,46 @@ func _check_stable_art(annex: Node) -> void:
 		var bounds := wisp.multimesh.mesh.get_aabb()
 		_check.expect(bounds.size.z > 0.15 and wisp.multimesh.instance_count <= 3,
 			"The smell must be sparse and three-dimensional")
+
+
+func _check_stable_surfaces(annex: Node) -> void:
+	# The connector and the relief use one soil shader in the same yard-local coordinates.
+	var earth := annex.get_node_or_null(^"StableYard/YardEarth") as MeshInstance3D
+	var connector := annex.get_node_or_null(^"StableLaneConnectorEarth") as MeshInstance3D
+	if _check.expect(earth != null and connector != null and connector.mesh != null,
+			"Stable soil or its connector is missing"):
+		var yard_mat := earth.material_override as ShaderMaterial
+		var lane_mat := connector.material_override as ShaderMaterial
+		if _check.expect(yard_mat != null and lane_mat != null and yard_mat.shader != null
+				and yard_mat.shader == lane_mat.shader, "The connector no longer shares the yard soil shader"):
+			var offset: Vector2 = lane_mat.get_shader_parameter(&"ground_offset")
+			_check.expect(offset.is_equal_approx(Vector2(-18.75, 16.565)),
+				"The connector's soil coordinates no longer meet the yard's")
+		var bounds := connector.mesh.get_aabb()
+		_check.expect(is_equal_approx(connector.position.x + bounds.position.x, -24.75),
+			"The connector overlaps or leaves a gap at the yard soil edge")
+	# On each low wall, the lime is proud of the mud; caps stop at the ends.
+	for wall: String in ["WallSouth", "WallWest", "WallNorth", "WallNorthEast"]:
+		var base := "StableYard/" + wall + "/"
+		var mud := annex.get_node_or_null(NodePath(base + "Mud")) as MeshInstance3D
+		var lime := annex.get_node_or_null(NodePath(base + "Lime")) as MeshInstance3D
+		var cap := annex.get_node_or_null(NodePath(base + "Cap")) as MeshInstance3D
+		if not _check.expect(mud != null and lime != null and cap != null, wall + " lost a surface"):
+			continue
+		var ms := mud.mesh.get_aabb().size
+		var ls := lime.mesh.get_aabb().size
+		var cs := cap.mesh.get_aabb().size
+		var along_x := ms.x > ms.z
+		_check.expect((ls.z > ms.z and ls.x < ms.x) if along_x else (ls.x > ms.x and ls.z < ms.z),
+			wall + " has coplanar mud and lime faces")
+		_check.expect(is_equal_approx(cs.x, ms.x) and is_equal_approx(cs.z, ms.z),
+			wall + " cap extends into its neighbour")
+	var north := annex.get_node_or_null(^"StableYard/WallNorth/Cap") as MeshInstance3D
+	var east := annex.get_node_or_null(^"StableYard/WallNorthEast/Cap") as MeshInstance3D
+	if north != null and east != null:
+		var north_end := north.global_position.x + north.mesh.get_aabb().end.x
+		var east_start := east.global_position.x + east.mesh.get_aabb().position.x
+		_check.expect(north_end <= east_start + 0.00001, "North caps overlap at the corner")
 
 
 func _check_stable_animals(annex: Node) -> void:

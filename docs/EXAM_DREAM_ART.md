@@ -106,9 +106,10 @@ the same uneven soil as the playground, with straw, a few droppings and some fli
 - **Trodden earth** (`tools/stable_ground.py`): `YardEarth` is one relief mesh over the
   yard and the lane, a few centimetres of swells, lumps and trodden hollows above the
   unchanged flat walking slabs (no collider), easing flat under the things that stand on
-  the ground and at the lane's mouth. `stable_earth.gdshader` paints the playground soil's
-  mineral mottle and grit over a vertex shade that darkens hollows and the damp ground by
-  the stalls.
+  the ground and at the lane's mouth. `stable_earth.gdshader` uses the original playground
+  soil's mineral mottle and grit (as of base `d4f06f76`), without the former vertex shade;
+  the connector shares that pigment in the same yard-local coordinates. The stable retains
+  its existing self-light, independently of later playground material changes.
 - **Straw, droppings, flies**: `LooseStraw` lies on the relief - drifts at the foot of the
   walls, seven tufts at no particular place and single strands everywhere; six droppings
   (`Dung0`-`5`) of three shapes at irregular spots, sizes and turns; small swarms of 7, 5
