@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
-"""Build the shared, visual-only soil and railings for both schoolyard views."""
+"""Build the shared, visual-only yard floor and railings for both schoolyard views.
+
+The node is still called Soil (tests and both views address it by name) but since round 20
+it is the plain concrete round the court: flat slabs drawn by `yard_earth.gdshader`."""
 from pathlib import Path
 import argparse
-import math
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scenes/environment/props/playground_art/source'))
-from site_mesh import Mesh, fbm  # noqa: E402
+from site_mesh import Mesh  # noqa: E402
 
 OUT = ROOT / 'scenes/environment/props/playground_art/earth_yard.tscn'
 
 
 def build():
-    # Subtle real relief over the unchanged walkable slab; all props and the
-    # physical navigation remain owned by the playground. The shared scene has
-    # no collision and can be instanced in the teaching-block window view too.
+    # A flat skin over the unchanged walkable slab; all props and the physical
+    # navigation remain owned by the playground. The shared scene has no
+    # collision and can be instanced in the teaching-block window view too.
     rows = []
     for j in range(81):
         z = -20 + j * .5
         row = []
         for i in range(93):
             x = -23 + i * .5
-            y = .055 + .015 * fbm(x * .23, z * .23, 47, 3)
+            # Flat, but for a few millimetres of float wave (a mesh with no height at all
+            # drew black in the GL Compatibility renderer).
+            y = .05 + .003 * ((i * 7 + j * 13) % 5 - 2) / 2
             row.append((x, y, z))
         rows.append(row)
     mesh = Mesh().grid(rows, outward=(0, 1, 0))
@@ -34,7 +38,11 @@ def build():
         tri = mesh.indices[i:i + 3]
         x = sum(mesh.points[k][0] for k in tri) / 3
         z = sum(mesh.points[k][2] for k in tri) / 3
-        if not (-11 < x < 11 and -15 < z < 11):
+        court = -11 < x < 11 and -15 < z < 11
+        # Round 20: the cactus plot's 3 x 3 m square of soil, let into the concrete
+        # (`CACTUS_PLOT` in tools/build_outdoor_locations.py; playground_art/source/cactus_plot.py).
+        plot = -17.5 < x < -14.5 and -5.5 < z < -2.5
+        if not (court or plot):
             visible.extend(tri)
     mesh.indices = visible
     parts = ['''[gd_scene load_steps=5 format=3]

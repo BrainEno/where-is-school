@@ -1,11 +1,27 @@
 shader_type spatial;
-render_mode diffuse_burley, specular_disabled;
+render_mode diffuse_toon, specular_disabled;
 
-// Original procedural mineral pigment; physical walking remains on the yard slab.
+// Round 20: the yard round the court is plain cast concrete, laid in 2 m slabs on the
+// world grid (the court's own joints fall on the same even metres), with cloud shadows
+// drifting slowly across it, after the owner's two references: a tiled plane running to
+// the horizon under airbrushed shadows. Procedural and texture-free (no texture inputs, see
+// tests/location_art_test.gd); the walking surface is still the yard slab below.
+// Kept no brighter than the `ground` material the HUD contrast test measures.
 varying vec2 ground_position;
+// Toon diffuse, like the court and yard materials (`diffuse_mode = 3`): under the low dusk
+// sun a Lambert/Burley falloff left the slabs near-black beside the lit court. `fill` is a
+// low self-light on top, so the concrete reads pale in the teaching block's shadow too.
+
+
+// A sine-free hash on a wrapped lattice: the usual fract(sin(dot(...)) * 43758.5) loses its
+// precision once the lattice runs into the hundreds (the grit is sampled at 23 per metre).
 float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    p = mod(p, 251.0);
+    vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
+
 float grain(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
@@ -13,13 +29,64 @@ float grain(vec2 p) {
     return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0)), u.x), u.y);
 }
+
+// Four octaves, each turned and doubled in frequency.
+float fbm(vec2 p) {
+    float sum = 0.5 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.25 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.125 * grain(p);
+    p = vec2(1.6 * p.x - 1.2 * p.y, 1.2 * p.x + 1.6 * p.y);
+    sum += 0.0625 * grain(p);
+    return sum / 0.9375;
+}
+
 void vertex() {
     ground_position = VERTEX.xz;
 }
+
 void fragment() {
-    float mottle = grain(ground_position * 0.55);
-    float grit = grain(ground_position * 28.0);
-    vec3 earth = mix(vec3(0.27, 0.19, 0.13), vec3(0.50, 0.39, 0.28), mottle);
-    ALBEDO = earth * (0.88 + 0.24 * grit);
+    float SLAB = 2.0;
+    vec3 PALE = vec3(0.150, 0.157, 0.176);  // linear: a cool, pale grey
+    vec3 JOINT = vec3(0.024, 0.025, 0.030);
+    vec2 WIND = vec2(0.30, 0.11);  // metres per second: one shadow crosses in minutes
+    float fill = 0.25;
+    vec2 p = ground_position;
+    vec2 slab = floor(p / SLAB);
+    vec2 f = p - slab * SLAB;
+    float edge = min(min(f.x, SLAB - f.x), min(f.y, SLAB - f.y));
+    // Each pour cured a shade apart; stains and the float's sweeps sit on top.
+    float tone = hash(slab + 17.0) - 0.5;
+    float stain = 0.6 * grain(p * 0.38 + 3.1) + 0.4 * grain(p * 0.9 + 7.7);
+    float sweep = grain(vec2(p.x * 2.6, p.y * 0.7) + slab * 5.3);
+    // Grit and the exposed aggregate.
+    float grit = grain(p * 23.0);
+    float pebble = grain(p * 11.0 + 5.0);
+    vec3 c = PALE * (1.0 + 0.09 * tone + 0.20 * (stain - 0.5) + 0.05 * (sweep - 0.5));
+    c *= 0.93 + 0.12 * grit;
+    c *= 1.0 + 0.12 * smoothstep(0.86, 0.95, pebble) - 0.2 * (1.0 - smoothstep(0.05, 0.14, pebble));
+    // Grime gathers along the sawn joints; their arrises are chipped here and there.
+    c *= 1.0 - 0.14 * (1.0 - smoothstep(0.02, 0.14, edge));
+    float chip = grain(p * 7.0 + 11.0);
+    float width = 0.016 + 0.035 * chip * chip * chip * chip * chip * chip;
+    float joint = 1.0 - smoothstep(0.011, width, edge);
+    c = mix(c, JOINT, joint);
+    // Cloud shadows, soft-edged and slow, the way they pass over a big flat yard.
+    vec2 drift = (p - WIND * TIME) * 0.042;
+    float cloud = fbm(drift);
+    float shadow = smoothstep(0.50, 0.68, cloud);
+    c *= mix(1.0, 0.56, shadow);
+    ALBEDO = c;
+    EMISSION = c * fill;
     ROUGHNESS = 1.0;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+    // The GL Compatibility renderer (mobile, and the "after" captures) gives this flat mesh the
+    // ambient term only, no sun, and the filmic toe then crushes a pale grey to black: a probe
+    // of plain PALE measured 17/255 there against ~80 in Forward+. The albedo is lifted into
+    // the range of the brown earth this replaced (0.27-0.50, which read ~75/255 there), with
+    // a stronger self-light on top.
+    ALBEDO = min(c * 2.8, vec3(1.0));
+    EMISSION = c * 0.9;
+#endif
 }

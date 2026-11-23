@@ -6,7 +6,7 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const STREET := "res://scenes/locations/street/street.tscn"
 const SHED := &"pg_shed"
-const SHED_STANCE := Vector3(-12.12, 0, -4.0)
+const SHED_STANCE := Vector3(4.8, 0, -13.45)  # Round 20: the shed in the north-east corner.
 
 var _check := Harness.Checker.new()
 var _state: Node

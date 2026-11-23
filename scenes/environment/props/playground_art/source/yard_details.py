@@ -91,7 +91,9 @@ def tap(b, art):
 
 def shed(b):
     # Local +Z is out to the yard, so all this facade work follows the same wall fade.
-    b.node("Facade", "ShedBody", position=_v3((2, -1.5, 0)), rotation_degrees=_v3((0, 90, 0)))
+    # Since round 20 the shed stands in the north-east with its door to the south: the
+    # 6 m face is the body's +Z side, 1.55 m out from its centre.
+    b.node("Facade", "ShedBody", position=_v3((0, -1.5, 1.55)))
     p = "ShedBody/Facade"
     _box(b, p, "Skirt", (5.90, 0.24, 0.05), (0, 0.13, 0.018), "plinth")
     # Mismatched reclaimed cladding panels, with seams and fastening strips.
@@ -137,11 +139,11 @@ def shed(b):
     # Dress the slab shared with the teaching-wing view, rather than drawing a
     # second roof. Its top is 0.10 m above the local origin; the seams sit into it.
     roof = "ShedRoof"
-    rib = b.mesh("BoxMesh", size=_v3((4.32, 0.025, 0.037)))
+    rib = b.mesh("BoxMesh", size=_v3((0.037, 0.025, 3.42)))
     for i in range(11):
-        b.flat(f"RoofSeam{i}", roof, rib, "shed_roof", (0, 0.108, 0.614 * (i - 5)))
-    _box(b, roof, "Gutter", (0.125, 0.112, 6.39), (2.208, -0.062, 0), "exit_frame")
-    _box(b, roof, "GutterLip", (0.042, 0.029, 6.39), (2.270, -0.006, 0), "exit_steel")
+        b.flat(f"RoofSeam{i}", roof, rib, "shed_roof", (0.614 * (i - 5), 0.108, 0))
+    _box(b, roof, "Gutter", (6.39, 0.112, 0.125), (0, -0.062, 1.758), "exit_frame")
+    _box(b, roof, "GutterLip", (6.39, 0.029, 0.042), (0, -0.006, 1.820), "exit_steel")
     # The wall-mounted drainpipe stays clear of the ping-pong ball and footing.
     _cylinder(b, p, "Downpipe", 0.047, 2.51, (2.87, 1.50, 0.157), "tap_steel", shadow=True)
     _cylinder(b, p, "DownpipeElbow", 0.048, 0.35, (2.87, 2.851, 0.208), "tap_steel", (26, 0, 0))
@@ -162,17 +164,23 @@ def shed_surroundings(b, art):
     hedge(b, art)
 
 
+HEDGE_SHIFT = (16.8, -17.9)
+
+
 def hedge(b, art, material_prefix=""):
     b.node("HedgeLeaves", art)
     parent = f"{art}/HedgeLeaves"
     # Small overlapping rounded clusters keep the hedge irregular, low, and
     # close to the pale strip described by the ball interaction.
+    # Authored round the hedge's old place (-17.2, 0.9) and carried with the shed in round
+    # 20 to (-0.4, -17.9), behind the footings; mirrored in z so the tall side stays at the back.
     for i, (x, y, z, r) in enumerate(((-18.10, .34, .9, .39), (-17.57, .43, .73, .46),
                                       (-17.03, .37, .88, .42), (-16.55, .33, .65, .35),
                                       (-17.85, .60, .98, .33), (-17.27, .64, .95, .34),
                                       (-16.82, .58, 1.03, .31), (-17.48, .30, 1.38, .30))):
         mesh = b.mesh("SphereMesh", radius=f"{r:g}", height=f"{2*r:g}", radial_segments="9", rings="5")
-        b.flat(f"LeafCluster{i}", parent, mesh, material_prefix + ("hedge" if i % 3 else "crown"), (x, y, z))
+        at = (round(x + HEDGE_SHIFT[0], 3), y, round(HEDGE_SHIFT[1] - (z - 0.9), 3))
+        b.flat(f"LeafCluster{i}", parent, mesh, material_prefix + ("hedge" if i % 3 else "crown"), at)
 
 
 def cabin(b):

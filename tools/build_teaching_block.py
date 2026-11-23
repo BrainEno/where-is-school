@@ -23,7 +23,7 @@ from build_playground_art import (  # noqa: E402
     school_plinth_returns, srgb, vec3,
 )
 import yard_details  # noqa: E402
-from build_outdoor_locations import BAKE_ONLY_LAYER, PLAYER_ONLY_LAYER, build_playground  # noqa: E402
+from build_outdoor_locations import BAKE_ONLY_LAYER, CACTUS_PLOT, PLAYER_ONLY_LAYER, build_playground  # noqa: E402
 from school_annex_layout import (  # noqa: E402
     ARCHIVE, PLAN_ROOM, PROJECTION, COMPUTER, VACANT, PRINCIPAL, WASH_02, WASH_03, THRESHOLDS,
 )
@@ -1202,6 +1202,11 @@ def courtyard_view():
         b.box(name, "Yard", pos, size, f"yard/{mat}")
     b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
     b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')
+    # Round 20: the saguaro and the skipping girl in their square of soil, without the
+    # yard's solid (the hall's view carries no physics).
+    b.bind("cactus_plot", f"{YARD}/cactus_plot_view.tscn", "PackedScene")
+    b.nodes.append('[node name="CactusPlot" parent="Yard" instance=ExtResource("cactus_plot")]\n'
+                   f'position = {vec3(CACTUS_PLOT)}\n')
     court_landmarks(b, "Yard", material_prefix="yard/")
     yard_details.hedge(b, "Yard", material_prefix="yard/")
     b.node("SchoolPlinth", "Yard", position=vec3((0, 0.6, -19.9)))

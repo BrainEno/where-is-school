@@ -56,6 +56,16 @@ SKY_MAUVE = (84, 76, 104)
 SKY_BELT = (100, 80, 94)
 SKY_GLOW = (104, 84, 86)
 DISTANT = (44, 40, 58)  # the ground-row silhouettes, one flat value
+# Round 20's blue-hour sky and the rock mountain standing in it.
+SKY_DEEP = (34, 46, 82)
+SKY_MID = (46, 62, 102)
+SKY_HAZE = (70, 80, 112)
+CLOUD_BELLY = (58, 66, 96)
+CLOUD_LIT = (86, 96, 128)
+MOUNTAIN_MID = (98, 66, 52)
+MOUNTAIN_LIT = (138, 94, 68)
+MOUNTAIN_DARK = (56, 38, 38)
+MOUNTAIN_FOOT = (70, 56, 62)
 # Ground: two pours of concrete, kept low in value. The HUD sentence (top left) and the
 # interaction prompt (bottom centre) are pale text with no outline, and the bottom one
 # always sits over the ground just in front of the player; tests/playground_art_slice_test.gd
@@ -187,14 +197,147 @@ def seam() -> Image.Image:
     return c.image(4, alpha="cut")
 
 
+# --- round 20: the yard laid as one plane of cast slabs ---------------------------------
+# The owner's two references (a 1970s collage of a tiled plane running to the horizon under
+# airbrushed cloud shadows, and a girl with a skipping rope between saguaros on pale square
+# paving) asked for the court to be rough cement and everything else plain concrete. Both
+# are cast in the same 2 m slabs, aligned on the world grid (joints on even metres), so
+# the yard reads as one surface running under the court paint and off past the edges.
+# Values stay where the HUD contrast test wants them (pale text, no outline).
+SLAB_M = 2.0
+COURT_SLAB = (104, 104, 102)
+YARD_SLAB = (94, 99, 109)
+
+
+def tile_noise(w: int, h: int, cell_px: float, rng: np.random.Generator, stretch: tuple[float, float] = (1.0, 1.0)) -> np.ndarray:
+    """Smooth noise in 0..1 that wraps exactly (white noise low-passed in Fourier space)."""
+    white = rng.standard_normal((h, w))
+    fy = np.fft.fftfreq(h)[:, None] * cell_px * stretch[1]
+    fx = np.fft.fftfreq(w)[None, :] * cell_px * stretch[0]
+    field = np.real(np.fft.ifft2(np.fft.fft2(white) * np.exp(-(fx * fx + fy * fy) * 9.0)))
+    field = field / (field.std() + 1e-9)
+    return np.clip(0.5 + field / 5.0, 0.0, 1.0).astype(np.float32)
+
+
+def _stamp(value: np.ndarray, cx: float, cy: float, mask: np.ndarray, target: float, rim: np.ndarray | None = None) -> None:
+    """Blends `mask` (odd square, centred on cx, cy) toward `target` in a wrapping field."""
+    h, w = value.shape
+    k = mask.shape[0] // 2
+    rows = (int(cy) + np.arange(-k, k + 1)) % h
+    cols = (int(cx) + np.arange(-k, k + 1)) % w
+    patch = value[np.ix_(rows, cols)]
+    patch = patch + (target - patch) * mask
+    if rim is not None:
+        patch = patch + rim
+    value[np.ix_(rows, cols)] = patch
+
+
+def _discs(value: np.ndarray, rng: np.random.Generator, count: int, radius: tuple[float, float], shade: tuple[float, float], rim: float = 0.0) -> None:
+    """Stamps aggregate (stones broken open by wear) or pits into a wrapping value field."""
+    yy, xx = np.mgrid[-6:7, -6:7].astype(np.float32)
+    for _ in range(count):
+        cx, cy = rng.uniform(0, value.shape[1]), rng.uniform(0, value.shape[0])
+        r = rng.uniform(*radius)
+        squash = rng.uniform(0.6, 1.0)
+        angle = rng.uniform(0, math.pi)
+        ca, sa = math.cos(angle), math.sin(angle)
+        ox, oy = xx - (cx % 1.0), yy - (cy % 1.0)
+        u = (ox * ca + oy * sa) / r
+        v = (-ox * sa + oy * ca) / (r * squash)
+        d = np.sqrt(u * u + v * v)
+        ring = None
+        if rim:
+            ring = rim * np.clip(1.0 - np.abs(d - 1.25) * 3.0, 0.0, 1.0) * (oy < 0)
+        _stamp(value, cx, cy, np.clip(1.6 - d * 1.6, 0.0, 1.0), rng.uniform(*shade), ring)
+
+
+def _joints(value: np.ndarray, ppm: float, rng: np.random.Generator, core: float, width_px: float, chips: int, chip_shade: tuple[float, float]) -> None:
+    """Sawn joints on every SLAB_M: a dark core, its edges broken out here and there."""
+    h, w = value.shape
+    step = int(round(SLAB_M * ppm))
+    across = np.arange(w, dtype=np.float32)
+    for axis in (0, 1):
+        wobble = tile_noise(w, 2, 40.0, rng)[0]
+        for k in range(0, w, step):
+            d = np.abs(((across - k + w / 2) % w) - w / 2) + (wobble - 0.5) * 0.9
+            line = np.clip(1.0 - (d - width_px / 2) / 0.9, 0.0, 1.0)
+            if axis == 0:
+                value[:] = value + (core - value) * line[None, :]
+            else:
+                value[:] = value + (core - value) * line[:, None]
+    yy, xx = np.mgrid[-5:6, -5:6].astype(np.float32)
+    for _ in range(chips):
+        k = int(rng.integers(0, w // step)) * step
+        along = rng.uniform(0, w)
+        cx, cy = (k + rng.normal(0, 1.6), along) if rng.random() < 0.5 else (along, k + rng.normal(0, 1.6))
+        r = rng.uniform(1.2, 3.6)
+        m = np.clip(1.5 - np.sqrt(xx ** 2 + (yy * rng.uniform(0.5, 1.0)) ** 2) / r, 0.0, 1.0)
+        _stamp(value, cx, cy, m, rng.uniform(*chip_shade))
+
+
+def _hairlines(value: np.ndarray, rng: np.random.Generator, count: int, shade: float) -> None:
+    h, w = value.shape
+    for _ in range(count):
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        a = rng.uniform(0, math.tau)
+        for _ in range(int(rng.uniform(60, 180))):
+            a += rng.normal(0, 0.35)
+            x, y = x + math.cos(a), y + math.sin(a)
+            j, i = int(y) % h, int(x) % w
+            value[j, i] += (shade - value[j, i]) * 0.7
+
+
 def court_tile() -> Image.Image:
-    """Rough concrete in a tile; fine aggregate and two quiet hairline cracks."""
-    c = Canvas(4.0, 4.0, 128.0, COURT, seed=2103)
-    planes(c, COURT_LIGHT, COURT_DARK, 45, (0.12, 0.48), (0.06, 0.23), angle=None, opacity=0.32)
-    c.mottle(rgb(COURT_DARK), 0.32, 0.16)
-    specks(c, COURT_DARK, 0.008, opacity=0.55)
-    make_tileable(c)
-    return c.image(16)
+    """Rough cement (4 x 4 m tile, four 2 m slabs): broom drag, open aggregate, pits.
+
+    The court is the yard's roughest surface: coarse stone broken open by years of rubber
+    soles, the fines worn out from between them, a broom drag across each pour and the sawn
+    joints chipped along their edges. Neutral grey, so the white paint stays the brightest
+    thing on it."""
+    ppm = 192.0
+    n = int(4.0 * ppm)
+    rng = np.random.default_rng(2103)
+    base = COURT_SLAB[0] / 255.0
+    v = np.full((n, n), base, np.float32)
+    v += (tile_noise(n, n, 150.0, rng) - 0.5) * 0.085   # broad stains and wet patches
+    v += (tile_noise(n, n, 34.0, rng) - 0.5) * 0.05     # trowel unevenness
+    v += (tile_noise(n, n, 3.0, rng, stretch=(26.0, 1.0)) - 0.5) * 0.045  # the broom drag
+    half = n // 2
+    for (r, c), dv in zip(((0, 0), (0, 1), (1, 0), (1, 1)), (0.012, -0.01, -0.004, 0.008)):
+        v[r * half:(r + 1) * half, c * half:(c + 1) * half] += dv
+    grain = rng.random((n, n)).astype(np.float32)
+    v += np.where(grain > 0.975, 0.11, 0.0) - np.where(grain < 0.03, 0.09, 0.0)
+    _discs(v, rng, 2600, (1.0, 2.6), (0.48, 0.62))   # pale quartz and limestone
+    _discs(v, rng, 1500, (1.0, 2.4), (0.24, 0.32))   # dark basalt chips
+    _discs(v, rng, 900, (0.7, 1.7), (0.16, 0.22), rim=0.05)  # pits where stones came out
+    _hairlines(v, rng, 4, base - 0.1)
+    _joints(v, ppm, rng, core=0.17, width_px=2.4, chips=160, chip_shade=(0.25, 0.55))
+    c = Canvas(4.0, 4.0, ppm, COURT_SLAB, seed=2103)
+    c.rgb = np.clip(np.stack([v, v, v * (COURT_SLAB[2] / COURT_SLAB[0])], axis=-1), 0.0, 1.0).astype(np.float32)
+    return c.image(28)
+
+
+def yard_slab() -> Image.Image:
+    """The plain concrete round the court (4 x 4 m tile): cooler, finer, steel-floated.
+
+    On the yard it is drawn by the procedural slab shader (`yard_earth.gdshader`), which
+    adds the passing cloud shadows; this tile is the same pour for the yard's own floor box,
+    so what the HUD contrast test measures is what the shader paints."""
+    ppm = 128.0
+    n = int(4.0 * ppm)
+    rng = np.random.default_rng(2131)
+    tint = np.array(YARD_SLAB, np.float32) / YARD_SLAB[1]
+    v = np.full((n, n), YARD_SLAB[1] / 255.0, np.float32)
+    v += (tile_noise(n, n, 120.0, rng) - 0.5) * 0.06
+    v += (tile_noise(n, n, 22.0, rng) - 0.5) * 0.03
+    grain = rng.random((n, n)).astype(np.float32)
+    v += np.where(grain > 0.985, 0.07, 0.0) - np.where(grain < 0.02, 0.06, 0.0)
+    _discs(v, rng, 500, (0.7, 1.5), (0.27, 0.32))
+    _hairlines(v, rng, 2, YARD_SLAB[1] / 255.0 - 0.07)
+    _joints(v, ppm, rng, core=0.2, width_px=1.6, chips=50, chip_shade=(0.3, 0.45))
+    c = Canvas(4.0, 4.0, ppm, YARD_SLAB, seed=2131)
+    c.rgb = np.clip(v[..., None] * tint[None, None, :], 0.0, 1.0).astype(np.float32)
+    return c.image(20)
 
 
 def court_line() -> Image.Image:
@@ -479,12 +622,13 @@ YARD_RECT = (-23.0, 23.0, -22.0, 20.0)  # x0, x1, z0, z1
 def sky_floor() -> Image.Image:
     """The sky the camera sees past the yard's edge (240 x 240 m, plan view).
 
-    The camera never looks above the horizon, so the sky is laid flat under the stage, in
-    bands by distance from the yard: a pale glow along the edge, the rose band, mauve, and
-    the dusty blue the background colour continues to infinity. Band edges are brushed,
-    and a few long flat cloud strokes lie across the blue."""
+    The camera never looks above the horizon, so the sky is laid flat under the stage. Round
+    20 repaints it after the owner's references: a deep blue-hour blue with heaps of soft
+    cloud lying in it, darker in their bellies and lit along one rim, and a haze along the
+    yard's edge where the horizon would be. Kept low in value for the HUD text over it."""
     ppm = SKY_PX / SKY_SIZE
-    c = Canvas(SKY_SIZE, SKY_SIZE, ppm, SKY_HIGH, seed=2115)
+    c = Canvas(SKY_SIZE, SKY_SIZE, ppm, SKY_DEEP, seed=2115)
+    rng = np.random.default_rng(2115)
     half = SKY_SIZE / 2
     xs = np.linspace(-half, half, c.w, dtype=np.float32)[None, :]
     zs = np.linspace(-half, half, c.h, dtype=np.float32)[:, None]
@@ -492,24 +636,74 @@ def sky_floor() -> Image.Image:
     dx = np.maximum(np.maximum(x0 - xs, xs - x1), 0.0)
     dz = np.maximum(np.maximum(z0 - zs, zs - z1), 0.0)
     d = np.sqrt(dx * dx + dz * dz)
-    noise = value_noise(c.w, c.h, 18.0, c.rng, 3)
-    d = d + (noise - 0.5) * 7.0
-    c.paint(SKY_MAUVE, smoothstep(30.0, 18.0, d), 1.0)
-    c.paint(SKY_BELT, smoothstep(14.0, 8.0, d), 1.0)
-    c.paint(SKY_GLOW, smoothstep(4.0, 1.0, d), 1.0)
-    rng = c.rng
-    before = c.rgb.copy()
-    clouds = []
-    for _ in range(14):
-        s = rng.uniform(0, SKY_SIZE)
-        y = rng.uniform(0, SKY_SIZE)
-        clouds.append(([(s, y), (s + rng.uniform(25, 60), y + rng.uniform(-2, 2))], rng.uniform(2.5, 6.0), {"bristles": 10, "dryness": 0.6, "wobble_m": 0.5}))
-    c.brush(rgb((76, 86, 112)), clouds[0::2], opacity=0.5)
-    c.brush(rgb((54, 64, 88)), clouds[1::2], opacity=0.45)
-    # Clouds only out in the blue, never in the warm bands along the yard's edge.
-    far = smoothstep(16.0, 28.0, d)[..., None]
-    c.rgb = before * (1.0 - far) + c.rgb * far
-    return c.image(9)
+    d = d + (value_noise(c.w, c.h, 18.0, c.rng, 3) - 0.5) * 7.0
+    c.paint(SKY_MID, smoothstep(70.0, 20.0, d), 1.0)
+    c.paint(SKY_HAZE, smoothstep(14.0, 2.0, d), 1.0)
+    big = tile_noise(c.w, c.h, 46.0, rng)
+    small = tile_noise(c.w, c.h, 12.0, rng)
+    body = smoothstep(0.56, 0.70, big * 0.78 + small * 0.32)
+    rim = np.clip(body - np.roll(np.roll(body, 5, axis=0), -5, axis=1), 0.0, 1.0)
+    core = smoothstep(0.64, 0.80, big * 0.7 + small * 0.4)
+    out = smoothstep(8.0, 22.0, d)
+    c.paint(CLOUD_BELLY, body * out, 0.9)
+    c.paint(CLOUD_LIT, np.clip(core * 0.8 + rim, 0.0, 1.0) * out, 0.85)
+    return c.image(12)
+
+
+def row_mountain() -> Image.Image:
+    """A rock mountain far out on the laid-flat sky (16 x 5 m canvas, alpha): the brown,
+    fissured massif behind the girl in the owner's second reference, a peak to the left and
+    a long broken ridge running right. Painted in its own colours (the material is white):
+    lit faces, the dark gullies between them, and a few bands of strata."""
+    c = Canvas(16.0, 5.0, 64.0, MOUNTAIN_MID, seed=2132, alpha=0.0)
+    rng = np.random.default_rng(2132)
+    ridge = [(0.0, 0.0), (0.4, 0.9), (1.2, 1.6), (2.0, 2.6), (2.7, 3.7), (3.3, 4.55), (3.8, 4.8),
+             (4.3, 4.5), (4.9, 4.1), (5.6, 3.95), (6.4, 3.4), (7.4, 3.3), (8.3, 3.05), (9.4, 3.15),
+             (10.5, 2.75), (11.6, 2.85), (12.7, 2.4), (13.8, 2.3), (14.9, 1.6), (15.6, 0.9), (16.0, 0.0)]
+    shape = c.polygon_mask(ridge, rough=0.5, cell_m=0.08, blur_m=0.01)
+    c.paint_alpha(MOUNTAIN_MID, shape, 1.0)
+    h, w = c.h, c.w
+    ys = np.linspace(5.0, 0.0, h, dtype=np.float32)[:, None]
+    xs = np.linspace(0.0, 16.0, w, dtype=np.float32)[None, :]
+    # Light from the left. The rock breaks into big flat faces (the nearest of scattered
+    # seeds, each face a tilted plane with its own tone): broad facets, not streaks. Faces
+    # on the peak's west flank catch the light; the long ridge running east mostly turns
+    # away, with a lit face here and there. Cracks run along the face edges.
+    pts = np.stack([rng.uniform(0.0, 16.0, 150), rng.uniform(0.0, 5.0, 150) ** 0.8 * 5.0 ** 0.2], axis=1)
+    pts[:, 1] *= 1.0 + 0.6 * (pts[:, 1] / 5.0)  # longer faces up high, smaller scree below
+    near = np.full((h, w), np.inf, dtype=np.float32)
+    second = np.full((h, w), np.inf, dtype=np.float32)
+    owner = np.zeros((h, w), dtype=np.int32)
+    for k, (px, py) in enumerate(pts):
+        # Stretched vertically, so the faces read as buttresses falling from the ridge.
+        d = np.hypot((xs - px) * 1.0, (ys - py) * 0.55)
+        closer = d < near
+        second = np.where(closer, near, np.minimum(second, d))
+        owner = np.where(closer, k, owner)
+        near = np.where(closer, d, near)
+    peak_side = np.clip((3.8 - pts[:, 0]) / 3.5, -1.0, 1.0)
+    tone = 0.5 + 0.4 * peak_side + rng.normal(0.0, 0.2, len(pts))
+    tilt_x, tilt_y = rng.normal(0.0, 0.35, len(pts)), rng.normal(0.0, 0.25, len(pts))
+    face = tone[owner] + tilt_x[owner] * (xs - pts[owner, 0]) + tilt_y[owner] * (ys - pts[owner, 1])
+    fine = tile_noise(w, h, 5.0, rng)
+    blocks = tile_noise(w, h, 40.0, rng)
+    face = face + (fine - 0.5) * 0.18 + (blocks - 0.5) * 0.25
+    lit = smoothstep(0.45, 0.85, face)
+    shade = smoothstep(0.3, -0.05, face)
+    c.paint(MOUNTAIN_LIT, lit, 0.9)
+    c.paint(MOUNTAIN_DARK, shade, 0.7)
+    crack = smoothstep(0.035, 0.01, second - near) * smoothstep(0.3, 1.0, ys) * smoothstep(0.55, 0.75, blocks + 0.3 * fine)
+    c.paint(MOUNTAIN_DARK, crack, 0.5)
+    # A few deep gullies falling from the ridge notches, and faint strata across the faces.
+    ribs = tile_noise(w, h, 28.0, rng, stretch=(0.6, 3.0))
+    gully = smoothstep(0.06, 0.0, np.abs(ribs - 0.5)) * smoothstep(0.8, 2.2, ys) * (1.0 - lit)
+    c.paint(MOUNTAIN_DARK, gully, 0.6)
+    strata = 0.5 + 0.5 * np.sin(ys * 6.0 + (fine - 0.5) * 1.5 + xs * 0.06)
+    c.paint(MOUNTAIN_DARK, smoothstep(0.94, 1.0, strata) * (1.0 - lit) * smoothstep(1.0, 2.5, ys), 0.3)
+    # Scree and haze at the foot, where it stands on the sky.
+    c.paint(MOUNTAIN_FOOT, smoothstep(0.9, 0.1, ys), 0.6)
+    c.a = np.minimum(c.a, shape)
+    return c.image(16, alpha="cut")
 
 
 def ground_row(kind: str, seed: int) -> Image.Image:
@@ -693,6 +887,7 @@ TEXTURES = {
     "tap_runoff.png": tap_runoff,
     "hoop_net.png": hoop_net,
     "court_tile.png": court_tile,
+    "yard_slab.png": yard_slab,
     "court_line.png": court_line,
     "key_area.png": key_area,
     "plaster_tile.png": plaster_tile,
@@ -710,6 +905,7 @@ TEXTURES = {
     "row_tower.png": lambda: ground_row("tower", 2119),
     "row_chimney.png": lambda: ground_row("chimney", 2120),
     "row_pylon.png": lambda: ground_row("pylon", 2121),
+    "row_mountain.png": row_mountain,
 }
 
 

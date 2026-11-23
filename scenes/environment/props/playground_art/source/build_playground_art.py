@@ -50,7 +50,12 @@ MAT_DIR = ART / "materials"
 RES = "res://scenes/environment/props/playground_art"
 ART_ROOT = '[node name="PlaygroundArt" type="Node3D"]'
 ART_INSTANCE = '[node name="PlaygroundArt" parent="." instance=ExtResource("yard_scenery")]'
-SCENERY_FILE = "scenery.scn"
+# A text scene since round 20: the yard art had to move (the shed, the cactus plot) on a
+# machine with no editor, and the binary bake could not be redone there. The
+# scenery-only materials are embedded in it as sub-resources, as the bake did.
+SCENERY_FILE = "scenery.tscn"
+# The tyre stack by the shed's footings (x, z): `TYRES` in tools/build_outdoor_locations.py.
+TYRES = (-2.4, -15.3)
 # These overrides belong only to the static yard scenery. Shared wall, prop and
 # distant-row colours stay addressable by path; do not ship these ones twice.
 SCENERY_MATERIALS = {
@@ -104,7 +109,9 @@ def tex(name: str) -> str:
 # cut (alpha scissor threshold), cull_off, outline, unshaded, no_shadow (receive).
 MATERIALS: dict[str, dict] = {
     # ground and things painted on it
-    "ground": {"texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
+    # The yard slab under the concrete skin (`earth_yard.tscn`): the same cool 2 m slabs, so
+    # the HUD contrast test measures what the yard shader paints.
+    "ground": {"texture": tex("yard_slab"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "concrete": {"color": (238, 238, 242), "texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "concrete_patch": {"color": (206, 218, 232), "texture": tex("ground_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25), "outline": True},
     "pour_b": {"texture": tex("pour_b"), "cut": 0.5},
@@ -173,6 +180,9 @@ MATERIALS: dict[str, dict] = {
     "row_tower": {"color": DISTANT, "texture": tex("row_tower"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_chimney": {"color": DISTANT, "texture": tex("row_chimney"), "cut": 0.5, "cull_off": True, "unshaded": True},
     "row_pylon": {"color": DISTANT, "texture": tex("row_pylon"), "cut": 0.5, "cull_off": True, "unshaded": True},
+    # Round 20: the brown rock massif of the owner's second reference, standing in the
+    # sky past the yard. Painted in its own colours, dimmed a little into the blue hour.
+    "row_mountain": {"color": (196, 186, 204), "texture": tex("row_mountain"), "cut": 0.5, "cull_off": True, "unshaded": True},
     # One panel tile per 3 x 2 m quad so its rails stay put as the fence sinks.
     "fence_far": {"color": (150, 146, 170), "texture": tex("fence_panel"), "cut": 0.35, "cull_off": True, "unshaded": True},
 }
@@ -465,6 +475,7 @@ def build_nodes() -> Builder:
     b.node("Distance", A)
     b.flat("SkyFloor", f"{A}/Distance", plane(b, 240, 240), "sky_floor", (0, -1.2, 0))
     rows = [
+        ("RowMountain", "row_mountain", (27.0, 8.4), (-47.0, -14.0)),
         ("RowFlats", "row_flats", (13.0, 5.4), (-31.0, -12.0)),
         ("RowTower", "row_tower", (9.0, 3.75), (-29.5, 3.0)),
         ("RowChimney", "row_chimney", (11.0, 4.6), (-36.0, -26.0)),
@@ -506,8 +517,8 @@ def build_nodes() -> Builder:
     court_landmarks(b, A)
     tyre = b.mesh("TorusMesh", inner_radius="0.27", outer_radius="0.5", rings="24", ring_segments="10")
     for i, y in enumerate((0.12, 0.36, 0.6)):
-        b.flat(f"Tyre_{i}", f"{A}/Equipment", tyre, "tyre", (-15.2 + (0.05 if i == 1 else 0.0), y, 2.6 - (0.04 if i == 2 else 0.0)), (0, 20 * i, 0), shadow=True)
-    b.flat("TyreLoose", f"{A}/Equipment", tyre, "tyre", (-14.1, 0.14, 3.5), (6, 0, 0), shadow=True)
+        b.flat(f"Tyre_{i}", f"{A}/Equipment", tyre, "tyre", (TYRES[0] + (0.05 if i == 1 else 0.0), y, TYRES[1] - (0.04 if i == 2 else 0.0)), (0, 20 * i, 0), shadow=True)
+    b.flat("TyreLoose", f"{A}/Equipment", tyre, "tyre", (TYRES[0] + 1.1, 0.14, TYRES[1] + 0.9), (6, 0, 0), shadow=True)
     yard_details.shed(b)
     yard_details.tap(b, A)
     yard_details.shed_surroundings(b, A)
@@ -746,15 +757,59 @@ def split_scenery(b: Builder) -> tuple[str, Builder]:
         part.imported_meshes = {name for name in b.imported_meshes if f'ExtResource("mesh_{name}")' in body}
     ext = material_resources(dressed_materials(inner)) + inner.mesh_resources("obj")
     header = f"[gd_scene load_steps={1 + len(ext) + len(inner.subs)} format=3]\n"
-    # A fresh PackedScene.pack otherwise generates random node IDs at each bake.
-    nodes = [node.replace("]\n", f" unique_id={i}]\n", 1)
-             for i, node in enumerate(inner.nodes, start=1)]
-    text = "\n".join([header, *ext, "", *inner.subs, *nodes])
+    text = "\n".join([header, *ext, "", *inner.subs, *inner.nodes])
     return text, outer
 
 
+def embed_scenery_materials(text: str) -> str:
+    """Turn the scenery source into the shipped text scene: the scenery-only materials
+    become sub-resources (no `.tres` of their own), every other reference stays external."""
+    if '.obj"' in text:
+        sys.exit("the text scenery cannot reference temporary OBJ imports; make them meshes")
+    lines = text.splitlines()
+    ext = [line for line in lines if line.startswith("[ext_resource")]
+    body = "\n".join(line for line in lines[1:] if not line.startswith("[ext_resource")) + "\n"
+    keep = []
+    for line in ext:
+        rid = re.search(r' id="([^"]+)"', line)[1]
+        name = rid.removeprefix("art_")
+        if rid.startswith("art_") and name in SCENERY_MATERIALS:
+            continue
+        keep.append(line)
+    subs = []
+    textures = {}
+    for name in sorted(SCENERY_MATERIALS):
+        rid = f"art_{name}"
+        if f'ExtResource("{rid}")' not in body:
+            continue
+        spec = MATERIALS[name]
+        if spec.get("outline"):
+            sys.exit(f"scenery-only material {name} cannot carry the shared outline")
+        lines = material_tres(name, spec).split("[resource]\n", 1)[1].splitlines()
+        if "texture" in spec:
+            tid = textures.setdefault(spec["texture"], f"tex_{Path(spec['texture']).stem}")
+            lines = [line.replace('ExtResource("2_tex")', f'ExtResource("{tid}")') for line in lines]
+        subs.append(f'[sub_resource type="StandardMaterial3D" id="{rid}"]\n' + "\n".join(lines) + "\n")
+        body = body.replace(f'ExtResource("{rid}")', f'SubResource("{rid}")')
+    keep += [f'[ext_resource type="Texture2D" path="{path}" id="{tid}"]' for path, tid in textures.items()]
+    first_sub = body.find("[sub_resource")
+    body = body[:first_sub] + "\n".join(subs) + "\n" + body[first_sub:]
+    steps = 1 + len(keep) + len(re.findall(r"^\[sub_resource", body, re.M))
+    return "\n".join([f"[gd_scene load_steps={steps} format=3]", "", *keep, "", body.lstrip("\n")])
+
+
+def write_scenery(text: str) -> None:
+    (ART / SCENERY_FILE).write_text(embed_scenery_materials(text))
+    stale = ART / "scenery.scn"
+    if stale.exists():
+        stale.unlink()
+
+
 def bake_scenery(text: str, engine: str) -> None:
-    """Import generated shapes in isolation, then embed them in an RSCC scene."""
+    """Re-import the detail OBJs in isolation and save them as compressed `.mesh` files.
+
+    Only needed when `yard_details.write_detail_meshes` changes (`--detail-meshes`); the
+    baker also packs a throwaway binary copy of the scenery, which is discarded."""
     prefix = RES.removeprefix("res://")
     with tempfile.TemporaryDirectory(prefix="wis-yard-art-") as tmp:
         stage = Path(tmp)
@@ -779,7 +834,7 @@ renderer/rendering_method="gl_compatibility"
         for args in (
             ["--import"],
             ["--script", str(ROOT / "tools" / "bake_playground_scenery.gd"), "--",
-             "res://scenery_source.tscn", f"{RES}/{SCENERY_FILE}", *sorted(SCENERY_MATERIALS)],
+             "res://scenery_source.tscn", f"{RES}/scenery_bake_check.scn", *sorted(SCENERY_MATERIALS)],
         ):
             result = subprocess.run(common + args, capture_output=True, text=True, timeout=180)
             errors = {line for line in result.stderr.splitlines() if "ERROR:" in line}
@@ -790,7 +845,6 @@ renderer/rendering_method="gl_compatibility"
                 errors.remove(no_fontconfig)
             if result.returncode or errors:
                 sys.exit(f"scenery bake failed ({result.returncode}):\n{result.stdout}\n{result.stderr}")
-        shutil.copyfile(staged_art / SCENERY_FILE, ART / SCENERY_FILE)
         for mesh in sorted((staged_art / "meshes").glob("*.mesh")):
             shutil.copyfile(mesh, ART / "meshes" / mesh.name)
 
@@ -833,17 +887,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("--scene", type=Path, default=SCENE)
     parser.add_argument("--materials-only", action="store_true")
-    parser.add_argument("--engine", default="godot", help="Godot editor binary for the scenery bake")
+    parser.add_argument("--engine", default="godot", help="Godot editor binary for --detail-meshes")
+    parser.add_argument("--detail-meshes", action="store_true",
+                        help="also re-import the detail OBJs into compressed .mesh files (needs Godot)")
     args = parser.parse_args()
 
-    if not args.materials_only:
+    engine = None
+    if args.detail_meshes:
         engine = shutil.which(args.engine)
         if engine is None:
-            parser.error("Godot is required to bake the scenery (set --engine)")
+            parser.error("Godot is required to re-import the detail meshes (set --engine)")
         version = subprocess.check_output([engine, "--version"], text=True).strip()
         pin = (ROOT / ".godot-version").read_text().strip()
         if not version.startswith(pin + ".stable."):
             parser.error(f"need Godot {pin} stable, got {version}")
+    if not args.materials_only:
         text, used = apply(args.scene.read_text())
 
     loose_materials = set(MATERIALS) - SCENERY_MATERIALS
@@ -866,14 +924,16 @@ def main() -> None:
     unused = sorted(set(MATERIALS) - used)
     if unused:
         sys.exit("materials written but not used: " + ", ".join(unused))
-    bake_scenery(scenery, engine)
+    write_scenery(scenery)
+    if engine is not None:
+        bake_scenery(scenery, engine)
     write_materials(MAT_DIR, loose_materials)
     (ART / "container.tscn").write_text(container)
     (ART / "noodle_wrapper.tscn").write_text(build_noodle_wrapper())
     args.scene.write_text(text)
     print(f"wrote {len(loose_materials) + 1} shared materials to {MAT_DIR.relative_to(ROOT)}")
     print(f"dressed {args.scene.relative_to(ROOT)}: {len(full.nodes)} nodes, {len(full.subs)} meshes added")
-    print(f"baked {SCENERY_FILE}: {(ART / SCENERY_FILE).stat().st_size:,} bytes")
+    print(f"wrote {SCENERY_FILE}: {(ART / SCENERY_FILE).stat().st_size:,} bytes")
 
 
 if __name__ == "__main__":

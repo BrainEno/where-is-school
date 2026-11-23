@@ -18,7 +18,8 @@ involved.
 | `textures/*.png.import` | same script | Lossless, mipmapped, VRAM detection off (same settings as the classroom textures). |
 | `materials/*.tres` | `source/build_playground_art.py` | Shared `StandardMaterial3D` palette: toon and a shared ink outline. The overrides used only by the scenery are embedded there. |
 | `meshes/*.mesh`, `noodle_wrapper.tscn` | `source/yard_details.py`, `source/build_playground_art.py` | Shaped bedding, paper and wrapper film in native compressed `ArrayMesh` resources. Their UVs, surfaces and node paths are unchanged. |
-| `scenery.scn` | `source/build_playground_art.py` and `tools/bake_playground_scenery.gd` | Native compressed `PackedScene` with the static yard visuals and scenery-only materials. The construction site is a separate text-scene instance. No external download or new paint tile. |
+| `scenery.tscn` | `source/build_playground_art.py` | Text `PackedScene` with the static yard visuals; the scenery-only materials are embedded as sub-resources. Since round 20 it is written directly by Python (no editor bake); `--detail-meshes` still uses `tools/bake_playground_scenery.gd` to re-encode the shaped `meshes/*.mesh`. The construction site is a separate text-scene instance. |
+| `cactus_plot.tscn`, `cactus_plot_view.tscn`, `meshes/cactus_plot/*.tres`, `materials/cactus_glow.tres`, `girl_glow.tres`, `cactus_soil.tres`, `shaders/cactus_glow.gdshader` | `source/cactus_plot.py` | Round 20: the square of soil let into the concrete, the giant saguaro and the girl skipping beside it. Plain Python, no engine: `python3 scenes/environment/props/playground_art/source/cactus_plot.py`. `cactus_plot_view.tscn` is the same plot for the hall's view of the yard, without the saguaro's solid. |
 | `construction_site.tscn`, `meshes/site/*.tres`, `materials/site/*.tres` | `source/construction_site.py` (layout), `source/site_meshes.py` (parts), `source/site_mesh.py` (mesh kit) | The building under construction as a text scene that instances generated `ArrayMesh` resources (`meshes/site/*.tres`, one file per mesh, so the scene stays small) with vertex colours (grime, rust, wet sand). Rebuilds with plain Python, no engine: `python3 scenes/environment/props/playground_art/source/construction_site.py`. The materials reuse the yard's ground, metal and plaster tiles. |
 | `scenes/locations/playground/playground.tscn` (art pass) | `source/build_playground_art.py` | Applied on top of the graybox written by `tools/build_outdoor_locations.py`. |
 
@@ -39,7 +40,7 @@ python3 tools/build_outdoor_locations.py playground
 
 `build_playground_art.py` refuses to run on a scene that already has the pass
 (`PlaygroundArt` node), so it can never be applied twice. The render-only
-`PlaygroundArt` branch is saved as the compressed `scenery.scn` instance. Fittings
+`PlaygroundArt` branch is saved as the text `scenery.tscn` instance. Fittings
 attached to occluding bodies stay in the location scene, so they still fade with
 those bodies. The art pass itself adds no collision; the graybox defines the smaller shed and removes the two retired interaction anchors.
 
@@ -57,7 +58,7 @@ referenced by one of the playable yard fittings or props.
 ## Roof visit and resident
 
 `RoofEncounter` is a sibling of the container at its origin, so it is not part of
-`scenery.scn` and does not fade with the shell. On either window route, roof contact
+`scenery.tscn` and does not fade with the shell. On either window route, roof contact
 wakes the resident on the existing sheet. After the landing pose the door shot
 follows his rise and walk across the threshold. No furniture or collisions are
 added; the ladder and the existing inspections still use the same nodes.
@@ -123,14 +124,28 @@ and events (`docs/IMPLEMENTATION_NOTES_PLAYGROUND.md`).
     inspection at the yard edge in front of the gate) carries the `building_site` camera
     shot, which backs the camera off and lifts its aim (`CameraShot.look_height`) so the
     whole building is in frame.
-- **Ground.** Two pours of low-value concrete: the stage floor stays dark so the court,
-  the props and the pale HUD text carry the light. The older pour is warm sand; the newer
-  pour, east of the seam, is a cooler grey. The seam crosses the yard and comes up
-  through the court paint. The near hoop stands in a cooler patch of newer concrete with
-  four filled bolt holes.
-- **Court.** Rough neutral-grey concrete, with a few non-repeating fine cracks and
-  hand-brushed white boundary and key lines. Both halves share the same concrete texture;
-  the slightly darker far overlay is lifted above the surface to prevent z-fighting.
+- **Ground (round 20).** Everything off the court is one plane of cool, pale-grey square
+  concrete slabs with thin dark joints (`yard_slab.png`, 2 m slabs), after the owner's
+  1970s surreal references: the 'infinite' tiled plane. The earth band round the court
+  (`earth_yard.tscn`, `shaders/yard_earth.gdshader`) is now the same cement, with slow
+  cloud shadows drifting across it; no texture sampler. The dusk lighting is unchanged.
+  The near hoop still stands in a cooler patch of newer concrete with four filled bolt holes.
+- **Court.** Rough (粗粝) neutral-grey concrete: pitted aggregate, trowel arcs, fine cracks
+  and hand-brushed white boundary and key lines (`court_tile.png`). Both halves share the
+  same concrete texture; the slightly darker far overlay is lifted above the surface to
+  prevent z-fighting.
+- **The cactus plot (round 20).** In the open west of the yard, where the shed stood
+  (`CACTUS_PLOT` in `tools/build_outdoor_locations.py`), the concrete suddenly gives way to
+  a sharp 3 × 3 m square of brown soil and gravel, cut into the slabs. In it stands a
+  4.4 m ribbed saguaro, and beside it a little girl in a white smocked dress, white tights
+  and a hair bun, seen from behind, skipping with a rope (`Girl/Motion`, 0.84 s). Both
+  use `cactus_glow.gdshader`, a soft self-lit sheen, so at dusk they are the brightest
+  things in the yard (the 'Empire of Light' contradiction). A distant brown mountain row
+  (`RowMountain`, `row_mountain.png`) closes the west sky. The saguaro is a solid in
+  `camera_occluder`; the girl and the soil have no collision.
+- **Shed (round 20).** Moved to the north-east corner: against the west side of the
+  container, its back to the fence in front of the teaching block, door to the south.
+  The tyres and the ping-pong ball under the footing moved with it.
 - **A few isolated colour accents**, each on something the player is meant to find:
   - the yellow climbing frame and hoop rings
   - the green shed door, with its hasp and brass padlock

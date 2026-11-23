@@ -160,7 +160,7 @@ func _run() -> void:
 	await _focus_shot(&"pg_bench_look", "12-noodle-wrapper.png")
 	await _stand(Vector3(-4.67, 0.03, 14.42), Vector3.LEFT)
 	await _focus_shot(&"pg_tap", "13-tap-and-drain.png")
-	await _stand(Vector3(-12.5, 0.03, -4.4), Vector3.LEFT)
+	await _stand(Vector3(4.8, 0.03, -13.45), Vector3.FORWARD)  # round 20: the shed moved north-east
 	await _focus_shot(&"pg_shed_door", "14-equipment-shed.png")
 	await _capture_rear_jump()
 	_finish(_failures)
