@@ -973,26 +973,20 @@ def build_playground(for_courtyard_view: bool = False):
         s.box(f"{name}Footing", (x, 0.1, z), (1.2, 0.2, 1.2), "concrete")
 
     # the equipment shed on the west side
-    s.box("ShedBody", (-17.0, 1.5, -4.0), (6.0, 3.0, 8.0), "wall", ["camera_occluder"])
+    s.box("ShedBody", (-16.0, 1.5, -4.0), (4.0, 3.0, 6.0), "wall", ["camera_occluder"])
     # Both views use the actual roof slab. The yard art pass adds seams and a gutter
     # to it and replaces the distant door, glazing and sign with detailed wall trim.
-    s.box("ShedRoof", (-17.0, 3.1, -4.0), (6.4, 0.2, 8.4), "metal", None, False)
+    s.box("ShedRoof", (-16.0, 3.1, -4.0), (4.4, 0.2, 6.4), "metal", None, False)
     if for_courtyard_view:
         s.box("ShedDoor", (-13.95, 1.1, -4.0), (0.12, 2.2, 1.1), "hedge", None, False)
-        s.box("ShedWindow", (-13.95, 1.9, -6.2), (0.1, 0.8, 1.2), "glass", None, False)
-        s.box("ShedSheet", (-13.9, 1.9, -6.2), (0.08, 0.5, 0.9), "paper", None, False)
+        s.box("ShedWindow", (-13.95, 1.9, -5.85), (0.1, 0.8, 1.2), "glass", None, False)
+        s.box("ShedSheet", (-13.9, 1.9, -5.85), (0.08, 0.5, 0.9), "paper", None, False)
     # two footings, and the gap is only on the left one
     s.box("ShedFootingWest", (-15.6, 0.2, -0.1), (1.4, 0.4, 1.4), "concrete")
     s.box("ShedFootingEast", (-13.2, 0.3, -0.1), (1.4, 0.6, 1.4), "concrete")
-    s.box("ShedHedge", (-18.5, 0.9, 0.6), (5.0, 1.6, 3.0), "hedge", None, False)
+    s.box("ShedHedge", (-17.2, 0.55, 0.9), (2.6, 1.1, 1.4), "hedge", None, False)
     s.box("PaleUnderHedge", (-16.6, 0.45, 0.9), (0.9, 0.05, 0.16), "paper", None, False)
     s.box("PingPongBall", (-14.4, 0.16, -0.1), (0.06, 0.06, 0.06), "paper", None, False)
-
-    # notice board on the east side, by the bench
-    s.box("BoardPostA", (14.0, 1.3, 2.0), (0.12, 2.6, 0.12), "metal")
-    s.box("BoardPostB", (14.0, 1.3, 4.4), (0.12, 2.6, 0.12), "metal")
-    s.box("BoardSheet", (14.0, 1.9, 3.2), (0.06, 1.1, 1.8), "paper", None, False)
-    s.box("BoardBacking", (14.06, 1.9, 3.2), (0.04, 1.2, 1.9), "metal", None, False)
 
     # climbing frame on the east side
     for i, z in enumerate((7.0, 9.0, 11.0)):
@@ -1070,14 +1064,6 @@ def build_playground(for_courtyard_view: bool = False):
         {"name": "BallLook", "pos": (-14.2, 0.8, 0.6), "id": "pg_ball_look",
          "route": "pg_ball", "prompt": "The ball under the shed", "radius": 1.4,
          "outline": ("PingPongBall",)},
-        {"name": "BoardLook", "pos": (13.2, 1.7, 3.2), "id": "pg_board_look",
-         "inspection": "pg_return_board", "radius": 1.2,
-         "shot": "res://assets/camera/shots/return_board.tres",
-         "outline": ("PlaygroundArt/ReturnBoardEast/Case", "PlaygroundArt/ReturnBoardWest/Case",
-                     "BoardPostA", "BoardPostB")},
-        {"name": "ChalkGuideLook", "pos": (-12.4, 0.53, -9.6), "id": "pg_chalk_guide",
-         "inspection": "pg_chalk_guide", "radius": 1.25,
-         "outline": ("PlaygroundArt/ChalkGuide/Caddy",)},
         {"name": "TapLook", "pos": (-5.58, 1.08, 14.0), "id": "pg_tap",
          "inspection": "pg_tap", "radius": 1.3,
          "script": "res://scenes/locations/playground/yard_tap.gd",

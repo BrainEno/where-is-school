@@ -45,12 +45,12 @@
     "prompt": "Look at the court",
     "speaker": "protagonist",
     "source": "observed",
-    "text": "Two hoops, a centre line, and a key painted at each end. The paint at the far end is a shade darker, as if that half was done a year later.",
-    "repeat_text": "Two hoops, two keys, two shades of paint.",
+    "text": "Two hoops, a centre line, and a key at each end. White lines cross the rough grey concrete; a few cracks run through it.",
+    "repeat_text": "Two hoops, white lines, and a few cracks in the concrete.",
     "record": {
       "entry_id": "saw_pg_court",
       "source": "observed",
-      "text": "The two halves of the yard court were painted at different times."
+      "text": "White court lines cross the rough grey concrete, with a few cracks showing through."
     }
   },
   "pg_container": {
@@ -77,32 +77,6 @@
       "entry_id": "saw_pg_tyres",
       "source": "observed",
       "text": "The tyres against the shed were painted the same green as the shed door."
-    }
-  },
-  "pg_return_board": {
-    "title": "Equipment return board",
-    "prompt": "Read the return board",
-    "speaker": "protagonist",
-    "source": "observed",
-    "text": "The red steps lead to the fire door in the school wall. For the alley, use the alley gate opposite. A strip under the main sheet has the same stamp printed backwards.",
-    "repeat_text": "Fire door for the school, alley gate for the alley. The lower stamp is still backwards.",
-    "record": {
-      "entry_id": "saw_pg_return_board",
-      "source": "observed",
-      "text": "The yard board marks the fire door back into school and the gate towards the alley. The lower strip shows the return stamp in reverse."
-    }
-  },
-  "pg_chalk_guide": {
-    "title": "Court marking guide",
-    "prompt": "Inspect the chalk-line kit",
-    "speaker": "protagonist",
-    "source": "observed",
-    "text": "Red cord and a strip used to mark the court. One peg hole is round, the other is a slot. There is enough chalk on the offcut to see what prints through each one.",
-    "repeat_text": "A round hole and a slot. The chalk gives both away.",
-    "record": {
-      "entry_id": "saw_pg_chalk_guide",
-      "source": "observed",
-      "text": "The court marking guide has one round hole and one slotted hole; both leave distinct chalk marks."
     }
   },
   "pg_tap": {

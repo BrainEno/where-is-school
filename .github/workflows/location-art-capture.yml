@@ -44,7 +44,6 @@ on:
       - "tests/school_facilities_test.gd"
       - "tests/playground_art_slice_test.gd"
       - "tests/return_route_test.gd"
-      - "assets/camera/shots/return_board.tres"
       - "data/inspections/*/street.json"
       - "data/inspections/*/alley.json"
       - "data/inspections/*/playground.json"
@@ -256,10 +255,6 @@ jobs:
               expect=2
               # The street adds the ditch by the drain cover to its two return-route details.
               if [ "$LOCATION" = playground ] || [ "$LOCATION" = street ]; then expect=3; fi
-              if [ "$LOCATION/$SIDE" = playground/after ]; then
-                detail+=(return-board-focus)
-                expect=4
-              fi
               ;;
           esac
           xvfb-run -a --server-args="-screen 0 1600x900x24" \

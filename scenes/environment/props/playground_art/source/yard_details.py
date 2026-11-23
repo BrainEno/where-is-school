@@ -52,6 +52,18 @@ def tap(b, art):
         _box(b, wheel, f"Spoke{i}", (0.167, 0.022, 0.018), (0, 0, 0), "fire_door", (0, angle, 0))
     _cylinder(b, wheel, "Retainer", 0.026, 0.031, (0, 0.009, 0), "exit_steel", sides=8)
 
+    # Turned rings, washers and small fasteners make the fitting read as assembled
+    # hardware instead of a single coloured tube. All are decorative and non-solid.
+    for i, x in enumerate((0.145, 0.18, 0.215)):
+        _cylinder(b, p, f"BibThread{i}", 0.057, 0.014, (x, 1.566, 0), "exit_steel", (0, 0, -90), sides=16)
+    _cylinder(b, p, "OutletCollar", 0.068, 0.028, (0.365, 1.486, 0), "exit_steel", sides=16)
+    for i, angle in enumerate((0, 90, 180, 270)):
+        r = math.radians(angle)
+        _cylinder(b, wheel, f"WheelBolt{i}", 0.008, 0.012,
+                  (0.09 * math.cos(r), 0.012, 0.09 * math.sin(r)), "brass", sides=8)
+    for i, y in enumerate((0.38, 1.10)):
+        _cylinder(b, p, f"PipeBand{i}", 0.081, 0.03, (0, y, 0), "exit_steel", sides=16)
+
     # The rubber-faced brass stopper is hooked onto a collar, not set in the drain.
     _cylinder(b, p, "HookCollar", 0.085, 0.039, (0, 1.248, 0), "exit_frame")
     b.flat("HookEye", p, _ring(b, 0.022, 0.039), "exit_steel", (0.094, 1.237, 0.024), (90, 0, 0))
@@ -79,9 +91,17 @@ def tap(b, art):
 
 def shed(b):
     # Local +Z is out to the yard, so all this facade work follows the same wall fade.
-    b.node("Facade", "ShedBody", position=_v3((3, -1.5, 0)), rotation_degrees=_v3((0, 90, 0)))
+    b.node("Facade", "ShedBody", position=_v3((2, -1.5, 0)), rotation_degrees=_v3((0, 90, 0)))
     p = "ShedBody/Facade"
-    _box(b, p, "Skirt", (7.90, 0.24, 0.05), (0, 0.13, 0.018), "plinth")
+    _box(b, p, "Skirt", (5.90, 0.24, 0.05), (0, 0.13, 0.018), "plinth")
+    # Mismatched reclaimed cladding panels, with seams and fastening strips.
+    for i, (x, width, height, y) in enumerate(((-2.43, 1.0, 1.18, 0.88),
+                                                  (-2.35, 1.16, 1.27, 2.12),
+                                                  (-1.20, 1.05, 1.35, 0.85),
+                                                  (1.18, 0.95, 1.22, 0.84))):
+        _box(b, p, f"ReclaimedPanel{i}", (width, height, 0.025), (x, y, 0.025),
+             "shed_clean_paint" if i % 2 else "shed_wall")
+        _box(b, p, f"PanelBatten{i}", (0.032, height, 0.035), (x - width / 2, y, 0.045), "exit_steel")
     # The dark reveal and slit under the door are visual only; the existing check
     # cannot actually change the exterior wall or open a navigable room.
     _box(b, p, "DoorReveal", (1.21, 2.24, 0.080), (0, 1.12, 0.052), "exit_frame")
@@ -105,30 +125,54 @@ def shed(b):
     _box(b, p, "SignBack", (0.85, 0.235, 0.034), (0, 2.498, 0.022), "exit_frame")
     b.flat("RoomSign", p, b.mesh("QuadMesh", size="Vector2(0.803, 0.19)"), "shed_sign", (0, 2.498, 0.041))
 
-    # A ruled sheet remains on the visible side of the glazing. No bar across its
-    # rows, or across the clipped-off copy mounted in _yard_return_details.
-    _box(b, p, "WindowReveal", (1.39, 1.0, 0.061), (2.2, 1.935, 0.027), "exit_frame")
-    _box(b, p, "Glazing", (1.223, 0.813, 0.040), (2.2, 1.935, 0.065), "exit_glass")
-    for i, x in enumerate((1.559, 2.841)):
+    # A ruled sheet remains on the visible side of the glazing.
+    _box(b, p, "WindowReveal", (1.39, 1.0, 0.061), (1.85, 1.935, 0.027), "exit_frame")
+    _box(b, p, "Glazing", (1.223, 0.813, 0.040), (1.85, 1.935, 0.065), "exit_glass")
+    for i, x in enumerate((1.209, 2.491)):
         _box(b, p, f"GlazingBead{i}", (0.069, 0.905, 0.059), (x, 1.934, 0.071), "exit_steel")
-    _box(b, p, "WindowHead", (1.342, 0.064, 0.061), (2.2, 2.371, 0.071), "exit_steel")
-    _box(b, p, "SillPan", (1.49, 0.082, 0.224), (2.2, 1.46, 0.081), "concrete")
-    _box(b, p, "HighRail", (1.22, 0.025, 0.019), (2.2, 2.234, 0.085), "exit_steel")
-    _box(b, p, "DutySheet", (0.009, 0.5, 0.90), (2.2, 1.963, 0.093), "rota", (0, -90, 0))
+    _box(b, p, "WindowHead", (1.342, 0.064, 0.061), (1.85, 2.371, 0.071), "exit_steel")
+    _box(b, p, "SillPan", (1.49, 0.082, 0.224), (1.85, 1.46, 0.081), "concrete")
+    _box(b, p, "HighRail", (1.22, 0.025, 0.019), (1.85, 2.234, 0.085), "exit_steel")
+    _box(b, p, "DutySheet", (0.009, 0.5, 0.90), (1.85, 1.963, 0.093), "rota", (0, -90, 0))
     # Dress the slab shared with the teaching-wing view, rather than drawing a
     # second roof. Its top is 0.10 m above the local origin; the seams sit into it.
     roof = "ShedRoof"
-    rib = b.mesh("BoxMesh", size=_v3((6.32, 0.025, 0.037)))
-    for i in range(13):
-        b.flat(f"RoofSeam{i}", roof, rib, "shed_roof", (0, 0.108, 0.634 * (i - 6)))
-    _box(b, roof, "Gutter", (0.125, 0.112, 8.39), (3.208, -0.062, 0), "exit_frame")
-    _box(b, roof, "GutterLip", (0.042, 0.029, 8.39), (3.270, -0.006, 0), "exit_steel")
+    rib = b.mesh("BoxMesh", size=_v3((4.32, 0.025, 0.037)))
+    for i in range(11):
+        b.flat(f"RoofSeam{i}", roof, rib, "shed_roof", (0, 0.108, 0.614 * (i - 5)))
+    _box(b, roof, "Gutter", (0.125, 0.112, 6.39), (2.208, -0.062, 0), "exit_frame")
+    _box(b, roof, "GutterLip", (0.042, 0.029, 6.39), (2.270, -0.006, 0), "exit_steel")
     # The wall-mounted drainpipe stays clear of the ping-pong ball and footing.
-    _cylinder(b, p, "Downpipe", 0.047, 2.51, (3.69, 1.50, 0.157), "tap_steel", shadow=True)
-    _cylinder(b, p, "DownpipeElbow", 0.048, 0.35, (3.69, 2.851, 0.208), "tap_steel", (26, 0, 0))
-    _cylinder(b, p, "DownpipeShoe", 0.050, 0.26, (3.69, 0.177, 0.215), "exit_steel", (-44, 0, 0))
+    _cylinder(b, p, "Downpipe", 0.047, 2.51, (2.87, 1.50, 0.157), "tap_steel", shadow=True)
+    _cylinder(b, p, "DownpipeElbow", 0.048, 0.35, (2.87, 2.851, 0.208), "tap_steel", (26, 0, 0))
+    _cylinder(b, p, "DownpipeShoe", 0.050, 0.26, (2.87, 0.177, 0.215), "exit_steel", (-44, 0, 0))
     for i, y in enumerate((0.54, 1.63, 2.62)):
-        _box(b, p, f"PipeStrap{i}", (0.138, 0.052, 0.181), (3.69, y, 0.096), "exit_frame")
+        _box(b, p, f"PipeStrap{i}", (0.138, 0.052, 0.181), (2.87, y, 0.096), "exit_frame")
+
+
+def shed_surroundings(b, art):
+    """Low leafy clusters and worn footing covers; original collision stays intact."""
+    for side, height in (("West", 0.4), ("East", 0.6)):
+        parent = "ShedFooting" + side
+        # Keep the text's gap and its two physical footings, while breaking the
+        # featureless brown cubes into a concrete base and chipped top courses.
+        _box(b, parent, "ConcreteBase", (1.36, height - 0.06, 1.36), (0, -0.03, 0), "concrete")
+        _box(b, parent, "WornCap", (1.28, 0.06, 1.27), (0.02, height / 2 - 0.03, -0.02), "concrete_patch")
+        _box(b, parent, "Joint", (1.31, 0.012, 0.025), (0, height / 2 + 0.001, 0.16), "plinth", (0, 5, 0))
+    hedge(b, art)
+
+
+def hedge(b, art, material_prefix=""):
+    b.node("HedgeLeaves", art)
+    parent = f"{art}/HedgeLeaves"
+    # Small overlapping rounded clusters keep the hedge irregular, low, and
+    # close to the pale strip described by the ball interaction.
+    for i, (x, y, z, r) in enumerate(((-18.10, .34, .9, .39), (-17.57, .43, .73, .46),
+                                      (-17.03, .37, .88, .42), (-16.55, .33, .65, .35),
+                                      (-17.85, .60, .98, .33), (-17.27, .64, .95, .34),
+                                      (-16.82, .58, 1.03, .31), (-17.48, .30, 1.38, .30))):
+        mesh = b.mesh("SphereMesh", radius=f"{r:g}", height=f"{2*r:g}", radial_segments="9", rings="5")
+        b.flat(f"LeafCluster{i}", parent, mesh, material_prefix + ("hedge" if i % 3 else "crown"), (x, y, z))
 
 
 def cabin(b):
