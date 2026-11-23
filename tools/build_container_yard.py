@@ -13,8 +13,9 @@ containers, which you walk through by the gaps between them.
   a second flight on that roof up onto a double stack.
 * Long timber planks, some level and some sloping, link the roofs; they sag and sway
   (`plank_sway.gdshader`) while their colliders stay put.
-* An apron with faded parking-bay paint by the way in, floodlight masts, the back wall of
-  the yard, and a gantry crane far off behind it.
+* An apron with faded parking-bay paint by the way in, floodlight masts, the precast back
+  wall of the yard; past it and the west fence the rest of the terminal (more stacks, a
+  shed, floodlight towers) and two of the port's quay cranes far off in the fog.
 * A truck on the apron, its 40 ft box open at the tail and bound for the dock: climbing in
   is the way to the port (build_port.py, which parks the same truck there).
 
@@ -317,7 +318,54 @@ def truck_mesh(length: float):
         for sz in (-1, 1):
             m.add(tyre, (*RUBBER, 1.0), offset=(x, 0, sz * 1.02))
             m.add(hub, (0.55, 0.55, 0.56, 1.0), offset=(x, 0, sz * 1.04))
+    _truck_details(m, hx, x_cab, cab, dark, steel)
     return m
+
+
+def _truck_details(m, hx: float, x_cab: float, cab, dark, steel):
+    """What makes the tractor read as a truck and not a box: the roof fairing and the sun
+    visor, a slatted grille, lamps, door seams and steps, mirrors on their arms, the fuel
+    tank, the exhaust stack, mudguards; on the trailer the landing legs, side guards, mud
+    flaps and the number plate."""
+    front = x_cab - 1.05
+    paint = lambda p, n: (*sm.mix(cab[:3], RUST, 0.25 * fbm(p[0] * 1.3, p[1] * 0.8 + p[2], 91)), 1.0)
+    m.add(box((1.5, 0.55, 2.3), (x_cab + 0.25, 3.77, 0), bevel=0.05), paint)
+    m.add(box((0.7, 0.5, 2.3), (0, 0, 0), bevel=0.04), paint, rotation=euler((0, 0, -38)),
+          offset=(x_cab - 0.55, 3.66, 0))
+    m.add(box((0.32, 0.05, 2.36), (front - 0.12, 3.42, 0)), dark)
+    m.add(box((0.05, 0.62, 1.5), (front - 0.005, 1.78, 0)), (0.42, 0.42, 0.44, 1.0))
+    for k in range(5):
+        m.add(box((0.04, 0.05, 1.42), (front - 0.03, 1.55 + k * 0.115, 0)), dark)
+    for sz in (-1, 1):
+        m.add(box((0.05, 0.2, 0.42), (front - 0.3, 1.32, sz * 0.86)), (0.98, 0.94, 0.78, 1.0))
+        m.add(box((0.05, 0.12, 0.16), (front - 0.3, 1.32, sz * 1.13)), (0.95, 0.55, 0.15, 1.0))
+        m.add(box((0.04, 0.12, 0.2), (front - 0.01, 3.3, sz * 1.0)), (0.95, 0.6, 0.2, 1.0))
+        side = sz * 1.215
+        for x in (x_cab - 0.75, x_cab + 0.55):
+            m.add(box((0.03, 1.5, 0.02), (x, 2.0, side)), dark)
+        m.add(box((1.3, 0.03, 0.02), (x_cab - 0.1, 1.27, side)), dark)
+        m.add(box((0.2, 0.05, 0.04), (x_cab + 0.35, 2.15, side + 0.02)), (0.6, 0.6, 0.62, 1.0))
+        for k, y in enumerate((0.62, 0.98)):
+            m.add(box((0.5, 0.05, 0.28 + 0.06 * k), (x_cab - 0.1, y, sz * (1.1 + 0.04 * k))), steel)
+        m.add(box((0.5, 0.05, 0.05), (front - 0.1, 3.05, sz * 1.24)), dark)
+        m.add(box((0.05, 0.05, 0.25), (front - 0.15, 3.05, sz * 1.25)), dark)
+        # Mudguards over the steer wheels and the drive axles.
+        m.add(box((1.2, 0.06, 0.42), (x_cab - 0.3, 1.12, sz * 1.02)), dark)
+        m.add(box((2.4, 0.06, 0.42), (-hx + 0.75, 1.14, sz * 1.02)), dark)
+        # The trailer: side guards between the axles, mud flaps behind the last wheels.
+        g0, g1 = -hx + 2.0, hx - 3.4
+        for gy in (0.55, 0.85):
+            m.add(box((g1 - g0, 0.1, 0.05), ((g0 + g1) / 2, gy, sz * 1.15)), (0.85, 0.85, 0.82, 1.0))
+        m.add(box((0.04, 0.55, 0.42), (hx - 0.95, 0.5, sz * 1.02)), dark)
+    # The fuel tank under the door on the near side, the exhaust stack behind the cab.
+    m.add(cylinder(0.28, 0.9, 14, axis="x", center=(-hx - 0.95, 0.72, 0.98)), (0.75, 0.76, 0.78, 1.0))
+    m.add(cylinder(0.08, 2.4, 10, center=(x_cab + 1.15, 3.0, -1.0)), (0.55, 0.55, 0.57, 1.0))
+    m.add(box((0.24, 0.9, 0.04), (x_cab + 1.15, 3.0, -0.88)), (0.7, 0.7, 0.72, 1.0))
+    # Landing legs at the front of the trailer, wound up off the ground.
+    for sz in (-0.8, 0.8):
+        m.add(box((0.14, 0.9, 0.14), (-hx + 2.7, TRUCK_DECK - 0.75, sz)), dark)
+        m.add(box((0.3, 0.06, 0.3), (-hx + 2.7, TRUCK_DECK - 1.22, sz)), dark)
+    m.add(box((0.05, 0.16, 0.5), (hx + 0.03, 0.75, 0)), (0.95, 0.92, 0.5, 1.0))
 
 
 def truck(s: Scene, parent: str, centre, materials: dict) -> str:
@@ -459,22 +507,124 @@ def mast_mesh():
     return m
 
 
-def crane_mesh():
-    """A ship-to-shore crane far off behind the back wall, a dark silhouette."""
+def back_wall_mesh():
+    """The back wall as precast concrete: panels between columns, a coping, rust and water
+    run down from the top, a dirty foot, and three strands of wire on cranked brackets. In
+    the wall body's frame: centred on it, 3.2 m high, its yard face toward +z."""
     m = sm.PaintMesh()
-    dark = (0.22, 0.22, 0.27, 1.0)
-    for x in (-6.0, 6.0):
-        for z in (-4.0, 4.0):
-            m.add(box((0.9, 30.0, 0.9), (x, 15.0, z)), dark)
-        m.add(box((0.7, 0.7, 8.9), (x, 14.0, 0)), dark)
-        m.add(tube([(x, 1.0, -4.0), (x, 14.0, 4.0)], 0.25, 6), dark)
-    m.add(box((14.0, 1.4, 1.2), (0, 30.5, -4.0)), dark)
-    m.add(box((14.0, 1.4, 1.2), (0, 30.5, 4.0)), dark)
-    m.add(box((2.2, 1.6, 64.0), (0, 32.0, 10.0)), dark)
-    m.add(box((3.0, 3.0, 4.0), (0, 30.0, 0)), dark)
-    for z in (-14.0, 34.0):
-        m.add(tube([(0, 44.0, 0.0), (0, 32.8, z)], 0.18, 6), dark)
-    m.add(box((1.2, 12.0, 1.2), (0, 38.0, 0)), dark)
+    length = X_MAX - X_MIN
+    half, h = length / 2, 1.6
+    pitch = length / 14
+
+    def concrete(p, _n):
+        x, y, _z = p
+        c = sm.mix((0.8, 0.79, 0.76), (0.6, 0.6, 0.6), 0.6 * fbm(x * 0.35, y * 0.5, 211))
+        run = fbm(x * 2.2, y * 0.18, 213) * smoothstep(-0.6, h, y)
+        if run > 0.48:
+            c = sm.mix(c, RUST if fbm(x * 0.3, 1.0, 215) > 0.5 else (0.36, 0.38, 0.36), min(0.6, (run - 0.48) * 2.4))
+        return (*sm.mix(c, (0.3, 0.29, 0.28), 0.6 * (1.0 - smoothstep(-h, -h + 0.5, y))), 1.0)
+
+    m.add(box((length, 2 * h - 0.1, 0.14), (0, -0.05, -0.04)), (0.18, 0.18, 0.19, 1.0))
+    for k in range(14):
+        x0 = -half + k * pitch + 0.03
+        x1 = x0 + pitch - 0.06
+        rows = [[(x0 + (x1 - x0) * i / 8, -h + 0.02 + (2 * h - 0.24) * j / 6, 0.1) for i in range(9)]
+                for j in range(7)]
+        m.mark()
+        m.grid(rows, outward=(0, 0, 1))
+        m.paint(concrete)
+        m.add(box((x1 - x0, 2 * h - 0.22, 0.04), ((x0 + x1) / 2, -0.1, -0.12)), concrete)
+    for k in range(15):
+        x = -half + k * pitch
+        m.add(box((0.32, 2 * h + 0.08, 0.3), (x, 0.04, 0.0)), concrete)
+        # The wire bracket, cranked out over the yard side.
+        m.add(box((0.06, 0.5, 0.06), (x, h + 0.33, 0.04)), (0.3, 0.3, 0.32, 1.0))
+        m.add(box((0.06, 0.06, 0.55), (0, 0, 0)), (0.3, 0.3, 0.32, 1.0), rotation=euler((-40, 0, 0)),
+              offset=(x, h + 0.7, -0.12))
+    m.add(box((length + 0.1, 0.12, 0.34), (0, h + 0.02, 0.0)), (0.7, 0.69, 0.66, 1.0))
+    for y, z in ((h + 0.32, 0.04), (h + 0.55, -0.08), (h + 0.78, -0.26)):
+        pts = []
+        for k in range(29):
+            x = -half + k * length / 28
+            sag = 0.04 * math.sin(math.pi * ((x + half) / pitch % 1.0))
+            pts.append((x, y - sag, z))
+        m.add(tube(pts, 0.012, 3), (0.25, 0.25, 0.27, 1.0))
+    return m
+
+
+def fence_frame_mesh():
+    """Posts, a top rail and a bottom wire along the chain-link fences, in world space."""
+    m = sm.PaintMesh()
+    steel = lambda p, n: (*sm.mix((0.5, 0.52, 0.5), RUST, 0.35 * noise(p[0] * 2.0 + p[2] * 2.0, p[1], 221)), 1.0)
+    runs = (((X_MIN, Z_MIN + 0.3), (X_MIN, Z_MAX)), ((X_MAX, Z_MIN + 0.3), (X_MAX, Z_MAX)),
+            ((X_MIN, Z_MAX), (GAP_X - 0.85, Z_MAX)), ((GAP_X + 0.85, Z_MAX), (X_MAX, Z_MAX)))
+    for (ax, az), (bx, bz) in runs:
+        ln = math.hypot(bx - ax, bz - az)
+        n = max(1, round(ln / 2.5))
+        for k in range(n + 1):
+            x, z = ax + (bx - ax) * k / n, az + (bz - az) * k / n
+            m.add(cylinder(0.04, 2.1, 8, center=(x, 1.05, z)), steel)
+            m.add(cylinder(0.06, 0.04, 8, center=(x, 2.12, z)), steel)
+        for y, r in ((2.0, 0.025), (0.08, 0.008)):
+            m.add(tube([(ax, y, az), (bx, y, bz)], r, 5), steel)
+    return m
+
+
+def far_stacks_mesh():
+    """Past the back wall and the west fence, the rest of the terminal: rows of stacks in
+    muted yard colours, a shed with a ribbed roof and roller doors, floodlight towers. Simple
+    boxes; the fog does the rest."""
+    m = sm.PaintMesh()
+    # The yard's own blues and reds and a grey, pulled toward the fog: the terminal past the
+    # wall is backdrop and must not compete with the maze.
+    haze = (0.36, 0.35, 0.42)
+    palette = tuple(sm.mix(c, haze, 0.45) for c in (COLOURS["blue"], COLOURS["blue_deep"], COLOURS["red"],
+                                                    COLOURS["red_dark"], (0.55, 0.55, 0.57), COLOURS["blue"]))
+
+    def stack(x, z, yaw, length, tiers, seed):
+        rot = euler((0, yaw, 0))
+        part = sm.PaintMesh()
+        for t in range(tiers):
+            base = palette[int(rand(seed * 7 + t, 231) * (len(palette) - 0.01))]
+            y = t * CH
+            # One box a tier, its foot darker so the tiers read apart in the fog.
+            part.add(box((length - 0.1, CH - 0.04, CW - 0.06), (0, y + CH / 2, 0)),
+                     lambda p, n, base=base, y=y: (*sm.mix(base, (0.12, 0.12, 0.13), 0.5 if p[1] < y + 0.1 else 0.0),
+                                                   1.0))
+        m.add(part, rotation=rot, offset=(x, 0, z))
+
+    seed = 0
+    # Behind the back wall: blocks of stacks in rows along x, lanes between the blocks.
+    for row, z in enumerate((-21.5, -24.2, -26.9, -33.0, -35.7, -38.4, -44.5, -47.2)):
+        x = -58.0 + rand(row, 233) * 4.0
+        while x < 46.0:
+            seed += 1
+            length = L40 if rand(seed, 235) > 0.4 else L20
+            if rand(seed, 237) > 0.12:
+                # The rows nearest the wall stay low, so the stacks climb away into the fog.
+                stack(x + length / 2, z, 0.0, length, 1 + int(rand(seed, 239) * min(3.99, 1.5 + row * 0.5)), seed)
+            x += length + (6.0 if rand(seed, 241) > 0.86 else 0.25)
+    # West of the west fence: rows along z, the same way.
+    for col, x in enumerate((-27.0, -29.7, -32.4, -38.5, -41.2, -43.9)):
+        z = -18.0 + rand(col, 243) * 3.0
+        while z < 30.0:
+            seed += 1
+            length = L40 if rand(seed, 245) > 0.5 else L20
+            if rand(seed, 247) > 0.15:
+                stack(x, z + length / 2, 90.0, length, 1 + int(rand(seed, 249) * min(3.99, 1.5 + col * 0.6)), seed)
+            z += length + (5.0 if rand(seed, 251) > 0.85 else 0.25)
+    # A long shed far behind the stacks, its roof ribbed, roller doors along its front.
+    shed = lambda p, n: (*sm.mix((0.62, 0.64, 0.66), RUST, 0.3 * fbm(p[0] * 0.2, p[1] * 0.5, 253)), 1.0)
+    m.add(box((60.0, 9.0, 18.0), (-8.0, 4.5, -62.0)), shed)
+    for k in range(41):
+        m.add(box((0.25, 0.25, 18.4), (-38.0 + k * 1.5, 9.1, -62.0)), (0.48, 0.5, 0.52, 1.0))
+    for k in range(8):
+        m.add(box((4.0, 5.0, 0.05), (-34.0 + k * 7.4, 2.5, -52.98)), (0.32, 0.36, 0.42, 1.0))
+    # Floodlight towers over the stacks.
+    for x, z in ((-44.0, -30.0), (-4.0, -30.0), (34.0, -30.0), (-36.0, 8.0)):
+        m.add(cylinder(0.35, 28.0, 8, top=0.2, center=(x, 14.0, z)), (0.4, 0.4, 0.42, 1.0))
+        m.add(box((3.2, 1.0, 0.5), (x, 28.2, z)), (0.3, 0.3, 0.32, 1.0))
+        m.add(box((3.0, 0.8, 0.04), (x, 28.0, z + 0.27)), (1.0, 0.86, 0.6, 1.0))
     return m
 
 
@@ -576,7 +726,6 @@ def build() -> Scene:
     metal_tile = s.res("Texture2D", f"{ART}/textures/metal_tile.png", "metal_tile")
     ground_tile = s.res("Texture2D", f"{ART}/textures/ground_tile.png", "ground_tile")
     fence = s.res("Material", f"{ART}/materials/fence_panel.tres", "fence")
-    wall = s.res("Material", f"{ART}/materials/estate.tres", "wall")
 
     env = s.sub("Environment", "YardEnvironment",
                 background_mode="1", background_color=colour((0.239, 0.275, 0.361)),
@@ -609,7 +758,11 @@ def build() -> Scene:
     steel_mat = painted("mast_steel", (1, 1, 1), srgb=True)
     hole_mat = painted("gap_dark", (1, 1, 1), cull="2", srgb=True)
     crane_mat = s.sub("StandardMaterial3D", "crane", resource_name='"crane"', shading_mode="0",
-                      vertex_color_use_as_albedo="true", albedo_color=colour((1, 1, 1)))
+                      albedo_color=colour((0.25, 0.25, 0.31)))
+    port_crane = s.res("ArrayMesh", "res://scenes/locations/port/meshes/crane.tres", "port_crane")
+    plaster = s.res("Texture2D", f"{ART}/textures/plaster_tile.png", "plaster_tile")
+    wall_mat = painted("precast", (1, 1, 1), texture=plaster, scale=0.3, world=True, srgb=True)
+    far_mat = painted("far_stacks", (1, 1, 1), texture=metal_tile, scale=0.4, world=True, srgb=True)
 
     root = s.node("ContainerYard", None, "Node3D", script=location, location_id='&"container_yard"')
     s.node("WorldEnvironment", root, "WorldEnvironment", environment=env)
@@ -629,6 +782,11 @@ def build() -> Scene:
            material_override=ground_mat)
     s.node("BayPaint", "YardGround", "MeshInstance3D", mesh=s.mesh("BayPaint", bay_paint()),
            material_override=paint_mat, cast_shadow="0")
+    # Past the edges the terminal goes on: the same asphalt to the fog, and stacks on it.
+    s.node("Outskirts", root, "MeshInstance3D", position=v3((0, -0.05, 0)),
+           mesh=s.sub("PlaneMesh", "Plane_outskirts", size="Vector2(320, 320)"), material_override=ground_mat,
+           cast_shadow="0")
+    s.node("FarStacks", root, "MeshInstance3D", mesh=s.mesh("FarStacks", far_stacks_mesh()), material_override=far_mat)
 
     # The containers, stack by stack; each stack is one body the camera can fade.
     meshes = {(L20, 0): s.mesh("Container20A", container_mesh(L20, 1)),
@@ -719,7 +877,7 @@ def build() -> Scene:
     # The edges: a back wall, chain-link fences, the gap in the front one.
     s.node("Edges", root, "Node3D")
     edges = (
-        ("BackWall", ((X_MIN + X_MAX) / 2, 1.6, Z_MIN), (X_MAX - X_MIN, 3.2, 0.3), wall, True),
+        ("BackWall", ((X_MIN + X_MAX) / 2, 1.6, Z_MIN), (X_MAX - X_MIN, 3.2, 0.3), None, True),
         ("FenceLeft", (X_MIN, 1.0, (Z_MIN + Z_MAX) / 2), (0.08, 2.0, Z_MAX - Z_MIN), fence, False),
         ("FenceRight", (X_MAX, 1.0, (Z_MIN + Z_MAX) / 2), (0.08, 2.0, Z_MAX - Z_MIN), fence, False),
         ("FenceFrontWest", ((X_MIN + GAP_X - 0.8) / 2, 1.0, Z_MAX), (GAP_X - 0.8 - X_MIN, 2.0, 0.08), fence, False),
@@ -729,8 +887,14 @@ def build() -> Scene:
         body = s.node(name, "Edges", "StaticBody3D", groups=["camera_occluder"] if occludes else None,
                       position=v3(pos), collision_layer="1", collision_mask="0")
         s.node("CollisionShape3D", body, "CollisionShape3D", shape=s.sub("BoxShape3D", f"Shape_{name}", size=v3(size)))
-        s.node("MeshInstance3D", body, "MeshInstance3D", mesh=s.sub("BoxMesh", f"Box_{name}", size=v3(size)),
-               material_override=mat)
+        if name == "BackWall":
+            s.node("MeshInstance3D", body, "MeshInstance3D", mesh=s.mesh("BackWall", back_wall_mesh()),
+                   material_override=wall_mat)
+        else:
+            s.node("MeshInstance3D", body, "MeshInstance3D", mesh=s.sub("BoxMesh", f"Box_{name}", size=v3(size)),
+                   material_override=mat)
+    s.node("FenceFrame", "Edges", "MeshInstance3D", mesh=s.mesh("FenceFrame", fence_frame_mesh()),
+           material_override=steel_mat)
     # The gap itself stays closed to the body: the exit is how you go through it.
     s.node("GapStop", "Edges", "StaticBody3D", position=v3((GAP_X, 1.0, Z_MAX + 0.15)), collision_layer="1",
            collision_mask="0")
@@ -749,8 +913,11 @@ def build() -> Scene:
         s.node("Pole", holder, "MeshInstance3D", mesh=mast, material_override=steel_mat)
         s.node("Light", holder, "OmniLight3D", position=v3((0, 8.6, 0.6)), light_color=colour((1.0, 0.74, 0.46)),
                light_energy="1.6", omni_range="22.0", omni_attenuation="0.8")
-    s.node("Crane", root, "MeshInstance3D", position=v3((-6.0, 0, -52.0)), rotation_degrees=v3((0, 12, 0)),
-           mesh=s.mesh("Crane", crane_mesh()), material_override=crane_mat, cast_shadow="0")
+    # The quay cranes beyond the wall are the port's own crane (build_port.py), seen far off
+    # against the evening as flat dark shapes.
+    for i, (x, z, yaw) in enumerate(((-6.0, -76.0, 12.0), (30.0, -82.0, 8.0))):
+        s.node(f"Crane{i}", root, "MeshInstance3D", position=v3((x, 0, z)), rotation_degrees=v3((0, yaw, 0)),
+               mesh=port_crane, material_override=crane_mat, cast_shadow="0")
 
     s.node("SpawnPoints", root, "Node3D")
     s.node("FromPlayground", "SpawnPoints", "Marker3D", groups=["spawn_point"], position=v3(SPAWN))

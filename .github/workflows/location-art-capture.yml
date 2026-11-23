@@ -210,20 +210,22 @@ jobs:
               expect=9
               ;;
             container_yard)
-              # The container yard: six fixed views (overhead maze, corner, tyre stairs, the
-              # long plank, roofs, the high plank), four follow-camera stances, and the way in
-              # from the schoolyard (a stance and a view).
+              # The container yard: eight fixed views (overhead maze, corner, tyre stairs, the
+              # long plank, roofs, the high plank, the back wall, the terminal past the edges),
+              # four follow-camera stances, and the way in from the schoolyard (a stance and a
+              # view).
               detail=(container-yard review_width=380)
               width=1280
-              expect=12
+              expect=14
               ;;
             port)
-              # The port: six fixed views (the quay from high up, the sea from the pier,
-              # the crane, the ship, the water from overhead, the truck), five follow-camera
-              # stances, and the yard's truck that takes you there (a stance and a view).
+              # The port: eight fixed views (the quay from high up, the sea from the pier,
+              # the crane, the ship, the water from overhead, the truck, the ship's stern and
+              # bow), five follow-camera stances, and the yard's truck that takes you there (a
+              # stance and a view).
               detail=(port review_width=380)
               width=1280
-              expect=13
+              expect=15
               ;;
             front_yard)
               # The front yard (前操场): three follow-camera stances (the side door, the

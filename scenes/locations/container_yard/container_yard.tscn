@@ -1,4 +1,4 @@
-[gd_scene load_steps=108 format=3]
+[gd_scene load_steps=113 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -10,9 +10,11 @@
 [ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/metal_tile.png" id="metal_tile"]
 [ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/ground_tile.png" id="ground_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fence_panel.tres" id="fence"]
-[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/estate.tres" id="wall"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/crane.tres" id="port_crane"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/playground_art/textures/plaster_tile.png" id="plaster_tile"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/ground.tres" id="mesh_ground"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/bay_paint.tres" id="mesh_bay_paint"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/far_stacks.tres" id="mesh_far_stacks"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_a.tres" id="mesh_container20_a"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container20_b.tres" id="mesh_container20_b"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/container40_a.tres" id="mesh_container40_a"]
@@ -36,9 +38,10 @@
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_high_across.tres" id="mesh_plank_high_across"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_back_pair.tres" id="mesh_plank_back_pair"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/plank_middle_diagonal.tres" id="mesh_plank_middle_diagonal"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/back_wall.tres" id="mesh_back_wall"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/fence_frame.tres" id="mesh_fence_frame"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/gap_hole.tres" id="mesh_gap_hole"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/mast.tres" id="mesh_mast"]
-[ext_resource type="ArrayMesh" path="res://scenes/locations/container_yard/meshes/crane.tres" id="mesh_crane"]
 
 [sub_resource type="Environment" id="YardEnvironment"]
 background_mode = 1
@@ -172,11 +175,41 @@ texture_filter = 3
 [sub_resource type="StandardMaterial3D" id="crane"]
 resource_name = "crane"
 shading_mode = 0
+albedo_color = Color(0.25, 0.25, 0.31, 1)
+
+[sub_resource type="StandardMaterial3D" id="precast"]
+resource_name = "precast"
+diffuse_mode = 3
+specular_mode = 2
 vertex_color_use_as_albedo = true
 albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+albedo_texture = ExtResource("plaster_tile")
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
+
+[sub_resource type="StandardMaterial3D" id="far_stacks"]
+resource_name = "far_stacks"
+diffuse_mode = 3
+specular_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+vertex_color_is_srgb = true
+albedo_texture = ExtResource("metal_tile")
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 3
 
 [sub_resource type="BoxShape3D" id="Shape_ground"]
 size = Vector3(43.5, 0.2, 36.5)
+
+[sub_resource type="PlaneMesh" id="Plane_outskirts"]
+size = Vector2(320, 320)
 
 [sub_resource type="BoxShape3D" id="Shape_R0C01"]
 size = Vector3(12.19, 7.77, 2.44)
@@ -348,9 +381,6 @@ shader_parameter/phase = 2.259
 [sub_resource type="BoxShape3D" id="Shape_BackWall"]
 size = Vector3(42.3, 3.2, 0.3)
 
-[sub_resource type="BoxMesh" id="Box_BackWall"]
-size = Vector3(42.3, 3.2, 0.3)
-
 [sub_resource type="BoxShape3D" id="Shape_FenceLeft"]
 size = Vector3(0.08, 2, 34.7)
 
@@ -421,6 +451,16 @@ material_override = SubResource("asphalt")
 mesh = ExtResource("mesh_bay_paint")
 material_override = SubResource("bay_paint")
 cast_shadow = 0
+
+[node name="Outskirts" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.05, 0)
+mesh = SubResource("Plane_outskirts")
+material_override = SubResource("asphalt")
+cast_shadow = 0
+
+[node name="FarStacks" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_far_stacks")
+material_override = SubResource("far_stacks")
 
 [node name="Containers" type="Node3D" parent="."]
 
@@ -1142,8 +1182,8 @@ collision_mask = 0
 shape = SubResource("Shape_BackWall")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/BackWall"]
-mesh = SubResource("Box_BackWall")
-material_override = ExtResource("wall")
+mesh = ExtResource("mesh_back_wall")
+material_override = SubResource("precast")
 
 [node name="FenceLeft" type="StaticBody3D" parent="Edges"]
 position = Vector3(-22.4, 1, -0.15)
@@ -1192,6 +1232,10 @@ shape = SubResource("Shape_FenceFrontEast")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Edges/FenceFrontEast"]
 mesh = SubResource("Box_FenceFrontEast")
 material_override = ExtResource("fence")
+
+[node name="FenceFrame" type="MeshInstance3D" parent="Edges"]
+mesh = ExtResource("mesh_fence_frame")
+material_override = SubResource("mast_steel")
 
 [node name="GapStop" type="StaticBody3D" parent="Edges"]
 position = Vector3(14, 1, 17.35)
@@ -1258,10 +1302,17 @@ light_energy = 1.6
 omni_range = 22.0
 omni_attenuation = 0.8
 
-[node name="Crane" type="MeshInstance3D" parent="."]
-position = Vector3(-6, 0, -52)
+[node name="Crane0" type="MeshInstance3D" parent="."]
+position = Vector3(-6, 0, -76)
 rotation_degrees = Vector3(0, 12, 0)
-mesh = ExtResource("mesh_crane")
+mesh = ExtResource("port_crane")
+material_override = SubResource("crane")
+cast_shadow = 0
+
+[node name="Crane1" type="MeshInstance3D" parent="."]
+position = Vector3(30, 0, -82)
+rotation_degrees = Vector3(0, 8, 0)
+mesh = ExtResource("port_crane")
 material_override = SubResource("crane")
 cast_shadow = 0
 

@@ -36,8 +36,8 @@ import sys
 from pathlib import Path
 
 import stable_meshes as sm  # also puts the site mesh kit on the path
-from build_container_yard import (CH, COLOURS, CW, L20, L40, RUBBER, RUST, Scene, colour, truck, v3)
-from site_mesh import box, cylinder, fbm, noise, rand, smoothstep, tube
+from build_container_yard import (CH, COLOURS, CW, L20, L40, RUBBER, RUST, Scene, colour, corrugation, truck, v3)
+from site_mesh import box, cylinder, euler, fbm, noise, rand, smoothstep, tube
 
 ROOT = Path(__file__).resolve().parent.parent
 REL = "scenes/locations/port"
@@ -60,8 +60,6 @@ CRANE_X, CRANE_HALF, RAIL_SEA, RAIL_LAND = 14.0, 5.5, -6.2, 3.8
 HANG = (CRANE_X, 5.0, -8.7)  # the hanging box: centre of its floor
 # The ship: moored along the quay east of the open water.
 SHIP_SIDE, SHIP_FAR, SHIP_X0, DECK_Y = -9.4, -25.0, 2.0, 3.4
-SHIP_OUTLINE = ((SHIP_X0, SHIP_SIDE), (62.0, SHIP_SIDE), (70.0, -11.4), (76.0, -17.2), (70.0, -23.0),
-                (62.0, SHIP_FAR), (SHIP_X0, SHIP_FAR))
 # The truck: its box's tail (the open doors) at TRUCK_TAIL_X.
 TRUCK_TAIL_X, TRUCK_Z = 17.4, 15.2
 SPAWN = (TRUCK_TAIL_X + 1.6, 0.0, TRUCK_Z)
@@ -260,127 +258,506 @@ def lifebuoy_mesh():
 # --- the crane ----------------------------------------------------------------------------
 
 
+def _hazard(m, centre, size, axis_up=True, bands=6):
+    """Yellow and black bands round a leg's foot."""
+    x, y, z = centre
+    sx, sy, sz = size
+    h = sy / bands
+    for k in range(bands):
+        col = (0.9, 0.72, 0.16, 1.0) if k % 2 == 0 else (0.08, 0.08, 0.09, 1.0)
+        m.add(box((sx + 0.04, h, sz + 0.04), (x, y - sy / 2 + h * (k + 0.5), z)), col)
+
+
 def crane_mesh():
-    """A ship-to-shore crane, local x along the quay, origin between its four feet."""
+    """A ship-to-shore crane, local x along the quay, origin between its four feet: box
+    girder legs with their sill and portal beams and cross bracing, a ladder up one leg, the
+    boom with its walkways and lattice, the A-frame and stays, the machinery house, the
+    trolley with the driver's cab, the spreader."""
     m = sm.PaintMesh()
 
-    def paint_steel(c):
-        return lambda p, n: (*sm.mix(c, RUST, 0.22 * fbm(p[0] * 0.5 + p[2] * 0.3, p[1] * 0.4, 171)), 1.0)
+    def paint_steel(c, amount=0.22):
+        return lambda p, n: (*sm.mix(c, RUST, amount * fbm(p[0] * 0.5 + p[2] * 0.3, p[1] * 0.4, 171)), 1.0)
 
     orange = paint_steel(CRANE)
+    shade = paint_steel(tuple(v * 0.78 for v in CRANE))
+    grey = (0.3, 0.3, 0.32, 1.0)
+    dark = (0.2, 0.2, 0.22, 1.0)
+    rail = (0.9, 0.86, 0.78)
+    top_y = 30.2
     for sx in (-1, 1):
+        x = sx * CRANE_HALF
         for z in (RAIL_SEA, RAIL_LAND):
-            x = sx * CRANE_HALF
-            m.add(box((3.0, 1.0, 1.3), (x, 0.62, z), bevel=0.05), (0.3, 0.3, 0.32, 1.0))
-            for wx in (-1.0, 0.0, 1.0):
-                m.add(cylinder(0.3, 0.2, 10, axis="z", center=(x + wx, 0.3, z)), (0.2, 0.2, 0.22, 1.0))
-            m.add(box((1.0, 28.6, 1.0), (x, 15.4, z)), orange)
-        m.add(box((1.0, 1.4, RAIL_LAND - RAIL_SEA), (sx * CRANE_HALF, 14.0, (RAIL_SEA + RAIL_LAND) / 2)), orange)
-        m.add(tube([(sx * CRANE_HALF, 1.6, RAIL_LAND), (sx * CRANE_HALF, 13.4, RAIL_SEA)], 0.22, 6), orange)
-        m.add(tube([(sx * CRANE_HALF, 14.6, RAIL_SEA), (sx * CRANE_HALF, 29.4, RAIL_LAND)], 0.22, 6), orange)
+            # The bogie: a beam on two wheel sets, a buffer at each end.
+            m.add(box((3.0, 0.8, 1.3), (x, 0.82, z)), dark)
+            m.add(box((1.6, 0.6, 1.1), (x, 1.5, z)), grey)
+            for wx in (-1.0, -0.35, 0.35, 1.0):
+                m.add(cylinder(0.3, 0.24, 12, axis="z", center=(x + wx, 0.3, z)), (0.16, 0.16, 0.17, 1.0))
+            for bx in (-1, 1):
+                m.add(box((0.25, 0.35, 0.5), (x + bx * 1.6, 0.8, z)), (0.9, 0.72, 0.16, 1.0))
+            # The leg: a box girder with flanges standing proud at its corners.
+            m.add(box((0.94, top_y - 2.0, 0.94), (x, 1.8 + (top_y - 2.0) / 2, z)), orange)
+            for fx in (-0.47, 0.47):
+                for fz in (-0.47, 0.47):
+                    m.add(box((0.08, top_y - 2.4, 0.08), (x + fx, 2.0 + (top_y - 2.4) / 2, z + fz)), shade)
+            _hazard(m, (x, 2.9, z), (0.96, 1.8, 0.96))
+        # The sill beam low between the seaward and landward legs, the portal beam high,
+        # and a K-brace between them.
+        mz = (RAIL_SEA + RAIL_LAND) / 2
+        span = RAIL_LAND - RAIL_SEA
+        m.add(box((1.0, 1.4, span), (x, 14.0, mz)), orange)
+        m.add(box((1.04, 0.1, span - 1.0), (x, 14.72, mz)), shade)
+        m.add(tube([(x, 1.9, RAIL_LAND - 0.4), (x, 13.4, RAIL_SEA + 0.4)], 0.24, 6), orange)
+        m.add(tube([(x, 14.6, RAIL_SEA + 0.4), (x, 29.4, RAIL_LAND - 0.4)], 0.24, 6), orange)
+        m.add(tube([(x, 14.6, RAIL_LAND - 0.4), (x, 22.0, mz)], 0.18, 6), orange)
     for z in (RAIL_SEA, RAIL_LAND):
-        m.add(box((2 * CRANE_HALF + 1.0, 1.6, 1.2), (0, 30.2, z)), orange)
-        m.add(tube([(-CRANE_HALF, 16.0, z), (CRANE_HALF, 29.0, z)], 0.2, 6), orange)
-    # The boom out over the ship, the backreach over the quay, its truss and its stays.
+        m.add(box((2 * CRANE_HALF + 1.0, 1.6, 1.2), (0, top_y, z)), orange)
+        m.add(box((2 * CRANE_HALF + 1.04, 0.12, 1.24), (0, top_y - 0.6, z)), shade)
+        m.add(tube([(-CRANE_HALF + 0.4, 16.0, z), (CRANE_HALF - 0.4, 29.2, z)], 0.2, 6), orange)
+        m.add(tube([(CRANE_HALF - 0.4, 16.0, z), (-CRANE_HALF + 0.4, 29.2, z)], 0.14, 6), orange)
+        # The number board on the portal beam, toward the quay.
+        if z == RAIL_LAND:
+            m.add(box((3.4, 1.0, 0.04), (0, top_y, z + 0.62)), (*WHITE, 1.0))
+            for k in range(2):
+                m.add(box((0.5, 0.7, 0.03), (-0.45 + k * 0.9, top_y, z + 0.65)), (0.1, 0.1, 0.12, 1.0))
+    # A caged ladder up the landward east leg, with rest platforms.
+    lx, lz = CRANE_HALF + 0.9, RAIL_LAND
+    for sz in (-0.25, 0.25):
+        m.add(box((0.05, top_y - 3.0, 0.05), (lx, 2.0 + (top_y - 3.0) / 2, lz + sz)), (0.75, 0.75, 0.72, 1.0))
+    y = 2.6
+    while y < top_y - 1.0:
+        m.add(box((0.03, 0.03, 0.5), (lx, y, lz)), (0.75, 0.75, 0.72, 1.0))
+        y += 0.6
+    y = 4.5
+    while y < top_y - 1.5:
+        ring = [(lx + 0.35 * math.cos(a * math.tau / 10), y, lz + 0.38 * math.sin(a * math.tau / 10))
+                for a in range(10)]
+        m.add(tube(ring, 0.025, 4, closed=True), (0.75, 0.75, 0.72, 1.0))
+        y += 1.6
+    for py in (10.0, 20.0):
+        m.add(box((1.2, 0.08, 1.4), (lx - 0.1, py, lz)), grey)
+        _railing(m, [(lx + 0.5, py, lz - 0.7), (lx + 0.5, py, lz + 0.7)], 1.0, 0.7, rail)
+    # The boom out over the ship and the backreach over the quay: a box girder with a
+    # lattice along each side and a walkway with handrails outside it.
     boom_y = 31.8
     m.add(box((2.6, 2.0, 66.0), (0, boom_y, -13.0)), orange)
+    m.add(box((2.64, 0.14, 66.0), (0, boom_y - 0.9, -13.0)), shade)
     z = -45.0
     k = 0
     while z < 19.0:
         for sx in (-1, 1):
             m.add(tube([(sx * 1.35, boom_y - 1.0, z), (sx * 1.35, boom_y + 1.0, z + 3.0)] if k % 2 == 0 else
                        [(sx * 1.35, boom_y + 1.0, z), (sx * 1.35, boom_y - 1.0, z + 3.0)], 0.09, 4), orange)
+            m.add(box((0.1, 2.0, 0.12), (sx * 1.37, boom_y, z)), shade)
         z += 3.0
         k += 1
+    for sx in (-1, 1):
+        m.add(box((0.9, 0.06, 64.0), (sx * 1.85, boom_y - 1.0, -13.0)), (0.36, 0.36, 0.38, 1.0))
+        _railing(m, [(sx * 2.25, boom_y - 1.0, -44.5), (sx * 2.25, boom_y - 1.0, 18.5)], 1.0, 2.0, rail)
+    # The boom tip and its lights.
+    m.add(box((3.0, 2.6, 0.6), (0, boom_y, -46.1)), orange)
+    for sx in (-1, 1):
+        m.add(box((0.3, 0.3, 0.3), (sx * 1.2, boom_y + 1.45, -46.1)), (0.9, 0.2, 0.12, 1.0))
+    # The A-frame, its ties and its stays.
     apex = (0.0, 46.0, 0.6)
     for sx in (-1, 1):
-        m.add(tube([(sx * 1.3, boom_y + 1.0, -2.0), apex], 0.3, 6), orange)
-        m.add(tube([(sx * 1.3, boom_y + 1.0, 3.2), apex], 0.3, 6), orange)
+        m.add(tube([(sx * 1.3, boom_y + 1.0, -2.0), apex], 0.32, 8), orange)
+        m.add(tube([(sx * 1.3, boom_y + 1.0, 3.2), apex], 0.32, 8), orange)
+    for t in (0.35, 0.65):
+        ya = boom_y + 1.0 + (apex[1] - boom_y - 1.0) * t
+        w = 1.3 * (1 - t)
+        m.add(tube([(-w, ya, -2.0 + 2.6 * t), (w, ya, -2.0 + 2.6 * t)], 0.12, 6), orange)
+        m.add(tube([(-w, ya, 3.2 - 2.6 * t), (w, ya, 3.2 - 2.6 * t)], 0.12, 6), orange)
+    m.add(box((1.4, 0.8, 1.4), (apex[0], apex[1] + 0.2, apex[2])), orange)
+    m.add(cylinder(0.18, 0.3, 8, center=(apex[0], apex[1] + 0.75, apex[2])), (0.95, 0.15, 0.1, 1.0))
     for zz in (-22.0, -40.0, 12.0, 18.0):
-        m.add(tube([apex, (0.0, boom_y + 1.0, zz)], 0.08, 4), (0.3, 0.3, 0.3, 1.0))
-    m.add(box((5.0, 4.0, 7.0), (0, boom_y + 3.0, 12.5), bevel=0.05), paint_steel(WHITE))
-    # The trolley, the driver's cab under it, the ropes and the spreader.
+        for sx in (-0.4, 0.4):
+            m.add(tube([(sx, apex[1], apex[2]), (sx * 2.5, boom_y + 1.0, zz)], 0.07, 4), (0.3, 0.3, 0.3, 1.0))
+    # The machinery house on the backreach: panelled, louvred, a door to the walkway.
+    mh = paint_steel(WHITE, 0.3)
+    m.add(box((5.0, 4.0, 7.0), (0, boom_y + 3.0, 12.5)), mh)
+    m.add(box((5.4, 0.2, 7.4), (0, boom_y + 5.1, 12.5)), (0.7, 0.7, 0.68, 1.0))
+    for sx in (-1, 1):
+        for k in range(6):
+            m.add(box((0.04, 4.0, 0.06), (sx * 2.52, boom_y + 3.0, 9.4 + k * 1.25)), (0.7, 0.7, 0.68, 1.0))
+        for k in range(5):
+            m.add(box((0.04, 0.12, 1.6), (sx * 2.53, boom_y + 2.0 + k * 0.28, 11.0)), dark)
+        m.add(box((0.05, 2.0, 0.9), (sx * 2.53, boom_y + 2.0, 14.6)), (0.5, 0.55, 0.6, 1.0))
+    # The trolley, the driver's cab under it with glass all round and in its floor, the
+    # ropes and the spreader.
     tz = HANG[2]
     m.add(box((3.2, 1.4, 3.6), (0, boom_y - 1.7, tz)), paint_steel(WHITE))
-    m.add(box((2.0, 2.3, 2.4), (0.6, boom_y - 3.6, tz - 2.6)), paint_steel(WHITE))
-    m.add(box((2.04, 0.9, 2.0), (0.6, boom_y - 3.2, tz - 2.6)), (*GLASS, 1.0))
+    for sx in (-1, 1):
+        for dz in (-1.3, 1.3):
+            m.add(cylinder(0.3, 0.2, 10, axis="x", center=(sx * 1.45, boom_y - 1.05, tz + dz)), dark)
+    cab = paint_steel(WHITE)
+    cx, cy, cz = 0.6, boom_y - 3.6, tz - 2.6
+    m.add(box((0.4, 1.2, 0.4), (cx, boom_y - 2.6, cz + 0.6)), grey)
+    m.add(box((2.0, 0.5, 2.4), (cx, cy + 0.9, cz)), cab)
+    m.add(box((2.0, 0.4, 2.4), (cx, cy - 0.95, cz)), cab)
+    for sx in (-1, 1):
+        m.add(box((0.12, 1.5, 0.12), (cx + sx * 0.94, cy, cz - 1.14)), cab)
+        m.add(box((0.12, 1.5, 0.12), (cx + sx * 0.94, cy, cz + 1.14)), cab)
+    m.add(box((1.8, 1.4, 0.03), (cx, cy, cz - 1.2)), (*GLASS, 1.0))
+    m.add(box((1.8, 1.4, 0.03), (cx, cy, cz + 1.2)), (*GLASS, 1.0))
+    for sx in (-1, 1):
+        m.add(box((0.03, 1.4, 2.2), (cx + sx * 1.0, cy, cz)), (*GLASS, 1.0))
     top = HANG[1] + CH + 0.35
     for sx in (-1, 1):
         for sz in (-1, 1):
             m.add(tube([(sx * 1.2, boom_y - 2.4, tz + sz * 1.0), (sx * 2.4, top, tz + sz * 0.6)], 0.035, 4),
                   (0.25, 0.25, 0.26, 1.0))
     m.add(box((L20, 0.32, CW), (0, top - 0.16, tz)), paint_steel(YELLOW))
+    for sx in (-1, 1):
+        m.add(box((0.3, 0.5, CW + 0.1), (sx * (L20 / 2 - 0.15), top - 0.3, tz)), paint_steel(YELLOW))
     m.add(box((1.2, 0.5, 1.6), (0, top + 0.2, tz)), paint_steel(YELLOW))
+    m.add(cylinder(0.35, 0.4, 10, axis="x", center=(0, top + 0.65, tz)), dark)
+    # The festoon cable along the boom, in loops from the trolley back to the tip.
+    k = 0
+    z = -40.0
+    while z < tz - 2.0:
+        m.add(tube([(1.0, boom_y - 1.2, z), (1.0, boom_y - 1.8, z + 1.2), (1.0, boom_y - 1.2, z + 2.4)], 0.05, 4),
+              dark)
+        z += 2.4
+        k += 1
     return m
 
 
 # --- the ship -----------------------------------------------------------------------------
 
+SHIP_MID = (SHIP_SIDE + SHIP_FAR) / 2
+SHIP_HALF = (SHIP_SIDE - SHIP_FAR) / 2
+KEEL_Y = -3.4
+FOCSLE_X, FOCSLE_UP = 61.0, 2.4  # where the raised forecastle starts, and how much higher
+HOUSE_X0, HOUSE_X1 = 3.0, 11.4  # the accommodation block, stern to front
 
-def _outline_dense(step=2.0):
+
+def ship_top(x):
+    """The height of the hull's top edge (the deck at the side) at `x`."""
+    sheer = 0.5 * smoothstep(40.0, 77.0, x) ** 1.6
+    return DECK_Y + sheer + FOCSLE_UP * smoothstep(FOCSLE_X, FOCSLE_X + 1.2, x)
+
+
+def ship_half(x, y):
+    """Half the hull's breadth at `x` and height `y`: a raked, flared bow, a full midbody,
+    the bilge turning in near the keel and the stern drawn in a little under the water."""
+    top = ship_top(x)
+    tip = 70.8 + 6.2 * smoothstep(KEEL_Y, top, y) ** 0.8
+    if x >= tip:
+        return 0.0
+    f = 1.0
+    if x > 52.0:
+        u = (x - 52.0) / (tip - 52.0)
+        f = max(0.0, 1.0 - u ** 2.2) ** 0.62
+    if x < 9.0:
+        f *= 1.0 - 0.16 * (1.0 - (x - SHIP_X0) / (9.0 - SHIP_X0)) * (1.0 - smoothstep(WATER_Y, DECK_Y, y))
+    f *= 0.7 + 0.3 * smoothstep(KEEL_Y, KEEL_Y + 1.4, y) ** 0.6
+    return SHIP_HALF * f
+
+
+def _ship_stations():
+    xs = [SHIP_X0 + k * 1.5 for k in range(int((52.0 - SHIP_X0) / 1.5) + 1)]
+    x = xs[-1]
+    while x < 77.0:
+        x = min(77.0, x + 0.7)
+        xs.append(x)
+    for extra in (FOCSLE_X, FOCSLE_X + 0.6, FOCSLE_X + 1.2):
+        if all(abs(extra - v) > 0.05 for v in xs):
+            xs.append(extra)
+    return sorted(xs)
+
+
+def _hull_strip(m, xs, y0, y1, levels, paint, side):
+    """One band of plating between heights y0 and y1 (y1 may be a function of x), on one
+    side (+1 the quay side, -1 the far side): a smooth grid, so its colour stays crisp at
+    the band's edges."""
+    rows, centers = [], []
+    for x in xs:
+        top = y1(x) if callable(y1) else y1
+        bot = y0(x) if callable(y0) else y0
+        row = []
+        for k in range(levels + 1):
+            y = bot + (top - bot) * k / levels
+            row.append((x, y, SHIP_MID + side * ship_half(x, y)))
+        rows.append(row)
+        centers.append((x, (bot + top) / 2, SHIP_MID))
+    m.mark()
+    m.grid(rows, centers=centers)
+    m.paint(paint)
+
+
+def _cargo_box(m, length, x, y, z, base, seed, face=0):
+    """A box on the hatches: its body, dark end frames, a lighter roof, and, on the side
+    `face` (+1 or -1 along z) that the quay sees, the corrugated sheet."""
+    def body(p, _n):
+        c = sm.mix(base, RUST, 0.32 * fbm(p[0] * 0.8 + seed, p[1] * 1.3 + p[2] * 0.4, seed))
+        return (*sm.mix(c, (0.1, 0.1, 0.1), 0.25 * (1.0 - smoothstep(y, y + 0.8, p[1]))), 1.0)
+    m.add(box((length - 0.14, CH - 0.05, CW - 0.08), (x, y + CH / 2, z)), body)
+    frame = tuple(v * 0.6 for v in base)
+    for sx in (-1, 1):
+        m.add(box((0.16, CH - 0.02, CW - 0.05), (x + sx * (length / 2 - 0.12), y + CH / 2, z)), (*frame, 1.0))
+    m.add(box((length - 0.3, 0.03, CW - 0.2), (x, y + CH - 0.03, z)),
+          (*sm.mix(base, (0.86, 0.86, 0.88), 0.45), 1.0))
+    if face:
+        prof = corrugation(x - length / 2 + 0.2, x + length / 2 - 0.2)
+        zs = z + face * (CW / 2 - 0.05)
+        rows = [[(u, yy, zs + face * off) for u, off in prof] for yy in (y + 0.14, y + CH - 0.12)]
+        m.mark()
+        m.grid(rows, outward=(0, 0, face), flat=True)
+        m.paint(body)
+
+
+def _railing(m, path, height=1.0, step=1.6, colour=WHITE):
+    """Stanchions along a polyline and two rails along their tops."""
+    c = (*colour, 1.0)
+    total = sum(math.dist(path[i], path[i + 1]) for i in range(len(path) - 1))
+    n = max(1, int(total / step))
     pts = []
-    n = len(SHIP_OUTLINE)
-    for i in range(n):
-        a, b = SHIP_OUTLINE[i], SHIP_OUTLINE[(i + 1) % n]
-        k = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
-        for j in range(k):
-            t = j / k
-            pts.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
-    return pts
+    for k in range(n + 1):
+        d = total * k / n
+        for i in range(len(path) - 1):
+            seg = math.dist(path[i], path[i + 1])
+            if d <= seg or i == len(path) - 2:
+                t = min(1.0, d / seg) if seg else 0.0
+                pts.append(tuple(path[i][j] + (path[i + 1][j] - path[i][j]) * t for j in range(3)))
+                break
+            d -= seg
+    for p in pts:
+        m.add(box((0.05, height, 0.05), (p[0], p[1] + height / 2, p[2])), c)
+    for h in (height * 0.5, height):
+        m.add(tube([(p[0], p[1] + h, p[2]) for p in path], 0.025, 4), c)
 
 
 def ship_mesh():
-    """A feeder ship: hull, deck, the house and funnel at the stern, boxes on the hatches."""
+    """A feeder ship's hull: lofted, with a raked bow and a raised forecastle, its decks,
+    the gear on the forecastle and rails along the sides. The boxes on the hatches and the
+    house at the stern are their own meshes (ship_cargo_mesh, ship_house_mesh), so none of
+    the three is past the release's warning size for a model."""
     m = sm.PaintMesh()
-    outline = _outline_dense()
-    cx = sum(p[0] for p in outline) / len(outline)
-    cz = sum(p[1] for p in outline) / len(outline)
-    ys = (-3.4, WATER_Y - 0.1, WATER_Y + 0.35, 1.2, DECK_Y - 0.45, DECK_Y)
-    m.mark()
-    m.grid([[(x, y, z) for x, z in outline] for y in ys], wrap=True, centers=[(cx, y, cz) for y in ys], flat=True)
+    xs = _ship_stations()
+    wl = WATER_Y + 0.25
 
-    def hull(p, _n):
+    def plating(p, _n):
         x, y, z = p
-        if y < WATER_Y + 0.2:
-            return (*ANTIFOUL, 1.0)
-        if y > DECK_Y - 0.5:
-            return (*WHITE, 1.0)
-        c = sm.mix(HULL, (0.1, 0.12, 0.17), 0.4 * fbm(x * 0.2, y * 0.5 + z * 0.2, 181))
+        c = sm.mix(HULL, (0.1, 0.12, 0.17), 0.45 * fbm(x * 0.2, y * 0.5 + z * 0.2, 181))
         streak = fbm(x * 1.1 + z * 1.1, y * 0.15, 183)
-        if streak > 0.57:
-            c = sm.mix(c, RUST, min(0.7, (streak - 0.57) * 2.4))
+        if streak > 0.55:
+            c = sm.mix(c, RUST, min(0.75, (streak - 0.55) * 2.6))
+        # Scrapes where the fenders and the tugs have rubbed.
+        if abs(y - 0.4) < 0.9 and noise(x * 0.9, y * 2.0, 189) > 0.72:
+            c = sm.mix(c, (0.5, 0.42, 0.36), 0.5)
         return (*c, 1.0)
-    m.paint(hull)
+
+    def antifoul(p, _n):
+        c = sm.mix(ANTIFOUL, (0.3, 0.14, 0.12), 0.4 * fbm(p[0] * 0.4, p[1] * 0.8, 185))
+        return (*sm.mix(c, WEED, 0.5 * (1.0 - smoothstep(wl - 0.5, wl, p[1]))), 1.0)
+
+    def sheer_strake(p, _n):
+        return (*sm.mix(WHITE, RUST, 0.35 * fbm(p[0] * 0.7, p[1] * 3.0, 187)), 1.0)
+
+    for side in (-1, 1):
+        _hull_strip(m, xs, KEEL_Y, wl, 3, antifoul, side)
+        _hull_strip(m, xs, wl, wl + 0.16, 1, lambda p, n: (0.08, 0.08, 0.09, 1.0), side)
+        _hull_strip(m, xs, wl + 0.16, lambda x: ship_top(x) - 0.42, 5, plating, side)
+        _hull_strip(m, xs, lambda x: ship_top(x) - 0.42, ship_top, 1, sheer_strake, side)
+    # The keel, closed flat, and the transom across the stern.
+    m.polygon([(xs[0], KEEL_Y, SHIP_MID - ship_half(xs[0], KEEL_Y)), (xs[-1], KEEL_Y, SHIP_MID),
+               (xs[0], KEEL_Y, SHIP_MID + ship_half(xs[0], KEEL_Y))], (0, -1, 0), (*ANTIFOUL, 1.0))
+    # The transom across the stern, in the same bands as the sides.
+    top0 = ship_top(SHIP_X0)
+    for y0, y1, paint in ((KEEL_Y, wl, antifoul), (wl, wl + 0.16, lambda p, n: (0.08, 0.08, 0.09, 1.0)),
+                          (wl + 0.16, top0 - 0.42, plating), (top0 - 0.42, top0, sheer_strake)):
+        levels = max(1, int((y1 - y0) / 0.8))
+        rows = []
+        for k in range(levels + 1):
+            y = y0 + (y1 - y0) * k / levels
+            hb = ship_half(SHIP_X0, y)
+            rows.append([(SHIP_X0, y, SHIP_MID - hb + 2 * hb * j / 6)
+                         for j in range(7)])
+        m.mark()
+        m.grid(rows, outward=(-1, 0, 0))
+        m.paint(paint)
+    # A white deck line and a dark rubbing strake along the quay side.
+    for y_of, rad, col in ((lambda x: ship_top(x) - 0.9, 0.05, WHITE), (lambda x: 0.9, 0.09, (0.08, 0.08, 0.09))):
+        path = [(x, y_of(x), SHIP_MID + ship_half(x, y_of(x)) + 0.02) for x in xs if x < 74.0
+                and ship_half(x, y_of(x)) > 0.3]
+        m.add(tube(path, rad, 4), (*col, 1.0))
+    # Draft marks at the stern, midships and the bow: white ticks every two decimetres.
+    for mx in (5.0, 38.0, 69.0):
+        for k in range(12):
+            y = WATER_Y + 0.1 + k * 0.2
+            z = SHIP_MID + ship_half(mx, y) + 0.015
+            w = 0.36 if k % 5 == 0 else 0.16
+            m.add(box((w, 0.07, 0.02), (mx, y, z)), (*WHITE, 1.0))
+
+    # The decks: the main deck from the stern to the forecastle, the forecastle above it.
+    deck = lambda p, n: (*sm.mix((0.3, 0.35, 0.32), RUST, 0.45 * fbm(p[0] * 0.3, p[2] * 0.3, 185)), 1.0)
+    main = [x for x in xs if x <= FOCSLE_X + 0.6]
+    rows = [[(x, DECK_Y - 0.02, SHIP_MID - ship_half(x, DECK_Y) + 0.02),
+             (x, DECK_Y - 0.02, SHIP_MID + ship_half(x, DECK_Y) - 0.02)] for x in main]
     m.mark()
-    m.polygon([(x, DECK_Y, z) for x, z in SHIP_OUTLINE], (0, 1, 0))
-    m.paint(lambda p, n: (*sm.mix((0.3, 0.35, 0.32), RUST, 0.4 * fbm(p[0] * 0.3, p[2] * 0.3, 185)), 1.0))
-    mid_z = (SHIP_SIDE + SHIP_FAR) / 2
-    # The house: five decks of cabins, the bridge across the top, the funnel behind.
-    house = lambda p, n: (*sm.mix(WHITE, RUST, 0.25 * fbm(p[0] * 0.6, p[1] * 0.4 + p[2] * 0.3, 187)), 1.0)
-    m.add(box((7.0, 12.6, 12.4), (7.5, DECK_Y + 6.3, mid_z)), house)
-    for level in range(4):
-        y = DECK_Y + 2.0 + level * 2.6
-        m.add(box((0.04, 0.8, 10.6), (11.03, y, mid_z)), (*GLASS, 1.0))
-        m.add(box((5.6, 0.8, 0.04), (7.5, y, mid_z + 6.22)), (*GLASS, 1.0))
-    m.add(box((6.0, 2.3, 16.2), (8.0, DECK_Y + 13.75, mid_z)), house)
-    m.add(box((0.04, 1.0, 15.6), (11.02, DECK_Y + 14.0, mid_z)), (*GLASS, 1.0))
-    m.add(box((3.0, 5.4, 3.6), (4.0, DECK_Y + 15.0, mid_z)), house)
-    m.add(box((3.04, 1.2, 3.64), (4.0, DECK_Y + 16.4, mid_z)), (*CRANE, 1.0))
-    m.add(box((3.06, 0.6, 3.66), (4.0, DECK_Y + 17.5, mid_z)), (0.12, 0.12, 0.13, 1.0))
-    m.add(cylinder(0.14, 9.0, 8, center=(68.0, DECK_Y + 4.5, mid_z)), (*WHITE, 1.0))
-    # The cargo: hatch covers, boxes on them in tiers of nought to three.
-    rows = [SHIP_SIDE - 1.55 - k * 2.5 for k in range(6)]
+    m.grid(rows, outward=(0, 1, 0), flat=True)
+    m.paint(deck)
+    fwd = [x for x in xs if x >= FOCSLE_X + 1.2]
+    rows = [[(x, ship_top(x) - 0.02, SHIP_MID - ship_half(x, ship_top(x)) + 0.02),
+             (x, ship_top(x) - 0.02, SHIP_MID + ship_half(x, ship_top(x)) - 0.02)] for x in fwd]
+    m.mark()
+    m.grid(rows, outward=(0, 1, 0), flat=True)
+    m.paint(lambda p, n: (*sm.mix((0.55, 0.22, 0.18), RUST, 0.4 * fbm(p[0] * 0.5, p[2] * 0.5, 186)), 1.0))
+    hb = ship_half(FOCSLE_X + 0.9, DECK_Y)
+    m.add(box((0.2, FOCSLE_UP + 0.3, 2 * hb - 0.2), (FOCSLE_X + 0.9, DECK_Y + FOCSLE_UP / 2, SHIP_MID)),
+          lambda p, n: (*sm.mix(WHITE, RUST, 0.3 * fbm(p[1] * 0.8, p[2] * 0.6, 188)), 1.0))
+    # On the forecastle: a windlass, mooring winches and bitts, the foremast.
+    fy = ship_top(66.0)
+    for sz in (-1, 1):
+        m.add(cylinder(0.55, 1.1, 14, axis="z", center=(66.0, fy + 0.7, SHIP_MID + sz * 1.6)), (*IRON, 1.0))
+        m.add(cylinder(0.75, 0.12, 14, axis="z", center=(66.0, fy + 0.7, SHIP_MID + sz * 2.2)), (*ANTIFOUL, 1.0))
+        m.add(box((1.6, 0.6, 0.8), (66.0, fy + 0.3, SHIP_MID + sz * 0.9)), (0.3, 0.35, 0.32, 1.0))
+        for bx in (63.0, 70.0):
+            for dz in (0.0, 0.7):
+                m.add(cylinder(0.16, 0.6, 10, center=(bx + dz, ship_top(bx) + 0.3, SHIP_MID + sz * 3.4)), (*IRON, 1.0))
+    m.add(cylinder(0.16, 9.0, 8, center=(69.0, fy + 4.5, SHIP_MID)), (*WHITE, 1.0))
+    m.add(box((0.12, 0.12, 3.0), (69.0, fy + 7.2, SHIP_MID)), (*WHITE, 1.0))
+    m.add(box((0.25, 0.25, 0.25), (69.0, fy + 9.1, SHIP_MID)), (0.95, 0.85, 0.6, 1.0))
+
+    # Rails along both sides of the main deck and round the forecastle.
+    for side in (-1, 1):
+        rx = [x for x in xs if 12.0 <= x <= FOCSLE_X]
+        _railing(m, [(x, DECK_Y, SHIP_MID + side * (ship_half(x, DECK_Y) - 0.08)) for x in rx])
+        fx = [x for x in xs if FOCSLE_X + 1.2 <= x <= 76.0]
+        _railing(m, [(x, ship_top(x), SHIP_MID + side * max(0.05, ship_half(x, ship_top(x)) - 0.08)) for x in fx])
+    # Fairleads where the mooring lines come aboard.
+    for _bx, sx in MOORINGS:
+        m.add(box((0.5, 0.3, 0.2), (sx, ship_top(sx) + 0.15, SHIP_SIDE - 0.1)), (*IRON, 1.0))
+
+    return m
+
+
+def ship_cargo_mesh():
+    """The ship's hatches and the boxes on them."""
+    m = sm.PaintMesh()
+    # Hatch coamings and their covers, boxes on them in tiers of nought to three, a
+    # lashing bridge between each pair of bays.
+    rows_z = [SHIP_SIDE - 1.55 - k * 2.5 for k in range(6)]
+    cover_y = DECK_Y + 1.1
     for b in range(7):
         bx = 14.6 + b * 6.4
-        m.add(box((L20 + 0.3, 0.4, SHIP_SIDE - SHIP_FAR - 1.0), (bx, DECK_Y + 0.2, mid_z)), (0.26, 0.32, 0.28, 1.0))
-        for r, z in enumerate(rows):
+        m.add(box((L20 + 0.3, 1.0, SHIP_HALF * 2 - 1.6), (bx, DECK_Y + 0.5, SHIP_MID)), (0.26, 0.32, 0.28, 1.0))
+        m.add(box((L20 + 0.5, 0.12, SHIP_HALF * 2 - 1.4), (bx, DECK_Y + 1.04, SHIP_MID)), (0.33, 0.4, 0.35, 1.0))
+        for k in range(3):
+            m.add(box((0.14, 0.08, SHIP_HALF * 2 - 1.8), (bx - L20 / 2 + 1.0 + k * 2.0, cover_y + 0.04, SHIP_MID)),
+                  (0.22, 0.27, 0.24, 1.0))
+        for r, z in enumerate(rows_z):
             tiers = int(rand(b * 11 + r, 191) * 3.6)
             for t in range(tiers):
                 base = CARGO[int(rand(b * 31 + r * 7 + t, 193) * (len(CARGO) - 0.5))]
-                seed = b * 13 + r * 5 + t
-                m.add(box((L20 - 0.12, CH - 0.03, CW - 0.06), (bx, DECK_Y + 0.4 + t * CH + CH / 2, z)),
-                      lambda p, n, base=base, seed=seed: (*sm.mix(base, RUST, 0.3 * fbm(p[0] * 0.8, p[1] + p[2],
-                                                                                       seed)), 1.0))
+                _cargo_box(m, L20, bx, cover_y + 0.08 + t * CH, z, base, b * 13 + r * 5 + t, face=1 if r == 0 else 0)
+        if b < 6:
+            lx = bx + 3.2
+            for z in [SHIP_SIDE - 0.3] + [z - 1.25 for z in rows_z[:-1]] + [SHIP_FAR + 0.3]:
+                m.add(box((0.14, 2 * CH, 0.14), (lx, DECK_Y + CH, z)), (*YELLOW, 1.0))
+            for level in (CH, 2 * CH):
+                m.add(box((0.5, 0.06, SHIP_HALF * 2 - 0.6), (lx, DECK_Y + level, SHIP_MID)), (0.4, 0.4, 0.38, 1.0))
+            _railing(m, [(lx, DECK_Y + 2 * CH, SHIP_FAR + 0.4), (lx, DECK_Y + 2 * CH, SHIP_SIDE - 0.4)], 0.9, 2.5,
+                     YELLOW)
+    return m
+
+
+def ship_house_mesh():
+    """The accommodation at the stern: a poop, four decks of cabins with their windows, the
+    bridge with its wings, the mast and radar on top, the funnel, the lifeboat."""
+    def house(p, _n):
+        c = sm.mix(WHITE, (0.72, 0.72, 0.7), 0.4 * fbm(p[0] * 0.6, p[1] * 0.4 + p[2] * 0.3, 187))
+        streak = fbm(p[0] * 1.6 + p[2] * 1.6, p[1] * 0.25, 190)
+        if streak > 0.6:
+            c = sm.mix(c, RUST, min(0.5, (streak - 0.6) * 2.0))
+        return (*c, 1.0)
+
+    m = sm.PaintMesh()
+    glass = (*GLASS, 1.0)
+    mid = SHIP_MID
+    x0, x1 = HOUSE_X0, HOUSE_X1
+    half = 6.0
+    # The poop: a full-width deck house under everything.
+    poop_top = DECK_Y + 2.4
+    m.add(box((x1 + 1.6 - SHIP_X0, 2.4, 2 * (SHIP_HALF - 0.4)), ((SHIP_X0 + x1 + 1.6) / 2, DECK_Y + 1.2, mid)), house)
+    _railing(m, [(x1 + 1.5, poop_top, mid - SHIP_HALF + 0.5), (x1 + 1.5, poop_top, mid + SHIP_HALF - 0.5),
+                 (SHIP_X0 + 0.2, poop_top, mid + SHIP_HALF - 0.5)])
+    levels = 4
+    step = 2.7
+    for level in range(levels):
+        y0 = poop_top + level * step
+        m.add(box((x1 - x0, step - 0.15, 2 * half), ((x0 + x1) / 2, y0 + (step - 0.15) / 2, mid)), house)
+        # The deck above overhangs a little: a plate that reads as a line round the house.
+        m.add(box((x1 - x0 + 0.6, 0.15, 2 * half + 0.6), ((x0 + x1) / 2, y0 + step - 0.075, mid)),
+              (0.8, 0.79, 0.76, 1.0))
+        wy = y0 + 1.35
+        # Windows: the front faces the bow (+x), the side faces the quay (+z).
+        for k in range(6):
+            z = mid - half + 1.1 + k * 1.95
+            m.add(box((0.04, 0.8, 1.0), (x1 + 0.02, wy, z)), glass)
+        for k in range(4):
+            x = x0 + 1.0 + k * 2.0
+            if level % 2 == 0 and k == 3:
+                m.add(box((0.85, 1.9, 0.04), (x, y0 + 0.95, mid + half + 0.02)), (0.6, 0.62, 0.6, 1.0))
+            else:
+                m.add(box((1.0, 0.8, 0.04), (x, wy, mid + half + 0.02)), glass)
+        _railing(m, [(x1 + 0.28, y0 + step, mid - half - 0.28), (x1 + 0.28, y0 + step, mid + half + 0.28),
+                     (x0 - 0.28, y0 + step, mid + half + 0.28)], 0.9, 1.8)
+    # The bridge: wider than the house, its wings reaching the ship's sides, a band of
+    # glass across the front and round the wing ends; the roof overhangs as a visor.
+    by = poop_top + levels * step
+    bw = SHIP_HALF - 0.1
+    m.add(box((x1 - x0 - 0.6, 2.5, 2 * half), ((x0 + x1) / 2 + 0.3, by + 1.25, mid)), house)
+    for sz in (-1, 1):
+        m.add(box((3.0, 2.5, bw - half), (x1 - 1.5, by + 1.25, mid + sz * (half + bw) / 2)), house)
+        m.add(box((3.2, 0.1, 2.0), (x1 - 1.6, by - 0.4, mid + sz * (bw - 1.0))), (0.8, 0.79, 0.76, 1.0))
+        m.add(box((0.15, 0.4, 0.15), (x1 - 1.6, by - 0.2, mid + sz * (bw - 0.3))), (0.8, 0.79, 0.76, 1.0))
+        m.add(box((2.4, 1.0, 0.04), (x1 - 1.5, by + 1.55, mid + sz * (bw + 0.02))), glass)
+    k = 0
+    z = mid - bw + 0.5
+    while z < mid + bw - 0.4:
+        m.add(box((0.04, 1.1, 0.9), (x1 + 0.02, by + 1.5, z)), glass)
+        z += 1.05
+        k += 1
+    m.add(box((x1 - x0 + 0.4, 0.2, 2 * bw + 0.4), ((x0 + x1) / 2, by + 2.6, mid)), (0.82, 0.81, 0.78, 1.0))
+    # On the bridge roof: the mast, its yard, two radar scanners, a whip aerial.
+    ry = by + 2.7
+    m.add(box((1.0, 0.8, 1.0), (x1 - 3.0, ry + 0.4, mid)), house)
+    m.add(cylinder(0.14, 4.6, 8, center=(x1 - 3.0, ry + 2.3, mid)), (*WHITE, 1.0))
+    m.add(box((0.1, 0.1, 3.4), (x1 - 3.0, ry + 3.8, mid)), (*WHITE, 1.0))
+    m.add(box((0.2, 0.2, 0.2), (x1 - 3.0, ry + 4.7, mid)), (0.95, 0.85, 0.6, 1.0))
+    for dz, w in ((-2.2, 2.6), (2.0, 2.0)):
+        m.add(cylinder(0.18, 0.6, 8, center=(x1 - 2.0, ry + 0.3, mid + dz)), (*IRON, 1.0))
+        m.add(box((0.25, 0.14, w), (x1 - 2.0, ry + 0.66, mid + dz)), (*WHITE, 1.0))
+    m.add(cylinder(0.03, 3.0, 4, center=(x0 + 1.0, ry + 1.5, mid + 3.0)), (*IRON, 1.0))
+    # The funnel behind the bridge: a rounded casing, a band of the line's colour, a black
+    # top and two exhausts.
+    fx, fz = x0 + 1.2, mid
+    base_y = poop_top + 2 * step
+    rows, centers = [], []
+    for y in (base_y, by + 3.8, by + 4.6, by + 5.4, by + 6.2):
+        rows.append([(fx + 1.5 * math.cos(a * math.tau / 16) ** 1 * 1.0, y,
+                      fz + 1.9 * math.sin(a * math.tau / 16)) for a in range(16)])
+        centers.append((fx, y, fz))
+    for i, (lo, hi) in enumerate(zip(rows, rows[1:])):
+        col = ((*WHITE, 1.0), (*CRANE, 1.0), (*WHITE, 1.0), (0.1, 0.1, 0.11, 1.0))[i]
+        m.mark()
+        m.grid([lo, hi], wrap=True, centers=[centers[i], centers[i + 1]])
+        m.paint(lambda p, n, col=col: col)
+    m.polygon(rows[-1], (0, 1, 0), (0.05, 0.05, 0.05, 1.0))
+    for dz in (-0.5, 0.5):
+        m.add(cylinder(0.22, 1.2, 10, center=(fx - 0.3, by + 6.7, fz + dz)), (0.12, 0.12, 0.12, 1.0))
+    # The freefall lifeboat on its ramp off the stern, nose down toward the water.
+    tilt = euler((0, 0, -32))
+    boat = sm.PaintMesh()
+    boat.add(sm.ellipsoid((0, 0, 0), (2.6, 0.75, 0.95), rings=8, sides=14), (0.95, 0.42, 0.12, 1.0))
+    boat.add(box((2.6, 0.5, 1.1), (0.3, 0.55, 0)), (0.95, 0.5, 0.18, 1.0))
+    boat.add(box((0.7, 0.35, 1.12), (-0.8, 0.5, 0)), glass)
+    m.add(boat, rotation=tilt, offset=(SHIP_X0 - 0.4, poop_top + 1.0, mid + 2.4))
+    for dz in (-0.75, 0.75):
+        m.add(box((5.6, 0.18, 0.16), (0, 0, 0)), (0.5, 0.5, 0.52, 1.0), rotation=tilt,
+              offset=(SHIP_X0 - 0.2, poop_top + 0.25, mid + 2.4 + dz))
+        m.add(box((0.16, 2.8, 0.16), (SHIP_X0 + 1.6, poop_top + 1.4, mid + 2.4 + dz)), (0.5, 0.5, 0.52, 1.0))
     return m
 
 
@@ -540,6 +917,8 @@ def build() -> Scene:
     # The ship alongside: out over the water, nothing to stand on.
     s.node("Ship", root, "Node3D")
     s.node("Hull", "Ship", "MeshInstance3D", mesh=s.mesh("Ship", ship_mesh()), material_override=ship_mat)
+    s.node("Cargo", "Ship", "MeshInstance3D", mesh=s.mesh("ShipCargo", ship_cargo_mesh()), material_override=ship_mat)
+    s.node("House", "Ship", "MeshInstance3D", mesh=s.mesh("ShipHouse", ship_house_mesh()), material_override=ship_mat)
 
     # The truck that brought you, its box open at the tail.
     truck(s, root, (TRUCK_TAIL_X - L40 / 2, 0, TRUCK_Z),
@@ -569,7 +948,7 @@ def build() -> Scene:
            outline_paths='PackedStringArray("../../Crane/Frame")')
     s.node("ShipLook", "Interactables", instance=look, position=v3((6.0, 1.0, Z_EDGE + 1.0)),
            interact_id='&"port_ship_look"', inspection_id='&"port_ship"', radius="1.6",
-           outline_paths='PackedStringArray("../../Ship/Hull")')
+           outline_paths='PackedStringArray("../../Ship/Hull", "../../Ship/Cargo", "../../Ship/House")')
     return s
 
 

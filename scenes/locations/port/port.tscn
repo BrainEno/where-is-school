@@ -1,4 +1,4 @@
-[gd_scene load_steps=61 format=3]
+[gd_scene load_steps=63 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="location"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="navigation"]
@@ -24,6 +24,8 @@
 [ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/lifebuoy.tres" id="mesh_lifebuoy"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/crane.tres" id="mesh_crane"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/ship.tres" id="mesh_ship"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/ship_cargo.tres" id="mesh_ship_cargo"]
+[ext_resource type="ArrayMesh" path="res://scenes/locations/port/meshes/ship_house.tres" id="mesh_ship_house"]
 
 [sub_resource type="Environment" id="PortEnvironment"]
 background_mode = 1
@@ -529,6 +531,14 @@ material_override = SubResource("container_red")
 mesh = ExtResource("mesh_ship")
 material_override = SubResource("ship")
 
+[node name="Cargo" type="MeshInstance3D" parent="Ship"]
+mesh = ExtResource("mesh_ship_cargo")
+material_override = SubResource("ship")
+
+[node name="House" type="MeshInstance3D" parent="Ship"]
+mesh = ExtResource("mesh_ship_house")
+material_override = SubResource("ship")
+
 [node name="Truck" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(11.305, 0, 15.2)
 collision_layer = 1
@@ -643,4 +653,4 @@ position = Vector3(6, 1, -7)
 interact_id = &"port_ship_look"
 inspection_id = &"port_ship"
 radius = 1.6
-outline_paths = PackedStringArray("../../Ship/Hull")
+outline_paths = PackedStringArray("../../Ship/Hull", "../../Ship/Cargo", "../../Ship/House")

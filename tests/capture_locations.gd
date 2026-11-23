@@ -214,6 +214,9 @@ const YARD_VIEWS := [
 	["long_plank", Vector3(-1.2, 1.5, 10.8), Vector3(-3.8, 4.3, 7.0)],
 	["roofs", Vector3(16.5, 9.5, 11.5), Vector3(5.0, 3.5, 3.0)],
 	["high_plank", Vector3(13.0, 2.0, -8.6), Vector3(8.5, 5.0, -11.0)],
+	# Round 17 art pass: the precast back wall, and the terminal past it and the west fence.
+	["back_wall", Vector3(4.0, 5.0, -6.0), Vector3(-8.0, 2.4, -18.0)],
+	["far_edge", Vector3(-10.0, 9.0, 8.0), Vector3(-34.0, 3.0, -22.0)],
 ]
 const YARD_STANCES := [
 	["entrance", Vector3(14.0, 0.0, 14.6)],
@@ -225,7 +228,8 @@ const YARD_STANCES := [
 const YARD_GAP_STANCES := [["behind_container", Vector3(13.0, 0.0, -17.6)]]
 const YARD_GAP_VIEWS := [["fence_flap", Vector3(16.5, 3.2, -12.5), Vector3(13.0, 0.7, -18.4)]]
 ## The port (`port`), past the yard's truck: fixed views (the quay from high up, the sea
-## from the pier, the crane, the ship, the water from overhead, the truck), then follow-
+## from the pier, the crane, the ship, the water from overhead, the truck, the ship's stern
+## and bow), then follow-
 ## camera stances, then the truck on the yard's apron that takes you there.
 const PORT_VIEWS := [
 	["overview", Vector3(34.0, 30.0, 34.0), Vector3(-4.0, 0.0, -10.0)],
@@ -234,6 +238,9 @@ const PORT_VIEWS := [
 	["ship", Vector3(-2.0, 6.0, 2.0), Vector3(20.0, 4.0, -16.0)],
 	["sky_water", Vector3(-8.0, 30.0, -10.0), Vector3(-12.0, -1.8, -30.0)],
 	["truck", Vector3(23.0, 3.0, 20.0), Vector3(15.0, 1.5, 15.0)],
+	# Round 17 art pass: the ship's house and lifeboat from the quay, its bow from the east.
+	["stern", Vector3(-6.0, 10.0, 0.0), Vector3(8.0, 9.0, -17.0)],
+	["bow", Vector3(40.0, 12.0, 4.0), Vector3(66.0, 4.0, -17.0)],
 ]
 const PORT_STANCES := [
 	["arrival", Vector3(19.0, 0.0, 15.2)],
