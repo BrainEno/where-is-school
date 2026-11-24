@@ -163,7 +163,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export XDG_DATA_HOME="$RUNNER_TEMP/wis-windows-dev-data"
+          # No XDG_DATA_HOME override here: the export templates setup-godot installed
+          # live under the default editor data directory, and pointing Godot at an empty
+          # one makes `can_export` fail with "No export template found at the expected
+          # path" - a plain line, which is why the annotation capture below also keeps
+          # the reasons that carry neither an ERROR prefix nor an indent.
           bash tools/ci_import_godot.sh "$RUNNER_TEMP/windows-dev-import"
           mkdir -p build/windows-dev
           log="$RUNNER_TEMP/windows-dev-export.log"
@@ -171,10 +175,11 @@ jobs:
           timeout 300 godot --headless --path . --export-debug "Windows Dev" \
             "build/windows-dev/where-is-school-dev.exe" 2>&1 | tee "$log" || result=$?
           if (( result != 0 )); then
-            # Godot prints the reason for a configuration failure as an indented line under
-            # the `ERROR: ... configuration errors:` header; without the indented branch the
-            # annotation stream carries the header and none of the cause.
-            grep -E 'SCRIPT ERROR|Parse Error|ERROR|Failed|^[[:space:]]+[^[:space:]]' "$log" |
+            # The cause of a configuration failure is not one shape: an indented detail
+            # line under the `ERROR: ... configuration errors:` header, or - as with a
+            # missing export template - a plain reason line carrying neither an ERROR
+            # prefix nor an indent. Keep both, and keep the tail, where the block sits.
+            grep -E 'SCRIPT ERROR|Parse Error|ERROR|Failed|template|not found|configuration|^[[:space:]]+[^[:space:]]' "$log" |
               tail -25 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Windows Dev export::%s\n' "$failure"; done || true
             exit 1
