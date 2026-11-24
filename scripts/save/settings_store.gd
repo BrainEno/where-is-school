@@ -63,12 +63,19 @@ static func exists() -> bool:
 ## the newest leftover an interrupted swap left behind. Both owners must read the same
 ## thing before changing their keys, or one of them writes over the other's idea of the file.
 static func read(config: ConfigFile) -> Error:
-	if FileAccess.file_exists(PATH) and config.load(PATH) == OK:
-		return OK
-	for candidate: String in leftovers():
-		var found := ConfigFile.new()
-		if found.load(candidate) == OK:
-			return config.parse_string(found.encode_to_text())
+	if not FileAccess.file_exists(PATH):
+		return _read_copy(config)
+	var error := config.load(PATH)
+	return OK if error == OK else _read_copy(config)
+
+
+## The copy an interrupted swap left behind, newest first: a half-finished swap should restore
+## what it was about to publish, not an older one. The last resort is the missing or unreadable
+## file itself, so the caller still sees the error a first run or a corrupt file means.
+static func _read_copy(config: ConfigFile) -> Error:
+	for path: String in leftovers():
+		if FileAccess.file_exists(path) and config.load(path) == OK:
+			return OK
 	return config.load(PATH)
 
 
@@ -105,8 +112,9 @@ static func write(config: ConfigFile, report: Dictionary = {}) -> Error:
 	return error
 
 
-## The leftovers of earlier swaps, oldest first: the newest is the best candidate to read
-## back, and every one of them is retired once a published file has been read back.
+## The leftovers of earlier swaps, newest first: `read()` takes the first of them that parses,
+## and every one of them is retired once a published file has been read back. Timestamps are
+## whole seconds, so a tie breaks by name and the order stays the same on every run.
 static func leftovers() -> PackedStringArray:
 	var directory := DirAccess.open("user://")
 	if directory == null:
@@ -115,9 +123,18 @@ static func leftovers() -> PackedStringArray:
 	for name: String in directory.get_files():
 		if not owns_name(name):
 			continue
-		found.append({"msec": directory.get_modification_time(name), "path": "user://".path_join(name)})
-	var by_age := func(older: Dictionary, newer: Dictionary) -> bool:
-		return int(older["msec"]) < int(newer["msec"])
+		var path := "user://".path_join(name)
+		# The time comes from opening the path, which only a file answers: a leftover that is
+		# somebody else's folder is still listed, just with no age to sort by. Asking first
+		# also keeps a file deleted between listing and sorting from logging an error.
+		var msec := 0
+		if FileAccess.file_exists(path):
+			msec = FileAccess.get_modified_time(path)
+		found.append({"msec": msec, "path": path})
+	var by_age := func(one: Dictionary, other: Dictionary) -> bool:
+		if int(one["msec"]) != int(other["msec"]):
+			return int(one["msec"]) > int(other["msec"])
+		return String(one["path"]) < String(other["path"])
 	found.sort_custom(by_age)
 	var paths := PackedStringArray()
 	for entry: Dictionary in found:

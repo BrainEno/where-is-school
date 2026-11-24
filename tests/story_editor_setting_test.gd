@@ -156,8 +156,15 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 func _check_wedged_backup(check: Harness.Checker, panel: SettingsPanel, settings: Node) -> void:
 	Harness.stage = "a backup name somebody else occupies"
 	var backup := SettingsStore.BACKUP_PATH
-	if not check.expect(DirAccess.make_dir_absolute(backup) == OK, "Could not create the wedged-backup fixture"):
-		return
+	var made_dir := false
+	if not DirAccess.dir_exists_absolute(backup):
+		if FileAccess.file_exists(backup):
+			# A copy an earlier run left without confirming its publish - ours by name, and
+			# removable, which is not the case this check is about.
+			DirAccess.remove_absolute(backup)
+		made_dir = DirAccess.make_dir_absolute(backup) == OK
+		if not check.expect(made_dir, "Could not create the wedged-backup fixture"):
+			return
 	# Non-empty, the way a person's own folder beside the file would be: a remove of an empty
 	# directory succeeds, and then this fixture would say nothing about what we do not own.
 	var held := backup.path_join("keep.txt")
@@ -185,7 +192,8 @@ func _check_wedged_backup(check: Harness.Checker, panel: SettingsPanel, settings
 	panel.cycle(&"story_editor", 1)
 	check.expect(not settings.is_story_editor_enabled(), "The switch could not be turned off again")
 	DirAccess.remove_absolute(held)
-	check.expect(DirAccess.remove_absolute(backup) == OK, "Could not clean up the wedged-backup fixture")
+	if made_dir:
+		check.expect(DirAccess.remove_absolute(backup) == OK, "Could not clean up the wedged-backup fixture")
 
 
 func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) -> void:
@@ -200,27 +208,39 @@ func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) 
 		return ERR_FILE_CANT_WRITE if from == stage else DirAccess.rename_absolute(from, to)
 	check.expect(SettingsStore._publish(stage, refuse_stage) == ERR_FILE_CANT_WRITE,
 		"A failed publication reported success")
-	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior and not FileAccess.file_exists(SettingsStore.BACKUP_PATH),
+	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior,
 		"Failure did not restore the previous settings byte for byte")
+	# The second refusal stops the publication *and* the rollback, so the preferences live only
+	# in the copy the swap made. Which name that copy has depends on what was already beside the
+	# file - that is the point of #394 - so everything below follows the bytes, not a path.
 	var refuse_primary := func(from: String, to: String) -> Error:
 		return ERR_FILE_CANT_WRITE if to == SETTINGS_PATH else DirAccess.rename_absolute(from, to)
 	var report := {}
 	check.expect(SettingsStore._publish(stage, refuse_primary, report) == ERR_FILE_CANT_WRITE,
 		"An interrupted swap reported success")
-	# A publish that also failed to roll back has to say where the previous file waits: that is
-	# the half-finished swap an author would otherwise read as a vanished preferences file (#394).
-	check.expect(String(report.get("step", "")).contains(SettingsStore.BACKUP_PATH)
+	var resting := _resting_copy(prior)
+	check.expect(not resting.is_empty()
+			and String(report.get("step", "")).contains(resting)
 			and int(report.get("error", OK)) == ERR_FILE_CANT_WRITE,
-		"A swap that could not publish or roll back said nothing about the file it left behind: %s"
+		"A swap that could not publish or roll back did not say where the previous file waits: %s"
 			% str(report))
-	check.expect(not FileAccess.file_exists(SETTINGS_PATH) and FileAccess.get_file_as_bytes(SettingsStore.BACKUP_PATH) == prior,
+	check.expect(not FileAccess.file_exists(SETTINGS_PATH) and not resting.is_empty(),
 		"An interrupted swap lost the previous settings")
 	settings.load_settings()
 	check.expect(settings.get_volume(&"music") == 37 and not settings.is_story_editor_enabled()
-			and loc._load_saved_locale() == "zh-CN", "Settings and Loc did not both read the backup")
+			and loc._load_saved_locale() == "zh-CN", "Settings and Loc did not both read the recovered copy")
 	check.expect(SettingsStore.write(SettingsStore.open()) == OK and FileAccess.file_exists(SETTINGS_PATH)
-			and not FileAccess.file_exists(SettingsStore.BACKUP_PATH), "Next write did not recover from an interrupted swap")
+			and not FileAccess.file_exists(resting), "Next write did not recover from an interrupted swap")
 	DirAccess.remove_absolute(stage)
+
+
+## The newest leftover that holds exactly `bytes`, or "" when none does. This is what `read()`
+## has to find after a half-finished swap, and what a verified publish has to clear away.
+static func _resting_copy(bytes: PackedByteArray) -> String:
+	for path: String in SettingsStore.leftovers():
+		if FileAccess.file_exists(path) and FileAccess.get_file_as_bytes(path) == bytes:
+			return path
+	return ""
 
 
 ## The development override: the same editor without the file, so an author whose
