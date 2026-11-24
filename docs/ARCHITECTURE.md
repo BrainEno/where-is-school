@@ -876,7 +876,13 @@ of the swap the machine refused, and the swap publishes onto whichever backup na
 a leftover nobody can remove cannot wedge every later preference (#394). A development run of
 the project can force the switch on for one session with `--story-editor` or
 `WHERE_IS_SCHOOL_STORY_EDITOR=1`, which writes nothing and is ignored by builds that leave
-`scripts/story_editor/` out (#395). `Settings` delegates to
+`scripts/story_editor/` out; and in such a run - `StoryEditorEntry.debug_run`, the same
+`OS.is_debug_build()` test the dialogue and location code use to keep development reports out of
+a shipped copy - a switch the machine refused to store still installs the editor for the session,
+with the row saying it is not saved, because the file is the author's persistence and not the
+author's permission. Turning the editor *off* always needs the write to succeed, and a release
+export (`--export-release`) meets none of this: a player's copy refuses the change outright
+(#395). `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
 mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The

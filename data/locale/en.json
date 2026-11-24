@@ -219,6 +219,7 @@
     "settings.done_note": "Saved.",
     "settings.save_failed": "Settings were not saved. The switch has not changed. Try again.",
     "settings.save_failed_step": "Settings were not saved ({step}). The switch has not changed. Try again.",
+    "settings.session_only_note": "Settings were not saved ({step}): this development run has the story editor on until it restarts.",
     "settings.hint_touch": "Swipe to see more · Tap to change; changes are saved as you go",
     "settings.hint_pad": "D-pad ↑/↓ move    ←/→ change    [{confirm}] select    [{cancel}] back",
     "settings.action.move_forward": "Walk forward",

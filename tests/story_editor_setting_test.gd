@@ -43,7 +43,7 @@ func _run() -> void:
 	check.expect(not settings.is_story_editor_enabled(), "A fresh settings file must start with the story editor off")
 	settings.set_volume(&"music", 37)
 	_check_interrupted_swap(check, settings, loc)
-	_check_dev_override(check)
+	_check_dev_override(check, settings)
 	var world := await _boot_world(check)
 	await _check_off_by_default(check, world)
 	await _check_entry_follows_switch(check, world, settings)
@@ -243,12 +243,11 @@ static func _resting_copy(bytes: PackedByteArray) -> String:
 	return ""
 
 
-## The development override: the same editor without the file, so an author whose
-## preferences cannot be written is never locked out of the tool, while a build that leaves
-## the editor's scripts out - the desktop and Android player exports - cannot be switched on
-## from a command line at all.
-func _check_dev_override(check: Harness.Checker) -> void:
-	Harness.stage = "the development override for the switch"
+## The two ways a development run keeps the editor reachable: the launch override, which needs
+## no file at all, and a switch the machine refused to store - which is refused on a player's copy
+## and installed for the session on an author's run (#394, #395).
+func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
+	Harness.stage = "the development override and the session-only switch"
 	if not StoryEditorEntry.scripts_present():
 		print("NOTE: this build has no editor scripts, so the override has nothing to install")
 		return
@@ -260,9 +259,20 @@ func _check_dev_override(check: Harness.Checker) -> void:
 	check.expect(not StoryEditorEntry.development_requested(PackedStringArray(["--editor"]), "0"),
 		"An unrelated argument or value turned the editor on")
 	check.expect(StoryEditorEntry.development_override()
-		== StoryEditorEntry.development_requested(
-			OS.get_cmdline_user_args(), OS.get_environment(StoryEditorEntry.DEVELOPMENT_ENVIRONMENT)),
+			== StoryEditorEntry.development_requested(
+				OS.get_cmdline_user_args(), OS.get_environment(StoryEditorEntry.DEVELOPMENT_ENVIRONMENT)),
 		"The override the settings load honours is not the rule it states")
+	# What each outcome reads as on the row, and the step inside it. The two tables have to carry
+	# the placeholder, or the sentence arrives with "{step}" in it on one language.
+	check.expect(SettingsPanel._story_feedback_key(true, true, "") == "settings.done_note",
+		"A stored switch did not read as saved")
+	check.expect(SettingsPanel._story_feedback_key(false, false, "publish staged preferences")
+			== "settings.save_failed_step", "A refused switch did not name the step it refused")
+	check.expect(SettingsPanel._story_feedback_key(false, true, "publish staged preferences")
+			== "settings.session_only_note", "A session-only install claimed the switch was unchanged")
+	for locale: String in ["zh-CN", "en"]:
+		check.expect(L10n.t_for("settings.session_only_note", locale).contains("{step}"),
+			"The %s table has no {step} for the session-only note" % locale)
 	var refused := RefusedStore.new()
 	check.expect(SettingsPanel._store_failure_step(refused) == "publish staged preferences",
 		"The settings row did not read the step a refused write reported")
@@ -270,6 +280,37 @@ func _check_dev_override(check: Harness.Checker) -> void:
 			and SettingsPanel._store_failure_step(Node.new()) == "",
 		"A settings node with no report made the row claim a cause it does not have")
 	refused.free()
+	_hold_preferences_hostage(check, settings)
+
+
+## The file is moved aside whole and put back, so a refused write here cannot cost the run a
+## preference it already had; the directory in its place is the case a rename cannot step over.
+func _hold_preferences_hostage(check: Harness.Checker, settings: Node) -> void:
+	Harness.stage = "a preferences write the machine refuses, as a player and as an author"
+	var hold := SETTINGS_PATH + ".author-hold"
+	if not check.expect(DirAccess.rename_absolute(SETTINGS_PATH, hold) == OK
+			and DirAccess.make_dir_absolute(SETTINGS_PATH) == OK,
+			"Could not block the preferences file for the session-only check"):
+		return
+	StoryEditorEntry.debug_run = false
+	check.expect(not bool(settings.call("set_story_editor_enabled", true))
+			and not bool(settings.call("is_story_editor_enabled")),
+		"A player's copy turned the editor on over a preferences write it could not make")
+	StoryEditorEntry.debug_run = true
+	check.expect(bool(settings.call("set_story_editor_enabled", true))
+			and bool(settings.call("is_story_editor_enabled")),
+		"An author's run was locked out of the tool by a file it could not write")
+	var failure: Variant = settings.call("get_last_store_failure")
+	check.expect(failure is Dictionary and not String((failure as Dictionary).get("step", "")).is_empty(),
+		"The session-only install did not report which step the write failed at")
+	DirAccess.remove_absolute(SETTINGS_PATH)
+	if not check.expect(DirAccess.rename_absolute(hold, SETTINGS_PATH) == OK,
+			"Could not put the blocked preferences file back"):
+		return
+	StoryEditorEntry.debug_run = OS.is_debug_build()
+	check.expect(bool(settings.call("set_story_editor_enabled", false))
+			and not bool(settings.call("is_story_editor_enabled")),
+		"Once the file was writable again the session-only switch could not be turned off")
 
 
 ## A `Settings` stand-in that only reports a refused write, so the settings row's message can
