@@ -171,7 +171,11 @@ jobs:
           timeout 300 godot --headless --path . --export-debug "Windows Dev" \
             "build/windows-dev/where-is-school-dev.exe" 2>&1 | tee "$log" || result=$?
           if (( result != 0 )); then
-            grep -m 12 -E 'SCRIPT ERROR|Parse Error|ERROR|Failed' "$log" | cut -c1-600 |
+            # Godot prints the reason for a configuration failure as an indented line under
+            # the `ERROR: ... configuration errors:` header; without the indented branch the
+            # annotation stream carries the header and none of the cause.
+            grep -E 'SCRIPT ERROR|Parse Error|ERROR|Failed|^[[:space:]]+[^[:space:]]' "$log" |
+              tail -25 | cut -c1-600 |
               while IFS= read -r failure; do printf '::error title=Windows Dev export::%s\n' "$failure"; done || true
             exit 1
           fi
