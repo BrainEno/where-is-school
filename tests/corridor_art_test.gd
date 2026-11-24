@@ -418,12 +418,14 @@ func _check_glass_entrance() -> void:
 	_check.expect(_player.test_move(pose, Vector3.FORWARD * 2.7, contact)
 		and contact.get_collider() == doorway.get_node(^"Right/GlassSafety"),
 		"The side glazing was left open to the capsule.")
-	# The pair of leaves is shut: walking at the middle of the doorway meets a leaf.
-	pose.origin = doorway.to_global(Vector3(0, 0.045, -1.35))
+	# The pair of leaves is shut: walking at the middle of the doorway meets a leaf. Swept
+	# from outside, because Q arrives behind the player, between them and the doors.
+	pose.origin = doorway.to_global(Vector3(0, 0.045, 1.35))
 	var leaf := KinematicCollision3D.new()
-	_check.expect(_player.test_move(pose, Vector3.BACK * 2.7, leaf)
-		and leaf.get_collider() in [doorway.get_node(^"Left"), doorway.get_node(^"Right")],
-		"The middle of the glass doors is open to the capsule; the leaves should stand shut.")
+	var shut := _player.test_move(pose, Vector3.FORWARD * 2.7, leaf)
+	var stop := leaf.get_collider() as Node if shut else null
+	_check.expect(stop != null and doorway.is_ancestor_of(stop),
+		"The middle of the glass doors is open to the capsule (stopped by %s); the leaves should stand shut." % stop)
 	var nav := inside.get_node(^"Navigation") as LocationNavigation
 	if _check.expect(await Harness.wait_until(nav.is_synchronized, 5.0), "01 never finished its navigation bake."):
 		_check_entrance_shut(nav.get_navigation_map(), doorway)
