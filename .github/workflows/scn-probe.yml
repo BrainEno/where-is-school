@@ -63,3 +63,40 @@ jobs:
           [ "${found}" = 1 ] || echo "::notice title=base scn::ABSENT after import"
           timeout 180 godot --headless --path . --script res://tools/scn_probe.gd 2>&1 \
             | sed -n 's/^PROBE /::notice title=base probe:: /p' || true
+
+      - name: Reimport the branch's model without LODs or shadow meshes
+        shell: bash
+        run: |
+          set -uo pipefail
+          git checkout -- assets/models/protagonist/Protagonist_Character.glb
+          sed -i 's/^generate_lods=true$/generate_lods=false/; s/^create_shadow_meshes=true$/create_shadow_meshes=false/' \
+            assets/models/protagonist/Protagonist_Character.glb.import
+          rm -f .godot/imported/Protagonist_Character*
+          status=0
+          godot --headless --path . --import > /tmp/import-nolod.log 2>&1 || status=$?
+          echo "::notice title=nolod import::exit ${status}"
+          found=0
+          for f in .godot/imported/Protagonist_Character.glb-*.scn; do
+            [ -e "$f" ] || continue
+            found=1
+            echo "::notice title=nolod scn::$(stat -c%s "$f") bytes (lods off, shadow meshes off)"
+          done
+          [ "${found}" = 1 ] || echo "::notice title=nolod scn::ABSENT after import"
+
+      - name: Reimport without LODs, shadow meshes or light baking
+        shell: bash
+        run: |
+          set -uo pipefail
+          sed -i 's/^light_baking=1$/light_baking=0/' \
+            assets/models/protagonist/Protagonist_Character.glb.import
+          rm -f .godot/imported/Protagonist_Character*
+          status=0
+          godot --headless --path . --import > /tmp/import-nolb.log 2>&1 || status=$?
+          echo "::notice title=nolb import::exit ${status}"
+          found=0
+          for f in .godot/imported/Protagonist_Character.glb-*.scn; do
+            [ -e "$f" ] || continue
+            found=1
+            echo "::notice title=nolb scn::$(stat -c%s "$f") bytes (lods off, shadow meshes off, light baking off)"
+          done
+          [ "${found}" = 1 ] || echo "::notice title=nolb scn::ABSENT after import"
