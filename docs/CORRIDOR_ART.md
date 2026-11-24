@@ -17,6 +17,13 @@ The navigation mesh is baked from the same slabs, guards and sloped stair collid
 
 ## Readable repetition
 
+- Doorway arrivals declare their heading (`metadata/entry_facing`, see
+  [ARCHITECTURE §5h](ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract)):
+  entering from the front yard faces north into the glass (`FromTeachingEntrance`);
+  coming up from the yard faces north up the fire landing (`FromSchoolyard`); the front
+  yard's `FromCorridor` faces east toward the school gate, shared by the glass and the gate
+  steps until those exits get their own markers; the yard's `FromCorridor` faces south, away
+  from the red door.
 - Each bay has front and rear doors, with separate small glazed transoms, and a 1.98 m × 0.30 m slot between them. The slot starts 2 m above the hall. Use the normal **Interact** action facing it, or click the glass. Both paths stage a real physics hop; the observation is presented only after the eye has passed the opening and the body has landed. There is no new global jump action.
 - The other classrooms are observations, not destinations: desks, a lectern and a rear wall are modelled behind each slot, but the biology classroom remains the only fully playable **classroom**. `104` and `202` repeat in different bays. Room depths and floor lines vary slightly behind otherwise familiar pairs of doors.
 - The right-hand wall is mostly masonry. On 02 and 03, a 1.06 m sill, 2.35 m lintel line and broad piers surround each divided sash (normally about 1.8 × 1.29 m). Masonry blocks ground and depth rays; only the clear aperture has a player-only barrier. The nearest bay can fade for the follow camera, not the whole elevation. The court paint, hoops, shed and plinth share the playable yard’s source. Its concrete apron continues under the teaching block’s foundations, keeping the yard and the fire stair visually connected. This view adds no yard colliders, actors, nav or story triggers.

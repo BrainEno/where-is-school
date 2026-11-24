@@ -307,9 +307,19 @@ class Scene:
 
         lines.append('[node name="SpawnPoints" type="Node3D" parent="."]')
         lines.append('')
-        for name, pos in self.spawns:
+        for spawn in self.spawns:
+            # (name, pos) keeps the legacy "keep the previous heading" behaviour. A third
+            # element may declare the arrival heading: {"rotation": (x, y, z)} is written as
+            # rotation_degrees, and "entry_facing": True marks it as authoritative (see
+            # location_host.gd ENTRY_FACING_META). Doors into and out of the teaching block use it.
+            name, pos = spawn[0], spawn[1]
+            options = spawn[2] if len(spawn) > 2 else {}
             lines.append(f'[node name="{name}" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]')
             lines.append('position = %s' % v3(pos))
+            if 'rotation' in options:
+                lines.append('rotation_degrees = %s' % v3(options['rotation']))
+            if options.get('entry_facing'):
+                lines.append('metadata/entry_facing = true')
             lines.append('')
         lines.append('[node name="Ambience" type="AudioStreamPlayer" parent="."]')
         lines.append(f'stream = ExtResource("{base + 2}_ambience")')
@@ -611,7 +621,10 @@ def build_front_yard():
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
          "id_dest": "street"},
     ]
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromStreet", (12.0, 0, d_mid))]
+    # Shared by the glass entrance and the gate steps (both leave the block). Faces east, toward
+    # the school gate. Split per exit in a later phase; see docs/CORRIDOR_ART.md.
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5), {"rotation": (0, -90, 0), "entry_facing": True}),
+                ("FromStreet", (12.0, 0, d_mid))]
     return s
 
 
@@ -1169,7 +1182,7 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromAlley", (0.0, 0, 16.0)),
         # The walkway's end door: this is the intended way into the yard, so the
         # player arrives from the school side rather than from the estate gate.
-        ("FromCorridor", (-3.0, 0, -17.6)),
+        ("FromCorridor", (-3.0, 0, -17.6), {"rotation": (0, 180, 0), "entry_facing": True}),
         # Arrival from classroom window curtain fall: lands on top of the blue container.
         ("FromSchool", (12.0, 2.6, -15.5)),
         # Out of the building site's gate, on the yard side of it.
