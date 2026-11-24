@@ -866,7 +866,12 @@ checklist in that test's section of the pull request, because no CI runner opens
 `scripts/story_editor/`; the device builds also link the Files bridge. The separate author
 app starts its editor automatically. In the normal iPhone app `[authoring] story_editor` in
 `user://settings.cfg` is off by default. The row appears only when the runtime is packed,
-and does not apply the change if the staged settings write fails. `Settings` delegates to
+and does not apply the change if the staged settings write fails; the row then names the step
+of the swap the machine refused, and the swap publishes onto whichever backup name is free so
+a leftover nobody can remove cannot wedge every later preference (#394). A development run of
+the project can force the switch on for one session with `--story-editor` or
+`WHERE_IS_SCHOOL_STORY_EDITOR=1`, which writes nothing and is ignored by builds that leave
+`scripts/story_editor/` out (#395). `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
 mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The
