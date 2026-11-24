@@ -64,39 +64,44 @@ jobs:
           timeout 180 godot --headless --path . --script res://tools/scn_probe.gd 2>&1 \
             | sed -n 's/^PROBE /::notice title=base probe:: /p' || true
 
-      - name: Reimport the branch's model without LODs or shadow meshes
+      - name: Reimport with animation import disabled
         shell: bash
         run: |
           set -uo pipefail
           git checkout -- assets/models/protagonist/Protagonist_Character.glb
-          sed -i 's/^generate_lods=true$/generate_lods=false/; s/^create_shadow_meshes=true$/create_shadow_meshes=false/' \
+          sed -i 's/^animation\/import=true$/animation\/import=false/' \
             assets/models/protagonist/Protagonist_Character.glb.import
+          grep -E '^(animation/import|meshes/ensure_tangents)=' assets/models/protagonist/Protagonist_Character.glb.import \
+            | sed 's/^/::notice title=noanim params::/' || true
           rm -f .godot/imported/Protagonist_Character*
           status=0
-          godot --headless --path . --import > /tmp/import-nolod.log 2>&1 || status=$?
-          echo "::notice title=nolod import::exit ${status}"
+          godot --headless --path . --import > /tmp/import-noanim.log 2>&1 || status=$?
+          echo "::notice title=noanim import::exit ${status}"
           found=0
           for f in .godot/imported/Protagonist_Character.glb-*.scn; do
             [ -e "$f" ] || continue
             found=1
-            echo "::notice title=nolod scn::$(stat -c%s "$f") bytes (lods off, shadow meshes off)"
+            echo "::notice title=noanim scn::$(stat -c%s "$f") bytes (animation import off)"
           done
-          [ "${found}" = 1 ] || echo "::notice title=nolod scn::ABSENT after import"
+          [ "${found}" = 1 ] || echo "::notice title=noanim scn::ABSENT after import"
 
-      - name: Reimport without LODs, shadow meshes or light baking
+      - name: Reimport with tangent generation disabled
         shell: bash
         run: |
           set -uo pipefail
-          sed -i 's/^light_baking=1$/light_baking=0/' \
+          git checkout -- assets/models/protagonist/Protagonist_Character.glb.import
+          sed -i 's/^meshes\/ensure_tangents=true$/meshes\/ensure_tangents=false/' \
             assets/models/protagonist/Protagonist_Character.glb.import
+          grep -E '^(animation/import|meshes/ensure_tangents)=' assets/models/protagonist/Protagonist_Character.glb.import \
+            | sed 's/^/::notice title=notan params::/' || true
           rm -f .godot/imported/Protagonist_Character*
           status=0
-          godot --headless --path . --import > /tmp/import-nolb.log 2>&1 || status=$?
-          echo "::notice title=nolb import::exit ${status}"
+          godot --headless --path . --import > /tmp/import-notan.log 2>&1 || status=$?
+          echo "::notice title=notan import::exit ${status}"
           found=0
           for f in .godot/imported/Protagonist_Character.glb-*.scn; do
             [ -e "$f" ] || continue
             found=1
-            echo "::notice title=nolb scn::$(stat -c%s "$f") bytes (lods off, shadow meshes off, light baking off)"
+            echo "::notice title=notan scn::$(stat -c%s "$f") bytes (ensure_tangents off)"
           done
-          [ "${found}" = 1 ] || echo "::notice title=nolb scn::ABSENT after import"
+          [ "${found}" = 1 ] || echo "::notice title=notan scn::ABSENT after import"
