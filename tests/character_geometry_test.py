@@ -18,6 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import character_geometry as geometry
+import character_hair as hair
 import prepare_classroom_student as student
 import prepare_teacher_n as teacher
 
@@ -32,6 +33,59 @@ def parts(data: bytes) -> tuple:
                 key: teacher.read_accessor(d, b, value) for key, value in a.items()
             } | {"triangles": teacher.read_accessor(d, b, p["indices"]).reshape(-1, 3)}
     return d, b, result
+
+
+def _inside(points: np.ndarray, skin: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """Point-in-mesh by ray parity, along a direction the skull has no face normal on."""
+    direction = np.array([1.0, .3, 0.0])
+    direction /= np.linalg.norm(direction)
+    v0, v1, v2 = skin[triangles[:, 0]], skin[triangles[:, 1]], skin[triangles[:, 2]]
+    e1, e2 = v1 - v0, v2 - v0
+    h = np.cross(direction, e2)
+    a = (e1 * h).sum(1)
+    valid = np.abs(a) > 1e-12
+    f = np.zeros_like(a)
+    f[valid] = 1.0 / a[valid]
+    out = np.zeros(len(points), bool)
+    for i, point in enumerate(points):
+        s = point - v0
+        u = f * (s * h).sum(1)
+        q = np.cross(s, e1)
+        v = f * (q @ direction)
+        t = f * (q * e2).sum(1)
+        hits = valid & (u >= 0) & (u <= 1) & (v >= 0) & (u + v <= 1) & (t > 1e-6)
+        out[i] = int(hits.sum()) % 2 == 1
+    return out
+
+
+def _spread(points: np.ndarray) -> np.ndarray:
+    """Gaps, in degrees, between neighbouring points around their own centre."""
+    angle = np.degrees(np.arctan2(points[:, 1], points[:, 0]))
+    angle = np.sort(angle)
+    return np.diff(np.append(angle, angle[0] + 360.0))
+
+
+def _first_hit(origin: np.ndarray, rays: np.ndarray, points: np.ndarray,
+               triangles: np.ndarray) -> np.ndarray:
+    """Distance to the first triangle each ray meets, or inf."""
+    v0, v1, v2 = points[triangles[:, 0]], points[triangles[:, 1]], points[triangles[:, 2]]
+    e1, e2 = v1 - v0, v2 - v0
+    out = np.full(len(rays), np.inf)
+    for i, direction in enumerate(rays):
+        h = np.cross(direction, e2)
+        a = (e1 * h).sum(1)
+        valid = np.abs(a) > 1e-12
+        f = np.zeros_like(a)
+        f[valid] = 1.0 / a[valid]
+        s = origin - v0
+        u = f * (s * h).sum(1)
+        q = np.cross(s, e1)
+        v = f * (q @ direction)
+        t = f * (q * e2).sum(1)
+        hit = valid & (u >= 0) & (u <= 1) & (v >= 0) & (u + v <= 1) & (t > 1e-6)
+        if hit.any():
+            out[i] = float(t[hit].min())
+    return out
 
 
 class RefinedCharacterTests(unittest.TestCase):
@@ -253,12 +307,221 @@ class RefinedCharacterTests(unittest.TestCase):
             self.assertGreater(discarded[:, :, 1].min(), 1.53)
             self.assertLess(discarded[:, :, 2].max(), -.046)
             self.assertEqual(len(before - retained), 520 if material == "M_ST_Hair" else 208)
-            displacement = np.linalg.norm(old["POSITION"][kept] - new["POSITION"], axis=1)
-            self.assertGreater(displacement.max(), .001)
-            self.assertLess(displacement.max(), .013)
-            np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
+            # The shipped hair is the source pass plus the skull-fitted crop, so what is
+            # checked here is the pair: the source vertices survive in order, and the crop
+            # is a real short cut rather than a lift.
+            shipped = new["POSITION"]
+            self.assertEqual(len(shipped), len(kept))
+            below = lambda points: int((points[:, 1] < 1.500).sum())
+            self.assertLess(below(shipped), below(old["POSITION"][kept]) * .10,
+                            "the crop did not take length off the bob")
+            # Nothing hangs below the ear lobe, which is what made it a bob.
+            self.assertGreater(float(shipped[:, 1].min()), 1.470)
+            # The cut sits on the hairline, not somewhere up the shell: every vertex is at
+            # or above the hem curve for its own angle, and the crown is untouched.
+            radius, _outward, angle = hair.polar(shipped)
+            hem = hair.hem_height(angle)
+            self.assertGreater(int((shipped[:, 1] >= hem - 1e-6).sum()),
+                               len(shipped) - 8)
+            # The crown is where the skull stops having sides, so the radial fit has to be
+            # faded out there (see `character_hair._place`); the cap keeps its authored
+            # clearance, and the displacement above the top ring is a few millimetres
+            # rather than the single millimetre a radial-only fit used to give.
             top = old["POSITION"][kept, 1] > 1.632
-            np.testing.assert_array_equal(old["POSITION"][kept[top]], new["POSITION"][top])
+            if top.any():   # the highlight sheet is cards; it has no cap of its own
+                self.assertLess(float(np.abs(shipped[top] - old["POSITION"][kept[top]]).max()),
+                                .045)
+            np.testing.assert_array_equal(old["JOINTS_0"][kept], new["JOINTS_0"])
+
+    def test_teacher_hair_sits_outside_the_skull(self) -> None:
+        """The bug that made the nape look torn: hair vertices inside the head.
+
+        Revision 3 lifted and tucked the shell, which pushed most of its lower half through
+        the skull; the skull then showed through the hair as the pale teeth at the nape.
+        """
+        _document, _binary, original = parts(self.teacher_source)
+        document, binary, refined = self.outputs[1]
+        skin = refined["ST_Head_Skin", "M_ST_Skin"]["POSITION"]
+        triangles = refined["ST_Head_Skin", "M_ST_Skin"]["triangles"]
+        # The skull is an open surface -- the neck, the mouth and both ear canals are holes
+        # -- so a vertex just under a rim reads as "inside" without being buried. What has
+        # to be true is that no *run* of the hair is inside: the revision this replaces had
+        # whole rows of the shell through the skull, which is what showed as pale teeth.
+        #
+        # Two shapes of the same fact, because the two sheets fail differently. The curtain
+        # is thousands of vertices, so it is a fraction of itself; the highlight sheet is
+        # seventeen cards of sixteen, so a per-card fraction is the only meaningful unit.
+        # (The curtain does keep a small pocket of its inner fold behind the crown, a few
+        # centimetres inside the skull; it is enclosed by the hair above it and invisible.)
+        for material in ("M_ST_Hair", "M_ST_HairLight"):
+            points = refined["ST_Hair", material]["POSITION"]
+            inside = _inside(points, skin, triangles)
+            pieces = [np.asarray(part, np.int64) for part
+                      in hair.islands(len(points), refined["ST_Hair", material]["triangles"])]
+            largest = max(pieces, key=len)
+            # A curtain this big says something as a fraction of itself; the highlight sheet
+            # has no curtain at all (its largest piece is one card), so for it the per-card
+            # check below is the whole statement. 3%, against the 43% that this check was
+            # written for: what is left is the inner face of one fold behind the crown,
+            # enclosed by the hair over it and never visible.
+            if len(largest) > 1000:
+                self.assertLess(inside[largest].mean(), .03,
+                                "%s: %.1f%% of the curtain is inside the head"
+                                % (material, 100 * inside[largest].mean()))
+            for part in pieces:
+                self.assertLess(inside[part].mean(), .60,
+                                "%s: a piece of %d vertices is %.0f%% inside the head"
+                                % (material, len(part), 100 * inside[part].mean()))
+
+    def test_teacher_crown_shows_no_skin_through_the_hair(self) -> None:
+        """From behind, no ray at the crown may reach the skull before the hair.
+
+        The curtain is tangent to the skull along the back midline, and the skull was
+        0.6 mm proud of it there, which showed as a hairline-thin pale seam running up the
+        crown. Vertex-in-mesh tests cannot see this -- both sheets are outside each other
+        almost everywhere -- so the check is the one the eye makes: cast from behind and
+        see which surface is first. `teacher_crown_part` lifts the band until none is.
+        """
+        _document, _binary, _refined = self.outputs[1]
+        refined = _refined
+        skin = refined["ST_Head_Skin", "M_ST_Skin"]
+        hair_points = refined["ST_Hair", "M_ST_Hair"]["POSITION"]
+        # Rays from behind, straight down the midline: the seam was a sliver two pixels
+        # wide that followed the sheets' tangency up the crown, so a fan wide enough to
+        # miss it proves nothing. This is a narrow, dense grid on the line of the seam.
+        eye = np.array([0.0, 1.60, .34])
+        target = np.array([0.0, 1.585, .02])
+        forward = target - eye
+        forward /= np.linalg.norm(forward)
+        right = np.cross(np.array([0.0, 1.0, 0.0]), forward)
+        right /= np.linalg.norm(right)
+        up = np.cross(forward, right)
+        rows = np.linspace(-.30, .40, 70)[:, None]
+        cols = np.linspace(-.030, .030, 25)[None, :]
+        rays = (forward + cols[..., None] * np.tan(.10) * right
+                + rows[..., None] * np.tan(.10) * up).reshape(-1, 3)
+        rays /= np.linalg.norm(rays, axis=1, keepdims=True)
+        skin_hit = _first_hit(eye, rays, skin["POSITION"], skin["triangles"])
+        hair_hit = _first_hit(eye, rays, hair_points, refined["ST_Hair", "M_ST_Hair"]["triangles"])
+        both = np.isfinite(skin_hit) & np.isfinite(hair_hit)
+        # Only the back of the head: rays that reach the skull at the nape are below the
+        # hem by design, so they are excluded by asking where they land.
+        points = eye + rays * np.where(np.isfinite(skin_hit), skin_hit, 0.0)[:, None]
+        crown = both & (points[:, 1] > 1.545)
+        self.assertGreater(int(crown.sum()), 400, "the probe does not cover the crown")
+        proud = crown & (skin_hit < hair_hit)
+        self.assertEqual(int(proud.sum()), 0,
+                         "%d of %d crown rays reach the skull before the hair"
+                         % (proud.sum(), crown.sum()))
+
+    def test_teacher_ear_has_a_concha(self) -> None:
+        """The ear is a shell whose middle is the bowl, not the highest part of the dome.
+
+        The source ear is one smooth convex dome -- frontmost at its rim and shallowing
+        inward -- so it read as a flat oval pasted on the skull. The concha is what makes
+        an ear read, and it is the one place where the front face must be *nearer* the
+        skull than the cartilage around it.
+        """
+        _document, _binary, original = parts(self.teacher_source)
+        _document, _binary, refined = self.outputs[1]
+        for side in ("L", "R"):
+            before = original["ST_Ear_" + side, "M_ST_Skin"]["POSITION"]
+            after = refined["ST_Ear_" + side, "M_ST_Skin"]["POSITION"]
+            self.assertEqual(len(before), len(after))
+            # The bowl is dug about the ear's own middle: 9 mm across at y 1.5335.
+            bowl = (np.abs(after[:, 1] - 1.5345) < .005) & (np.abs(after[:, 2] - .0140) < .005)
+            radius = np.abs(after[:, 0])
+            self.assertGreater(float(np.median(radius[bowl])), float(radius[~bowl].min()),
+                               "the concha floor is not inside the rim")
+            depth = float((radius[bowl] - np.abs(before[:, 0])[bowl]).min())
+            self.assertLess(depth, -.0025,
+                            "the concha is not a bowl (floor moved %.2f mm inwards)" % (depth * 1e3))
+            # A bowl, not a squeeze. The source ear was convex, so its middle was the
+            # *shallowest* part; afterwards the middle must be the deepest, by a real
+            # margin, and the cut must die out before the helix.
+            was = np.abs(before[:, 0])
+            now = np.abs(after[:, 0])
+            floor = np.argmin(now - was)          # the deepest point of the cut
+            self.assertLess(float(now[floor] - was[floor]), -.0035,
+                            "the concha is not deep enough to read")
+            self.assertLess(float(now[floor]), float(now.max()),
+                            "the deepest cut is not inside the ear's front face")
+            # The old dome was frontmost in the middle; the bowl has to have taken that
+            # distinction away, which is the whole read of a concha.
+            room = np.hypot(before[:, 1] - 1.5335, before[:, 2] - .0140) < .006
+            self.assertLess(float(now[room].max()), float(now.max()),
+                            "the middle of the ear is still the front of a dome")
+            rim = was > was.max() - .001
+            self.assertLess(float(np.abs(after[rim] - before[rim]).max()), .002,
+                            "the helix rim moved")
+            self.assertLess(float(np.abs(after - before).max()), .007)
+            np.testing.assert_array_equal(original["ST_Ear_" + side, "M_ST_Skin"]["JOINTS_0"],
+                                          refined["ST_Ear_" + side, "M_ST_Skin"]["JOINTS_0"])
+
+    def test_teacher_mouth_seam_is_evenly_spaced(self) -> None:
+        """The seam where the lip tube meets the face is one ring of 74 vertices.
+
+        The source lip was resampled by hand, so its ring ran in uneven steps and the
+        seam read as a stair-step across the lip line: measured as the ring's own second
+        difference, the source bends by up to 3.4 mm between neighbouring steps, which is
+        the jaggedness. The ring is now fitted with a small Fourier series in its own
+        polar angle, which keeps every vertex and every triangle and only spreads the ring
+        out, so the fix has to show up as *smoothness* rather than as a big displacement.
+        """
+        _document, _binary, original = parts(self.teacher_source)
+        _document, _binary, refined = self.outputs[1]
+        key = ("ST_Head_Skin", "M_ST_Lip")
+        before = original[key]["POSITION"]
+        ids, targets = geometry.mouth_rim_targets(before, original[key]["triangles"])
+        self.assertEqual(len(ids), 74)
+        ring = lambda points: float(np.linalg.norm(
+            np.roll(points, -1, 0) - 2.0 * points + np.roll(points, 1, 0), axis=1).max())
+        self.assertGreater(ring(before[ids]), .003, "the source seam is not stepped")
+        self.assertLess(ring(targets), .0007, "the seam is still stepped")
+        # Spread, not displaced: two millimetres, and only a partial one on average.
+        move = np.abs(targets - before[ids])
+        self.assertLess(float(move.max()), .002)
+        self.assertGreater(float(move.max()), .0005)
+        # Both sheets took the same ring, so the seam stayed welded -- the mouth is four
+        # separate meshes and the lip is a tube through the face; opening it would show.
+        skin = refined[("ST_Head_Skin", "M_ST_Skin")]
+        lip = refined[("ST_Head_Skin", "M_ST_Lip")]
+        skin_rim = hair.boundary_loop(skin["triangles"])
+        lip_rim = hair.boundary_loop(lip["triangles"])
+        self.assertEqual(len(skin_rim), 74)
+        self.assertEqual(len(lip_rim), 74)
+        pairing = np.linalg.norm(skin["POSITION"][skin_rim][:, None]
+                                 - lip["POSITION"][lip_rim][None], axis=2)
+        self.assertLess(float(pairing.min(1).max()), 1e-5, "the mouth seam is torn")
+        # The fix is stable: re-fitting the result moves it nowhere, on the source and on
+        # the shipped mesh, where simplification has already moved the ring a little.
+        _loop, again = geometry.mouth_rim_targets(before, original[key]["triangles"])
+        self.assertLess(float(np.abs(again - targets).max()), 1e-12)
+        loop, settled = geometry.mouth_rim_targets(lip["POSITION"], lip["triangles"])
+        self.assertLess(float(np.abs(settled - lip["POSITION"][loop]).max()), 5e-6)
+
+    def test_teacher_teeth_are_tucked_behind_the_lip(self) -> None:
+        """The source teeth sat a millimetre in front of the mouth, as a white bar.
+
+        They are a flat strip between the lips; at rest they have to be behind the lip's
+        front rim, or a closed mouth shows a row of teeth.
+        """
+        _document, _binary, _original = parts(self.teacher_source)
+        _document, _binary, refined = self.outputs[1]
+        teeth = refined["ST_Head_Skin", "M_ST_Teeth"]["POSITION"]
+        lip = refined["ST_Head_Skin", "M_ST_Lip"]["POSITION"]
+        self.assertEqual(len(teeth), 96)
+        self.assertLess(float(teeth[:, 2].max()), float(lip[:, 2].max()) - .0015,
+                        "the teeth still reach past the lip")
+        # Tucked, not eaten: the strip keeps nearly all of its width and reach.
+        self.assertGreater(float(teeth[:, 0].max()), .018)
+        self.assertGreater(float(teeth[:, 2].max() - teeth[:, 2].min()), .004)
+        # And it is behind the lip the whole way across, corners included -- the corners
+        # are where the lip turns away and the strip used to poke through.
+        for x in (-.018, -.009, 0.0, .009, .018):
+            strip = float(teeth[np.abs(teeth[:, 0] - x) < .004, 2].max())
+            front = float(lip[np.abs(lip[:, 0] - x) < .008, 2].max())
+            self.assertLess(strip, front, "the teeth show through the lip at x=%.3f" % x)
 
     def test_iris_pupil_and_glint_lie_on_the_cut_sclera(self) -> None:
         doc, _binary, surfaces = self.outputs[0]
@@ -308,8 +571,11 @@ class RefinedCharacterTests(unittest.TestCase):
     def test_runtime_models_stay_within_the_existing_hard_budget(self) -> None:
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
-        for (doc, _binary, surfaces), limit in zip(self.outputs, [64604, 62340]):
-            self.assertEqual(doc["asset"]["extras"]["geometry_revision"], 2)
+        for (doc, _binary, surfaces), limit, revision in zip(
+                self.outputs, [64604, 62340], [2, 5]):
+            # Revision 3 is the teacher's resting face, expression shapes and crop; the
+            # seated student is unchanged at revision 2.
+            self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)
             self.assertLess(sum(len(part["triangles"]) for part in surfaces.values()), limit)
 
     def test_existing_scale_and_sole_contracts_are_preserved(self) -> None:
@@ -323,6 +589,19 @@ class RefinedCharacterTests(unittest.TestCase):
             np.testing.assert_allclose(refined.min(0), original.min(0), atol=.02)
             np.testing.assert_allclose(refined.max(0), original.max(0), atol=.02)
             self.assertAlmostEqual(float(refined[:, 1].min()), float(original[:, 1].min()), places=6)
+
+
+    def test_teacher_lower_face_lifts_only_the_front_of_the_lower_face(self) -> None:
+        # Chin tip, eye line, back of the head and the far side are fixed; the nose base
+        # rises 14 mm, which is what puts the lower third in its band.
+        points = np.array([[0, 1.408, -.09], [0, 1.467, -.09], [0, 1.5324, -.09],
+                           [0, 1.467, .05], [.09, 1.467, -.09]])
+        lifted = geometry.teacher_lower_face(points)
+        self.assertAlmostEqual(float(lifted[0, 1]), 1.408, places=9)
+        self.assertAlmostEqual(float(lifted[1, 1]), 1.481, places=9)
+        self.assertAlmostEqual(float(lifted[2, 1]), 1.5324, places=9)
+        self.assertAlmostEqual(float(lifted[3, 1]), 1.467, places=9)
+        self.assertAlmostEqual(float(lifted[4, 1]), 1.467, places=9)
 
 
 if __name__ == "__main__":

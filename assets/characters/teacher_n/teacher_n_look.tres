@@ -460,8 +460,12 @@ materials = {
 "m_st_teeth": SubResource("m_m_st_teeth"),
 "m_st_button": SubResource("m_m_st_button")
 }
-expression = {}
-blink_shapes = PackedStringArray()
+expression = {
+"Brow_Compress": 0.42,
+"Frown": 0.28,
+"Mouth_Close": 0.34
+}
+blink_shapes = PackedStringArray("Eye_Blink_L", "Eye_Blink_R")
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16
 label = "N: chalk (integrated)"

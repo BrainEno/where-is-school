@@ -257,12 +257,14 @@ is a model, not a scene.
 | other | 256 KiB | 2 MiB | project settings, pack stubs, imported banners; something over 256 KiB here is something nobody classified |
 
 **No hard limit is above 2 MiB.** That was the old flat per-file rule, so this table can
-only tighten it. The pack total has a **40 MiB hard limit** and an **8 MiB warning line**.
+only tighten it. The pack total has a **50 MiB hard limit** and an **8 MiB warning line**.
 The limit was 16 MiB (the old flat check's number) until the release reached 15.97 MiB; the
 owner raised it to 24 MiB when teacher B's model joined the build for the imagined lesson, and
 to 32 MiB when the front yard (round 16) found the pack at 23.94 MiB. The owner approved
 40 MiB after a clean 4.7.2 source-build export with the 14 score MP3s measured 36.95 MiB
-of packed entries. Per-file limits are unchanged; verify the standard release export too.
+of packed entries. The owner then approved about 50 MiB when teacher N's blink and
+expression shapes pushed the packs to 40.0–40.1 MiB. Per-file limits are unchanged; verify
+the standard release export too.
 
 **A warning does not fail the release; a hard limit does.** Warnings are printed and
 attached to the workflow run as annotations, which is where a build that has grown should
