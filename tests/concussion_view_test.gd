@@ -77,6 +77,7 @@ func _run() -> void:
 	_check_layering()
 	_check_curve()
 	_check_shader()
+	_check_quiet_flag()
 
 	if "--capture" in OS.get_cmdline_user_args():
 		await _capture()
@@ -185,6 +186,13 @@ func _check_shader() -> void:
 
 func _check_landing_and_countdown() -> void:
 	Harness.stage = "the landing and the countdown"
+	# Every announced change of the flag, whatever wrote it. The landing announces once; the
+	# countdown's per-second ticks must not announce at all (#348).
+	var announced: Array[int] = []
+	var listen := func(flag: StringName, _previous: Variant, _value: Variant) -> void:
+		if flag == StoryFlags.CONCUSSION_SECONDS_LEFT:
+			announced.append(1)
+	_state.story_flag_changed.connect(listen)
 	ConcussionView.begin(_world)
 	_check.expect(
 		int(_state.get_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, 0)) == ConcussionView.DURATION,
@@ -210,6 +218,37 @@ func _check_landing_and_countdown() -> void:
 		"The flag holds %d s while %.1f s are left." % [saved, after]
 	)
 	_check.expect(_view.get_daze() < daze_before, "The look did not thin out as it was counted.")
+	_state.story_flag_changed.disconnect(listen)
+	_check.expect(
+		announced.size() == 1,
+		"The landing announced the flag %d times; only the landing's write should, the countdown's per-second ticks must not (#348)."
+			% announced.size()
+	)
+
+
+## `GameState.set_flag_quiet` stores and reads like `set_flag`, and only the announcing
+## setter emits. The next announced change reports the quiet value as its previous one, so
+## a listener that wakes later still sees what was really there.
+func _check_quiet_flag() -> void:
+	Harness.stage = "quiet flag writes"
+	var probe := &"concussion_quiet_probe"
+	var heard: Array[Array] = []
+	var listen := func(flag: StringName, previous: Variant, value: Variant) -> void:
+		if flag == probe:
+			heard.append([previous, value])
+	_state.story_flag_changed.connect(listen)
+	_state.set_flag_quiet(probe, 5)
+	_check.expect(int(_state.get_flag(probe, -1)) == 5, "A quiet write did not store its value.")
+	_state.set_flag_quiet(probe, 5)
+	_state.set_flag_quiet(probe, 4)
+	_check.expect(heard.is_empty(), "A quiet write announced itself: %s" % str(heard))
+	_state.set_flag(probe, 9)
+	_state.story_flag_changed.disconnect(listen)
+	_check.expect(
+		heard.size() == 1 and int(heard[0][0]) == 4 and int(heard[0][1]) == 9,
+		"The announced write did not report the quiet value as its previous one: %s" % str(heard)
+	)
+	_check.expect(int(_state.get_flag(probe, -1)) == 9, "The announced write did not store its value.")
 
 
 func _check_pause() -> void:

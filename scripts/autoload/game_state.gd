@@ -24,18 +24,37 @@ func get_flag(flag: StringName, default_value: Variant = null) -> Variant:
 
 
 func set_flag(flag: StringName, value: Variant) -> void:
+	var change := _store_flag(flag, value)
+	if change.is_empty():
+		return
+	story_flag_changed.emit(flag, change["previous"], value)
+
+
+## Stores a flag without announcing it: the value is read, saved and replaced exactly like
+## any other flag, but `story_flag_changed` is not emitted. For a value that a single owner
+## changes many times a second and that the owner itself displays (the concussion countdown,
+## #348), so the journal and the presence nodes are not woken for every tick. Anything that
+## needs to react to a change of such a flag must be the owner, or must read it on its own.
+func set_flag_quiet(flag: StringName, value: Variant) -> void:
+	_store_flag(flag, value)
+
+
+## Writes the flag and returns `{"previous": old_value}` when the value changed, or `{}` when
+## the flag was refused or already held `value`. Both setters share it, so the refusal and
+## the no-change rules stay the same whether a change is announced or not.
+func _store_flag(flag: StringName, value: Variant) -> Dictionary:
 	if String(flag).is_empty():
 		OfflineDiagnostics.note("state.flag_refused")
 		push_error("GameState.set_flag received an empty flag identifier.")
-		return
+		return {}
 
 	var had_previous: bool = _story_flags.has(flag)
 	var previous_value: Variant = _story_flags.get(flag)
 	if had_previous and previous_value == value:
-		return
+		return {}
 
 	_story_flags[flag] = value
-	story_flag_changed.emit(flag, previous_value, value)
+	return {"previous": previous_value}
 
 
 func get_snapshot() -> Dictionary:
