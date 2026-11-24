@@ -27,7 +27,8 @@
 | [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含 #308 现用肖像出处，以及教室帆布书包、操场集装箱铺盖与球场道具的第一方来源；记录不等于权利放行或美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐、翻包与主角步行摆幅；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
-| [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
+| [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-23 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md)；§9 为主角 V2 头部合同（issue #383），中文阅读副本为 [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) |
+| [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) | 角色外观中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-23 | 与 [CHARACTER_ART.md](CHARACTER_ART.md) 全文同步（含 §9 V2 头部合同），不独立声称获批 |
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–12 说明 N／学生几何、全员头部精修与主角步态，对照待所有者验收 |
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–12 几何修订同步，不独立声称获批 |
 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) | 序章摔伤后的“恍惚”画面：静止的后现代拼贴滤镜，落地最强、约四分钟内先快后慢淡出；再摔更重，水龙头可缓解或清除 | 实验 | 实现 PR 作者 | 2026-11-21 | 只做美术；检查见 `tests/concussion_view_test.gd` 与 `concussion-view-capture.yml` |
