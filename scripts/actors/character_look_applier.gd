@@ -233,7 +233,11 @@ static func _with_detail_maps(replacement: Material, maps: CharacterDetailMaps,
 		(report["detail_maps_skipped"] as Array).append(key)
 		return null
 	var arrays := mesh.surface_get_arrays(surface)
-	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays.size() > Mesh.ARRAY_TEX_UV else PackedVector2Array()
+	# A surface without UVs leaves the slot null rather than absent, so the slot's
+	# contents -- not the array's size -- decide whether this surface can carry maps.
+	var uvs := PackedVector2Array()
+	if arrays.size() > Mesh.ARRAY_TEX_UV and arrays[Mesh.ARRAY_TEX_UV] is PackedVector2Array:
+		uvs = arrays[Mesh.ARRAY_TEX_UV]
 	if uvs.is_empty():
 		(report["detail_maps_skipped"] as Array).append(key)
 		return null
