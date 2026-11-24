@@ -68,7 +68,12 @@ const ENTRANCE_ROUTES := {
 	"the archive door landing": Vector3(-14.48, -3.4, 12.0),
 	"the plan room door landing": Vector3(-6.45, -3.4, 8.0),
 	"the foot of the blue stair": Vector3(-9.94, -3.4, 12.54),
+	"the walk-out forecourt": Vector3(-17.65, -3.64, 21.3),
 }
+## Round 23: the board across the lane's mouth (build_dream_annex.lane_barrier), world x and
+## the z where it starts. Routes into the stable yard squeeze past its north end.
+const BARRIER_X := -24.95
+const BARRIER_NORTH_Z := 16.35
 const KEPT_POINTS := {
 	"the 01 gallery": Vector3(-11.4, -3.4, 12.6),
 	"the restroom door": Vector3(-25.0, -3.4, 12.6),
@@ -543,6 +548,7 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		var path := NavigationServer3D.map_get_path(map, entrance, spot, true)
 		_check.expect(path.size() >= 2 and path[path.size() - 1].distance_to(spot) < 0.3,
 			"%s cannot be reached from the glass entrance." % label)
+	_check_barrier(map, entrance)
 	for label: String in KEPT_POINTS:
 		var wanted: Vector3 = KEPT_POINTS[label]
 		var spot := NavigationServer3D.map_get_closest_point(map, wanted)
@@ -555,6 +561,23 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		length += climb[i - 1].distance_to(climb[i])
 	_check.expect(climb.size() >= 2 and climb[climb.size() - 1].distance_to(top) < 0.3 and length < 18.0,
 		"The stair under the escalator no longer climbs 02 -> 03 directly (%.1f m)." % length)
+
+
+## The lane barrier must turn the yard route through the gap by the wall, not let it pass
+## straight through the board.
+func _check_barrier(map: RID, entrance: Vector3) -> void:
+	var yard := NavigationServer3D.map_get_closest_point(map, ENTRANCE_ROUTES["the yard"])
+	var path := NavigationServer3D.map_get_path(map, entrance, yard, true)
+	var crossed := false
+	for i in range(1, path.size()):
+		var a := path[i - 1]
+		var b := path[i]
+		if (a.x - BARRIER_X) * (b.x - BARRIER_X) > 0.0 or is_equal_approx(a.x, b.x):
+			continue
+		var z := lerpf(a.z, b.z, (BARRIER_X - a.x) / (b.x - a.x))
+		crossed = true
+		_check.expect(z < BARRIER_NORTH_Z, "The yard route passes through the lane barrier at z %.2f." % z)
+	_check.expect(crossed, "The yard route never crosses the lane barrier's line: %s." % str(path))
 
 
 ## The baked surface floats a cell or two above the collider, so only the plan

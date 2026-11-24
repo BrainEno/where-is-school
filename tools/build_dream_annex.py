@@ -440,10 +440,34 @@ def stable_yard(b):
                                  ("BackLeg", (.13, 1.94, .04, .16)), ("Tail", (.21, 2.08, .04, .12))):
         b.box(f"Horse{name}", p, (.095, py, pz), (.01, h, w), "wayfind")
     label(b, "Arrow", p, (.1, 1.86, 0), "↑", .004, rot=(0, 90, 0), ink=(28, 36, 58))
+    lane_barrier(b, y)
     for i, (pos, energy) in enumerate((((-34.0, G + 2.7, 13.0), .9), ((-29.6, G + 2.8, 8.0), .7),
                                        ((-23.5, G + 2.6, 16.6), .55))):
         b.node(f"YardLight{i}", y, "OmniLight3D", position=vec3(pos), light_color=srgb((255, 214, 160)),
                light_energy=energy, omni_range=8.5)
+
+
+# Round 23: a horizontal board (挡板) across the lane's mouth, so the stable is no longer
+# somewhere the player drifts into from the glass entrance. It closes the south of the lane
+# and leaves a squeeze against the teaching block's wall that is still wider than the
+# navigation agent (radius 0.5) plus a cell, so the yard stays routed (dream_annex_test).
+BARRIER_X = LANE_X[1] - .2
+BARRIER_Z = (16.35, LANE_Z[1] - .1)
+
+
+def lane_barrier(b, y):
+    z0, z1 = BARRIER_Z
+    span = z1 - z0
+    bar = solid(b, "LaneBarrier", y, (BARRIER_X, G, (z0 + z1) / 2), (.16, 1.15, span))
+    for i, z in enumerate((-span / 2 + .06, span / 2 - .06)):
+        b.box(f"Post{i}", bar, (0, .6, z), (.1, 1.2, .1), "timber", shadow=True)
+    b.box("LowBoard", bar, (0, .42, 0), (.05, .24, span - .2), "timber", shadow=True)
+    # The top board is painted in red and white stripes, the usual 挡板.
+    count = 6
+    for i in range(count):
+        length = (span - .2) / count
+        b.box(f"Stripe{i}", bar, (0, .92, -span / 2 + .1 + length * (i + .5)), (.06, .26, length),
+              "vermilion" if i % 2 == 0 else "paper", shadow=True)
 
 
 WAITING_LOOKS = (

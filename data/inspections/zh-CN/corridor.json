@@ -120,5 +120,19 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "前两块牌子的背面都有字线。最后一块空着。"
+  },
+  "corridor_iron_door_west": {
+    "title": "铁门",
+    "prompt": "敲门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "敲了三下。牌子上的箭头指着下面，回声却就贴在漆后面，闷闷的，像门是直接砌在墙里的。"
+  },
+  "corridor_iron_door_north": {
+    "title": "铁门",
+    "prompt": "敲门",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "又是一扇铁门，又是01。等了一会儿，远处有人在拧拖把。没人来开。"
   }
 }
