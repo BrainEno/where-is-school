@@ -16,22 +16,42 @@ from PIL import Image
 
 from glbview import Glb, render
 
-LOOKS = [
+# Camera tables per model: teacher N faces -Z with her eye line at y = 1.534,
+# the protagonist faces +Z with his at y = 1.584 (docs/CHARACTER_MODEL_STANDARD.md
+# section 1). Getting this wrong frames the back of the head.
+N_LOOKS = [
     ("front", (0.00, 1.520, -0.620), 26),
     ("quarter", (-0.30, 1.550, -0.520), 26),
     ("profile", (-0.620, 1.530, -0.050), 26),
     ("back", (0.00, 1.550, 0.580), 26),
     ("eyes", (0.00, 1.534, -0.310), 20),
 ]
+LEAD_LOOKS = [
+    ("front", (0.00, 1.575, 0.620), 26),
+    ("quarter", (-0.30, 1.600, 0.520), 26),
+    ("profile", (-0.620, 1.590, 0.050), 26),
+    ("back", (0.00, 1.600, -0.580), 26),
+    ("eyes", (0.00, 1.584, 0.310), 20),
+]
+N_CENTRE = (0.0, 1.520, -0.060), (0.0, 1.534, -0.088)
+LEAD_CENTRE = (0.0, 1.575, 0.060), (0.0, 1.584, 0.088)
 SIZE = 300
+
+
+def cameras(glb):
+    names = {name for name, *_ in glb.instances()}
+    if "Protagonist_Head" in names:
+        return LEAD_LOOKS, LEAD_CENTRE
+    return N_LOOKS, N_CENTRE
 
 
 def row(path):
     glb = Glb(path)
-    centre = np.array([0.0, 1.520, -0.060])
+    looks, (centre, eye_target) = cameras(glb)
+    centre = np.array(centre)
     tiles = []
-    for _name, eye, fov in LOOKS:
-        target = np.array([0.0, 1.534, -0.088]) if fov == 20 else centre
+    for _name, eye, fov in looks:
+        target = np.array(eye_target) if fov == 20 else centre
         image = render(glb, np.array(eye), target, size=(SIZE, SIZE), fov=fov,
                        ambient=.34)
         tiles.append((np.clip(image, 0, 1) ** (1 / 2.2) * 255).astype(np.uint8))
