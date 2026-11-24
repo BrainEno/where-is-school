@@ -274,6 +274,21 @@ func _verify_live_beyond_prologue() -> void:
 		# Recording the miss above is the verdict; editing a drawer that is not the live
 		# editor would only turn one red bar into a null dereference.
 		return
+	# The classroom phase deliberately kept an unapplied input, and by design a buffered
+	# input at one address refuses to begin editing at any other (#395's corridor line is
+	# another address). Drop it here the way the panel's own notice tells the author to.
+	if not _store.live_buffer.is_empty():
+		_press("DiscardInput")
+		if not _check.expect(await Harness.wait_until(func() -> bool:
+			return _store.live_buffer.is_empty()
+		, 3.0), "Could not discard the classroom's unapplied input before the corridor edit"):
+			return
+	if not _check.expect(_runtime.get_current_node_id() == &"cs_1",
+			"The corridor runtime was not on cs_1 before the edit (node=%s)"
+			% str(_runtime.get_current_node_id())) \
+			or not _check.expect(_panel._edit_line.is_valid(),
+				"The corridor live editor did not bind the panel's edit callback"):
+		return
 	if not await _edit_line(&"cs_1"):
 		return
 	_press("ContinueGame")
