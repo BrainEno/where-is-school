@@ -246,13 +246,22 @@ func _verify_live_beyond_prologue() -> void:
 		return
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 		return _runtime.get_active_conversation_id() == &"corridor_speaker" \
-				and _panel.is_visible_in_tree() and not _panel._layout_dirty
-	, 6.0), "The corridor line did not appear in the real panel (active=%s mode=%s panel_shown=%s dirty=%s stage=%s viewport=%s revealing=%s paused=%s)" % [
+				and _panel.is_visible_in_tree()
+	, 6.0), "The corridor line did not reach the real panel (active=%s mode=%s panel_shown=%s paused=%s)" % [
 			str(_runtime.get_active_conversation_id()), str(_controller.get_mode()),
-			str(_panel.is_visible_in_tree()), str(_panel._layout_dirty),
-			str(_panel._layout_stage), str(_panel.get_viewport_rect().size),
-			str(_panel.is_revealing()), str(paused)]):
+			str(_panel.is_visible_in_tree()), str(paused)]):
 		return
+	# Settled geometry is what the click below needs, so ask for it - but with a bound:
+	# the handoff and the edit are the acceptance, and if a panel that keeps re-queuing
+	# its layout still edits, that is the fact the next assertion should report, with
+	# this state attached, rather than a timeout that never says which condition held.
+	if not await Harness.wait_until(func() -> bool: return not _panel._layout_dirty, 3.0):
+		# A red run's log is not readable from CI, so this rides the annotation stream
+		# instead: the extraction in test_live_classroom.sh carries TEST FAILURE lines.
+		# On a green run it is an ERROR line nothing greps for, and the run stays green.
+		push_error("TEST FAILURE: corridor panel layout never settled (stage=%s revealing=%s edit_line_valid=%s)"
+			% [str(_panel._layout_stage), str(_panel.is_revealing()),
+				str(_panel._edit_line.is_valid())])
 	if not await _open_editor():
 		return
 	var drawer := _world.get_node_or_null(^"AuthorOverlay/AuthorDrawer")
