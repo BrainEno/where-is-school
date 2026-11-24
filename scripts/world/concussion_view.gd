@@ -135,7 +135,9 @@ func _process(delta: float) -> void:
 	var whole := ceili(_seconds_left)
 	if whole != _written and _game_state != null:
 		_written = whole
-		_game_state.set_flag(StoryFlags.CONCUSSION_SECONDS_LEFT, whole)
+		# A tick, not an event: the flag is saved as always, but nobody else is woken once a
+		# second for it (#348). The landing, the water and a loaded save still announce.
+		_game_state.set_flag_quiet(StoryFlags.CONCUSSION_SECONDS_LEFT, whole)
 	_apply()
 	if not _is_drawn():
 		set_process(false)
