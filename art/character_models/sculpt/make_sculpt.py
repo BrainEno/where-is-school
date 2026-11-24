@@ -22,6 +22,7 @@ from forms import (LANDMARKS, components, ease, face, facial_details, hairline,
                    lead_spikes, other_hair, q_closeup_planes, shell_relief)
 from refine_bq import (b_brows_and_folds, b_cheek_and_mouth, b_chignon, q_brows,
                        q_cheek_and_mouth, q_cropped_fringe, q_cropped_relief, seat_q_orbit)
+from refine_q_face import eye_centres, warp as q_eye_warp
 from refine_classroom import (n_bob, n_brow, n_face, student_brow, student_crop,
                               student_face, student_hair_clearance, student_lock, student_nape)
 
@@ -199,6 +200,9 @@ def polish_bq(role, parts, skull):
         skin.output = q_cheek_and_mouth(skin_before)
         for ids in lid_islands(role, skin_before, skin.triangles):
             skin.output[ids] = seat_q_orbit(skin_before[ids])
+        # Eye widening: centres from the basis sclera, so the order of parts does not matter.
+        q_centres = eye_centres(next(s for s in parts if s.node == 'Q_Eyes' and s.mat['name'] == 'Q_Mat_Sclera').p)
+        skin.output = q_eye_warp(skin.output, q_centres)
         for s in parts:
             if s.node == 'Q_Hair':
                 p, faces = fitted_shell('q', skull, line=q_cropped_fringe, shape=q_cropped_relief)
@@ -208,7 +212,7 @@ def polish_bq(role, parts, skull):
                 p[:, 1] += (s.output[:, 1].max() - peak) * ease(peak - .07, peak, p[:, 1])
                 s.output = p
             elif s.node == 'Q_Eyes':
-                s.output = seat_q_orbit(s.output)
+                s.output = q_eye_warp(seat_q_orbit(s.output), q_centres)
             elif s.mat['name'] == 'Q_Mat_MouthInner':
                 s.output = q_cheek_and_mouth(s.output)
             elif s.mat['name'] == 'Q_Mat_Hair':
