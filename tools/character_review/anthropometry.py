@@ -23,7 +23,7 @@ BANDS = [
     ("nose base / face height", 0.333, 0.30, 0.36),
     ("mouth line / lower third", 0.333, 0.28, 0.40),
     ("eye width / face width", 0.20, 0.18, 0.22),
-    ("interocular / eye width", 1.00, 0.85, 1.15),
+    ("inner gap / eye width", 1.00, 0.85, 1.15),
     ("face width / face height", 0.62, 0.55, 0.70),
     ("jaw width / cranium width", 0.72, 0.60, 0.82),
     ("lower third / face height", 0.333, 0.30, 0.37),
@@ -50,7 +50,9 @@ def measure(glb):
     height = crown - chin
     eye_y = (p["eye_l"][:, 1].mean() + p["eye_r"][:, 1].mean()) / 2
     eye_w = (p["eye_l"][:, 0].max() - p["eye_l"][:, 0].min())
-    inter = np.linalg.norm(p["eye_l"].mean(0) - p["eye_r"].mean(0))
+    # "Two eyes apart by exactly one eye" is the gap between the inner corners, not the
+    # distance between the eyes' centres (that is about two eye widths in any face).
+    inter = p["eye_r"][:, 0].min() - p["eye_l"][:, 0].max()
     face_w = skin[:, 0].max() * 2
     jaw = skin[(skin[:, 1] > chin + .032) & (skin[:, 1] < chin + .052)][:, 0].max() * 2
     cranium = skin[skin[:, 1] > crown - .055][:, 0].max() * 2
@@ -61,9 +63,9 @@ def measure(glb):
     return {
         "eye line / face height": (eye_y - chin) / height,
         "nose base / face height": (nose_y - chin) / height,
-        "mouth line / lower third": (mouth_y - nose_y) / (chin - nose_y) * -1,
+        "mouth line / lower third": (nose_y - mouth_y) / (nose_y - chin),
         "eye width / face width": eye_w / face_w,
-        "interocular / eye width": inter / eye_w,
+        "inner gap / eye width": inter / eye_w,
         "face width / face height": face_w / height,
         "jaw width / cranium width": jaw / cranium,
         "lower third / face height": (nose_y - chin) / height,
