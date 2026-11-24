@@ -26,7 +26,7 @@ SCRIPTS = frozenset(AUTHOR_DIR + name + ".gd" for name in (
     # Split out of author_overlay (#344 follow-up): the launcher's touch rule and the
     # keyboard-aware usable area. They are preloaded by author_overlay, so a pack that
     # omitted them would carry an editor that cannot open.
-    "launcher_touch", "keyboard_area",
+    "launcher_touch", "keyboard_area", "live_editor", "live_round_form", "native_chapter",
 ))
 PACK_PATHS = frozenset("res://" + path.removesuffix(".gd") + suffix for path in SCRIPTS
                        for suffix in (".gd", ".gdc", ".gd.remap"))
@@ -42,6 +42,8 @@ def configure_project(tree: Path, head: str, *, editor: bool = True) -> None:
     text = project.read_text(encoding="utf-8")
     if text.count('[autoload]\n') != 1 or text.count('config/name="where-is-school"') != 1:
         raise ValueError("Unexpected author project base; the retail settings were not modified")
+    if re.search(r'^config/use_custom_user_dir\s*=\s*true', text, re.MULTILINE):
+        raise ValueError("Author progress must use a different user directory from boot")
     if any(not (tree / p).is_file() for p in SCRIPTS):
         # The retail iPhone pack carries the editor runtime too; a staged tree without it
         # would ship a preset that points at nothing.

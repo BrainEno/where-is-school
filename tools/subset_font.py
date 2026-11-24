@@ -72,7 +72,8 @@ TEXT_SOURCES = (
 
 # The separate preview uses system CJK fallback, including for these fixtures.
 # It should not add its Chinese UI or deliberately out-of-subset text to retail.
-AUTHOR_FIXTURES = frozenset(("tests/authoring_classroom_test.gd", "tests/authoring_patch_test.gd"))
+AUTHOR_FIXTURES = frozenset(("tests/authoring_classroom_test.gd", "tests/authoring_patch_test.gd",
+                            "tests/authoring_live_classroom_test.gd"))
 
 # What can reach the dialogue panel: content, locale tables, scenes and scripts. The serif
 # face draws nothing else, so the editor add-on and the tests are left out on purpose; a

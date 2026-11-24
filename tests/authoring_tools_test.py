@@ -54,6 +54,17 @@ class AuthoringToolsTest(unittest.TestCase):
             self.assertEqual(authored["authoring/base_commit"], '"abc"')
             self.assertTrue(all(retail[k] == authored[k] for k in retail if k != "application/config/name"))
 
+    def test_author_stage_refuses_a_custom_user_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            tree = Path(directory)
+            project = tree / "project.godot"
+            shared = (ROOT / "project.godot").read_text().replace(
+                "[application]\n", "[application]\nconfig/use_custom_user_dir=true\n")
+            project.write_text(shared)
+            with self.assertRaisesRegex(ValueError, "different user directory"):
+                author.configure_project(tree, "abc")
+            self.assertEqual(project.read_text(), shared)
+
     def test_separate_ios_id_and_only_the_approved_native_bridge(self):
         text = (ROOT / "export_presets.cfg").read_text()
         retail = export_presets.parse(text)
@@ -116,6 +127,7 @@ class AuthoringToolsTest(unittest.TestCase):
 
     def test_author_preview_fixtures_do_not_expand_the_retail_font(self):
         with patch("subset_font.glob.glob", return_value=["tests/authoring_classroom_test.gd",
+                                                          "tests/authoring_live_classroom_test.gd",
                                                           "scripts/story_editor/author_form.gd"]):
             used, _ = collect_characters(("unused",))
         self.assertFalse(used)

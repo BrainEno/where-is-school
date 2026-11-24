@@ -1,5 +1,5 @@
-// Author build only. Use real UIKit text selection/composition and an export-as-copy
-// document picker. The small protocol carries UTF-8 strings, never file paths or code.
+// Opt-in author exchange: native UIKit selection/composition and export-as-copy.
+// The protocol carries UTF-8 text or ZIP bytes encoded as text, never file paths or code.
 #import <UIKit/UIKit.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -194,6 +194,14 @@ static constexpr NSUInteger fieldLimit = 8000; // Unicode scalar count, the same
     UIViewController *controller = [self presenter];
     if (controller && [kind isEqualToString:@"export"]) {
         [self exportText:text from:controller];
+    } else if (controller && [kind isEqualToString:@"chapter"]) {
+        NSData *zip = [[NSData alloc] initWithBase64EncodedString:text options:0];
+        const unsigned char *bytes = static_cast<const unsigned char *>(zip.bytes);
+        if (zip.length < 4 || bytes[0] != 'P' || bytes[1] != 'K' || bytes[2] != 3 || bytes[3] != 4) {
+            [self finishPicker:@"error"];
+            return;
+        }
+        [self exportBytes:zip name:@"where-is-school-chapter-candidate.zip" from:controller];
     } else if (controller && [kind isEqualToString:@"edit"]) {
         id caption = object[@"caption"];
         [self editText:text caption:[caption isKindOfClass:NSString.class] ? caption : @"编辑文案" from:controller];
@@ -203,12 +211,17 @@ static constexpr NSUInteger fieldLimit = 8000; // Unicode scalar count, the same
 }
 
 - (void)exportText:(NSString *)text from:(UIViewController *)controller {
+    [self exportBytes:[text dataUsingEncoding:NSUTF8StringEncoding]
+        name:@"where-is-school-dialogue-draft.json" from:controller];
+}
+
+- (void)exportBytes:(NSData *)data name:(NSString *)name from:(UIViewController *)controller {
     _temporary = [[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES]
         URLByAppendingPathComponent:NSUUID.UUID.UUIDString isDirectory:YES];
-    NSURL *copy = [_temporary URLByAppendingPathComponent:@"where-is-school-dialogue-draft.json"];
-    if (![NSFileManager.defaultManager createDirectoryAtURL:_temporary
+    NSURL *copy = [_temporary URLByAppendingPathComponent:name];
+    if (!data || ![NSFileManager.defaultManager createDirectoryAtURL:_temporary
             withIntermediateDirectories:YES attributes:nil error:nullptr] ||
-        ![text writeToURL:copy atomically:YES encoding:NSUTF8StringEncoding error:nullptr]) {
+        ![data writeToURL:copy options:NSDataWritingAtomic error:nullptr]) {
         [self finishPicker:@"error"];
         return;
     }

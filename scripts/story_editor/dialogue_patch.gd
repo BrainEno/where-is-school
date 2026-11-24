@@ -9,6 +9,7 @@ const MAX_FIELD_CHARS := 8000
 const MAX_BYTES := 2 * 1024 * 1024
 const MAX_OPS := 1024
 const MAX_ROUND_LINES := 12
+const MAX_ROUND_CHOICES := 12
 const PLACEHOLDER := "〔占位剧情 · 待补写〕"
 const ID_PREFIX := "author_"
 
@@ -173,8 +174,12 @@ static func apply_chapter(base: Dictionary, chapter: String, entry: Dictionary) 
 		var error := _apply_op(candidate, op, followups)
 		if not error.is_empty():
 			return {"error": "%s / %s / %s：%s" % [chapter, op.get("conversation", "?"), op.get("node", "?"), error]}
-		if op["kind"] == "choice":
-			added_choices.append(op)
+		match op["kind"]:
+			"choice": added_choices.append(op)
+			"round":
+				for choice: Dictionary in op["choices"]:
+					added_choices.append({"conversation": op["conversation"],
+						"node": op["lines"].back()["id"], "next": choice["next"]})
 	var graph := DialogueGraph.load_from_data(candidate, "authoring:%s" % chapter)
 	if not graph.is_valid():
 		return {"error": "分支未应用：\n%s" % "\n".join(graph.errors)}
@@ -251,7 +256,7 @@ static func _apply_op(data: Dictionary, op: Dictionary, followups: Followups) ->
 			elif followups.owns_line(op["conversation"], target):
 				return "不能接到另一选项专属的后续句。"
 			choices.append({"id": id, "text": text, "next": target})
-		"followup":
+		"followup", "round":
 			return _apply_followup(nodes, node, op, followups)
 		_:
 			return "不支持的操作。"
@@ -268,8 +273,13 @@ static func _apply_followup(nodes: Array, hub: Dictionary, op: Dictionary, follo
 	var tail := followups.tail(op["conversation"], op["node"], choice)
 	var edge := followup_edge(nodes, option, tail)
 	if option.is_empty() or option_signature(option) != op.get("guard") or tail != op["after"] \
-			or edge.get("next") != op["before"] or find_record(nodes, op["before"]).is_empty():
+			or not edge.has("next") or edge["next"] != op["before"] or find_record(nodes, op["before"]).is_empty():
 		return "该选项或原去向已改变；没有覆盖后续。"
+	var options: Array[Dictionary] = []
+	if op["kind"] == "round":
+		options = _round_options(nodes, op, followups)
+		if options.is_empty():
+			return "请填写 1–12 个有效选项；至少一个接回原去向，不能接入另一选项专属的后续。"
 	var key := Followups.option_key(op["conversation"], op["node"], choice)
 	var added: Array[Dictionary] = []
 	var ids := {}
@@ -282,8 +292,9 @@ static func _apply_followup(nodes: Array, hub: Dictionary, op: Dictionary, follo
 		var is_placeholder: Variant = row.get("placeholder")
 		if not _speaker_known(nodes, row.get("speaker")) or not is_placeholder is bool \
 				or not text is String or text.length() > MAX_FIELD_CHARS \
-				or (not is_placeholder and not authored_text(text)):
-			return "请检查后续第 %d 句：选说话人，填写正文，或标为占位。" % (index + 1)
+				or (not is_placeholder and not authored_text(text)) or (is_placeholder and not options.is_empty()):
+			var help := "选择说话人并填写正文。" if op["kind"] == "round" else "选说话人，填写正文，或标为占位。"
+			return "请检查后续第 %d 句：%s" % [index + 1, help]
 		ids[row["id"]] = true
 		var address := Followups.line_key(op["conversation"], row["id"])
 		followups.owners[address] = key
@@ -295,10 +306,39 @@ static func _apply_followup(nodes: Array, hub: Dictionary, op: Dictionary, follo
 		added.append({"id": row["id"], "speaker": row["speaker"], "text": text})
 	var position := nodes.find(hub if tail.is_empty() else edge) + 1
 	for index in added.size():
-		added[index]["next"] = added[index + 1]["id"] if index + 1 < added.size() else edge["next"]
+		if index + 1 < added.size():
+			added[index]["next"] = added[index + 1]["id"]
+		elif options.is_empty():
+			added[index]["next"] = edge["next"]
+		else:
+			added[index]["choices"] = options
+		# The parent hub (or explicit old tail) has no implicit fall-through here.
 		nodes.insert(position + index, added[index])
 	edge["next"] = added[0]["id"]
 	if tail.is_empty():
 		followups.routes[key] = {"first": added[0]["id"]}
 	followups.routes[key]["tail"] = added.back()["id"]
 	return ""
+
+
+## The last new line is the hub. Wires point only to already present nodes; the
+## graph pass rejects paths that loop back through this hub after all ops replay.
+static func _round_options(nodes: Array, op: Dictionary, followups: Followups) -> Array[Dictionary]:
+	var rows: Variant = op.get("choices")
+	if not rows is Array or rows.is_empty() or rows.size() > MAX_ROUND_CHOICES:
+		return []
+	var result: Array[Dictionary] = []
+	var ids := {}
+	var returns := false
+	for row: Variant in rows:
+		if not row is Dictionary or not _valid_new_id(row.get("id")) or ids.has(row["id"]) \
+				or not authored_text(row.get("text")) or not row.get("next") is String:
+			return []
+		var target: String = row["next"]
+		if find_record(nodes, target).is_empty() \
+				or (target != op["before"] and followups.owns_line(op["conversation"], target)):
+			return []
+		returns = returns or target == op["before"]
+		ids[row["id"]] = true
+		result.append({"id": row["id"], "text": row["text"], "next": target})
+	return result if returns else []

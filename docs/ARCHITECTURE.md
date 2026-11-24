@@ -863,9 +863,21 @@ app starts its editor automatically. In the normal iPhone app `[authoring] story
 and does not apply the change if the staged settings write fails. `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
-only mirrors the saved setting. Without opt-in no drafts are loaded. The
+mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The
 journal and Files exchange under `user://story_editor/` never write `user://save.json` or
 shipped story content. Android and desktop exclude both the runtime and the bridge.
+
+**Live author session.** The staged author app has a different project/user directory
+from boot (and a different bundle ID on iPhone), so its actual gameplay progress and
+read log never go into the player profile. From a paused, visible conversation, the
+pause entry hands off to `live_editor.gd`. It uses `DialoguePanel` itself for input and
+text redraw, not the drawer's detached panel. The controller opts into validated shadow
+chapter graphs only in this session. A silent `DialogueRuntime.rebind_graph()` keeps
+its current cursor and any resolved check; no line, camera or check event is replayed.
+New rounds are one guarded draft transaction; invalid/unapplied input stays in the
+journal, not on a live edge. The explicit chapter export writes a checked bilingual
+candidate ZIP outside the project, with baseline byte hashes and pending translations.
+See [the author workflow](../tools/authoring/README.zh-CN.md).
 
 **Completing a change (touch).** The story editor switch acknowledges a successful save in
 Settings, or leaves the old value and displays the failure. The phone's visible 「完成」
