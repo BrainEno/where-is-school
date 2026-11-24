@@ -247,10 +247,11 @@ func _verify_live_beyond_prologue() -> void:
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 		return _runtime.get_active_conversation_id() == &"corridor_speaker" \
 				and _panel.is_visible_in_tree() and not _panel._layout_dirty
-	, 6.0), "The corridor line did not appear in the real panel (active=%s mode=%s panel_shown=%s dirty=%s paused=%s)" % [
+	, 6.0), "The corridor line did not appear in the real panel (active=%s mode=%s panel_shown=%s dirty=%s stage=%s viewport=%s revealing=%s paused=%s)" % [
 			str(_runtime.get_active_conversation_id()), str(_controller.get_mode()),
 			str(_panel.is_visible_in_tree()), str(_panel._layout_dirty),
-			str(paused)]):
+			str(_panel._layout_stage), str(_panel.get_viewport_rect().size),
+			str(_panel.is_revealing()), str(paused)]):
 		return
 	if not await _open_editor():
 		return

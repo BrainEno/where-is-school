@@ -214,11 +214,17 @@ jobs:
               if not packs:
                   fail("neither half of the developer build carries an embedded pack")
               sizes = {path: len(paths) for path, paths in packs}
+              # script_export_mode=2 packs scripts as .gd, .gdc or .gd.remap; the
+              # contract is the folder, not the suffix (authoring_build.py reads the
+              # same three).
               carrying = [path for path, paths in packs
-                          if any(p == "res://scripts/story_editor/bootstrap.gd" for p in paths)]
+                          if any(p.startswith("res://scripts/story_editor/bootstrap.")
+                                 for p in paths)]
               if not carrying:
+                  story = {path: [p for p in paths if "story_editor" in p][:5]
+                           for path, paths in packs}
                   fail("the developer pack does not carry the story editor it exists for "
-                       f"(#395); packs seen: {sizes}")
+                       f"(#395); packs seen: {sizes}; story_editor entries: {story}")
               for path, paths in packs:
                   leaked = [p for p in paths
                             if p.startswith(("res://tests/", "res://tools/", "res://addons/"))]
