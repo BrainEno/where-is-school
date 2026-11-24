@@ -190,18 +190,46 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import sys
+          import sys, traceback
           sys.path.insert(0, "tools")
-          from godot_pck import load_blob
-          blob = open("build/windows-dev/where-is-school-dev.exe", "rb").read()
-          entries, _header = load_blob(blob, embedded=True)
-          paths = [path for path, _size in entries]
-          assert any(path == "res://scripts/story_editor/bootstrap.gd" for path in paths), \
-              "the developer pack does not carry the story editor it exists for (#395)"
-          leaked = [path for path in paths
-                    if path.startswith(("res://tests/", "res://tools/", "res://addons/"))]
-          assert not leaked, f"player exclusions leaked into the developer pack: {leaked[:5]}"
-          print(f"OK: {len(paths)} files; story editor carried")
+          from godot_pck import PackError, load_blob
+
+          def fail(message):
+              # The checks page cannot read this step's log; carry the reason over.
+              print(f"::error title=Windows Dev pack::{message}")
+              raise SystemExit(1)
+
+          try:
+              # With the console wrapper Godot may place the embedded pack in either
+              # half of the pair; whichever half carries it must satisfy the contract.
+              candidates = ["build/windows-dev/where-is-school-dev.exe",
+                            "build/windows-dev/where-is-school-dev.console.exe"]
+              packs = []
+              for path in candidates:
+                  try:
+                      entries, _header = load_blob(open(path, "rb").read(), embedded=True)
+                      packs.append((path, [p for p, _s in entries]))
+                  except (FileNotFoundError, PackError) as error:
+                      print(f"pack note: {path}: {error}")
+              if not packs:
+                  fail("neither half of the developer build carries an embedded pack")
+              sizes = {path: len(paths) for path, paths in packs}
+              carrying = [path for path, paths in packs
+                          if any(p == "res://scripts/story_editor/bootstrap.gd" for p in paths)]
+              if not carrying:
+                  fail("the developer pack does not carry the story editor it exists for "
+                       f"(#395); packs seen: {sizes}")
+              for path, paths in packs:
+                  leaked = [p for p in paths
+                            if p.startswith(("res://tests/", "res://tools/", "res://addons/"))]
+                  if leaked:
+                      fail(f"player exclusions leaked into {path}: {leaked[:5]}")
+              print(f"OK: carries={carrying}; sizes={sizes}")
+          except SystemExit:
+              raise
+          except Exception:
+              traceback.print_exc()
+              fail("pack check crashed; see traceback above")
           PY
       - name: Upload the developer build
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -214,13 +214,13 @@ func _verify_live_beyond_prologue() -> void:
 	# A paused tree swallows the layout pass that clears the panel's dirty flag, so the
 	# wait below would starve on a line that is on screen. The classroom phase should
 	# have ended unpaused; if it did not, hand the pause back the way the flow does.
-	if get_tree().paused:
+	if paused:
 		if _editor != null and bool(_editor.call("is_editing")):
 			_editor.call("close_editor")
 		elif _editor != null:
 			_press("ContinueGame")
 		if not _check.expect(await Harness.wait_until(func() -> bool:
-			return not get_tree().paused
+			return not paused
 		, 4.0), "The world was still paused when the corridor began (#395)"):
 			return
 	if not _check.expect(_editor != null and host.load_location(
@@ -250,7 +250,7 @@ func _verify_live_beyond_prologue() -> void:
 	, 6.0), "The corridor line did not appear in the real panel (active=%s mode=%s panel_shown=%s dirty=%s paused=%s)" % [
 			str(_runtime.get_active_conversation_id()), str(_controller.get_mode()),
 			str(_panel.is_visible_in_tree()), str(_panel._layout_dirty),
-			str(get_tree().paused)]):
+			str(paused)]):
 		return
 	if not await _open_editor():
 		return
