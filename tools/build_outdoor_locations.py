@@ -1401,6 +1401,13 @@ def build_north_grove():
         s.box(f"GroveFarTree{i}", (x, bh / 2 - 0.1, z), (bw, bh, bw), "soil", occ, True, GROVE_FADE_LAYER)
         s.box(f"GroveFarTree{i}Trunk", (x, 1.0, z), (0.42, 2.0, 0.42), "soil", occ, True, GROVE_FADE_LAYER)
 
+    s.interactables = [
+        # One look for now; the strip's own texts are the owner's to write
+        # (data/inspections/*/north_grove.json).
+        {"name": "GroveTreeLook", "pos": (1.3, 1.2, -3.15), "id": "north_grove_tree",
+         "inspection": "north_grove_tree", "radius": 1.3,
+         "support": ("../../GroveTree0Trunk",), "outline": ("GroveTree0/StageTree/Trunk",)},
+    ]
     s.exits = [
         # Back out to the front yard, standing in the mouth: the wall's south stub and the
         # railing's last post frame the opening, and the mouth's dark inset outlines it.

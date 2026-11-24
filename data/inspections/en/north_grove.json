@@ -1,4 +1,11 @@
 {
   "format_version": 1,
-  "locale": "en"
+  "locale": "en",
+  "north_grove_tree": {
+    "title": "The dead tree",
+    "prompt": "Look at the dead tree",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · a dead tree in the railing run, not a single leaf on it"
+  }
 }

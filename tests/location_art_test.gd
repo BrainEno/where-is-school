@@ -114,9 +114,9 @@ const LOCATIONS := {
 		# 56 bodies (two ground boxes, three wall runs, the block's face and plinth, two
 		# railing runs and three posts, fifteen strip trees and seven far trees, each with
 		# a trunk, all on the fade layer), two exit spheres, and the pick boxes of the
-		# mouth inset and the last railing post.
-		"shapes": 60,
-		"interactables": 2,
+		# mouth inset and the last railing post. The tree look adds a sphere and a pick box.
+		"shapes": 62,
+		"interactables": 3,
 		"spawns": ["FromFrontYard", "FromPlayground"],
 		"exits": {
 			"north_grove_to_front_yard": "front_yard/FromGrove",

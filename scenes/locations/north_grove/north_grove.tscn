@@ -1239,6 +1239,14 @@ material_override = ExtResource("art_yard_dirt")
 
 [node name="Interactables" type="Node3D" parent="."]
 
+[node name="GroveTreeLook" parent="Interactables" instance=ExtResource("6_interactable")]
+position = Vector3(1.3, 1.2, -3.15)
+interact_id = &"north_grove_tree"
+inspection_id = &"north_grove_tree"
+radius = 1.3
+support_paths = PackedStringArray("../../GroveTree0Trunk")
+outline_paths = PackedStringArray("../../GroveTree0/StageTree/Trunk")
+
 [node name="ToFrontYard" parent="Interactables" instance=ExtResource("7_location_exit")]
 position = Vector3(1.7, 0.9, 0.7)
 interact_id = &"north_grove_to_front_yard"
