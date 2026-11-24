@@ -291,8 +291,8 @@ const STABLE_VIEWS := [
 ## stairwell. Round 25: the shut glass doors (the way out) and the stable lane's side door.
 const TEACHING_STAIR_STANCES := [
 	["glass_doors", Vector3(-17.65, -3.4, 13.0)],
-	["lane_door", Vector3(-21.7, -3.4, 13.3)],
-	["lane_door_outside", Vector3(-21.7, -3.4, 15.6)],
+	["lane_door", Vector3(-21.8, -3.4, 13.3)],
+	["lane_door_outside", Vector3(-21.8, -3.4, 15.6)],
 	["stairwell_door", Vector3(-11.0, -3.4, 12.6)],
 	["bikes_at_turn", Vector3(-3.6, -1.7, 12.6)],
 	["railless_landing", Vector3(-11.5, 1.8, 5.2)],

@@ -69,7 +69,7 @@ const ENTRANCE_ROUTES := {
 	"the plan room door landing": Vector3(-6.45, -3.4, 8.0),
 	"the foot of the blue stair": Vector3(-9.94, -3.4, 12.54),
 	# Round 25: the forecourt is gone; the lane is reached through the gallery's side door.
-	"the lane door": Vector3(-21.7, -3.4, 14.6),
+	"the lane door": Vector3(-21.8, -3.4, 14.6),
 }
 ## Round 23: the board across the lane's mouth (build_dream_annex.lane_barrier), world x and
 ## the z where it starts. Routes into the stable yard squeeze past its north end.

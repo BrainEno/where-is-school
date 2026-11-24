@@ -293,7 +293,7 @@ distant buildings); see [MAP_PLAN.md](MAP_PLAN.md).
   same leaves from the landing.
 - **The side door to the stable lane.** With the glass doors only a click, the stink stable
   and the graffiti were left without a walk; the owner chose a plain door. `lane_door()`
-  opens the gallery's south wall at x -22.3 to -21.1 (2.2 m high, an iron-green leaf swung
+  opens the gallery's south wall at x -22.65 to -20.95 (1.7 m wide so the 0.5 m navigation agent fits through, 2.2 m high, an iron-green leaf swung
   flat against the gallery wall, a steel threshold over `LaneDoorSill`), straight into the
   lane. The sprayed wall (`EntranceWallWest`) faces the lane, so the graffiti is looked at
   from there. The lane's barrier and the stable yard are unchanged.

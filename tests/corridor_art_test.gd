@@ -143,7 +143,10 @@ func _run() -> void:
 						"Leaving the classroom did not land on the hall side of the front door.")
 		# Round 25: the 02 gate steps are gone. The way out is down the blue stair to 01
 		# and the shut glass doors; the arrival walks down the porch steps (`entry_walk`).
-		if (_host.get_current().location_id == &"corridor" and await _walk(BLUE_STAIR_FOOT, "down the blue stair")
+		# The first leg is the old walk to the 02 end, which slants past Q where the
+		# classroom door put it; then down the blue stair from there.
+		if (_host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "the 02 end")
+			and await _walk(BLUE_STAIR_FOOT, "down the blue stair")
 			and await _walk(INSIDE_GLASS_DOORS, "along 01 to the glass doors")):
 			if await _use_exit(&"teaching_entrance_to_street", &"front_yard", &"FromCorridor"):
 				var yard_arrival := _host.get_current().get_spawn(&"FromCorridor").global_position

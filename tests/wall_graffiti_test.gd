@@ -12,7 +12,7 @@ const WALL_PATH := ^"TeachingBlock/GroundFloor/EntranceWallWest"
 const ID := &"teaching_entrance_graffiti"
 ## Round 25: the glass doors became a click exit and the apron is not walked any more; the
 ## sprayed wall faces the stable lane, reached from 01 through the gallery's side door.
-const LANE_STANCE := Vector3(-21.3, -3.4, 16.6)
+const LANE_STANCE := Vector3(-21.8, -3.4, 16.6)
 
 # Keep the normal autosave contract under test without letting a screenshot run
 # read or clear a player's real save. A surprise write must still fail the test.
