@@ -1634,17 +1634,21 @@ func _capture_click_navigation() -> void:
 			await _wait(0.45)
 			await _shot(
 				"03d_hover_cue",
-				"The hover cue on the timetable sheet: a warm outline traced around the sheet "
-				+ "and its clip, and nothing on the floor."
+				"The hover cue on the timetable sheet: a small green ring on the sheet itself "
+				+ "(round 24 look marker), no outline and nothing on the floor."
 			)
 			var cue := sheet.get_cue()
 			if cue != null:
-				await _check_outline_drawn(cue, sheet_screen)
+				if cue.is_marking():
+					if not cue.is_revealed() or cue.get_marker() == null or not cue.get_marker().visible:
+						_failures.append("The timetable sheet is the target but its look marker is not drawn.")
+				else:
+					await _check_outline_drawn(cue, sheet_screen)
 				_note(
-					"hover cue: revealed=%s opacity=%.2f outlining=%s meshes=%d"
+					"hover cue: revealed=%s opacity=%.2f marking=%s outlining=%s meshes=%d"
 					% [
-						str(cue.is_revealed()), cue.get_opacity(), str(cue.is_outlining()),
-						cue.get_outline_meshes().size()
+						str(cue.is_revealed()), cue.get_opacity(), str(cue.is_marking()),
+						str(cue.is_outlining()), cue.get_outline_meshes().size()
 					]
 				)
 			else:

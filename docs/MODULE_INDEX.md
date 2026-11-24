@@ -72,7 +72,8 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 Phone-only button states and glyphs are the preload-only [handheld style](../scripts/ui/handheld_style.gd);
 input ownership and safe-area sizing stay with the touch controls and layout. The pause menu's
 [story editor entry](../scripts/ui/story_editor_entry.gd) binds the saved iOS opt-in to the optional
-runtime without preloading resources omitted from other exports.
+runtime without preloading resources omitted from other exports, and is where a development run is
+decided (`debug_run`, `development_run()`, the `--story-editor` override).
 
 ### Dialogue and reading
 
@@ -126,7 +127,7 @@ runtime without preloading resources omitted from other exports.
 | `InputBindings` | [`scripts/save/input_bindings.gd`](../scripts/save/input_bindings.gd) | Stateless binding rules: event encoding/labels, shared pairs, stored-list validation and rebind checks; Settings owns the state and re-exports the old names. |
 | `SaveFileStore` | [`scripts/save/save_file_store.gd`](../scripts/save/save_file_store.gd) | The save file's bytes: verified writes, the non-destructive swap, staging, swap recovery and quarantine; Save owns payloads, timing and results. |
 | `SettingsOutputs` | [`scripts/save/settings_outputs.gd`](../scripts/save/settings_outputs.gd) | Where settings reach the engine: bus levels from the volume dials and the 2D layer's UI scale; no stored state. |
-| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. Also the checked readers for a choice and a percentage. |
+| `SettingsStore` | [`scripts/save/settings_store.gd`](../scripts/save/settings_store.gd) | The preferences file and its keys (`user://settings.cfg`, `[display] locale`); Loc and Settings both read and write through it instead of keeping their own copy of the path. Also the checked readers for a choice and a percentage, the swap's leftover names by pattern (an occupied `settings.cfg.bak` cannot refuse a later write, #394), and a report naming the step a refusal came from. |
 
 ### Interaction and world cues
 

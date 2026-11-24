@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -62,6 +63,15 @@ GROUND_Z = (10.55, 14.55)
 ENTRANCE_X = -17.65
 ENTRANCE_WIDTH = 6.2
 ENTRANCE_APRON_END = 18.45
+# Round 23: the apron is no longer a railed balcony. Two shallow steps (each under the
+# body's 0.25 m step) walk down onto a dirt forecourt in the front yard's soil, between
+# low railings, to a pair of gateposts; the street exit stands between them.
+WALKOUT_STEP = 0.12
+WALKOUT_STEP_Z = (ENTRANCE_APRON_END, ENTRANCE_APRON_END + 0.6)
+FORECOURT_Y = GROUND_Y - 2*WALKOUT_STEP
+FORECOURT_X = (-21.9, -13.4)
+FORECOURT_Z = (WALKOUT_STEP_Z[1], 22.85)
+GATE_OPENING = (ENTRANCE_X - 1.35, ENTRANCE_X + 1.35)
 WEST_STAIR_Z = -8.45
 WEST_STAIR_WIDTH = 3.2
 BEND_STAIR_WIDTH = 2.8
@@ -89,6 +99,8 @@ WALK_SURFACE = 0.10
 EXTERNAL = {
     **{name: f"{STAGE}/materials/{name}.tres" for name in (
         "walk_plaster", "walk_dado", "walk_step", "school_haze_floor",
+        # Round 23: the walk-out forecourt shares the front yard's (前操场) trodden line.
+        "yard_path",
     )},
     **{name: f"{YARD}/materials/{name}.tres" for name in ("exit_frame", "exit_glass", "exit_steel")},
     "rose_plaster": "res://assets/materials/corridor/graffiti/rose_plaster.tres",
@@ -110,6 +122,15 @@ SOLIDS = {
     "office_sage": (112, 148, 136), "office_ochre": (190, 153, 101),
     "night_lilac": (154, 145, 179), "blue_hour": (63, 69, 106),
     "signal_ivory": (211, 204, 182),
+    # Round 23: the walk-out, the stairwells and what the novel leaves on the stairs.
+    "cement": (126, 124, 128), "cement_dark": (92, 92, 99), "ghost_step": (104, 102, 108),
+    "yard_rail": (74, 92, 88), "pier_brick": (150, 104, 92), "iron_green": (62, 90, 80),
+    "iron_rust": (126, 80, 62), "shutter_steel": (118, 124, 132), "tyre_rubber": (40, 40, 46),
+    "bike_blue": (64, 96, 146), "bike_red": (158, 64, 58), "skate_yellow": (214, 172, 70),
+    "skate_mint": (122, 186, 168), "garbage_bag": (52, 58, 70), "garbage_white": (196, 196, 188),
+    "carpet_roll": (128, 62, 66), "agave": (92, 124, 104), "agave_tip": (176, 168, 120),
+    "bucket_red": (172, 70, 62), "bucket_blue": (66, 108, 150), "mop_head": (176, 170, 156),
+    "mop_handle": (150, 120, 84), "fitness_yellow": (220, 176, 64), "fitness_blue": (54, 98, 160),
 }
 SCENES = {
     "bio_door": f"{PROPS}/classroom_art/classroom_door.tscn",
@@ -248,6 +269,13 @@ def plain_door(b, parent, name, x, mat):
     b.box("Kick", p, (0, 0.19, 0.062), (0.93, 0.15, 0.024), "exit_frame")
 
 
+# Round 24: only two of the high slits are something to hop up and look through - the one
+# next to the protagonist's own room on 02 and the first one on 03. The other seven are
+# still glazed and lit, but they are wall, not targets: nine identical hop prompts along
+# one walk made the character jump at windows whenever a click strayed near one.
+PEEK_BAYS = ("LowerWest2", "UpperWest1")
+
+
 def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     _, width, plate, depth, bias = spec
     p = b.shell(name, parent, pos, (0, yaw, 0), ("camera_occluder", "teaching_bay"))
@@ -307,7 +335,7 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
             x, z = -1.8 + col * 1.7 + (0.24 if bias < 0 else 0), -2.0 - row * 1.55
             b.box(f"Desk{row}_{col}", p, (x, 0.79 + bias, z), (1.12, 0.08, 0.54), "room_wood")
             b.box(f"DeskBase{row}_{col}", p, (x, 0.37 + bias, z), (0.86, 0.75, 0.28), "room_ink")
-    if not biology:
+    if not biology and name in PEEK_BAYS:
         script = b.bind("peek", "res://scenes/locations/corridor/high_window_peek.gd", "Script")
         b.instance("Peek", p, "interactable", (slit_x, 0.84, 0.68),
                    script=script, interact_id=f'&"high_window_{name.lower()}"',
@@ -410,18 +438,30 @@ def slab_dressing(b, p, w, d, surface_mat, rotate=False):
                (0, 0.003, 0), (0, -90, 0) if rotate else None)
 
 
-def rail(b, parent, name, x, y, z, w, d, panel="gallery_base", cap="gallery_frame"):
-    p = b.shell(name, parent, (x, y, z), groups=("camera_occluder",))
+def rail(b, parent, name, x, y, z, w, d, panel="gallery_base", cap="gallery_frame", bare=False):
+    p = b.shell(name, parent, (x, y, z), groups=() if bare else ("camera_occluder",))
     b.shape("Guard", p, (0, 0.55, 0), (w, 1.10, d))
+    if bare:
+        # Round 23: no handrail, only a low poured kerb at the edge of the drop.
+        b.box("Kerb", p, (0, 0.05, 0), (w, 0.10, d), cap)
+        return
     b.box("Panel", p, (0, 0.50, 0), (w, 1.0, d), panel)
     b.box("Cap", p, (0, 1.04, 0), (w, 0.08, d), cap)
 
 
 def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent,
-           panel="gallery_base", cap="gallery_frame", tread="upper_concrete"):
+           panel="gallery_base", cap="gallery_frame", tread="upper_concrete", *,
+           guard="panel", treads="steps", nosing=True, wall_height=2.7):
     """The treads are visual, one continuous physics slope keeps mouse paths smooth.
 
     Start at the low end; the flight's -Z is uphill (rotate the assembly as needed).
+
+    Round 23: no two stairs share a character any more. `guard` is "panel" (the old solid
+    balustrade), "bars" (painted iron balusters under a round handrail, `panel` is the
+    paint), "bare" (no handrail at all: the side stays closed to the capsule, but nothing
+    is drawn above the treads), or "wall" (a stairwell: full-height sides that fade for the
+    camera like every other wall). `treads="ramp"` shaves the steps into one slope and
+    leaves only their ghosts on it.
     """
     b.node(name, parent, position=vec3(origin), rotation_degrees=vec3((0, yaw, 0)))
     p = child_path(parent, name)
@@ -432,28 +472,66 @@ def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent,
     offset = WALK_SURFACE / 2
     b.shape("Slope", ramp, (0, rise/2 - offset*normal_y, -run/2 - offset*normal_z),
             (width + 0.05, WALK_SURFACE, length + 0.12), (pitch, 0, 0))
-    for i in range(steps):
-        t = (i + 0.5) / steps
-        top_y = rise*t
-        z = -run*t
-        b.box(f"Tread{i+1}", p, (0, top_y-0.13, z), (width, 0.26, run/steps+0.004),
-              tread if i % 4 else accent)
-        # Set the metal on the riser, not a second surface half a millimetre below
-        # the tread. The top and front planes stay distinct at the grazing camera angle.
-        b.box(f"Nosing{i+1}", p, (0, top_y-0.042, z+run/steps/2+0.014), (width-0.018, 0.043, 0.040), cap)
+    if treads == "ramp":
+        # One poured slope, its top on the walking plane; the old risers show as faint bands.
+        slab_t = 0.24
+        b.box("Pour", p, (0, rise/2 - slab_t/2*normal_y, -run/2 - slab_t/2*normal_z),
+              (width, slab_t, length), tread, (pitch, 0, 0))
+        b.node("Ghosts", p, rotation_degrees=vec3((pitch, 0, 0)))
+        for i in range(1, steps):
+            b.box(f"GhostStep{i}", f"{p}/Ghosts", (0, 0.003, -length*i/steps), (width - 0.02, 0.006, 0.07),
+                  accent)
+    else:
+        for i in range(steps):
+            t = (i + 0.5) / steps
+            top_y = rise*t
+            z = -run*t
+            b.box(f"Tread{i+1}", p, (0, top_y-0.13, z), (width, 0.26, run/steps+0.004),
+                  tread if i % 4 else accent)
+            if nosing:
+                # Set the metal on the riser, not a second surface half a millimetre below
+                # the tread. The top and front planes stay distinct at the grazing camera angle.
+                b.box(f"Nosing{i+1}", p, (0, top_y-0.042, z+run/steps/2+0.014),
+                      (width-0.018, 0.043, 0.040), cap)
     for sign, side in ((-1, "West"), (1, "East")):
-        guard = b.shell(side + "Guard", p, (sign*(width/2+0.065), rise/2, -run/2),
-                        (pitch, 0, 0), ("camera_occluder",))
-        b.shape("Guard", guard, (0, 0.54, 0), (0.14, 1.13, length))
-        b.box("Panel", guard, (0, 0.5, 0), (0.14, 1.0, length), panel)
-        b.box("Cap", guard, (0, 1.02, 0), (0.16, 0.08, length), cap)
+        x = sign*(width/2+0.065)
+        if guard == "wall":
+            guard_body = b.shell(side + "Guard", p, (x, rise/2, -run/2), (pitch, 0, 0), ("camera_occluder",))
+            b.shape("Guard", guard_body, (0, wall_height/2 - 0.1, 0), (0.14, wall_height, length))
+            b.box("Panel", guard_body, (0, 0.45, 0), (0.14, 1.1, length), cap)
+            b.box("Plaster", guard_body, (0, (wall_height + 0.9)/2 - 0.1, 0), (0.14, wall_height - 1.1, length),
+                  panel)
+            continue
+        groups = () if guard == "bare" else ("camera_occluder",)
+        guard_body = b.shell(side + "Guard", p, (x, rise/2, -run/2), (pitch, 0, 0), groups)
+        b.shape("Guard", guard_body, (0, 0.54, 0), (0.14, 1.13, length))
+        if guard == "panel":
+            b.box("Panel", guard_body, (0, 0.5, 0), (0.14, 1.0, length), panel)
+            b.box("Cap", guard_body, (0, 1.02, 0), (0.16, 0.08, length), cap)
+        elif guard == "bare":
+            # Only the poured string shows below the tread ends.
+            b.box("String", guard_body, (-sign*0.045, -0.2, 0), (0.05, 0.3, length), cap)
+        elif guard == "bars":
+            rail_bar = b.mesh("CylinderMesh", top_radius=0.03, bottom_radius=0.03, height=length,
+                              radial_segments=8, rings=1)
+            b.flat("Handrail", guard_body, rail_bar, panel, (0, 0.98, 0), (90, 0, 0), shadow=True)
+            b.box("Shoe", guard_body, (0, 0.04, 0), (0.06, 0.06, length), panel)
+            count = max(2, int(length / 0.28))
+            for i in range(count):
+                t = (i + 0.5) / count
+                b.box(f"{side}Baluster{i}", p, (x, rise*t + 0.5, -run*t), (0.024, 0.92, 0.024), panel)
 
 
 def sign(b, parent, name, pos, text, width=0.55, yaw=0, plate="gallery_frame"):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     p = child_path(parent, name)
     b.box("Plate", p, (0, 0, 0), (width, 0.21, 0.035), plate)
-    b.node("Text", p, "Label3D", position=vec3((0, 0, 0.023)), text=f'"{text}"',
+    # Han characters need the bundled CJK face; without it the label falls back to a system
+    # font whose glyph surface leaks at exit in GL Compatibility (round 23 capture).
+    font = {}
+    if any("\u4e00" <= c <= "\u9fff" for c in text):
+        font["font"] = b.bind("cjk_font", "res://assets/fonts/NotoSansSC-Regular.ttf", "FontFile")
+    b.node("Text", p, "Label3D", position=vec3((0, 0, 0.023)), text=f'"{text}"', **font,
            font_size=44, pixel_size=0.0024, outline_size=0, modulate="Color(0.93, 0.86, 0.73, 1)")
 
 
@@ -464,7 +542,7 @@ def lamp(b, name, parent, pos, warmth):
            light_color="Color(1, 0.83, 0.64, 1)", light_energy=warmth, omni_range=5.3)
 
 
-def guard_edges(b, parent, prefix, xs, zs, y, openings, panel, cap):
+def guard_edges(b, parent, prefix, xs, zs, y, openings, panel, cap, bare=False):
     """Guard platform edges, leaving only the spans that actually join a flight."""
     for side, axis, span in (("North", zs[0], xs), ("South", zs[1], xs),
                              ("West", xs[0], zs), ("East", xs[1], zs)):
@@ -474,7 +552,7 @@ def guard_edges(b, parent, prefix, xs, zs, y, openings, panel, cap):
                 x, z, w, d = along, axis, hi-lo, 0.16
             else:
                 x, z, w, d = axis, along, 0.16, hi-lo
-            rail(b, parent, f"{prefix}{side}{index}", x, y, z, w, d, panel, cap)
+            rail(b, parent, f"{prefix}{side}{index}", x, y, z, w, d, panel, cap, bare)
 
 
 def solid_wall(b, parent, name, pos, width, yaw=0, height=3.05, base="deep_plum", field="chalk_rose"):
@@ -615,14 +693,21 @@ def rear_stair_and_ground_wing(b):
     high_track = (-13.45, -10.55)
     up_y = RISE/2
     flight(b, s, "UpLowerFlight", (junction_x[0], 0, z_axis), 90,
-           junction_x[0]-up_x[1], up_y, up_width, 10, "arch_chalk",
-           panel="iron_red", cap="deep_plum", tread="landing_stone")
+           junction_x[0]-up_x[1], up_y, up_width, 10, "cement",
+           cap="cement_dark", tread="cement", guard="bare", nosing=False)
     slab(b, s, "UpLanding", up_x, junction_z, up_y, "folded_tile")
     guard_edges(b, s, "UpLandingRail", up_x, junction_z, up_y,
-                {"East": [across], "North": [high_track]}, "iron_red", "deep_plum")
+                {"East": [across], "North": [high_track]}, "iron_red", "cement_dark", bare=True)
     flight(b, s, "UpUpperFlight", (sum(high_track)/2, up_y, junction_z[0]), 0,
-           junction_z[0]-UPPER_JOIN_Z, up_y, high_track[1]-high_track[0], 10, "arch_chalk",
-           panel="iron_red", cap="deep_plum", tread="landing_stone")
+           junction_z[0]-UPPER_JOIN_Z, up_y, high_track[1]-high_track[0], 10, "cement",
+           cap="cement_dark", tread="cement", guard="bare", nosing=False)
+    # Round 23: the red stair has no handrail and steps of nearly equal height. Its
+    # landing keeps what someone stacked there: tyres in the corner, a rolled carpet.
+    tyres = b.shell("LandingTyres", s, (up_x[0]+0.45, up_y, junction_z[1]-0.45))
+    b.shape("Solid", tyres, (0, 0.33, 0), (0.7, 0.66, 0.7))
+    tyre_stack(b, tyres, "Stack", (0, 0, 0), 4)
+    tyre(b, s, "LeaningTyre", (up_x[0]+1.15, up_y+0.34, junction_z[1]-0.2), (90, 10, 0))
+    carpet_roll(b, s, "LandingCarpet", (up_x[0]+2.55, up_y, junction_z[1]-0.24), 0, 1.8)
     upper_link = (UPPER_Z[1], UPPER_JOIN_Z)
     b.node("UpperLink", s, position=vec3((sum(UPPER_X)/2, RISE, sum(upper_link)/2)))
     slab_dressing(b, child_path(s, "UpperLink"), UPPER_X[1]-UPPER_X[0], upper_link[1]-upper_link[0], "folded_tile")
@@ -638,16 +723,19 @@ def rear_stair_and_ground_wing(b):
     ground_x, ground_z = GROUND_X, GROUND_Z
     low_track = (11.15, 14.05)
     flight(b, s, "DownUpperFlight", (down_x, down_half_y, down_half_z[0]), 0,
-           down_half_z[0]-junction_z[1], -down_half_y, down_width, 10, "fern_blue",
-           panel="night_blue", cap="apricot", tread="landing_stone")
+           down_half_z[0]-junction_z[1], -down_half_y, down_width, 10, "ghost_step",
+           panel="cement", cap="cement_dark", tread="cement", guard="wall", nosing=False)
     slab(b, s, "DownLanding", down_half_x, down_half_z, down_half_y, "folded_tile")
     guard_edges(b, s, "DownLandingRail", down_half_x, down_half_z, down_half_y,
-                {"North": [down_entry], "West": [low_track]}, "night_blue", "apricot")
+                {"North": [down_entry], "West": [low_track]}, "cement", "cement_dark")
     landing_support(b, s, "DownLandingPier", sum(down_half_x)/2, down_half_z[1]-0.65, down_half_y, 0.92)
     flight(b, s, "DownLowerFlight", (ground_x[1], GROUND_Y, sum(low_track)/2), -90,
            down_half_x[0]-ground_x[1], down_half_y-GROUND_Y,
-           low_track[1]-low_track[0], 10, "fern_blue",
-           panel="night_blue", cap="apricot", tread="landing_stone")
+           low_track[1]-low_track[0], 10, "ghost_step",
+           panel="cement", cap="cement_dark", tread="cement", guard="wall", treads="ramp")
+    wet_carpet(b, child_path(s, "DownLowerFlight"), down_half_x[0]-ground_x[1], down_half_y-GROUND_Y,
+               low_track[1]-low_track[0])
+    bikes_at_the_turn(b, s, down_half_y)
 
     # 01: municipal terrazzo and an over-scaled entrance, across from the
     # folded room directory. The lobby itself is a passage, not a teleport plane.
@@ -659,8 +747,9 @@ def rear_stair_and_ground_wing(b):
     slab(b, g, "EntranceApron", entrance_x, apron_z, GROUND_Y, "apron_tile")
     # Only the east end of the gallery needs a guard; full height walls take the other sides.
     guard_edges(b, g, "GalleryRail", ground_x, ground_z, GROUND_Y,
-                {"North": [ground_x], "South": [ground_x], "East": [low_track], "West": [ground_z]},
+                {"North": [ground_x], "South": [ground_x], "East": [ground_z], "West": [ground_z]},
                 "night_blue", "arch_chalk")
+    stairwell_door(b, g, (11.55, 13.65))
     directory_wall(b, g)
     # The old plan-room aperture now leads into a short 01 east wing. It ends
     # before the rear stair; the plan-room portal and its return share the new
@@ -675,7 +764,13 @@ def rear_stair_and_ground_wing(b):
                    yaw=90, base="entry_glaze", field="municipal_rose")
     b.node("ClosedClassroom", g, position=vec3((-9.55, GROUND_Y, east_z[0]+.13)))
     closed = child_path(g, "ClosedClassroom")
-    b.box("Leaf", closed, (0, 1.03, 0), (1.16, 2.06, .035), "office_sage")
+    b.box("Leaf", closed, (0, 1.03, 0), (1.16, 2.06, .035), "iron_green")
+    # Round 23: an outer iron grille (铁栅门) over the classroom door, padlocked.
+    for i in range(7):
+        b.box(f"Grille{i}", closed, (-.48+i*.16, 1.05, .07), (.03, 1.96, .03), "iron_rust")
+    for i, y in enumerate((.35, 1.05, 1.8)):
+        b.box(f"GrilleRail{i}", closed, (0, y, .09), (1.08, .04, .03), "iron_rust")
+    b.box("Padlock", closed, (.42, 1.0, .12), (.07, .09, .04), "brass_rule")
     for side in (-1, 1):
         b.box(f"Jamb{side}", closed, (side*.61, 1.05, .02), (.08, 2.10, .06), "night_blue")
     b.box("Head", closed, (0, 2.12, .02), (1.30, .10, .06), "night_blue")
@@ -705,12 +800,11 @@ def rear_stair_and_ground_wing(b):
     b.box("Crossbar", gate, (0, 1.02, .07), (.95, .05, .04), "exit_steel")
     b.box("Lock", gate, (.34, .97, .10), (.09, .13, .05), "brass_rule")
     # The west side opens onto the stable lane of tools/build_dream_annex.py.
-    guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y, {"North": [entrance_x], "West": [apron_z]},
-                "entry_glaze", "brass_rule")
-    b.box("StreetPlateRiser", g, (ENTRANCE_X, GROUND_Y+0.7, ENTRANCE_APRON_END-0.104),
-          (0.26, 0.14, 0.08), "entry_glaze")
-    sign(b, g, "StreetPlate", (ENTRANCE_X, GROUND_Y+0.7, ENTRANCE_APRON_END-0.14), "STREET", 0.66, 180,
-         "directory_black")
+    # Round 23: the south side is open too - the apron walks out (walkout()).
+    guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y,
+                {"North": [entrance_x], "West": [apron_z], "South": [entrance_x]}, "entry_glaze", "brass_rule")
+    walkout(b, g)
+    ground_floor_style(b, g)
     sign(b, g, "FirstFloorPlate", (-9.78, GROUND_Y+2.41, ground_z[0]+0.15), "01", 0.72, plate="clay_red")
 
     # Floor rules meet edge-to-edge. Brighter copper continues to the lab while
@@ -999,6 +1093,11 @@ def service_controls(b):
     for i in range(5):
         b.box(f"FalseTread{i}", p, (.6-.20*i, .073+.14*i, -.31-.16*i),
               (1.30-.08*i, .16, .22), "arch_chalk" if i % 2 else "office_sage")
+    # Round 23: the stair that is not there is also blocked - tyres, a rolled carpet, rubbish.
+    tyre_stack(b, p, "BlockTyres", (-1.02, .01, -.62), 3, 15)
+    carpet_roll(b, p, "BlockCarpet", (.25, .37, -.62), 16, 1.25, .12)
+    for i, (x, y, z, k) in enumerate(((.62, .23, -.36, 1.0), (.95, .09, -.18, .85), (-.35, .51, -.86, .8))):
+        rubbish_bag(b, p, f"BlockBag{i}", (x, y, z), k, "garbage_white" if i == 1 else "garbage_bag")
     for i, x in enumerate((-.93, .69)):
         b.box(f"Sash{i}", p, (x, 1.67, -1.052), (.94, 1.27, .076), "night_blue")
         b.box(f"LitPaper{i}", p, (x, 1.68, -1.003), (.76, 1.05, .03), "lamp_tube")
@@ -1040,6 +1139,322 @@ def service_controls(b):
            max_distance=9.0)
     service_button(b, end, (.61, .91, .178), "BellControl",
                    "corridor_bell_register", "bell_service", "../BellRegister", 1)
+
+
+# --- Round 23: the walk-out, the stairwells, and what the novel leaves on the stairs --------
+# Schools in the novel sit in tangled residential compounds: always grey, the classrooms high
+# up winding stairs, and every stair different. One turns a right angle piled with bikes,
+# skateboards and roller skates; one has no handrail and nearly equal steps; one is flooded
+# and planted with big spiky plants; one is blocked by tyres, a rolled carpet and rubbish;
+# one has been shaved into a ramp under a thin, wrinkled, wet carpet. Finding the stair door
+# is only the first step: some iron doors are only iron doors.
+
+def dressing_materials(b):
+    b.mat("murky_water", transparency=1, specular_mode="0", roughness="0.15",
+          albedo_color="Color(0.36, 0.35, 0.29, 0.78)")
+    b.mat("mop_wet", transparency=1, specular_mode="0", roughness="0.1",
+          albedo_color="Color(0.2, 0.19, 0.22, 0.34)")
+    b.mat("flood_water", transparency=1, specular_mode="0", roughness="0.06",
+          albedo_color="Color(0.24, 0.29, 0.3, 0.64)")
+    b.mat("carpet_wet", specular_mode="0", roughness="0.28", albedo_color=srgb((66, 54, 64)))
+    b.mat("bulb_warm", shading_mode=0, albedo_color=srgb((255, 214, 150)))
+
+
+def bar(b, parent, name, a, c, mat, t=0.035, z=0.0):
+    """A square tube between two points in a node's XY plane."""
+    dx, dy = c[0]-a[0], c[1]-a[1]
+    b.box(name, parent, ((a[0]+c[0])/2, (a[1]+c[1])/2, z), (math.hypot(dx, dy), t, t), mat,
+          (0, 0, math.degrees(math.atan2(dy, dx))))
+
+
+def tyre(b, parent, name, pos, rot=None, outer=0.34, inner=0.19):
+    ring = b.mesh("TorusMesh", inner_radius=inner, outer_radius=outer, rings=18, ring_segments=8)
+    b.flat(name, parent, ring, "tyre_rubber", pos, rot, shadow=True)
+
+
+def tyre_stack(b, parent, name, pos, count, yaw=0):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    for i in range(count):
+        tyre(b, p, f"Tyre{i}", (0.03*((i*5) % 3-1), 0.075+0.15*i, 0.025*((i*7) % 3-1)))
+    return p
+
+
+def bicycle(b, parent, name, pos, rot, frame):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3(rot))
+    p = child_path(parent, name)
+    wheel = b.mesh("TorusMesh", inner_radius=0.29, outer_radius=0.33, rings=20, ring_segments=6)
+    rear, front, crank = (-0.52, 0.33), (0.52, 0.33), (-0.06, 0.3)
+    seat, head, head_low = (-0.2, 0.84), (0.36, 0.86), (0.41, 0.7)
+    for i, axle in enumerate((rear, front)):
+        b.flat(f"Wheel{i}", p, wheel, "tyre_rubber", (axle[0], axle[1], 0), (90, 0, 0), shadow=True)
+    for i, (a, c) in enumerate(((rear, crank), (rear, seat), (crank, seat), (crank, head_low),
+                                (seat, head), (head_low, front), (head, head_low))):
+        bar(b, p, f"Tube{i}", a, c, frame)
+    b.box("Saddle", p, (-0.22, 0.9, 0), (0.24, 0.05, 0.1), "tyre_rubber")
+    b.box("Bars", p, (0.34, 0.95, 0), (0.05, 0.04, 0.52), "shutter_steel")
+    return p
+
+
+def skateboard(b, parent, name, pos, rot, deck):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3(rot))
+    p = child_path(parent, name)
+    b.box("Deck", p, (0, 0.09, 0), (0.8, 0.02, 0.21), deck, shadow=True)
+    wheel = b.mesh("CylinderMesh", top_radius=0.028, bottom_radius=0.028, height=0.04, radial_segments=8, rings=1)
+    for i, (x, z) in enumerate(((-0.28, -0.08), (-0.28, 0.08), (0.28, -0.08), (0.28, 0.08))):
+        b.flat(f"Wheel{i}", p, wheel, "garbage_white", (x, 0.03, z), (90, 0, 0))
+    for i, x in enumerate((-0.28, 0.28)):
+        b.box(f"Truck{i}", p, (x, 0.062, 0), (0.05, 0.035, 0.16), "shutter_steel")
+
+
+def roller_skate(b, parent, name, pos, yaw, boot):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    b.box("Sole", p, (0, 0.07, 0), (0.28, 0.03, 0.1), "tyre_rubber")
+    b.box("Boot", p, (-0.04, 0.175, 0), (0.18, 0.18, 0.1), boot, shadow=True)
+    b.box("Toe", p, (0.08, 0.12, 0), (0.12, 0.07, 0.1), boot)
+    wheel = b.mesh("CylinderMesh", top_radius=0.03, bottom_radius=0.03, height=0.03, radial_segments=8, rings=1)
+    for i, (x, z) in enumerate(((-0.09, -0.04), (-0.09, 0.04), (0.09, -0.04), (0.09, 0.04))):
+        b.flat(f"Wheel{i}", p, wheel, "garbage_white", (x, 0.03, z), (90, 0, 0))
+
+
+def agave(b, parent, name, pos, size=0.8, blades=13, pot="bucket_red"):
+    """A big spiky plant: stiff blades on a golden-angle spiral, each with a pale spine."""
+    b.node(name, parent, position=vec3(pos))
+    p = child_path(parent, name)
+    base = 0.0
+    if pot:
+        tub = b.mesh("CylinderMesh", top_radius=0.24, bottom_radius=0.19, height=0.36, radial_segments=14, rings=1)
+        b.flat("Pot", p, tub, pot, (0, 0.18, 0), shadow=True)
+        base = 0.34
+    for i in range(blades):
+        yaw, tilt = (i*137.5) % 360, 16+(i*29) % 48
+        length = size*(0.65+0.35*((i*7) % 5)/4)
+        t, y = math.radians(tilt), math.radians(yaw)
+        d = (math.sin(t)*math.sin(y), math.cos(t), math.sin(t)*math.cos(y))
+        b.box(f"Blade{i}", p, (d[0]*length/2, base+d[1]*length/2, d[2]*length/2),
+              (0.075, length, 0.018), "agave", (tilt, yaw, 0), shadow=True)
+        b.box(f"Spine{i}", p, (d[0]*length, base+d[1]*length, d[2]*length), (0.018, 0.08, 0.018),
+              "agave_tip", (tilt, yaw, 0))
+
+
+def ladder(b, parent, name, pos, yaw, height, width=0.46):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    for i, x in enumerate((-width/2, width/2)):
+        b.box(f"Stile{i}", p, (x, height/2, 0), (0.05, height, 0.05), "shutter_steel", shadow=True)
+        for j, y in enumerate((0.3, height-0.3)):
+            b.box(f"Bracket{i}_{j}", p, (x, y, -0.07), (0.05, 0.05, 0.1), "iron_rust")
+    for i in range(int((height-0.2)/0.3)):
+        b.box(f"Rung{i}", p, (0, 0.3+0.3*i, 0), (width, 0.028, 0.028), "shutter_steel")
+
+
+def rubbish_bag(b, parent, name, pos, size=1.0, mat="garbage_bag"):
+    sack = b.mesh("CylinderMesh", top_radius=0.13*size, bottom_radius=0.22*size, height=0.4*size,
+                  radial_segments=9, rings=1)
+    b.flat(name, parent, sack, mat, (pos[0], pos[1]+0.2*size, pos[2]), shadow=True)
+    b.box(name+"Knot", parent, (pos[0], pos[1]+0.43*size, pos[2]), (0.07, 0.07, 0.07), mat)
+
+
+def carpet_roll(b, parent, name, pos, yaw, length=1.6, radius=0.14, mat="carpet_roll"):
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    roll = b.mesh("CylinderMesh", top_radius=radius, bottom_radius=radius, height=length, radial_segments=12, rings=1)
+    b.flat("Roll", p, roll, mat, (0, radius, 0), (0, 0, 90), shadow=True)
+    strap = b.mesh("CylinderMesh", top_radius=radius+0.006, bottom_radius=radius+0.006, height=0.04,
+                   radial_segments=12, rings=1)
+    for i, x in enumerate((-length/3, length/3)):
+        b.flat(f"Strap{i}", p, strap, "garbage_white", (x, radius, 0), (0, 0, 90))
+
+
+def mop_and_bucket(b, parent, name, pos, yaw):
+    """The duty students' mop, and the murky water it just wetted the cement with."""
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    tub = b.mesh("CylinderMesh", top_radius=0.19, bottom_radius=0.15, height=0.3, radial_segments=14, rings=1)
+    b.flat("Bucket", p, tub, "bucket_blue", (0, 0.15, 0), shadow=True)
+    water = b.mesh("CylinderMesh", top_radius=0.175, bottom_radius=0.175, height=0.01, radial_segments=14, rings=1)
+    b.flat("Water", p, water, "murky_water", (0, 0.265, 0))
+    bar(b, p, "Handle", (0.62, 0.12), (0.2, 1.42), "mop_handle", 0.03, z=0.02)
+    b.box("Head", p, (0.66, 0.05, 0.02), (0.1, 0.06, 0.3), "mop_handle")
+    for i in range(6):
+        b.box(f"String{i}", p, (0.62+0.05*(i % 3), 0.02, -0.13+0.052*i), (0.26, 0.03, 0.04), "mop_head", (0, 12*(i-2.5), 0))
+
+
+def wet_patches(b, parent, points, y):
+    """Freshly mopped cement: overlapping translucent smears, each at its own height."""
+    for i, (x, z, r) in enumerate(points):
+        disc = b.mesh("CylinderMesh", top_radius=r, bottom_radius=r, height=0.002, radial_segments=20, rings=1)
+        b.flat(f"WetPatch{i}", parent, disc, "mop_wet", (x, y+0.0035+0.0004*i, z))
+
+
+def yard_railing(b, parent, name, a, c, y):
+    """The front yard's low railing, one closed run between two plan points."""
+    (xa, za), (xc, zc) = a, c
+    length = math.hypot(xc-xa, zc-za)
+    p = b.shell(name, parent, ((xa+xc)/2, y, (za+zc)/2), (0, math.degrees(math.atan2(xc-xa, zc-za)), 0),
+                ("camera_occluder",))
+    b.shape("Guard", p, (0, 0.55, 0), (0.12, 1.1, length))
+    for i, h in enumerate((0.95, 0.48)):
+        b.box(f"Rail{i}", p, (0, h, 0), (0.05, 0.05, length), "yard_rail")
+    count = max(1, round(length/1.2))
+    for i in range(count+1):
+        b.box(f"Post{i}", p, (0, 0.5, -length/2+0.03+(length-0.06)*i/count), (0.06, 1.0, 0.06), "yard_rail")
+
+
+def walkout(b, g):
+    """Round 23: the glass entrance walks out to the front yard (前操场).
+
+    The apron used to end at a railing with a STREET plate on it: a balcony over the void
+    that you had to "use" to leave. Now two shallow steps go down onto a dirt forecourt in
+    the front yard's own soil and trodden line, between the front yard's low railings, to two
+    brick gateposts. The street exit stands between them; the opening is closed to the body
+    just beyond it, where the yard is only seen.
+    """
+    b.node("Forecourt", g)
+    f = child_path(g, "Forecourt")
+    step_y = GROUND_Y-WALKOUT_STEP
+    depth = WALKOUT_STEP_Z[1]-WALKOUT_STEP_Z[0]
+    step = b.shell("Step", f, (ENTRANCE_X, step_y, sum(WALKOUT_STEP_Z)/2))
+    b.shape("Solid", step, (0, -WALK_SURFACE/2, 0), (ENTRANCE_WIDTH, WALK_SURFACE, depth))
+    b.box("Tread", step, (0, -0.135, 0), (ENTRANCE_WIDTH, 0.27, depth), "walk_step")
+    x0, x1 = FORECOURT_X
+    z0, z1 = ENTRANCE_APRON_END, FORECOURT_Z[1]
+    ground = b.shell("Ground", f, ((x0+x1)/2, FORECOURT_Y, (z0+z1)/2))
+    b.shape("Solid", ground, (0, -WALK_SURFACE/2, 0), (x1-x0, WALK_SURFACE, z1-z0))
+    # The soil runs on past the rails and the gate, where the yard is only seen. It samples
+    # the front yard's dirt at the same 4 m tile, on a plain plane: the yard's world-triplanar
+    # material was the corridor's only one, and its box leaked at exit in every corridor
+    # capture (GL Compatibility).
+    far, soil_w = 28.5, 28.3
+    dirt = b.bind("yard_dirt_tex", f"{STAGE}/textures/yard_dirt.png", "Texture2D")
+    b.mat("forecourt_soil", albedo_color="Color(1, 1, 1, 1)", albedo_texture=dirt, texture_filter=3,
+          uv1_scale=vec3((soil_w/4, (far-z0)/4, 1)))
+    b.flat("Earth", f, plane(b, soil_w, far-z0), "forecourt_soil", (-16.0, FORECOURT_Y, (z0+far)/2))
+    b.flat("Path", f, plane(b, 2.4, far-FORECOURT_Z[0]), "yard_path",
+           (ENTRANCE_X, FORECOURT_Y+0.003, (FORECOURT_Z[0]+far)/2))
+    for name, a, c in (("RailWest", (x0, z0), (x0, z1)), ("RailEast", (x1, z0), (x1, z1)),
+                       ("RailNorthEast", (ENTRANCE_X+ENTRANCE_WIDTH/2+0.08, z0), (x1, z0)),
+                       ("RailSouthWest", (x0, z1), (GATE_OPENING[0]-0.5, z1)),
+                       ("RailSouthEast", (GATE_OPENING[1]+0.5, z1), (x1, z1))):
+        yard_railing(b, f, name, a, c, FORECOURT_Y)
+    for side, x in (("West", GATE_OPENING[0]-0.25), ("East", GATE_OPENING[1]+0.25)):
+        pier = b.shell(f"GatePier{side}", f, (x, FORECOURT_Y, z1), groups=("camera_occluder",))
+        b.shape("Solid", pier, (0, 0.75, 0), (0.5, 1.5, 0.5))
+        b.box("Brick", pier, (0, 0.7, 0), (0.5, 1.4, 0.5), "pier_brick", shadow=True)
+        b.box("Cap", pier, (0, 1.46, 0), (0.6, 0.12, 0.6), "cement", shadow=True)
+        ball = b.mesh("CylinderMesh", top_radius=0.12, bottom_radius=0.16, height=0.22, radial_segments=12, rings=1)
+        b.flat("Finial", pier, ball, "cement", (0, 1.63, 0))
+    sign(b, f"{f}/GatePierWest", "YardPlate", (0.268, 1.08, 0), "前操场", 0.46, 90, "directory_black")
+    # Closed to the capsule just past the exit; the exit is between the posts.
+    stop = b.shell("GateStop", f, (ENTRANCE_X, FORECOURT_Y, z1+0.2))
+    b.shape("Solid", stop, (0, 0.8, 0), (GATE_OPENING[1]-GATE_OPENING[0], 1.6, 0.1))
+    # A waist twister (扭腰器) by the west rail: the compound's fitness corner reaches the school.
+    twist = b.shell("WaistTwister", f, (x0+1.25, FORECOURT_Y, 21.3), groups=("camera_occluder",))
+    b.shape("Solid", twist, (0, 0.65, 0), (1.3, 1.3, 0.5))
+    column = b.mesh("CylinderMesh", top_radius=0.055, bottom_radius=0.055, height=1.3, radial_segments=10, rings=1)
+    b.flat("Column", twist, column, "fitness_blue", (0, 0.65, 0), shadow=True)
+    b.box("Handlebar", twist, (0, 1.28, 0), (0.62, 0.05, 0.05), "fitness_yellow")
+    b.box("Arm", twist, (0, 0.1, 0), (1.0, 0.07, 0.07), "fitness_blue")
+    disc = b.mesh("CylinderMesh", top_radius=0.2, bottom_radius=0.2, height=0.05, radial_segments=16, rings=1)
+    for i, x in enumerate((-0.45, 0.45)):
+        b.flat(f"Disc{i}", twist, disc, "fitness_yellow", (x, 0.16, 0), shadow=True)
+    # One street lamp, faint orange-yellow, by the east rail.
+    lamp_x, lamp_z = x1-0.35, 21.7
+    post = b.mesh("CylinderMesh", top_radius=0.045, bottom_radius=0.06, height=3.2, radial_segments=10, rings=1)
+    b.flat("LampPost", f, post, "gallery_frame", (lamp_x, FORECOURT_Y+1.6, lamp_z), shadow=True)
+    b.box("LampArm", f, (lamp_x-0.3, FORECOURT_Y+3.15, lamp_z), (0.65, 0.05, 0.05), "gallery_frame")
+    b.box("LampHead", f, (lamp_x-0.6, FORECOURT_Y+3.08, lamp_z), (0.3, 0.1, 0.18), "bulb_warm")
+    b.node("LampLight", f, "OmniLight3D", position=vec3((lamp_x-0.6, FORECOURT_Y+2.85, lamp_z)),
+           light_color="Color(1, 0.78, 0.5, 1)", light_energy=0.85, omni_range=7.0)
+
+
+def stairwell_door(b, g, opening):
+    """The 01 end of the blue stair is a concrete stairwell behind a raised roller shutter.
+
+    From the glass entrance there is no stair to see: only grey jambs at the end of the
+    gallery. The shutter is rolled up into its box on the stairwell side.
+    """
+    x = GROUND_X[1]
+    lo, hi = opening
+    for name, (a, c) in (("StairwellJambNorth", (GROUND_Z[0]+0.11, lo)), ("StairwellJambSouth", (hi, GROUND_Z[1]-0.11))):
+        solid_wall(b, g, name, (x, GROUND_Y, (a+c)/2), c-a, yaw=90, base="cement_dark", field="cement")
+    head = b.shell("StairwellLintel", g, (x, GROUND_Y, (lo+hi)/2), (0, 90, 0), ("camera_occluder",))
+    # 2.6 m clear: 2.3 m rounded onto the 0.25 m bake grid was exactly the agent's 2.0 m
+    # height, and the erosion then closed the doorway to the navigation mesh.
+    b.shape("Solid", head, (0, 2.825, 0), (hi-lo, 0.45, 0.22))
+    b.box("Face", head, (0, 2.825, 0), (hi-lo, 0.45, 0.22), "cement")
+    # On the stairwell side (+x; the lintel turns local +z there): the shutter box, its guides, and the last slats hanging down.
+    b.box("ShutterBox", head, (0, 2.55, 0.3), (hi-lo+0.16, 0.36, 0.38), "shutter_steel", shadow=True)
+    for i in range(3):
+        b.box(f"Slat{i}", head, (0, 2.3-0.075*i, 0.16), (hi-lo-0.04, 0.06, 0.03), "shutter_steel")
+    b.box("BottomBar", head, (0, 2.08, 0.16), (hi-lo-0.04, 0.05, 0.06), "iron_rust")
+    for i, z in enumerate((-(hi-lo)/2-0.03, (hi-lo)/2+0.03)):
+        b.box(f"Guide{i}", head, (z, 1.2, 0.16), (0.07, 2.4, 0.08), "shutter_steel")
+    b.box("PullHandle", head, (0.4, 2.02, 0.2), (0.14, 0.04, 0.04), "iron_rust")
+
+
+def wet_carpet(b, flight_path, run, rise, width):
+    """Thin, wrinkled and wet, laid down the shaved steps. Its top end curls."""
+    length = math.hypot(run, rise)
+    b.node("WetCarpet", flight_path, rotation_degrees=vec3((math.degrees(math.atan2(rise, run)), 0, 0)))
+    p = child_path(flight_path, "WetCarpet")
+    w, count = width-0.7, 13
+    seg = (length-0.55)/count
+    for i in range(count):
+        lift = 0.014+(0.022 if i % 3 == 1 else 0.0)
+        b.box(f"Fold{i}", p, (0.04*((i*5) % 3-1), lift, -(0.25+seg*(i+0.5))), (w, 0.012, seg+0.03),
+              "carpet_wet", ((6, -4, 0)[i % 3], 0, 0))
+    curl = b.mesh("CylinderMesh", top_radius=0.06, bottom_radius=0.06, height=w, radial_segments=10, rings=1)
+    b.flat("CurledEnd", p, curl, "carpet_wet", (0, 0.07, -(length-0.22)), (0, 0, 90))
+    # One bare bulb on a cord, low and dim, as if waiting for someone to clap.
+    b.box("Cord", flight_path, (0, rise/2+2.45, -run/2), (0.012, 0.5, 0.012), "directory_black")
+    bulb = b.mesh("CylinderMesh", top_radius=0.035, bottom_radius=0.05, height=0.1, radial_segments=10, rings=1)
+    b.flat("Bulb", flight_path, bulb, "bulb_warm", (0, rise/2+2.15, -run/2))
+    b.node("BulbLight", flight_path, "OmniLight3D", position=vec3((0, rise/2+2.0, -run/2)),
+           light_color="Color(1, 0.8, 0.55, 1)", light_energy=0.42, omni_range=4.2)
+
+
+def bikes_at_the_turn(b, s, landing_y):
+    """The blue stair's right-angle turn, piled with bikes, skateboards and roller skates."""
+    b.node("TurnPile", s)
+    p = child_path(s, "TurnPile")
+    bicycle(b, p, "LyingBike", (-3.3, landing_y+0.27, 13.5), (90, 90, 0), "bike_blue")
+    bicycle(b, p, "LeaningBike", (-4.2, landing_y, 14.12), (8, 0, 0), "bike_red")
+    skateboard(b, p, "Skateboard0", (-2.75, landing_y, 12.25), (0, 32, 0), "skate_yellow")
+    skateboard(b, p, "Skateboard1", (-2.62, landing_y+0.1, 12.0), (0, -18, 0), "skate_mint")
+    for i, (x, z, yaw) in enumerate(((-2.55, 11.55, 20), (-2.75, 11.35, 160))):
+        roller_skate(b, p, f"RollerSkate{i}", (x, landing_y, z), yaw, "skate_mint" if i else "bike_red")
+
+
+def iron_door(b, parent, name, pos, yaw, key, plate):
+    """A painted iron door that is only a door: knock and listen."""
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    b.box("Leaf", p, (0, 1.03, 0.03), (1.0, 2.06, 0.05), "iron_green", shadow=True)
+    for side in (-1, 1):
+        b.box(f"Jamb{side}", p, (side*0.54, 1.08, 0.03), (0.08, 2.16, 0.08), "cement_dark")
+    b.box("Head", p, (0, 2.14, 0.03), (1.16, 0.08, 0.08), "cement_dark")
+    for i, y in enumerate((0.55, 1.5)):
+        b.box(f"Panel{i}", p, (0, y, 0.062), (0.78, 0.62, 0.014), "iron_green")
+        b.box(f"PanelEdge{i}", p, (0, y+0.32, 0.066), (0.8, 0.025, 0.02), "iron_rust")
+    b.box("Rust", p, (-0.28, 0.32, 0.058), (0.12, 0.6, 0.006), "iron_rust")
+    b.box("Peephole", p, (0, 1.55, 0.072), (0.04, 0.04, 0.02), "brass_rule")
+    b.box("Handle", p, (0.38, 1.0, 0.08), (0.13, 0.035, 0.04), "exit_steel")
+    b.box("Keyhole", p, (0.38, 0.9, 0.065), (0.03, 0.05, 0.01), "directory_black")
+    sign(b, p, "Plate", (0, 1.88, 0.07), plate, 0.42, plate="directory_black")
+    b.instance("Knock", p, "interactable", (0, 1.1, 0.42), interact_id=f'&"{key}"',
+               inspection_id=f'&"{key}"', prompt_text='"Knock"', radius=0.9,
+               outline_paths='PackedStringArray("../Leaf")', support_paths='PackedStringArray("..")')
+
+
+def ground_floor_style(b, g):
+    """01: freshly mopped cement, the duty students' bucket, and doors that are iron."""
+    wet_patches(b, g, ((-24.3, 12.1, 0.5), (-23.7, 12.5, 0.38), (-20.6, 13.0, 0.55), (-20.0, 12.7, 0.42),
+                       (-15.4, 12.0, 0.36), (-12.3, 12.9, 0.5), (-11.8, 12.3, 0.33)), GROUND_Y)
+    mop_and_bucket(b, g, "DutyMop", (-22.75, GROUND_Y, 10.95), 0)
+    iron_door(b, g, "IronDoorWest", (-11.74, GROUND_Y, 8.4), 90, "corridor_iron_door_west", "↓")
+    iron_door(b, g, "IronDoorNorth", (-8.15, GROUND_Y, 6.66), 0, "corridor_iron_door_north", "01")
 
 
 def teaching_block():
@@ -1087,17 +1502,36 @@ def teaching_block():
     # The short flight closes the loop near the biology room. The far stair breaks
     # alignment by 4.5 m across its deep intermediate landing before it climbs again.
     flight(b, s, "WestFlight", (-2.2, 0, WEST_STAIR_Z), 90, 7.55, RISE, WEST_STAIR_WIDTH, 20, "warm_tile")
-    flight(b, s, "NorthFlight", (0, 0, -30), 0, 4.25, 1.8, BEND_STAIR_WIDTH, 10, "upper_concrete")
+    dressing_materials(b)
+    flight(b, s, "NorthFlight", (0, 0, -30), 0, 4.25, 1.8, BEND_STAIR_WIDTH, 10, "landing_stone",
+           panel="iron_green", guard="bars")
     slab(b, s, "HalfLanding", (-1.4, 5.9), (-37.25, -34.25), 1.8)
-    rail(b, s, "LandingNorth", 0.85, 1.8, -37.24, 4.5, 0.14)
-    rail(b, s, "LandingSouth", 3.65, 1.8, -34.26, 4.5, 0.14)
-    rail(b, s, "LandingWest", -1.4, 1.8, -35.75, 0.14, 3)
-    rail(b, s, "LandingEast", 5.9, 1.8, -35.75, 0.14, 3)
-    flight(b, s, "OffsetFlight", (4.5, 1.8, -37.25), 0, 3.25, 1.8, BEND_STAIR_WIDTH, 10, "upper_concrete")
+    for name, x, z, w, d in (("LandingNorth", 0.85, -37.24, 4.5, 0.14), ("LandingSouth", 3.65, -34.26, 4.5, 0.14),
+                             ("LandingWest", -1.4, -35.75, 0.14, 3), ("LandingEast", 5.9, -35.75, 0.14, 3)):
+        rail(b, s, name, x, 1.8, z, w, d, "iron_green", "gallery_frame")
+    flight(b, s, "OffsetFlight", (4.5, 1.8, -37.25), 0, 3.25, 1.8, BEND_STAIR_WIDTH, 10, "landing_stone",
+           panel="iron_green", guard="bars")
+    # Round 23: the dogleg's half landing is the compound's fitness corner - a pull-up bar.
+    b.node("PullUpBar", s, position=vec3((5.25, 1.8, -34.72)))
+    pole = b.mesh("CylinderMesh", top_radius=0.04, bottom_radius=0.04, height=2.2, radial_segments=8, rings=1)
+    for i, x in enumerate((-0.42, 0.42)):
+        b.flat(f"Pole{i}", "Stairs/PullUpBar", pole, "fitness_blue", (x, 1.1, 0), shadow=True)
+    b.box("Bar", "Stairs/PullUpBar", (0, 2.08, 0), (0.92, 0.035, 0.035), "fitness_yellow")
     gallery_details(b, l, u)
     foot = YARD_APPROACH_Z+YARD_RUN
     flight(b, s, "YardFlight", (YARD_X, YARD_Y, foot), 0, YARD_RUN, -YARD_Y,
-           YARD_WIDTH, 15, "warm_tile")
+           YARD_WIDTH, 15, "iron_rust", panel="walk_plaster", cap="cool_trim", tread="cement_dark",
+           guard="wall", wall_height=3.0)
+    # Round 23: the yard stair goes down into a sunken stairwell that has flooded. Big spiky
+    # plants grow in the water; a straight ladder climbs the landing wall to nowhere.
+    flood_top = YARD_Y+0.45
+    flood_z = (foot-YARD_RUN*0.45/-YARD_Y, YARD_PORTAL_Z-0.12)
+    b.box("Flood", s, (YARD_X, flood_top-0.225, sum(flood_z)/2),
+          (YARD_WIDTH-0.04, 0.45, flood_z[1]-flood_z[0]), "flood_water")
+    agave(b, s, "FloodAgave0", (YARD_X-1.15, YARD_Y, -18.55), 0.85)
+    agave(b, s, "FloodAgave1", (YARD_X+1.1, YARD_Y+0.61, foot-1.0), 1.0, 15, pot=None)
+    agave(b, s, "FloodAgave2", (YARD_X+1.2, YARD_Y, -18.5), 0.6, 11, pot="bucket_blue")
+    ladder(b, s, "LandingLadder", (YARD_X-YARD_WIDTH/2+0.16, YARD_Y, -19.0), 90, WALL_HEIGHT-0.1)
     slab(b, s, "YardLanding", yard_gap, (foot, YARD_PORTAL_Z), YARD_Y)
     # Short, full-height returns at the landing only. From the stair the door sits
     # in a recess, not on a free-standing screen looking out over the court.
@@ -1165,7 +1599,9 @@ def foundations(b):
     ground = material_for("YardGround/MeshInstance3D")
     b.box("NorthApron", p, (8, YARD_Y-0.12, -37.9), (70, 0.20, 39.8), f"yard/{ground}")
     b.box("WestApron", p, (-15.7, YARD_Y-0.12, -3.0), (22.6, 0.20, 29.8), f"yard/{ground}")
-    b.box("GroundWingApron", p, (-16.0, GROUND_Y-0.22, 13.25), (28.3, 0.18, 14.9), f"yard/{ground}")
+    # Round 23: it stops at the apron's line; south of it the walk-out forecourt's soil is lower.
+    b.box("GroundWingApron", p, (-16.0, GROUND_Y-0.22, (5.8+ENTRANCE_APRON_END)/2),
+          (28.3, 0.18, ENTRANCE_APRON_END-5.8), f"yard/{ground}")
     for name, x, z, w, d, top in (
         ("LowerWest", -5.35, -11.55, 6.2, 36.5, -0.34),
         ("LowerNorth", 13.4, -33.0, 30.6, 6.0, -0.34),
@@ -1230,6 +1666,19 @@ def courtyard_view():
     return b
 
 
+def duplicate_nodes(text):
+    """Node paths emitted twice. Godot keeps only one; the other leaks at exit."""
+    seen, twice = set(), []
+    for name, parent in re.findall(r'^\[node name="([^"]+)"(?:[^\]\n]*?parent="([^"]*)")?', text, re.M):
+        path = name if parent in ("", ".") else f"{parent}/{name}"
+        if parent == "":
+            continue
+        if path in seen:
+            twice.append(path)
+        seen.add(path)
+    return twice
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -1241,6 +1690,9 @@ def main():
               (LOC / "courtyard_view.tscn", courtyard_view()),
               (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()))
     outputs = [(path, generated.emit()) for path, generated in scenes]
+    for path, text in outputs:
+        if twice := duplicate_nodes(text):
+            sys.exit(f"{path.relative_to(ROOT)} repeats node paths: " + ", ".join(twice[:8]))
     # The stink stable's shaped meshes are files of their own (tools/dream_stable.py).
     from dream_stable import STABLE_DIR  # noqa: E402
     stable = ROOT / STABLE_DIR

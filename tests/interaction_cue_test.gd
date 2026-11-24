@@ -49,6 +49,7 @@ func _run() -> void:
 	await _check_outline_of_the_object()
 	await _check_outline_hand_over()
 	await _check_outline_fallback()
+	await _check_marker_on_the_object()
 	await _check_pick_where_drawn()
 	Harness.finish(
 		self,
@@ -56,7 +57,8 @@ func _run() -> void:
 		"%d checks: the ground mark is a small ring that lands, echoes once and holds; the "
 		% _checks
 		+ "object cue outlines the object's own meshes, hands over cleanly, restores what it "
-		+ "marked, falls back when there is nothing to trace, and is pointable where drawn."
+		+ "marked, falls back when there is nothing to trace, and is pointable where drawn; a look "
+		+ "or talk target gets the small ring on the object instead, pointable only on it."
 	)
 
 
@@ -308,8 +310,11 @@ func _check_dismiss() -> void:
 
 
 ## A prop with a mesh of its own beside it, named through `outline_paths`, and a second
-## mesh parented under the interactable, which is always included.
-func _make_prop(id: StringName, at: Vector3) -> Dictionary:
+## mesh parented under the interactable, which is always included. Outlined unless asked
+## otherwise: a plain interactable is a look target and would be marked (`CueStyle`).
+func _make_prop(
+	id: StringName, at: Vector3, style: Interactable.CueStyle = Interactable.CueStyle.OUTLINE
+) -> Dictionary:
 	var holder := Node3D.new()
 	holder.name = "Prop_%s" % String(id)
 	holder.position = at
@@ -327,6 +332,7 @@ func _make_prop(id: StringName, at: Vector3) -> Dictionary:
 	probe.radius = 0.8
 	probe.position = Vector3(0.0, 0.9, 0.0)
 	probe.outline_paths = PackedStringArray(["../Body"])
+	probe.cue_style = style
 	var tag := MeshInstance3D.new()
 	tag.name = "Tag"
 	var tag_mesh := BoxMesh.new()
@@ -444,6 +450,7 @@ func _check_outline_fallback() -> void:
 	var probe := InteractableScene.instantiate() as Interactable
 	probe.interact_id = &"bare_probe"
 	probe.radius = 0.8
+	probe.cue_style = Interactable.CueStyle.OUTLINE
 	root.add_child(probe)
 	await process_frame
 	_expect(probe.get_outline_meshes().is_empty(), "A bare interactable claims meshes to outline.")
@@ -464,6 +471,76 @@ func _check_outline_fallback() -> void:
 		await _wait(FADE_WAIT)
 		_expect(not cue.visible, "The fallback is still drawn after the highlight ended.")
 	probe.queue_free()
+	await process_frame
+
+
+# --- the look/talk marker ---------------------------------------------------
+
+
+## Round 24: a thing to look at or a person to talk to is marked by a small green ring on
+## the object, not outlined; ways out keep the outline. The ring sits on the middle of the
+## traced meshes, leaves their layers alone, fades with the cue, and the pointer finds a
+## marked object on the object or a pinpoint at its anchor, never on its whole sphere.
+func _check_marker_on_the_object() -> void:
+	Harness.stage = "look marker"
+	var plain := InteractableScene.instantiate() as Interactable
+	_expect(plain.uses_marker_cue(), "A plain look target is not marked by default.")
+	plain.free()
+	var exit := LocationExit.new()
+	_expect(not exit.uses_marker_cue(), "A way out lost its outline to the marker.")
+	exit.cue_style = Interactable.CueStyle.MARKER
+	_expect(exit.uses_marker_cue(), "cue_style = MARKER does not override the exit default.")
+	exit.free()
+
+	var prop := _make_prop(&"marker_probe", Vector3(0.0, 0.0, -6.0), Interactable.CueStyle.AUTO)
+	var probe := prop["probe"] as Interactable
+	var body := prop["body"] as MeshInstance3D
+	await process_frame
+	await process_frame
+	probe.set_highlighted(true)
+	var cue := probe.get_cue()
+	if not _expect_true(cue != null and cue.is_revealed(), "The marked prop has no revealed cue."):
+		(prop["holder"] as Node).queue_free()
+		return
+	_expect(cue.is_marking(), "A look target was not marked.")
+	_expect(not cue.is_outlining(), "A marked look target is also outlined.")
+	_expect(cue.get_overlay() == null, "A marked look target took the outline overlay.")
+	_expect(body.layers & OutlineOverlay.MASK_LAYER == 0, "A marked look target's mesh went onto the outline layer.")
+	var marker := cue.get_marker()
+	_expect(marker != null and marker.visible, "The marker is not drawn.")
+	var shard := cue.get_parts().get("shard", null) as MeshInstance3D
+	_expect(shard == null or not shard.visible, "A marked prop also draws the fallback shard.")
+	await _wait(FADE_WAIT)
+	if marker != null:
+		var centre := probe.get_marker_position()
+		_expect(
+			marker.global_position.distance_to(centre) < 0.01,
+			"The marker is at %s, not on the object's middle %s." % [marker.global_position, centre]
+		)
+		var material := marker.material_override as ShaderMaterial
+		var opacity := float(material.get_shader_parameter(&"opacity")) if material != null else 0.0
+		_expect(opacity > 0.95, "The marker never faded in (%.2f)." % opacity)
+	probe.set_highlighted(false)
+	await _wait(FADE_WAIT)
+	_expect(not cue.visible, "The marker is still drawn after the highlight ended.")
+
+	# The pointer rule, without a room: a ray through the sphere that misses both the
+	# drawn boxes and the anchor pinpoint does not pick a marked object; an outlined one
+	# keeps its whole sphere.
+	var controller := InteractionController.new()
+	var anchor := probe.global_position
+	var beside := anchor + Vector3(0.0, 0.0, 3.0)
+	var off_anchor := (anchor + Vector3(0.0, 0.5, 0.0) - beside).normalized()
+	var at_anchor := (anchor - beside).normalized()
+	_expect(not controller._accepts_anchor_pick(beside, off_anchor, probe),
+		"A ray half a metre off a marked object's anchor still picks it.")
+	_expect(controller._accepts_anchor_pick(beside, at_anchor, probe),
+		"A ray straight at a marked object's anchor no longer picks it.")
+	probe.cue_style = Interactable.CueStyle.OUTLINE
+	_expect(controller._accepts_anchor_pick(beside, off_anchor, probe),
+		"An outlined object lost its anchor sphere as a pointer target.")
+	controller.free()
+	(prop["holder"] as Node).queue_free()
 	await process_frame
 
 
@@ -541,6 +618,11 @@ func _wait(seconds: float) -> void:
 	if seconds > 0.0:
 		await create_timer(seconds).timeout
 	await process_frame
+
+
+func _expect_true(condition: bool, message: String) -> bool:
+	_expect(condition, message)
+	return condition
 
 
 func _expect(condition: bool, message: String) -> void:

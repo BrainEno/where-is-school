@@ -17,7 +17,14 @@ The navigation mesh is baked from the same slabs, guards and sloped stair collid
 
 ## Readable repetition
 
-- Each bay has front and rear doors, with separate small glazed transoms, and a 1.98 m × 0.30 m slot between them. The slot starts 2 m above the hall. Use the normal **Interact** action facing it, or click the glass. Both paths stage a real physics hop; the observation is presented only after the eye has passed the opening and the body has landed. There is no new global jump action.
+- Doorway arrivals declare their heading (`metadata/entry_facing`, see
+  [ARCHITECTURE §5h](ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract)):
+  entering from the front yard faces north into the glass (`FromTeachingEntrance`);
+  coming up from the yard faces north up the fire landing (`FromSchoolyard`); the front
+  yard's `FromCorridor` faces east toward the school gate, shared by the glass and the gate
+  steps until those exits get their own markers; the yard's `FromCorridor` faces south, away
+  from the red door.
+- Each bay has front and rear doors, with separate small glazed transoms, and a 1.98 m × 0.30 m slot between them. The slot starts 2 m above the hall. Since round 24 only two slots are something to hop up to (`PEEK_BAYS`: `LowerWest2` beside the biology room on 02, `UpperWest1` at the top of the west stair on 03); the other seven are glazed and lit but are wall. At those two, use the normal **Interact** action facing the slot, or click the glass itself. Both paths stage a real physics hop; the observation is presented only after the eye has passed the opening and the body has landed. There is no new global jump action.
 - The other classrooms are observations, not destinations: desks, a lectern and a rear wall are modelled behind each slot, but the biology classroom remains the only fully playable **classroom**. `104` and `202` repeat in different bays. Room depths and floor lines vary slightly behind otherwise familiar pairs of doors.
 - The right-hand wall is mostly masonry. On 02 and 03, a 1.06 m sill, 2.35 m lintel line and broad piers surround each divided sash (normally about 1.8 × 1.29 m). Masonry blocks ground and depth rays; only the clear aperture has a player-only barrier. The nearest bay can fade for the follow camera, not the whole elevation. The court paint, hoops, shed and plinth share the playable yard’s source. Its concrete apron continues under the teaching block’s foundations, keeping the yard and the fire stair visually connected. This view adds no yard colliders, actors, nav or story triggers.
 - Rose and petrol enamel on 01, sage and ochre public-office trim on 02, and an indigo ledger wall on 03 make repeated rooms legible even when their numbers are unreliable. See [the wing's art notes](../art/teaching_block/README.md).
@@ -166,6 +173,78 @@ keeps adjacent cutaways from pulsing when the sight ray alternates across a seam
 The south end of the street has a visible works barrier where its physical road
 ends. Leaving the playable floor elsewhere has a same-location fallback (see
 [the placement contract](ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract)).
+
+## Round 23: the walk-out, five different stairs, iron doors
+
+The owner found leaving 01 for the front yard (前操场) strange - the glass entrance's apron
+ended at a railing with a STREET plate on it, a balcony over the void that you had to "use"
+to leave - and asked for a ground floor and doors with more character, and above all for
+stairs that each look different and are not found the moment you walk in. The imagery is
+the owner's novel: schools tangled into residential compounds, always grey, classrooms high
+up winding stairs, fitness equipment, iron doors that are only doors, and stairs that change.
+
+- **The walk-out.** The apron's south side is open (`guard_edges` no longer rails it). Two
+  0.12 m steps (`WALKOUT_STEP`, each under the body's 0.25 m step) go down to a dirt
+  forecourt at `FORECOURT_Y` in the front yard's own `yard_dirt` and trodden `yard_path`,
+  between the front yard's low railings, to two brick gateposts with a 前操场 plate. The
+  `EntranceToStreet` exit (in `corridor.tscn`) stands between them; `GateStop` closes the
+  opening to the capsule just past it, where the soil is only seen. A waist twister (扭腰器)
+  and one faint orange street lamp stand inside the rails. `GroundWingApron` now stops at
+  the apron's line so it no longer covers the lower soil.
+- **`flight()` styles.** `guard` is `panel` (the old balustrade), `bars` (painted iron
+  balusters under a round handrail), `bare` (no handrail drawn; the sides stay closed to
+  the capsule) or `wall` (a stairwell whose sides fade for the camera like other walls);
+  `treads="ramp"` shaves the steps into one slope with their ghosts left on it.
+  `guard_edges(..., bare=True)` draws only a kerb.
+- **Blue 01 stair:** a grey concrete stairwell. At 01 it sits behind grey jambs and a raised
+  roller shutter at the gallery's end (`StairwellJambNorth/South`, `StairwellLintel`), so
+  nothing of it shows from the glass entrance. Its right-angle turn is piled with two bikes,
+  two skateboards and roller skates (`RearStair/TurnPile`); the last flight is shaved into
+  a ramp under a thin, wrinkled, wet carpet with one dim bulb on a cord (`WetCarpet`).
+- **Red 03 stair:** no handrail and nearly equal bare cement steps; tyres stacked in the
+  landing's corner (with a collider) and a rolled carpet along its edge.
+- **North dogleg:** green iron balusters, and a pull-up bar on the half landing. The false
+  half-flight behind the screen is also blocked - tyres, a rolled carpet, rubbish bags.
+- **Yard stair:** walled and sunk, and flooded at the bottom (`Flood`, translucent), with big
+  spiky plants in the water and on a tread, and a straight ladder up the landing wall.
+- **West stair:** stays the dream annex's escalator.
+- **01 ground floor:** freshly mopped cement (translucent `WetPatch*` smears at distinct
+  heights) and the duty students' mop and bucket of murky water; classroom 103 behind an
+  iron grille with a padlock; two iron doors in the east wing (`IronDoorWest` "↓",
+  `IronDoorNorth` "01") that answer a knock with nothing (`corridor_iron_door_west/north`).
+
+`corridor_art_test` now walks down the walk-out to `FORECOURT_GATE` before taking the exit;
+`location_art_test` counts 36 corridor interactables; the `teaching_stairs` leg of
+`Location art capture` frames all of the above (11 frames, after only).
+
+## Round 24: a small ring for looking, fewer windows, a step out of the way
+
+The owner found looks and people far too easy to select by accident - the selectable area
+was much larger than the thing - and asked for Disco Elysium's cue: a small green ring on
+the thing itself, and a look only when the click lands on it. While walking the hall the
+protagonist kept hopping at the high windows, so not every window should be a target. The
+stairs' full outline stays, but leaving the teaching block a stray touch on the stairs must
+not send the player straight back in.
+
+- **The ring.** Every interactable that is not a way out (`LocationExit`) is now marked by
+  a 24 px green ring with a pale dot at the middle of what its outline used to trace, and
+  is no longer outlined; doors, gates and stairs keep the outline. Details:
+  [ARCHITECTURE.md](ARCHITECTURE.md), "Marker or outline".
+- **Precise pointing.** A marked object is found by the pointer on its own pick boxes, or
+  within 0.18 m of its anchor - not anywhere in its proximity sphere, which for the high
+  windows was 1.15 m around a point in front of the glass. That sphere was what turned a
+  click on the floor beside a window into a hop at it. Exits keep the sphere.
+- **Windows.** Seven of the nine `high_window_*` peeks are gone (`PEEK_BAYS` in
+  `tools/build_teaching_block.py`); `high_window_lowerwest2` and `high_window_upperwest1`
+  remain, with the `corridor_high_window` text unchanged. `classroom_glass` and
+  `corridor_wait` (the window sill) are ordinary looks, now marked and precise.
+- **Out of the door, off the step.** Going out to the schoolyard (`to_schoolyard`), the
+  player used to stand 1.6 m from the red fire door, inside the 1.6 m sphere of the way
+  back (`pg_to_corridor`, outlining the door and its step), so the first stray click walked
+  them back in. The yard's `FromCorridor` marker now has `metadata/entry_walk = 1.6`: after
+  the fade-in the protagonist walks 1.6 m out into the yard on their own, then control
+  comes back. `corridor_art_test` checks the walk and walks back to the door before using
+  it; `companion_route_test` expects the player anywhere along that walk.
 
 ## Build and check
 

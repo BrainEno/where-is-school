@@ -102,6 +102,12 @@ func load_world(world: Dictionary, catalog: LocationCatalog, locations: Location
 		# LocationHost just placed rather than uncovering a void on Continue.
 		if not locations.get_current().is_below_playable_space(pose.origin):
 			player.teleport(pose)
+			# teleport() keeps the current heading for an identity basis, which is what a
+			# saved -Z heading produces. The entry has its own heading now, so the saved one
+			# is restored explicitly.
+			var facing := vec3(world.get("facing", null))
+			if facing.length_squared() > 0.0001:
+				player.face_toward(facing)
 	return true
 
 

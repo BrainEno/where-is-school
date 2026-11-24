@@ -44,6 +44,8 @@ var _back: Button = null
 ## Touch-only confirmation of edits, not a second write or an entry in desktop focus.
 var _done: Button = null
 var _story_feedback := ""
+## The `{name}` values behind `_story_feedback`; a refused write names the step that failed.
+var _story_feedback_args := {}
 ## id -> the focusable control for that row.
 var _controls: Dictionary = {}
 var _capture_action := StringName()
@@ -136,6 +138,7 @@ func open() -> void:
 	_cancel_capture()
 	# A fresh visit starts on the first rows rather than a previous swipe's offset.
 	_story_feedback = ""
+	_story_feedback_args = {}
 	_rebuild(false)
 	show()
 	_fit()
@@ -658,7 +661,12 @@ func _cycle(id: StringName, step: int) -> void:
 	if id == &"story_editor":
 		var settings := _settings()
 		var saved := settings != null and bool(settings.call("set_story_editor_enabled", value == "on"))
-		_story_feedback = "settings.done_note" if saved else "settings.save_failed"
+		var installed := settings != null and bool(settings.call("is_story_editor_enabled"))
+		var refused := _store_failure_step(settings)
+		# The step is what makes a refusal something the author can act on, instead of only a
+		# "try again" nobody can diagnose (#394).
+		_story_feedback_args = {"step": refused}
+		_story_feedback = _story_feedback_key(saved, installed, refused)
 		_sync_story_choice()
 		_refresh_status_hint()
 		return
@@ -894,9 +902,10 @@ func _refresh_status_hint() -> void:
 	if _status == null or is_capturing():
 		return
 	_status.add_theme_color_override(&"font_color",
-		MenuStyle.WARN if _story_feedback == "settings.save_failed" else MenuStyle.MUTED)
+		MenuStyle.WARN if _story_feedback.begins_with("settings.save_failed") \
+			or _story_feedback == "settings.session_only_note" else MenuStyle.MUTED)
 	if not _story_feedback.is_empty():
-		_status.text = L10n.t(_story_feedback)
+		_status.text = L10n.t(_story_feedback, _story_feedback_args)
 		return
 	var pad := MenuStyle.using_gamepad(self)
 	var keys := {
@@ -1090,3 +1099,25 @@ func _display_mode() -> Node:
 
 func _settings() -> Node:
 	return get_node_or_null(^"/root/Settings") if is_inside_tree() else null
+
+
+## Which note the story editor row shows after one cycle of the switch: `saved` is whether the
+## preference reached the file, `installed` whether the editor is on now. A development run can
+## be installed without being saved, and that deserves a different sentence (#395). A refusal
+## with no step cannot be the session-only case: the state only changes through a settings node
+## that reported one.
+static func _story_feedback_key(saved: bool, installed: bool, step: String) -> String:
+	if saved:
+		return "settings.done_note"
+	if not step.is_empty() and installed:
+		return "settings.session_only_note"
+	return "settings.save_failed" if step.is_empty() else "settings.save_failed_step"
+
+
+## The step `Settings` refused its last write over, or "" when it has none to report. Read
+## through a lookup so a stand-in settings node in a test keeps the row working.
+static func _store_failure_step(settings: Node) -> String:
+	if settings == null or not settings.has_method("get_last_store_failure"):
+		return ""
+	var failure: Variant = settings.call("get_last_store_failure")
+	return "" if not (failure is Dictionary) else String((failure as Dictionary).get("step", ""))

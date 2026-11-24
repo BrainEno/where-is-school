@@ -324,6 +324,12 @@ find the sheet while the outline, correctly, drew nothing.
   centre or a corner of one of its boxes reaches the box first. When hotspots overlap,
   an eligible mesh-bounds hit takes priority over an anchor-only hit, and the nearest
   mesh-bounds hit wins. These are still bounding boxes, not pixel-accurate silhouettes.
+  Only **outlined** objects (ways out) keep the whole sphere as a pointer target. A
+  **marked** object - a thing to look at, a person, a control (`Interactable.CueStyle`,
+  below) - is found on its boxes and otherwise only within
+  `InteractionController.MARKER_ANCHOR_PICK_RADIUS` (0.18 m) of its anchor (round 24: the
+  spheres, a metre or more, made it easy to click a window or a person by accident while
+  walking). Facing and E are unchanged.
 - *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, drawn
   with at least one material that writes depth - anything but an alpha-blended
   `BaseMaterial3D` (a `ShaderMaterial`, or no material, counts as opaque). A collider with
@@ -445,6 +451,21 @@ together:
   light: unshaded, no depth write, back faces drawn, so it reads on any surface without
   being lit by the room or punching a hole in what is behind it. Every mesh is built in
   code (`SurfaceTool`), so no prop, scene or camera distance needs new art.
+- **Marker or outline (round 24).** Things to look at and people to talk to get a small
+  green ring with a pale dot on the object itself - Disco Elysium's look/talk mark - and no
+  outline; ways out (doors, gates, stairs: every `LocationExit`) keep the full outline below.
+  `Interactable.cue_style` is `AUTO` almost everywhere, which resolves to the outline for a
+  `LocationExit` and to the marker for everything else; `OUTLINE` and `MARKER` override it.
+  The ring (`HoverCue`'s `Marker` child, `assets/shaders/interaction/look_marker.gdshader`)
+  is a billboard of constant pixel size - 24 px at a 900 px high window, scaled with the
+  window - placed on the centre of the meshes the outline would trace
+  (`Interactable.get_marker_position()`) and moved with them every frame, so it rides on a
+  person who walks. It is drawn without a depth test (it sits inside solid objects) and is
+  only shown while the object is the target, which already requires it to be visible. It
+  fades with the cue and breathes by a pixel. The owner had rejected a ring *on the floor*
+  next to the object (below); this one is on the thing and much smaller. With the marker came
+  the narrower pointer rule for marked objects (section 5e) and fewer jump-to-look windows
+  in the corridor ([CORRIDOR_ART.md](CORRIDOR_ART.md), round 24).
 - **The object is outlined, not circled.** The owner asked for the usable object to be
   shown the way Disco Elysium shows it: its own contour, traced. `HoverCue` asks the
   interactable for `get_outline_meshes()` (the nodes named in `outline_paths`, plus any mesh
@@ -796,12 +817,28 @@ of the location that was actually entered — after it was checked against the e
 claim — not from the exit's `destination_id` on its own. The exit and the scene can no
 longer disagree about which room the player is in.
 
-**Spawn markers carry position, not heading.** Every marker that ships is position-only,
-so arrival keeps the heading the player already had; the mechanism is real (a marker
-with a rotation does set the arrival facing, and the test pins that on a fixture), and
-authoring a rotation on a marker is what changes it. Which marker an exit names is
+**Spawn markers carry position, and a heading only when they declare one.** A marker
+without `metadata/entry_facing` is position-only: arrival keeps the heading the player
+already had, because `PlayerController.teleport()` reads an identity basis as "keep".
+A marker with `metadata/entry_facing = true` sets the arrival heading from its own -Z,
+even when its rotation is identity (`LocationHost` applies it after the teleport). The
+four doorway markers of the teaching block and its yard use it (see
+[CORRIDOR_ART.md](CORRIDOR_ART.md)). Restoring a save sets the saved heading explicitly.
+Unmarked doorway markers in other scenes still keep the previous heading; converting them
+is not done yet. The test pins the declared headings. Which marker an exit names is
 checked by the test above: the marker must exist, must be the one the player lands on,
 must be walkable ground, and for a return trip must sit by the exit that leads back.
+
+**A marker may also ask for a few steps on arrival (round 24).** `metadata/entry_walk =
+<metres>` makes `LocationFlow.transition_to()` walk the player that far straight ahead
+(along the marker's -Z) after the fade-in and before the transition beat lets go, with
+`StagedActorMotion.walk_to` - so no click can turn the walk round, and a walk the capsule
+cannot make (Q parked on the line) is skipped rather than forced. It exists for doorways whose
+way back sits under the cursor at the player's feet: entering the schoolyard from the
+teaching block put the player in front of the fire door and its step, inside the 1.6 m
+sphere of `pg_to_corridor`, so the first stray click walked them back in. The yard's
+`FromCorridor` walks 1.6 m out into the yard. `LocationHost.get_entry_walk_target()` reads
+it; a direct `load_location()` (a test, a restored save) does not walk.
 
 **Accidental falls are not arrivals.** A successful commit seeds the recovery pose
 from its entry marker. `LocationHost` checks the live player after physics movement;
@@ -866,7 +903,18 @@ checklist in that test's section of the pull request, because no CI runner opens
 `scripts/story_editor/`; the device builds also link the Files bridge. The separate author
 app starts its editor automatically. In the normal iPhone app `[authoring] story_editor` in
 `user://settings.cfg` is off by default. The row appears only when the runtime is packed,
-and does not apply the change if the staged settings write fails. `Settings` delegates to
+and does not apply the change if the staged settings write fails; the row then names the step
+of the swap the machine refused, and the swap publishes onto whichever backup name is free so
+a leftover nobody can remove cannot wedge every later preference (#394). A development run of
+the project can force the switch on for one session with `--story-editor` or
+`WHERE_IS_SCHOOL_STORY_EDITOR=1`, which writes nothing and is ignored by builds that leave
+`scripts/story_editor/` out; and in such a run - `StoryEditorEntry.debug_run`, the same
+`OS.is_debug_build()` test the dialogue and location code use to keep development reports out of
+a shipped copy - a switch the machine refused to store still installs the editor for the session,
+with the row saying it is not saved, because the file is the author's persistence and not the
+author's permission. Turning the editor *off* always needs the write to succeed, and a release
+export (`--export-release`) meets none of this: a player's copy refuses the change outright
+(#395). `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
 mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The

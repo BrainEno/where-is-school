@@ -120,5 +120,19 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "Two plates have lines on the other side. The last one is blank."
+  },
+  "corridor_iron_door_west": {
+    "title": "Iron door",
+    "prompt": "Knock",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "You knock three times. The arrow on the plate points down, but the knock comes back from right behind the paint, flat, as if the door were set straight into the wall."
+  },
+  "corridor_iron_door_north": {
+    "title": "Iron door",
+    "prompt": "Knock",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "Another iron door, another 01. You wait. Somewhere far off a mop is being wrung out. Nobody comes."
   }
 }

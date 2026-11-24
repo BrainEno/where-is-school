@@ -28,6 +28,11 @@ const RESIDENT_CAPTURE_SECONDS := 12.0
 ## the yard's and the resident's pipelines then and game time stalls with it, so that
 ## one capture gets a longer real-time window (round 21 added four yard materials).
 const FIRST_DRAW_CAPTURE_SECONDS := 28.0
+## Real seconds a staged beat may take to wind down before the next step. Software
+## Forward+ on a shared runner can stall the roof and resident beats past 20 s, and
+## the slip route then started on a locked controller (failed three runs in a row on
+## 2026-11-24, passed on the same code later).
+const STAGE_WAIT_SECONDS := 60.0
 
 var _failures: Array[String] = []
 var _shots: Array[String] = []
@@ -43,7 +48,7 @@ var _voices: InnerVoiceDirector = null
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 420.0, "capture_classroom_anomalies.gd")
+	Harness.arm_watchdog(self, 600.0, "capture_classroom_anomalies.gd")
 	call_deferred("_run")
 
 
@@ -286,7 +291,8 @@ func _activate(id: StringName) -> void:
 		return
 	# A staged beat that is still winding down (on software Forward+ the roof and resident
 	# beats run slowly) keeps the controller off, and it then ignores the request outright.
-	if not await Harness.wait_until(func() -> bool: return _interaction.is_enabled(), 20.0):
+	var wait := STAGE_WAIT_SECONDS
+	if not await Harness.wait_until(func() -> bool: return _interaction.is_enabled(), wait):
 		_failures.append("The interaction controller was still off when '%s' was used." % id)
 	if not target.can_interact():
 		_failures.append("'%s' could not be used when the capture activated it." % id)
@@ -386,8 +392,22 @@ func _settle() -> void:
 			_dialogue.advance_presentation()
 		return not _dialogue.is_busy() and not _sequence.is_beat_active() \
 			and _voices.pending_count() == 0 and not _voices.is_firing()
-	, 20.0):
-		_failures.append("The capture waited on a busy stage.")
+	, STAGE_WAIT_SECONDS):
+		_failures.append("The capture waited on a busy stage (%s)." % _stage_state())
+
+
+## What still holds the stage, for the failure line: the artifact log is not always at hand.
+func _stage_state() -> String:
+	var state := PackedStringArray()
+	state.append("dialogue busy" if _dialogue.is_busy() else "dialogue idle")
+	if _dialogue.has_pending_choices():
+		state.append("choices waiting")
+	if _sequence.is_beat_active():
+		state.append("beat active")
+	state.append("%d voices pending" % _voices.pending_count())
+	if _voices.is_firing():
+		state.append("voice firing")
+	return ", ".join(state)
 
 
 func _shot(name: String) -> void:

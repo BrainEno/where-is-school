@@ -212,6 +212,9 @@ func _make_probe(interact_id: StringName, position: Vector3) -> Interactable:
 	probe.prompt_text = "Probe"
 	probe.inspection_id = &"classroom_own_desk"
 	probe.radius = 0.7
+	# A bare probe has nothing drawn; keep the outlined pointer rule (its whole sphere) so
+	# the scan below finds it. This test is about switching targets, not pick precision.
+	probe.cue_style = Interactable.CueStyle.OUTLINE
 	_location.add_child(probe)
 	probe.global_position = position
 	return probe
@@ -468,18 +471,27 @@ func _reset_to_start() -> void:
 ## target-switch rule.
 func _click_target(target: Interactable) -> bool:
 	var rect := _player.get_viewport().get_visible_rect().size
+	# A marked person is pointable only on their own body (round 24), which a coarse grid
+	# can step over: try where the object is drawn first, then the grid.
+	var screens: Array[Vector2] = []
+	var camera := _player.get_viewport().get_camera_3d()
+	if camera != null:
+		for point: Vector3 in [target.get_marker_position(), target.global_position]:
+			if not camera.is_position_behind(point):
+				screens.append(camera.unproject_position(point))
 	for x_step in 20:
 		for y_step in 14:
-			var screen := Vector2(
+			screens.append(Vector2(
 				rect.x * (0.02 + 0.96 * float(x_step) / 19.0),
 				rect.y * (0.02 + 0.96 * float(y_step) / 13.0)
-			)
-			if _interaction.get_target_at_screen_position(screen, false) != target:
-				continue
-			_last_clicked_under_pointer = _name_of(target)
-			_last_clicked_screen = screen
-			_navigator.click_at_screen_position(screen)
-			return _navigator.was_last_click_accepted()
+			))
+	for screen in screens:
+		if _interaction.get_target_at_screen_position(screen, false) != target:
+			continue
+		_last_clicked_under_pointer = _name_of(target)
+		_last_clicked_screen = screen
+		_navigator.click_at_screen_position(screen)
+		return _navigator.was_last_click_accepted()
 	_last_clicked_under_pointer = "<not on screen>"
 	return false
 

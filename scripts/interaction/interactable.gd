@@ -28,6 +28,18 @@ const PICK_MAX_EXTENT := 12.0
 const FLOOR_PAINT_THICKNESS := 0.05
 const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 
+## How the object says "this one" when it is the target (round 24, `docs/ARCHITECTURE.md, "Marker or outline"`).
+##
+## * `MARKER` - a small green ring on the object itself, Disco Elysium's look/talk dot. The
+##   pointer finds such an object only on the object: its pick boxes, or a few centimetres
+##   around its anchor (`InteractionController.MARKER_ANCHOR_PICK_RADIUS`), never the whole
+##   proximity sphere.
+## * `OUTLINE` - the full traced silhouette (`OutlineOverlay`). Kept for ways out of a room -
+##   doors, gates and stairs - which the owner wants to read as a whole.
+## * `AUTO` - `OUTLINE` for a `LocationExit`, `MARKER` for everything else: things to look
+##   at, people to talk to, controls to press.
+enum CueStyle { AUTO, OUTLINE, MARKER }
+
 ## Stable id used by tests and routing tables.
 @export var interact_id: StringName = &""
 ## Prompt used when no other source describes this object. Authored text is kept
@@ -85,6 +97,9 @@ const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 ## player is being told about, and that is the sheet, not the wall. When this is empty the
 ## support paths are used, and meshes parented under this node are always included.
 @export var outline_paths: PackedStringArray = []
+
+## See `CueStyle`. Almost always left on `AUTO`.
+@export var cue_style: CueStyle = CueStyle.AUTO
 
 var _prompt_override: String = ""
 var _highlighted := false
@@ -194,6 +209,34 @@ func gets_pick_box(mesh: GeometryInstance3D) -> bool:
 	return not (flat and below_anchor)
 
 
+## Whether this object is marked with the small ring rather than outlined (see `CueStyle`).
+func uses_marker_cue() -> bool:
+	match cue_style:
+		CueStyle.OUTLINE:
+			return false
+		CueStyle.MARKER:
+			return true
+	return _marks_by_default()
+
+
+## `AUTO`'s answer. `LocationExit` overrides it: a way out keeps the outline.
+func _marks_by_default() -> bool:
+	return true
+
+
+## Where the ring sits: the middle of what the outline would trace, so it lands on the
+## sheet, the person's chest, the window pane - not on the anchor, which for a door or a
+## notice is a point in the air in front of it. The anchor when there is nothing to trace.
+func get_marker_position() -> Vector3:
+	var meshes := get_outline_meshes()
+	if meshes.is_empty():
+		return global_position
+	var bounds := meshes[0].global_transform * meshes[0].get_aabb()
+	for index in range(1, meshes.size()):
+		bounds = bounds.merge(meshes[index].global_transform * meshes[index].get_aabb())
+	return bounds.get_center()
+
+
 ## The boxes the pointer can find this object by, besides its anchor sphere. Public for
 ## tests: every shipped object with an outline should also be pointable where it is drawn.
 func get_pick_shapes() -> Array[CollisionShape3D]:
@@ -249,8 +292,9 @@ func is_occupied_by(_body: Node3D) -> bool:
 ## The controller marks exactly one interactable as highlighted: the one E would use
 ## right now, and the one a click would walk to.
 ##
-## The cue itself lives in `scripts/interaction/hover_cue.gd`: an outline traced around the
-## meshes `get_outline_meshes` returns. It is built the first time the object is
+## The cue itself lives in `scripts/interaction/hover_cue.gd`: a small green ring on the
+## object, or for an exit an outline traced around the meshes `get_outline_meshes` returns
+## (see `CueStyle`). It is built the first time the object is
 ## highlighted, and it fades in and out instead of switching: an outline that appears
 ## between two frames reads as a flicker, one that arrives reads as attention.
 func set_highlighted(value: bool) -> void:
