@@ -840,7 +840,7 @@ up. It exists for doorways whose way back sits under the cursor at the player's 
 
 | Marker | Walk | Why |
 | --- | --- | --- |
-| `front_yard/FromCorridor` | 2.5 m east | Down the 02 gate steps (`school_gate`) or out of the 01 glass entrance; on toward the gate, away from the glass door (`front_yard_back_inside`). |
+| `front_yard/FromCorridor` | 3.0 m east | Out of the 01 glass doors (`teaching_entrance_to_street`, round 25) the player stands on the porch landing in front of the shut leaves that are the way back (`front_yard_back_inside`); the walk goes down its three steps to 0.8 m past the foot. |
 | `street/FromResidential` | 5.8 m | Back from the flats the player stood on the landing of the twelve steps that are themselves the way up (`street_to_residential`); the walk goes down the flight to 0.9 m past its foot. |
 | `playground/FromCorridor` | 1.6 m | Out of the red fire door the player stood inside the 1.6 m sphere of `pg_to_corridor` (door and step). |
 

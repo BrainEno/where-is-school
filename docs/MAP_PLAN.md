@@ -24,8 +24,8 @@ comes from the manuscript.
 | Location id | Scene | What it is now | Status |
 |---|---|---|---|
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
-| `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: the glass entrance (out to the front yard) and directory on 01, biology and the old outside exit (also to the front yard) on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
-| `front_yard` | `scenes/locations/front_yard/front_yard.tscn` | Round 16. Out of the 01 glass entrance onto the front yard (前操场): bare loess dirt with a trodden path and dry grass at the edges, no road. Seven dead trees, a low railing north and south with more dirt sports ground past it, so the teaching block has playground on both sides. East is the school wall (围墙) with the school gate (校门) in it: a parking-lot retractable gate (伸缩门), shut, and beside it a side door (小门) one person wide, with a card reader (刷卡机) on its pier just inside. The reader is look-only; the door opens without a card. Three inspections, owner text still TODO. | 已实现 |
+| `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: the big two-leaf glass doors (a click out to the front yard's porch, round 25), the directory and a side door to the stable lane on 01, biology on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
+| `front_yard` | `scenes/locations/front_yard/front_yard.tscn` | Round 16. Out of the 01 glass doors onto a porch, three steps above the front yard (前操场, round 25): bare loess dirt with a trodden path and dry grass at the edges, no road. Seven dead trees, a low railing north and south with more dirt sports ground past it, so the teaching block has playground on both sides. East is the school wall (围墙) with the school gate (校门) in it: a parking-lot retractable gate (伸缩门), shut, and beside it a side door (小门) one person wide, with a card reader (刷卡机) on its pier just inside. The reader is look-only; the door opens without a card. Three inspections, owner text still TODO. | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | Reached only through the school gate's side door (round 16). West is the school wall (围墙) with the gate at its south end and an ivory dado along its foot; over it, the front yard's dirt, its dead trees and the teaching block with its barred windows stand back out of reach. Then a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The gutter is an open ditch under the school-side kerb: lined, its water holding a pale strip of sky, bare cracked earth on its road side, precast slabs over it from the crossing to the school gate, and a drain cover higher than the water that runs to it. The road runs off its north end into the laid-flat sky; a blank sign stands out there, and a pale ribbed panel stands in the ditch's line. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
@@ -57,7 +57,6 @@ flowchart LR
 
   classroom -- "classroom_door → FromClassroom" --> corridor
   corridor -- "back_to_classroom → FromCorridor" --> classroom
-  corridor -- "school_gate → FromCorridor" --> front_yard
   corridor -- "teaching_entrance_to_street → FromCorridor" --> front_yard
   front_yard -- "front_yard_back_inside → FromTeachingEntrance" --> corridor
   front_yard -- "front_yard_to_street → FromCorridor" --> street
@@ -107,7 +106,7 @@ is the same yard behind the corridor.
 | Unused spawn `playground/FromSchool` | No exit targets it; a near-duplicate of `FromCorridor` | 建议新增: remove, or keep for a future school-interior door into the yard |
 | Spawn `residential/FromStair` on a look-only landing | The west stair goes nowhere yet | 建议新增: the stair is the natural hook for "upstairs flats" (§6); until then keep it unused |
 | Prompt mismatch: alley → courtyard says "Go back to the street" | `prompt.back_to_street` reused | 建议新增: a `prompt.back_to_courtyard` key (both locales) |
-| School return | The front yard's glass-door exit uses `prompt.back_inside` and lands outside the 01 glass entrance; the street's side door uses `prompt.back_to_school` and lands in the front yard. | 已实现 |
+| School return | The front yard's glass-door exit uses `prompt.back_inside` and lands inside the 01 glass doors; the street's side door uses `prompt.back_to_school` and lands in the front yard. | 已实现 |
 | Prompt: courtyard → alley says "Keep walking" (`prompt.milestone`) | The key name dates from when the alley was the end | 建议新增: rename the key; text can stay |
 | Objectives are ambient ("Nothing asks you to be anywhere") | Intended tone; no wayfinding role | Keep; 尚待作者决定 whether any location ever gets a directive objective |
 | Corridor and street are one-sided stages | The camera never sees the east side of the street or the west side of the walkway | Accepted for an isometric follow camera; new rooms should be authored for the same view |
@@ -160,6 +159,21 @@ exploration, not implemented content; this plan places them only as far as the b
 | Mirror-lined crawlspace or pipe | A narrow connector between two places | Short separate scene | 已确定但未实现; what it connects: 尚待作者决定 |
 | The schoolyard's impossible animals (a crocodile or a lion, as examples) | Occupants of the yard, calm, not combat | Inside `playground` (the yard's middle is reserved for events) | 已确定但未实现; relation to the green animal: 尚待作者决定 |
 | A laboratory with its own medium | Optional detour off 01, with a cold studio palette and instrumentation | `laboratory` | 已实现 |
+
+### School layout (round 25, the owner's plan)
+
+The owner's picture of the campus: the teaching block stands inside the school wall (one
+side may be open); the dirt front yard (`front_yard`) east of it and the court
+(`playground`) west of it both stay as they are. North of the block a very narrow passage
+of dead trees between iron railings, a mirrored L: from beside the front yard's school
+gate north, then west along the north wall to the court and on. South: the sports
+equipment, moved off the court. Elsewhere: school buildings such as a gym.
+
+| Phase | Content | Status |
+|---|---|---|
+| 1 | Out of 01 by a big two-leaf glass door facing east (down the blue stair); a click lands the player on a porch's steps above the dirt yard, and they walk down onto it. The 02 gate steps and the small forecourt are gone; a plain side door from the 01 gallery leads to the stable lane. See [CORRIDOR_ART.md](CORRIDOR_ART.md), round 25. | 已实现 |
+| 2 | The school wall round the block, and the north grove as a new walkable location joining the two yards | 已确定但未实现 |
+| 3 | The sports equipment south, a gym, distant buildings lined up with the map | 已确定但未实现 |
 
 ## 6. Expansions around the campus
 

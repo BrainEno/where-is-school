@@ -10,6 +10,9 @@ const MAIN := preload("res://scenes/main/main.tscn")
 const HALL := "res://scenes/locations/corridor/corridor.tscn"
 const WALL_PATH := ^"TeachingBlock/GroundFloor/EntranceWallWest"
 const ID := &"teaching_entrance_graffiti"
+## Round 25: the glass doors became a click exit and the apron is not walked any more; the
+## sprayed wall faces the stable lane, reached from 01 through the gallery's side door.
+const LANE_STANCE := Vector3(-21.3, -3.4, 16.6)
 
 # Keep the normal autosave contract under test without letting a screenshot run
 # read or clear a player's real save. A surprise write must still fail the test.
@@ -105,7 +108,18 @@ func _enter_hall() -> LocationRoot:
 	var nav := hall.get_node(^"Navigation") as LocationNavigation
 	if not _check.expect(await Harness.wait_until(func() -> bool:
 		return nav.is_routable() and _player.is_on_floor() and _player.is_control_enabled(), 8.0),
-		"The glass-door apron isn't walkable."):
+		"01 inside the glass doors isn't walkable."):
+		return null
+	var map := nav.get_navigation_map()
+	var lane := NavigationServer3D.map_get_closest_point(map, LANE_STANCE)
+	var route := NavigationServer3D.map_get_path(map, _player.global_position, lane, true)
+	if not _check.expect(Vector2(lane.x - LANE_STANCE.x, lane.z - LANE_STANCE.z).length() < 0.35
+		and route.size() >= 2 and route[route.size() - 1].distance_to(lane) < 0.3,
+		"The stable lane outside the sprayed wall can't be reached from 01 (nearest %s)." % lane):
+		return null
+	_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(90.0)), lane + Vector3.UP * 0.05))
+	if not _check.expect(await Harness.wait_until(func() -> bool: return _player.is_on_floor(), 4.0),
+		"The player did not settle in the stable lane."):
 		return null
 	return hall
 
@@ -127,7 +141,7 @@ func _visit(hall: LocationRoot) -> void:
 	var pixel := _rig.camera.unproject_position(ink)
 	if not _check.expect(root.get_visible_rect().has_point(pixel)
 			and _interaction.get_target_at_screen_position(pixel, false) == subject,
-			"No pointer pick at the drawing from the 01 entrance: %s." % pixel):
+			"No pointer pick at the drawing from the stable lane: %s." % pixel):
 		return
 	_check.expect(not _interaction.is_in_reach(subject) and _rig.get_focus_subject() == null,
 		"The camera started before a real approach and use.")

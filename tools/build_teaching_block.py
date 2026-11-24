@@ -63,15 +63,16 @@ GROUND_Z = (10.55, 14.55)
 ENTRANCE_X = -17.65
 ENTRANCE_WIDTH = 6.2
 ENTRANCE_APRON_END = 18.45
-# Round 23: the apron is no longer a railed balcony. Two shallow steps (each under the
-# body's 0.25 m step) walk down onto a dirt forecourt in the front yard's soil, between
-# low railings, to a pair of gateposts; the street exit stands between them.
-WALKOUT_STEP = 0.12
-WALKOUT_STEP_Z = (ENTRANCE_APRON_END, ENTRANCE_APRON_END + 0.6)
-FORECOURT_Y = GROUND_Y - 2*WALKOUT_STEP
-FORECOURT_X = (-21.9, -13.4)
-FORECOURT_Z = (WALKOUT_STEP_Z[1], 22.85)
-GATE_OPENING = (ENTRANCE_X - 1.35, ENTRANCE_X + 1.35)
+# Round 25: the glass doors are the way out to the front yard (前操场), a click like every
+# other exit; nobody walks through them. Outside, the apron is a landing seen through the
+# glass, two steps down onto the yard's soil, with nothing on it to walk. (Round 23's
+# walk-out forecourt, its railings and gateposts are gone.) The stable lane west of the
+# apron has its own plain side door from the gallery, a few metres west of the glass.
+PORCH_STEP = 0.12
+PORCH_STEP_Z = (ENTRANCE_APRON_END, ENTRANCE_APRON_END + 0.6)
+PORCH_SOIL_Y = GROUND_Y - 2*PORCH_STEP
+LANE_DOOR_X = (-22.3, -21.1)
+LANE_DOOR_HEIGHT = 2.2
 WEST_STAIR_Z = -8.45
 WEST_STAIR_WIDTH = 3.2
 BEND_STAIR_WIDTH = 2.8
@@ -99,7 +100,7 @@ WALK_SURFACE = 0.10
 EXTERNAL = {
     **{name: f"{STAGE}/materials/{name}.tres" for name in (
         "walk_plaster", "walk_dado", "walk_step", "school_haze_floor",
-        # Round 23: the walk-out forecourt shares the front yard's (前操场) trodden line.
+        # The soil outside the glass doors shares the front yard's (前操场) trodden line.
         "yard_path",
     )},
     **{name: f"{YARD}/materials/{name}.tres" for name in ("exit_frame", "exit_glass", "exit_steel")},
@@ -122,10 +123,9 @@ SOLIDS = {
     "office_sage": (112, 148, 136), "office_ochre": (190, 153, 101),
     "night_lilac": (154, 145, 179), "blue_hour": (63, 69, 106),
     "signal_ivory": (211, 204, 182),
-    # Round 23: the walk-out, the stairwells and what the novel leaves on the stairs.
+    # Round 23: the stairwells and what the novel leaves on the stairs.
     "cement": (126, 124, 128), "cement_dark": (92, 92, 99), "ghost_step": (104, 102, 108),
-    "yard_rail": (74, 92, 88), "pier_brick": (150, 104, 92), "iron_green": (62, 90, 80),
-    "iron_rust": (126, 80, 62), "shutter_steel": (118, 124, 132), "tyre_rubber": (40, 40, 46),
+    "iron_green": (62, 90, 80), "iron_rust": (126, 80, 62), "shutter_steel": (118, 124, 132), "tyre_rubber": (40, 40, 46),
     "bike_blue": (64, 96, 146), "bike_red": (158, 64, 58), "skate_yellow": (214, 172, 70),
     "skate_mint": (122, 186, 168), "garbage_bag": (52, 58, 70), "garbage_white": (196, 196, 188),
     "carpet_roll": (128, 62, 66), "agave": (92, 124, 104), "agave_tip": (176, 168, 120),
@@ -567,11 +567,13 @@ def solid_wall(b, parent, name, pos, width, yaw=0, height=3.05, base="deep_plum"
 
 
 def teaching_entrance():
-    """The same open glass assembly, seen from the street and the 01 forecourt.
+    """The 01 glass doors, the same assembly from the gallery and from the front yard.
 
-    The sidelights and parked leaves are one continuous pane per side. Intact
-    glass is solid to the capsule and transparent to click rays, just as above.
-    Nothing, including the bake, crosses the 2.66 m clear opening below the header.
+    Round 25: a big pair of glass doors (双开玻璃大门), shut. The sidelights are one
+    continuous pane per side, solid to the capsule and transparent to click rays. The two
+    leaves fill the clear opening: solid to the capsule, the bake and the click ray, so a
+    click on the glass is a click on the door, which is the exit on both sides (corridor
+    EntranceToStreet, front yard BackInside). Nobody walks through.
     """
     b = Build("TeachingBlockEntrance")
     b.mat("entry_pane", transparency=1, cull_mode=2, albedo_color="Color(0.52, 0.77, 0.72, 0.32)")
@@ -597,12 +599,22 @@ def teaching_entrance():
         for i, (shift, length) in enumerate(((0.0, 1.50), (-0.12, 1.23), (-0.31, 0.85))):
             b.box(f"Silkscreen{i}", edge, (direction*(2.18+shift), 1.17+0.17*i, 0.018),
                   (length, 0.037, 0.023), "entry_ribbon")
+        # The leaf, hinged on the stile and meeting its twin on the centre line.
+        leaf_x = direction*0.69
+        b.shape("LeafBody", edge, (leaf_x, 1.32, 0), (1.30, 2.64, 0.07))
+        for part, x, width in (("LeafHinge", 1.30, 0.06), ("LeafMeet", 0.05, 0.08)):
+            b.box(part, edge, (direction*x, 1.32, 0), (width, 2.64, 0.07), "entry_glaze", shadow=True)
+        b.box("LeafTop", edge, (leaf_x, 2.60, 0), (1.22, 0.08, 0.07), "entry_glaze")
+        b.box("LeafKick", edge, (leaf_x, 0.12, 0), (1.22, 0.24, 0.07), "entry_glaze")
+        b.flat("LeafPane", edge, quad(b, 1.18, 2.32), "entry_pane", (leaf_x, 1.40, 0))
+        b.box("LeafBand", edge, (leaf_x, 1.30, 0.004), (1.18, 0.037, 0.043), "entry_ribbon")
+        # A tall brass pull each side of each leaf, beside the meeting stiles.
         for face, z in (("Outside", 0.155), ("Inside", -0.14)):
-            b.box(face+"Pull", edge, (direction*1.65, 1.03, z), (0.052, 0.31, 0.066), "brass_rule")
-            for i, y in enumerate((0.91, 1.15)):
+            b.box(face+"Pull", edge, (direction*0.24, 1.03, z), (0.052, 0.62, 0.066), "brass_rule")
+            for i, y in enumerate((0.77, 1.29)):
                 y += 0.011 if face == "Inside" else 0
-                b.box(f"{face}Mount{i}", edge, (direction*1.65, y, (z+0.018)*0.5),
-                      (0.056 if face == "Inside" else 0.061, 0.058, abs(z-0.018)+0.015), "brass_rule")
+                b.box(f"{face}Mount{i}", edge, (direction*0.24, y, z*0.5),
+                      (0.056 if face == "Inside" else 0.061, 0.058, abs(z)+0.015), "brass_rule")
     top = b.shell("Header", ".", groups=("camera_occluder",))
     # Match the projecting cap's silhouette: the old slim lintel volume missed
     # the camera ray while the cap itself still covered the player inside 01.
@@ -744,7 +756,9 @@ def rear_stair_and_ground_wing(b):
     apron_z = (ground_z[1], ENTRANCE_APRON_END)
     slab(b, g, "Gallery", ground_x, ground_z, GROUND_Y, "gallery_tile", rotate=True)
     slab(b, g, "Recess", alcove_x, alcove_z, GROUND_Y, "recess_tile")
-    slab(b, g, "EntranceApron", entrance_x, apron_z, GROUND_Y, "apron_tile")
+    # Round 25: seen, not walked - the doors are the exit. No collider, so no baked island.
+    b.node("EntranceApron", g, position=vec3(((entrance_x[0]+entrance_x[1])/2, GROUND_Y, sum(apron_z)/2)))
+    slab_dressing(b, child_path(g, "EntranceApron"), ENTRANCE_WIDTH, apron_z[1]-apron_z[0], "apron_tile")
     # Only the east end of the gallery needs a guard; full height walls take the other sides.
     guard_edges(b, g, "GalleryRail", ground_x, ground_z, GROUND_Y,
                 {"North": [ground_x], "South": [ground_x], "East": [ground_z], "West": [ground_z]},
@@ -777,11 +791,13 @@ def rear_stair_and_ground_wing(b):
     b.box("VisionLight", closed, (0, 1.54, .03), (.50, .42, .02), "entry_glaze")
     b.box("Handle", closed, (.42, 1.0, .05), (.13, .035, .03), "exit_steel")
     sign(b, closed, "Number", (0, 2.36, .04), "103", .55, plate="night_blue")
-    for name, ends in (("EntranceWallWest", (ground_x[0]+0.11, entrance_x[0])),
+    for name, ends in (("EntranceWallWest", (ground_x[0]+0.11, LANE_DOOR_X[0])),
+                       ("LaneDoorPier", (LANE_DOOR_X[1], entrance_x[0])),
                        ("EntranceWallEast", (entrance_x[1], ground_x[1]))):
         field = "rose_plaster" if name == "EntranceWallWest" else "municipal_rose"
         solid_wall(b, g, name, (sum(ends)/2, GROUND_Y, ground_z[1]), ends[1]-ends[0],
                    base="entry_glaze", field=field, height=2.83)
+    lane_door(b, g, ground_z[1])
     # Paint shares the plaster's XY centre so its baked pores line up with the coat.
     # Exterior face on the stable-lane side: paint sits 4 mm above the 0.11 m plaster face.
     # Parent it to the wall so the usual occluder fade treats both as one surface.
@@ -799,11 +815,11 @@ def rear_stair_and_ground_wing(b):
         b.box(f"Bar{i}", gate, (-.42 + i*.168, 1.12, .05), (.035, 1.60, .035), "exit_steel")
     b.box("Crossbar", gate, (0, 1.02, .07), (.95, .05, .04), "exit_steel")
     b.box("Lock", gate, (.34, .97, .10), (.09, .13, .05), "brass_rule")
-    # The west side opens onto the stable lane of tools/build_dream_annex.py.
-    # Round 23: the south side is open too - the apron walks out (walkout()).
+    # Round 25: the west rail closes the stable lane's east end (the lane has its own door);
+    # the south edge is the head of the two steps.
     guard_edges(b, g, "ApronRail", entrance_x, apron_z, GROUND_Y,
-                {"North": [entrance_x], "West": [apron_z], "South": [entrance_x]}, "entry_glaze", "brass_rule")
-    walkout(b, g)
+                {"North": [entrance_x], "South": [entrance_x]}, "entry_glaze", "brass_rule")
+    porch(b, g)
     ground_floor_style(b, g)
     sign(b, g, "FirstFloorPlate", (-9.78, GROUND_Y+2.41, ground_z[0]+0.15), "01", 0.72, plate="clay_red")
 
@@ -1288,85 +1304,69 @@ def wet_patches(b, parent, points, y):
         b.flat(f"WetPatch{i}", parent, disc, "mop_wet", (x, y+0.0035+0.0004*i, z))
 
 
-def yard_railing(b, parent, name, a, c, y):
-    """The front yard's low railing, one closed run between two plan points."""
-    (xa, za), (xc, zc) = a, c
-    length = math.hypot(xc-xa, zc-za)
-    p = b.shell(name, parent, ((xa+xc)/2, y, (za+zc)/2), (0, math.degrees(math.atan2(xc-xa, zc-za)), 0),
-                ("camera_occluder",))
-    b.shape("Guard", p, (0, 0.55, 0), (0.12, 1.1, length))
-    for i, h in enumerate((0.95, 0.48)):
-        b.box(f"Rail{i}", p, (0, h, 0), (0.05, 0.05, length), "yard_rail")
-    count = max(1, round(length/1.2))
-    for i in range(count+1):
-        b.box(f"Post{i}", p, (0, 0.5, -length/2+0.03+(length-0.06)*i/count), (0.06, 1.0, 0.06), "yard_rail")
+def porch(b, g):
+    """Round 25: outside the glass doors, seen through them and never walked.
 
-
-def walkout(b, g):
-    """Round 23: the glass entrance walks out to the front yard (前操场).
-
-    The apron used to end at a railing with a STREET plate on it: a balcony over the void
-    that you had to "use" to leave. Now two shallow steps go down onto a dirt forecourt in
-    the front yard's own soil and trodden line, between the front yard's low railings, to two
-    brick gateposts. The street exit stands between them; the opening is closed to the body
-    just beyond it, where the yard is only seen.
+    The apron ends in two steps down onto the front yard's (前操场) soil and trodden line,
+    under one faint street lamp. Nothing here has a collider: the doors are the exit, and
+    the front yard (build_outdoor_locations.build_front_yard) has the same landing and steps
+    for the arrival to walk down.
     """
-    b.node("Forecourt", g)
-    f = child_path(g, "Forecourt")
-    step_y = GROUND_Y-WALKOUT_STEP
-    depth = WALKOUT_STEP_Z[1]-WALKOUT_STEP_Z[0]
-    step = b.shell("Step", f, (ENTRANCE_X, step_y, sum(WALKOUT_STEP_Z)/2))
-    b.shape("Solid", step, (0, -WALK_SURFACE/2, 0), (ENTRANCE_WIDTH, WALK_SURFACE, depth))
-    b.box("Tread", step, (0, -0.135, 0), (ENTRANCE_WIDTH, 0.27, depth), "walk_step")
-    x0, x1 = FORECOURT_X
-    z0, z1 = ENTRANCE_APRON_END, FORECOURT_Z[1]
-    ground = b.shell("Ground", f, ((x0+x1)/2, FORECOURT_Y, (z0+z1)/2))
-    b.shape("Solid", ground, (0, -WALK_SURFACE/2, 0), (x1-x0, WALK_SURFACE, z1-z0))
-    # The soil runs on past the rails and the gate, where the yard is only seen. It samples
-    # the front yard's dirt at the same 4 m tile, on a plain plane: the yard's world-triplanar
-    # material was the corridor's only one, and its box leaked at exit in every corridor
-    # capture (GL Compatibility).
+    b.node("Porch", g)
+    f = child_path(g, "Porch")
+    depth = PORCH_STEP_Z[1]-PORCH_STEP_Z[0]
+    b.box("Step", f, (ENTRANCE_X, GROUND_Y-PORCH_STEP-0.135, sum(PORCH_STEP_Z)/2),
+          (ENTRANCE_WIDTH, 0.27, depth), "walk_step")
+    b.box("StepEdge", f, (ENTRANCE_X, GROUND_Y+0.006, ENTRANCE_APRON_END-0.04),
+          (ENTRANCE_WIDTH, 0.012, 0.06), "signal_ivory")
+    z0 = ENTRANCE_APRON_END
+    # The soil samples the front yard's dirt at the same 4 m tile, on a plain plane: the
+    # yard's world-triplanar material leaked at exit in every corridor capture (GL
+    # Compatibility).
     far, soil_w = 28.5, 28.3
     dirt = b.bind("yard_dirt_tex", f"{STAGE}/textures/yard_dirt.png", "Texture2D")
-    b.mat("forecourt_soil", albedo_color="Color(1, 1, 1, 1)", albedo_texture=dirt, texture_filter=3,
+    b.mat("porch_soil", albedo_color="Color(1, 1, 1, 1)", albedo_texture=dirt, texture_filter=3,
           uv1_scale=vec3((soil_w/4, (far-z0)/4, 1)))
-    b.flat("Earth", f, plane(b, soil_w, far-z0), "forecourt_soil", (-16.0, FORECOURT_Y, (z0+far)/2))
-    b.flat("Path", f, plane(b, 2.4, far-FORECOURT_Z[0]), "yard_path",
-           (ENTRANCE_X, FORECOURT_Y+0.003, (FORECOURT_Z[0]+far)/2))
-    for name, a, c in (("RailWest", (x0, z0), (x0, z1)), ("RailEast", (x1, z0), (x1, z1)),
-                       ("RailNorthEast", (ENTRANCE_X+ENTRANCE_WIDTH/2+0.08, z0), (x1, z0)),
-                       ("RailSouthWest", (x0, z1), (GATE_OPENING[0]-0.5, z1)),
-                       ("RailSouthEast", (GATE_OPENING[1]+0.5, z1), (x1, z1))):
-        yard_railing(b, f, name, a, c, FORECOURT_Y)
-    for side, x in (("West", GATE_OPENING[0]-0.25), ("East", GATE_OPENING[1]+0.25)):
-        pier = b.shell(f"GatePier{side}", f, (x, FORECOURT_Y, z1), groups=("camera_occluder",))
-        b.shape("Solid", pier, (0, 0.75, 0), (0.5, 1.5, 0.5))
-        b.box("Brick", pier, (0, 0.7, 0), (0.5, 1.4, 0.5), "pier_brick", shadow=True)
-        b.box("Cap", pier, (0, 1.46, 0), (0.6, 0.12, 0.6), "cement", shadow=True)
-        ball = b.mesh("CylinderMesh", top_radius=0.12, bottom_radius=0.16, height=0.22, radial_segments=12, rings=1)
-        b.flat("Finial", pier, ball, "cement", (0, 1.63, 0))
-    sign(b, f"{f}/GatePierWest", "YardPlate", (0.268, 1.08, 0), "前操场", 0.46, 90, "directory_black")
-    # Closed to the capsule just past the exit; the exit is between the posts.
-    stop = b.shell("GateStop", f, (ENTRANCE_X, FORECOURT_Y, z1+0.2))
-    b.shape("Solid", stop, (0, 0.8, 0), (GATE_OPENING[1]-GATE_OPENING[0], 1.6, 0.1))
-    # A waist twister (扭腰器) by the west rail: the compound's fitness corner reaches the school.
-    twist = b.shell("WaistTwister", f, (x0+1.25, FORECOURT_Y, 21.3), groups=("camera_occluder",))
-    b.shape("Solid", twist, (0, 0.65, 0), (1.3, 1.3, 0.5))
-    column = b.mesh("CylinderMesh", top_radius=0.055, bottom_radius=0.055, height=1.3, radial_segments=10, rings=1)
-    b.flat("Column", twist, column, "fitness_blue", (0, 0.65, 0), shadow=True)
-    b.box("Handlebar", twist, (0, 1.28, 0), (0.62, 0.05, 0.05), "fitness_yellow")
-    b.box("Arm", twist, (0, 0.1, 0), (1.0, 0.07, 0.07), "fitness_blue")
-    disc = b.mesh("CylinderMesh", top_radius=0.2, bottom_radius=0.2, height=0.05, radial_segments=16, rings=1)
-    for i, x in enumerate((-0.45, 0.45)):
-        b.flat(f"Disc{i}", twist, disc, "fitness_yellow", (x, 0.16, 0), shadow=True)
-    # One street lamp, faint orange-yellow, by the east rail.
-    lamp_x, lamp_z = x1-0.35, 21.7
+    b.flat("Earth", f, plane(b, soil_w, far-z0), "porch_soil", (-16.0, PORCH_SOIL_Y, (z0+far)/2))
+    b.flat("Path", f, plane(b, 2.4, far-PORCH_STEP_Z[1]), "yard_path",
+           (ENTRANCE_X, PORCH_SOIL_Y+0.003, (PORCH_STEP_Z[1]+far)/2))
+    # One street lamp, faint orange-yellow, off the steps' east side.
+    lamp_x, lamp_z = -13.75, 21.7
     post = b.mesh("CylinderMesh", top_radius=0.045, bottom_radius=0.06, height=3.2, radial_segments=10, rings=1)
-    b.flat("LampPost", f, post, "gallery_frame", (lamp_x, FORECOURT_Y+1.6, lamp_z), shadow=True)
-    b.box("LampArm", f, (lamp_x-0.3, FORECOURT_Y+3.15, lamp_z), (0.65, 0.05, 0.05), "gallery_frame")
-    b.box("LampHead", f, (lamp_x-0.6, FORECOURT_Y+3.08, lamp_z), (0.3, 0.1, 0.18), "bulb_warm")
-    b.node("LampLight", f, "OmniLight3D", position=vec3((lamp_x-0.6, FORECOURT_Y+2.85, lamp_z)),
+    b.flat("LampPost", f, post, "gallery_frame", (lamp_x, PORCH_SOIL_Y+1.6, lamp_z), shadow=True)
+    b.box("LampArm", f, (lamp_x-0.3, PORCH_SOIL_Y+3.15, lamp_z), (0.65, 0.05, 0.05), "gallery_frame")
+    b.box("LampHead", f, (lamp_x-0.6, PORCH_SOIL_Y+3.08, lamp_z), (0.3, 0.1, 0.18), "bulb_warm")
+    b.node("LampLight", f, "OmniLight3D", position=vec3((lamp_x-0.6, PORCH_SOIL_Y+2.85, lamp_z)),
            light_color="Color(1, 0.78, 0.5, 1)", light_energy=0.85, omni_range=7.0)
+
+
+def lane_door(b, g, wall_z):
+    """Round 25: a plain side door from the 01 gallery out to the stable lane.
+
+    The glass doors became the click exit to the front yard, so the lane (and the stable
+    yard of tools/build_dream_annex.py behind its barrier) needs its own way out. A walked
+    opening, not an exit: an iron-green leaf stands open flat against the gallery wall.
+    """
+    x0, x1 = LANE_DOOR_X
+    mid, width, height = (x0+x1)/2, x1-x0, LANE_DOOR_HEIGHT
+    head = b.shell("LaneDoorHead", g, (mid, GROUND_Y, wall_z), groups=("camera_occluder",))
+    b.shape("Solid", head, (0, (height+2.83)/2, 0), (width, 2.83-height, 0.22))
+    b.box("Plaster", head, (0, (height+2.64)/2, 0), (width, 2.64-height, 0.22), "municipal_rose")
+    b.box("Frieze", head, (0, 2.83-0.095, 0), (width, 0.19, 0.24), "arch_chalk")
+    b.node("LaneDoor", g, position=vec3((mid, GROUND_Y, wall_z)))
+    door = child_path(g, "LaneDoor")
+    for side in (-1, 1):
+        b.box(f"Jamb{side}", door, (side*(width/2-0.04), height/2, 0), (0.08, height, 0.26), "night_blue")
+    b.box("Head", door, (0, height-0.04, 0), (width, 0.08, 0.26), "night_blue")
+    # Floor to floor across the wall: the gallery slab ends at the wall line, the lane a
+    # little past its outer face. A thin steel plate covers the seam.
+    slab(b, g, "LaneDoorSill", (x0, x1), (wall_z-0.12, wall_z+0.25), GROUND_Y)
+    b.box("Threshold", door, (0, 0.006, 0.01), (width-0.16, 0.012, 0.28), "exit_steel")
+    # The leaf, hinged on the west jamb and swung right round against the gallery wall.
+    leaf_w, face = width-0.08, -0.11-0.03
+    b.box("Leaf", door, (-width/2-leaf_w/2+0.04, 1.06, face), (leaf_w, 2.08, 0.045), "iron_green")
+    b.box("VisionLight", door, (-width/2-leaf_w/2+0.04, 1.6, face-0.024), (0.36, 0.42, 0.006), "entry_glaze")
+    b.box("PushBar", door, (-width/2-leaf_w/2+0.04, 1.0, face-0.04), (leaf_w-0.24, 0.04, 0.04), "exit_steel")
 
 
 def stairwell_door(b, g, opening):
@@ -1599,7 +1599,7 @@ def foundations(b):
     ground = material_for("YardGround/MeshInstance3D")
     b.box("NorthApron", p, (8, YARD_Y-0.12, -37.9), (70, 0.20, 39.8), f"yard/{ground}")
     b.box("WestApron", p, (-15.7, YARD_Y-0.12, -3.0), (22.6, 0.20, 29.8), f"yard/{ground}")
-    # Round 23: it stops at the apron's line; south of it the walk-out forecourt's soil is lower.
+    # It stops at the apron's line; south of it the porch's soil (porch()) is lower.
     b.box("GroundWingApron", p, (-16.0, GROUND_Y-0.22, (5.8+ENTRANCE_APRON_END)/2),
           (28.3, 0.18, ENTRANCE_APRON_END-5.8), f"yard/{ground}")
     for name, x, z, w, d, top in (

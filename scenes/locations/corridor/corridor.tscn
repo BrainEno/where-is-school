@@ -1,4 +1,4 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="Script" path="res://scripts/world/location_navigation.gd" id="90_navigation"]
@@ -12,7 +12,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/corridor_fire_extinguisher.tscn" id="20_extinguisher"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/corridor_cleaning_trolley.tscn" id="21_trolley"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_dado.tres" id="art_walk_dado"]
-[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_step.tres" id="art_walk_step"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/metal_ink.tres" id="art_metal_ink"]
 [ext_resource type="PackedScene" path="res://scenes/locations/corridor/teaching_block.tscn" id="block"]
 [ext_resource type="PackedScene" path="res://scenes/locations/corridor/courtyard_view.tscn" id="courtyard"]
@@ -31,18 +31,6 @@ resource_local_to_scene = true
 shader = ExtResource("31_stench_haze_shader")
 shader_parameter/stench = 0.0
 shader_parameter/seed = 0.37
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_20"]
-size = Vector3(4.4, 0.18, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_21"]
-size = Vector3(4.4, 0.18, 0.3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_22"]
-size = Vector3(0.12, 2.7, 0.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_23"]
-size = Vector3(4.1, 0.16, 0.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_30"]
 size = Vector3(0.5, 0.08, 2)
@@ -75,10 +63,13 @@ adjustment_saturation = 0.91
 adjustment_contrast = 1.04
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_gate_end"]
-size = Vector3(4.4, 2.1, 0.18)
+size = Vector3(4.4, 2.7, 0.18)
 
 [sub_resource type="BoxMesh" id="BoxMesh_gate_end"]
-size = Vector3(4.4, 2.1, 0.18)
+size = Vector3(4.4, 0.94, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gate_end_plaster"]
+size = Vector3(4.4, 1.76, 0.18)
 
 [sub_resource type="BoxMesh" id="BoxMesh_directory_track"]
 size = Vector3(1.92, 0.112, 0.10)
@@ -149,59 +140,20 @@ script = ExtResource("90_navigation")
 [node name="DreamAnnex" parent="." instance=ExtResource("dream_annex")]
 
 [node name="GateEnd" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(0, 0.52, 7.64)
+position = Vector3(0, 1.35, 7.04)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GateEnd"]
 shape = SubResource("BoxShape3D_gate_end")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GateEnd"]
+position = Vector3(0, -0.88, 0)
 mesh = SubResource("BoxMesh_gate_end")
 material_override = ExtResource("art_walk_dado")
 
-[node name="Step0" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.09, 6.8)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Step0"]
-shape = SubResource("BoxShape3D_20")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Step0"]
-mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("art_walk_step")
-
-[node name="Step1" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.27, 7.1)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Step1"]
-shape = SubResource("BoxShape3D_20")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Step1"]
-mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("art_walk_step")
-
-[node name="Step2" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.45, 7.4)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Step2"]
-shape = SubResource("BoxShape3D_20")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Step2"]
-mesh = SubResource("BoxMesh_21")
-material_override = ExtResource("art_walk_step")
-
-[node name="ExitFrameLeft" type="MeshInstance3D" parent="."]
-position = Vector3(-2, 1.35, 6.9)
-mesh = SubResource("BoxMesh_22")
-material_override = ExtResource("art_walk_dado")
-
-[node name="ExitFrameRight" type="MeshInstance3D" parent="."]
-position = Vector3(2, 1.35, 6.9)
-mesh = SubResource("BoxMesh_22")
-material_override = ExtResource("art_walk_dado")
-
-[node name="ExitFrameHead" type="MeshInstance3D" parent="."]
-position = Vector3(0, 2.62, 6.9)
-mesh = SubResource("BoxMesh_23")
-material_override = ExtResource("art_walk_dado")
+[node name="Plaster" type="MeshInstance3D" parent="GateEnd"]
+position = Vector3(0, 0.47, 0)
+mesh = SubResource("BoxMesh_gate_end_plaster")
+material_override = ExtResource("art_walk_plaster")
 
 [node name="BenchSeat" type="MeshInstance3D" parent="."]
 position = Vector3(1.5, 0.44, -3.2)
@@ -312,25 +264,13 @@ prompt_text = "Try the second door"
 inspection_id = &"classroom_rear_door"
 radius = 1.0
 
-[node name="SchoolGateExit" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(0, 0.6, 6.5)
-interact_id = &"school_gate"
-outline_paths = PackedStringArray("../../ExitFrameLeft", "../../ExitFrameRight", "../../ExitFrameHead", "../../Step0", "../../Step1", "../../Step2")
-support_paths = PackedStringArray("../../Step0", "../../Step1", "../../Step2")
-prompt_text = "Go down towards the gate"
-prompt_key = "prompt.gate"
-radius = 1.3
-destination_scene = "res://scenes/locations/front_yard/front_yard.tscn"
-destination_spawn = &"FromCorridor"
-destination_id = &"front_yard"
-
 [node name="EntranceToStreet" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(-17.65, -2.94, 22.25)
+position = Vector3(-17.65, -2.5, 14.3)
 interact_id = &"teaching_entrance_to_street"
-outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/Forecourt/GatePierWest/Cap", "../../TeachingBlock/GroundFloor/Forecourt/GatePierEast/Cap", "../../TeachingBlock/GroundFloor/Forecourt/GatePierWest/YardPlate/Plate")
-support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/Forecourt/GateStop", "../../TeachingBlock/GroundFloor/Forecourt/GatePierWest", "../../TeachingBlock/GroundFloor/Forecourt/GatePierEast")
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/GlassEntrance/Left/LeafMeet", "../../TeachingBlock/GroundFloor/GlassEntrance/Left/LeafHinge", "../../TeachingBlock/GroundFloor/GlassEntrance/Left/LeafTop", "../../TeachingBlock/GroundFloor/GlassEntrance/Left/LeafKick", "../../TeachingBlock/GroundFloor/GlassEntrance/Right/LeafMeet", "../../TeachingBlock/GroundFloor/GlassEntrance/Right/LeafHinge", "../../TeachingBlock/GroundFloor/GlassEntrance/Right/LeafTop", "../../TeachingBlock/GroundFloor/GlassEntrance/Right/LeafKick")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/GlassEntrance/Left", "../../TeachingBlock/GroundFloor/GlassEntrance/Right", "../../TeachingBlock/GroundFloor/GlassEntrance/Header")
 prompt_key = "prompt.gate"
-radius = 1.35
+radius = 1.2
 destination_scene = "res://scenes/locations/front_yard/front_yard.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"front_yard"
@@ -630,7 +570,7 @@ rotation_degrees = Vector3(0, -90, 0)
 position = Vector3(0, 0, 5.4)
 
 [node name="FromTeachingEntrance" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-17.65, -3.4, 16.38)
+position = Vector3(-17.65, -3.4, 12.6)
 rotation_degrees = Vector3(0, 0, 0)
 metadata/entry_facing = true
 

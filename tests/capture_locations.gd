@@ -253,6 +253,7 @@ const PORT_STANCES := [
 const FRONT_YARD_STANCES := [
 	["side_door", Vector3(13.2, 0.0, 15.8)],
 	["path", Vector3(3.0, 0.0, 15.8)],
+	["porch", Vector3(-9.7, 0.6, 15.8)],
 	["trees", Vector3(-3.5, 0.0, 2.0)],
 ]
 const FRONT_YARD_VIEWS := [
@@ -261,6 +262,7 @@ const FRONT_YARD_VIEWS := [
 	["card_reader", Vector3(12.6, 1.7, 18.4), Vector3(14.85, 1.25, 16.6)],
 	["dead_trees", Vector3(4.0, 3.0, 12.0), Vector3(-7.0, 3.0, 0.0)],
 	["entrance", Vector3(2.0, 3.2, 21.0), Vector3(-10.6, 1.6, 15.8)],
+	["porch_steps", Vector3(-4.0, 2.4, 20.5), Vector3(-9.8, 0.8, 15.8)],
 ]
 const STREET_GATE_VIEWS := [
 	["street_gate", Vector3(-2.0, 2.4, 18.6), Vector3(-11.0, 1.3, 12.0)],
@@ -284,12 +286,13 @@ const STABLE_VIEWS := [
 	["restroom_wall", Vector3(-38.6, -0.4, 14.6), Vector3(-30.9, -1.9, 9.8)],
 	["yard_ground", Vector3(-33.0, -2.1, 11.8), Vector3(-35.6, -3.35, 9.0)],
 ]
-## Round 23: the walk-out to the front yard, each stair's own character, the lane barrier
-## and the iron doors, all from the gameplay camera; then the glass entrance looking out
-## and the 01 gallery looking at the stairwell.
+## Round 23: each stair's own character, the lane barrier and the iron doors, all from the
+## gameplay camera; then the glass entrance looking out and the 01 gallery looking at the
+## stairwell. Round 25: the shut glass doors (the way out) and the stable lane's side door.
 const TEACHING_STAIR_STANCES := [
-	["walkout_apron", Vector3(-17.65, -3.4, 17.6)],
-	["walkout_gate", Vector3(-17.65, -3.64, 21.2)],
+	["glass_doors", Vector3(-17.65, -3.4, 13.0)],
+	["lane_door", Vector3(-21.7, -3.4, 13.3)],
+	["lane_door_outside", Vector3(-21.7, -3.4, 15.6)],
 	["stairwell_door", Vector3(-11.0, -3.4, 12.6)],
 	["bikes_at_turn", Vector3(-3.6, -1.7, 12.6)],
 	["railless_landing", Vector3(-11.5, 1.8, 5.2)],
@@ -487,7 +490,7 @@ func _run() -> void:
 		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
 		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
 	elif _teaching_stairs:
-		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Forecourt", TEACHING_STAIR_STANCES,
+		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Porch", TEACHING_STAIR_STANCES,
 			TEACHING_STAIR_VIEWS, "teaching_stairs")
 	elif _stable_yard:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", STABLE_STANCES, STABLE_VIEWS,

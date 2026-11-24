@@ -151,10 +151,10 @@ func _visit_tour() -> void:
 		var feet := landing.global_position
 		if id == &"projection_room":
 			# Do not warp past the return: make the real controller negotiate the
-			# glass opening, forecourt corner and short lab corridor before clicking.
+			# 01 gallery inside the glass doors and the short lab corridor before clicking.
 			if not _check.expect(_player.request_path_to(feet) and await Harness.wait_until(func() -> bool:
 				return not _player.is_path_active() and _player.global_position.distance_to(feet) < .69, 24.0),
-				"No live route from the glass forecourt to the projection recess."):
+				"No live route from the 01 glass doors to the projection recess."):
 				return
 		if id in STUDIES:
 			var slide := hall.find_interactable(StringName("align_" + String(id)))

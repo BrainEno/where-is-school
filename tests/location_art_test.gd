@@ -63,13 +63,12 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 36, # Original 29, two mechanical controls, three clerk looks, two iron doors.
+		"interactables": 35, # Original 29, two controls, three clerk looks, two iron doors, less the 02 gate (r25).
 		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
 			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
-			"school_gate": "front_yard/FromCorridor",
 			"teaching_entrance_to_street": "front_yard/FromCorridor",
 			"to_schoolyard": "playground/FromCorridor",
 			"to_laboratory": "laboratory/FromCorridor",
@@ -91,9 +90,10 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/front_yard/front_yard.tscn",
 		"stage": true,
 		# 32 bodies (ground, apron, block, rails, the wall and gate, seven dead trees with a
-		# trunk and a fader box each), the glass entrance's 9, five anchor spheres and the
-		# pick boxes of eight outline meshes.
-		"shapes": 55,
+		# trunk and a fader box each), round 25's porch (three steps, two rails, the landing's
+		# surface and tread, the ramp: 8), the glass entrance's 11 (two shut leaves), five
+		# anchor spheres and the pick boxes of thirteen outline meshes (the leaves' frames: 8).
+		"shapes": 70,
 		"interactables": 5,
 		"spawns": ["FromCorridor", "FromStreet"],
 		"exits": {
