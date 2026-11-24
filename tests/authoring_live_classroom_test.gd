@@ -47,6 +47,11 @@ func _run() -> void:
 			or not _check.expect((author == null) == imported, "Wrong project variant for classroom test"):
 		Harness.finish(self, _check.failures, "")
 		return
+	if author != null:
+		# Before this file ever sets a locale itself: the staged author profile is new at boot,
+		# and #395 is that it starts in the Chinese master without anyone pressing 「切到简中」.
+		_check.expect(String((root.get_node(^"Loc") as Node).call("get_locale")) == "zh-CN",
+			"An author run did not boot into the Simplified Chinese master (#395)")
 	if not recovered:
 		Harness.ensure_state_autoloads(self)
 		Harness.clear_session_state(self)
@@ -61,7 +66,8 @@ func _run() -> void:
 		verdict = "new author process recovered the live graph, progress and unapplied input separately"
 	else:
 		await _edit_and_export(author, archive)
-		verdict = "same classroom cursor edits, nested routes and explicit bilingual chapter export"
+		await _verify_live_beyond_prologue()
+		verdict = "classroom edits and export, then live editing in another chapter's room"
 	paused = false
 	_world.queue_free()
 	await process_frame
@@ -191,7 +197,47 @@ func _verify_restart() -> void:
 		_finish_old_route()
 
 
-func _edit_line() -> bool:
+## The author's tool at every point of the game, not a prologue classroom extra (#395): leave
+## the classroom for another room, start a conversation from a different chapter, and the pause
+## handoff must land in the live editor on that line. While a real dialogue is on screen the
+## drawer is a degradation - it is what the entry must NOT fall back to outside the prologue.
+func _verify_live_beyond_prologue() -> void:
+	Harness.stage = "live editing beyond the prologue, in another room"
+	_editor = _world.get_node_or_null(^"LiveStoryEditor")
+	var host := _world.get_node(^"LocationHost") as LocationHost
+	var player := _world.get_node(^"Player") as PlayerController
+	var ui := _world.get_node(^"GameUI") as GameUI
+	if not _check.expect(_editor != null and host.load_location(
+			"res://scenes/locations/corridor/corridor.tscn", &"FromClassroom", player, &"corridor"),
+			"Could not move the author's run out of the prologue classroom (#395)"):
+		return
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		return host.get_current() != null and host.get_current().location_id == &"corridor" and not ui.fade.visible
+	, 6.0), "The corridor did not load"):
+		return
+	if not _check.expect(_controller.play_conversation(&"corridor_speaker"),
+			"A non-prologue chapter's conversation would not start"):
+		return
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		return _runtime.get_active_conversation_id() == &"corridor_speaker" \
+				and _panel.is_visible_in_tree() and not _panel._layout_dirty
+	, 6.0), "The corridor line did not appear in the real panel"):
+		return
+	if not await _open_editor():
+		return
+	var drawer := _world.get_node_or_null(^"AuthorOverlay/AuthorDrawer")
+	_check.expect(bool(_editor.call("is_editing")) and paused,
+		"The corridor dialogue did not open the live editor (#395)")
+	_check.expect(drawer == null or not bool((drawer as CanvasItem).visible),
+		"The corridor dialogue degraded to the draft drawer (#395)")
+	if not await _edit_line(&"cs_1"):
+		return
+	_press("ContinueGame")
+	_check.expect(not bool(_editor.call("is_editing")) and not paused,
+		"Closing on the corridor line did not hand the world back")
+
+
+func _edit_line(expected: StringName = SAME) -> bool:
 	Harness.stage = "single/double click on the real reading surface and in-place redraw"
 	var before := _world_snapshot()
 	var shown := _panel.get_body_text()
@@ -203,7 +249,7 @@ func _edit_line() -> bool:
 		_send_mouse(point, false)
 		_check.expect(not body.visible and _panel.get_body_text() == shown, "First click advanced or opened the editor")
 		_send_mouse(point, true)
-	if not _check.expect(body.is_visible_in_tree() and _runtime.get_current_node_id() == SAME,
+	if not _check.expect(body.is_visible_in_tree() and _runtime.get_current_node_id() == expected,
 			"Original dialogue box did not open its inline text entry"):
 		return false
 	var space := InputEventKey.new()
@@ -211,14 +257,14 @@ func _edit_line() -> bool:
 	space.unicode = 32
 	space.pressed = true
 	root.push_input(space, true)
-	_check.expect(_runtime.get_current_node_id() == SAME and paused, "Typing an advance key took a live action")
+	_check.expect(_runtime.get_current_node_id() == expected and paused, "Typing an advance key took a live action")
 	body.text = "  \n"
 	_press("ApplyLine")
 	_check.expect(body.visible and _panel.get_body_text() == shown, "Blank text replaced the live line")
 	body.text = BODY
 	_press("ApplyLine")
 	return _check.expect(not body.visible and _panel.get_body_text() == BODY and _panel.get_body_label().visible_characters == -1
-		and _controller.get_runtime() == _runtime and _runtime.get_current_node_id() == SAME
+		and _controller.get_runtime() == _runtime and _runtime.get_current_node_id() == expected
 		and _world_snapshot() == before, "Application replaced the panel/runner or replayed the line, effects, or read/history")
 
 
