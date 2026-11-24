@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # The second step swaps in the pre-PR model with `git show <base sha>`, so
+          # the full history must be present on a default-depth clone.
+          fetch-depth: 0
 
       - uses: ./.github/actions/setup-godot
 
