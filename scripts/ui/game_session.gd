@@ -50,6 +50,10 @@ extends Node
 ## quarantines a file while a run is live.
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+# Not a `class_name`: the entry is preloaded by every caller, the same way `Settings` and the
+# settings row reach it. Preloading only this file is safe for an export, because it loads the
+# editor's scripts by path at runtime, and only while it is allowed to.
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
 
 ## Emitted once a new game has actually started: everything cleared, the opening entered.
 signal new_game_started(report: Dictionary)
@@ -87,6 +91,17 @@ var _failure_shown := true
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+## The author's story-editor key, wherever the run currently is (#396). This node is the one thing
+## that is alive on the title screen, in a paused world, in the settings screen and under the
+## editor's own overlay; `_shortcut_input` is the engine's slot between the settings screen's
+## rebinding capture (`_input`) and the menus that take every key they are showing
+## (`_unhandled_input`). The deciding is all in `StoryEditorEntry.handle_shortcut_input()` - a
+## build that left `scripts/story_editor/` out, or a release export nobody launched as an author's
+## run, hands the press straight back to the game.
+func _shortcut_input(event: InputEvent) -> void:
+	StoryEditorEntry.handle_shortcut_input(self, event)
 
 
 ## What the save file looks like, without applying anything: `{state, detail,
