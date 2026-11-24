@@ -6,6 +6,7 @@ const Overlay := preload("res://scripts/story_editor/author_overlay.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
 const LiveEditor := preload("res://scripts/story_editor/live_editor.gd")
 const Entry := preload("res://scripts/ui/story_editor_entry.gd")
+const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 
 var _store: Store
 var _overlay: Overlay
@@ -13,8 +14,24 @@ var _live: LiveEditor
 
 
 func _ready() -> void:
+	_author_locale()
 	get_tree().scene_changed.connect(_attach)
 	_attach.call_deferred()
+
+
+## The staged author app starts in the Simplified Chinese master (#395). Its profile is new
+## at boot, so without this the first run opens in the fallback language and the author has to
+## press 「切到简中」 before the first line can be edited - the master language of this tool is
+## not a preference the author should have to find. The author's own later choice still sticks
+## in their own settings file; every fresh profile simply begins where the work is. Only the
+## staged app reaches this: `Entry.isolated_author()` is the same gate the pause entry uses,
+## so a player's run and the ordinary project's installed editor are not moved.
+func _author_locale() -> void:
+	if Entry.isolated_author(get_tree().root) != self:
+		return
+	var loc := get_node_or_null(^"/root/Loc")
+	if loc != null and loc.has_method("get_locale") and String(loc.call("get_locale")) != Patch.LOCALE:
+		loc.call("set_locale", Patch.LOCALE)
 
 
 func has_overlay() -> bool:
