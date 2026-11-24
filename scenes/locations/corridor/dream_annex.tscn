@@ -1,4 +1,4 @@
-[gd_scene load_steps=398 format=3]
+[gd_scene load_steps=402 format=3]
 
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_escalator.gdshader" id="dream_escalator"]
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_motion.gdshader" id="dream_motion"]
@@ -2255,6 +2255,18 @@ size = Vector3(0.01, 0.16, 0.04)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art217"]
 size = Vector3(0.01, 0.12, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art218"]
+size = Vector3(0.16, 1.15, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art219"]
+size = Vector3(0.1, 1.2, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art220"]
+size = Vector3(0.05, 0.24, 1.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art221"]
+size = Vector3(0.06, 0.26, 0.3)
 
 [node name="DreamAnnex" type="Node3D"]
 
@@ -7095,6 +7107,61 @@ font_size = 44
 pixel_size = 0.004
 outline_size = 0
 modulate = Color(0.11, 0.141, 0.227, 1)
+
+[node name="LaneBarrier" type="StaticBody3D" parent="StableYard" groups=["camera_occluder"]]
+position = Vector3(-20.95, -3.4, 17.35)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.575, 0)
+shape = SubResource("BoxShape3D_art218")
+
+[node name="Post0" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.6, -0.94)
+mesh = SubResource("BoxMesh_art219")
+material_override = SubResource("Mat_timber")
+
+[node name="Post1" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.6, 0.94)
+mesh = SubResource("BoxMesh_art219")
+material_override = SubResource("Mat_timber")
+
+[node name="LowBoard" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.42, 0)
+mesh = SubResource("BoxMesh_art220")
+material_override = SubResource("Mat_timber")
+
+[node name="Stripe0" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.75)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe1" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.45)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
+
+[node name="Stripe2" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.15)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe3" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.15)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
+
+[node name="Stripe4" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.45)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe5" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.75)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
 
 [node name="YardLight0" type="OmniLight3D" parent="StableYard"]
 position = Vector3(-34, -0.7, 13)

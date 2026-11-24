@@ -284,6 +284,24 @@ const STABLE_VIEWS := [
 	["restroom_wall", Vector3(-38.6, -0.4, 14.6), Vector3(-30.9, -1.9, 9.8)],
 	["yard_ground", Vector3(-33.0, -2.1, 11.8), Vector3(-35.6, -3.35, 9.0)],
 ]
+## Round 23: the walk-out to the front yard, each stair's own character, the lane barrier
+## and the iron doors, all from the gameplay camera; then the glass entrance looking out
+## and the 01 gallery looking at the stairwell.
+const TEACHING_STAIR_STANCES := [
+	["walkout_apron", Vector3(-17.65, -3.4, 17.6)],
+	["walkout_gate", Vector3(-17.65, -3.64, 21.2)],
+	["stairwell_door", Vector3(-11.0, -3.4, 12.6)],
+	["bikes_at_turn", Vector3(-3.6, -1.7, 12.6)],
+	["railless_landing", Vector3(-11.5, 1.8, 5.2)],
+	["dogleg_landing", Vector3(2.2, 1.8, -35.7)],
+	["flooded_stair", Vector3(15.6, -1.5, -22.5)],
+	["lane_barrier", Vector3(-23.6, -3.4, 16.2)],
+	["iron_doors", Vector3(-9.6, -3.4, 8.8)],
+]
+const TEACHING_STAIR_VIEWS := [
+	["entrance_looking_out", Vector3(-17.65, -1.6, 11.5), Vector3(-17.65, -2.6, 20.0)],
+	["gallery_to_stairwell", Vector3(-15.0, -1.7, 12.9), Vector3(-7.5, -2.5, 12.6)],
+]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
 const RETURN_SPOTS := {
@@ -332,6 +350,7 @@ var _port := false
 var _front_yard := false
 var _annex_thresholds := false
 var _stable_yard := false
+var _teaching_stairs := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -381,6 +400,8 @@ func _initialize() -> void:
 			_front_yard = true
 		elif arg == "stable-yard":
 			_stable_yard = true
+		elif arg == "teaching-stairs":
+			_teaching_stairs = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -465,6 +486,9 @@ func _run() -> void:
 	elif _front_yard:
 		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
 		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
+	elif _teaching_stairs:
+		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Forecourt", TEACHING_STAIR_STANCES,
+			TEACHING_STAIR_VIEWS, "teaching_stairs")
 	elif _stable_yard:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", STABLE_STANCES, STABLE_VIEWS,
 			"stable_yard")

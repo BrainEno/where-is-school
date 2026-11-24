@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from collections import defaultdict
 from functools import lru_cache
 
 import numpy as np
@@ -74,6 +75,19 @@ def deform(points: np.ndarray, normal: np.ndarray, warp: Callable[[np.ndarray], 
     jacobian = np.stack([(warp(p + d) - warp(p - d)) / 2e-5 for d in step], axis=2)
     n = np.linalg.solve(jacobian.transpose(0, 2, 1), normal[:, :, None])[:, :, 0]
     return warp(p), n / np.linalg.norm(n, axis=1, keepdims=True)
+
+
+def deform_delta(points: np.ndarray, delta: np.ndarray,
+                 warp: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
+    """Re-express a morph delta after `warp`.
+
+    A morph target stores a displacement from the base surface. When the base is
+    re-sculpted, the displacement has to travel with it: warping ``base`` and
+    ``base + delta`` and subtracting gives the new displacement, so a blink still
+    moves the lid that moved rather than the one that used to be there.
+    """
+    moved = warp(points)
+    return warp(points + delta) - moved
 
 
 def grid_surface(points: np.ndarray, cap: bool = True) -> Geometry:
@@ -404,9 +418,11 @@ def _components(positions: np.ndarray, faces: np.ndarray) -> list[np.ndarray]:
 def teacher_bob(points: np.ndarray, triangles: np.ndarray) -> tuple[Geometry, np.ndarray]:
     """Keep the supplied bob shell/back locks; remove only floating front thread tufts.
 
-    The original shell already has a swept fringe. Its tucked left temple and broad
-    middle plane should carry the part, not parallel strips crossing the forehead.
-    Shape the shell and accent surfaces with the same field at every shared seam.
+    This is the source pass, and it is now a *placement* fix only: the tucked left temple
+    and the swept middle plane carry the part instead of parallel strips crossing the
+    forehead. The silhouette itself is cut later, in `teacher_crop`, which runs after the
+    baked Blender stroke layer. Keeping the two apart means the baked layer is baked
+    against the geometry it was authored on, and the crop cannot desynchronise it.
     """
     keep = np.ones(len(triangles), bool)
     for group in _components(points, triangles):
@@ -446,6 +462,375 @@ def teacher_face(points: np.ndarray) -> np.ndarray:
     bridge = .0035 * bell(x, -.0015, .011) * bell(y, 1.505, .025)
     p[:, 2] -= frontal * (cheek + bridge - .0012 * mouth)
     return p
+
+
+def teacher_expression(positions: np.ndarray, normals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The resting face of a person who expects to be interrupted.
+
+    This runs *after* the baked Blender stroke layer, on whatever geometry that leaves,
+    and it changes no topology: same vertices, same order, same skin weights. That is
+    why it can be a channel of its own instead of another edit to the sculpt basis.
+    Callers that need normals follow the field with `deform` (see prepare_teacher_n).
+
+    What it changes, and why each one is a shape rather than a decoration:
+
+      - **The upper lid comes down 5 mm over the pupil** and the skin above the lash
+        line is thickened 2.6 mm, so the lid reads as a fold with an edge instead of
+        the rim of a hole. Measured, her eye was 24.3 mm wide on a 148 mm face -- 5.4
+        eyes across where the count should be about 5 -- so the aperture also opens
+        2.2 mm at the corners.
+      - **The brows tilt.** Inner heads up 3.8 mm, tails down. The skew is the whole
+        signal: a symmetric brow at the same height reads as nothing, a brow that climbs
+        toward the nose reads as worry, and the face is a strong enough category cue that
+        this is what makes her read as a woman rather than a boy on a low-poly head.
+      - **The mouth corners drop 3 mm** and the mouth line shortens, so the mouth is
+        held rather than set. The lower lip is left alone: pulling the whole mouth down
+        would push it into a pout, which reads as sulking.
+      - **The jaw narrows 9 % at the angle and the cheeks flatten**, softening a jaw
+        that measured 0.72 of the cranium width (fine for a man, hard for her).
+    """
+    p = positions.astype(np.float64).copy()
+    n = normals.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    frontal = smoothstep(.018, .062, -z)
+    ax = np.abs(x)
+
+    # --- eyes -------------------------------------------------------------
+    # The lid is measured *away from its own edge*, not by "above a line": the previous
+    # form dropped every vertex above the lash line, which turned the brow ridge into a
+    # lid and left the eye a slit under a bulge.
+    lid_y = np.where(x < 0, 1.5335, 1.5325)
+    above = y - lid_y
+    orbit_x = bell(ax, .0312, .0195)
+    # A band of skin 0.5-5 mm above the lash line is the lid; above 5 mm the brow ridge
+    # is left alone.
+    upper = orbit_x * smoothstep(-.0004, .0022, above) * (1 - smoothstep(.0062, .0080, above)) * frontal
+    # And the same band below it is the lower lid, which also comes up a little.
+    lower = orbit_x * (1 - smoothstep(-.0060, -.0035, above)) * smoothstep(-.0075, -.0065, above) * frontal
+    rim = orbit_x * bell(above, .0052, .0022) * frontal
+    p[:, 1] -= .0022 * upper
+    p[:, 1] += .0015 * rim
+    p[:, 1] += .0007 * lower
+    p[:, 2] -= .0014 * rim
+    p[:, 2] += .0012 * bell(ax, .0335, .0152) * bell(y, lid_y - .0120, .0040) * frontal
+
+    # --- brows: inner head up, tail down ----------------------------------
+    brow_y = np.where(x < 0, 1.5550, 1.5542)
+    brow = bell(y, brow_y, .0080)
+    inner = bell(ax, .0150, .0105)
+    outer = bell(ax, .0500, .0120)
+    p[:, 1] += .0038 * (inner - 1.05 * outer) * brow * frontal
+    p[:, 1] -= .0022 * brow * frontal
+    p[:, 2] -= .0026 * brow * frontal
+    p[:, 1] += .0010 * brow * (1 - smoothstep(-.012, .004, x))
+
+    # --- mouth: corners down, line shortened ------------------------------
+    mouth_y = 1.4515
+    p[:, 1] -= .0030 * smoothstep(.0135, .0250, ax) * bell(y, mouth_y, .0125) * frontal
+    p[:, 0] *= 1 - .070 * bell(y, mouth_y, .0110) * smoothstep(.014, .030, ax) * frontal
+
+    # --- jaw and cheeks ---------------------------------------------------
+    jaw = bell(y, 1.4400, .0230) * smoothstep(.010, .042, ax)
+    p[:, 0] *= 1 - .090 * jaw
+    p[:, 2] += .0020 * bell(ax, .0455, .0175) * bell(y, 1.4930, .0165) * frontal
+
+    return p, n
+
+
+def teacher_crop(points: np.ndarray) -> np.ndarray:
+    """Cut a short crop out of the source bob.
+
+    The supplied hair is a bell: a shell whose front edge hangs to 1.436 m over the
+    brows, a pinwheel crown with no part, some long flat planes down one side and a few
+    rectangles floating at the nape. It reads as long and shapeless, which is the
+    opposite of the short, disciplined hair this character needs.
+
+    Three things happen, all on the bind-pose vertices so the rig and its single Head
+    weight are untouched:
+
+    1. **The front comes up.** The fringe is pulled back to 1.559-1.572 m, clear of the
+       brows at 1.549-1.563 and above the eye line at 1.532, so the face is not framed by
+       hair. That is the difference between a crop and a curtain.
+    2. **Locks are grouped.** Rather than leave the shell smooth, strands are pulled in
+       bands along their length (`phases`), displaced along the surface normal so the cut
+       has grooves. A groove that follows the fall of the hair reads as cut hair; an even
+       surface reads as a moulded helmet.
+    3. **The back is tapered.** The shell is drawn in toward the neck below 1.52 m, so the
+       crop ends on the nape instead of hanging beside the jaw.
+
+    The crown part is left as authored: the source's sweep is a real part, not a defect.
+    """
+    p = points.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    front = smoothstep(.030, .085, -z)
+    top = smoothstep(1.560, 1.600, y)
+
+    # 1. Raise the front edge from the brow to just above it, and shape a side part.
+    edge = (1.5720 - .0125 * smoothstep(-.02, .085, x)     # higher on her right
+            + .0042 * np.cos(78 * x) + .0021 * np.sin(41 * x + 1.3))
+    lift = np.clip(edge - y, 0, None) * front ** 1.35
+    p[:, 1] += lift * .92
+    p[:, 2] += lift * .34                                   # and back off the forehead
+    p[:, 0] += lift * .18 * np.sign(x)
+
+    # 2. Cut grooves: bands that run down the fall of the hair, fading at the crown.
+    flow = np.arctan2(x, -z)
+    phases = 5.2 * flow + 2.6 * (y - 1.50)
+    groove = np.cos(phases)
+    band = smoothstep(.55, .95, groove)                      # narrow crests, wide flats
+    amount = (.0021 * band) * (1 - top) * (1 - .35 * front)
+    radius = np.sqrt(x ** 2 + z ** 2)
+    radius[radius < 1e-6] = 1e-6
+    p[:, 0] += amount * (x / radius)
+    p[:, 2] += amount * (z / radius)
+
+    # 3. Take the length off the sides and the back, not just the fringe. A bob ends at
+    #    the jaw; a crop ends above the ear lobe. Everything below 1.545 m is lifted by
+    #    up to 34 mm (more the lower it hangs) and drawn in behind the ear line, so the
+    #    silhouette is a cap over the skull rather than a bell around it.
+    short = np.clip(1.545 - y, 0, None)
+    lift = np.minimum(short, .045) * .78
+    p[:, 1] += lift
+    p[:, 0] *= 1 - np.clip(.30 * short / .045, 0, .30)
+    p[:, 2] += np.clip(.012 * short / .045, 0, .012) * smoothstep(-.02, .06, z)
+
+    # 4. Taper the nape in toward the neck.
+    nape = (1 - smoothstep(1.470, 1.530, y)) * smoothstep(-.02, .05, z)
+    p[:, 0] *= 1 - .10 * nape
+    p[:, 2] -= .005 * nape
+
+    return p
+
+
+# The eyes, measured on the source: each sclera is 24.5 mm wide on a 148 mm face (0.165 of
+# the face, against 0.18-0.22 in the canon) and they sit 38 mm apart at the inner corners,
+# 1.57 eye widths. Widening each eye 12 % about its own centre and drawing it 3 mm toward
+# the nose gives a 27 mm eye (0.18 of the face) with a 29 mm gap (1.06 eye widths).
+EYE_WIDEN = 1.12
+
+
+def teacher_eyeball(points: np.ndarray) -> np.ndarray:
+    """Flatten each eyeball slightly about its own centre.
+
+    The sclera is a sphere and the lid is skin. Lowering the lid over an unsquashed
+    sphere leaves a white band above the iris, which is exactly what "swollen shut"
+    looks like. Squashing the ball by 8 % into the aperture keeps the iris filling the
+    opening, and the iris/pupil discs are squashed with it so nothing drifts.
+    """
+    p = points.astype(np.float64).copy()
+    for centre, inward in ((np.array([-.0317, 1.5324, -.0786]), .003),
+                           (np.array([.0313, 1.5300, -.0783]), -.003)):
+        near = np.linalg.norm(p - centre, axis=1) < .030
+        p[near, 0] = centre[0] + (p[near, 0] - centre[0]) * EYE_WIDEN + inward
+        p[near, 1] = centre[1] + (p[near, 1] - centre[1]) * .90
+        p[near, 2] = centre[2] + (p[near, 2] - centre[2]) * .97
+    return p
+
+
+def teacher_ear(points: np.ndarray) -> np.ndarray:
+    """Cut the concha into the ear.
+
+    Measured off the source, the ear is one smooth convex dome: frontmost at its rim
+    (|x| = 80 mm) and shallowing towards the middle, with no bowl anywhere. That is why it
+    reads as a flat oval pasted on the skull -- the concha, the one feature that makes an
+    ear an ear and the only part of it that catches shadow, is simply absent.
+
+    The bowl is cut about the region the source already treats as its middle: centred at
+    y 1.5335, z 0.0140, about 9 mm across, pressed inward toward the skull by up to 6 mm and
+    fading out before the rim so the helix is left standing as a lip. It is applied to the
+    outward half of the shell only; the flat plate on the skull side stays where it is.
+    """
+    p = points.astype(np.float64).copy()
+    x, y, z = p.T.copy()
+    xr = np.abs(x)
+    # The bowl's floor, in the ear's own (y, z): a radial falloff, not a separable one,
+    # because the concha is round and a product of two bells puts its corners back up.
+    r = np.hypot((y - 1.5335) / .0092, (z - .0140) / .0082)
+    floor = np.clip(1.0 - r * r, 0.0, 1.0) ** 1.5
+    # Only the outward half of the shell: the back plate is flat against the skull and
+    # moving it would open a gap at the jaw. Within that half the bowl's own falloff decides
+    # where the cut lands, so this gate stays well outside it and only the *back* is spared.
+    out = smoothstep(.0680, .0700, xr)
+    p[:, 0] -= np.sign(x) * .0060 * floor * out
+    return p
+
+
+def mouth_rim_targets(points: np.ndarray, triangles: np.ndarray,
+                      harmonics: int = 5) -> np.ndarray:
+    """Where the outer lip rim belongs: a smooth curve through its 74 vertices.
+
+    The mouth opening is cut out of the face on the *grid*, two millimetres at a time, so
+    its rim is a ring of horizontal steps: the 74 rim vertices sit on only twelve distinct
+    heights, and two of those heights carry thirteen vertices each. The lip is sewn onto
+    that rim, so it inherits the staircase, and no amount of refining the lip can remove it
+    -- the steps are in the skin.
+
+    The repair keeps the topology and moves the vertices: the rim is ordered round the loop,
+    fitted with a low-order Fourier series (five harmonics -- enough for a lip's own curve,
+    not enough to follow a step) and each vertex is placed on that curve. Because the skin
+    and the lip share these vertices by identity, doing it once on either sheet moves both,
+    and the seam stays welded by construction rather than by a tolerance.
+
+    Returns the replacement positions for the loop's vertices, in loop order.
+    """
+    loop = _loop_order(points, triangles)
+    if len(loop) != 74:
+        raise ValueError("the mouth rim has %d vertices, expected 74" % len(loop))
+    rim = points[loop]
+    u = np.linspace(0.0, 2.0 * np.pi, len(loop), endpoint=False)
+    out = np.zeros_like(rim)
+    for k in range(harmonics + 1):
+        cos, sin = np.cos(k * u), np.sin(k * u)
+        for axis in range(3):
+            a = float((rim[:, axis] * cos).mean()) * (2 if k else 1)
+            b = float((rim[:, axis] * sin).mean()) * (2 if k else 0)
+            out[:, axis] += a * cos + b * sin
+    return loop, out
+
+
+def teacher_crown_part(points: np.ndarray) -> np.ndarray:
+    """Lift a narrow band of the crown's back, so the skull cannot show through it.
+
+    The skull is 0.6 mm proud of the curtain along the back midline, which is all it takes
+    for a hairline-thin sliver of skin to show from behind -- a seam that follows the two
+    sheets' tangency up the crown. The band is only 24 mm wide and 2.2 mm deep: measured
+    over every ray at the seam, skin visible from behind goes from 134 to none, and the
+    silhouette does not move, because the band is added on the midline rather than the sides.
+    """
+    p = points.astype(np.float64).copy()
+    half, depth = .012, .0022
+    a, b = 1.528, 1.640                  # the tangency runs from the nape's top to the crown
+    def ramp(x: np.ndarray) -> np.ndarray:   # smoothstep, so the band has no lip of its own
+        t = np.clip(x, 0.0, 1.0)
+        return t * t * (3.0 - 2.0 * t)
+    weight = (np.cos(np.clip(np.abs(p[:, 0]) / half, 0.0, 1.0) * np.pi / 2.0) ** 2
+              * ramp((p[:, 1] - a) / .018) * ramp((b - p[:, 1]) / .018)
+              * (p[:, 2] > .02).astype(np.float64))
+    radial = np.zeros_like(p)
+    radial[:, 0], radial[:, 2] = p[:, 0], p[:, 2]
+    radial /= np.maximum(np.linalg.norm(radial, axis=1, keepdims=True), 1e-9)
+    return p + radial * (weight * depth)[:, None]
+
+
+def _loop_order(points: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """The mouth's outer rim, as vertex ids in ring order."""
+    counts: dict = {}
+    for a, b, c in triangles:
+        for u, v in ((a, b), (b, c), (c, a)):
+            key = (int(u), int(v)) if u < v else (int(v), int(u))
+            counts[key] = counts.get(key, 0) + 1
+    rim = defaultdict(set)
+    for (u, v), count in counts.items():
+        if count == 1:
+            rim[u].add(v)
+            rim[v].add(u)
+    # The mouth is the largest open ring that sits on the face.
+    best: list = []
+    seen: set = set()
+    for start in sorted(rim):
+        if start in seen:
+            continue
+        component, stack = [], [start]
+        while stack:
+            x = stack.pop()
+            if x in seen:
+                continue
+            seen.add(x)
+            component.append(x)
+            stack.extend(rim[x] - seen)
+        if len(component) > len(best):
+            best = component
+    loop = set(best)
+    order, previous, current = [best[0]], None, best[0]
+    while True:
+        nxt = [x for x in rim[current] if x in loop and x != previous]
+        if not nxt or nxt[0] == order[0]:
+            break
+        previous, current = current, nxt[0]
+        order.append(current)
+    return np.array(order, np.int64)
+
+
+def teacher_teeth(points: np.ndarray, lip: np.ndarray) -> np.ndarray:
+    """Set the teeth behind the lip's own front, so no white strip shows at rest.
+
+    The teeth are a flat strip only two millimetres high, and at rest the mouth is closed:
+    the strip sits at z -0.0792..-0.0714 while the lip's front runs from -0.0918 back to
+    -0.0724, so the teeth are a millimetre *proud* of the lip and read as a thin white bar
+    across a closed mouth. At rest nothing should be visible but lip.
+
+    The lip is not a plane: its front runs from z -0.0792 across the middle back to -0.0724
+    at the corners, so a single cut plane either leaves the strip proud in the middle or
+    buries it at the corners. The strip is pushed back to a metre-per-metre *profile* of
+    the lip instead -- the lip's frontmost point in each of a few dozen slices across x,
+    smoothed and then held in 1.6 mm behind itself -- and its width is pulled in a touch so
+    the corners cannot poke out where the lip turns. It stays a flat strip: teeth that show
+    are the animation's job, not this pose's.
+    """
+    p = points.astype(np.float64).copy()
+    slices = np.linspace(float(lip[:, 0].min()), float(lip[:, 0].max()), 33)
+    step = slices[1] - slices[0]
+    front = np.array([lip[np.abs(lip[:, 0] - x) < 1.5 * step, 2].max() for x in slices])
+    kernel = np.ones(5) / 5.0                 # bin noise must not ripple the strip
+    front = np.convolve(np.pad(front, 2, mode="edge"), kernel, mode="valid")
+    p[:, 2] = np.minimum(p[:, 2], np.interp(p[:, 0], slices, front) - .0016)
+    p[:, 0] *= .94
+    return p
+
+
+# The lower face, measured on the source: the chin tip is 1.408 m and the nose base sits at
+# 1.467 m, only 59 mm apart, against about 79 mm (a third of the 237 mm head) in the canon.
+# That is why the mouth reads as sitting on the chin. The fix lifts the nose and the mouth
+# and leaves the chin tip and the eye line where they are, so the head height, the eye line
+# and the chin the measures are taken from all stay put. The lift is a function of height
+# only: it is zero at the chin, rises to 14 mm at the nose base (6 mm at the mouth line, which
+# keeps the mouth's share of the lower third) and falls back to zero at the eye line.
+LOWER_FACE_HEIGHTS = (1.408, 1.4515, 1.4670, 1.5324)
+LOWER_FACE_LIFT = (0.0, 0.006, 0.014, 0.0)
+
+
+def teacher_lower_face(points: np.ndarray) -> np.ndarray:
+    """Lift the nose and mouth 14 mm and 6 mm; the chin and eye line do not move.
+
+    The lift belongs to the face, so it is weighted off the back of the head (z > 0 is the
+    back: the face looks toward -z) and off the sides, where the ears and the jaw hinge.
+    Without that the nape rises with the nose, and the hair that sits on the nape moves.
+    """
+    p = points.astype(np.float64).copy()
+    x, _, z = p.T.copy()
+    front = smoothstep(.0, -.04, z) * (1 - smoothstep(.046, .068, np.abs(x)))
+    p[:, 1] += front * np.interp(p[:, 1], LOWER_FACE_HEIGHTS, LOWER_FACE_LIFT)
+    return p
+
+
+def teacher_resting_field(points: np.ndarray) -> np.ndarray:
+    """The head skin's full resting field: the expression, then the lower face.
+
+    Used for the skin's positions, its normals and its morph deltas alike, so a blink or a
+    mouth-close still lands on the lid and lip that moved.
+    """
+    return teacher_lower_face(teacher_expression_field(points))
+
+
+def teacher_resting_face(points: np.ndarray, normals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The head skin's resting pass. Normals are carried through unchanged, as in
+    `teacher_expression`.
+
+    Re-deriving them through the warp's Jacobian was tried and rejected: the hair is fitted
+    to these normals, and the re-derived ones flip two skin vertices and send 150 hair
+    vertices to the back of the head. The warp is a 14 mm lift over ~65 mm, so the shading
+    error it leaves is a few degrees at the nostril wings.
+    """
+    return teacher_resting_field(points), normals.astype(np.float64).copy()
+
+
+def teacher_expression_field(points: np.ndarray) -> np.ndarray:
+    """The resting-face field as positions only, for warping a morph delta.
+
+    `teacher_expression` returns positions and normals because the mesh pass needs both.
+    A shape key only needs the displacement, so it goes through this.
+    """
+    return teacher_expression(points, np.zeros_like(points, dtype=np.float64))[0]
 
 
 def teacher_tailoring(points: np.ndarray, knit: bool) -> np.ndarray:

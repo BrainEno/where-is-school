@@ -409,6 +409,9 @@ def n_look(label: str) -> dict:
 def n_chalk() -> dict:
     look = n_look("N: chalk (experiment)")
     look["outline"] = {"wobble": 0.45, "wobble_scale": 12.0}
+    # N's GLB carries the eyelid blink and the brow/mouth expression shapes (revision 6).
+    look["expression"] = {"Brow_Compress": 0.42, "Frown": 0.28, "Mouth_Close": 0.34}
+    look["blink_shapes"] = ["Eye_Blink_L", "Eye_Blink_R"]
     soft = {"edge_softness": 0.1, "edge_break": 0.3}
     skin = dict(
         soft,

@@ -212,7 +212,7 @@ size = Vector3(70, 0.2, 39.8)
 size = Vector3(22.6, 0.2, 29.8)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art49"]
-size = Vector3(28.3, 0.18, 14.9)
+size = Vector3(28.3, 0.18, 12.65)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art50"]
 size = Vector3(6.2, 3.06, 36.5)
@@ -680,7 +680,7 @@ material_override = ExtResource("yard_ground")
 cast_shadow = 0
 
 [node name="GroundWingApron" type="MeshInstance3D" parent="Foundations"]
-position = Vector3(-16, -3.62, 13.25)
+position = Vector3(-16, -3.62, 12.125)
 mesh = SubResource("BoxMesh_art49")
 material_override = ExtResource("yard_ground")
 cast_shadow = 0
