@@ -439,6 +439,10 @@ func _make_probe(interact_id: StringName, position: Vector3, radius: float = 0.7
 	probe.prompt_text = "Probe"
 	probe.inspection_id = &"classroom_own_desk"
 	probe.radius = radius
+	# These cases are about what hides an object, not about how precisely it is pointed at:
+	# keep the outlined pointer rule (whole sphere), which the scans below were written for.
+	# The marker's narrower rule is `tests/interaction_cue_test.gd`.
+	probe.cue_style = Interactable.CueStyle.OUTLINE
 	_location.add_child(probe)
 	probe.global_position = position
 	_probes.append(probe)

@@ -2,24 +2,32 @@ class_name HoverCue
 extends Node3D
 ## The cue on the object the player can use right now - the thing E would act on.
 ##
-## It is an outline traced around the object itself, in the manner of Disco Elysium: the
-## object's own silhouette gets a thin warm line, a dark rim and a faint wash, and nothing
-## is added to the floor. The previous cue was a dashed ring on the ground with a halo and
-## a floating diamond; the owner rejected it because a big circle next to a timetable says
-## "here is a circle", not "this sheet". An outline can only mean the thing it traces.
+## Two looks, chosen by the object (`Interactable.CueStyle`, `docs/ARCHITECTURE.md, "Marker or outline"`):
+##
+## * **Marker** (things to look at, people to talk to, controls): a small green ring with a
+##   pale dot, sitting on the middle of the object - Disco Elysium's look/talk mark. It is a
+##   billboard of constant pixel size (`assets/shaders/interaction/look_marker.gdshader`)
+##   and follows the object if it moves (a person walking to their talk spot). The owner
+##   asked for it in round 24: the outline on every prop and every window made the whole
+##   hall light up under a wandering cursor.
+## * **Outline** (ways out: doors, gates, stairs): the object's own silhouette gets a thin
+##   warm line, a dark rim and a faint wash, and nothing is added to the floor. The cue
+##   before that was a dashed ring on the ground with a halo and a floating diamond; the
+##   owner rejected it because a big circle next to a timetable says "here is a circle",
+##   not "this sheet". The marker is not that circle: it is small and on the thing itself.
 ##
 ## Which meshes are traced is the interactable's decision (`Interactable.get_outline_meshes`:
 ## its `outline_paths`, else its `support_paths`, plus anything parented under it). How
 ## they are traced is `OutlineOverlay`'s. This node only owns the fade and the hand-over:
 ##
 ## * `reveal()` collects the meshes *now* - a character's model is instanced at runtime and a
-##   placeholder may have been hidden since the last time - hands them to the overlay and
-##   fades the outline in;
+##   placeholder may have been hidden since the last time - hands them to the overlay (or
+##   places the marker on them) and fades the cue in;
 ## * `conceal()` fades it out and releases the meshes. If another object was highlighted in
 ##   the meantime the overlay already belongs to it, and the release is ignored there.
 ##
-## An object with nothing visible to trace (content still being built) falls back to a
-## small tumbling diamond above it, so it is never silently unmarked. Every shipped
+## An outlined object with nothing visible to trace (content still being built) falls back
+## to a small tumbling diamond above it, so it is never silently unmarked. Every shipped
 ## interactable is checked to resolve to at least one mesh, so the fallback is a safety net
 ## and never the design.
 
@@ -31,6 +39,12 @@ const SHARD_HEIGHT := 0.35
 const SHARD_TUMBLE_DEGREES_PER_SECOND := 26.0
 const BOB_HEIGHT := 0.05
 const BOB_SECONDS := 2.6
+const MARKER_SHADER := preload("res://assets/shaders/interaction/look_marker.gdshader")
+## The ring's diameter in pixels at a 900-pixel-high window (the shader scales it with the
+## window). Small on purpose: a mark on the thing, not a target painted over it.
+const MARKER_PIXEL_SIZE := 24.0
+const MARKER_COLOR := Color(0.55, 0.92, 0.5, 1.0)
+const MARKER_PULSE_SECONDS := 1.8
 
 var _source: Interactable = null
 var _revealed: bool = false
@@ -39,6 +53,9 @@ var _tween: Tween = null
 var _meshes: Array[GeometryInstance3D] = []
 var _overlay: OutlineOverlay = null
 var _shard: MeshInstance3D = null
+var _marker: MeshInstance3D = null
+var _marker_material: ShaderMaterial = null
+var _marking: bool = false
 var _time: float = 0.0
 
 
@@ -62,9 +79,19 @@ func get_outline_meshes() -> Array[GeometryInstance3D]:
 	return _meshes.duplicate()
 
 
-## True when the last reveal traced the object's meshes rather than falling back.
+## True when the last reveal traced the object's meshes rather than marking or falling back.
 func is_outlining() -> bool:
-	return not _meshes.is_empty()
+	return not _marking and not _meshes.is_empty()
+
+
+## True when the last reveal drew the small ring instead of an outline.
+func is_marking() -> bool:
+	return _marking
+
+
+## The ring, or null when this cue has never marked anything. Public for tests.
+func get_marker() -> MeshInstance3D:
+	return _marker
 
 
 func get_overlay() -> OutlineOverlay:
@@ -72,7 +99,7 @@ func get_overlay() -> OutlineOverlay:
 
 
 func get_parts() -> Dictionary:
-	return {"shard": _shard}
+	return {"shard": _shard, "marker": _marker}
 
 
 func _ready() -> void:
@@ -85,14 +112,25 @@ func reveal() -> void:
 	_meshes.clear()
 	if _source != null:
 		_meshes = _source.get_outline_meshes()
-	_overlay = OutlineOverlay.for_node(self) if not _meshes.is_empty() else null
-	if _overlay != null:
-		_overlay.show_meshes(self, _meshes)
+	_marking = _source != null and _source.uses_marker_cue()
+	if _marking:
+		# A previous outline reveal of this same object may still own the overlay.
+		if _overlay != null and is_instance_valid(_overlay):
+			_overlay.release(self)
+		_overlay = null
+		_ensure_marker()
+		_place_marker()
 	else:
-		_meshes.clear()
-		_ensure_shard()
+		_overlay = OutlineOverlay.for_node(self) if not _meshes.is_empty() else null
+		if _overlay != null:
+			_overlay.show_meshes(self, _meshes)
+		else:
+			_meshes.clear()
+			_ensure_shard()
 	if _shard != null:
-		_shard.visible = _overlay == null
+		_shard.visible = not _marking and _overlay == null
+	if _marker != null:
+		_marker.visible = _marking
 	visible = true
 	set_process(true)
 	_fade_to(1.0, REVEAL_SECONDS)
@@ -111,6 +149,11 @@ func conceal(immediate: bool = false) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if _marking and _marker != null:
+		_place_marker()
+		_marker_material.set_shader_parameter(
+			&"pulse", 0.5 + 0.5 * sin(_time * TAU / MARKER_PULSE_SECONDS)
+		)
 	if _shard == null or not _shard.visible:
 		return
 	_shard.rotation.y = deg_to_rad(SHARD_TUMBLE_DEGREES_PER_SECOND) * _time
@@ -136,6 +179,8 @@ func _set_opacity(value: float) -> void:
 		_overlay.set_opacity(self, _opacity)
 	if _shard != null:
 		_shard.transparency = 1.0 - _opacity
+	if _marker_material != null:
+		_marker_material.set_shader_parameter(&"opacity", _opacity)
 
 
 func _finish() -> void:
@@ -159,6 +204,39 @@ func _ensure_shard() -> void:
 	_shard.position = Vector3(0.0, SHARD_HEIGHT, 0.0)
 	_shard.transparency = 1.0
 	add_child(_shard)
+
+
+## The ring is built once per object, the first time it is marked. Its material is its own
+## because the opacity is a shader parameter (the per-node `transparency` is not applied to a
+## custom shader on every renderer the game ships for).
+func _ensure_marker() -> void:
+	if _marker != null:
+		return
+	_marker_material = ShaderMaterial.new()
+	_marker_material.shader = MARKER_SHADER
+	_marker_material.set_shader_parameter(&"ring_color", MARKER_COLOR)
+	_marker_material.set_shader_parameter(&"pixel_size", MARKER_PIXEL_SIZE)
+	_marker_material.set_shader_parameter(&"opacity", _opacity)
+	_marker_material.set_shader_parameter(&"pulse", 0.0)
+	_marker_material.render_priority = Material.RENDER_PRIORITY_MAX
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE
+	_marker = MeshInstance3D.new()
+	_marker.name = "Marker"
+	_marker.mesh = quad
+	_marker.material_override = _marker_material
+	_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The shader sizes the quad in pixels, so far away it is wider than one metre.
+	_marker.extra_cull_margin = 4.0
+	# Placed in world space on the object's centre, whatever the anchor's transform is.
+	_marker.top_level = true
+	add_child(_marker)
+
+
+func _place_marker() -> void:
+	if _marker == null or _source == null or not _marker.is_inside_tree():
+		return
+	_marker.global_transform = Transform3D(Basis.IDENTITY, _source.get_marker_position())
 
 
 func _kill_tween() -> void:

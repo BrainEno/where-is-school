@@ -335,9 +335,11 @@ func _walk_out_to_the_yard() -> void:
 			_failures.append("The yard has no anchor for '%s'." % interact_id)
 	if yard.find_interactable(&"pg_to_corridor") == null:
 		_failures.append("The yard has no way back into the walkway.")
-	# Arriving from the school side, not from the estate gate at the far end.
-	var expected := Vector3(-3.0, 0.0, -17.6)
-	if _player.global_position.distance_to(expected) > 1.0:
+	# Arriving from the school side, not from the estate gate at the far end. The spawn is
+	# (-3, 0, -17.6) under the fire door; the arrival walks 1.6 m out into the yard (round 24),
+	# unless Q happens to stand on that line, so anywhere along the walk counts.
+	var expected := Vector3(-3.0, 0.0, -16.8)
+	if _player.global_position.distance_to(expected) > 1.2:
 		_failures.append(
 			"The player did not arrive at the yard's school-side spawn (%s)." % _player.global_position
 		)
