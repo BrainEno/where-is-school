@@ -591,5 +591,18 @@ class RefinedCharacterTests(unittest.TestCase):
             self.assertAlmostEqual(float(refined[:, 1].min()), float(original[:, 1].min()), places=6)
 
 
+    def test_teacher_lower_face_lifts_only_the_front_of_the_lower_face(self) -> None:
+        # Chin tip, eye line, back of the head and the far side are fixed; the nose base
+        # rises 14 mm, which is what puts the lower third in its band.
+        points = np.array([[0, 1.408, -.09], [0, 1.467, -.09], [0, 1.5324, -.09],
+                           [0, 1.467, .05], [.09, 1.467, -.09]])
+        lifted = geometry.teacher_lower_face(points)
+        self.assertAlmostEqual(float(lifted[0, 1]), 1.408, places=9)
+        self.assertAlmostEqual(float(lifted[1, 1]), 1.481, places=9)
+        self.assertAlmostEqual(float(lifted[2, 1]), 1.5324, places=9)
+        self.assertAlmostEqual(float(lifted[3, 1]), 1.467, places=9)
+        self.assertAlmostEqual(float(lifted[4, 1]), 1.467, places=9)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

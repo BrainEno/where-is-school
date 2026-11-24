@@ -602,6 +602,13 @@ def teacher_crop(points: np.ndarray) -> np.ndarray:
     return p
 
 
+# The eyes, measured on the source: each sclera is 24.5 mm wide on a 148 mm face (0.165 of
+# the face, against 0.18-0.22 in the canon) and they sit 38 mm apart at the inner corners,
+# 1.57 eye widths. Widening each eye 12 % about its own centre and drawing it 3 mm toward
+# the nose gives a 27 mm eye (0.18 of the face) with a 29 mm gap (1.06 eye widths).
+EYE_WIDEN = 1.12
+
+
 def teacher_eyeball(points: np.ndarray) -> np.ndarray:
     """Flatten each eyeball slightly about its own centre.
 
@@ -611,8 +618,10 @@ def teacher_eyeball(points: np.ndarray) -> np.ndarray:
     opening, and the iris/pupil discs are squashed with it so nothing drifts.
     """
     p = points.astype(np.float64).copy()
-    for centre in (np.array([-.0317, 1.5324, -.0786]), np.array([.0313, 1.5300, -.0783])):
+    for centre, inward in ((np.array([-.0317, 1.5324, -.0786]), .003),
+                           (np.array([.0313, 1.5300, -.0783]), -.003)):
         near = np.linalg.norm(p - centre, axis=1) < .030
+        p[near, 0] = centre[0] + (p[near, 0] - centre[0]) * EYE_WIDEN + inward
         p[near, 1] = centre[1] + (p[near, 1] - centre[1]) * .90
         p[near, 2] = centre[2] + (p[near, 2] - centre[2]) * .97
     return p
@@ -767,6 +776,52 @@ def teacher_teeth(points: np.ndarray, lip: np.ndarray) -> np.ndarray:
     p[:, 2] = np.minimum(p[:, 2], np.interp(p[:, 0], slices, front) - .0016)
     p[:, 0] *= .94
     return p
+
+
+# The lower face, measured on the source: the chin tip is 1.408 m and the nose base sits at
+# 1.467 m, only 59 mm apart, against about 79 mm (a third of the 237 mm head) in the canon.
+# That is why the mouth reads as sitting on the chin. The fix lifts the nose and the mouth
+# and leaves the chin tip and the eye line where they are, so the head height, the eye line
+# and the chin the measures are taken from all stay put. The lift is a function of height
+# only: it is zero at the chin, rises to 14 mm at the nose base (6 mm at the mouth line, which
+# keeps the mouth's share of the lower third) and falls back to zero at the eye line.
+LOWER_FACE_HEIGHTS = (1.408, 1.4515, 1.4670, 1.5324)
+LOWER_FACE_LIFT = (0.0, 0.006, 0.014, 0.0)
+
+
+def teacher_lower_face(points: np.ndarray) -> np.ndarray:
+    """Lift the nose and mouth 14 mm and 6 mm; the chin and eye line do not move.
+
+    The lift belongs to the face, so it is weighted off the back of the head (z > 0 is the
+    back: the face looks toward -z) and off the sides, where the ears and the jaw hinge.
+    Without that the nape rises with the nose, and the hair that sits on the nape moves.
+    """
+    p = points.astype(np.float64).copy()
+    x, _, z = p.T.copy()
+    front = smoothstep(.0, -.04, z) * (1 - smoothstep(.046, .068, np.abs(x)))
+    p[:, 1] += front * np.interp(p[:, 1], LOWER_FACE_HEIGHTS, LOWER_FACE_LIFT)
+    return p
+
+
+def teacher_resting_field(points: np.ndarray) -> np.ndarray:
+    """The head skin's full resting field: the expression, then the lower face.
+
+    Used for the skin's positions, its normals and its morph deltas alike, so a blink or a
+    mouth-close still lands on the lid and lip that moved.
+    """
+    return teacher_lower_face(teacher_expression_field(points))
+
+
+def teacher_resting_face(points: np.ndarray, normals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The head skin's resting pass. Normals are carried through unchanged, as in
+    `teacher_expression`.
+
+    Re-deriving them through the warp's Jacobian was tried and rejected: the hair is fitted
+    to these normals, and the re-derived ones flip two skin vertices and send 150 hair
+    vertices to the back of the head. The warp is a 14 mm lift over ~65 mm, so the shading
+    error it leaves is a few degrees at the nostril wings.
+    """
+    return teacher_resting_field(points), normals.astype(np.float64).copy()
 
 
 def teacher_expression_field(points: np.ndarray) -> np.ndarray:

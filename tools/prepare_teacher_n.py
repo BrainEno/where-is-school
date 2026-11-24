@@ -706,8 +706,10 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
 # Geometry revision 3 lives here: after the baked Blender stroke layer, so it edits what
 # that layer leaves instead of being overwritten by it. Each entry is a pure field over
 # bind-space positions and changes no topology, which is what makes a post-pass possible.
+# The head skin's morph deltas are warped by the same field as its positions.
+MORPH_FIELDS = {"ST_Head_Skin": geometry.teacher_resting_field}
 RESTING = {
-    "ST_Head_Skin": geometry.teacher_expression,
+    "ST_Head_Skin": geometry.teacher_resting_face,
     "ST_Eyebrow_L": geometry.teacher_expression,
     "ST_Eyebrow_R": geometry.teacher_expression,
 }
@@ -923,8 +925,9 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
                 for target in primitive.get("targets", []):
                     rows, deltas = arrays.read_morph_values(target)
                     arrays.write_morph_values(
-                        target, geometry.deform_delta(base[rows], deltas,
-                                                      geometry.teacher_expression_field))
+                        target, geometry.deform_delta(
+                            base[rows], deltas,
+                            MORPH_FIELDS.get(mesh["name"], geometry.teacher_expression_field)))
             arrays.write(attributes["POSITION"], positions)
             arrays.write(attributes["NORMAL"], normals_out)
             moved.setdefault(mesh["name"], 0.0)

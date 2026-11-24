@@ -30,6 +30,23 @@ BANDS = [
 ]
 
 
+def nose_base(skin, chin):
+    """Where the nose stops protruding from the face, measured on the front midline.
+
+    The nose is the skin, not a mesh, so it is read off the front profile: the tip is the
+    most forward point below the eyes, and the base is the lowest height at which the
+    profile has come half way from the upper lip's surface out to the tip.
+    """
+    front = skin[(np.abs(skin[:, 0]) < .004) & (skin[:, 2] < 0) & (skin[:, 1] > chin + .02)
+                 & (skin[:, 1] < 1.53)]
+    tip = front[np.argmin(front[:, 2])]
+    lip = front[(front[:, 1] < chin + .05)]
+    surface = np.median(lip[:, 2]) if len(lip) else tip[2]
+    halfway = (tip[2] + surface) / 2
+    below = front[(front[:, 1] < tip[1]) & (front[:, 2] > halfway)]
+    return below[:, 1].max() if len(below) else tip[1]
+
+
 def head_parts(glb):
     parts = {}
     for name, material, positions, _index, _colour, _rough, _normal in glb.instances():
@@ -40,6 +57,7 @@ def head_parts(glb):
         "eye_l": parts["ST_Eye_L"][0][1],
         "eye_r": parts["ST_Eye_R"][0][1],
         "brow_l": parts["ST_Eyebrow_L"][0][1],
+        "lip": [p for m, p in parts["ST_Head_Skin"] if m == "M_ST_Lip"][0],
     }
 
 
@@ -56,10 +74,8 @@ def measure(glb):
     face_w = skin[:, 0].max() * 2
     jaw = skin[(skin[:, 1] > chin + .032) & (skin[:, 1] < chin + .052)][:, 0].max() * 2
     cranium = skin[skin[:, 1] > crown - .055][:, 0].max() * 2
-    # The mouth line is the pale lip shell's own vertical centre; the nose base is the
-    # bottom of the nostril patch on the skin (see the standard for why these two).
-    nose_y = 1.4670 if chin < 1.45 else chin + .249 * height
-    mouth_y = 1.4515 if chin < 1.45 else chin + .184 * height
+    nose_y = nose_base(skin, chin)
+    mouth_y = (p["lip"][:, 1].min() + p["lip"][:, 1].max()) / 2
     return {
         "eye line / face height": (eye_y - chin) / height,
         "nose base / face height": (nose_y - chin) / height,
