@@ -22,6 +22,34 @@ static func walk_to(player: PlayerController, target: Vector3, speed: float = 1.
 	return true
 
 
+## Like `walk_to`, for a walk that may go down a flight of steps (an arrival that starts
+## on a landing, `LocationHost.ENTRY_WALK_META`). The tween moves the body only across the
+## floor and leaves its height to the controller's own gravity and floor snap, so the feet
+## come down each tread instead of gliding out at the landing's height. Down or level
+## only: on a rise the capsule would be pushed into the next riser.
+static func walk_down_to(player: PlayerController, target: Vector3, speed: float = 1.45) -> bool:
+	var start := player.global_position
+	var travel := target - start
+	travel.y = 0.0
+	if travel.length() < 0.015:
+		return true
+	if player.test_move(player.global_transform.translated(Vector3.UP * 0.035), travel):
+		return false
+	var direction := travel.normalized()
+	await turn_to(player, direction)
+	var animator := player.get_character_animator()
+	if animator != null:
+		animator.report_velocity(direction * speed)
+	var across := func(t: float) -> void:
+		var point := start + travel * t
+		player.global_position = Vector3(point.x, player.global_position.y, point.z)
+	var tween := player.create_tween()
+	tween.tween_method(across, 0.0, 1.0, travel.length() / speed)
+	await tween.finished
+	_stop_walking(player)
+	return true
+
+
 ## Like `walk_to`, but when something stands on the straight line (a chair, the end of a
 ## desk row) it goes round it the way a click would: along the navigation map, which is
 ## baked with the body's own radius, then the last short step from the mesh onto the mark.

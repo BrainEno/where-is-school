@@ -93,6 +93,18 @@ func _walk_return_route() -> void:
 		return
 	if not await _exit(&"street_to_residential", Vector3(10.49, 1.6, -35.7), &"residential", &"FromStreet"):
 		return
+	# Round 24: back from the flats the street arrival walks the player down the whole
+	# flight (`entry_walk`), so the stair, which is the way up again, is behind them and
+	# not under the cursor. Then up again, as before.
+	Harness.stage = "back down the estate stair"
+	if not await _exit(&"res_back_to_street", Vector3(-16.75, 0, 12.8), &"street", &"FromResidential"):
+		return
+	var foot := _player.global_position
+	if not _check.expect(foot.z > -30.4 and foot.y < 0.3,
+		"The street arrival left the player on the stair at %s." % foot):
+		return
+	if not await _exit(&"street_to_residential", Vector3(10.49, 1.6, -35.7), &"residential", &"FromStreet"):
+		return
 
 	Harness.stage = "courtyard and alley mouth"
 	if not await _exit(&"res_alley_end", Vector3(6.0, 0, -33.75), &"alley", &"FromCourtyard"):

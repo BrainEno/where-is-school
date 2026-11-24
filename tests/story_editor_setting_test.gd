@@ -8,8 +8,10 @@ extends SceneTree
 ## from `user://save.json`, and the switch survives a restart without touching any other
 ## preference.
 ##
-## The editor's own behaviour (edit, insert, trial walk, export) is
-## `tests/authoring_classroom_test.gd`; this file is the switch and the entry.
+## F9 moves the same switch from anywhere in the run, which is what makes a preferences file
+## this machine refuses unable to lock the author out of their own tool (#396). This file is the
+## switch, the entry and the key; the editor's own behaviour (edit, insert, trial walk, export) is
+## `tests/authoring_classroom_test.gd`.
 
 const Harness := preload("res://tests/test_harness.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
@@ -43,7 +45,7 @@ func _run() -> void:
 	check.expect(not settings.is_story_editor_enabled(), "A fresh settings file must start with the story editor off")
 	settings.set_volume(&"music", 37)
 	_check_interrupted_swap(check, settings, loc)
-	_check_dev_override(check, settings)
+	await _check_dev_override(check, settings)
 	var world := await _boot_world(check)
 	await _check_off_by_default(check, world)
 	await _check_entry_follows_switch(check, world, settings)
@@ -262,8 +264,10 @@ func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
 			== StoryEditorEntry.development_requested(
 				OS.get_cmdline_user_args(), OS.get_environment(StoryEditorEntry.DEVELOPMENT_ENVIRONMENT)),
 		"The override the settings load honours is not the rule it states")
-	# What each outcome reads as on the row, and the step inside it. The two tables have to carry
-	# the placeholder, or the sentence arrives with "{step}" in it on one language.
+	# What each outcome reads as on the row, and the step inside it: `saved` is the file, `moved`
+	# is the switch, and the two come apart in a development run - which is why one sentence cannot
+	# serve both. The tables have to carry the placeholder, or the sentence arrives with "{step}"
+	# in it on one language.
 	check.expect(SettingsPanel._story_feedback_key(true, true, "") == "settings.done_note",
 		"A stored switch did not read as saved")
 	check.expect(SettingsPanel._story_feedback_key(false, false, "publish staged preferences")
@@ -271,8 +275,15 @@ func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
 	check.expect(SettingsPanel._story_feedback_key(false, true, "publish staged preferences")
 			== "settings.session_only_note", "A session-only install claimed the switch was unchanged")
 	for locale: String in ["zh-CN", "en"]:
-		check.expect(L10n.t_for("settings.session_only_note", locale).contains("{step}"),
+		var only := L10n.t_for("settings.session_only_note", locale)
+		check.expect(only.contains("{step}"),
 			"The %s table has no {step} for the session-only note" % locale)
+		# One sentence serves both directions of a session-only change, so it cannot repeat the
+		# refusal's claim that the switch did not move: F9 moves it without the file.
+		var unchanged := "开关未更改" if locale == "zh-CN" else "has not changed"
+		check.expect(not only.contains(unchanged),
+			"The %s session-only note says the switch did not move, which is what the key just did"
+			% locale)
 	var refused := RefusedStore.new()
 	check.expect(SettingsPanel._store_failure_step(refused) == "publish staged preferences",
 		"The settings row did not read the step a refused write reported")
@@ -280,7 +291,9 @@ func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
 			and SettingsPanel._store_failure_step(Node.new()) == "",
 		"A settings node with no report made the row claim a cause it does not have")
 	refused.free()
-	_hold_preferences_hostage(check, settings)
+	_check_hotkey_presses(check)
+	_check_packaging_keeps_the_authoring_out(check)
+	await _hold_preferences_hostage(check, settings)
 
 
 ## The file is moved aside whole and put back, so a refused write here cannot cost the run a
@@ -297,12 +310,14 @@ func _hold_preferences_hostage(check: Harness.Checker, settings: Node) -> void:
 			and not bool(settings.call("is_story_editor_enabled")),
 		"A player's copy turned the editor on over a preferences write it could not make")
 	StoryEditorEntry.debug_run = true
-	check.expect(bool(settings.call("set_story_editor_enabled", true))
+	check.expect(not bool(settings.call("set_story_editor_enabled", true))
 			and bool(settings.call("is_story_editor_enabled")),
-		"An author's run was locked out of the tool by a file it could not write")
+		"An author's run was locked out of the tool by a file it could not write, or the switch "
+		+ "said the refused write had saved it")
 	var failure: Variant = settings.call("get_last_store_failure")
 	check.expect(failure is Dictionary and not String((failure as Dictionary).get("step", "")).is_empty(),
 		"The session-only install did not report which step the write failed at")
+	await _check_hotkey_over_a_refused_write(check, settings)
 	DirAccess.remove_absolute(SETTINGS_PATH)
 	if not check.expect(DirAccess.rename_absolute(hold, SETTINGS_PATH) == OK,
 			"Could not put the blocked preferences file back"):
@@ -313,6 +328,111 @@ func _hold_preferences_hostage(check: Harness.Checker, settings: Node) -> void:
 		"Once the file was writable again the session-only switch could not be turned off")
 
 
+## What one key is allowed to mean. The key decides nothing on its own - who may use it is the
+## entry's rule - so this is about what counts as asking, and about a run that must not answer.
+func _check_hotkey_presses(check: Harness.Checker) -> void:
+	Harness.stage = "what counts as the story-editor key"
+	check.expect(StoryEditorEntry.HOTKEY == KEY_F9,
+		"The story-editor key is not the F9 the settings row promises")
+	var release := _story_key(StoryEditorEntry.HOTKEY, false)
+	var repeated := _story_key(StoryEditorEntry.HOTKEY)
+	repeated.echo = true
+	var chord := _story_key(StoryEditorEntry.HOTKEY)
+	chord.ctrl_pressed = true
+	check.expect(StoryEditorEntry.hotkey_pressed(_story_key(StoryEditorEntry.HOTKEY))
+			and not StoryEditorEntry.hotkey_pressed(release)
+			and not StoryEditorEntry.hotkey_pressed(repeated)
+			and not StoryEditorEntry.hotkey_pressed(chord)
+			and not StoryEditorEntry.hotkey_pressed(_story_key(KEY_F8))
+			and not StoryEditorEntry.hotkey_pressed(InputEventMouseButton.new())
+			and not StoryEditorEntry.hotkey_pressed(null),
+		"The story-editor key did not answer to exactly one fresh, unmodified press")
+	# A key is an author's tool, not a player's shortcut. In a run that is not a development run -
+	# every release export, and the iOS package that does carry the runtime - the press is not this
+	# code's to take, and the report says nothing rather than refusing something never offered.
+	var settings := root.get_node(^"Settings") as Node
+	var was_on := bool(settings.call("is_story_editor_enabled"))
+	StoryEditorEntry.debug_run = false
+	var silent: Dictionary = StoryEditorEntry.toggle(root)
+	check.expect(String(silent["step"]).is_empty() and not bool(silent["changed"])
+			and not bool(silent["saved"]) and not bool(silent["enabled"]),
+		"A run that is not an author's run answered the story-editor key")
+	check.expect(bool(settings.call("is_story_editor_enabled")) == was_on,
+		"A key nobody was allowed to press still moved the switch")
+	StoryEditorEntry.debug_run = OS.is_debug_build()
+
+
+## The key pushed through the real input path while the preferences file is held hostage, which is
+## the one run where it has to prove something. The hook's place is the engine's own order
+## (`Viewport::push_input`, 4.7.2-stable): `_input` first, so a rebinding capture in the settings
+## screen keeps the key it asked for; the GUI next; then `_shortcut_input`, which is this, before
+## the pause menu and the open editor each take every key in `_unhandled_input`.
+func _check_hotkey_over_a_refused_write(check: Harness.Checker, settings: Node) -> void:
+	Harness.stage = "the story-editor key over a refused write"
+	var session := Harness.ensure_autoload(
+		self, "Session", "res://scripts/ui/game_session.gd")
+	if not check.expect(session != null,
+			"The node that owns the key could not be created, so the push below proves nothing"):
+		return
+	check.expect(bool(session.call("is_processing_shortcut_input")),
+		"The owner of the key is not receiving shortcut input, so the engine would never hand it F9")
+	if not check.expect(await Harness.wait_until(
+			func() -> bool: return root.has_node(^"StoryEditor"), 5.0),
+			"The session-only install never put the editor on the tree"):
+		return
+	root.push_input(_story_key(StoryEditorEntry.HOTKEY), true)
+	check.expect(root.is_input_handled(),
+		"The story-editor key was left to the game in an author's run")
+	check.expect(await Harness.wait_until(func() -> bool:
+		return not bool(settings.call("is_story_editor_enabled")) and not root.has_node(^"StoryEditor")
+	, 5.0), "The key could not put the editor away without a writable preferences file")
+	root.push_input(_story_key(StoryEditorEntry.HOTKEY), true)
+	if check.expect(await Harness.wait_until(func() -> bool:
+		return bool(settings.call("is_story_editor_enabled")) and root.has_node(^"StoryEditor")
+	, 5.0), "The key could not open the editor again without a writable preferences file"):
+		root.push_input(_story_key(KEY_F8), true)
+		check.expect(not root.is_input_handled(),
+			"An unrelated key was eaten by the story-editor hook")
+	# Off for the checks that follow, which expect a run with no editor on the tree. The file is
+	# still hostage here, so this is the session-only direction, not a stored one.
+	settings.call("set_story_editor_enabled", false)
+	check.expect(await Harness.wait_until(
+			func() -> bool: return not root.has_node(^"StoryEditor"), 5.0),
+		"Leaving this fixture put the editor on the tree for the checks that follow")
+
+
+## The separation the author has to be able to count on: the tool lives in one folder, the export
+## presets switch it off, and the code that stays in a player's package answers only while that
+## folder is really in it. This reads the file the exporter reads, so a preset added later without
+## the filter fails here rather than shipping a menu nobody meant to publish.
+func _check_packaging_keeps_the_authoring_out(check: Harness.Checker) -> void:
+	Harness.stage = "what a player's export leaves out"
+	var config := ConfigFile.new()
+	if not check.expect(config.load("res://export_presets.cfg") == OK,
+			"export_presets.cfg could not be read to check what ships out"):
+		return
+	var dropped: Array[String] = ["scripts/story_editor/*", "scripts/dev/*", "tests/*", "tools/*", "addons/*"]
+	var index := 0
+	var presets := 0
+	while config.has_section("preset.%d" % index):
+		var section := "preset.%d" % index
+		var preset := String(config.get_value(section, "name", ""))
+		var excludes := String(config.get_value(section, "exclude_filter", ""))
+		if preset == "iOS":
+			# The one package that carries the runtime, because the device app has the opt-in row;
+			# `_check_hotkey_presses` is the evidence that a released run of it answers nothing.
+			check.expect(excludes.contains("addons/*") and excludes.contains("tests/*"),
+				"The iOS export ships the editor-only addon or the test scripts")
+		else:
+			for filter: String in dropped:
+				check.expect(excludes.contains(filter),
+					"The %s export ships %s, which the author's tool needs to run" % [preset, filter])
+		presets += 1
+		index += 1
+	check.expect(presets >= 3,
+		"Fewer than the three player-facing export presets were readable")
+
+
 ## A `Settings` stand-in that only reports a refused write, so the settings row's message can
 ## be checked apart from a disk the machine will not let go of (#394).
 class RefusedStore:
@@ -320,6 +440,16 @@ class RefusedStore:
 
 	func get_last_store_failure() -> Dictionary:
 		return {"step": "publish staged preferences", "error": ERR_FILE_CANT_WRITE}
+
+
+## A keyboard event for the two checks above: a raw press of `code`, with the flags left default
+## unless the test asks for one.
+static func _story_key(code: Key, pressed: bool = true) -> InputEventKey:
+	var key := InputEventKey.new()
+	key.keycode = code
+	key.physical_keycode = code
+	key.pressed = pressed
+	return key
 
 
 ## The switch as the next process sees it, and the two ways back off.

@@ -141,6 +141,10 @@ func _run() -> void:
 						"Leaving the classroom did not land on the hall side of the front door.")
 		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
 			if await _use_exit(&"school_gate", &"front_yard", &"FromCorridor"):
+				# Round 24: down the gate steps the arrival walks on toward the gate (`entry_walk`).
+				var yard_arrival := _host.get_current().get_spawn(&"FromCorridor").global_position
+				_check.expect(_player.global_position.x - yard_arrival.x > 1.8,
+					"The front yard arrival did not walk on from %s (at %s)." % [yard_arrival, _player.global_position])
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
