@@ -134,8 +134,8 @@ MiB = 1024 * 1024
 # texture the game will eventually ship.
 #
 # Each entry is: warning threshold, hard limit, and why those two numbers. A warning is an
-# annotation and does not fail the release; a hard limit does. `hard` is never above
-# HARD_CEILING, so no category is looser than the old flat limit was.
+# annotation and does not fail the release; a hard limit does. The named runtime-character
+# category may use the 4 MiB absolute ceiling; every other category keeps its lower budget.
 @dataclass(frozen=True)
 class Category:
     name: str
@@ -144,11 +144,18 @@ class Category:
     why: str
 
 
-# The ceiling that applies to every file whatever it is classified as: the old flat per-file
-# budget, kept so this table can only tighten it, never relax it.
-HARD_CEILING = 2 * MiB
+# Absolute per-file ceiling. Only the explicit runtime-character allowlist may reach it.
+HARD_CEILING = 4 * MiB
 
 CATEGORIES = (
+    Category(
+        "character-model",
+        1536 * KiB,
+        4 * MiB,
+        "the protagonist, Q, substitute teacher N and biology teacher B are authored runtime "
+        "characters with facial geometry, morph targets and character-specific detail; 1.5 MiB "
+        "warns, while 4 MiB leaves measured headroom without relaxing ordinary model budgets",
+    ),
     Category(
         "model",
         384 * KiB,
@@ -196,7 +203,7 @@ CATEGORIES = (
     Category(
         "other",
         256 * KiB,
-        HARD_CEILING,
+        2 * MiB,
         "project settings, pack stubs and imported banners; anything here over 256 KiB is "
         "something nobody classified yet, which is exactly what wants looking at",
     ),
@@ -223,6 +230,17 @@ def load(path: Path, embedded: bool) -> tuple[list[tuple[str, int]], dict]:
 # `.godot/exported/<hash>/<source name>-<hash>.<ext>`, so the source's extension survives in
 # the stored name and can be used to classify it — that is what `classify` reads.
 _MODEL_SUFFIXES = (".glb", ".gltf", ".blend", ".obj", ".fbx")
+# Exact source basenames of approved runtime characters. Godot keeps these names in
+# imported PCK entries, even after moving them under .godot/exported/<hash>/.
+CHARACTER_MODEL_SOURCE_NAMES = frozenset(
+    {
+        "protagonist_character.glb",
+        "protagonist.glb",
+        "new-q.glb",
+        "teacher-n.glb",
+        "teacher_b.glb",
+    }
+)
 _AUDIO_SUFFIXES = (".wav", ".ogg", ".mp3", ".opus", ".flac", ".m4a")
 _TEXTURE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".svg", ".exr", ".hdr", ".bmp", ".tga")
 _FONT_SUFFIXES = (".ttf", ".otf", ".fontdata", ".woff", ".woff2")
@@ -240,6 +258,12 @@ def classify(path: str) -> Category:
     lowered = path.lower()
     stored = lowered.rsplit("/", 1)[-1]
     if any(suffix in stored for suffix in _MODEL_SUFFIXES):
+        source_name = stored.removeprefix("export-")
+        if any(
+            source_name == basename or source_name.startswith(basename + "-")
+            for basename in CHARACTER_MODEL_SOURCE_NAMES
+        ):
+            return BY_NAME["character-model"]
         return BY_NAME["model"]
     if any(suffix in stored for suffix in _FONT_SUFFIXES):
         return BY_NAME["font"]
