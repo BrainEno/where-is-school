@@ -1,0 +1,10 @@
+{
+  "source_sha256": "45cbbc7a063026a14c8f0fe6ab186c2f3f2b960ba3af547c60b45315d8d2c977",
+  "normal_sha256": "7f1ad8ead198595d79b0aa9a643d7f048d91266ced5e52ba24e53b5549c74309",
+  "albedo_sha256": "44ac7958f43b02348d0e8af5919d70cad4dac33fdf1e1450d1e12101505187da",
+  "normal_size": 1024,
+  "albedo_size": 1024,
+  "covered_texels": 1036518,
+  "normal_bytes": 291711,
+  "albedo_bytes": 304200
+}

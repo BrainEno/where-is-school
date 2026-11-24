@@ -16,15 +16,21 @@ extends Node
 ##             material carrying that material's colour (option B);
 ##   ORIGINAL  the GLB's materials, untouched (option A).
 ##
-## **Rest-pose paint coordinates.** Neither GLB has UVs, so the painted shader places its
-## pigment blocks by position. A skinned vertex's position moves with the bone it follows,
-## so blocks placed by it would slide through a swinging trouser leg. For PAINTED, each mesh
-## without blend shapes is rebuilt once with its own bind-pose position copied into
+## **Rest-pose paint coordinates.** No GLB ships UVs for its paint, so the painted shader
+## places its pigment blocks by position. A skinned vertex's position moves with the bone it
+## follows, so blocks placed by it would slide through a swinging trouser leg. For PAINTED, each
+## mesh without blend shapes is rebuilt once with its own bind-pose position copied into
 ## `CUSTOM0` (w = 2 marks it); the shader reads that, and the blocks stay on the cloth. The
-## vertices, indices, normals, bone indices and weights are the GLB's, unchanged and in the
-## same order; the rebuilt mesh is cached per source mesh and shared by every instance.
-## Meshes with blend shapes (the protagonist's head) keep their own mesh and the shader
-## falls back to the object-space position — the head only nods a few degrees.
+## vertices, indices, normals, bone indices and weights are the GLB's, unchanged and in the same
+## order; the rebuilt mesh is cached per source mesh and shared by every instance. Meshes with
+## blend shapes (the protagonist's head) keep their own mesh and the shader falls back to the
+## object-space position — the head only nods a few degrees.
+##
+## **Local detail maps.** The one exception is the protagonist's V2 head, which carries its own
+## UV atlas beside its triangles (`tools/head_v2.py`). A look may name a `CharacterDetailMaps` per
+## material; the applier sets it on that surface — and only on a surface that really has UVs — so
+## the head's colour and relief come from maps while the rest of the game's characters, which
+## have no UVs, draw exactly as before. `detail_maps_enabled` is the switch the A/B is taken on.
 
 enum Treatment { PAINTED, PIGMENT, ORIGINAL }
 
@@ -45,6 +51,10 @@ static var _rest_meshes: Dictionary = {}
 ## Opt in when fine detail is baked on a face with both skinning and expression
 ## targets. Existing looks retain their original blend-shaped meshes by default.
 @export var rest_paint_blend_shapes: bool = false
+## Draw a look's local detail maps (`CharacterLook.detail_maps`) on the surfaces that carry
+## UVs. Off draws the same materials without them — the same geometry, the same flat colour —
+## which is the A/B the V2 head's maps are judged with.
+@export var detail_maps_enabled: bool = true
 ## Blink while the PAINTED treatment is on.
 @export var blinking: bool = true
 
@@ -101,6 +111,8 @@ func apply_treatment(which: Treatment) -> Dictionary:
 		"kept": [],
 		"outlined": [],
 		"rebuilt_meshes": [],
+		"detail_maps": [],
+		"detail_maps_skipped": [],
 		"expression": {},
 	}
 	if _model == null:
@@ -128,6 +140,11 @@ func apply_treatment(which: Treatment) -> Dictionary:
 						replacement = look.material_for(String(mesh_instance.name), authored_name)
 				Treatment.PIGMENT:
 					replacement = _pigment_for(authored)
+			if which == Treatment.PAINTED and look != null and detail_maps_enabled:
+				var maps := look.detail_maps_for(String(mesh_instance.name), authored_name)
+				if maps != null and maps.has_any():
+					replacement = _with_detail_maps(replacement, maps, mesh, surface,
+						String(mesh_instance.name), report)
 			mesh_instance.set_surface_override_material(surface, replacement)
 			if replacement != null:
 				report["replaced"] = int(report["replaced"]) + 1
@@ -202,6 +219,38 @@ func _meshes() -> Array[MeshInstance3D]:
 		if mesh_instance.mesh != null:
 			found.append(mesh_instance)
 	return found
+
+
+## `replacement` with `maps` set on it, on a copy so the look's own material is untouched, or
+## null if this surface cannot carry them. A surface is only given maps when it really has UVs:
+## without them every fragment would sample the same texel, which is how a hand sharing the
+## head's skin material would turn into one flat colour. The name of a surface that was skipped
+## goes in the report, so a look that asks for maps on a part without UVs is visible.
+static func _with_detail_maps(replacement: Material, maps: CharacterDetailMaps,
+		mesh: Mesh, surface: int, label: String, report: Dictionary) -> Material:
+	var key := "%s/%d" % [label, surface]
+	if replacement == null:
+		(report["detail_maps_skipped"] as Array).append(key)
+		return null
+	var arrays := mesh.surface_get_arrays(surface)
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays.size() > Mesh.ARRAY_TEX_UV else PackedVector2Array()
+	if uvs.is_empty():
+		(report["detail_maps_skipped"] as Array).append(key)
+		return null
+	var painted := replacement.duplicate() as ShaderMaterial
+	if painted == null:
+		(report["detail_maps_skipped"] as Array).append(key)
+		return null
+	if maps.albedo != null:
+		painted.set_shader_parameter("has_detail_albedo", true)
+		painted.set_shader_parameter("detail_albedo", maps.albedo)
+		painted.set_shader_parameter("detail_albedo_mix", maps.albedo_mix)
+	if maps.normal != null:
+		painted.set_shader_parameter("has_detail_normal", true)
+		painted.set_shader_parameter("detail_normal", maps.normal)
+		painted.set_shader_parameter("detail_normal_strength", maps.normal_strength)
+	(report["detail_maps"] as Array).append(key)
+	return painted
 
 
 func _pigment_for(authored: Material) -> Material:

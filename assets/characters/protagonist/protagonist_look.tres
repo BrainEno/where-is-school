@@ -1,8 +1,11 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=18 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_outline.gdshader" id="3_outline"]
+[ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/head_albedo.png" id="4_albedo"]
+[ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/head_normal.png" id="5_normal"]
+[ext_resource type="Script" path="res://scripts/actors/character_detail_maps.gd" id="6_maps"]
 
 [sub_resource type="ShaderMaterial" id="outline"]
 resource_name = "character_ink_outline"
@@ -263,6 +266,7 @@ shader_parameter/shadow_fill = 0.6
 resource_name = "protagonist_mat_iris (painted)"
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.2314, 0.1686, 0.1373, 1)
+shader_parameter/use_vertex_paint = true
 shader_parameter/edge_break = 0.18
 shader_parameter/edge_softness = 0.03
 shader_parameter/half_tone = 0.62
@@ -316,6 +320,13 @@ shader_parameter/shade_tint = Color(0.5961, 0.5922, 0.7569, 1)
 shader_parameter/shadow_edge = -0.05
 shader_parameter/shadow_fill = 0.3
 
+[sub_resource type="Resource" id="maps_skin"]
+script = ExtResource("6_maps")
+albedo = ExtResource("4_albedo")
+albedo_mix = 1.0
+normal = ExtResource("5_normal")
+normal_strength = 1.0
+
 [resource]
 script = ExtResource("1_look")
 materials = {
@@ -332,6 +343,9 @@ materials = {
 "protagonist_mat_iris": SubResource("m_protagonist_mat_iris"),
 "protagonist_mat_pupil": SubResource("m_protagonist_mat_pupil"),
 "protagonist_mat_mouthinner": SubResource("m_protagonist_mat_mouthinner")
+}
+detail_maps = {
+"protagonist_mat_skin": SubResource("maps_skin")
 }
 expression = {
 "BrowCompress": 0.45,

@@ -148,9 +148,10 @@ runtime without preloading resources omitted from other exports.
 |---|---|---|
 | `AnimationRetarget` | [`scripts/actors/animation_retarget.gd`](../scripts/actors/animation_retarget.gd) | Rest-relative semantic rig mapping and baking into real Animation resources; UAL inputs/derivatives remain dev-only. |
 | `CharacterAnimation` | [`scripts/actors/character_animation.gd`](../scripts/actors/character_animation.gd) | Semantic-bone resolution, shared clips, authored layers and pose resets; never assume identical rigs. |
+| `CharacterDetailMaps` | [`scripts/actors/character_detail_maps.gd`](../scripts/actors/character_detail_maps.gd) | Optional UV-space albedo/normal maps one look material draws on a part that carries UVs; per material, off unless the look enables them. |
 | `CharacterDialogueAnimation` | [`scripts/actors/character_dialogue_animation.gd`](../scripts/actors/character_dialogue_animation.gd) | Visible-speaker-to-animation bridge, explicitly opted into by the wrapper; no dialogue routing. |
 | `CharacterLimbContact` | [`scripts/actors/character_limb_contact.gd`](../scripts/actors/character_limb_contact.gd) | Resolve and solve two-joint wrist/boot contacts on a sampled pose, with no stretch or capsule movement. |
-| `CharacterLook` | [`scripts/actors/character_look.gd`](../scripts/actors/character_look.gd) | Material-name and resting-expression resource; source model geometry stays independent. |
+| `CharacterLook` | [`scripts/actors/character_look.gd`](../scripts/actors/character_look.gd) | Material-name, detail-map and resting-expression resource; source model geometry stays independent. |
 | `CharacterLookApplier` | [`scripts/actors/character_look_applier.gd`](../scripts/actors/character_look_applier.gd) | Apply look treatments, stable paint coordinates and blink without changing the wrapper/rig contract. |
 | `CharacterMotionProfile` | [`scripts/actors/character_motion_profile.gd`](../scripts/actors/character_motion_profile.gd) | Per-character semantic key tracks, tempo, posture and layers for the shared animation API. |
 | `CharacterNameplate` | [`scripts/actors/character_nameplate.gd`](../scripts/actors/character_nameplate.gd) | Localized development-only name labels; not collision or click targets. |
