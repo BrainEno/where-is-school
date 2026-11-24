@@ -16,10 +16,10 @@ func _initialize() -> void:
 	var meshes: PackedStringArray = []
 	_collect_meshes(inst, "", meshes)
 	print("PROBE meshes=", meshes.size(), " :: ", " | ".join(meshes))
-	_walk_free(inst)
 	var players: PackedStringArray = []
 	_collect_animations(inst, "", players)
 	print("PROBE animations :: ", " | ".join(players))
+	_walk_free(inst)
 	quit(0)
 
 
@@ -30,10 +30,12 @@ func _collect_meshes(node: Node, path: String, out: PackedStringArray) -> void:
 		if mesh is ArrayMesh:
 			var array_mesh: ArrayMesh = mesh
 			var verts: PackedInt32Array = []
+			var formats: PackedInt64Array = []
 			for surface in array_mesh.get_surface_count():
 				verts.append(array_mesh.surface_get_array_len(surface))
-			out.append("%s s=%d bs=%d v=%s" % [here, array_mesh.get_surface_count(),
-				array_mesh.get_blend_shape_count(), str(verts)])
+				formats.append(array_mesh.surface_get_format(surface))
+			out.append("%s s=%d bs=%d v=%s fmt=%s" % [here, array_mesh.get_surface_count(),
+				array_mesh.get_blend_shape_count(), str(verts), str(formats)])
 		else:
 			out.append("%s (not ArrayMesh)" % here)
 	for child in node.get_children():
