@@ -174,9 +174,12 @@ jobs:
           args="--group=${{ matrix.group }} --variants=${{ matrix.variants }}"
           if [ -n "${{ matrix.frames }}" ]; then args="${args} --frames=${{ matrix.frames }}"; fi
           if [[ "${{ matrix.name }}" == refinement-* ]]; then
+            # The script's own diagnostics (which leg failed, and why) go to stderr;
+            # tee them into capture.log so the failure branch below can quote them as
+            # annotations instead of pointing at an artifact log this PR cannot read.
             EVIDENCE_PYTHON="${RUNNER_TEMP}/character-evidence-python/bin/python" \
               bash tools/capture_character_geometry.sh "${{ matrix.group }}" \
-              "${{ matrix.frames }}" "${RUNNER_TEMP}/character-look-baseline"
+              "${{ matrix.frames }}" "${RUNNER_TEMP}/character-look-baseline" 2>&1 | tee -a capture.log
             code=$?
           else
             xvfb-run -a --server-args="-screen 0 1600x900x24" \
@@ -210,7 +213,8 @@ jobs:
             exit 1
           fi
           if [ "${code}" -ne 0 ]; then
-            echo "::error title=character integration ${{ matrix.name }} process failed::exit ${code}; inspect the full artifact logs"
+            errs=$(grep -E 'SCRIPT ERROR|Parse Error|Geometry .* failed|no valid|missing|mismatched|SystemExit|ABORT' capture.log geometry-*.log 2>/dev/null | head -n 15 | tr '\n' '|' | cut -c1-1800)
+            echo "::error title=character integration ${{ matrix.name }} process failed::exit ${code}; ${errs:-no error lines in capture.log}"
             exit "${code}"
           fi
           if ! grep -qE "RESULT: SUCCESS" capture.log; then
