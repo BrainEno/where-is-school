@@ -63,7 +63,13 @@ static func development_run() -> bool:
 ## this decides only what a development run starts at, and F9 or the settings row can still
 ## close the editor for the session.
 static func development_default() -> bool:
-	if not development_run() or OS.has_feature("ios"):
+	if not development_run():
+		return false
+	# Mobile packs are player-shaped artifacts even as debug builds: the iPhone pack
+	# ships these scripts and stays opt-in (#394), and the Android preview APK is
+	# smoke-launched as a player on an emulator. The author-at-a-window run this
+	# default exists for is a desktop one.
+	if OS.has_feature("ios") or OS.has_feature("android"):
 		return false
 	if DisplayServer.get_name() == "headless":
 		return false

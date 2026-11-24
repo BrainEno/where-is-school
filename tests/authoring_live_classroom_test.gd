@@ -276,8 +276,11 @@ func _verify_live_beyond_prologue() -> void:
 		return
 	# The classroom phase deliberately kept an unapplied input, and by design a buffered
 	# input at one address refuses to begin editing at any other (#395's corridor line is
-	# another address). Drop it here the way the panel's own notice tells the author to.
-	if not _store.live_buffer.is_empty():
+	# another address). Drop it here the way the panel's own notice tells the author to -
+	# but keep a copy: the recovery invocation that follows this one is *built* on that
+	# kept input, so the corridor visit must put the journal back exactly as it found it.
+	var kept_input: Dictionary = _store.live_buffer.duplicate(true)
+	if not kept_input.is_empty():
 		_press("DiscardInput")
 		if not _check.expect(await Harness.wait_until(func() -> bool:
 			return _store.live_buffer.is_empty()
@@ -294,6 +297,10 @@ func _verify_live_beyond_prologue() -> void:
 	_press("ContinueGame")
 	_check.expect(not bool(_editor.call("is_editing")) and not paused,
 		"Closing on the corridor line did not hand the world back")
+	if not kept_input.is_empty():
+		_check.expect(_store.save_live_buffer(kept_input),
+			"The corridor visit could not put the classroom's kept input back for the "
+			+ "recovery run")
 
 
 func _edit_line(expected: StringName = SAME) -> bool:
