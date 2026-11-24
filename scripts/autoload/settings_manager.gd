@@ -114,6 +114,11 @@ var _bus_trim: Dictionary = {}
 ## The rebinding half: the input map, its defaults and the stored overrides.
 var _input_settings: InputSettings
 var _load_problems: Array[String] = []
+## Which part of the swap the machine refused the last time a preference was written, as
+## `{step, error}`. A refused write already shows as "not saved" on the settings screen; the
+## step is what turns that into something an author can act on (#394). Every attempt
+## overwrites it, so it never describes an older failure.
+var _store_failure := {}
 var _applying_scale := false
 var _applied_ui_scale := 1.0
 var _mobile_area := Rect2()
@@ -511,6 +516,9 @@ func load_settings() -> void:
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
 		_load_bindings(config)
+	if StoryEditorEntry.development_override():
+		# An author's launch turns the switch on for this run whatever the file says (#394).
+		_story_editor = true
 	_apply_all_volumes()
 	_apply_ui_scale()
 	_sync_story_editor.call_deferred()
@@ -568,7 +576,18 @@ func _open() -> ConfigFile:
 
 
 func _write(config: ConfigFile) -> Error:
-	var error := SettingsStore.write(config)
+	var report := {}
+	var error := SettingsStore.write(config, report)
+	_store_failure = report
 	if error != OK:
-		push_warning("Settings: could not write %s (error %d)." % [SETTINGS_PATH, error])
+		push_warning("Settings: could not write %s (error %d): %s." % [
+			SETTINGS_PATH, error, String(report.get("step", "write"))
+		])
 	return error
+
+
+## Which step of the swap the machine refused last, and with which `Error`; empty when the
+## last write went through. `Settings` rows that report a refusal to the player use this to
+## say what failed instead of only that something did (#394).
+func get_last_store_failure() -> Dictionary:
+	return _store_failure.duplicate(true)

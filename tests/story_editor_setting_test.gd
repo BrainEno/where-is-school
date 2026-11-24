@@ -14,6 +14,7 @@ extends SceneTree
 const Harness := preload("res://tests/test_harness.gd")
 const MainScene := preload("res://scenes/main/main.tscn")
 const SettingsScript := preload("res://scripts/autoload/settings_manager.gd")
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
 
@@ -42,6 +43,7 @@ func _run() -> void:
 	check.expect(not settings.is_story_editor_enabled(), "A fresh settings file must start with the story editor off")
 	settings.set_volume(&"music", 37)
 	_check_interrupted_swap(check, settings, loc)
+	_check_dev_override(check)
 	var world := await _boot_world(check)
 	await _check_off_by_default(check, world)
 	await _check_entry_follows_switch(check, world, settings)
@@ -113,7 +115,7 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 		check.expect(MobileLayout.safe_rect(row).encloses(row.get_global_rect()) \
 				and row.size.y >= MobileLayout.hit_size(row),
 			"The Story editor row is outside the safe area or smaller than a finger")
-	_check_blocked_write(check, panel, settings)
+	_check_wedged_backup(check, panel, settings)
 	# A legacy fixed stage must never block an update or be overwritten by it.
 	var legacy_stage := SETTINGS_PATH + ".tmp"
 	check.expect(DirAccess.make_dir_absolute(legacy_stage) == OK, "Could not arrange the legacy stage fixture")
@@ -146,18 +148,44 @@ func _check_entry_follows_switch(check: Harness.Checker, world: Node, settings: 
 	check.expect(not overlay.is_editing() and not paused, "Closing the editor did not resume the world")
 
 
-func _check_blocked_write(check: Harness.Checker, panel: SettingsPanel, settings: Node) -> void:
-	var prior := FileAccess.get_file_as_bytes(SETTINGS_PATH)
+## A leftover nobody can remove must not be able to wedge the preferences file. The name
+## `settings.cfg.bak` is where the swap would put the previous file, and a directory of that
+## name - or a read-only copy an outside tool holds - used to refuse every later settings
+## change, which is how an author ends up unable to turn the editor on at all (#394). The
+## swap now takes another name, publishes, and leaves what it does not own alone.
+func _check_wedged_backup(check: Harness.Checker, panel: SettingsPanel, settings: Node) -> void:
+	Harness.stage = "a backup name somebody else occupies"
 	var backup := SettingsStore.BACKUP_PATH
-	if not check.expect(DirAccess.make_dir_absolute(backup) == OK, "Could not create the blocked-write fixture"):
+	if not check.expect(DirAccess.make_dir_absolute(backup) == OK, "Could not create the wedged-backup fixture"):
 		return
+	# Non-empty, the way a person's own folder beside the file would be: a remove of an empty
+	# directory succeeds, and then this fixture would say nothing about what we do not own.
+	var held := backup.path_join("keep.txt")
+	var holding := FileAccess.open(held, FileAccess.WRITE)
+	if not check.expect(holding != null, "Could not fill the wedged-backup fixture"):
+		DirAccess.remove_absolute(backup)
+		return
+	holding.store_string("left here by whoever made this folder\n")
+	holding.close()
 	panel.cycle(&"story_editor", 1)
-	var row := panel.get_row_control(&"story_editor") as Button
-	check.expect(not settings.is_story_editor_enabled() and row.text.contains(L10n.t("settings.off")),
-		"An unsaved switch was applied")
-	check.expect(panel.get_status_text() == L10n.t("settings.save_failed"), "Write failure was not shown in Settings")
-	check.expect(FileAccess.get_file_as_bytes(SETTINGS_PATH) == prior, "A refused swap changed the previous preferences")
-	DirAccess.remove_absolute(backup)
+	check.expect(bool(settings.call("is_story_editor_enabled")),
+		"A settings change was refused because the usual backup name was occupied")
+	check.expect(panel.get_status_text() == L10n.t("settings.done_note"), "A published switch gave no saved feedback")
+	var written := ConfigFile.new()
+	check.expect(written.load(SETTINGS_PATH) == OK and bool(written.get_value("authoring", "story_editor", false)) \
+			and int(written.get_value("audio", "music", -1)) == 37,
+		"The published file lost the switch or the volume it did not own")
+	check.expect(DirAccess.dir_exists_absolute(backup), "The swap removed a directory it does not own")
+	var staying: Array[String] = []
+	for path: String in SettingsStore.leftovers():
+		if FileAccess.file_exists(path):
+			staying.append(path)
+	check.expect(staying.is_empty(),
+		"A copy this swap made stayed after a verified publish: %s" % str(staying))
+	panel.cycle(&"story_editor", 1)
+	check.expect(not settings.is_story_editor_enabled(), "The switch could not be turned off again")
+	DirAccess.remove_absolute(held)
+	check.expect(DirAccess.remove_absolute(backup) == OK, "Could not clean up the wedged-backup fixture")
 
 
 func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) -> void:
@@ -176,8 +204,15 @@ func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) 
 		"Failure did not restore the previous settings byte for byte")
 	var refuse_primary := func(from: String, to: String) -> Error:
 		return ERR_FILE_CANT_WRITE if to == SETTINGS_PATH else DirAccess.rename_absolute(from, to)
-	check.expect(SettingsStore._publish(stage, refuse_primary) == ERR_FILE_CANT_WRITE,
+	var report := {}
+	check.expect(SettingsStore._publish(stage, refuse_primary, report) == ERR_FILE_CANT_WRITE,
 		"An interrupted swap reported success")
+	# A publish that also failed to roll back has to say where the previous file waits: that is
+	# the half-finished swap an author would otherwise read as a vanished preferences file (#394).
+	check.expect(String(report.get("step", "")).contains(SettingsStore.BACKUP_PATH)
+			and int(report.get("error", OK)) == ERR_FILE_CANT_WRITE,
+		"A swap that could not publish or roll back said nothing about the file it left behind: %s"
+			% str(report))
 	check.expect(not FileAccess.file_exists(SETTINGS_PATH) and FileAccess.get_file_as_bytes(SettingsStore.BACKUP_PATH) == prior,
 		"An interrupted swap lost the previous settings")
 	settings.load_settings()
@@ -188,6 +223,45 @@ func _check_interrupted_swap(check: Harness.Checker, settings: Node, loc: Node) 
 	DirAccess.remove_absolute(stage)
 
 
+## The development override: the same editor without the file, so an author whose
+## preferences cannot be written is never locked out of the tool, while a build that leaves
+## the editor's scripts out - the desktop and Android player exports - cannot be switched on
+## from a command line at all.
+func _check_dev_override(check: Harness.Checker) -> void:
+	Harness.stage = "the development override for the switch"
+	if not StoryEditorEntry.scripts_present():
+		print("NOTE: this build has no editor scripts, so the override has nothing to install")
+		return
+	var asked := PackedStringArray(["--story-editor"])
+	check.expect(StoryEditorEntry.development_requested(asked, ""),
+		"--story-editor did not ask for the editor")
+	check.expect(StoryEditorEntry.development_requested(PackedStringArray(), "1"),
+		"The development environment variable did not ask for the editor")
+	check.expect(not StoryEditorEntry.development_requested(PackedStringArray(["--editor"]), "0"),
+		"An unrelated argument or value turned the editor on")
+	check.expect(StoryEditorEntry.development_override()
+		== StoryEditorEntry.development_requested(
+			OS.get_cmdline_user_args(), OS.get_environment(StoryEditorEntry.DEVELOPMENT_ENVIRONMENT)),
+		"The override the settings load honours is not the rule it states")
+	var refused := RefusedStore.new()
+	check.expect(SettingsPanel._store_failure_step(refused) == "publish staged preferences",
+		"The settings row did not read the step a refused write reported")
+	check.expect(SettingsPanel._store_failure_step(null) == ""
+			and SettingsPanel._store_failure_step(Node.new()) == "",
+		"A settings node with no report made the row claim a cause it does not have")
+	refused.free()
+
+
+## A `Settings` stand-in that only reports a refused write, so the settings row's message can
+## be checked apart from a disk the machine will not let go of (#394).
+class RefusedStore:
+	extends Node
+
+	func get_last_store_failure() -> Dictionary:
+		return {"step": "publish staged preferences", "error": ERR_FILE_CANT_WRITE}
+
+
+## The switch as the next process sees it, and the two ways back off.
 func _check_restart_and_disable(check: Harness.Checker, world: Node, settings: Node) -> void:
 	Harness.stage = "fresh settings instance, toggle off, then toggle on again"
 	var config := ConfigFile.new()

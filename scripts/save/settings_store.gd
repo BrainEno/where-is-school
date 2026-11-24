@@ -21,12 +21,33 @@ extends RefCounted
 ## the file first and sets only the keys that owner owns, so a volume change never drops the
 ## language and the other way round. This class owns the filename and staging procedure.
 ##
+## The swap publishes by rename onto a name that is free. Every name it may leave behind -
+## the preferred `settings.cfg.bak` and the unique ones it falls back to - is found by
+## pattern rather than assumed, because a leftover nobody can remove used to refuse every
+## later settings change (#394), and a refused step is named in the report so the settings
+## screen can say what failed instead of only "not saved".
+##
 ## The keys are named here too, next to the path, because a reader looking for where the
 ## language is stored should not have to read two autoloads to find it:
 
 ## The whole preferences file. One file, not one per subsystem.
 const PATH := "user://settings.cfg"
 const BACKUP_PATH := PATH + ".bak"
+
+## Every leftover this system may leave beside the file: the preferred backup name and the
+## unique ones `_free_backup_name()` falls back to. They are matched by name, never by a
+## single fixed path, because a leftover is exactly the thing that must not be able to
+## wedge the next write (issue #394).
+const LEFTOVER_PREFIX := "settings.cfg."
+const LEFTOVER_SUFFIX := ".bak"
+## The tag that marks a unique leftover as ours: `Crypto.generate_random_bytes(HEX_BYTES)`
+## in hex, which is what `_free_backup_name()` and `write()` both build their names from.
+const HEX_BYTES := 6
+const HEX_TAG_LENGTH := HEX_BYTES * 2
+## The stage name gets its own longer tag: it is not looked up by name, and a collision with
+## a remnant of an earlier run would be resolved only by chance.
+const STAGE_BYTES := 12
+const HEX_DIGITS := "0123456789abcdef"
 
 ## `[display] locale` - the language choice, owned by `Loc`. `Settings` never writes it and
 ## deliberately preserves it (`reset_to_defaults()` leaves it alone).
@@ -35,14 +56,20 @@ const KEY_LOCALE := "locale"
 
 
 static func exists() -> bool:
-	return FileAccess.file_exists(PATH) or FileAccess.file_exists(BACKUP_PATH)
+	return FileAccess.file_exists(PATH) or not leftovers().is_empty()
 
 
-## An interrupted fallback swap may have moved the old file aside without publishing
-## the new one. Both owners must read the same fallback before changing their keys.
+## The preferences a caller should read: the file, or - when it is missing or unreadable -
+## the newest leftover an interrupted swap left behind. Both owners must read the same
+## thing before changing their keys, or one of them writes over the other's idea of the file.
 static func read(config: ConfigFile) -> Error:
-	var path := BACKUP_PATH if not FileAccess.file_exists(PATH) and FileAccess.file_exists(BACKUP_PATH) else PATH
-	return config.load(path)
+	if FileAccess.file_exists(PATH) and config.load(PATH) == OK:
+		return OK
+	for candidate: String in leftovers():
+		var found := ConfigFile.new()
+		if found.load(candidate) == OK:
+			return config.parse_string(found.encode_to_text())
+	return config.load(PATH)
 
 
 ## A missing file is a first run: the ConfigFile starts empty.
@@ -52,29 +79,98 @@ static func open() -> ConfigFile:
 	return config
 
 
-static func write(config: ConfigFile) -> Error:
+## Publish `config`, naming the step of any failure in `report` so the settings screen can
+## say which part of the swap the machine refused instead of only "it did not save".
+static func write(config: ConfigFile, report: Dictionary = {}) -> Error:
+	report.clear()
 	# Never reuse a fixed staging name: a remnant from another run (even a directory)
 	# must not make every subsequent settings change fail.
-	var stage := PATH + ".tmp-" + Crypto.new().generate_random_bytes(12).hex_encode()
+	var stage := PATH + ".tmp-" + Crypto.new().generate_random_bytes(STAGE_BYTES).hex_encode()
 	var error := config.save(stage)
 	if error != OK:
-		_warn_save("write staging file", error)
+		error = _refuse(report, "write staging file", error)
 	else:
 		var staged := ConfigFile.new()
 		error = staged.load(stage)
-		if error == OK and not _same_values(config, staged):
-			error = ERR_FILE_CORRUPT
 		if error != OK:
-			_warn_save("verify staged preferences", error)
+			error = _refuse(report, "verify staged preferences", error)
+		elif not _same_values(config, staged):
+			error = _refuse(report, "verify staged preferences", ERR_FILE_CORRUPT)
 		else:
-			error = _publish(stage, DirAccess.rename_absolute)
+			error = _publish(stage, DirAccess.rename_absolute, report)
+			if error == OK:
+				error = _confirm(config, report)
 	if error != OK and FileAccess.file_exists(stage):
 		DirAccess.remove_absolute(stage)
 	return error
 
 
+## The leftovers of earlier swaps, oldest first: the newest is the best candidate to read
+## back, and every one of them is retired once a published file has been read back.
+static func leftovers() -> PackedStringArray:
+	var directory := DirAccess.open("user://")
+	if directory == null:
+		return PackedStringArray()
+	var found: Array[Dictionary] = []
+	for name: String in directory.get_files():
+		if not owns_name(name):
+			continue
+		found.append({"msec": directory.get_modification_time(name), "path": "user://".path_join(name)})
+	var by_age := func(older: Dictionary, newer: Dictionary) -> bool:
+		return int(older["msec"]) < int(newer["msec"])
+	found.sort_custom(by_age)
+	var paths := PackedStringArray()
+	for entry: Dictionary in found:
+		paths.append(String(entry["path"]))
+	return paths
+
+
+## True for the names this swap leaves behind - the preferred backup name and the unique
+## ones with our hex tag - and false for anything a person put beside the file. The swap
+## deletes leftovers, so it has to be sure whose they are.
+static func owns_name(name: String) -> bool:
+	if name == BACKUP_PATH.get_file():
+		return true
+	if not name.begins_with(LEFTOVER_PREFIX) or not name.ends_with(LEFTOVER_SUFFIX):
+		return false
+	var tag := name.trim_prefix(LEFTOVER_PREFIX).trim_suffix(LEFTOVER_SUFFIX)
+	if tag.length() != HEX_TAG_LENGTH:
+		return false
+	for index in tag.length():
+		if not HEX_DIGITS.contains(tag[index].to_lower()):
+			return false
+	return true
+
+
+## Removes the leftovers of finished swaps and returns the ones that stayed.
+##
+## A leftover that will not go away - read-only, or held by another program, which is also
+## how the preferred backup name gets stuck in the first place - is reported and left alone:
+## it is not worth refusing every later settings change over, and each write then keeps one
+## small copy of what it replaced. The warning names the paths so the directory can be
+## cleaned up by whoever owns it.
+static func retire_leftovers() -> PackedStringArray:
+	var stuck := PackedStringArray()
+	for path: String in leftovers():
+		if DirAccess.remove_absolute(path) == OK or not FileAccess.file_exists(path):
+			continue
+		stuck.append(path)
+	if not stuck.is_empty():
+		push_warning("SettingsStore: preferences saved; leftovers stayed: %s." % str(stuck))
+	return stuck
+
+
 static func _warn_save(step: String, error: Error) -> void:
 	push_warning("SettingsStore: could not %s (error %d: %s)." % [step, error, error_string(error)])
+
+
+## Names the refused step for the log and for `report`, and returns the error unchanged: a
+## caller that ignores `report` still sees the same `Error` it saw before.
+static func _refuse(report: Dictionary, step: String, error: Error) -> Error:
+	_warn_save(step, error)
+	report["step"] = step
+	report["error"] = error
+	return error
 
 
 ## Verify each key and its serialized value, not their order in the engine's maps.
@@ -93,37 +189,64 @@ static func _same_values(expected: ConfigFile, staged: ConfigFile) -> bool:
 	return true
 
 
-## Always rename onto a vacant name. Some engines/filesystems cannot replace an
-## existing file, or delete it before moving the new one. Preserve the old file first.
+## Always rename onto a vacant name. Some engines/filesystems cannot replace an existing
+## file, or delete it before moving the new one. So the previous file is preserved first -
+## under a name that is free, which is what keeps a leftover nobody can remove (a read-only
+## file, a directory someone made) from wedging every later settings change.
 ## `move_file` lets the regression test fail exactly one step of the swap.
-static func _publish(stage: String, move_file: Callable) -> Error:
-	var moved_previous := FileAccess.file_exists(PATH)
-	if moved_previous:
-		if FileAccess.file_exists(BACKUP_PATH):
-			# A previous swap reached publish but did not clean up. Only retire that
-			# backup if the preferred file is itself readable.
-			if ConfigFile.new().load(PATH) != OK:
-				_warn_save("verify previous preferences; backup kept", ERR_FILE_CORRUPT)
-				return ERR_FILE_CORRUPT
-			var cleanup := DirAccess.remove_absolute(BACKUP_PATH)
-			if cleanup != OK:
-				_warn_save("retire earlier backup", cleanup)
-				return cleanup
-		var aside: Error = move_file.call(PATH, BACKUP_PATH)
+static func _publish(stage: String, move_file: Callable, report: Dictionary = {}) -> Error:
+	var preserving := FileAccess.file_exists(PATH)
+	var kept := ""
+	if preserving:
+		kept = _free_backup_name()
+		if kept.is_empty():
+			return _refuse(report, "find a free name beside the preferences file", ERR_CANT_CREATE)
+		var aside: Error = move_file.call(PATH, kept)
 		if aside != OK:
-			_warn_save("back up previous preferences", aside)
-			return aside
+			return _refuse(report, "move the previous preferences aside to %s" % kept, aside)
 	var error: Error = move_file.call(stage, PATH)
+	if error == OK:
+		return OK
+	if preserving:
+		# The previous file is still on the disk, only under `kept`, and `read()` finds it on the
+		# next run. Naming it in the report is what makes a half-finished swap something a person
+		# can finish by hand instead of a preferences file that appears to have gone missing.
+		if move_file.call(kept, PATH) != OK:
+			var waiting := "publish the staged preferences; the previous file is still at %s" % kept
+			return _refuse(report, waiting, error)
+	return _refuse(report, "publish staged preferences", error)
+
+
+## The file is the truth once it reads back as what was asked for; only then are the
+## leftovers of the swap retired. While it does not read back, the copy that was moved aside
+## stays on disk, and `read()` finds it on the next run.
+static func _confirm(asked: ConfigFile, report: Dictionary) -> Error:
+	var published := ConfigFile.new()
+	var error := published.load(PATH)
 	if error != OK:
-		_warn_save("publish staged preferences", error)
-		if moved_previous:
-			var rollback: Error = move_file.call(BACKUP_PATH, PATH)
-			if rollback != OK:
-				_warn_save("restore previous preferences; backup kept", rollback)
-		return error
-	if FileAccess.file_exists(BACKUP_PATH) and DirAccess.remove_absolute(BACKUP_PATH) != OK:
-		push_warning("SettingsStore: preferences saved; old backup could not be removed.")
+		return _refuse(report, "read back the published preferences", error)
+	if not _same_values(asked, published):
+		return _refuse(report, "read back the published preferences", ERR_FILE_CORRUPT)
+	retire_leftovers()
 	return OK
+
+
+## The preferred backup name when something does not occupy it, otherwise a unique one.
+static func _free_backup_name() -> String:
+	if not _occupied(BACKUP_PATH):
+		return BACKUP_PATH
+	var crypto := Crypto.new()
+	for attempt in 8:
+		var candidate := "%s.%s%s" % [PATH, crypto.generate_random_bytes(HEX_BYTES).hex_encode(), LEFTOVER_SUFFIX]
+		if not _occupied(candidate):
+			return candidate
+	return ""
+
+
+## A name is taken by a file or by a directory: neither can be the target of a rename on
+## the platforms that refuse to replace what is already there.
+static func _occupied(path: String) -> bool:
+	return FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path)
 
 
 ## The value of `[section] key` when it is one of `allowed`; otherwise `fallback`, and a
