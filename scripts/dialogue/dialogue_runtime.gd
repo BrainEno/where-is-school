@@ -411,34 +411,29 @@ func _flag_is_set(flag: StringName) -> bool:
 	return true
 
 
-## Swaps in the same conversation from another language. Only text is re-emitted;
-## effects are *not* applied again, so switching language mid-scene can never
-## rewrite story state.
-func rebind_graph(new_graph: DialogueGraph) -> bool:
-	if not _active or _conversation == null or new_graph == null:
+## Swaps the graph at the existing cursor, retaining the resolved check branch,
+## effects and visit counters. Locale changes publish; a paused author refresh
+## explicitly redraws the view without firing the normal presentation signals.
+func rebind_graph(new_graph: DialogueGraph, publish: bool = true) -> bool:
+	if not _active or _conversation == null or new_graph == null or not new_graph.is_valid():
 		return false
 	var conversation := new_graph.get_conversation(_conversation.conversation_id)
-	if conversation == null:
-		_note("dialogue.progress_failed", {"reason": "locale_rebind"})
-		push_error(
-			"DialogueRuntime.rebind_graph: '%s' is missing from %s."
-			% [_conversation.conversation_id, new_graph.source_path]
-		)
+	var id := get_current_node_id()
+	var node: DialogueGraph.DialogueNode = conversation.nodes.get(id) if conversation != null else null
+	if conversation == null or (id != &"" and node == null):
+		if publish:
+			_note("dialogue.progress_failed", {"reason": "locale_rebind"})
+			push_error("DialogueRuntime.rebind_graph: '%s/%s' is missing from %s."
+				% [_conversation.conversation_id, id, new_graph.source_path])
 		return false
-	var current_id: StringName = _node.node_id if _node != null else &""
 	_graph = new_graph
 	_conversation = conversation
-	if String(current_id).is_empty():
-		return true
-	var node: DialogueGraph.DialogueNode = conversation.nodes.get(current_id, null)
-	if node == null:
-		_note("dialogue.progress_failed", {"reason": "locale_rebind"})
-		push_error(
-			"DialogueRuntime.rebind_graph: node '%s' is missing from %s."
-			% [current_id, new_graph.source_path]
-		)
-		return false
 	_node = node
+	if node == null:
+		return true
+	if not publish:
+		_awaiting_choice = not _available_choices(node).is_empty()
+		return true
 	if not node.text.is_empty():
 		line_changed.emit(get_current_line())
 	if _awaiting_choice:

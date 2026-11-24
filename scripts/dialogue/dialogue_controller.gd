@@ -86,6 +86,10 @@ var _current_choices: Array = []
 ## False while the window has lost focus: nothing is passed while nobody is looking.
 var _window_focused := true
 var _app_suspended := false
+# Set only by the isolated author app. The ordinary game's library and input paths
+# never load optional editor scripts or adopt a draft.
+var _author_graph: Callable
+var _author_editing := false
 
 
 func _ready() -> void:
@@ -318,6 +322,48 @@ func get_current_line() -> Dictionary:
 	return {}
 
 
+func set_author_graph_provider(provider: Callable) -> void:
+	_author_graph = provider
+
+
+func set_author_editing(active: bool) -> void:
+	_author_editing = active and _author_graph.is_valid() and get_tree().paused
+	if _author_editing:
+		_playback.stop()
+
+
+func _graph_for(conversation: StringName) -> DialogueGraph:
+	var shipped := _library.get_graph(conversation)
+	if shipped != null and _author_graph.is_valid():
+		var draft := _author_graph.call(shipped.chapter, shipped.locale) as DialogueGraph
+		if draft != null and draft.has_conversation(conversation):
+			return draft
+	return shipped
+
+
+## No line_presented, no story effect, no new history entry, no new check. The
+## cursor still belongs to the same live runner and picks from its new edges later.
+func refresh_author_dialogue() -> bool:
+	if not _author_editing or not get_tree().paused or _mode != Mode.CONVERSATION:
+		return false
+	if not _runtime.rebind_graph(_graph_for(_runtime.get_active_conversation_id()), false):
+		return false
+	var line := _runtime.get_current_line()
+	if line.get("text") != _current_line.get("text"):
+		_current_line = line
+		var descriptor := _descriptor(line)
+		_history.update_last(descriptor)
+		if _backlog != null:
+			_backlog.replace_last(descriptor)
+		_panel.update_author_body(String(line["text"]))
+		_remember_line(line, String(descriptor["identity"]))
+	var choices := _describe_choices(_runtime.get_current_choices())
+	if choices != _current_choices:
+		_current_choices = choices
+		_panel.set_choices(choices)
+	return true
+
+
 ## Switches the display language. Safe mid-scene: texts are re-rendered from the
 ## same node ids and no effect is applied twice.
 func apply_locale(locale: String) -> bool:
@@ -334,7 +380,7 @@ func apply_locale(locale: String) -> bool:
 	# effect, no record, no flag, no new backlog row.
 	_republishing = true
 	if _mode == Mode.CONVERSATION and _runtime != null and _runtime.is_active():
-		var graph := _library.get_graph(_runtime.get_active_conversation_id())
+		var graph := _graph_for(_runtime.get_active_conversation_id())
 		_runtime.rebind_graph(graph)
 	elif _mode == Mode.INSPECTION and not String(_active_inspection_id).is_empty():
 		_refresh_inspection_text()
@@ -389,7 +435,7 @@ func play_conversation(conversation_id: StringName) -> bool:
 		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "no_graph"})
 		push_error("DialogueController: dialogue library failed to load.")
 		return false
-	var graph := _library.get_graph(conversation_id)
+	var graph := _graph_for(conversation_id)
 	if graph == null:
 		OfflineDiagnostics.note("dialogue.start_refused", {"reason": "unknown_conversation"})
 		push_error("DialogueController: unknown conversation '%s'." % conversation_id)
@@ -640,7 +686,7 @@ func _render_entry(descriptor: Dictionary) -> Dictionary:
 	var conversation_id := StringName(String(descriptor.get("conversation_id", "")))
 	var node_id := StringName(String(descriptor.get("node_id", "")))
 	if not String(conversation_id).is_empty() and _library != null:
-		var graph := _library.get_graph(conversation_id)
+		var graph := _graph_for(conversation_id)
 		if graph != null:
 			var conversation := graph.get_conversation(conversation_id)
 			if conversation != null:
@@ -713,12 +759,17 @@ func _on_check_resolved(result: Dictionary) -> void:
 
 
 func _on_choices_changed(choices: Array) -> void:
-	_current_choices = []
+	_current_choices = _describe_choices(choices)
+	_panel.set_choices(_current_choices)
+
+
+func _describe_choices(choices: Array) -> Array:
+	var shown := []
 	for choice: Variant in choices:
 		var entry: Dictionary = (choice as Dictionary).duplicate()
 		entry["chosen_before"] = _read_log != null and _read_log.has_chosen(_choice_identity(entry))
-		_current_choices.append(entry)
-	_panel.set_choices(_current_choices)
+		shown.append(entry)
+	return shown
 
 
 func _on_runtime_conversation_started(conversation_id: StringName) -> void:
@@ -757,6 +808,8 @@ func _set_active(active: bool) -> void:
 
 
 func _on_advance_requested() -> void:
+	if _author_editing:
+		return
 	# Moving on is the player saying the line has been read. The panel and auto only ask once
 	# the text is all on screen; `advance_presentation()` from code is taken at its word.
 	_commit_read()
@@ -770,7 +823,7 @@ func _on_advance_requested() -> void:
 
 
 func _on_choice_selected(index: int) -> void:
-	if _mode != Mode.CONVERSATION:
+	if _author_editing or _mode != Mode.CONVERSATION:
 		return
 	_commit_read()
 	if _read_log != null and index >= 0 and index < _current_choices.size():
@@ -781,7 +834,7 @@ func _on_choice_selected(index: int) -> void:
 
 
 func _on_backlog_requested() -> void:
-	if _backlog == null:
+	if _author_editing or _backlog == null:
 		return
 	if _backlog.is_open():
 		_backlog.close()
@@ -806,7 +859,7 @@ func _remember_line(line: Dictionary, identity: String) -> void:
 ## Records the waiting line once the panel has finished typing it: at once with instant text,
 ## otherwise on the frame the last character appears (or the player completes it).
 func _commit_read_if_shown() -> void:
-	if _pending_read.is_empty() or not is_instance_valid(_panel) or _panel.is_revealing():
+	if _author_editing or _pending_read.is_empty() or not is_instance_valid(_panel) or _panel.is_revealing():
 		return
 	_commit_read()
 
@@ -872,11 +925,13 @@ func _notification(what: int) -> void:
 
 
 func _on_auto_toggle_requested() -> void:
-	_playback.toggle_auto()
+	if not _author_editing:
+		_playback.toggle_auto()
 
 
 func _on_skip_requested() -> void:
-	_playback.press_skip()
+	if not _author_editing:
+		_playback.press_skip()
 
 
 func _on_playback_mode_changed(mode: int, reason: StringName) -> void:

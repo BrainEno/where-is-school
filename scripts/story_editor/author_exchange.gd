@@ -4,6 +4,7 @@ extends Node
 
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const Journal := preload("res://scripts/story_editor/draft_journal.gd")
+const NativeChapter := preload("res://scripts/story_editor/native_chapter.gd")
 const INBOX := "user://story_editor/share/request.json"
 const RECEIPT := "user://story_editor/share/result.json"
 const FILE_NAME := "where-is-school-dialogue-draft.json"
@@ -16,6 +17,7 @@ var _token := ""
 var _kind := ""
 var _field := ""
 var _draft := ""
+var _chapter_files := {}
 var _deadline := 0
 var _file_dialog: FileDialog
 
@@ -36,18 +38,42 @@ func export_draft(draft: String) -> void:
 	if OS.has_feature("ios"):
 		_request({"text": draft})
 		return
+	_choose_path(FILE_NAME, "导出剧情草稿", "*.json", "剧情草稿 JSON")
+
+
+func export_chapter(chapter: String, files: Dictionary) -> void:
+	if is_busy() or files.is_empty():
+		return
+	_kind = "chapter"
+	_chapter_files = files
+	if OS.has_feature("ios"):
+		# Same path-free UTF-8 request protocol: the bridge receives only this ZIP's
+		# bytes, not the ability to select paths in the project or the save directory.
+		var temporary := INBOX.get_base_dir().path_join(Patch.new_id() + ".zip")
+		if NativeChapter.write_archive(temporary, files) != OK:
+			_finish(false, "未能生成章节候选包，草稿仍保留。")
+			return
+		_draft = Marshalls.raw_to_base64(FileAccess.get_file_as_bytes(temporary))
+		DirAccess.remove_absolute(temporary)
+		_request({"text": _draft})
+		return
+	_choose_path(chapter + "-chapter.zip", "导出整章候选包", "*.zip", "双语章节候选 ZIP")
+
+
+func _choose_path(filename: String, caption: String, pattern: String, description: String) -> void:
 	if _file_dialog == null:
 		_file_dialog = FileDialog.new()
-		_file_dialog.title = "导出剧情草稿"
 		_file_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
 		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		_file_dialog.use_native_dialog = true
-		_file_dialog.add_filter("*.json", "剧情草稿 JSON")
 		_file_dialog.file_selected.connect(write_to)
 		_file_dialog.canceled.connect(func() -> void: _finish(false, "已取消导出。"))
 		add_child(_file_dialog)
+	_file_dialog.title = caption
+	_file_dialog.clear_filters()
+	_file_dialog.add_filter(pattern, description)
 	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
-	_file_dialog.current_file = FILE_NAME.replace(".json", "-" + stamp + ".json")
+	_file_dialog.current_file = filename.get_basename() + "-" + stamp + "." + filename.get_extension()
 	_file_dialog.popup_centered_ratio(0.58)
 
 
@@ -71,8 +97,8 @@ func _request(data: Dictionary) -> void:
 
 
 ## FileDialog normally returns an OS path, including for project files.
-static func is_export_destination(path: String) -> bool:
-	if not path.is_absolute_path() or path.begins_with("res://") or path.get_extension().to_lower() != "json":
+static func is_export_destination(path: String, extension: String = "json") -> bool:
+	if not path.is_absolute_path() or path.begins_with("res://") or path.get_extension().to_lower() != extension:
 		return false
 	var absolute := ProjectSettings.globalize_path(path).replace("\\", "/").simplify_path()
 	var project := ProjectSettings.globalize_path("res://").replace("\\", "/").trim_suffix("/")
@@ -83,16 +109,23 @@ static func is_export_destination(path: String) -> bool:
 
 
 func write_to(path: String) -> void:
-	if _kind != "export":
+	if not _is_export():
 		return
-	if not is_export_destination(path):
-		_finish(false, "请选择项目之外的 .json 文件。")
+	var chapter := _kind == "chapter"
+	var extension := "zip" if chapter else "json"
+	if not is_export_destination(path, extension):
+		_finish(false, "请选择项目之外的 .%s 文件。" % extension)
 		return
 	if FileAccess.file_exists(path):
 		_finish(false, "为防止覆盖，请使用一个新的文件名。")
 		return
-	var ok := Journal.write_checked(path, _draft) == OK
-	_finish(ok, "JSON 已导出。" if ok else "保存文件失败，草稿仍保留。")
+	var result := NativeChapter.write_archive(path, _chapter_files) if chapter else Journal.write_checked(path, _draft)
+	_finish(result == OK, ("双语整章候选包已导出。" if chapter else "JSON 已导出。")
+		if result == OK else "保存文件失败，草稿仍保留。")
+
+
+func _is_export() -> bool:
+	return _kind in ["export", "chapter"]
 
 
 func _process(_delta: float) -> void:
@@ -100,7 +133,7 @@ func _process(_delta: float) -> void:
 	if receipt.get("id") == _token:
 		match receipt.get("state"):
 			"presented": _deadline = 0
-			"exported": _finish(_kind == "export", "JSON 已保存到「文件」。")
+			"exported": _finish(_is_export(), "已保存到「文件」。")
 			"edited":
 				var text: Variant = receipt.get("text")
 				var field := _field
@@ -117,8 +150,10 @@ func _process(_delta: float) -> void:
 
 
 func _finish(ok: bool, note: String) -> void:
-	var digest := _draft.sha256_text() if ok else ""
-	var was_export := _kind == "export"
+	var digest := ""
+	if ok:
+		digest = Patch.digest(_chapter_files) if _kind == "chapter" else _draft.sha256_text()
+	var was_export := _is_export()
 	set_process(false)
 	if not _token.is_empty():
 		DirAccess.remove_absolute(RECEIPT)
@@ -126,6 +161,7 @@ func _finish(ok: bool, note: String) -> void:
 	_kind = ""
 	_field = ""
 	_draft = ""
+	_chapter_files = {}
 	_deadline = 0
 	if was_export:
 		exported.emit(digest, note)

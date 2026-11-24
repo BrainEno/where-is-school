@@ -1,6 +1,5 @@
 extends CanvasLayer
-## Attached by the author build or by the saved opt-in. Pauses the world, draws a
-## detached DialoguePanel over it, and leaves the real controller and its state alone.
+## Detached drawer and trial; leaves the real controller and its state alone.
 
 const Form := preload("res://scripts/story_editor/author_form.gd")
 const Catalog := preload("res://scripts/story_editor/author_catalog.gd")
@@ -16,6 +15,7 @@ const EDIT_DELAY := 0.32
 const CONFIRM_MSEC := 4_000
 
 var store: Store
+var show_launcher := true
 var _controller: DialogueController
 var _ui: GameUI
 var _entry: Button
@@ -141,7 +141,7 @@ func _allowed() -> bool:
 
 
 func _process(_delta: float) -> void:
-	_entry.visible = not _open and _allowed()
+	_entry.visible = show_launcher and not _open and _allowed()
 	if _open and is_instance_valid(_drawer):
 		var usable := _usable_rect()
 		if _last_metrics != usable:

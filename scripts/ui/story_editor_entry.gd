@@ -5,6 +5,7 @@ extends RefCounted
 const BOOTSTRAP_PATH := "res://scripts/story_editor/bootstrap.gd"
 const NODE_NAME := &"StoryEditor"
 const AUTHOR_APP := ^"Authoring"
+const AUTHOR_PROJECT_NAME := "Where Is School - Author"
 
 
 static func available(root: Window) -> bool:
@@ -32,6 +33,20 @@ static func reconcile(root: Window, enabled: bool) -> void:
 
 static func installed(root: Window) -> Node:
 	return root.get_node_or_null(NodePath(NODE_NAME))
+
+
+## The live editor is never a mid-run switch. Staging sets a new project identity
+## before Godot opens user://, so progress, read log and drafts are isolated from boot.
+static func isolated_author(root: Window) -> Node:
+	if ProjectSettings.get_setting("application/config/name") != AUTHOR_PROJECT_NAME \
+			or bool(ProjectSettings.get_setting("application/config/use_custom_user_dir", false)):
+		return null
+	return root.get_node_or_null(AUTHOR_APP)
+
+
+static func for_pause(root: Window) -> Node:
+	var author := isolated_author(root)
+	return author if author != null else installed(root)
 
 
 static func is_editing(root: Window) -> bool:

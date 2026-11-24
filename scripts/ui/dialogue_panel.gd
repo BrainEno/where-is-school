@@ -176,6 +176,12 @@ const DIALOGUE_FONT: FontFile = preload("res://assets/fonts/NotoSerifSC-Regular.
 var _reveal_progress: float = 0.0
 var _revealing: bool = false
 var _choice_buttons: Array[Button] = []
+var _choice_rows: Array[Control] = []
+var _shown_choices: Array = []
+var _edit_line: Callable
+var _edit_choice: Callable
+var _edit_choice_label := ""
+var _play_process_mode: ProcessMode
 var _line: Dictionary = {}
 var _accent: Color = SPEAKER_INK
 var _style_normal: StyleBoxEmpty = StyleBoxEmpty.new()
@@ -485,19 +491,40 @@ func show_line(line: Dictionary, keep_state: bool = false) -> void:
 	_queue_fit()
 
 
+## Live author controls belong to the real panel. Only its layout/input runs while
+## paused; the runtime and the rest of the game stay frozen.
+func set_author_controls(edit_line: Callable = Callable(), edit_choice: Callable = Callable(), caption: String = "") -> void:
+	if edit_line.is_valid() == _edit_line.is_valid():
+		return
+	if edit_line.is_valid():
+		_play_process_mode = process_mode
+		process_mode = Node.PROCESS_MODE_ALWAYS
+	else:
+		process_mode = _play_process_mode
+	_edit_line = edit_line
+	_edit_choice = edit_choice
+	_edit_choice_label = caption
+	var cursor := _choice_cursor
+	var start := _choice_window_start
+	set_choices(_shown_choices)
+	_choice_window_start = start
+	if cursor >= 0:
+		_set_choice_cursor(cursor)
+	refresh_static_text()
+
+
+func update_author_body(text: String) -> void:
+	if _edit_line.is_valid() and _replace_body_text(text):
+		_queue_fit()
+
+
 ## Text-only redraw for a detached panel. Its caller has already matched the line
 ## and option IDs; the choice buttons, their cursor/window, and portrait stay put.
 func update_preview_text(text: String, choices: PackedStringArray) -> void:
 	if not preview_only or choices.size() != _choice_buttons.size():
 		return
 	var position := _body_label.get_v_scroll_bar().value
-	var changed := _body_label.text != text
-	if changed:
-		_line["text"] = text
-		_body_label.text = text
-		_body_label.visible_characters = -1
-		_reveal_progress = float(text.length())
-		_revealing = false
+	var changed := _replace_body_text(text)
 	for index in choices.size():
 		var label := "%d.  %s" % [index + 1, choices[index]]
 		if _choice_buttons[index].text != label:
@@ -509,11 +536,26 @@ func update_preview_text(text: String, choices: PackedStringArray) -> void:
 		_queue_fit()
 
 
+func _replace_body_text(text: String) -> bool:
+	if _body_label.text == text:
+		return false
+	var position := _body_label.get_v_scroll_bar().value
+	if _preview_scroll < 0.0 and position > 0.0:
+		_preview_scroll = position
+	_line["text"] = text
+	_body_label.text = text
+	_body_label.visible_characters = -1
+	_reveal_progress = float(text.length())
+	_revealing = false
+	return true
+
+
 func set_choices(choices: Array) -> void:
-	for button in _choice_buttons:
-		if is_instance_valid(button):
-			_choices_container.remove_child(button)
-			button.queue_free()
+	_shown_choices = choices.duplicate()
+	for row: Control in _choice_rows:
+		_choices_container.remove_child(row)
+		row.queue_free()
+	_choice_rows.clear()
 	_choice_buttons.clear()
 	_choice_cursor = -1
 	_choice_window_start = 0
@@ -548,7 +590,9 @@ func set_choices(choices: Array) -> void:
 		button.add_theme_stylebox_override("focus", _style_normal)
 		button.add_theme_stylebox_override("disabled", _style_normal)
 		button.pressed.connect(_on_choice_button_pressed.bind(index))
-		_choices_container.add_child(button)
+		var row := _choice_row(button, String(choice.get("choice_id", "")))
+		_choices_container.add_child(row)
+		_choice_rows.append(row)
 		_choice_buttons.append(button)
 	_choices_container.show()
 	_choice_rule.visible = true
@@ -559,6 +603,31 @@ func set_choices(choices: Array) -> void:
 	refresh_static_text()
 	_update_hint_visibility()
 	_queue_fit()
+
+
+func _choice_row(button: Button, choice_id: String) -> Control:
+	if not _edit_choice.is_valid():
+		return button
+	var row := HBoxContainer.new()
+	row.name = String(button.name) + "AuthorRow"
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(button)
+	if not choice_id.is_empty():
+		var edit := Button.new()
+		edit.name = "EditChoice"
+		edit.text = _edit_choice_label
+		edit.add_theme_font_size_override(&"font_size", 17)
+		var style := MenuStyle.panel_style()
+		style.set_content_margin_all(5.0)
+		edit.add_theme_stylebox_override(&"normal", style)
+		edit.custom_minimum_size = Vector2(58, 30)
+		edit.pressed.connect(_edit_choice.bind(choice_id))
+		row.add_child(edit)
+		if MobileLayout.enabled:
+			MobileLayout.enlarge(edit)
+	return row
 
 
 func close() -> void:
@@ -741,7 +810,7 @@ func _process(delta: float) -> void:
 		_body_label.get_content_height()
 		_body_label.get_v_scroll_bar().value = _preview_scroll
 		_preview_scroll = -1.0
-	if not _revealing:
+	if not _revealing or _edit_line.is_valid():
 		return
 	var direction := 1.0
 	if not MobileLayout.enabled and Input.is_action_pressed("dialogue_advance"):
@@ -776,9 +845,12 @@ func _gui_input(event: InputEvent) -> void:
 	# Swallowed either way: reading must never walk the character or use whatever
 	# stands behind the band.
 	accept_event()
-	if has_choices():
+	if _edit_line.is_valid():
+		if mouse.double_click:
+			_edit_line.call()
 		return
-	_request_advance()
+	if not has_choices():
+		_request_advance()
 
 
 func _notification(what: int) -> void:
@@ -805,7 +877,7 @@ func _touch_reading(event: InputEvent) -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or _edit_line.is_valid():
 		return
 	if MobileLayout.enabled and (MobileLayout.is_emulated_mouse(event) or event is InputEventScreenTouch):
 		get_viewport().set_input_as_handled()
@@ -877,7 +949,7 @@ func _is_pressed(event: InputEvent, actions: Array) -> bool:
 ## One definition of "continue": finish the line if it is still typing, otherwise ask
 ## for the next one. The click and the key both go through it so they cannot drift.
 func _request_advance() -> void:
-	if has_choices():
+	if _edit_line.is_valid() or has_choices():
 		return
 	if _revealing:
 		complete_reveal()
@@ -886,7 +958,8 @@ func _request_advance() -> void:
 
 
 func _on_choice_button_pressed(index: int) -> void:
-	choice_selected.emit(index)
+	if not _edit_line.is_valid():
+		choice_selected.emit(index)
 
 
 func _on_viewport_resized() -> void:
@@ -1026,8 +1099,11 @@ func _refresh_touch_footer() -> void:
 	if _touch_footer == null:
 		return
 	_touch_buttons[&"continue"].text = L10n.t("ui.dialogue_touch_continue")
-	_touch_buttons[&"continue"].visible = not has_choices()
+	var author := _edit_line.is_valid()
+	_touch_buttons[&"continue"].visible = not author and not has_choices()
 	if not preview_only:
+		for id in [&"auto", &"skip", &"log"]:
+			_touch_buttons[id].visible = not author
 		_touch_buttons[&"auto"].text = L10n.t("ui.dialogue_mode_auto")
 		_touch_buttons[&"skip"].text = L10n.t("ui.dialogue_mode_skip")
 		_touch_buttons[&"log"].text = L10n.t("settings.action.backlog")
@@ -1113,9 +1189,8 @@ func _settle_layout() -> void:
 			_body_label.scroll_active = false
 		_body_label.custom_minimum_size = Vector2(0.0, 0.0)
 		# Measure with every option, then decide how many can be shown.
-		for button in _choice_buttons:
-			if is_instance_valid(button):
-				button.visible = true
+		for row: Control in _choice_rows:
+			row.visible = true
 		_place_portrait(portrait_plan)
 		_fit_speaker_width(width)
 		_layout_stage = 1
@@ -1180,8 +1255,8 @@ func _fit_choice_window(needed: float, max_height: float, body_height: float) ->
 	if room >= choices_height:
 		return
 	var heights: Array[float] = []
-	for button in _choice_buttons:
-		heights.append(button.get_combined_minimum_size().y if is_instance_valid(button) else 0.0)
+	for row: Control in _choice_rows:
+		heights.append(row.get_combined_minimum_size().y)
 	var gap := float(_choices_container.get_theme_constant(&"separation"))
 	var total := heights.size()
 	var start := clampi(_choice_window_start, 0, total - 1)
@@ -1202,8 +1277,7 @@ func _fit_choice_window(needed: float, max_height: float, body_height: float) ->
 	var shown := 0.0
 	for index in total:
 		var inside := index >= start and index < start + count
-		if is_instance_valid(_choice_buttons[index]):
-			_choice_buttons[index].visible = inside
+		_choice_rows[index].visible = inside
 		if inside:
 			shown += heights[index] + (gap if index > start else 0.0)
 	if body_height <= max_height - other - shown:
@@ -1575,7 +1649,7 @@ func _digit_from_event(event: InputEvent) -> int:
 
 
 func _update_hint_visibility() -> void:
-	_hint_label.visible = visible and (_touch_footer == null or not _playback_notice.is_empty())
+	_hint_label.visible = visible and not _edit_line.is_valid() and (_touch_footer == null or not _playback_notice.is_empty())
 
 
 func _move_to_front() -> void:

@@ -147,6 +147,7 @@ func _run() -> void:
 	_test_once_choice(game_state, narrative, characters)
 	_test_hub_without_options(game_state, narrative, characters)
 	_test_camera_focus(game_state, narrative, characters)
+	_test_silent_rebind(game_state, narrative, characters)
 
 	game_state.free()
 	narrative.free()
@@ -388,3 +389,42 @@ func _write_fixture() -> void:
 		return
 	file.store_string(JSON.stringify(FIXTURE, "  "))
 	file.close()
+
+
+func _test_silent_rebind(game_state: Node, narrative: Node, characters: CharacterDirectory) -> void:
+	var data := {"format_version": 2, "locale": "en", "chapter": "fixture", "conversations": {"cursor": {
+		"start": "test", "nodes": [
+			{"id": "test", "speaker": "student", "text": "Fixture check before edit.",
+				"effects": [{"type": "camera_focus", "target": "fixture_prop"},
+					{"type": "set_flag", "flag": "fixture_author_entry", "value": true}],
+				"check": {"ability": "fixture_voice", "difficulty": 1, "kind": "hidden", "success": "done", "failure": null}},
+			{"id": "done", "speaker": "student", "text": "Fixture continues.", "next": null},
+		],
+	}}}
+	var graph := DialogueGraph.load_from_data(data, "fixture before edit")
+	if not graph.is_valid():
+		_failures.append("Rebind fixture graph is invalid: " + "; ".join(graph.errors))
+		return
+	var runtime := _new_runtime(game_state, narrative, characters)
+	var events := {"line": 0, "focus": 0, "check": 0}
+	runtime.line_changed.connect(func(_line: Dictionary) -> void: events["line"] += 1)
+	runtime.camera_focus_requested.connect(func(_target: StringName) -> void: events["focus"] += 1)
+	runtime.check_resolved.connect(func(_result: Dictionary) -> void: events["check"] += 1)
+	if not runtime.start(graph, &"cursor") or not runtime.get_last_check().get("success", false):
+		_failures.append("Fixture check did not resolve")
+		return
+	var audit := Harness.Checker.new()
+	var check := runtime.get_last_check().duplicate(true)
+	game_state.set_flag(&"fixture_author_entry", false) # Re-entering would write this again.
+	var incomplete := data.duplicate(true)
+	incomplete["conversations"]["cursor"]["start"] = "done"
+	incomplete["conversations"]["cursor"]["nodes"].pop_front()
+	audit.expect(not runtime.rebind_graph(DialogueGraph.load_from_data(incomplete, "missing cursor"), false)
+		and runtime.get_current_line()["text"] == "Fixture check before edit.", "Rejected rebind moved or lost the live cursor")
+	data["conversations"]["cursor"]["nodes"][0]["text"] = "Fixture text after edit."
+	audit.expect(runtime.rebind_graph(DialogueGraph.load_from_data(data, "valid edit"), false)
+		and runtime.get_current_line()["text"] == "Fixture text after edit.", "Silent rebind did not change the current text")
+	audit.expect(events == {"line": 1, "focus": 1, "check": 1} and runtime.get_last_check() == check
+		and not game_state.get_flag(&"fixture_author_entry", true), "Edit replayed the line, effects or check")
+	audit.expect(runtime.advance() and runtime.get_current_node_id() == &"done", "Rebind lost the already resolved branch")
+	_failures.append_array(audit.failures)

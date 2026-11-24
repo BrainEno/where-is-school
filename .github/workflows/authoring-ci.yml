@@ -12,6 +12,7 @@ on:
       - 'scripts/autoload/settings_manager.gd'
       - 'scripts/i18n/loc.gd'
       - 'tools/authoring_build.py'
+      - 'tools/authoring/test_live_classroom.sh'
       - 'tools/review_author_draft.*'
       - 'tools/macos/ios/authoring/**'
       - 'tests/authoring_*'
@@ -32,6 +33,7 @@ on:
       - 'project.godot'
       - 'export_presets.cfg'
       - 'tools/authoring_build.py'
+      - 'tools/authoring/test_live_classroom.sh'
       - 'tools/review_author_draft.*'
       - 'tools/export_mobile.py'
       - 'tools/export_presets.py'
@@ -138,6 +140,9 @@ jobs:
             exit 1
           fi
           git diff --exit-code -- data/dialogue
+      - name: Edit in place and load the native chapter with authoring off
+        shell: bash
+        run: bash tools/authoring/test_live_classroom.sh "$RUNNER_TEMP/author-live" --render
   iphone:
     name: Verify unsigned author and retail iPhone archives
     runs-on: macos-26
