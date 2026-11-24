@@ -924,7 +924,16 @@ either direction, with the row saying it is not saved, because the file is the a
 and not the author's permission: a stored "on" wins the next run, and `set_story_editor_enabled()`
 answers whether the *file* took the value, which is the only honest input to that message. A
 release export (`--export-release`) meets none of this: a player's copy refuses the change
-outright (#395). The same switch has a key, `F9`, handled by the always-alive `Session` autoload
+outright (#395). The standing default of the same issue is that a development run *starts*
+with the editor already on - `StoryEditorEntry.development_default()` is `development_run()`
+minus the runs that are not an author at a window: the iPhone pack also ships the scripts and
+stays opt-in, a headless job and a CI capture (which renders the player's view on purpose)
+are nobody's editing session, and the `--script` harness must still be able to speak as a
+player's copy. So during development nothing has to be pressed or stored for the tool to
+exist, F9 and the row still close it for the session, and the `Windows Dev` preset - the
+player's selection with `scripts/story_editor/*` carried back in, asserted in both directions
+by `tests/story_editor_setting_test.gd` - is the packaged form of that run (#395). The same
+switch has a key, `F9`, handled by the always-alive `Session` autoload
 in `_shortcut_input` - after the settings screen's rebinding capture has had its `_input` turn,
 and before the pause menu or an open editor takes every key in `_unhandled_input` - and it goes
 through `StoryEditorEntry.toggle()`, which refuses to act in a run that is neither a development
@@ -935,14 +944,22 @@ both it and its world overlay when turned off, including from the title screen. 
 mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The
 journal and Files exchange under `user://story_editor/` never write `user://save.json` or
 shipped story content. Android and desktop exclude both the runtime and the bridge, and
-`tests/story_editor_setting_test.gd` reads `export_presets.cfg` to keep that true for every preset
-but iOS, so "separate enough to package apart" is a checked property of the export filters and
-not a habit (`scripts/dev/*`, `tests/*` and `tools/*` are checked in the same pass).
+`tests/story_editor_setting_test.gd` reads `export_presets.cfg` to keep that true for every
+player preset - iOS, which carries the runtime for its opt-in row, and the `Windows Dev`
+preset, which carries it for the owner's double-click development run, are the two named
+exceptions, each asserted positively for what it must contain (#395), so "separate enough to
+package apart" is a checked property of the export filters and not a habit (`scripts/dev/*`,
+`tests/*` and `tools/*` are checked in the same pass).
 
 **Live author session.** The staged author app has a different project/user directory
 from boot (and a different bundle ID on iPhone), so its actual gameplay progress and
-read log never go into the player profile. From a paused, visible conversation, the
-pause entry hands off to `live_editor.gd`. It uses `DialoguePanel` itself for input and
+read log never go into the player profile. From a paused, visible conversation, in any
+chapter and any room, the pause entry hands off to `live_editor.gd` - the address is the
+running cursor looked up in the store's index of every shipped chapter, so a corridor line
+hands off exactly like a prologue one and the drawer is what remains only when no dialogue
+is on screen (#395). The staged app also boots into the Simplified Chinese master: a fresh
+author profile would otherwise open in the fallback language and ask for a switch before
+the first line can be edited. `live_editor.gd` uses `DialoguePanel` itself for input and
 text redraw, not the drawer's detached panel. The controller opts into validated shadow
 chapter graphs only in this session. A silent `DialogueRuntime.rebind_graph()` keeps
 its current cursor and any resolved check; no line, camera or check event is replayed.
