@@ -255,6 +255,8 @@ const FRONT_YARD_STANCES := [
 	["path", Vector3(3.0, 0.0, 15.8)],
 	["porch", Vector3(-9.7, 0.6, 15.8)],
 	["trees", Vector3(-3.5, 0.0, 2.0)],
+	# Round 26: the grove's mouth, and the strip's trees behind the north railing.
+	["grove_mouth", Vector3(11.9, 0.0, 7.0)],
 ]
 const FRONT_YARD_VIEWS := [
 	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
@@ -263,6 +265,15 @@ const FRONT_YARD_VIEWS := [
 	["dead_trees", Vector3(4.0, 3.0, 12.0), Vector3(-7.0, 3.0, 0.0)],
 	["entrance", Vector3(2.0, 3.2, 21.0), Vector3(-10.6, 1.6, 15.8)],
 	["porch_steps", Vector3(-4.0, 2.4, 20.5), Vector3(-9.8, 0.8, 15.8)],
+	["north_wall", Vector3(6.0, 5.0, -10.0), Vector3(-8.0, 0.6, -20.4)],
+]
+## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
+## the east leg, and one high view down the whole L towards the court's opening.
+const NORTH_GROVE_STANCES := [
+	["east_leg", Vector3(1.7, 0.0, -7.6)],
+]
+const NORTH_GROVE_VIEWS := [
+	["grove_overview", Vector3(7.0, 10.0, 0.0), Vector3(-14.0, 0.0, -18.6)],
 ]
 const STREET_GATE_VIEWS := [
 	["street_gate", Vector3(-2.0, 2.4, 18.6), Vector3(-11.0, 1.3, 12.0)],
@@ -351,6 +362,7 @@ var _site_interior := false
 var _container_yard := false
 var _port := false
 var _front_yard := false
+var _north_grove := false
 var _annex_thresholds := false
 var _stable_yard := false
 var _teaching_stairs := false
@@ -401,6 +413,8 @@ func _initialize() -> void:
 			_port = true
 		elif arg == "front-yard":
 			_front_yard = true
+		elif arg == "north-grove":
+			_north_grove = true
 		elif arg == "stable-yard":
 			_stable_yard = true
 		elif arg == "teaching-stairs":
@@ -489,6 +503,9 @@ func _run() -> void:
 	elif _front_yard:
 		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
 		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
+	elif _north_grove:
+		await _capture_views(out_dir, "north_grove", ^"GroveWallEast", NORTH_GROVE_STANCES, NORTH_GROVE_VIEWS,
+			"north_grove")
 	elif _teaching_stairs:
 		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Porch", TEACHING_STAIR_STANCES,
 			TEACHING_STAIR_VIEWS, "teaching_stairs")

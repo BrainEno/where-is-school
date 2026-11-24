@@ -29,7 +29,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const LOCATIONS: Array[String] = [
-	"classroom", "corridor", "front_yard", "street", "residential", "alley", "playground", "laboratory",
+	"classroom", "corridor", "front_yard", "north_grove", "street", "residential", "alley", "playground", "laboratory",
 	"staff_office", "restroom",
 	"archive", "plan_room", "projection_room", "computer_room", "vacant_office", "principal_office",
 	"restroom_02", "restroom_03", "site_interior", "container_yard", "port",

@@ -63,12 +63,52 @@ FRONT_PORCH_LANDING_X = (-11.0, -8.65)
 FRONT_PORCH_LANDING_Z = (12.5, 19.1)
 FRONT_PORCH_STEP_Z = (13.0, 18.6)
 # Dead trees: (x, z, variant, yaw degrees; multiples of 90 keep the crown in its fader box).
+# Round 26: the last three stand in the strip between the north railing and the school
+# wall's new north run - the grove seen from the yard, out of reach behind the railing.
 FRONT_YARD_TREES = (
     (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
     (-6.6, 26.4, "c", 0), (3.4, 22.8, "b", 270), (11.0, 27.6, "a", 90),
+    # the last three are the grove's trees 9, 11 and 13 (yard x = grove x + 11.65,
+    # the same z), the strip seen from this side of its railing
+    (1.95, -17.9, "b", 180), (-0.65, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
 )
 # The box each crown grows in (front_yard_meshes.TREE_BOUNDS), as the fader's collider.
 FRONT_YARD_TREE_BOX = (5.4, 7.3)
+
+# Round 26: the north grove (北面枯树小道), a new walkable location (docs/MAP_PLAN.md §5,
+# school layout phase 2): a narrow strip of dead trees between iron railings (铁栏杆) and
+# the school wall, a mirrored L hugging the grounds' north-east corner. The east leg starts
+# beside the front yard's school gate and runs north along the wall; at the corner it turns
+# west and runs above the front yard and the teaching block, ending where the wall stops
+# and the court (playground) opens - the one gap the wall leaves on the west. The yards
+# stay as they are; each reaches the strip through a click exit beside its own mouth.
+# The strip's north wall sits at z -20.7 (its inner face z -20.55), the same line the front
+# yard's own north wall is drawn on; the court's back wall and the strip's floor carry on
+# at the same heights, so both yards' edges read as the same grounds.
+GROVE_WALL_H = 2.6
+GROVE_STRIP_W = 3.4             # railing line to wall face
+GROVE_CORNER_Z = -20.55         # the north wall's inner face
+GROVE_SOUTH_Z = 3.4             # the strip's south end, where the mouth opening stands
+GROVE_MOUTH_Z = (0.0, 1.4)      # the opening in the east wall, one person wide
+GROVE_RAIL_Z = -17.15           # the horizontal run's railing line
+GROVE_WEST_X = -23.6            # where the railing ends and the court opens
+GROVE_RAIL_V_LEN = 20.55        # the west railing run, mouth post to the corner
+GROVE_RAIL_H_LEN = 23.6         # the south railing run, corner post to the west end post
+# A crown box on its own layer: in the camera_occluder group so the fader finds it, but on
+# a layer neither the bake (mask 25) nor the body (mask 5) reads - a crown that fades
+# without sealing the strip the route has to weave through.
+GROVE_FADE_LAYER = 1 << 10
+# Dead trees along the L: (x, z, variant, yaw; multiples of 90 keep the crown in its box).
+# The trunks stand clear of the walked lines (x 1.7 down the east leg, z -18.85 along the
+# north leg) and of each other's weave gaps: trunks at x 0.85 / 2.55 leave a 1.28 m band
+# for the agent between them, and along the north leg the z -17.9 / -19.5 pairs leave a
+# 1.18 m one at z -18.11..-19.29.
+GROVE_TREES = (
+    (0.85, -3.6, "a", 0), (2.55, -6.2, "b", 90), (0.85, -8.8, "c", 180), (2.55, -11.4, "a", 270),
+    (0.85, -14.0, "b", 0), (2.55, -16.4, "c", 90), (2.85, -20.0, "a", 180),
+    (-1.6, -19.5, "b", 270), (-4.3, -17.9, "c", 0), (-7.0, -19.5, "a", 90), (-9.7, -17.9, "b", 180),
+    (-12.4, -19.5, "c", 270), (-15.1, -17.9, "a", 0), (-17.6, -19.6, "b", 90), (-20.6, -17.8, "c", 180),
+)
 
 MATS = {
     "asphalt": "res://assets/materials/outdoor_asphalt.tres",
@@ -585,9 +625,17 @@ def _front_porch(s):
     s.box("PavementSchoolEntry", (-11.5, top / 2, 16.35), (1.0, top, 7.3), "concrete")
     steps = _stair(s, "PorchStep", FRONT_PORCH_STEPS, rise, run, None, FRONT_PORCH_STEP_Z, "x", -1, foot, 0.0)
     _ramp(s, "PorchRamp", FRONT_PORCH_STEPS, rise, run, None, FRONT_PORCH_STEP_Z, "x", -1, foot, 0.0)
-    # Low steel rails along the landing's open sides; the steps' front is the way down.
+    # Low steel rails along the landing's open sides, carried on past the steps' foot so
+    # the flanks of the flight are railed too; the steps' front is the way down. Round 26:
+    # two short rails close the ~0.5 m gaps between the rail ends and the steps' edges -
+    # east of the landing the 0.6 m drop ran unrailed north and south of the flight.
+    rail_x0, rail_x1 = x_land[0] + 0.45, foot + 0.05
     for name, z in (("PorchRailNorth", z_land[0] + 0.04), ("PorchRailSouth", z_land[1] - 0.04)):
-        s.box(name, (sum(x_land) / 2 + 0.15, top + 0.45, z), (x_land[1] - x_land[0] - 0.3, 0.9, 0.06),
+        s.box(name, ((rail_x0 + rail_x1) / 2, top + 0.45, z), (rail_x1 - rail_x0, 0.9, 0.06),
+              "metal", ["camera_occluder"])
+    for name, z0, z1 in (("PorchRailNorthGap", z_land[0] + 0.04, FRONT_PORCH_STEP_Z[0]),
+                         ("PorchRailSouthGap", FRONT_PORCH_STEP_Z[1], z_land[1] - 0.04)):
+        s.box(name, (x_land[1] - 0.03, top + 0.45, (z0 + z1) / 2), (0.06, 0.9, z1 - z0),
               "metal", ["camera_occluder"])
     return steps
 
@@ -625,6 +673,14 @@ def build_front_yard():
     for name, z in (("NorthRail", z0 + 0.15), ("SouthRail", z1 - 0.15)):
         s.box(name, ((x0 + x1) / 2, 0.6, z), (x1 - x0, 1.2, 0.1), "metal", occ)
     _school_wall(s, YARD_WALL_X, (z0 + 0.3, z1 - 0.3), -1)
+    # Round 26: the school wall's north run (校墙) so the teaching block stands inside the
+    # wall: the east wall carried on past the yard's north rail to the grounds' north-east
+    # corner, and the north wall west from there, behind the grove strip's dead trees. The
+    # strip itself (between this wall and the NorthRail) is the north_grove location's walk;
+    # from the yard it reads as the tree line the wall closes. The wall stops at the block's
+    # north-west corner - west of the court it never closes, the one gap the owner allowed.
+    s.box("SchoolWallNorthExt", (YARD_WALL_X, SCHOOL_WALL_H / 2, -14.425), (0.3, SCHOOL_WALL_H, 12.85), "wall", occ)
+    s.box("SchoolWallNorth", (2.15, SCHOOL_WALL_H / 2, -20.7), (26.3, SCHOOL_WALL_H, 0.3), "wall", occ)
     # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):
@@ -633,6 +689,12 @@ def build_front_yard():
     d_mid = sum(STREET_DOOR_Z) / 2
     g_mid = sum(STREET_GATE_Z) / 2
     tx = FRONT_YARD_TREES[0][0]
+
+    # Round 26: the grove's mouth beside the gate's north pier - one tree of the strip, and
+    # the exit that walks it. The crown box is on the grove's fade layer: it may not carve
+    # a hole into the bake here, where the only route along the east wall passes it.
+    s.box("GroveHintTree", (12.6, 3.55, 4.3), (5.4, 7.3, 5.4), "soil", occ, True, GROVE_FADE_LAYER)
+    s.box("GroveHintTreeTrunk", (12.6, 1.0, 4.3), (0.42, 2.0, 0.42), "soil")
 
     s.interactables = [
         # placeholders until the owner writes them (data/inspections/*/front_yard.json)
@@ -663,13 +725,24 @@ def build_front_yard():
          "outline": ("SideDoor/StageDoor/Frame", "SideDoor/StageDoor/Bars"),
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
          "id_dest": "street"},
+        # Round 26: into the north grove, past the gate's north pier (the strip runs north
+        # from here along the wall - docs/MAP_PLAN.md §5, phase 2).
+        {"name": "ToNorthGrove", "pos": (14.55, 0.9, 7.4), "id": "front_yard_to_grove",
+         "prompt_key": "prompt.to_grove", "radius": 1.25,
+         "outline": ("GroveHintTree/StageTree/Trunk",),
+         "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromFrontYard",
+         "id_dest": "north_grove"},
     ]
     # Round 25: out of the glass doors onto the porch landing, facing east toward the school
     # gate, and the arrival walks down the three steps onto the dirt (3 m, ending 0.45 m past
     # the foot of the ramp), so the doors (the way back in) are well behind.
     s.spawns = [("FromCorridor", (-9.8, FRONT_PORCH_TOP, 15.8),
                  {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 3.0}),
-                ("FromStreet", (12.0, 0, d_mid))]
+                ("FromStreet", (12.0, 0, d_mid)),
+                # Round 26: back from the grove, beside the gate's north pier, facing west
+                # onto the dirt; the arrival walks 2.4 m clear of the tree and the exit.
+                ("FromGrove", (13.45, 0, 8.6),
+                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4})]
     return s
 
 
@@ -1222,7 +1295,20 @@ def build_playground(for_courtyard_view: bool = False):
          "prompt_key": "prompt.container_yard", "radius": 1.6, "outline": ("FenceRunNorth/YardGapFlap",),
          "scene": "res://scenes/locations/container_yard/container_yard.tscn", "spawn": "FromPlayground",
          "id_dest": "container_yard"},
+        # Round 26: into the north grove, at the east end of the strip between the fence and
+        # the school's back wall (the grove's west opening is this strip carried on past the
+        # corner; docs/MAP_PLAN.md §5, phase 2).
+        {"name": "ToNorthGrove", "pos": (18.6, 0.9, -19.7), "id": "playground_to_grove",
+         "prompt_key": "prompt.court_to_grove", "radius": 1.3,
+         "outline": ("GroveStubTree", "GroveStubRail"),
+         "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromPlayground",
+         "id_dest": "north_grove"},
     ]
+    # Round 26: the grove's mouth at the strip's east end - a dead trunk and a rail stub
+    # against the flats. Mesh only: the bake and the pinned polygon count must not move,
+    # and nothing walks here that the trunk would need to stop.
+    s.box("GroveStubTree", (19.55, 1.0, -19.7), (0.42, 2.0, 0.42), "soil", None, False)
+    s.box("GroveStubRail", (19.9, 0.6, -19.7), (0.5, 1.2, 0.1), "metal", None, False)
     s.spawns = [
         ("FromAlley", (0.0, 0, 16.0)),
         # The walkway's end door: this is the intended way into the yard, so the
@@ -1238,6 +1324,95 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromSite", (-21.6, 0, 13.2)),
         # Back from the container yard, behind the blue container.
         ("FromContainerYard", (13.0, 0, -17.6)),
+        # Round 26: back from the grove, in the strip east of the container, facing south
+        # onto the court; the arrival walks 2.4 m out from under the exit.
+        ("FromGrove", (18.6, 0, -19.7),
+         {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.6}),
+    ]
+    return s
+
+
+def build_north_grove():
+    """Round 26: the north grove (北面枯树小道) as its own walkable location.
+
+    A mirrored L of dead trees between iron railings and the school wall, hugging the
+    grounds' north-east corner (docs/MAP_PLAN.md §5, phase 2): the east leg starts beside
+    the front yard's school gate and runs north along the wall; at the corner it turns west
+    and runs above the front yard and the teaching block, ending where the wall stops and
+    the court (playground) opens - the one gap the wall leaves on the west. The ground, the
+    trees and the railings are dressed by the stage pass (build_stage_art.py, NORTH_GROVE);
+    here are the walk, the walls, the routes and the trees' colliders."""
+    s = Scene("NorthGrove", "north_grove")
+    s.env = {
+        'sky': 'Color(0.243, 0.196, 0.176, 1)',
+        'ambient': 'Color(0.52, 0.43, 0.36, 1)',
+        'energy': '1.05',
+        'fog': 'Color(0.34, 0.27, 0.22, 1)',
+        'fog_density': '0.004',
+        'saturation': '0.85',
+    }
+    s.sun = {'rotation': (-14, 38, 0), 'color': 'Color(1, 0.72, 0.5, 1)', 'energy': 2.1}
+    s.ambience = {'volume': -18.0, 'target': -26.0}
+    occ = ["camera_occluder"]
+    corner = GROVE_CORNER_Z
+    # The dirt of the L, one box per leg sharing the corner edge (never overlapping), the
+    # east one carrying on south past the mouth to the strip's south end.
+    s.box("GroveGroundEast", (1.875, -0.1, (corner - 0.3 + GROVE_SOUTH_Z) / 2),
+          (4.05, 0.2, GROVE_SOUTH_Z - corner + 0.3), "soil")
+    s.box("GroveGroundNorth", (-12.4, -0.1, -18.95), (24.5, 0.2, 3.8), "soil")
+    # The school wall: the east wall carried on north from the gate to the grounds' corner -
+    # with the mouth opening (口) left in it at the strip's south end - and the north wall
+    # west from the corner, ending where the court opens (the one gap).
+    m0, m1 = GROVE_MOUTH_Z
+    s.box("GroveWallEast", (3.6, GROVE_WALL_H / 2, (corner - 0.3 + m0) / 2),
+          (0.4, GROVE_WALL_H, m0 - corner + 0.3), "wall", occ)
+    s.box("GroveWallSouth", (3.6, GROVE_WALL_H / 2, (m1 + GROVE_SOUTH_Z + 0.4) / 2),
+          (0.4, GROVE_WALL_H, GROVE_SOUTH_Z - m1 + 0.4), "wall", occ)
+    s.box("GroveWallNorth", (-10.35, GROVE_WALL_H / 2, corner - 0.15), (27.5, GROVE_WALL_H, 0.3), "wall", occ)
+    # Beyond the railing at the west end, the teaching block's north face with its plinth:
+    # the corner the strip rounds on its way out to the court (the front yard sees the same
+    # block face ten metres east, so the strip runs just past its north wall).
+    s.box("GroveBlockFacade", (-27.75, 6.5, -16.85), (10.0, 13, 0.4), "wall", occ)
+    s.box("GroveBlockPlinth", (-27.75, 0.6, -16.85), (10.2, 1.2, 0.6), "concrete", occ)
+    # The iron railings (铁栏杆): the west run from the mouth post to the corner and the
+    # south run from the corner to the west end post, with a post covering each end, the
+    # joint and the mouth. The stage pass hides the runs and hangs the railing meshes on them.
+    s.box("GroveRailRunWest", (0.06, 0.6, (GROVE_RAIL_Z + GROVE_SOUTH_Z) / 2),
+          (0.12, 1.2, GROVE_RAIL_V_LEN), "metal", occ)
+    s.box("GroveRailRunSouth", (-11.8, 0.6, GROVE_RAIL_Z), (GROVE_RAIL_H_LEN, 1.2, 0.12), "metal", occ)
+    s.box("GroveRailPostMouth", (0.06, 0.65, GROVE_SOUTH_Z), (0.16, 1.3, 0.16), "metal", occ)
+    s.box("GroveRailPostCorner", (0.06, 0.65, GROVE_RAIL_Z), (0.2, 1.3, 0.2), "metal", occ)
+    s.box("GroveRailPostWest", (GROVE_WEST_X, 0.65, GROVE_RAIL_Z), (0.16, 1.3, 0.16), "metal", occ)
+    # The dead trees: a trunk to walk round, and a crown box on the grove's fade layer.
+    bw, bh = 5.4, 7.3
+    for i, (x, z, _variant, _yaw) in enumerate(GROVE_TREES):
+        s.box(f"GroveTree{i}", (x, bh / 2 - 0.1, z), (bw, bh, bw), "soil", occ, True, GROVE_FADE_LAYER)
+        s.box(f"GroveTree{i}Trunk", (x, 1.0, z), (0.42, 2.0, 0.42), "soil")
+
+    s.exits = [
+        # Back out to the front yard, standing in the mouth: the wall's south stub and the
+        # railing's last post frame the opening, and the mouth's dark inset outlines it.
+        {"name": "ToFrontYard", "pos": (1.7, 0.9, 0.7), "id": "north_grove_to_front_yard",
+         "prompt_key": "prompt.grove_to_yard", "radius": 1.25,
+         "outline": ("StageArt/Mouth",),
+         "scene": "res://scenes/locations/front_yard/front_yard.tscn", "spawn": "FromGrove",
+         "id_dest": "front_yard"},
+        # Out to the court, at the strip's west end: the wall stops here (the one gap) and
+        # the railing's last post marks where the trees give up.
+        {"name": "ToPlayground", "pos": (-23.3, 0.9, -18.85),
+         "id": "north_grove_to_playground",
+         "prompt_key": "prompt.grove_to_court", "radius": 1.3,
+         "outline": ("GroveRailPostWest",),
+         "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromGrove",
+         "id_dest": "playground"},
+    ]
+    s.spawns = [
+        # Round 26 arrivals: each walks straight up its leg, away from the exit it came in by,
+        # so the way back is behind the player and not under the cursor (round 24b's pattern).
+        ("FromFrontYard", (2.8, 0, -0.5),
+         {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
+        ("FromPlayground", (-23.8, 0, -18.85),
+         {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.6}),
     ]
     return s
 
@@ -1409,6 +1584,7 @@ BUILDERS = {
     "residential": build_residential,
     "alley": build_alley,
     "playground": build_playground,
+    "north_grove": build_north_grove,
 }
 
 

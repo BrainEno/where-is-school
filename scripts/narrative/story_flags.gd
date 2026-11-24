@@ -54,6 +54,8 @@ const CLASS_DISMISSED: StringName = &"class_dismissed"
 const LEFT_CLASSROOM: StringName = &"left_classroom"
 ## bool: the player has stepped out of the teaching block into the front yard (前操场).
 const FRONT_YARD_ARRIVED: StringName = &"front_yard_arrived"
+## bool: the player walked the north grove (北面枯树小道) between the two yards (round 26).
+const NORTH_GROVE_VISITED: StringName = &"north_grove_visited"
 ## bool: the player went out through the school gate's side door into the street.
 const LEFT_SCHOOL: StringName = &"left_school"
 ## bool: the first street conversation has played.

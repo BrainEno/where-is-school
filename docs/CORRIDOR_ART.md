@@ -257,6 +257,41 @@ not send the player straight back in.
   (`StagedActorMotion.walk_down_to`, which lets gravity bring the feet down each tread).
   `return_route_test` goes back down once and checks where the walk ends.
 
+## Round 26: the rail gaps closed, the school wall, and the north grove
+
+Phase 2 of the owner's campus plan ([MAP_PLAN.md](MAP_PLAN.md)): the teaching block now
+stands inside the school wall (围墙), and a new walkable location - the north grove
+(北面枯树小道), a mirrored L of dead trees between iron railings (铁栏杆) and the wall -
+joins the dirt yard to the court. Both yards stay as they were.
+
+- **The rail gaps closed.** The porch's two side rails (`PorchRailNorth/South`) run on
+  past the steps' foot (greybox centre x -9.05, 3.0 m long, the drawn post pair respaced
+  to 0.483/1.45 m), and two short rails (`PorchRailNorthGap/SouthGap`, 0.46 m, drawn as
+  bar pairs turned along z) close the ~0.5 m gaps east of the landing - nothing has to
+  walk there, but the keyboard could drop 0.6 m off the flight's flanks.
+- **The school wall runs north.** In `front_yard.tscn` (hand-ported, the art pass is not
+  rerun there): `SchoolWallNorthExt` carries the east wall from the yard rail to the
+  grounds' north-east corner, `SchoolWallNorth` runs west at z -20.7 (the same line the
+  grove's wall uses), both with coping, and three of the grove's dead trees stand behind
+  the north railing (`DeadTree7..9`). A mouth tree (`GroveHintTree`, its crown box on the
+  grove's fade layer 1024) marks the strip beside the gate's north pier, and
+  `front_yard_to_grove` (`ToNorthGrove`, "Into the dead trees by the wall") stands in the
+  opening. `FromGrove` is the return spawn, facing west, `entry_walk = 2.4`.
+- **The north grove is its own location.** `scenes/locations/north_grove/north_grove.tscn`,
+  built by `tools/build_outdoor_locations.py` (`build_north_grove()`, safe to regenerate)
+  and dressed by the stage pass (`NORTH_GROVE`): the east wall along x 3.6 with the strip's
+  mouth opening (z 0.0 to 1.4, a dark inset drawn in it), the north wall at z -20.7, the
+  block's north face at the west end, two railing runs with three posts (the mesh runs
+  along local x, so the west run takes it turned), and fifteen dead trees whose trunks
+  leave weave gaps for the 0.5 m agent. `FromFrontYard` (2.8, 0, -0.5) walks north 2.6 m;
+  `FromPlayground` (-23.8, 0, -18.85) walks west 2.6 m. The exits: `north_grove_to_front_yard`
+  in the mouth (outlining the inset), `north_grove_to_playground` at the wall's west end
+  (outlining the last post). The court reaches the strip through `playground_to_grove`
+  (x 18.6, the margin east of the container, a mesh-only trunk and rail stub drawn there).
+- **Stage-pass caution.** `build_stage_art.py front_yard` must NOT be rerun: the committed
+  front_yard carries hand-authored stage pieces the pass would strip. The grove and the
+  street/residential/alley stay regenerable.
+
 ## Round 25: two big glass doors, a porch, a side door to the lane
 
 The owner found the way out to the front yard (前操场) confusing: the 01 glass entrance led

@@ -8,6 +8,7 @@ const DirectoryCase = preload("res://tests/corridor_directory_support.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const FRONT_YARD := "res://scenes/locations/front_yard/front_yard.tscn"
 const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
+const NORTH_GROVE := "res://scenes/locations/north_grove/north_grove.tscn"
 const SCHOOL := ^"TeachingBlock"
 const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
 const DIRECTORY := &"corridor_folded_directory"
@@ -213,6 +214,9 @@ func _check_entry_headings() -> void:
 		[CORRIDOR, &"FromSchoolyard", Vector3.FORWARD],
 		[FRONT_YARD, &"FromCorridor", Vector3.RIGHT],
 		[PLAYGROUND, &"FromCorridor", Vector3.BACK],
+		# Round 26: the grove's arrivals walk straight up their legs (north, then west).
+		[NORTH_GROVE, &"FromFrontYard", Vector3.FORWARD],
+		[NORTH_GROVE, &"FromPlayground", Vector3.RIGHT],
 	]
 	for case in cases:
 		var scene := (load(case[0]) as PackedScene).instantiate() as Node3D

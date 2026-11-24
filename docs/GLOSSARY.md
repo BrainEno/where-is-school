@@ -18,6 +18,8 @@
 | `classroom` | 教室 | Classroom | 生物课教室，序章所在 |
 | `corridor` | 走廊 | Corridor | 三层教学楼的走廊；旧文档写作 walkway |
 | `front_yard` | 前操场 | Front yard | 第 16 轮新增：教学楼玻璃门外、校门以内的土操场，两边都是操场，没有马路；场景由 `tools/build_outdoor_locations.py` 生成 |
+| 北面枯树小道 | north grove | 枯树小道、林子 | 第 26 轮新增：前操场与球场之间的可行走窄道，铁栏杆夹着枯树，贴东北角呈镜像 L 形；场景 `scenes/locations/north_grove/north_grove.tscn`，由 `tools/build_outdoor_locations.py` 生成 |
+| 校墙 | school wall | 围墙（北段）、院墙 | 校园东北角那两段围墙：东段从前操场北栏杆延伸到角落，北段沿 z -20.7 往西，到球场开口为止（墙上留的一个缺口）。节点 `SchoolWallNorthExt`/`SchoolWallNorth`（前操场）、`GroveWallEast`/`GroveWallNorth`（小道） |
 | `street` | 街上 | Street | 校门外的街；第 16 轮起只能从校门旁的小门出来，不再从教学楼直接到街上 |
 | `residential` | 居民楼 | The flats | 几栋居民楼和楼间的居民院；不叫「小区」/ estate |
 | `alley` | 小巷 | Alley | 居民楼后面，尽头是通往操场的栅栏门 |

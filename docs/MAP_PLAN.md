@@ -26,6 +26,7 @@ comes from the manuscript.
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | Start (`PlayerStart`). The painted classroom; the wake and the free period. | 已实现 |
 | `corridor` | `scenes/locations/corridor/corridor.tscn` | Three connected storeys: the big two-leaf glass doors (a click out to the front yard's porch, round 25), the directory and a side door to the stable lane on 01, biology on 02, and a loop to the upper gallery on 03. Optional doors in the end bays are listed below. The original fire stair still goes to `playground`. See [CORRIDOR_ART.md](CORRIDOR_ART.md). | 已实现 |
 | `front_yard` | `scenes/locations/front_yard/front_yard.tscn` | Round 16. Out of the 01 glass doors onto a porch, three steps above the front yard (前操场, round 25): bare loess dirt with a trodden path and dry grass at the edges, no road. Seven dead trees, a low railing north and south with more dirt sports ground past it, so the teaching block has playground on both sides. East is the school wall (围墙) with the school gate (校门) in it: a parking-lot retractable gate (伸缩门), shut, and beside it a side door (小门) one person wide, with a card reader (刷卡机) on its pier just inside. The reader is look-only; the door opens without a card. Three inspections, owner text still TODO. | 已实现 |
+| `north_grove` | `scenes/locations/north_grove/north_grove.tscn` | Round 26. The north grove (北面枯树小道): a mirrored L of dead trees between iron railings (铁栏杆) and the school wall, hugging the grounds' north-east corner - north beside the front yard's school gate, then west along the north wall to the court's opening (the one gap the wall leaves). Reached from both yards by click exits; see [CORRIDOR_ART.md](CORRIDOR_ART.md), round 26. | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | Reached only through the school gate's side door (round 16). West is the school wall (围墙) with the gate at its south end and an ivory dado along its foot; over it, the front yard's dirt, its dead trees and the teaching block with its barred windows stand back out of reach. Then a road with a broken centre line and a crossing missing one bar, rose flats and an ochre shop (east), a stair up to the flats' passage. The gutter is an open ditch under the school-side kerb: lined, its water holding a pale strip of sky, bare cracked earth on its road side, precast slabs over it from the crossing to the school gate, and a drain cover higher than the water that runs to it. The road runs off its north end into the laid-flat sky; a blank sign stands out there, and a pale ribbed panel stands in the ditch's line. | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | Courtyard of three blocks in three slightly-wrong colours (yellow, rose, sage); slide, planter, washing line, bench, chair, the animal; chalk hopscotch with one square drawn twice; water tanks and a leaning aerial on the roofs; one long lit window that is off the grid. | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 7 m lane between cold blue streaked walls; the west wall carries on above its coping and leans over the lane; a bay with a service door; skip with a chair in it; the gate to the yard, with light beyond it; close cut-out rooftops at the wrong scale. | 已实现 |
@@ -50,6 +51,7 @@ flowchart LR
   residential["residential courtyard"]
   alley["alley"]
   playground["playground / yard"]
+  north_grove["north grove"]
   laboratory["laboratory / 01 recess"]
   restroom["restroom / 01 west"]
   staff_office["staff office / 03 east"]
@@ -63,6 +65,10 @@ flowchart LR
   street -- "street_back_to_school → FromStreet" --> front_yard
   corridor -- "to_schoolyard → FromCorridor" --> playground
   playground -- "pg_to_corridor → FromSchoolyard" --> corridor
+  front_yard -- "front_yard_to_grove → FromFrontYard" --> north_grove
+  north_grove -- "north_grove_to_front_yard → FromGrove" --> front_yard
+  north_grove -- "north_grove_to_playground → FromGrove" --> playground
+  playground -- "playground_to_grove → FromGrove" --> north_grove
   street -- "street_to_residential → FromStreet" --> residential
   residential -- "res_back_to_street → FromResidential" --> street
   residential -- "res_alley_end → FromCourtyard" --> alley
@@ -92,6 +98,7 @@ is the same yard behind the corridor.
 | School wall and gate; the teaching block over it | street, west | Keeps the school present while outside it | 已实现 |
 | Retractable gate, side door and card reader | front yard, east | The way out is one person wide | 已实现 |
 | Dead trees on bare dirt | front yard | Playground on both sides of the block, with nothing growing | 已实现 |
+| The grove's railings and its dead trees | north grove | A strip that keeps you at the wall, tree by tree | 已实现 |
 | Long lit window off the grid | courtyard, north block | The one wrong thing in an ordinary block | 已实现 |
 | Water tanks, leaning aerial | courtyard roofs | Silhouette; reads "housing" from above | 已实现 |
 | Leaning west wall, light past the gate | alley | Narrowing; a goal at the end of the lane | 已实现 |
@@ -172,7 +179,7 @@ equipment, moved off the court. Elsewhere: school buildings such as a gym.
 | Phase | Content | Status |
 |---|---|---|
 | 1 | Out of 01 by a big two-leaf glass door facing east (down the blue stair); a click lands the player on a porch's steps above the dirt yard, and they walk down onto it. The 02 gate steps and the small forecourt are gone; a plain side door from the 01 gallery leads to the stable lane. See [CORRIDOR_ART.md](CORRIDOR_ART.md), round 25. | 已实现 |
-| 2 | The school wall round the block, and the north grove as a new walkable location joining the two yards | 已确定但未实现 |
+| 2 | The school wall round the block, and the north grove as a new walkable location joining the two yards. Round 26: the wall's north runs and the grove are in; the rail gaps by the porch steps are closed. | 已实现 |
 | 3 | The sports equipment south, a gym, distant buildings lined up with the map | 已确定但未实现 |
 
 ## 6. Expansions around the campus
