@@ -18,7 +18,9 @@ const FIRST_BEND := Vector3(0, 0, -27.75)
 const SECOND_BEND := Vector3(-12, 3.6, -42.75)
 const UPPER_EAST := Vector3(11.2, 3.6, -42.75)
 const HALL_BY_WEST_STAIR := Vector3(0, 0, -8.45)
-const FORECOURT_GATE := Vector3(-17.65, -3.64, 21.3)
+const BLUE_STAIR_FOOT := Vector3(-9.94, -3.4, 12.54)
+const INSIDE_GLASS_DOORS := Vector3(-17.65, -3.4, 13.4)
+const PORCH_LANDING := Vector3(-9.2, 0.6, 15.8)
 const ROOM_WINDOW_Y := 2.15
 const FLOOR_RISE := 3.6
 const PLAYER_GLASS_LAYER := 4
@@ -139,12 +141,17 @@ func _run() -> void:
 				if await _use_exit(&"classroom_door", &"corridor", &"FromClassroom"):
 					_check.expect(_player.global_position.distance_to(front_step) < 0.12,
 						"Leaving the classroom did not land on the hall side of the front door.")
-		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
-			if await _use_exit(&"school_gate", &"front_yard", &"FromCorridor"):
-				# Round 24: down the gate steps the arrival walks on toward the gate (`entry_walk`).
+		# Round 25: the 02 gate steps are gone. The way out is down the blue stair to 01
+		# and the shut glass doors; the arrival walks down the porch steps (`entry_walk`).
+		# The first leg is the old walk to the 02 end, which slants past Q where the
+		# classroom door put it; then down the blue stair from there.
+		if (_host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "the 02 end")
+			and await _walk(BLUE_STAIR_FOOT, "down the blue stair")
+			and await _walk(INSIDE_GLASS_DOORS, "along 01 to the glass doors")):
+			if await _use_exit(&"teaching_entrance_to_street", &"front_yard", &"FromCorridor"):
 				var yard_arrival := _host.get_current().get_spawn(&"FromCorridor").global_position
-				_check.expect(_player.global_position.x - yard_arrival.x > 1.8,
-					"The front yard arrival did not walk on from %s (at %s)." % [yard_arrival, _player.global_position])
+				_check.expect(_player.global_position.x - yard_arrival.x > 1.8 and _player.global_position.y < 0.25,
+					"The front yard arrival did not walk down the porch from %s (at %s)." % [yard_arrival, _player.global_position])
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
@@ -158,7 +165,7 @@ func _finish() -> void:
 	Harness.finish(self, _check.failures,
 		"the biology doors match on both sides and only the front door routes; "
 		+ "the ten bays, masonry and divided windows, older exits and both peek inputs still work; "
-		+ "the 01 glass entrance is passable and connected to the front yard, and the yard's side door to the street; the rear stair and hidden laboratory still work; "
+		+ "the shut 01 glass doors lead out onto the front yard's porch and back, and the yard's side door to the street; the rear stair and hidden laboratory still work; "
 		+ "directory poses and the wall's shortened revisit survive resuming a checkpoint.")
 
 
@@ -376,8 +383,12 @@ func _check_glass_entrance() -> void:
 	if not _check.expect(yard_facade != null, "The front yard has no glass school entrance."):
 		return
 	var entrance_scene := yard_facade.scene_file_path
-	if not await _walk(Vector3(-8.4, 0, 15.8), "front yard side of the glass entrance"):
+	# Round 25: the doors stand shut at the top of a porch. Up its steps to the landing.
+	if not await _walk(PORCH_LANDING, "up the porch steps to the glass doors"):
 		return
+	_check.expect(_player.global_position.y > 0.45, "The porch landing is not above the dirt: %s." % _player.global_position)
+	_check.expect(_player.test_move(_player.global_transform, Vector3.LEFT * 1.6),
+		"The shut glass doors let the capsule walk back in from the porch.")
 	if not await _use_exit(&"front_yard_back_inside", &"corridor", &"FromTeachingEntrance"):
 		return
 	var inside := _host.get_current()
@@ -388,9 +399,9 @@ func _check_glass_entrance() -> void:
 		return
 	_check.expect(_player.get_facing_direction().dot(-arrival.global_basis.z) > 0.99,
 		"Arrival from the front yard must face into the block, not keep the old heading.")
-	var exterior := doorway.to_local(_player.global_position)
-	_check.expect(exterior.z > 1.0 and absf(exterior.x) < 0.08 and absf(exterior.y) < 0.09,
-		"Street arrival must put the player's feet outside, level with the door: %s." % exterior)
+	var interior := doorway.to_local(_player.global_position)
+	_check.expect(interior.z < -1.0 and absf(interior.x) < 0.08 and absf(interior.y) < 0.09,
+		"Arrival from the front yard must put the player's feet inside, level with the doors: %s." % interior)
 	var ground := doorway.get_parent()
 	_check.expect(ground.find_children("BlindBay*", "Node3D", false, false).is_empty(),
 		"A blind arch section survived on 01.")
@@ -407,71 +418,56 @@ func _check_glass_entrance() -> void:
 	_check.expect(_player.test_move(pose, Vector3.FORWARD * 2.7, contact)
 		and contact.get_collider() == doorway.get_node(^"Right/GlassSafety"),
 		"The side glazing was left open to the capsule.")
+	# The pair of leaves is shut: walking at the middle of the doorway meets a leaf. Swept
+	# from outside, because Q arrives behind the player, between them and the doors.
 	pose.origin = doorway.to_global(Vector3(0, 0.045, 1.35))
-	_check.expect(not _player.test_move(pose, Vector3.FORWARD * 2.7),
-		"An invisible barrier crosses the centre of the glass entrance.")
+	var leaf := KinematicCollision3D.new()
+	var shut := _player.test_move(pose, Vector3.FORWARD * 2.7, leaf)
+	var stop := leaf.get_collider() as Node if shut else null
+	_check.expect(stop != null and doorway.is_ancestor_of(stop),
+		"The middle of the glass doors is open to the capsule (stopped by %s); the leaves should stand shut." % stop)
 	var nav := inside.get_node(^"Navigation") as LocationNavigation
 	if _check.expect(await Harness.wait_until(nav.is_synchronized, 5.0), "01 never finished its navigation bake."):
-		_check_entrance_route(nav.get_navigation_map(), doorway, arrival.global_position)
-
-	# In the default camera basis W+D steps north. This crosses the portal with
-	# actual continuous movement: no reload, no activation and no teleport.
-	var cap := doorway.get_node(^"Header/EnamelCap") as MeshInstance3D
-	var fade: Array[float] = [0.0]
-	Input.action_press(&"move_forward")
-	Input.action_press(&"move_right")
-	var crossed := await Harness.wait_until(func() -> bool:
-		fade[0] = maxf(fade[0], cap.transparency)
-		return doorway.to_local(_player.global_position).z < -2.42, 6.0)
-	Input.action_release(&"move_forward")
-	Input.action_release(&"move_right")
-	_check.expect(fade[0] > 0.45, "The camera never clears the door cap while walking into 01.")
-	if not _check.expect(crossed and _host.get_current() == inside and _player.is_on_floor(),
-		"Keyboard movement did not carry the player through the glass doorway: %s." % _player.global_position):
+		_check_entrance_shut(nav.get_navigation_map(), doorway)
+	if not await _walk(doorway.to_global(Vector3(0, 0, -2.5)), "into the 01 gallery"):
 		return
 	await _check_directory(inside)
-	# On the reversal Q is behind us. Line up on the other side of the opening,
-	# then click the apron itself (not the street plaque's pick box beyond it).
-	var companion := _host.get_parent().get_node(^"Companion") as CompanionController
-	var lane := -0.84 if doorway.to_local(companion.global_position).x > 0.0 else 0.84
-	if not await _walk(doorway.to_global(Vector3(lane * 1.3, 0, -2.42)), "01 passing lane"):
+	# Round 25: clicking the shut doors is the way out. The player comes out on the porch
+	# and walks down its steps onto the dirt.
+	if not await _walk(INSIDE_GLASS_DOORS, "back to the glass doors"):
 		return
-	if await _click_floor(doorway.to_global(Vector3(lane, 0, 2.08)), "mouse through the open glass entrance"):
-		if not _check.expect(doorway.to_local(_player.global_position).z > 1.0,
-			"The click accepted the hall side instead of crossing to the apron."):
-			return
-		# Round 23: the apron walks out. Down its two steps onto the forecourt's soil, to
-		# the gateposts; the exit stands between them, not on a railing at the apron's edge.
-		if not await _walk(FORECOURT_GATE, "down the walk-out to the gateposts"):
-			return
-		if await _use_exit(&"teaching_entrance_to_street", &"front_yard", &"FromCorridor"):
-			# Across the front yard and out of the side door: the school wall is the street's.
-			if await _walk(Vector3(13.3, 0, 15.8), "front yard to the side door"):
-				if await _use_exit(&"front_yard_to_street", &"street", &"FromCorridor"):
-					_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
-					if await _walk(Vector3(-9.5, 0, 15.8), "back to the side door"):
-						if await _use_exit(&"street_back_to_school", &"front_yard", &"FromStreet"):
-							if await _walk(Vector3(-8.4, 0, 15.8), "back across the front yard"):
-								if await _use_exit(&"front_yard_back_inside", &"corridor", &"FromTeachingEntrance"):
-									DirectoryCase.check_return(_host.get_current(), _check)
+	var exit := inside.find_interactable(&"teaching_entrance_to_street")
+	_player.camera_rig.snap()
+	var screen := _camera.unproject_position(doorway.to_global(Vector3(0.05, 1.32, 0)))
+	if not _check.expect(exit != null and _interaction.get_target_at_screen_position(screen, false) == exit,
+		"A click on the glass doors does not pick their exit (%s)." % _interaction.get_target_at_screen_position(screen, false)):
+		return
+	_pointer.click_at_screen_position(screen)
+	var out := await Harness.wait_until(func() -> bool:
+		return _host.get_current().location_id == &"front_yard" and _player.is_control_enabled() and _player.is_on_floor(),
+		15.0)
+	if not _check.expect(out and _host.get_current_spawn() == &"FromCorridor",
+		"Clicking the 01 glass doors did not take the player out to the front yard."):
+		return
+	_check.expect(_player.global_position.y < 0.25 and _player.global_position.x > -7.6,
+		"The porch arrival did not walk down the steps onto the dirt: %s." % _player.global_position)
+	# Across the front yard and out of the side door: the school wall is the street's.
+	if await _walk(Vector3(13.3, 0, 15.8), "front yard to the side door"):
+		if await _use_exit(&"front_yard_to_street", &"street", &"FromCorridor"):
+			_directory_checkpoints["wall"] = DirectoryCase.check_street_echo(_host.get_parent(), _check)
+			if await _walk(Vector3(-9.5, 0, 15.8), "back to the side door"):
+				if await _use_exit(&"street_back_to_school", &"front_yard", &"FromStreet"):
+					if await _walk(PORCH_LANDING, "back across the front yard and up the porch"):
+						if await _use_exit(&"front_yard_back_inside", &"corridor", &"FromTeachingEntrance"):
+							DirectoryCase.check_return(_host.get_current(), _check)
 
 
-## A long click from outside should turn through the opening, not across a sill.
-func _check_entrance_route(map: RID, doorway: Node3D, from: Vector3) -> void:
-	var hall := doorway.to_global(Vector3(6.3, 0, -2.0))
-	var route := NavigationServer3D.map_get_path(map, from, hall, true)
-	if not _check.expect(not route.is_empty() and route[-1].distance_to(hall) < 0.6,
-		"The apron route to the hall is partial: %s." % str(route)):
-		return
-	for i in range(1, route.size()):
-		var a := doorway.to_local(route[i - 1])
-		var b := doorway.to_local(route[i])
-		if a.z > 0.0 and b.z <= 0.0:
-			var threshold := a.lerp(b, a.z / (a.z - b.z))
-			_check.expect(absf(threshold.x) < 1.14,
-				"The baked route sent the player through a side pane: %s." % threshold)
-			return
-	_check.fail("The baked route never crossed the 01 threshold.")
+## Round 25: the glass doors are a click exit, not a walk; nothing bakes outside them
+## (the lane is reached through the side door, well west of the apron).
+func _check_entrance_shut(map: RID, doorway: Node3D) -> void:
+	var apron := doorway.to_global(Vector3(0, 0, 2.0))
+	var near := doorway.to_local(NavigationServer3D.map_get_closest_point(map, apron))
+	_check.expect(near.z < 0.3, "The apron outside the shut glass doors is still walkable: %s." % near)
 
 
 func _check_directory(corridor: LocationRoot) -> void:

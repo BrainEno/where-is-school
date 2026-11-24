@@ -229,7 +229,7 @@ func _check_play_through() -> void:
 		return
 	var companion := _world.get_node_or_null(^"Companion") as CompanionController
 	_expect(companion == null or companion.is_joined(), "Flow: Q did not come along out of the classroom.")
-	if not await _use_exit(&"school_gate", &"front_yard", "Flow"):
+	if not await _use_exit(&"teaching_entrance_to_street", &"front_yard", "Flow"):
 		return
 	if not await _use_exit(&"front_yard_to_street", &"street", "Flow"):
 		return

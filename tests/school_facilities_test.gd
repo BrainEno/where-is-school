@@ -96,12 +96,20 @@ func _load_hall(spawn: StringName) -> bool:
 	return await _ready_in(&"corridor")
 
 
-func _ready_in(id: StringName) -> bool:
-	return _check.expect(await Harness.wait_until(func() -> bool:
+func _ready_in(id: StringName, budget: float = 8.0) -> bool:
+	var usable := await Harness.wait_until(func() -> bool:
 		var room := _host.get_current()
 		return room != null and room.location_id == id and _player.is_on_floor() \
-			and _player.is_control_enabled() and (room.get_node(^"Navigation") as LocationNavigation).is_routable(), 8.0),
-		"Could not use the live map in %s (%s)." % [id, Harness.stage])
+			and _player.is_control_enabled() and (room.get_node(^"Navigation") as LocationNavigation).is_routable(), budget)
+	if usable:
+		return true
+	var current := _host.get_current()
+	var navigation: LocationNavigation = null
+	if current != null:
+		navigation = current.get_node_or_null(^"Navigation") as LocationNavigation
+	return _check.expect(false, "Could not use the live map in %s (%s): in %s, floor %s, control %s, routable %s." % [
+		id, Harness.stage, current.location_id if current != null else &"nothing", _player.is_on_floor(),
+		_player.is_control_enabled(), navigation != null and navigation.is_routable()])
 
 
 func _walk(point: Vector3) -> bool:
@@ -234,7 +242,8 @@ func _continue_and_exit() -> void:
 	_check.expect(last.rotation.y > 3.13, "A revisit started the bell animation again.")
 	if await _close() and await _walk(Vector3(-24.94, -3.4, 7.07)):
 		if await _use(hall.find_interactable(&"to_laboratory"), false):
-			await _ready_in(&"laboratory")
+			# The lab bakes its own map after the fade; under Xvfb that can outlast 8 s.
+			await _ready_in(&"laboratory", 15.0)
 
 
 func _use(button: Interactable, mouse: bool) -> bool:

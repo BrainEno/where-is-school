@@ -99,9 +99,9 @@ const RETIRED: Array[String] = [
 
 ## Spawn -> exit pairs that must still be connected with the trolley's collider baked in.
 const ROUTES: Array[Array] = [
-	[&"FromClassroom", &"SchoolGateExit"],
+	[&"FromClassroom", &"EntranceToStreet"],
 	[&"FromClassroom", &"YardDoor"],
-	[&"FromSchoolyard", &"SchoolGateExit"],
+	[&"FromSchoolyard", &"EntranceToStreet"],
 	[&"FromStreet", &"BackToClassroom"],
 ]
 
