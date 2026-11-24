@@ -270,6 +270,18 @@
           "/front_yard_dead_tree/text": "333bbf9f8f53bfcaa90f51632a5ccf24dfc801649cc0fd122dc7fd94fdf09055"
         }
       }
+    },
+    {
+      "issue": 412,
+      "reason": "Round 26: the north grove's tree look ships with the round's TODO placeholder; the owner writes the strip's texts (like the front yard's, issue #345).",
+      "files": {
+        "data/inspections/en/north_grove.json": {
+          "/north_grove_tree/text": "1ba4b91ca4033572344536ca21b1d34510d76f24234f05756444ad48ab37fb44"
+        },
+        "data/inspections/zh-CN/north_grove.json": {
+          "/north_grove_tree/text": "b7b7f0018495a4d68587cb8c3c300f7908cb0489fd8f68b4f80c821ecb14ce10"
+        }
+      }
     }
   ]
 }
