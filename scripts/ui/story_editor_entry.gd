@@ -68,7 +68,7 @@ const SETTINGS_MISSING := "the settings autoload is not running"
 static func hotkey_pressed(event: InputEvent) -> bool:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
-		return False
+		return false
 	return key.keycode == HOTKEY and not key.ctrl_pressed and not key.alt_pressed \
 		and not key.shift_pressed and not key.meta_pressed
 
@@ -79,7 +79,7 @@ static func hotkey_pressed(event: InputEvent) -> bool:
 ## as an author's run, which is the same terms the saved switch is honoured on.
 static func hotkey_allowed(root: Window) -> bool:
 	if not available(root):
-		return False
+		return false
 	return development_run() or development_override()
 
 
@@ -90,7 +90,7 @@ static func hotkey_allowed(root: Window) -> bool:
 ## turn this on - so the key cannot install a tool the build does not carry, and cannot store a
 ## choice a player's copy was refused.
 static func toggle(root: Window) -> Dictionary:
-	var report := {"changed": False, "enabled": False, "saved": False, "step": ""}
+	var report := {"changed": false, "enabled": false, "saved": false, "step": ""}
 	if root == null or not hotkey_allowed(root):
 		return report
 	var settings := root.get_node_or_null(SETTINGS_NODE)
