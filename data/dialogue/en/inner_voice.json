@@ -10,10 +10,10 @@
       "nodes": [
         {
           "id": "vn_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "Wait. Something here doesn't feel quite right.",
           "check": {
-            "ability": "orientation",
+            "ability": "insight",
             "difficulty": 8,
             "kind": "hidden",
             "success": "vn_ok",
@@ -22,13 +22,13 @@
         },
         {
           "id": "vn_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "The notices are almost all at the same height, except one. That one is higher, and crooked, and the tape at its corners is messy. It doesn't look like school staff put it up.",
           "next": null
         },
         {
           "id": "vn_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "A noticeboard with a few sheets on it. What else?",
           "next": "vn_bad_2"
         },
@@ -47,10 +47,10 @@
       "nodes": [
         {
           "id": "va_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "This yard is the same as ever: small, run-down, the ground all cracked. But it has plenty of shortcuts you'd never expect.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 9,
             "kind": "hidden",
             "success": "va_ok",
@@ -59,13 +59,13 @@
         },
         {
           "id": "va_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "There's a seam down the middle of the concrete, so the yard was poured in two goes. The seam runs all the way to the other end, yet the main gate happens to open on this side.",
           "next": null
         },
         {
           "id": "va_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "A yard. Two hoops, a shed, a bench. Wait! Why is one of the hoops facing away from the court?",
           "next": "va_bad_2"
         },
@@ -84,10 +84,10 @@
       "nodes": [
         {
           "id": "vh_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Hold on. Look at where the hoop's pole is set.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "hidden",
             "success": "vh_ok",
@@ -96,13 +96,13 @@
         },
         {
           "id": "vh_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "The concrete around the pole is newer than the rest of the yard, and the backboard looks a bit odd. There are a few old bolt holes in the ground too, for fixing an iron pole, also painted over in dark blue. The hoop must have stood somewhere else before. There should be a base.",
           "next": null
         },
         {
           "id": "vh_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "The rim's height looks fine. It's just facing the wrong way.",
           "next": "vh_bad_2"
         },

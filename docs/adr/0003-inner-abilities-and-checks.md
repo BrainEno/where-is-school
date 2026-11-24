@@ -17,6 +17,14 @@
 > assumption in the code. The formula, the difficulties and every value in the
 > tables are still provisional.
 
+> **Roster update (#280, 2026-11-23).** The current six-voice roster and its implementation
+> are defined by [NARRATIVE_BIBLE](../NARRATIVE_BIBLE.md#inner-voices) and the
+> [content schema](../../data/dialogue_schema/README.md#six-voice-registry-and-reviewed-attempts-280).
+> Orientation is retired; Insight is not a blanket replacement for its checks.
+> The fantasy check uses Imagination, not a seventh `whimsy` ability. Earlier
+> one-voice/Orientation statements below are the historical proposal, not current
+> content instructions. Dice math, base values and progression remain provisional.
+
 ## How to read this document
 
 There are two kinds of statement below, and they are kept apart on purpose.

@@ -48,7 +48,7 @@ func _run() -> void:
 
 func _inspect_conversations(library: DialogueLibrary) -> void:
 	# The registry is what tells the directory which profiles are inner voices, so a
-	# speaker id like `voice_orientation` is found by declaration rather than by a list.
+	# speaker id like `voice_scrutiny` is found by declaration rather than by a list.
 	var abilities := InnerAbilities.load_all()
 	if not abilities.is_valid():
 		_failures.append(abilities.describe_errors())

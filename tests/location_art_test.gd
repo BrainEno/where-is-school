@@ -146,8 +146,11 @@ const LOCATIONS := {
 		# site's gate (the same two leaves) and the climb over the hoarding (the south sand
 		# pile) add a sphere each and three boxes. The way to the container yard (the bent
 		# chain-link behind the container) adds a sphere and a box. The saguaro in the
-		# cactus plot (round 20) is a camera-fading solid box.
-		"shapes": 100,
+		# cactus plot (round 20) is a camera-fading solid box. Round 21: the razor-wire
+		# fences (west and east), the invisible edge along the building site, the alley
+		# threshold and the skipping girl are a box each, and the fourth stacked tyre adds
+		# a pick box to the tyre look.
+		"shapes": 106,
 		"interactables": 18, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
 		"exits": {

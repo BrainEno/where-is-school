@@ -15,9 +15,9 @@ extends SceneTree
 ## a full GameState snapshot before and after, so a new field cannot slip past.
 ##
 ## One exception is deliberate (owner's decision, round 7): a check that rolls
-## 「异想天开」 (`whimsy`, `DialogueGraph.IMAGINATION_ABILITIES`) belongs to the fantasy
-## and may be rolled inside it. It records its result and nothing else; an orientation
-## check is still refused.
+## 「臆想」 (`imagination`, `DialogueGraph.IMAGINATION_ABILITIES`) belongs to the fantasy
+## and may be rolled inside it. It records its result and nothing else; every other
+## ability (including retired ids) is still refused.
 
 const Harness = preload("res://tests/test_harness.gd")
 
@@ -48,9 +48,11 @@ func _run() -> void:
 		return
 
 	_check_validation_rejects_once()
-	_check_validation_rejects_check()
+	for ability_id: StringName in [&"insight", &"scrutiny", &"echo", &"inference", &"resonance", &"orientation", &"whimsy"]:
+		_check_validation_rejects_check(ability_id)
 	_check_runtime_refuses_once()
-	_check_runtime_refuses_check()
+	for ability_id: StringName in [&"insight", &"scrutiny", &"echo", &"inference", &"resonance", &"orientation", &"whimsy"]:
+		_check_runtime_refuses_check(ability_id)
 	_check_honest_subjective_still_works()
 	_check_imagination_check_allowed()
 
@@ -58,7 +60,7 @@ func _run() -> void:
 		self, _failures,
 		(
 			"a fantasy cannot write a flag, an objective, a choice record, or a dice result;"
-			+ " only a Flight of Fancy check records its own roll."
+			+ " only an Imagination check records its own roll."
 		)
 	)
 
@@ -125,14 +127,15 @@ func _check_validation_rejects_once() -> void:
 		)
 
 
-func _check_validation_rejects_check() -> void:
+func _check_validation_rejects_check(ability_id: StringName) -> void:
 	var data := _content()
 	var node: Dictionary = (data["conversations"]["fantasy"]["nodes"] as Array)[1]
+	node.erase("next") # Isolate the subjective violation, not a check/next conflict.
 	node["check"] = {
-		"ability": "orientation", "difficulty": 9, "kind": "hidden",
-		"success": "b", "failure": "b",
+		"ability": String(ability_id), "difficulty": 9, "kind": "hidden",
+		"success": null, "failure": null,
 	}
-	var graph := _load("rejects_check", data)
+	var graph := _load("rejects_check_" + String(ability_id), data)
 	if graph == null:
 		return
 	if graph.is_valid():
@@ -174,15 +177,16 @@ func _check_runtime_refuses_once() -> void:
 		_failures.append("Refusing the 'once' flag did not report why.")
 
 
-func _check_runtime_refuses_check() -> void:
+func _check_runtime_refuses_check(ability_id: StringName) -> void:
 	Harness.clear_session_state(self)
 	var data := _content()
 	var node: Dictionary = (data["conversations"]["fantasy"]["nodes"] as Array)[1]
+	node.erase("next")
 	node["check"] = {
-		"ability": "orientation", "difficulty": 9, "kind": "visible",
-		"success": "b", "failure": "b",
+		"ability": String(ability_id), "difficulty": 9, "kind": "visible",
+		"success": null, "failure": null,
 	}
-	var graph := _load("runtime_check", data)
+	var graph := _load("runtime_check_" + String(ability_id), data)
 	if graph == null:
 		return
 	var before: Dictionary = _game_state.get_snapshot().duplicate(true)
@@ -199,8 +203,10 @@ func _check_runtime_refuses_check() -> void:
 		_failures.append("A check was rolled inside a subjective conversation.")
 	if not _same_state(before, after):
 		_failures.append("A subjective check changed story state: %s" % _describe_diff(before, after))
-	if rejections.call() == 0:
-		_failures.append("Refusing the check did not report why.")
+	if rejections.call() != 1:
+		_failures.append("Refusing %s should report exactly one rejected attempt." % ability_id)
+	if runtime.is_active():
+		_failures.append("Refusing %s did not finish its terminal failure branch." % ability_id)
 
 
 ## The guards must not be so broad that a legitimate subjective scene stops
@@ -243,7 +249,7 @@ func _check_imagination_check_allowed() -> void:
 	var check_node: Dictionary = nodes[1]
 	check_node.erase("next")
 	check_node["check"] = {
-		"ability": "whimsy", "difficulty": 9, "kind": "visible",
+		"ability": "imagination", "difficulty": 9, "kind": "visible",
 		"success": "c", "failure": "c",
 	}
 	nodes.append({"id": "c", "speaker": "protagonist", "text": "It goes oddly.", "next": null})
@@ -252,10 +258,10 @@ func _check_imagination_check_allowed() -> void:
 		return
 	if not graph.is_valid():
 		for message: String in graph.errors:
-			_failures.append("A Flight of Fancy check in a fantasy was rejected: %s" % message)
+			_failures.append("An Imagination check in a fantasy was rejected: %s" % message)
 		return
-	if not _abilities.has_ability(&"whimsy"):
-		_failures.append("The shipped abilities have no 'whimsy' (异想天开).")
+	if not _abilities.has_ability(&"imagination"):
+		_failures.append("The shipped abilities have no 'imagination' (臆想).")
 		return
 	var before: Dictionary = _game_state.get_snapshot().duplicate(true)
 	var runtime := _new_runtime(graph)
@@ -266,14 +272,14 @@ func _check_imagination_check_allowed() -> void:
 	var after: Dictionary = _game_state.get_snapshot()
 	var record_flag := StoryFlags.check_record_flag(&"fantasy", &"b")
 	if not (after.get(record_flag, null) is Dictionary):
-		_failures.append("The Flight of Fancy check in a fantasy was not recorded.")
+		_failures.append("The Imagination check in a fantasy was not recorded.")
 	var changed := _describe_diff(before, after)
 	if changed != String(record_flag):
 		_failures.append(
-			"A Flight of Fancy check changed more than its own record: %s" % changed
+			"An Imagination check changed more than its own record: %s" % changed
 		)
 	if rejections.call() != 0:
-		_failures.append("The runtime refused a Flight of Fancy check in a fantasy.")
+		_failures.append("The runtime refused an Imagination check in a fantasy.")
 
 
 # --- helpers ----------------------------------------------------------------

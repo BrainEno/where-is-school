@@ -106,15 +106,36 @@ the same uneven soil as the playground, with straw, a few droppings and some fli
 - **Trodden earth** (`tools/stable_ground.py`): `YardEarth` is one relief mesh over the
   yard and the lane, a few centimetres of swells, lumps and trodden hollows above the
   unchanged flat walking slabs (no collider), easing flat under the things that stand on
-  the ground and at the lane's mouth. `stable_earth.gdshader` uses the original playground
-  soil's mineral mottle and grit (as of base `d4f06f76`), without the former vertex shade;
-  the connector shares that pigment in the same yard-local coordinates. The stable retains
-  its existing self-light, independently of later playground material changes.
+  the ground and at the lane's mouth. `stable_earth.gdshader` paints it (since round 22)
+  with the front yard's packed dirt in world space; see round 22 below.
 - **Straw, droppings, flies**: `LooseStraw` lies on the relief - drifts at the foot of the
   walls, seven tufts at no particular place and single strands everywhere; six droppings
   (`Dung0`-`5`) of three shapes at irregular spots, sizes and turns; small swarms of 7, 5
   and 6 flies (`Flies1`-`3`) over three of them, and the heap's swarm cut to 16, so the
   yard has 34 flies in all.
+
+### Round 22 (2026-11-11): the front yard's dirt, the bay horse, the muck bay, a flicker
+
+The owner asked for the stable's ground to be the same soil as the front playground, then
+for the open stable items (the horse in the dark stall, the muck bay's place) and for a
+flicker near the stable "like the restroom roof".
+
+- **The front yard's dirt.** `stable_earth.gdshader` now samples the front yard's packed
+  dirt (`stage_art/textures/yard_dirt.png`, painted by `paint_front_yard.py`) the way
+  `stage_art/materials/yard_dirt.tres` lays it: world-space plan projection, a 4 m tile,
+  toon diffuse, no specular. The yard relief, the lane connector, the stall floors (a shade
+  darker) and the village ground beyond the walls (darker still) all use it; being in world
+  space, the connector needs no coordinate offset. `fill` keeps the self-light.
+- **The bay horse** stood in the north stall, the darkest, in a dark coat, with the muck bay
+  in front of its door. Its coat is a lighter, redder bay, it keeps more self-light
+  (`fill` .46) and `StallLamp0` over its stall is brighter (1.7, range 4.4).
+- **The muck bay** (`Heap`) moved off the stall fronts into the yard's back south-west
+  corner behind the quilt line: back board against the west wall, open to the east, seen
+  from the lane. The stench source, the straw drift and the settled ground moved with it.
+- **The flicker.** `RestroomExterior/Roof` ended exactly at the cornice top, so the two
+  faces z-fought over the whole roof; it now stands 2.5 cm proud. The plinth top no longer
+  meets the gallery dado's, and the stall posts stand 1 cm proud of the walls they meet.
+  `dream_annex_test.gd` fails on any face shared by two differently painted boxes there.
 
 | Piece | What it is | How it is drawn |
 |---|---|---|
@@ -122,8 +143,8 @@ the same uneven soil as the playground, with straw, a few droppings and some fli
 | `DreamHouse/HalfDoor0`-`2` | Ledged, braced plank half doors with strap hinges and a bolt. | `stable_props.half_door()`. |
 | `DreamHouse/HorseShadow` | The empty middle stall has a horse's ink shadow painted on its back wall - a horse that is not there. | Cut-out slab in ink. |
 | `DreamHouse/StallBedding`, `StableYard/Straw0`-`1`, `LooseStraw` | Clean bedding in the stalls; straw shaken out in front of them and round the bales; loose straw blown over the yard (round 19). | One mesh of creased straw ribbons per area, laid on the relief. |
-| `StableYard/YardEarth` | Uneven, trodden earth over the yard and lane (round 19). | `stable_ground.earth()`, `stable_earth.gdshader`; no collider. |
-| `StableYard/Dung0`-`5`, `Heap/Muck`, `Heap/Bay` | Six droppings at random spots; the muck heap kept in a three-sided board bay. | Matte, no highlight. |
+| `StableYard/YardEarth` | Uneven, trodden earth over the yard and lane (round 19). | `stable_ground.earth()`, `stable_earth.gdshader` with the front yard's `yard_dirt.png`; no collider. |
+| `StableYard/Dung0`-`5`, `Heap/Muck`, `Heap/Bay` | Six droppings at random spots; the muck heap kept in a three-sided board bay in the back south-west corner (round 22). | Matte, no highlight. |
 | `StableYard/Coop` (`HenHouse`, `CoopHen0`-`1`), `YardHen0`-`2` | The hen house and its run, two hens inside and three pecking in the yard. | `stable_props.coop()`; sculpted hens peck about the neck in their material. |
 | `StableYard/Flies0`-`3` | A small swarm over the heap and a few flies over three droppings (34 in all). | `stench_flies.gdshader`: each instance loops its own knot; wings flap as dithered film. |
 | `StableYard/OldWoman0`, `OldWoman1` | A seated woman shaking a sieve of grain, and a woman raking the grain mat (round 19). | Sculpted in `tools/stable_workers.py`, placed by `tools/stable_people.py`; `stable_coat.gdshader`; one native loop each, no actor or collider. |

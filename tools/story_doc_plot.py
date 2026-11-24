@@ -28,18 +28,18 @@ STEP_NOTES = {
     "bag": "翻书包：没有提醒。玩家翻了书包 → Q 问课本（q_after_bag）；"
     "一直没翻 → 计时用完，记 bag_wait_expired，不假装发生过对话。",
     "expectation": "想象 B（expected_b，主观会话，徽章「想象中的」）。B 的四句话各是一个分岔点：正常应对 / 荒诞（装疯）"
-    " / 跳出幻想；每个方向 2-4 轮，荒诞方向在「课本呢」之后有一次「异想天开」检定。没选「去想象B」就跳过并记"
+    " / 跳出幻想；每个方向 2-4 轮，荒诞方向在「课本呢」之后有一次「臆想」检定。没选「去想象B」就跳过并记"
     " expectation_skipped。",
     "bell": "第二遍铃（bell_moment），目标条「第二遍铃响了」。",
     "substitute": "代课的 N 进门、点名、宣布自习（n_class）。以 class_dismissed 结束，教室门从此可出。"
-    "在 q_wake 选了「去隔壁班借」的玩家，下课前可在后门做一次定向检定（classroom_rear_door_borrow），"
+    "在 q_wake 选了「去隔壁班借」的玩家，下课前可在后门做一次推演检定（classroom_rear_door_borrow），"
     "成功即从后门进走廊、记 skipped_class，算翘课：铃声和 N 的一拍都不再发生。检定只属于主角，Q 不跟随。",
 }
 
 OPEN_QUESTIONS = [
     "P0 小试：操场看过交还板（seen:pg_return_board）后，q_ask_along 多一句问话？",
     "P0 主切片：推荐「从消防梯另一侧再看」；备选「楼层表 → 校墙 → 走廊复看」。",
-    "P1：回响「借看课本」或「点名」那一刻；是否加第二个内心声音 细察。",
+    "P1：回响「借看课本」或「点名」那一刻；六声部的成长与新增文案仍待设计，不为注册而硬加检定。",
     "记忆选择 A/B/C 的对象未定；D 不互斥。",
     "B 还没有正式出场（目前只在想象与他人转述里）。",
 ]
@@ -226,7 +226,7 @@ def plot_document(names) -> list[tuple[str, str]]:
     out += [
         ("h1", "※ 一、怎么读、怎么改"),
         ("note", "※ 台本按章节分成多份文档：00 是本页，01–08 是各章对话，最后一份是全部检视文字。完整格式说明见仓库 docs/STORY_DOCS.zh-CN.md。"),
-        ("note", "※ 台词行：[节点id] 说话人：文字。说话人可写 你、旁白、Q、N、B、同学、路感；「旁白」和「你」导入后都是主角（游戏没有独立的旁白角色，第二人称叙述就是旁白）。"),
+        ("note", "※ 台词行：[节点id] 说话人：文字。说话人可写 你、旁白、Q、N、B、同学、洞察、细察、回声、臆想、推演、共鸣；「旁白」和「你」导入后都是主角（游戏没有独立的旁白角色，第二人称叙述就是旁白）。"),
         ("note", "※ 台词下面的小字是结构：来源、下一句、条件、效果、记录、检定。◇ 开头是玩家选项，选项下面缩进的小字属于这个选项。"),
         ("note", "※ 来源决定徽章：亲眼所见 / 听人说的 / 记忆里的 / 想象中的。「想象中的」永远不会变成世界状态。"),
         ("note", "※ 可以改字、增删台词和选项、改跳转。新台词请起一个新的 [id]（小写字母、数字、下划线），不要复用旧 id。"),
@@ -259,7 +259,7 @@ def plot_document(names) -> list[tuple[str, str]]:
     for rule in load_json(DATA / "abilities/abilities.json").get("passives", []):
         voice = names.ability.get(rule["ability"], rule["ability"])
         out.append(("ref", f"· {voice}：{rule['trigger']['kind']} {rule['trigger']['id']} → {rule['conversation']}{'（仅一次）' if rule.get('once') else ''}"))
-    out.append(("ref", "· 已定稿六个声音：路感、细察、回声、臆想、推演、共鸣；目前只实装路感。"))
+    out.append(("ref", "· 已注册六个声音：洞察、细察、回声、臆想、推演、共鸣；数值暂定，共鸣暂无检定文案。"))
     out.append(("h1", "※ 六、剧情 flag：谁写、谁读（「无人读取」= 记下了但还没有回响）"))
     for flag, writers, readers in flag_table():
         reader = "、".join(readers) if readers else "无人读取"

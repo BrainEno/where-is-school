@@ -3,6 +3,8 @@ extends RefCounted
 ## the safe start/end positions; this does not add a locomotion state or drive input.
 
 const Limb = preload("res://scripts/actors/character_limb_contact.gd")
+## How far off the navigation mesh a staged mark may sit and still be walked onto.
+const ROUTE_OFF_MESH := 0.75
 
 
 static func walk_to(player: PlayerController, target: Vector3, speed: float = 1.45) -> bool:
@@ -15,17 +17,74 @@ static func walk_to(player: PlayerController, target: Vector3, speed: float = 1.
 	# because a cinematic mark happened to be just beyond it.
 	if player.test_move(player.global_transform.translated(Vector3.UP * 0.035), travel):
 		return false
-	var animator := player.get_character_animator()
+	await _walk_leg(player, start + travel, speed)
+	_stop_walking(player)
+	return true
+
+
+## Like `walk_to`, but when something stands on the straight line (a chair, the end of a
+## desk row) it goes round it the way a click would: along the navigation map, which is
+## baked with the body's own radius, then the last short step from the mesh onto the mark.
+## False only when the map has no route there either.
+static func walk_route_to(player: PlayerController, target: Vector3, speed: float = 1.45) -> bool:
+	if await walk_to(player, target, speed):
+		return true
+	var legs := route_to(player, target)
+	if legs.is_empty():
+		return false
+	for point: Vector3 in legs:
+		await _walk_leg(player, point, speed)
+	_stop_walking(player)
+	return true
+
+
+## The points a staged walk from where the player stands to `target` passes through,
+## ending on `target`, or an empty array when the map has no such route. A mark a little
+## off the mesh (the lip of the cut, a step) is reached from the mesh's closest point.
+static func route_to(player: PlayerController, target: Vector3) -> PackedVector3Array:
+	var legs := PackedVector3Array()
+	var agent := player.navigation_agent
+	if agent == null:
+		return legs
+	var map := agent.get_navigation_map()
+	if not map.is_valid() or NavigationServer3D.map_get_regions(map).is_empty():
+		return legs
+	var goal := NavigationServer3D.map_get_closest_point(map, target)
+	if Vector2(goal.x - target.x, goal.z - target.z).length() > ROUTE_OFF_MESH:
+		return legs
+	var path := NavigationServer3D.map_get_path(map, player.global_position, goal, true)
+	if path.size() < 2:
+		return legs
+	var floor_y := player.global_position.y
+	for index in range(1, path.size()):
+		var point := path[index]
+		if Vector2(point.x - target.x, point.z - target.z).length() < 0.015:
+			continue
+		legs.append(Vector3(point.x, floor_y, point.z))
+	legs.append(Vector3(target.x, floor_y, target.z))
+	return legs
+
+
+static func _walk_leg(player: PlayerController, point: Vector3, speed: float) -> void:
+	var travel := point - player.global_position
+	travel.y = 0.0
+	if travel.length() < 0.015:
+		return
 	var direction := travel.normalized()
 	await turn_to(player, direction)
+	var animator := player.get_character_animator()
 	if animator != null:
 		animator.report_velocity(direction * speed)
 	var tween := player.create_tween()
-	tween.tween_property(player, "global_position", start + travel, travel.length() / speed)
+	var finish := player.global_position + travel
+	tween.tween_property(player, "global_position", finish, travel.length() / speed)
 	await tween.finished
+
+
+static func _stop_walking(player: PlayerController) -> void:
+	var animator := player.get_character_animator()
 	if animator != null:
 		animator.clear_reported_velocity()
-	return true
 
 
 static func turn_to(player: PlayerController, direction: Vector3) -> void:

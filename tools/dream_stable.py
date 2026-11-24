@@ -36,7 +36,11 @@ PAINT = "res://assets/shaders/school/stable_paint.gdshader"
 COAT = "res://assets/shaders/school/stable_coat.gdshader"
 FLIES = "res://assets/shaders/school/stench_flies.gdshader"
 PAPER = "res://assets/shaders/school/stench_paper.gdshader"
-HEAP = (-31.75, G, 5.4)
+# Round 22: the muck bay moved off the stall fronts (it stood 0.3 m in front of the bay
+# horse's door) into the yard's back south-west corner, behind the quilt line: its back
+# board against the west wall, open to the east. `HEAP_YAW` turns the bay's open +Z there.
+HEAP = (-39.25, G, 13.45)
+HEAP_YAW = 90
 
 
 def shaped(b, name, build):
@@ -121,7 +125,8 @@ def horse(b, parent, name, pos, yaw, look, *, graze, phase, swish=.32, rate=.07)
     limbs = shaped(b, key + "Limbs", lambda: part(1))
     motion = {**HORSE_MOTION, "graze": graze, "graze_rate": rate, "swish": swish,
               "swish_rate": .42 + phase * .2, "phase": phase}
-    body = coat(b, **motion, sheen=.3)
+    # The bay stands in the north stall, the darkest; it keeps more of its own light.
+    body = coat(b, **motion, sheen=.3, fill=.46 if look is sa.BAY else .3)
     path = place(b, name, parent, pos, trunk, body, rot=(0, yaw, 0), shadow=True, aabb=HORSE_AABB)
     place(b, "Limbs", path, (0, 0, 0), limbs, body, shadow=True, aabb=HORSE_AABB)
     return path
@@ -157,12 +162,16 @@ def stall_dressing(b, body, w, d, stall_back, posts):
 # --- ground: trodden earth -------------------------------------------------------------
 
 EARTH = "res://assets/shaders/school/stable_earth.gdshader"
+# Round 22: the front yard's packed dirt (stage_art/source/paint_front_yard.py), laid in
+# world space as yard_dirt.tres lays it, so every piece of stable ground shares one tile.
+DIRT = "res://scenes/environment/props/stage_art/textures/yard_dirt.png"
 
 
-def earth_material(b, offset=None):
-    params = {"fill": .5}
-    if offset is not None:
-        params["ground_offset"] = f"Vector2({offset[0]:g}, {offset[1]:g})"
+def earth_material(b, shade=1.0):
+    dirt = b.bind("front_yard_dirt", DIRT, "Texture2D")
+    params = {"dirt": dirt, "fill": .5}
+    if shade != 1.0:
+        params["shade"] = shade
     return _mat(b, "stable_earth", EARTH, params)
 
 

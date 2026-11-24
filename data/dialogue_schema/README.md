@@ -117,7 +117,7 @@ chapter list comes from the chapter files, and it warns if that disagrees with
 | `locale` | Must match the directory. |
 | `chapter` | Free-text label; one file per chapter. |
 | `default_source` | Narrative category inherited by every node: `observed`, `reported`, `recalled`, `imagined`. |
-| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, record observed/reported knowledge, carry a `check` (except a 「异想天开」 `whimsy` check, see Checks), or mark a choice `once`. The last two are refused because both write story state (the dice record and the "already taken" record); see the notes under Checks and Choices. |
+| `subjective` | `true` for imagined or expected sequences. Such a conversation **cannot** set flags, change the objective, record observed/reported knowledge, carry a `check` (except a 「臆想」 `imagination` check, see Checks), or mark a choice `once`. The last two are refused because both write story state (the dice record and the "already taken" record); see the notes under Checks and Choices. |
 | `start` | Node id the conversation opens on. |
 
 ### Nodes
@@ -125,7 +125,7 @@ chapter list comes from the chapter files, and it warns if that disagrees with
 | Field | Required | Meaning |
 |---|---|---|
 | `id` | yes | Stable, unique inside the conversation. Used by tests, parity and `next`. |
-| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `student`) or an inner voice (`voice_orientation`, `voice_whimsy`). There is no narrator: narration is a `protagonist` line. |
+| `speaker` | yes | Character id from `data/characters/` (`protagonist`, `q`, `n`, `b`, `student`) or an inner voice (`voice_scrutiny`, `voice_imagination`, etc.; see the six-voice registry below). There is no narrator: narration is a `protagonist` line. |
 | `text` | yes | The line. May not be empty; a node with only choices may omit it. |
 | `source` | no | Overrides `default_source` for this line. |
 | `next` | no | Id of the next node. **Absent** = fall through to the next node in file order. **`null`** = the conversation ends here. |
@@ -152,7 +152,7 @@ otherwise the end of the file is ambiguous and the build fails.
 
 A node may carry a `check` block. It is refused inside a `subjective` conversation:
 the resolved result is stored so it cannot be re-rolled, and that record is story
-state. The one exception is 「异想天开」 (`whimsy`, Flight of Fancy): it measures how
+state. The one exception is 「臆想」 (`imagination`): it measures how
 far the protagonist steers his own fantasy, so it is rolled *inside* the imagined scene
 (`DialogueGraph.IMAGINATION_ABILITIES`, mirrored in `tools/story_doc.py`). It records
 its result under `check:<conversation>:<node>` like any check, so replaying the fantasy
@@ -162,7 +162,7 @@ shows the line, and then continues to one of two branches. A check node never ha
 
 | Field | Required | Meaning |
 |---|---|---|
-| `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. Shipping today: `orientation` (路感) and `whimsy` (异想天开, value provisional, only used inside `expected_b`). Its value is added to the die. |
+| `ability` | yes | Inner-voice id from `data/abilities/abilities.json`. The six registered ids are `insight`, `scrutiny`, `echo`, `imagination`, `inference`, `resonance`; all currently have provisional value 3. Its value is added to the die. |
 | `difficulty` | yes | 1..30. The total needed. Typical values are 8-12. |
 | `kind` | yes | `visible` = the player sees the voice, the die, the difficulty and the outcome. `hidden` = only the resulting line is shown. Use `visible` when the player chose the attempt, `hidden` when a voice speaks up on its own. |
 | `success` | yes | Node id to continue to on success, or explicit `null` to end the conversation. |
@@ -173,17 +173,17 @@ shows the line, and then continues to one of two branches. A check node never ha
 ```json
 {
   "id": "ps_boundary_check",
-  "speaker": "voice_orientation",
+  "speaker": "voice_scrutiny",
   "text": "Let me feel how it sits.",
   "check": {
-    "ability": "orientation", "difficulty": 9, "kind": "visible",
+    "ability": "scrutiny", "difficulty": 9, "kind": "visible",
     "success": "ps_boundary_ok", "failure": "ps_boundary_bad"
   }
 }
 ```
 
 The `speaker` of a voice line is the voice's `speaker` from `abilities.json`
-(`voice_orientation` today), not its ability id. The two are separate on purpose: the
+(`voice_scrutiny` for the example above), not its ability id. The two are separate on purpose: the
 ability id is what the dice read, the speaker id is who the reading surface draws.
 
 To stop an attempt being offered twice, gate the *choice* that leads to the check on
@@ -203,7 +203,7 @@ A voice that speaks without being asked is an ordinary conversation whose first
 node is a `hidden` check, plus a rule in `data/abilities/abilities.json`:
 
 ```json
-{"id": "playground_hoop_orientation", "ability": "orientation",
+{"id": "playground_hoop_orientation", "ability": "scrutiny",
  "trigger": {"kind": "inspection", "id": "pg_hoop"},
  "conversation": "voice_hoop", "once": true}
 ```
@@ -211,6 +211,77 @@ node is a `hidden` check, plus a rule in `data/abilities/abilities.json`:
 `trigger.kind` is `inspection`, `location` or `conversation_end`. Rules are rationed
 by the director (once per rule, a per-voice session cap, and no two unprompted lines
 in a row); see ADR 0003.
+
+### Six-voice registry and reviewed attempts (#280)
+
+The roster is **Insight / 洞察**, **Scrutiny / 细察**, **Echo / 回声**,
+**Imagination / 臆想**, **Inference / 推演**, and **Resonance / 共鸣**. Each has its
+own `voice_<ability>` profile, localized functional definition and provisional
+base value **3**. Registration is not new writing: Resonance has no authored check
+or passive line yet. Do not assign a spatial task to empathy merely to fill a quota.
+The retired `orientation` and `whimsy` ids are not aliases in new content.
+
+All 19 existing attempts keep their conversation/node ids, difficulties, kinds,
+branches, choice gates and knowledge sources. Their semantic owners are:
+
+| Conversation / node | Ability | What the attempt concerns |
+|---|---|---|
+| `voice_notice/vn_1` | `insight` | Interpreting an inconsistency in how notices were posted; the poster's identity remains a hypothesis. |
+| `voice_arrival/va_1` | `inference` | Inferring construction phases from a seam, not finding a route. |
+| `voice_hoop/vh_1` | `scrutiny` | Concrete, bolt holes and paint as physical traces. |
+| `pg_shed/ps_boundary_check` | `scrutiny` | Examining the door/frame gap. |
+| `pg_shed/ps_ledger_check` | `scrutiny` | Reading and distinguishing rows and dates. |
+| `pg_ball/pb_boundary_check` | `scrutiny` | Tactile examination of depth and the ledge. |
+| `pg_ball/pb_ledger_check` | `inference` | Comparing the shadow with the gap and object positions. |
+| `pg_roof_jump/prj_check` | `inference` | Reasoning about cover and the resident's sightline, not reading his emotions. |
+| `q_after_dismissal/ad_square_check` | `echo` | Placing a remembered sound; it remains `recalled`, not verified. |
+| `expected_b/e3_whimsy` | `imagination` | Steering the fantasy; the old node id remains a save key. |
+| `classroom_curtain/cc_edges_check` | `scrutiny` | Looking at the curtain's hanging and hem. |
+| `classroom_curtain_void/cv_balance_check` | `scrutiny` | Noticing the open edge and foothold risk; no agility stat is introduced. |
+| `classroom_rear_door_borrow/rdb_check` | `inference` | Finding a way to use the door; the special means and check wording still await the author. |
+| `align_archive/bearing` | `inference` | Selecting invariant holes rather than a shrinking paper edge. |
+| `align_plan_room/bearing` | `inference` | Following the route that connects the platform and square. |
+| `align_projection_room/bearing` | `scrutiny` | Matching the lower-edge scratches. |
+| `align_computer_room/bearing` | `inference` | Continuing the broken line into the gap. |
+| `align_vacant_office/bearing` | `scrutiny` | Distinguishing pressure/wear marks from ink. |
+| `align_principal_office/bearing` | `inference` | Establishing the pin axis rather than trusting a painted centre. |
+
+Only five attempts gain a **+1**, each from a specific existing preparation:
+
+| Target | Preparation flag | Reason |
+|---|---|---|
+| Remembered sound (`ad_square_check`) | `saw_set_square` | Inspecting the actual prop supplies a reference, not proof of the memory. |
+| Curtain hem (`cc_edges_check`) | `seen:classroom_window` | The other window gives a local point of comparison. |
+| Open edge (`cv_balance_check`) | `curtain_edges_examined` | Choosing the existing `edges` option before touching the curtain makes the approach more cautious. Both observation outcomes retain this preparation; listing options, drawing directly and leaving do not grant it. |
+| Shed rota (`ps_ledger_check`) | `seen:staff_office_rota` | The previously examined duty-sheet master supplies a comparison for the table layout. |
+| Reaching behind the ball (`pb_boundary_check`) | `playground_shadow_measured` | A successful shadow comparison helps the later tactile attempt; a failed comparison does not. |
+
+Bonuses affect **fresh attempts only**. A later preparation, scene reload, language
+switch or saved-game load must replay the whole recorded result, not recalculate
+its total against new rules. A preparation never guarantees success in general.
+The six annex doors keep their no-dice manual recovery after failure.
+
+`GameState.replace_snapshot()` uses the preload-only
+`scripts/rpg/inner_voice_migration.gd`. For the 19 known saved check keys it changes
+only the retired ability label, preserving all saved numbers, extensions, outcomes
+and RNG keys. Unknown records are not guessed at. The save envelope and seed are
+unchanged, and loading does not rewrite the file. A subsequent normal checkpoint
+stores the canonical ids. The new preparation flag is absent/false in old saves;
+no historical choice is invented from a check result.
+
+The three passive rules retain their old `*_orientation` **rule ids** to keep fired
+flags stable, but now belong respectively to Insight (notices), Inference (arrival)
+and Scrutiny (hoop). Old counts are reconstructed from fired rules, not copied into
+all six voices. A mixed snapshot keeps the greater of an existing counter and its
+evidenced use; unattributable old aggregate uses are not charged to another voice.
+`whimsy`'s old counter, if present, migrates to Imagination by the same maximum rule.
+This is idempotent. Per-voice caps and the no-consecutive-interruption guard remain;
+on a fresh run the three existing lines can now use three separate allowances.
+
+Speaker profiles and live/backlog lines resolve from the current registry and the
+unchanged node ids. The existing save format stores knowledge entries, not a
+serialized dialogue backlog; no historical dialogue text is rewritten or invented.
+No current knowledge effect records either retired voice as its speaker.
 
 ### Who a speaker is
 
@@ -240,8 +311,8 @@ name copied over is treated as an unfinished translation — with one exception,
 declared on purpose and only where it is needed:
 
 ```json
-"orientation": {
-  "name": "Orientation",
+"scrutiny": {
+  "name": "Scrutiny",
   "description": "……",
   "untranslated_fields": ["name"]
 }
@@ -321,7 +392,7 @@ the content test check, in CI, that:
 - every node has text or choices, and every choice has text, an id and a `next`;
 - speakers exist in `data/characters/`, and objective keys exist in every locale;
 - a subjective conversation writes no flags, no objective, and no observed or
-  reported knowledge, and rolls no check other than `whimsy` (this is refused while
+  reported knowledge, and rolls no check other than `imagination` (this is refused while
   parsing, before any line is shown);
 - both languages define the same conversations, node ids, order, branches and
   effects, and no inspection is left with an empty translation;
@@ -375,6 +446,7 @@ the repository depends on their content.
 | `inspections/*/residential.json`, `res_stain` | Whether the repeated stain belongs to the same wall, and whether the game should ever say so. |
 | `prologue.json`, `expected_b` | Which half-remembered details of the imagined confrontation are allowed to survive. |
 | `zh-CN` lines the author has not edited yet | Every other simplified-Chinese line is a placeholder written for this build, pending the author's own voice. |
+| `data/abilities/<locale>.json`, all six voices | Descriptions currently state only the confirmed functional domains. Literary descriptions, personalities and Resonance dialogue remain the author's to write; no new monologue or check is invented for registration. |
 | `prologue.json`, `classroom_rear_door_borrow` (`rdb_check`) | The line shown before the rear-door check. It is the locked door's own line for now; the author will write the check's line. |
 | `notebook_comparisons.json` | The "wooden set square" pair was removed with its right half (`q_set_square_use`). The author may add a new set-square pair once a new note exists. |
 | `prologue.json` options without a reply (`q_wake` `q_who_look`, `q_ecosystem`; `q_after_bag` `q_sq_2`; `n_class` `n_8` `ecosystem`/`zygote`) | The author wrote the options but not yet what follows them. Until then each keeps only its mechanics (a camera look, a branch, the rear-door attempt) and continues to the author's next line; no reply is written for them. |

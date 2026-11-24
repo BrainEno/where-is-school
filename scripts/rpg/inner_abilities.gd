@@ -3,21 +3,20 @@ extends RefCounted
 ## The protagonist's inner voices: what they are, what they are worth, and when
 ## they are allowed to speak on their own.
 ##
-## The registry is a *list* of voices, and this round exists to keep it one: the
-## number of voices is data, not code. Content ships two voices: `orientation` (路感)
-## and, from round 7, `whimsy` (异想天开), whose value is a placeholder and whose only
-## check is inside the imagined lesson; the tests load additional fictional voices from a fixture
-## directory that never enters `data/`. Nothing here decides how many voices the
-## game will have, what they are called, or what they are worth — those are the
-## owner's decisions, and the voice's name, value and prose stay provisional
-## (ADR 0003).
+## The registry is a *list* of voices: the number of voices is data, not code.
+## Content registers the owner's six voices: insight, scrutiny, echo, imagination,
+## inference and resonance. Their base values remain provisional (ADR 0003), and
+## registration does not imply every voice already has authored checks or lines.
+## Tests load additional fictional voices from a fixture directory that never enters
+## `data/`. Retired ids are not aliases here; snapshot compatibility is handled by
+## the preload-only `inner_voice_migration.gd` before GameState replaces its flags.
 ##
 ## Three identities are kept apart on purpose, because mixing them up is the failure
 ## mode a multi-voice system invites:
 ##
-##   ability_id   what the content rolls against ("orientation"). Unique; it is the
+##   ability_id   what the content rolls against ("scrutiny"). Unique; it is the
 ##                key of the `abilities` object and the id a check names.
-##   speaker_id   who the dialogue panel is speaking as ("voice_orientation"). Also
+##   speaker_id   who the dialogue panel is speaking as ("voice_scrutiny"). Also
 ##                unique, and the only link between a voice and its CharacterProfile,
 ##                which is `data/characters/<speaker_id>.tres`.
 ##   value / max_passive
@@ -283,7 +282,7 @@ func _parse_structure() -> void:
 				% [context, ability.max_passive, MIN_MAX_PASSIVE, MAX_MAX_PASSIVE]
 			)
 		# One speaker, one voice. Without this check a second voice could claim
-		# `voice_orientation` and every speaker lookup would silently return whichever
+		# `voice_scrutiny` and every speaker lookup would silently return whichever
 		# ability happened to be parsed first.
 		if _speakers.has(ability.speaker_id):
 			errors.append(
@@ -417,7 +416,7 @@ func _parse_rule(raw: Variant, index: int) -> PassiveRule:
 
 ## Reads one language's prose. `name` and `description` must be JSON strings: the
 ## previous version ran every value through `String()`, so `"name": 7` became "7" and
-## `"name": {"zh": "路感"}` became a string nobody could predict — a translation bug that
+## `"name": {"zh": "细察"}` became a string nobody could predict — a translation bug that
 ## would reach the dialogue panel instead of CI.
 func _parse_text(locale: String) -> void:
 	var path := text_path(locale)

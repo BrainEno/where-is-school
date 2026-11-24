@@ -317,7 +317,7 @@ func _resolve_check(node: DialogueGraph.DialogueNode) -> void:
 	var conversation_id := _conversation.conversation_id
 	if _is_subjective() and not DialogueGraph.is_imagination_check(node.check):
 		# Defence in depth: validation refuses the content, and the runtime refuses
-		# to roll or record anything if it arrives anyway. A Flight of Fancy check
+		# to roll or record anything if it arrives anyway. An Imagination check
 		# (`DialogueGraph.IMAGINATION_ABILITIES`) is the one kind an imagined scene
 		# rolls. The failure branch is taken so the scene still moves on instead of
 		# stalling.

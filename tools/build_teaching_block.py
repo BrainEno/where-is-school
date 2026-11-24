@@ -763,6 +763,7 @@ def rear_stair_and_ground_wing(b):
 WASH_X = (-30.85, GROUND_X[0] - 0.12)
 WASH_Z = (5.52, GROUND_Z[1] + 0.11)
 WASH_HEIGHT = 3.3
+ROOF_PROUD = .025
 
 
 def restroom_exterior(b, parent):
@@ -771,10 +772,13 @@ def restroom_exterior(b, parent):
     w, d, h = x1 - x0, z1 - z0, WASH_HEIGHT
     p = b.shell("RestroomExterior", parent, ((x0 + x1) / 2, GROUND_Y, (z0 + z1) / 2), groups=("camera_occluder",))
     b.shape("Solid", p, (0, h / 2, 0), (w, h, d))
-    b.box("Plinth", p, (0, .47, 0), (w + .04, .94, d + .04), "entry_glaze", shadow=True)
+    # Round 22: the plinth stops 1 cm above the gallery dado so their tops never share a plane.
+    b.box("Plinth", p, (0, .475, 0), (w + .04, .95, d + .04), "entry_glaze", shadow=True)
     b.box("Plaster", p, (0, (.94 + h - .22) / 2, 0), (w, h - .22 - .94, d), "rose_plaster", shadow=True)
     b.box("Cornice", p, (0, h - .11, 0), (w + .08, .22, d + .08), "arch_chalk", shadow=True)
-    b.box("Roof", p, (0, h - .02, 0), (w - .3, .04, d - .3), "roof")
+    # Round 22: the roof membrane used to end exactly at the cornice top (both at h), and the
+    # two faces fought over the whole roof as the camera moved. It now sits 2.5 cm proud.
+    b.box("Roof", p, (0, h + ROOF_PROUD - .02, 0), (w - .3, .04, d - .3), "roof")
     for i, (x, z, sw, sd) in enumerate(((0, -d / 2 + .06, w + .1, .14), (0, d / 2 - .06, w + .1, .14),
                                         (-w / 2 + .06, 0, .14, d - .1), (w / 2 - .06, 0, .14, d - .1))):
         b.box(f"Coping{i}", p, (x, h + .1, z), (sw, .2, sd), "arch_chalk", shadow=True)
@@ -1199,6 +1203,17 @@ def courtyard_view():
             raise ValueError(f"No yard material for {path}")
         if name == "CourtFarHalf":
             pos = (pos[0], 0.012, pos[2])
+        if name.startswith("ShedFooting"):
+            # Round 21: as in the yard, the footing's base shows under junk covered with a
+            # blanket (west) or a tarpaulin (east): playground_art/source/yard_junk.py.
+            side = name.removeprefix("ShedFooting").lower()
+            b.box(f"{name}Base", "Yard", (pos[0], 0.045, pos[2]), (1.46, 0.09, 1.46), "yard/concrete")
+            mesh = b.bind(f"junk_{side}", f"{YARD}/meshes/yard_junk/covered_junk_{side}.tres", "Mesh")
+            b.nodes.append(f'[node name="{name}Junk" type="MeshInstance3D" parent="Yard"]\n'
+                           f'transform = Transform3D({"0, 0, -1, 0, 1, 0, 1, 0, 0" if side == "east" else "1, 0, 0, 0, 1, 0, 0, 0, 1"}, '
+                           f'{pos[0]:g}, 0, {pos[2]:g})\n'
+                           f'mesh = {mesh}\nmaterial_override = {b.surface("yard/yard_junk")}\n')
+            continue
         b.box(name, "Yard", pos, size, f"yard/{mat}")
     b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
     b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')

@@ -98,13 +98,20 @@ The six core voices are:
 - **推演 (Inference):** logical analysis, deduction and causal reasoning.
 - **共鸣 (Resonance):** emotional attunement, empathy and interpersonal signals.
 
-This is a narrative design decision, not an implementation claim. The current
-runtime/data still contains the provisional Orientation (路感) implementation in
-`data/abilities/`; this documentation change does not rename or migrate that code.
-The owner has now directed the design to replace 路感 with 洞察 (Insight), so the
-implementation migration remains a separate follow-up. The ability registry,
-character profiles, dialogue runtime, dice core and passive director support
-multiple voices, but the other five are not yet shipped as content.
+The six voices are registered in `data/abilities/` with separate speaker profiles,
+bilingual functional definitions and provisional base value 3 (#280). The retired
+Orientation ability is removed, not globally renamed to Insight: all 19 existing
+checks are allocated by their actual action (for example, curtain details use
+Scrutiny, a remembered sound uses Echo, and causal comparisons use Inference).
+The former `whimsy` fantasy check belongs to Imagination, not a seventh ability.
+Stable node/rule ids and previously recorded outcomes are preserved on load; see
+[data schema](../data/dialogue_schema/README.md#six-voice-registry-and-reviewed-attempts-280).
+
+Registration is not a claim that six sets of dialogue or progression are written.
+Resonance awaits suitable authored interpersonal content; no physical task is
+relabelled as empathy just to give it a roll. Only existing options and observations
+supply five limited +1 preparation bonuses. Voice personalities, literary descriptions
+and new lines remain the author's to write.
 
 Voices volunteer automatically when relevant scene details, events or interactions
 activate them. They are not primarily a player-operated skill menu. The player's
@@ -122,8 +129,8 @@ it may offer an interpretation, but the narrative must preserve uncertainty.
 
 The exact personalities, dialogue, progression model, numerical values, thresholds,
 check frequency, and the rules by which thoughts emerge or feed back into voices
-remain open for design and playtesting. The existing one-voice implementation and
-the provisional mechanics in ADR 0003 must not be mistaken for the final design.
+remain open for design and playtesting. The registered base values and
+the provisional mechanics in ADR 0003 must not be mistaken for a final progression design.
 
 ## The open yard
 

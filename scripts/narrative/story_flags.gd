@@ -112,6 +112,10 @@ const ANNEX_VACANT_OFFICE_ALIGNED: StringName = &"annex.vacant_office.aligned"
 const ANNEX_VACANT_OFFICE_UNCLEAR: StringName = &"annex.vacant_office.unclear"
 const ANNEX_PRINCIPAL_OFFICE_ALIGNED: StringName = &"annex.principal_office.aligned"
 const ANNEX_PRINCIPAL_OFFICE_UNCLEAR: StringName = &"annex.principal_office.unclear"
+## bool: the player chose to examine the curtain before touching it. Either result
+## leaves this preparation in place; it is not evidence that the curtain is safe.
+## Absent (false) in old saves: never infer preparation from a saved dice result.
+const CURTAIN_EDGES_EXAMINED: StringName = &"curtain_edges_examined"
 ## bool: the opening has been requested by dialogue. Kept across a refused forced fall.
 const CURTAIN_FALL_PENDING: StringName = &"curtain_fall_pending"
 ## bool: the back-window curtain hangs open on the void; the classroom loads that way.
@@ -156,7 +160,7 @@ const ACCUSED_Q: StringName = &"accused_q"
 const Q_BOOK_TALK_DONE: StringName = &"q_book_talk_done"
 ## bool: the protagonist told Q they would borrow a book from the class next door
 ## (`q_wake`, option `borrow`). Until the lesson is over it turns the classroom's rear
-## door from a locked door into a one-off orientation check (`classroom_anomalies.gd`).
+## door from a locked door into a one-off inference check (`classroom_anomalies.gd`).
 const BORROW_FROM_NEXT_CLASS: StringName = &"borrow_from_next_class"
 ## bool: the rear-door check succeeded and the protagonist left before the lesson. It
 ## closes the rest of the prologue (bell, substitute) the way `class_dismissed` does,
@@ -232,6 +236,7 @@ const ALL_FLAGS: Array[StringName] = [
 	ANNEX_VACANT_OFFICE_UNCLEAR,
 	ANNEX_PRINCIPAL_OFFICE_ALIGNED,
 	ANNEX_PRINCIPAL_OFFICE_UNCLEAR,
+	CURTAIN_EDGES_EXAMINED,
 	CURTAIN_FALL_PENDING,
 	CURTAIN_DRAWN,
 	CURTAIN_EDGE_HELD,

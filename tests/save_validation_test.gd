@@ -12,6 +12,7 @@ extends SceneTree
 ## runs in a second and is the first place to look when a save stops loading.
 
 const Harness = preload("res://tests/test_harness.gd")
+const VoiceMigrationCases = preload("res://tests/inner_voice_migration_cases.gd")
 const SAVE_PATH := "user://save.json"
 const BROKEN_PATH := "user://save.broken.json"
 const USER_DIR := "user://"
@@ -148,6 +149,9 @@ func _run() -> void:
 
 	Harness.stage = "determinism"
 	_expect_seed_round_trip()
+
+	Harness.stage = "six-voice save migration"
+	_failures.append_array(VoiceMigrationCases.new().run(self, _game_state, _narrative, _save))
 
 	Harness.stage = "write failures"
 	_check_write_failures()
@@ -562,7 +566,7 @@ func _expect_seed_round_trip() -> void:
 	# back from the file is the whole of "the same check falls the same way".
 	var key := "gate:try_roll"
 	var before := CheckResolver.new(4242)
-	var expected := CheckResolver.describe(before.roll(&"orientation", 3, 9, 0, key))
+	var expected := CheckResolver.describe(before.roll(&"scrutiny", 3, 9, 0, key))
 
 	Harness.clear_session_state(self)
 	_save.write_payload({"flags": {}, "entries": [], "check_seed": 4242})
@@ -572,7 +576,7 @@ func _expect_seed_round_trip() -> void:
 		return
 	var payload: Dictionary = read["payload"]
 	var after := CheckResolver.new(int(payload.get("check_seed", 0)))
-	var actual := CheckResolver.describe(after.roll(&"orientation", 3, 9, 0, key))
+	var actual := CheckResolver.describe(after.roll(&"scrutiny", 3, 9, 0, key))
 	_expect(actual == expected, "The same check differs after a round trip:\n  %s\n  %s" % [expected, actual])
 
 	# ...and the assertion above is only meaningful if the seed actually moves the dice.

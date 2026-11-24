@@ -316,7 +316,16 @@ func _check_isolated_island_is_not_reached() -> void:
 	var island_center := _player.global_position + Vector3(4.0, 3.0, 0.0)
 	_add_slab(location, island_center, Vector3(3.0, 0.2, 3.0), "IslandSlab")
 	await _rebake(nav)
-	_player.request_path_to(island_center + Vector3(0.0, 0.9, 0.0))
+	var island_target := island_center + Vector3(0.0, 0.9, 0.0)
+	var map := _player.navigation_agent.get_navigation_map()
+	var snapped := NavigationServer3D.map_get_closest_point(map, island_target)
+	var route := NavigationServer3D.map_get_path(map, _player.global_position, snapped, true)
+	if absf(snapped.y - island_target.y) > 1.5:
+		_failures.append("Island fixture did not create a separate walkable surface.")
+	elif route.size() >= 2 and route[-1].distance_to(snapped) <= 0.25:
+		_failures.append("Island fixture unexpectedly has a complete route.")
+	elif _player.request_path_to(island_target):
+		_failures.append("The player accepted a partial route to a disconnected island.")
 	await _frames(2)
 	var deadline := Time.get_ticks_msec() + 6000
 	while _player.is_path_active() and Time.get_ticks_msec() < deadline:
