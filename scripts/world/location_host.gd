@@ -21,6 +21,12 @@ const SAFE_SAMPLE_INTERVAL := 0.12
 ## it, an identity rotation means "keep the previous heading" (PlayerController.teleport),
 ## which is only right for restoring or interrupting a location, not for a doorway.
 const ENTRY_FACING_META := &"entry_facing"
+## Marker metadata: metres the player walks straight ahead (along the marker's -Z) as part
+## of arriving, before control is handed back. For a doorway whose way back - a fire door
+## with its step, a flight of stairs - would otherwise sit under the cursor at the player's
+## feet, so a stray click on it walked them straight back in (round 24). `LocationFlow`
+## walks it; a direct `load_location` (a test, a restored save) does not.
+const ENTRY_WALK_META := &"entry_walk"
 const SUPPORT_MARGIN := 0.38 # Wider than the playable capsule's 0.35 m radius.
 const SUPPORT_VERTICAL := 0.30 # Allows contact on either side of a normal stair slope.
 const WORLD_SOLIDS := 1
@@ -38,6 +44,8 @@ var _current_path: String = ""
 ## The marker the player was placed on when the current location was entered. A save
 ## needs it: the room says where the player *may* arrive, this says where they did.
 var _current_spawn: StringName = &""
+## Where the arrival walk of the current entry ends, or null (see `ENTRY_WALK_META`).
+var _entry_walk_target: Variant = null
 
 ## How far the body may end up from the marker before the placement counts as failed.
 ## A teleport assigns the position exactly; anything larger means the player refused
@@ -140,6 +148,12 @@ func get_current_path() -> String:
 ## The spawn marker the current location was entered through.
 func get_current_spawn() -> StringName:
 	return _current_spawn
+
+
+## The point the player should walk to as part of arriving through the current spawn, or
+## null when the marker asks for no walk (`ENTRY_WALK_META`).
+func get_entry_walk_target() -> Variant:
+	return _entry_walk_target
 
 
 ## Loads `scene_path` and places `player` at the marker named `spawn_id`.
@@ -284,6 +298,7 @@ func _swap(
 	_current = location
 	_current_path = scene_path
 	_current_spawn = spawn_id
+	_entry_walk_target = _entry_walk_from(spawn, target)
 	_player = player as PlayerController
 	_entry_pose = target
 	_safe_pose = target
@@ -298,6 +313,15 @@ func _swap(
 	})
 	location_entered.emit(location, spawn_id)
 	return &"entered"
+
+
+func _entry_walk_from(spawn: Node, target: Transform3D) -> Variant:
+	var distance := float(spawn.get_meta(ENTRY_WALK_META, 0.0))
+	var ahead := -target.basis.z
+	ahead.y = 0.0
+	if distance <= 0.0 or ahead.length_squared() < 0.0001:
+		return null
+	return target.origin + ahead.normalized() * distance
 
 
 ## Places `player` at `target` and reports whether the body actually took it. With

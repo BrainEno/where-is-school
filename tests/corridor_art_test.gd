@@ -120,7 +120,15 @@ func _run() -> void:
 	var approach := corridor.get_spawn(&"FromSchoolyard")
 	if await _walk(approach.global_position, "fire stair bottom"):
 		if await _use_exit(&"to_schoolyard", &"playground", &"FromCorridor"):
-			await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
+			# Round 24: arriving, the player walks out from under the fire door and off its
+			# step, so the way back in is not under the cursor at their feet.
+			var yard_spawn := _host.get_current().get_spawn(&"FromCorridor").global_position
+			_check.expect(_player.global_position.distance_to(yard_spawn) > 1.2,
+				"Arriving in the yard did not walk the player off the fire step (%s)." % _player.global_position)
+			var yard_nav := _host.get_current().get_node(^"Navigation") as LocationNavigation
+			await Harness.wait_until(func() -> bool: return yard_nav.is_routable(), 7.0)
+			if await _walk(yard_spawn, "back under the fire door"):
+				await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
 	if _host.get_current().location_id == &"corridor":
 		await _walk(FIRST_BEND, "climb back from the yard")
 		Harness.stage = "classroom and street returns"

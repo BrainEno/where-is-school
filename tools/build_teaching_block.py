@@ -269,6 +269,13 @@ def plain_door(b, parent, name, x, mat):
     b.box("Kick", p, (0, 0.19, 0.062), (0.93, 0.15, 0.024), "exit_frame")
 
 
+# Round 24: only two of the high slits are something to hop up and look through - the one
+# next to the protagonist's own room on 02 and the first one on 03. The other seven are
+# still glazed and lit, but they are wall, not targets: nine identical hop prompts along
+# one walk made the character jump at windows whenever a click strayed near one.
+PEEK_BAYS = ("LowerWest2", "UpperWest1")
+
+
 def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
     _, width, plate, depth, bias = spec
     p = b.shell(name, parent, pos, (0, yaw, 0), ("camera_occluder", "teaching_bay"))
@@ -328,7 +335,7 @@ def classroom_bay(b, name, parent, pos, yaw, spec, biology=False):
             x, z = -1.8 + col * 1.7 + (0.24 if bias < 0 else 0), -2.0 - row * 1.55
             b.box(f"Desk{row}_{col}", p, (x, 0.79 + bias, z), (1.12, 0.08, 0.54), "room_wood")
             b.box(f"DeskBase{row}_{col}", p, (x, 0.37 + bias, z), (0.86, 0.75, 0.28), "room_ink")
-    if not biology:
+    if not biology and name in PEEK_BAYS:
         script = b.bind("peek", "res://scenes/locations/corridor/high_window_peek.gd", "Script")
         b.instance("Peek", p, "interactable", (slit_x, 0.84, 0.68),
                    script=script, interact_id=f'&"high_window_{name.lower()}"',

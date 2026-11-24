@@ -4285,17 +4285,6 @@ mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
 
-[node name="Peek" parent="LowerFloor/LowerWest3" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_lowerwest3"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
-
 [node name="WestPier0" type="StaticBody3D" parent="LowerFloor" groups=["camera_occluder"]]
 position = Vector3(-2.2, 0, -29.65)
 rotation_degrees = Vector3(0, 90, 0)
@@ -4866,17 +4855,6 @@ mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
 
-[node name="Peek" parent="LowerFloor/LowerNorth1" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_lowernorth1"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
-
 [node name="LowerNorth2" type="StaticBody3D" parent="LowerFloor" groups=["camera_occluder", "teaching_bay"]]
 position = Vector3(23.05, 0, -30)
 rotation_degrees = Vector3(0, 0, 0)
@@ -5358,17 +5336,6 @@ position = Vector3(1.6, 0.37, -3.55)
 mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
-
-[node name="Peek" parent="LowerFloor/LowerNorth2" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_lowernorth2"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
 
 [node name="NorthPier0" type="StaticBody3D" parent="LowerFloor" groups=["camera_occluder"]]
 position = Vector3(-1.8, 0, -30)
@@ -6411,17 +6378,6 @@ mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
 
-[node name="Peek" parent="UpperFloor/UpperWest2" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_upperwest2"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
-
 [node name="UpperWest3" type="StaticBody3D" parent="UpperFloor" groups=["camera_occluder", "teaching_bay"]]
 position = Vector3(-14.25, 3.6, -35.1)
 rotation_degrees = Vector3(0, 90, 0)
@@ -6903,17 +6859,6 @@ position = Vector3(1.84, 0.07, -3.55)
 mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
-
-[node name="Peek" parent="UpperFloor/UpperWest3" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_upperwest3"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
 
 [node name="WestPier0" type="StaticBody3D" parent="UpperFloor" groups=["camera_occluder"]]
 position = Vector3(-14.25, 3.6, -42.55)
@@ -7485,17 +7430,6 @@ mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
 
-[node name="Peek" parent="UpperFloor/UpperNorth1" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_uppernorth1"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
-
 [node name="UpperNorth2" type="StaticBody3D" parent="UpperFloor" groups=["camera_occluder", "teaching_bay"]]
 position = Vector3(11.2, 3.6, -45)
 rotation_degrees = Vector3(0, 0, 0)
@@ -7977,17 +7911,6 @@ position = Vector3(1.84, -0.08, -3.55)
 mesh = SubResource("BoxMesh_art49")
 material_override = SubResource("Mat_room_ink")
 cast_shadow = 0
-
-[node name="Peek" parent="UpperFloor/UpperNorth2" instance=ExtResource("interactable")]
-position = Vector3(0, 0.84, 0.68)
-script = ExtResource("peek")
-interact_id = &"high_window_uppernorth2"
-prompt_text = "Jump to look through the high window"
-inspection_id = &"corridor_high_window"
-radius = 1.15
-outline_paths = PackedStringArray("../HighGlass", "../HighGlassSill")
-support_paths = PackedStringArray("..")
-pane_path = NodePath("../HighGlass")
 
 [node name="NorthPier0" type="StaticBody3D" parent="UpperFloor" groups=["camera_occluder"]]
 position = Vector3(-11.25, 3.6, -45)

@@ -320,6 +320,9 @@ class Scene:
                 lines.append('rotation_degrees = %s' % v3(options['rotation']))
             if options.get('entry_facing'):
                 lines.append('metadata/entry_facing = true')
+            if options.get('entry_walk'):
+                # Metres walked straight ahead as part of arriving (LocationHost.ENTRY_WALK_META).
+                lines.append('metadata/entry_walk = %s' % float(options['entry_walk']))
             lines.append('')
         lines.append('[node name="Ambience" type="AudioStreamPlayer" parent="."]')
         lines.append(f'stream = ExtResource("{base + 2}_ambience")')
@@ -1182,7 +1185,11 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromAlley", (0.0, 0, 16.0)),
         # The walkway's end door: this is the intended way into the yard, so the
         # player arrives from the school side rather than from the estate gate.
-        ("FromCorridor", (-3.0, 0, -17.6), {"rotation": (0, 180, 0), "entry_facing": True}),
+        # Round 24: arriving from the teaching block, the player walks out from under the fire
+        # door and off its step before control comes back. Standing on the spawn, the way
+        # back in (fire door and step, a 1.6 m sphere) was under every click at their feet.
+        ("FromCorridor", (-3.0, 0, -17.6),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 1.6}),
         # Arrival from classroom window curtain fall: lands on top of the blue container.
         ("FromSchool", (12.0, 2.6, -15.5)),
         # Out of the building site's gate, on the yard side of it.

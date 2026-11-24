@@ -20,6 +20,7 @@ extends RefCounted
 ## asking the host for a checkpoint (ADR 0005 §4).
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+const StagedActorMotion := preload("res://scripts/actors/staged_actor_motion.gd")
 
 ## The only exit whose prompt is rewritten by the story.
 const COMPLETION_DOOR_ID := &"classroom_door"
@@ -229,12 +230,25 @@ func transition_to(
 		# beat where it is (see `OpeningSequence.wait_seconds()`).
 		await _host.get_tree().create_timer(0.3, false).timeout
 		await _ui.fade.fade_from_black(0.9)
+	await _walk_off_entry()
 
 	# The arrival line plays after the transition beat releases the lock, otherwise
 	# the beat that plays the conversation would wait for itself.
 	_host.end_beat()
 	_play_arrival_beat(destination_id, StringName(options.get("arrival_conversation", &"")))
 	return true
+
+
+## The few steps a doorway asks for before control comes back (`LocationHost.ENTRY_WALK_META`):
+## out from under the fire door and off its step, so the way back is behind the player and
+## not under the cursor. Still inside the transition beat, so no click can turn it round.
+## A walk the capsule cannot make (something parked on the line) is skipped, not forced.
+func _walk_off_entry() -> void:
+	var target: Variant = _locations.get_entry_walk_target()
+	if target == null or _player == null:
+		return
+	var goal: Vector3 = target
+	await StagedActorMotion.walk_to(_player, Vector3(goal.x, _player.global_position.y, goal.z))
 
 
 ## Runs a refused transition's `on_failure` once and waits for it, but never longer than

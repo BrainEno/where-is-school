@@ -36,6 +36,12 @@ func _ready() -> void:
 	super()
 
 
+## A way out keeps the full outline: a door, a gate or a flight of stairs is read as a
+## whole, not as a dot on it (`Interactable.CueStyle`).
+func _marks_by_default() -> bool:
+	return false
+
+
 func is_open() -> bool:
 	if String(required_flag).is_empty():
 		return true
