@@ -1,4 +1,4 @@
-[gd_scene load_steps=834 format=3]
+[gd_scene load_steps=835 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_entrance.tscn" id="teaching_entrance"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_dirt.tres" id="art_yard_dirt"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_path.tres" id="art_yard_path"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="cjk_font"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_door.tscn" id="restroom_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/laboratory_entry_door.tscn" id="lab_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/archive_door.tscn" id="archive"]
@@ -1975,10 +1976,10 @@ size = Vector3(0.79, 1.92, 0.22)
 size = Vector3(0.79, 0.19, 0.24)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art477"]
-size = Vector3(2.1, 0.74, 0.22)
+size = Vector3(2.1, 0.45, 0.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art478"]
-size = Vector3(2.1, 0.74, 0.22)
+size = Vector3(2.1, 0.45, 0.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art479"]
 size = Vector3(2.26, 0.36, 0.38)
@@ -15530,58 +15531,58 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="Solid" type="CollisionShape3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.68, 0)
+position = Vector3(0, 2.825, 0)
 shape = SubResource("BoxShape3D_art477")
 
 [node name="Face" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.68, 0)
+position = Vector3(0, 2.825, 0)
 mesh = SubResource("BoxMesh_art478")
 material_override = SubResource("Mat_cement")
 cast_shadow = 0
 
 [node name="ShutterBox" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.55, -0.3)
+position = Vector3(0, 2.55, 0.3)
 mesh = SubResource("BoxMesh_art479")
 material_override = SubResource("Mat_shutter_steel")
 
 [node name="Slat0" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.3, -0.16)
+position = Vector3(0, 2.3, 0.16)
 mesh = SubResource("BoxMesh_art480")
 material_override = SubResource("Mat_shutter_steel")
 cast_shadow = 0
 
 [node name="Slat1" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.225, -0.16)
+position = Vector3(0, 2.225, 0.16)
 mesh = SubResource("BoxMesh_art480")
 material_override = SubResource("Mat_shutter_steel")
 cast_shadow = 0
 
 [node name="Slat2" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.15, -0.16)
+position = Vector3(0, 2.15, 0.16)
 mesh = SubResource("BoxMesh_art480")
 material_override = SubResource("Mat_shutter_steel")
 cast_shadow = 0
 
 [node name="BottomBar" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0, 2.08, -0.16)
+position = Vector3(0, 2.08, 0.16)
 mesh = SubResource("BoxMesh_art481")
 material_override = SubResource("Mat_iron_rust")
 cast_shadow = 0
 
 [node name="Guide0" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(-1.08, 1.2, -0.16)
+position = Vector3(-1.08, 1.2, 0.16)
 mesh = SubResource("BoxMesh_art482")
 material_override = SubResource("Mat_shutter_steel")
 cast_shadow = 0
 
 [node name="Guide1" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(1.08, 1.2, -0.16)
+position = Vector3(1.08, 1.2, 0.16)
 mesh = SubResource("BoxMesh_art482")
 material_override = SubResource("Mat_shutter_steel")
 cast_shadow = 0
 
 [node name="PullHandle" type="MeshInstance3D" parent="GroundFloor/StairwellLintel"]
-position = Vector3(0.4, 2.02, -0.2)
+position = Vector3(0.4, 2.02, 0.2)
 mesh = SubResource("BoxMesh_art483")
 material_override = SubResource("Mat_iron_rust")
 cast_shadow = 0
@@ -16718,6 +16719,7 @@ cast_shadow = 0
 [node name="Text" type="Label3D" parent="GroundFloor/Forecourt/GatePierWest/YardPlate"]
 position = Vector3(0, 0, 0.023)
 text = "前操场"
+font = ExtResource("cjk_font")
 font_size = 44
 pixel_size = 0.0024
 outline_size = 0

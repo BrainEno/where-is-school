@@ -518,7 +518,12 @@ def sign(b, parent, name, pos, text, width=0.55, yaw=0, plate="gallery_frame"):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
     p = child_path(parent, name)
     b.box("Plate", p, (0, 0, 0), (width, 0.21, 0.035), plate)
-    b.node("Text", p, "Label3D", position=vec3((0, 0, 0.023)), text=f'"{text}"',
+    # Han characters need the bundled CJK face; without it the label falls back to a system
+    # font whose glyph surface leaks at exit in GL Compatibility (round 23 capture).
+    font = {}
+    if any("\u4e00" <= c <= "\u9fff" for c in text):
+        font["font"] = b.bind("cjk_font", "res://assets/fonts/NotoSansSC-Regular.ttf", "FontFile")
+    b.node("Text", p, "Label3D", position=vec3((0, 0, 0.023)), text=f'"{text}"', **font,
            font_size=44, pixel_size=0.0024, outline_size=0, modulate="Color(0.93, 0.86, 0.73, 1)")
 
 
@@ -1361,16 +1366,18 @@ def stairwell_door(b, g, opening):
     for name, (a, c) in (("StairwellJambNorth", (GROUND_Z[0]+0.11, lo)), ("StairwellJambSouth", (hi, GROUND_Z[1]-0.11))):
         solid_wall(b, g, name, (x, GROUND_Y, (a+c)/2), c-a, yaw=90, base="cement_dark", field="cement")
     head = b.shell("StairwellLintel", g, (x, GROUND_Y, (lo+hi)/2), (0, 90, 0), ("camera_occluder",))
-    b.shape("Solid", head, (0, 2.68, 0), (hi-lo, 0.74, 0.22))
-    b.box("Face", head, (0, 2.68, 0), (hi-lo, 0.74, 0.22), "cement")
-    # On the stairwell side (+x): the shutter box, its guides, and the last slats hanging down.
-    b.box("ShutterBox", head, (0, 2.55, -0.3), (hi-lo+0.16, 0.36, 0.38), "shutter_steel", shadow=True)
+    # 2.6 m clear: 2.3 m rounded onto the 0.25 m bake grid was exactly the agent's 2.0 m
+    # height, and the erosion then closed the doorway to the navigation mesh.
+    b.shape("Solid", head, (0, 2.825, 0), (hi-lo, 0.45, 0.22))
+    b.box("Face", head, (0, 2.825, 0), (hi-lo, 0.45, 0.22), "cement")
+    # On the stairwell side (+x; the lintel turns local +z there): the shutter box, its guides, and the last slats hanging down.
+    b.box("ShutterBox", head, (0, 2.55, 0.3), (hi-lo+0.16, 0.36, 0.38), "shutter_steel", shadow=True)
     for i in range(3):
-        b.box(f"Slat{i}", head, (0, 2.3-0.075*i, -0.16), (hi-lo-0.04, 0.06, 0.03), "shutter_steel")
-    b.box("BottomBar", head, (0, 2.08, -0.16), (hi-lo-0.04, 0.05, 0.06), "iron_rust")
+        b.box(f"Slat{i}", head, (0, 2.3-0.075*i, 0.16), (hi-lo-0.04, 0.06, 0.03), "shutter_steel")
+    b.box("BottomBar", head, (0, 2.08, 0.16), (hi-lo-0.04, 0.05, 0.06), "iron_rust")
     for i, z in enumerate((-(hi-lo)/2-0.03, (hi-lo)/2+0.03)):
-        b.box(f"Guide{i}", head, (z, 1.2, -0.16), (0.07, 2.4, 0.08), "shutter_steel")
-    b.box("PullHandle", head, (0.4, 2.02, -0.2), (0.14, 0.04, 0.04), "iron_rust")
+        b.box(f"Guide{i}", head, (z, 1.2, 0.16), (0.07, 2.4, 0.08), "shutter_steel")
+    b.box("PullHandle", head, (0.4, 2.02, 0.2), (0.14, 0.04, 0.04), "iron_rust")
 
 
 def wet_carpet(b, flight_path, run, rise, width):
