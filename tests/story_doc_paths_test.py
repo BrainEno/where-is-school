@@ -81,6 +81,25 @@ class StoryDocPathsTest(unittest.TestCase):
         finally:
             self.assertEqual(self.snapshot(), before, "a refused import changed or created a file")
 
+    def test_duplicate_inspection_id_is_refused_with_both_lines_before_write(self) -> None:
+        lines = ["◆ 检视", "▣ 章节 fixture", "■ 检视 fixture_item", "首次：fixture-first",
+                 "▣ 章节 fixture", "■ 检视 fixture_item", "首次：fixture-second"]
+        for write in (False, True):
+            with self.subTest(write=write):
+                before = self.snapshot()
+                with self.assertRaises(sd.DocError) as caught:
+                    sd.apply_document(lines, self.names, write=write)
+                self.assertIn("第 3 行", str(caught.exception))
+                self.assertIn("第 6 行", str(caught.exception))
+                self.assertEqual(self.snapshot(), before, "a duplicate inspection changed or created a file")
+
+    def test_same_inspection_id_in_different_chapters_remains_valid(self) -> None:
+        lines = ["◆ 检视", "▣ 章节 fixture", "■ 检视 shared_item", "首次：fixture-text",
+                 "▣ 章节 other", "■ 检视 shared_item", "首次：other-text"]
+        parsed = sd.parse_inspections(lines, self.names)
+        self.assertEqual(parsed["fixture"]["shared_item"]["text"], "fixture-text")
+        self.assertEqual(parsed["other"]["shared_item"]["text"], "other-text")
+
     def test_inspection_parent_traversal_is_refused_without_overwriting_outside(self) -> None:
         for write in (False, True):
             with self.subTest(write=write):
