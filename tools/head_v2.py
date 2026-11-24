@@ -542,17 +542,19 @@ def nearest_displacement(points: np.ndarray, source: np.ndarray, displacement: n
     return out
 
 
-def _morph_targets(positions: np.ndarray, triangles: np.ndarray, normals: np.ndarray,
-                   deltas: list[dict[str, np.ndarray]]) -> list[dict[str, np.ndarray]]:
-    """Sparse morph targets re-expressed against the new rest pose."""
+def _morph_targets(positions: np.ndarray, deltas: list[dict[str, np.ndarray]]) -> list[dict[str, np.ndarray]]:
+    """Sparse morph targets re-expressed against the new rest pose.
+
+    Position deltas only: teacher N's approved expressions are position-only too,
+    and the imported scene stores every target densely -- carrying normal deltas
+    multiplied the protagonist's imported head by most of a megabyte without
+    changing what the painterly shader shows.
+    """
     built = []
     for target in deltas:
         delta = target['POSITION'].copy()
         delta[np.linalg.norm(delta, axis=1) < 1e-5] = 0.0
-        moved = vertex_normals(positions + delta, triangles)
-        normal_delta = moved - normals
-        normal_delta[np.linalg.norm(normal_delta, axis=1) < 1e-5] = 0.0
-        built.append({'POSITION': delta, 'NORMAL': normal_delta})
+        built.append({'POSITION': delta})
     return built
 
 
@@ -631,7 +633,7 @@ def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
             'targets': [
                 {name: (values.astype(np.float32), 5126, 'VEC3')
                  for name, values in target.items()}
-                for target in _morph_targets(positions, triangles, normals, deltas)
+                for target in _morph_targets(positions, deltas)
             ],
         }
     return replacements
@@ -916,21 +918,15 @@ def build() -> dict:
     tangent = tangents(positions, normals, uv, triangles)
 
     # 5. Sparse morph targets, with the sculpt carried into every shape.
+    #    Position deltas only -- see _morph_targets for why normals are not stored.
     built_targets = []
     for target in targets:
-        entry = {}
         delta = target['POSITION'].copy()
         # Subdivision spreads a target over its one-ring; a fifth of a micron is
         # exporter noise, not a shape. Zeroing it keeps the sparse target honest
         # and the GLB inside the model budget without changing any visible delta.
         delta[np.linalg.norm(delta, axis=1) < 1e-5] = 0.0
-        moved = positions + delta
-        moved_normals = vertex_normals(moved, triangles)
-        normal_delta = moved_normals - normals
-        normal_delta[np.linalg.norm(normal_delta, axis=1) < 1e-5] = 0.0
-        entry['POSITION'] = delta
-        entry['NORMAL'] = normal_delta
-        built_targets.append(entry)
+        built_targets.append({'POSITION': delta})
 
     # 6. Hair: in-place ring refinement (5 -> 10 columns per ring), taper, gentle bend.
     hair_positions = hair_arrays['POSITION']
@@ -958,10 +954,7 @@ def build() -> dict:
         },
         'indices': triangles.reshape(-1).astype(np.uint32),
         'targets': [
-            {
-                'POSITION': (target['POSITION'].astype(np.float32), 5126, 'VEC3'),
-                'NORMAL': (target['NORMAL'].astype(np.float32), 5126, 'VEC3'),
-            }
+            {'POSITION': (target['POSITION'].astype(np.float32), 5126, 'VEC3')}
             for target in built_targets
         ],
     }
