@@ -98,6 +98,15 @@ GROVE_RAIL_H_LEN = 23.6         # the south railing run, corner post to the west
 # a layer neither the bake (mask 25) nor the body (mask 5) reads - a crown that fades
 # without sealing the strip the route has to weave through.
 GROVE_FADE_LAYER = 1 << 10
+# Far trees across the railings, out of reach: the yard's east margin seen from the
+# strip. Each stands in a fading crown box and a fading trunk box (the grove's fade
+# layer, in the camera_occluder group), so a sight line that crosses one fades it the
+# way the front yard fades its own trees.
+GROVE_FAR_TREES = (
+    (-1.55, -4.3, "a", 270), (-18.15, -3.7, "a", 0), (-18.55, -11.9, "b", 90),
+    (-5.55, -11.5, "c", 180), (-3.0, -12.4, "c", 90), (-8.0, -14.6, "b", 270),
+    (-13.4, -13.2, "a", 0),
+)
 # Dead trees along the L: (x, z, variant, yaw; multiples of 90 keep the crown in its box).
 # The trunks stand clear of the walked lines (x 1.7 down the east leg, z -18.85 along the
 # north leg) and of each other's weave gaps: trunks at x 0.85 / 2.55 leave a 1.28 m band
@@ -1298,7 +1307,7 @@ def build_playground(for_courtyard_view: bool = False):
         # Round 26: into the north grove, at the east end of the strip between the fence and
         # the school's back wall (the grove's west opening is this strip carried on past the
         # corner; docs/MAP_PLAN.md §5, phase 2).
-        {"name": "ToNorthGrove", "pos": (18.6, 0.9, -19.7), "id": "playground_to_grove",
+        {"name": "ToNorthGrove", "pos": (18.6, 0.9, -17.9), "id": "playground_to_grove",
          "prompt_key": "prompt.court_to_grove", "radius": 1.3,
          "outline": ("GroveStubTree", "GroveStubRail"),
          "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromPlayground",
@@ -1326,8 +1335,8 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromContainerYard", (13.0, 0, -17.6)),
         # Round 26: back from the grove, in the strip east of the container, facing south
         # onto the court; the arrival walks 2.4 m out from under the exit.
-        ("FromGrove", (18.6, 0, -19.7),
-         {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.6}),
+        ("FromGrove", (18.6, 0, -17.9),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 2.6}),
     ]
     return s
 
@@ -1388,6 +1397,9 @@ def build_north_grove():
     for i, (x, z, _variant, _yaw) in enumerate(GROVE_TREES):
         s.box(f"GroveTree{i}", (x, bh / 2 - 0.1, z), (bw, bh, bw), "soil", occ, True, GROVE_FADE_LAYER)
         s.box(f"GroveTree{i}Trunk", (x, 1.0, z), (0.42, 2.0, 0.42), "soil")
+    for i, (x, z, _variant, _yaw) in enumerate(GROVE_FAR_TREES):
+        s.box(f"GroveFarTree{i}", (x, bh / 2 - 0.1, z), (bw, bh, bw), "soil", occ, True, GROVE_FADE_LAYER)
+        s.box(f"GroveFarTree{i}Trunk", (x, 1.0, z), (0.42, 2.0, 0.42), "soil", occ, True, GROVE_FADE_LAYER)
 
     s.exits = [
         # Back out to the front yard, standing in the mouth: the wall's south stub and the

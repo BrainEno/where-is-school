@@ -94,8 +94,9 @@ const LOCATIONS := {
 		# surface and tread, the ramp: 8), the glass entrance's 11 (two shut leaves), five
 		# anchor spheres and the pick boxes of thirteen outline meshes (the leaves' frames: 8).
 		# Round 26: the north wall's two runs and two rail gaps, the mouth tree and the
-		# strip's three trees (each with a trunk, 12), the mouth tree's outline pick box.
-		"shapes": 83,
+		# strip's three trees (each with a trunk, 12), the new exit's sphere and its
+		# outline pick box.
+		"shapes": 84,
 		"interactables": 6,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove"],
 		"exits": {
@@ -110,10 +111,11 @@ const LOCATIONS := {
 	"north_grove": {
 		"scene": "res://scenes/locations/north_grove/north_grove.tscn",
 		"stage": true,
-		# 42 bodies (two ground boxes, three wall runs, the block's face and plinth, two
-		# railing runs and three posts, fifteen dead trees with a trunk each), two exit
-		# spheres, and the pick boxes of the mouth inset and the last railing post.
-		"shapes": 46,
+		# 56 bodies (two ground boxes, three wall runs, the block's face and plinth, two
+		# railing runs and three posts, fifteen strip trees and seven far trees, each with
+		# a trunk, all on the fade layer), two exit spheres, and the pick boxes of the
+		# mouth inset and the last railing post.
+		"shapes": 60,
 		"interactables": 2,
 		"spawns": ["FromFrontYard", "FromPlayground"],
 		"exits": {

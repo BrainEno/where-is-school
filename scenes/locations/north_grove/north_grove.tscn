@@ -1,4 +1,4 @@
-[gd_scene load_steps=186 format=3]
+[gd_scene load_steps=216 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="6_interactable"]
@@ -9,6 +9,7 @@
 
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/dry_grass.tres" id="art_dry_grass"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/metal_ink.tres" id="art_metal_ink"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/north_grove_distance.tres" id="art_north_grove_distance"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/pavement.tres" id="art_pavement"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/school_teal.tres" id="art_school_teal"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/tree_bark.tres" id="art_tree_bark"]
@@ -298,217 +299,304 @@ size = Vector3(0.42, 2.0, 0.42)
 [sub_resource type="BoxMesh" id="BoxMesh_41"]
 size = Vector3(0.42, 2.0, 0.42)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_42"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_42"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_43"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_43"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_44"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_44"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_45"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_45"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_46"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_46"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_47"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_47"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_48"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_48"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_49"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_49"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_50"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_50"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_51"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_51"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_52"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_52"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_53"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_53"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_54"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_54"]
+size = Vector3(5.4, 7.3, 5.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_55"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_55"]
+size = Vector3(0.42, 2.0, 0.42)
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_art1"]
-size = Vector2(70, 55)
+size = Vector2(200, 200)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_art2"]
-size = Vector2(1.6, 20)
+size = Vector2(70, 55)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_art3"]
+size = Vector2(1.6, 20)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_art4"]
 size = Vector2(1.6, 22.6)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art4"]
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
 size = Vector3(0.52, 0.1, 20.85)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
 size = Vector3(0.52, 0.1, 2.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
 size = Vector3(27.5, 0.1, 0.52)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art7"]
+[sub_resource type="BoxMesh" id="BoxMesh_art8"]
 size = Vector3(10.4, 0.1, 0.6)
 
-[sub_resource type="QuadMesh" id="QuadMesh_art8"]
+[sub_resource type="QuadMesh" id="QuadMesh_art9"]
 size = Vector2(1.4, 2.1)
 
-[sub_resource type="QuadMesh" id="QuadMesh_art9"]
-size = Vector2(0.38, 0.38)
-
 [sub_resource type="QuadMesh" id="QuadMesh_art10"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art11"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art12"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art13"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art14"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art15"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art16"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art17"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art18"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art19"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art20"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art21"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art22"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art23"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art24"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art25"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art26"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art27"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art28"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art29"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art30"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art31"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art32"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art33"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art34"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art35"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art36"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art37"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art38"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art39"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art40"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art41"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art42"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art43"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art44"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art45"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art46"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art47"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art48"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art49"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art50"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art51"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art52"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art53"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art54"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art55"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art56"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art57"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art58"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art59"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art60"]
-size = Vector2(0.42, 0.42)
+size = Vector2(0.46, 0.46)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art61"]
-size = Vector2(0.38, 0.38)
+size = Vector2(0.42, 0.42)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art62"]
-size = Vector2(0.5, 0.5)
+size = Vector2(0.38, 0.38)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art63"]
-size = Vector2(0.46, 0.46)
+size = Vector2(0.5, 0.5)
 
 [sub_resource type="QuadMesh" id="QuadMesh_art64"]
-size = Vector2(0.42, 0.42)
-
-[sub_resource type="QuadMesh" id="QuadMesh_art65"]
-size = Vector2(0.38, 0.38)
-
-[sub_resource type="QuadMesh" id="QuadMesh_art66"]
-size = Vector2(0.5, 0.5)
-
-[sub_resource type="QuadMesh" id="QuadMesh_art67"]
 size = Vector2(0.46, 0.46)
 
-[sub_resource type="QuadMesh" id="QuadMesh_art68"]
+[sub_resource type="QuadMesh" id="QuadMesh_art65"]
 size = Vector2(0.42, 0.42)
 
-[sub_resource type="QuadMesh" id="QuadMesh_art69"]
+[sub_resource type="QuadMesh" id="QuadMesh_art66"]
 size = Vector2(0.38, 0.38)
 
-[sub_resource type="QuadMesh" id="QuadMesh_art70"]
+[sub_resource type="QuadMesh" id="QuadMesh_art67"]
 size = Vector2(0.5, 0.5)
 
+[sub_resource type="QuadMesh" id="QuadMesh_art68"]
+size = Vector2(0.46, 0.46)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art69"]
+size = Vector2(0.42, 0.42)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art70"]
+size = Vector2(0.38, 0.38)
+
 [sub_resource type="QuadMesh" id="QuadMesh_art71"]
+size = Vector2(0.5, 0.5)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art72"]
 size = Vector2(10, 11.4)
 
 [node name="NorthGrove" type="Node3D"]
@@ -995,6 +1083,160 @@ mesh = SubResource("BoxMesh_41")
 material_override = ExtResource("art_yard_dirt")
 visible = false
 
+[node name="GroveFarTree0" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-1.55, 3.55, -4.3)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree0"]
+shape = SubResource("BoxShape3D_42")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree0"]
+mesh = SubResource("BoxMesh_42")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree0Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-1.55, 1.0, -4.3)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree0Trunk"]
+shape = SubResource("BoxShape3D_43")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree0Trunk"]
+mesh = SubResource("BoxMesh_43")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree1" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-18.15, 3.55, -3.7)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree1"]
+shape = SubResource("BoxShape3D_44")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree1"]
+mesh = SubResource("BoxMesh_44")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree1Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-18.15, 1.0, -3.7)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree1Trunk"]
+shape = SubResource("BoxShape3D_45")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree1Trunk"]
+mesh = SubResource("BoxMesh_45")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree2" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-18.55, 3.55, -11.9)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree2"]
+shape = SubResource("BoxShape3D_46")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree2"]
+mesh = SubResource("BoxMesh_46")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree2Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-18.55, 1.0, -11.9)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree2Trunk"]
+shape = SubResource("BoxShape3D_47")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree2Trunk"]
+mesh = SubResource("BoxMesh_47")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree3" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-5.55, 3.55, -11.5)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree3"]
+shape = SubResource("BoxShape3D_48")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree3"]
+mesh = SubResource("BoxMesh_48")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree3Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-5.55, 1.0, -11.5)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree3Trunk"]
+shape = SubResource("BoxShape3D_49")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree3Trunk"]
+mesh = SubResource("BoxMesh_49")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree4" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-3.0, 3.55, -12.4)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree4"]
+shape = SubResource("BoxShape3D_50")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree4"]
+mesh = SubResource("BoxMesh_50")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree4Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-3.0, 1.0, -12.4)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree4Trunk"]
+shape = SubResource("BoxShape3D_51")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree4Trunk"]
+mesh = SubResource("BoxMesh_51")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree5" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-8.0, 3.55, -14.6)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree5"]
+shape = SubResource("BoxShape3D_52")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree5"]
+mesh = SubResource("BoxMesh_52")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree5Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-8.0, 1.0, -14.6)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree5Trunk"]
+shape = SubResource("BoxShape3D_53")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree5Trunk"]
+mesh = SubResource("BoxMesh_53")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree6" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-13.4, 3.55, -13.2)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree6"]
+shape = SubResource("BoxShape3D_54")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree6"]
+mesh = SubResource("BoxMesh_54")
+material_override = ExtResource("art_yard_dirt")
+
+[node name="GroveFarTree6Trunk" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-13.4, 1.0, -13.2)
+collision_layer = 1024
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroveFarTree6Trunk"]
+shape = SubResource("BoxShape3D_55")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroveFarTree6Trunk"]
+mesh = SubResource("BoxMesh_55")
+material_override = ExtResource("art_yard_dirt")
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="ToFrontYard" parent="Interactables" instance=ExtResource("7_location_exit")]
@@ -1039,143 +1281,151 @@ target_db = -26.0
 
 [node name="StageArt" type="Node3D" parent="."]
 
+[node name="Distance" type="Node3D" parent="StageArt"]
+
+[node name="SkyFloor" type="MeshInstance3D" parent="StageArt/Distance"]
+position = Vector3(-10.1, -1.6, -8.55)
+mesh = SubResource("PlaneMesh_art1")
+material_override = ExtResource("art_north_grove_distance")
+cast_shadow = 0
+
 [node name="Beyond" type="Node3D" parent="StageArt"]
 
 [node name="Ground" type="MeshInstance3D" parent="StageArt/Beyond"]
 position = Vector3(-12, -0.01, -9)
-mesh = SubResource("PlaneMesh_art1")
+mesh = SubResource("PlaneMesh_art2")
 material_override = ExtResource("art_yard_dirt")
 cast_shadow = 0
 
-[node name="FarTree0" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-1.55, 0, -4.3)
+[node name="StageTree" type="Node3D" parent="GroveFarTree0"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 270, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree0"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree0/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree0"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree0/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree0"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree0/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree1" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-18.15, 0, -3.7)
+[node name="StageTree" type="Node3D" parent="GroveFarTree1"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 0, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree1"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree1/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree1"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree1/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree1"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree1/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree2" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-18.55, 0, -11.9)
+[node name="StageTree" type="Node3D" parent="GroveFarTree2"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 90, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree2"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree2/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree2"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree2/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree2"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree2/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree3" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-5.55, 0, -11.5)
+[node name="StageTree" type="Node3D" parent="GroveFarTree3"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 180, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree3"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree3/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree3"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree3/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree3"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree3/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree4" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-3, 0, -12.4)
+[node name="StageTree" type="Node3D" parent="GroveFarTree4"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 90, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree4"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree4/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree4"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree4/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree4"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree4/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_c_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree5" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-8, 0, -14.6)
+[node name="StageTree" type="Node3D" parent="GroveFarTree5"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 270, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree5"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree5/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree5"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree5/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree5"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree5/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_b_twig")
 material_override = ExtResource("art_tree_twig")
 
-[node name="FarTree6" type="Node3D" parent="StageArt/Beyond"]
-position = Vector3(-13.4, 0, -13.2)
+[node name="StageTree" type="Node3D" parent="GroveFarTree6"]
+position = Vector3(0, -3.55, 0)
 rotation_degrees = Vector3(0, 0, 0)
 
-[node name="Trunk" type="MeshInstance3D" parent="StageArt/Beyond/FarTree6"]
+[node name="Trunk" type="MeshInstance3D" parent="GroveFarTree6/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_trunk")
 material_override = ExtResource("art_tree_trunk")
 
-[node name="Bark" type="MeshInstance3D" parent="StageArt/Beyond/FarTree6"]
+[node name="Bark" type="MeshInstance3D" parent="GroveFarTree6/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_bark")
 material_override = ExtResource("art_tree_bark")
 
-[node name="Twig" type="MeshInstance3D" parent="StageArt/Beyond/FarTree6"]
+[node name="Twig" type="MeshInstance3D" parent="GroveFarTree6/StageTree"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_twig")
 material_override = ExtResource("art_tree_twig")
@@ -1184,14 +1434,14 @@ material_override = ExtResource("art_tree_twig")
 
 [node name="PathEast" type="MeshInstance3D" parent="StageArt/Ground"]
 position = Vector3(1.7, 0.003, -7.6)
-mesh = SubResource("PlaneMesh_art2")
+mesh = SubResource("PlaneMesh_art3")
 material_override = ExtResource("art_yard_path")
 cast_shadow = 0
 
 [node name="PathNorth" type="MeshInstance3D" parent="StageArt/Ground"]
 position = Vector3(-11.7, 0.003, -18.85)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("PlaneMesh_art3")
+mesh = SubResource("PlaneMesh_art4")
 material_override = ExtResource("art_yard_path")
 cast_shadow = 0
 
@@ -1493,28 +1743,28 @@ material_override = ExtResource("art_yard_rail")
 
 [node name="StageCoping" type="MeshInstance3D" parent="GroveWallEast"]
 position = Vector3(0, 1.35, 0)
-mesh = SubResource("BoxMesh_art4")
+mesh = SubResource("BoxMesh_art5")
 material_override = ExtResource("art_wall_coping")
 
 [node name="StageCoping" type="MeshInstance3D" parent="GroveWallSouth"]
 position = Vector3(0, 1.35, 0)
-mesh = SubResource("BoxMesh_art5")
+mesh = SubResource("BoxMesh_art6")
 material_override = ExtResource("art_wall_coping")
 
 [node name="StageCoping" type="MeshInstance3D" parent="GroveWallNorth"]
 position = Vector3(0, 1.35, 0)
-mesh = SubResource("BoxMesh_art6")
+mesh = SubResource("BoxMesh_art7")
 material_override = ExtResource("art_wall_coping")
 
 [node name="StageCoping" type="MeshInstance3D" parent="GroveBlockFacade"]
 position = Vector3(0, 6.55, 0)
-mesh = SubResource("BoxMesh_art7")
+mesh = SubResource("BoxMesh_art8")
 material_override = ExtResource("art_wall_coping")
 
 [node name="Mouth" type="MeshInstance3D" parent="StageArt"]
 position = Vector3(3.39, 1.05, 0.7)
 rotation_degrees = Vector3(0, -90, 0)
-mesh = SubResource("QuadMesh_art8")
+mesh = SubResource("QuadMesh_art9")
 material_override = ExtResource("art_metal_ink")
 cast_shadow = 0
 
@@ -1525,14 +1775,14 @@ rotation_degrees = Vector3(0, 0, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft0"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art9")
+mesh = SubResource("QuadMesh_art10")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft0"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art9")
+mesh = SubResource("QuadMesh_art10")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1543,14 +1793,14 @@ rotation_degrees = Vector3(0, 47, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft1"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art10")
+mesh = SubResource("QuadMesh_art11")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft1"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art10")
+mesh = SubResource("QuadMesh_art11")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1561,14 +1811,14 @@ rotation_degrees = Vector3(0, 94, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft2"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art11")
+mesh = SubResource("QuadMesh_art12")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft2"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art11")
+mesh = SubResource("QuadMesh_art12")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1579,14 +1829,14 @@ rotation_degrees = Vector3(0, 141, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft3"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art12")
+mesh = SubResource("QuadMesh_art13")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft3"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art12")
+mesh = SubResource("QuadMesh_art13")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1597,14 +1847,14 @@ rotation_degrees = Vector3(0, 8, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft4"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art13")
+mesh = SubResource("QuadMesh_art14")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft4"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art13")
+mesh = SubResource("QuadMesh_art14")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1615,14 +1865,14 @@ rotation_degrees = Vector3(0, 55, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft5"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art14")
+mesh = SubResource("QuadMesh_art15")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft5"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art14")
+mesh = SubResource("QuadMesh_art15")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1633,14 +1883,14 @@ rotation_degrees = Vector3(0, 102, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft6"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art15")
+mesh = SubResource("QuadMesh_art16")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft6"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art15")
+mesh = SubResource("QuadMesh_art16")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1651,14 +1901,14 @@ rotation_degrees = Vector3(0, 149, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft7"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art16")
+mesh = SubResource("QuadMesh_art17")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft7"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art16")
+mesh = SubResource("QuadMesh_art17")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1669,14 +1919,14 @@ rotation_degrees = Vector3(0, 16, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft8"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art17")
+mesh = SubResource("QuadMesh_art18")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft8"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art17")
+mesh = SubResource("QuadMesh_art18")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1687,14 +1937,14 @@ rotation_degrees = Vector3(0, 63, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft9"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art18")
+mesh = SubResource("QuadMesh_art19")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft9"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art18")
+mesh = SubResource("QuadMesh_art19")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1705,14 +1955,14 @@ rotation_degrees = Vector3(0, 110, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft10"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art19")
+mesh = SubResource("QuadMesh_art20")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft10"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art19")
+mesh = SubResource("QuadMesh_art20")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1723,14 +1973,14 @@ rotation_degrees = Vector3(0, 157, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft11"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art20")
+mesh = SubResource("QuadMesh_art21")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft11"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art20")
+mesh = SubResource("QuadMesh_art21")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1741,14 +1991,14 @@ rotation_degrees = Vector3(0, 24, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft12"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art21")
+mesh = SubResource("QuadMesh_art22")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft12"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art21")
+mesh = SubResource("QuadMesh_art22")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1759,14 +2009,14 @@ rotation_degrees = Vector3(0, 71, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft13"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art22")
+mesh = SubResource("QuadMesh_art23")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft13"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art22")
+mesh = SubResource("QuadMesh_art23")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1777,14 +2027,14 @@ rotation_degrees = Vector3(0, 118, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft14"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art23")
+mesh = SubResource("QuadMesh_art24")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft14"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art23")
+mesh = SubResource("QuadMesh_art24")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1795,14 +2045,14 @@ rotation_degrees = Vector3(0, 165, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft15"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art24")
+mesh = SubResource("QuadMesh_art25")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft15"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art24")
+mesh = SubResource("QuadMesh_art25")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1813,14 +2063,14 @@ rotation_degrees = Vector3(0, 32, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft16"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art25")
+mesh = SubResource("QuadMesh_art26")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft16"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art25")
+mesh = SubResource("QuadMesh_art26")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1831,14 +2081,14 @@ rotation_degrees = Vector3(0, 79, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft17"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art26")
+mesh = SubResource("QuadMesh_art27")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft17"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art26")
+mesh = SubResource("QuadMesh_art27")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1849,14 +2099,14 @@ rotation_degrees = Vector3(0, 126, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft18"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art27")
+mesh = SubResource("QuadMesh_art28")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft18"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art27")
+mesh = SubResource("QuadMesh_art28")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1867,14 +2117,14 @@ rotation_degrees = Vector3(0, 173, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft19"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art28")
+mesh = SubResource("QuadMesh_art29")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft19"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art28")
+mesh = SubResource("QuadMesh_art29")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1885,14 +2135,14 @@ rotation_degrees = Vector3(0, 40, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft20"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art29")
+mesh = SubResource("QuadMesh_art30")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft20"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art29")
+mesh = SubResource("QuadMesh_art30")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1903,14 +2153,14 @@ rotation_degrees = Vector3(0, 87, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft21"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art30")
+mesh = SubResource("QuadMesh_art31")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft21"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art30")
+mesh = SubResource("QuadMesh_art31")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1921,14 +2171,14 @@ rotation_degrees = Vector3(0, 134, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft22"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art31")
+mesh = SubResource("QuadMesh_art32")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft22"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art31")
+mesh = SubResource("QuadMesh_art32")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1939,14 +2189,14 @@ rotation_degrees = Vector3(0, 1, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft23"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art32")
+mesh = SubResource("QuadMesh_art33")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft23"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art32")
+mesh = SubResource("QuadMesh_art33")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1957,14 +2207,14 @@ rotation_degrees = Vector3(0, 48, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft24"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art33")
+mesh = SubResource("QuadMesh_art34")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft24"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art33")
+mesh = SubResource("QuadMesh_art34")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1975,14 +2225,14 @@ rotation_degrees = Vector3(0, 95, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft25"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art34")
+mesh = SubResource("QuadMesh_art35")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft25"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art34")
+mesh = SubResource("QuadMesh_art35")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -1993,14 +2243,14 @@ rotation_degrees = Vector3(0, 142, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft26"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art35")
+mesh = SubResource("QuadMesh_art36")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft26"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art35")
+mesh = SubResource("QuadMesh_art36")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2011,14 +2261,14 @@ rotation_degrees = Vector3(0, 9, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft27"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art36")
+mesh = SubResource("QuadMesh_art37")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft27"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art36")
+mesh = SubResource("QuadMesh_art37")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2029,14 +2279,14 @@ rotation_degrees = Vector3(0, 56, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft28"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art37")
+mesh = SubResource("QuadMesh_art38")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft28"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art37")
+mesh = SubResource("QuadMesh_art38")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2047,14 +2297,14 @@ rotation_degrees = Vector3(0, 103, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft29"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art38")
+mesh = SubResource("QuadMesh_art39")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft29"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art38")
+mesh = SubResource("QuadMesh_art39")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2065,14 +2315,14 @@ rotation_degrees = Vector3(0, 150, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft30"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art39")
+mesh = SubResource("QuadMesh_art40")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft30"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art39")
+mesh = SubResource("QuadMesh_art40")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2083,14 +2333,14 @@ rotation_degrees = Vector3(0, 17, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft31"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art40")
+mesh = SubResource("QuadMesh_art41")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft31"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art40")
+mesh = SubResource("QuadMesh_art41")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2101,14 +2351,14 @@ rotation_degrees = Vector3(0, 64, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft32"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art41")
+mesh = SubResource("QuadMesh_art42")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft32"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art41")
+mesh = SubResource("QuadMesh_art42")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2119,14 +2369,14 @@ rotation_degrees = Vector3(0, 111, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft33"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art42")
+mesh = SubResource("QuadMesh_art43")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft33"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art42")
+mesh = SubResource("QuadMesh_art43")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2137,14 +2387,14 @@ rotation_degrees = Vector3(0, 158, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft34"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art43")
+mesh = SubResource("QuadMesh_art44")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft34"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art43")
+mesh = SubResource("QuadMesh_art44")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2155,14 +2405,14 @@ rotation_degrees = Vector3(0, 25, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft35"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art44")
+mesh = SubResource("QuadMesh_art45")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft35"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art44")
+mesh = SubResource("QuadMesh_art45")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2173,14 +2423,14 @@ rotation_degrees = Vector3(0, 72, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft36"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art45")
+mesh = SubResource("QuadMesh_art46")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft36"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art45")
+mesh = SubResource("QuadMesh_art46")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2191,14 +2441,14 @@ rotation_degrees = Vector3(0, 119, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft37"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art46")
+mesh = SubResource("QuadMesh_art47")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft37"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art46")
+mesh = SubResource("QuadMesh_art47")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2209,14 +2459,14 @@ rotation_degrees = Vector3(0, 166, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft38"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art47")
+mesh = SubResource("QuadMesh_art48")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft38"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art47")
+mesh = SubResource("QuadMesh_art48")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2227,14 +2477,14 @@ rotation_degrees = Vector3(0, 33, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft39"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art48")
+mesh = SubResource("QuadMesh_art49")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft39"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art48")
+mesh = SubResource("QuadMesh_art49")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2245,14 +2495,14 @@ rotation_degrees = Vector3(0, 80, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft40"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art49")
+mesh = SubResource("QuadMesh_art50")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft40"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art49")
+mesh = SubResource("QuadMesh_art50")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2263,14 +2513,14 @@ rotation_degrees = Vector3(0, 127, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft41"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art50")
+mesh = SubResource("QuadMesh_art51")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft41"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art50")
+mesh = SubResource("QuadMesh_art51")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2281,14 +2531,14 @@ rotation_degrees = Vector3(0, 174, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft42"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art51")
+mesh = SubResource("QuadMesh_art52")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft42"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art51")
+mesh = SubResource("QuadMesh_art52")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2299,14 +2549,14 @@ rotation_degrees = Vector3(0, 41, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft43"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art52")
+mesh = SubResource("QuadMesh_art53")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft43"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art52")
+mesh = SubResource("QuadMesh_art53")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2317,14 +2567,14 @@ rotation_degrees = Vector3(0, 88, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft44"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art53")
+mesh = SubResource("QuadMesh_art54")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft44"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art53")
+mesh = SubResource("QuadMesh_art54")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2335,14 +2585,14 @@ rotation_degrees = Vector3(0, 135, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft45"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art54")
+mesh = SubResource("QuadMesh_art55")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft45"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art54")
+mesh = SubResource("QuadMesh_art55")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2353,14 +2603,14 @@ rotation_degrees = Vector3(0, 2, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft46"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art55")
+mesh = SubResource("QuadMesh_art56")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft46"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art55")
+mesh = SubResource("QuadMesh_art56")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2371,14 +2621,14 @@ rotation_degrees = Vector3(0, 49, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft47"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art56")
+mesh = SubResource("QuadMesh_art57")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft47"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art56")
+mesh = SubResource("QuadMesh_art57")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2389,14 +2639,14 @@ rotation_degrees = Vector3(0, 96, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft48"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art57")
+mesh = SubResource("QuadMesh_art58")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft48"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art57")
+mesh = SubResource("QuadMesh_art58")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2407,14 +2657,14 @@ rotation_degrees = Vector3(0, 143, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft49"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art58")
+mesh = SubResource("QuadMesh_art59")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft49"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art58")
+mesh = SubResource("QuadMesh_art59")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2425,14 +2675,14 @@ rotation_degrees = Vector3(0, 10, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft50"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art59")
+mesh = SubResource("QuadMesh_art60")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft50"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art59")
+mesh = SubResource("QuadMesh_art60")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2443,14 +2693,14 @@ rotation_degrees = Vector3(0, 57, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft51"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art60")
+mesh = SubResource("QuadMesh_art61")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft51"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art60")
+mesh = SubResource("QuadMesh_art61")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2461,14 +2711,14 @@ rotation_degrees = Vector3(0, 104, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft52"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art61")
+mesh = SubResource("QuadMesh_art62")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft52"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art61")
+mesh = SubResource("QuadMesh_art62")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2479,14 +2729,14 @@ rotation_degrees = Vector3(0, 151, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft53"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art62")
+mesh = SubResource("QuadMesh_art63")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft53"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art62")
+mesh = SubResource("QuadMesh_art63")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2497,14 +2747,14 @@ rotation_degrees = Vector3(0, 18, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft54"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art63")
+mesh = SubResource("QuadMesh_art64")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft54"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art63")
+mesh = SubResource("QuadMesh_art64")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2515,14 +2765,14 @@ rotation_degrees = Vector3(0, 65, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft55"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art64")
+mesh = SubResource("QuadMesh_art65")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft55"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art64")
+mesh = SubResource("QuadMesh_art65")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2533,14 +2783,14 @@ rotation_degrees = Vector3(0, 112, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft56"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art65")
+mesh = SubResource("QuadMesh_art66")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft56"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art65")
+mesh = SubResource("QuadMesh_art66")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2551,14 +2801,14 @@ rotation_degrees = Vector3(0, 159, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft57"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art66")
+mesh = SubResource("QuadMesh_art67")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft57"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art66")
+mesh = SubResource("QuadMesh_art67")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2569,14 +2819,14 @@ rotation_degrees = Vector3(0, 26, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft58"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art67")
+mesh = SubResource("QuadMesh_art68")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft58"]
 position = Vector3(0, 0.23, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art67")
+mesh = SubResource("QuadMesh_art68")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2587,14 +2837,14 @@ rotation_degrees = Vector3(0, 73, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft59"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art68")
+mesh = SubResource("QuadMesh_art69")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft59"]
 position = Vector3(0, 0.21, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art68")
+mesh = SubResource("QuadMesh_art69")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2605,14 +2855,14 @@ rotation_degrees = Vector3(0, 120, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft60"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art69")
+mesh = SubResource("QuadMesh_art70")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft60"]
 position = Vector3(0, 0.19, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art69")
+mesh = SubResource("QuadMesh_art70")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
@@ -2623,19 +2873,19 @@ rotation_degrees = Vector3(0, 167, 0)
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft61"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 0, 0)
-mesh = SubResource("QuadMesh_art70")
+mesh = SubResource("QuadMesh_art71")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Card1" type="MeshInstance3D" parent="StageArt/Ground/Tuft61"]
 position = Vector3(0, 0.25, 0)
 rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art70")
+mesh = SubResource("QuadMesh_art71")
 material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="StageWindows" type="MeshInstance3D" parent="GroveBlockFacade"]
 position = Vector3(0, 0.5, 0.006)
-mesh = SubResource("QuadMesh_art71")
+mesh = SubResource("QuadMesh_art72")
 material_override = ExtResource("art_yard_school_windows")
 cast_shadow = 0

@@ -52,7 +52,7 @@ from paint_stage_textures import DISTANCE  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 from build_outdoor_locations import (  # noqa: E402
     DOOR_HEIGHT, FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER, GROVE_RAIL_H_LEN,
-    GROVE_RAIL_V_LEN, GROVE_RAIL_Z, GROVE_TREES, SCHOOL_SOUTH_Z,
+    GROVE_FAR_TREES, GROVE_RAIL_V_LEN, GROVE_RAIL_Z, GROVE_TREES, SCHOOL_SOUTH_Z,
     SCHOOL_WALL_H, SCHOOL_WALL_X, STREET_DOOR_Z, STREET_GATE_Z, STREET_SCHOOL_Z, YARD_WALL_X,
 )
 
@@ -186,6 +186,7 @@ MATERIALS: dict[str, dict] = {
     "yard_school_windows_south": {"texture": stex("window_tile"), "cut": 0.5,
                                   "scale": ((SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]) / 8.0, 11.4 / 6.5, 1.0)},
     "front_yard_distance": {"texture": stex("distance_front_yard"), "unshaded": True},
+    "north_grove_distance": {"texture": stex("distance_north_grove"), "unshaded": True},
     # the courtyard
     "court_concrete": tiled((132, 124, 120), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
@@ -478,16 +479,16 @@ def north_grove_nodes() -> Builder:
     b = Builder()
     A = "StageArt"
     b.nodes.append(MARKER + "\n")
-    # One dirt floor far under everything, so the fog takes the strip's edges instead of a
-    # void; then the front yard's east margin beyond the west railing - with the same trees
-    # the yard grows, at the places its coordinates put them (yard x - 11.75, z - 7.9).
+    # The painted distance: a sky floor a metre and a half under the walkable ground, so
+    # the fog takes the strip's edges instead of a void; then the front yard's east margin
+    # beyond the railings, on the same dirt.
+    distance(b, A, "north_grove", "north_grove_distance", -1.6)
     b.node("Beyond", A)
     b.flat("Ground", f"{A}/Beyond", yard.plane(b, 70.0, 55.0), "yard_dirt", (-12.0, -0.01, -9.0))
-    far = ((-1.55, -4.3, "a", 270), (-18.15, -3.7, "a", 0), (-18.55, -11.9, "b", 90),
-           (-5.55, -11.5, "c", 180), (-3.0, -12.4, "c", 90), (-8.0, -14.6, "b", 270),
-           (-13.4, -13.2, "a", 0))
-    for i, (x, z, variant, yaw_) in enumerate(far):
-        dead_tree(b, f"{A}/Beyond", f"FarTree{i}", (x, 0.0, z), variant, yaw_)
+    # The far trees hang under their fading bodies (the generator's GroveFarTreeN),
+    # so a sight line that crosses one fades it instead of blocking the view.
+    for i, (_x, _z, variant, yaw_) in enumerate(GROVE_FAR_TREES):
+        dead_tree(b, f"GroveFarTree{i}", "StageTree", (0, -3.55, 0), variant, yaw_)
     # The trodden line down the L.
     b.node("Ground", A)
     b.flat("PathEast", f"{A}/Ground", yard.plane(b, 1.6, 20.0), "yard_path", (1.7, 0.003, -7.6))
