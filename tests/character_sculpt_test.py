@@ -107,6 +107,14 @@ def read(doc, data, index):
 BUILT_BY_PREPARE = frozenset({'n'})
 SCULPTED = {role: path for role, path in sculpt.RUNTIME.items() if role not in BUILT_BY_PREPARE}
 
+# Issue #383: the player's runtime head is re-exported by tools/head_v2.py from the
+# archived V1 export -- retopology and UVs are not vertex layers, so the sculpt chain
+# can no longer be what the runtime file *is*. The chain itself is untouched and still
+# owns V1: `sculpt.apply` must reproduce this archive byte for byte, and every
+# assertion below keeps running against the archive as lead's output. The V2 runtime
+# is pinned in tests/head_v2_test.py instead.
+V1_EXPORTED = {'lead': ROOT / 'art/character_models/sculpt/lead_v1_head.glb'}
+
 
 class HeadSculpts(unittest.TestCase):
     @classmethod
@@ -118,6 +126,7 @@ class HeadSculpts(unittest.TestCase):
         cls.before_classroom = {role: snapshot(sculpt.CLASSROOM_POLISH_BASE, path)
                                 for role, path in SCULPTED.items()}
         cls.outputs = {role:(ROOT/path).read_bytes() for role,path in SCULPTED.items()}
+        cls.outputs.update({role: path.read_bytes() for role, path in V1_EXPORTED.items()})
         cls.layers = sculpt.read_layers()
 
     def test_reproducible_and_original_player_export_is_archived(self):
