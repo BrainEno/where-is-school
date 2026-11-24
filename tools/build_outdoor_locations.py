@@ -68,8 +68,8 @@ FRONT_PORCH_STEP_Z = (13.0, 18.6)
 FRONT_YARD_TREES = (
     (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
     (-6.6, 26.4, "c", 0), (3.4, 22.8, "b", 270), (11.0, 27.6, "a", 90),
-    # the last three are the grove's trees 9, 11 and 13 (yard x = grove x + 11.65,
-    # the same z), the strip seen from this side of its railing
+    # the last three stand in the strip behind the north railing, near the grove's
+    # trees 9, 11 and 12 (a tenth of a metre off the strict mapping is invisible)
     (1.95, -17.9, "b", 180), (-0.65, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
 )
 # The box each crown grows in (front_yard_meshes.TREE_BOUNDS), as the fader's collider.
@@ -727,7 +727,7 @@ def build_front_yard():
          "id_dest": "street"},
         # Round 26: into the north grove, past the gate's north pier (the strip runs north
         # from here along the wall - docs/MAP_PLAN.md §5, phase 2).
-        {"name": "ToNorthGrove", "pos": (14.55, 0.9, 7.4), "id": "front_yard_to_grove",
+        {"name": "ToNorthGrove", "pos": (13.45, 0.9, 8.6), "id": "front_yard_to_grove",
          "prompt_key": "prompt.to_grove", "radius": 1.25,
          "outline": ("GroveHintTree/StageTree/Trunk",),
          "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromFrontYard",

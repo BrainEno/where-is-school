@@ -170,15 +170,18 @@ const LOCATIONS := {
 		# fences (west and east), the invisible edge along the building site, the alley
 		# threshold and the skipping girl are a box each, and the fourth stacked tyre adds
 		# a pick box to the tyre look.
-		"shapes": 106,
-		"interactables": 18, # The new paper read is separate from the view through the doorway.
-		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
+		# Round 26: the way to the north grove (a mesh-only trunk and rail stub outlined)
+		# adds a sphere and two pick boxes.
+		"shapes": 109,
+		"interactables": 19, # The new paper read is separate from the view through the doorway.
+		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard", "FromGrove"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
 			"pg_site_gate": "site_interior/FromPorch",
 			"pg_site_climb": "site_interior/FromPorch",
 			"pg_container_yard": "container_yard/FromPlayground",
+		"playground_to_grove": "north_grove/FromPlayground",
 		},
 	},
 	"laboratory": {
