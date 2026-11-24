@@ -11515,97 +11515,97 @@ mesh = SubResource("BoxMesh_art265")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster0" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster0" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 0.5563, -0.1328)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster1" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster1" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 0.6687, -0.3984)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster2" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster2" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 0.7812, -0.6641)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster3" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster3" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 0.8938, -0.9297)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster4" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster4" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.0063, -1.1953)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster5" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster5" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.1187, -1.4609)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster6" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster6" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.2313, -1.7266)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster7" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster7" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.3438, -1.9922)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster8" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster8" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.4563, -2.2578)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster9" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster9" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.5688, -2.5234)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster10" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster10" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.6813, -2.7891)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster11" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster11" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.7937, -3.0547)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster12" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster12" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 1.9062, -3.3203)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster13" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster13" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 2.0187, -3.5859)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster14" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster14" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 2.1313, -3.8516)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster15" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="WestBaluster15" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(-1.465, 2.2438, -4.1172)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
@@ -11633,97 +11633,97 @@ mesh = SubResource("BoxMesh_art265")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster0" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster0" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 0.5563, -0.1328)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster1" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster1" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 0.6687, -0.3984)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster2" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster2" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 0.7812, -0.6641)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster3" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster3" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 0.8938, -0.9297)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster4" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster4" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.0063, -1.1953)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster5" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster5" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.1187, -1.4609)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster6" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster6" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.2313, -1.7266)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster7" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster7" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.3438, -1.9922)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster8" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster8" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.4563, -2.2578)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster9" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster9" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.5688, -2.5234)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster10" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster10" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.6813, -2.7891)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster11" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster11" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.7937, -3.0547)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster12" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster12" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 1.9062, -3.3203)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster13" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster13" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 2.0187, -3.5859)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster14" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster14" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 2.1313, -3.8516)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster15" type="MeshInstance3D" parent="Stairs/NorthFlight"]
+[node name="EastBaluster15" type="MeshInstance3D" parent="Stairs/NorthFlight"]
 position = Vector3(1.465, 2.2438, -4.1172)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
@@ -11990,79 +11990,79 @@ mesh = SubResource("BoxMesh_art279")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster0" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster0" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 0.5692, -0.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster1" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster1" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 0.7077, -0.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster2" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster2" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 0.8462, -0.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster3" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster3" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 0.9846, -0.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster4" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster4" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.1231, -1.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster5" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster5" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.2615, -1.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster6" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster6" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.4, -1.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster7" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster7" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.5385, -1.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster8" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster8" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.6769, -2.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster9" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster9" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.8154, -2.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster10" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster10" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 1.9538, -2.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster11" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster11" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 2.0923, -2.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster12" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="WestBaluster12" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(-1.465, 2.2308, -3.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
@@ -12090,79 +12090,79 @@ mesh = SubResource("BoxMesh_art279")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster0" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster0" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 0.5692, -0.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster1" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster1" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 0.7077, -0.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster2" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster2" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 0.8462, -0.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster3" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster3" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 0.9846, -0.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster4" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster4" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.1231, -1.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster5" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster5" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.2615, -1.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster6" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster6" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.4, -1.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster7" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster7" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.5385, -1.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster8" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster8" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.6769, -2.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster9" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster9" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.8154, -2.375)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster10" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster10" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 1.9538, -2.625)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster11" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster11" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 2.0923, -2.875)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")
 cast_shadow = 0
 
-[node name="Baluster12" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
+[node name="EastBaluster12" type="MeshInstance3D" parent="Stairs/OffsetFlight"]
 position = Vector3(1.465, 2.2308, -3.125)
 mesh = SubResource("BoxMesh_art266")
 material_override = SubResource("Mat_iron_green")

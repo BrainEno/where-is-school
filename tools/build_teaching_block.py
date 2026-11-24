@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -511,7 +512,7 @@ def flight(b, parent, name, origin, yaw, run, rise, width, steps, accent,
             count = max(2, int(length / 0.28))
             for i in range(count):
                 t = (i + 0.5) / count
-                b.box(f"Baluster{i}", p, (x, rise*t + 0.5, -run*t), (0.024, 0.92, 0.024), panel)
+                b.box(f"{side}Baluster{i}", p, (x, rise*t + 0.5, -run*t), (0.024, 0.92, 0.024), panel)
 
 
 def sign(b, parent, name, pos, text, width=0.55, yaw=0, plate="gallery_frame"):
@@ -1658,6 +1659,19 @@ def courtyard_view():
     return b
 
 
+def duplicate_nodes(text):
+    """Node paths emitted twice. Godot keeps only one; the other leaks at exit."""
+    seen, twice = set(), []
+    for name, parent in re.findall(r'^\[node name="([^"]+)"(?:[^\]\n]*?parent="([^"]*)")?', text, re.M):
+        path = name if parent in ("", ".") else f"{parent}/{name}"
+        if parent == "":
+            continue
+        if path in seen:
+            twice.append(path)
+        seen.add(path)
+    return twice
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -1669,6 +1683,9 @@ def main():
               (LOC / "courtyard_view.tscn", courtyard_view()),
               (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()))
     outputs = [(path, generated.emit()) for path, generated in scenes]
+    for path, text in outputs:
+        if twice := duplicate_nodes(text):
+            sys.exit(f"{path.relative_to(ROOT)} repeats node paths: " + ", ".join(twice[:8]))
     # The stink stable's shaped meshes are files of their own (tools/dream_stable.py).
     from dream_stable import STABLE_DIR  # noqa: E402
     stable = ROOT / STABLE_DIR
