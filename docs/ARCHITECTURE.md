@@ -832,13 +832,22 @@ must be walkable ground, and for a return trip must sit by the exit that leads b
 **A marker may also ask for a few steps on arrival (round 24).** `metadata/entry_walk =
 <metres>` makes `LocationFlow.transition_to()` walk the player that far straight ahead
 (along the marker's -Z) after the fade-in and before the transition beat lets go, with
-`StagedActorMotion.walk_to` - so no click can turn the walk round, and a walk the capsule
-cannot make (Q parked on the line) is skipped rather than forced. It exists for doorways whose
-way back sits under the cursor at the player's feet: entering the schoolyard from the
-teaching block put the player in front of the fire door and its step, inside the 1.6 m
-sphere of `pg_to_corridor`, so the first stray click walked them back in. The yard's
-`FromCorridor` walks 1.6 m out into the yard. `LocationHost.get_entry_walk_target()` reads
-it; a direct `load_location()` (a test, a restored save) does not walk.
+`StagedActorMotion.walk_down_to` - so no click can turn the walk round, and a walk the capsule
+cannot make (Q parked on the line) is skipped rather than forced. `walk_down_to` tweens only
+across the floor and leaves the height to the controller's gravity and floor snap, so a
+walk that starts on a landing comes down the treads; it is for going down or level, never
+up. It exists for doorways whose way back sits under the cursor at the player's feet:
+
+| Marker | Walk | Why |
+| --- | --- | --- |
+| `front_yard/FromCorridor` | 2.5 m east | Down the 02 gate steps (`school_gate`) or out of the 01 glass entrance; on toward the gate, away from the glass door (`front_yard_back_inside`). |
+| `street/FromResidential` | 5.8 m | Back from the flats the player stood on the landing of the twelve steps that are themselves the way up (`street_to_residential`); the walk goes down the flight to 0.9 m past its foot. |
+| `playground/FromCorridor` | 1.6 m | Out of the red fire door the player stood inside the 1.6 m sphere of `pg_to_corridor` (door and step). |
+
+`LocationHost.get_entry_walk_target()` reads it; a direct `load_location()` (a test, a
+restored save) does not walk. The street and playground scenes carry hand-made art passes,
+so their markers are edited in the `.tscn` and mirrored in `tools/build_outdoor_locations.py`
+rather than rebuilt.
 
 **Accidental falls are not arrivals.** A successful commit seeds the recovery pose
 from its entry marker. `LocationHost` checks the live player after physics movement;

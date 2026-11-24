@@ -245,6 +245,17 @@ not send the player straight back in.
   the fade-in the protagonist walks 1.6 m out into the yard on their own, then control
   comes back. `corridor_art_test` checks the walk and walks back to the door before using
   it; `companion_route_test` expects the player anywhere along that walk.
+- **Down the gate steps, on toward the gate.** The stairs the owner meant are the three
+  steps at the classroom end of 02 ("Go down towards the gate", `school_gate`), which lead
+  out to the front yard's dirt (`front_yard`). Its `FromCorridor` marker, shared with the
+  01 glass entrance, now walks 2.5 m east toward the school gate after the fade-in, so the
+  glass door back in is behind the player. `corridor_art_test` checks it after the gate steps.
+- **The estate stair, the same idea outside the school.** Back from the flats
+  (`res_back_to_street`) the player used to stand on the street's stair landing, on the
+  flight that is itself the way up (`street_to_residential`). `street/FromResidential` now
+  faces down the stairs and walks 5.8 m, down all twelve steps to 0.9 m past the foot
+  (`StagedActorMotion.walk_down_to`, which lets gravity bring the feet down each tread).
+  `return_route_test` goes back down once and checks where the walk ends.
 
 ## Build and check
 

@@ -487,7 +487,11 @@ def build_street():
     ]
     # `FromCorridor` is outside the side door now; it keeps the name the route used to give it,
     # because saves taken in the street name it.
-    s.spawns = [("FromCorridor", (-7.4, 0, 15.2)), ("FromResidential", (10.5, 1.6, -35.4))]
+    # Back from the flats the player stands on the landing, on the very stair that is the way
+    # up again, so the arrival walks them down the flight and 0.9 m past its foot (round 24).
+    s.spawns = [("FromCorridor", (-7.4, 0, 15.2)),
+                ("FromResidential", (10.5, 1.6, -35.4),
+                 {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 5.8})]
     # The painted distance keeps going, but neither the asphalt nor the pavements
     # do. A low works barrier makes the playable southern edge physical and legible.
     s.box("SouthWorksBarrier", (0, 0.53, 19.79), (34, 1.06, 0.28), "concrete", ["camera_occluder"])
@@ -625,8 +629,10 @@ def build_front_yard():
          "id_dest": "street"},
     ]
     # Shared by the glass entrance and the gate steps (both leave the block). Faces east, toward
-    # the school gate. Split per exit in a later phase; see docs/CORRIDOR_ART.md.
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5), {"rotation": (0, -90, 0), "entry_facing": True}),
+    # the school gate. Split per exit in a later phase; see docs/CORRIDOR_ART.md. Round 24: the
+    # arrival walks 2.5 m on toward the gate, so the glass door (the way back in) is well behind.
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5),
+                 {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.5}),
                 ("FromStreet", (12.0, 0, d_mid))]
     return s
 
