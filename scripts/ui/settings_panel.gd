@@ -660,13 +660,15 @@ func _cycle(id: StringName, step: int) -> void:
 	_story_feedback = ""
 	if id == &"story_editor":
 		var settings := _settings()
-		var saved := settings != null and bool(settings.call("set_story_editor_enabled", value == "on"))
-		var installed := settings != null and bool(settings.call("is_story_editor_enabled"))
+		var wanted := value == "on"
+		var saved := settings != null and bool(settings.call("set_story_editor_enabled", wanted))
+		var moved := settings != null and bool(settings.call("is_story_editor_enabled")) == wanted
 		var refused := _store_failure_step(settings)
 		# The step is what makes a refusal something the author can act on, instead of only a
-		# "try again" nobody can diagnose (#394).
+		# "try again" nobody can diagnose (#394), and `moved` is what tells a switch the run
+		# accepted for itself alone from one that did not move at all - either direction (#396).
 		_story_feedback_args = {"step": refused}
-		_story_feedback = _story_feedback_key(saved, installed, refused)
+		_story_feedback = _story_feedback_key(saved, moved, refused)
 		_sync_story_choice()
 		_refresh_status_hint()
 		return
@@ -1102,14 +1104,14 @@ func _settings() -> Node:
 
 
 ## Which note the story editor row shows after one cycle of the switch: `saved` is whether the
-## preference reached the file, `installed` whether the editor is on now. A development run can
-## be installed without being saved, and that deserves a different sentence (#395). A refusal
-## with no step cannot be the session-only case: the state only changes through a settings node
-## that reported one.
-static func _story_feedback_key(saved: bool, installed: bool, step: String) -> String:
+## preference reached the file, `moved` whether the switch is where it was just asked to be. A
+## development run can move without being saved, in either direction, and that deserves a
+## different sentence from a change that never happened (#395, #396). A refusal with no step cannot
+## be the session-only case: the state only changes through a settings node that reported one.
+static func _story_feedback_key(saved: bool, moved: bool, step: String) -> String:
 	if saved:
 		return "settings.done_note"
-	if not step.is_empty() and installed:
+	if moved and not step.is_empty():
 		return "settings.session_only_note"
 	return "settings.save_failed" if step.is_empty() else "settings.save_failed_step"
 

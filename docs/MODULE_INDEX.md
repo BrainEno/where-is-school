@@ -72,8 +72,10 @@ file; descriptions state the responsibility/boundary rather than copying APIs th
 Phone-only button states and glyphs are the preload-only [handheld style](../scripts/ui/handheld_style.gd);
 input ownership and safe-area sizing stay with the touch controls and layout. The pause menu's
 [story editor entry](../scripts/ui/story_editor_entry.gd) binds the saved iOS opt-in to the optional
-runtime without preloading resources omitted from other exports, and is where a development run is
-decided (`debug_run`, `development_run()`, the `--story-editor` override).
+runtime without preloading resources omitted from other exports, is where a development run is
+decided (`debug_run`, `development_run()`, the `--story-editor` override), and owns the `F9`
+author key: `hotkey_pressed()` says what counts as a press, `hotkey_allowed()` who may use it, and
+`toggle()` moves the saved switch through `Settings` and reports whether the file took it.
 
 ### Dialogue and reading
 

@@ -89,6 +89,17 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 
+## The author's story-editor key, wherever the run currently is (#396). This node is the one thing
+## that is alive on the title screen, in a paused world, in the settings screen and under the
+## editor's own overlay; `_shortcut_input` is the engine's slot between the settings screen's
+## rebinding capture (`_input`) and the menus that take every key they are showing
+## (`_unhandled_input`). The deciding is all in `StoryEditorEntry.handle_shortcut_input()` - a
+## build that left `scripts/story_editor/` out, or a release export nobody launched as an author's
+## run, hands the press straight back to the game.
+func _shortcut_input(event: InputEvent) -> void:
+	StoryEditorEntry.handle_shortcut_input(self, event)
+
+
 ## What the save file looks like, without applying anything: `{state, detail,
 ## quarantined_to, saved_at_unix, location_id}` where `state` is `SAVE_NONE`, `SAVE_VALID`
 ## or `SAVE_BROKEN`. Reading an unreadable file copies it to `save.broken.json`, exactly as

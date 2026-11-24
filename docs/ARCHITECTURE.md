@@ -878,16 +878,25 @@ the project can force the switch on for one session with `--story-editor` or
 `WHERE_IS_SCHOOL_STORY_EDITOR=1`, which writes nothing and is ignored by builds that leave
 `scripts/story_editor/` out; and in such a run - `StoryEditorEntry.debug_run`, the same
 `OS.is_debug_build()` test the dialogue and location code use to keep development reports out of
-a shipped copy - a switch the machine refused to store still installs the editor for the session,
-with the row saying it is not saved, because the file is the author's persistence and not the
-author's permission. Turning the editor *off* always needs the write to succeed, and a release
-export (`--export-release`) meets none of this: a player's copy refuses the change outright
-(#395). `Settings` delegates to
+a shipped copy - a switch the machine refused to store still moves the editor for the session, in
+either direction, with the row saying it is not saved, because the file is the author's persistence
+and not the author's permission: a stored "on" wins the next run, and `set_story_editor_enabled()`
+answers whether the *file* took the value, which is the only honest input to that message. A
+release export (`--export-release`) meets none of this: a player's copy refuses the change
+outright (#395). The same switch has a key, `F9`, handled by the always-alive `Session` autoload
+in `_shortcut_input` - after the settings screen's rebinding capture has had its `_input` turn,
+and before the pause menu or an open editor takes every key in `_unhandled_input` - and it goes
+through `StoryEditorEntry.toggle()`, which refuses to act in a run that is neither a development
+run nor an author-launched one, so the iOS package that carries the runtime keeps the key silent
+for a player (#396). `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
 mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The
 journal and Files exchange under `user://story_editor/` never write `user://save.json` or
-shipped story content. Android and desktop exclude both the runtime and the bridge.
+shipped story content. Android and desktop exclude both the runtime and the bridge, and
+`tests/story_editor_setting_test.gd` reads `export_presets.cfg` to keep that true for every preset
+but iOS, so "separate enough to package apart" is a checked property of the export filters and
+not a habit (`scripts/dev/*`, `tests/*` and `tools/*` are checked in the same pass).
 
 **Live author session.** The staged author app has a different project/user directory
 from boot (and a different bundle ID on iPhone), so its actual gameplay progress and
