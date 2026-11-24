@@ -67,7 +67,11 @@ func _run() -> void:
 	else:
 		await _edit_and_export(author, archive)
 		await _verify_live_beyond_prologue()
-		verdict = "classroom edits and export, then live editing in another chapter's room"
+		# The script's PASS marker for this invocation is the phrase this verdict must keep
+		# leading with (`tools/authoring/test_live_classroom.sh`); #395 extends the run, it
+		# does not rename it.
+		verdict = "same classroom cursor edits, nested routes and bilingual export, then live " \
+			+ "editing in another chapter's room"
 	paused = false
 	_world.queue_free()
 	await process_frame
@@ -215,6 +219,16 @@ func _verify_live_beyond_prologue() -> void:
 		return host.get_current() != null and host.get_current().location_id == &"corridor" and not ui.fade.visible
 	, 6.0), "The corridor did not load"):
 		return
+	# A conversation the classroom left running refuses play_conversation; the corridor must
+	# start on an idle controller or the wait below would starve on a line that never began.
+	if not _check.expect(await Harness.wait_until(func() -> bool:
+		return not _controller.is_busy()
+	, 4.0), "The classroom conversation never went idle before the corridor"):
+		_press("ContinueGame")
+		if not _check.expect(await Harness.wait_until(func() -> bool:
+			return not _controller.is_busy()
+		, 4.0), "Still busy after an advance; the corridor chapter cannot start"):
+			return
 	if not _check.expect(_controller.play_conversation(&"corridor_speaker"),
 			"A non-prologue chapter's conversation would not start"):
 		return
@@ -226,10 +240,15 @@ func _verify_live_beyond_prologue() -> void:
 	if not await _open_editor():
 		return
 	var drawer := _world.get_node_or_null(^"AuthorOverlay/AuthorDrawer")
-	_check.expect(bool(_editor.call("is_editing")) and paused,
+	var live_open := bool(_editor.call("is_editing"))
+	_check.expect(live_open and paused,
 		"The corridor dialogue did not open the live editor (#395)")
 	_check.expect(drawer == null or not bool((drawer as CanvasItem).visible),
 		"The corridor dialogue degraded to the draft drawer (#395)")
+	if not live_open:
+		# Recording the miss above is the verdict; editing a drawer that is not the live
+		# editor would only turn one red bar into a null dereference.
+		return
 	if not await _edit_line(&"cs_1"):
 		return
 	_press("ContinueGame")
@@ -242,6 +261,8 @@ func _edit_line(expected: StringName = SAME) -> bool:
 	var before := _world_snapshot()
 	var shown := _panel.get_body_text()
 	var body := _editor.find_child("InlineBody", true, false) as TextEdit
+	if not _check.expect(body != null, "The live editor has no inline body to edit"):
+		return false
 	var point := _panel.get_body_label().get_global_rect().get_center()
 	if MobileLayout.enabled:
 		await _tap(_button("EditLine"), true)

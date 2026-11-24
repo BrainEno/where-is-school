@@ -38,6 +38,12 @@ assert_log() {
   local log="$1" status="$2" marker="$3"
   if (( status != 0 )) || grep -qE 'SCRIPT ERROR|Parse Error|ObjectDB instances leaked|^FAIL:' "$log" || ! grep -Fq "$marker" "$log"; then
     echo "::error title=Live author classroom::See ${log##*/} (exit $status)"
+    # The annotation above cannot link anywhere in CI; carry the actual verdict lines into
+    # the annotation stream, or a red run is unreadable from the checks page alone.
+    grep -m 8 -E 'SCRIPT ERROR|Parse Error|TEST FAILURE|^FAIL:' "$log" |
+      while IFS= read -r line; do
+        printf '::error title=Live author classroom::%s\n' "$line"
+      done || true
     return 1
   fi
 }
