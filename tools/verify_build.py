@@ -130,7 +130,7 @@ MiB = 1024 * 1024
 # Every single file is checked against the budget of the kind of thing it is, because the
 # kinds do not cost the same: a mesh, a texture, a font, a sound, a scene and a JSON chapter
 # have different reasons to grow and different sizes when they are healthy. A single global
-# "2 MiB per file" was either too generous for a JSON chapter or too strict for the one
+# one global per-file limit was either too generous for a JSON chapter or too strict for the one
 # texture the game will eventually ship.
 #
 # Each entry is: warning threshold, hard limit, and why those two numbers. A warning is an
@@ -214,8 +214,8 @@ CATEGORIES = (
 # export on the pinned 4.7.2 source measured 36.95 MiB of packed entries (38,957,488
 # bytes including the PCK directory). 40 MiB then gave it modest headroom; the owner
 # raised the pack limit to about 50 MiB when teacher N's blink and expression shapes
-# (about 0.3 MiB of dense morph data) pushed the iOS pack to 40.1 MiB. The per-file
-# limits are unchanged. Earlier limits were 16, 24, 32 and then 40 MiB.
+# (about 0.3 MiB of dense morph data) pushed the iOS pack to 40.1 MiB. Non-character
+# per-file limits are unchanged; named runtime characters use their separate budget.
 PACK_WARN_BYTES = 8 * MiB
 MAX_PACK_BYTES = 50 * MiB
 
