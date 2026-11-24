@@ -43,8 +43,8 @@ const GROUND_PROBE_DEPTH := 4.0
 @export var interaction_path: NodePath = ^"../InteractionController"
 ## Physics layers that can be walked on.
 @export_flags_3d_physics var ground_mask: int = 1
-## Radii tried around an interactable when looking for somewhere to stand, in metres,
-## as fractions of its interaction radius plus a body's width.
+## Radii tried around an interactable, as fractions of the controller's actual reach.
+## An object's proximity-sensor radius is not its activation distance.
 @export var ring_fractions: PackedFloat32Array = PackedFloat32Array([0.35, 0.6, 0.85])
 ## How many evenly spaced candidate spots are tried on each ring.
 @export_range(4, 48, 1) var ring_samples: int = 16
@@ -208,6 +208,18 @@ func _physics_process(_delta: float) -> void:
 	# no longer something to arrive at. Catching the disabled case here is the difference
 	# between "the prompt stopped offering it" and "the character keeps walking at it".
 	if is_instance_valid(_pending) and _pending.can_interact():
+		# Do not walk past a valid interaction point just because the sampled spot
+		# lies farther along the route. Clear the pending target before cancelling,
+		# so the path cancellation cannot report a second, spurious abandonment.
+		if _approaching and not _is_falling():
+			if _can_activate_now(_pending):
+				_activate_pending()
+				_player.cancel_path()
+			elif not _player.is_path_active():
+				# A path that ended during a fall must wait until recovery before it
+				# can either use the target or report an unreachable approach.
+				_last_rejection = "%s is no longer usable from here" % String(_pending.interact_id)
+				_abandon_pending()
 		return
 	_abandon_pending()
 	if _player != null:
@@ -393,7 +405,7 @@ func _begin_approach(target: Interactable) -> void:
 	_clear_cue()
 	_pending = target
 	_has_pending = true
-	if _can_activate_now(target):
+	if not _is_falling() and _can_activate_now(target):
 		# Nothing to walk to, so there is no shape to draw — the action is already happening
 		# under the cursor. The click still answers in the ears: a mouse that makes no sound
 		# when it works is the one case a player reads as "the click was lost".
@@ -408,15 +420,18 @@ func _begin_approach(target: Interactable) -> void:
 		_abandon_pending()
 		_mark_refused(_ground_point_under(target.global_position))
 		return
+	# Set this before the request: an already-near path can finish synchronously.
+	_approaching = true
 	if not _player.request_path_to(spot):
 		_last_rejection = "no route to the spot next to %s" % String(target.interact_id)
 		_abandon_pending()
 		_mark_refused(_ground_point_under(target.global_position))
 		return
 	if not _player.is_path_active():
-		# The spot was within arrival distance, so the walk finished inside
-		# `request_path_to()` and `_on_path_finished()` has already activated (or
-		# abandoned) the target and cleared the cue. There is no walk left to mark.
+		# The request can finish synchronously. In midair the target stays pending
+		# until landing or recovery, rather than locking control during a fall.
+		if _has_pending:
+			_last_click_accepted = true
 		_announce(WorldCue.ROLE_TARGET)
 		return
 	_approaching = true
@@ -437,21 +452,26 @@ func _find_approach_spot(target: Interactable) -> Variant:
 	if not _map_has_geometry(map):
 		return null
 	var origin := target.global_position
-	var reach := maxf(target.radius, 0.4)
+	# The controller, not the hotspot sphere, defines actual interaction reach.
+	# Leave room for the player's arrival tolerance so a finished path is still in reach.
+	var reach := maxf(_interaction.max_distance - _player.arrival_radius - 0.05, 0.45)
 	var best: Vector3 = Vector3.ZERO
 	var best_cost := INF
 	for fraction: float in ring_fractions:
-		var radius: float = clampf(reach * fraction + 0.35, 0.45, reach * 1.35)
+		var radius: float = clampf(_interaction.max_distance * fraction, 0.45, reach)
 		for index in ring_samples:
 			var angle := TAU * float(index) / float(ring_samples)
 			var candidate := origin + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 			var snapped := NavigationServer3D.map_get_closest_point(map, candidate)
 			if Vector2(snapped.x - candidate.x, snapped.z - candidate.z).length() > 0.6:
 				continue
-			var to_player := candidate - _player.global_position
-			var to_player_flat := Vector2(to_player.x, to_player.z).length()
-			if to_player_flat < 0.35:
-				# Standing on top of the target is not an approach.
+			var target_gap := Vector2(snapped.x - origin.x, snapped.z - origin.z).length()
+			if target_gap < 0.35 or target_gap > reach:
+				continue
+			var player_gap := Vector2(snapped.x - _player.global_position.x, snapped.z - _player.global_position.z).length()
+			if player_gap <= _player.arrival_radius:
+				# A path to this point would finish immediately, before the player
+				# can move to the clear line of sight found for the point.
 				continue
 			# Everything below is measured from the floor the character would stand on, not
 			# from the object's anchor. The anchor of a door or a notice is at chest height,
@@ -462,7 +482,10 @@ func _find_approach_spot(target: Interactable) -> Variant:
 			var path := NavigationServer3D.map_get_path(
 				map, _player.global_position, Vector3(snapped.x, floor_y + 0.05, snapped.z), true
 			)
-			if path.size() < 2:
+			if path.size() < 2 or path[-1].distance_to(snapped) > 0.25:
+				# NavigationServer may return a partial path on a disconnected island.
+				continue
+			if not _interaction.is_in_reach_at(snapped, target):
 				continue
 			if not _interaction.has_line_of_sight_from(
 				Vector3(snapped.x, floor_y + _interaction.eye_height, snapped.z), target
@@ -482,6 +505,12 @@ func _path_length(path: PackedVector3Array) -> float:
 	for index in range(1, path.size()):
 		total += Vector2(path[index].x - path[index - 1].x, path[index].z - path[index - 1].z).length()
 	return total
+
+
+## Match the recovery system's falling threshold: floor contact may take a physics
+## tick after a teleport, but a body already falling must not open a presentation.
+func _is_falling() -> bool:
+	return _player != null and not _player.is_on_floor() and _player.velocity.y < -1.5
 
 
 func _can_activate_now(target: Interactable) -> bool:
@@ -526,7 +555,8 @@ func _abandon_pending() -> void:
 
 func _on_path_finished() -> void:
 	if _has_pending:
-		_activate_pending()
+		if _player != null and not _is_falling():
+			_activate_pending()
 		return
 	_approaching = false
 	# A ground walk arrived: the mark has nothing left to say, so it fades. Only the

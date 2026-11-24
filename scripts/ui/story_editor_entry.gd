@@ -5,10 +5,38 @@ extends RefCounted
 const BOOTSTRAP_PATH := "res://scripts/story_editor/bootstrap.gd"
 const NODE_NAME := &"StoryEditor"
 const AUTHOR_APP := ^"Authoring"
+const AUTHOR_PROJECT_NAME := "Where Is School - Author"
+
+## The development override for the saved switch (#394). The author workflow is wanted in
+## every run of the project, and a preferences file the machine will not accept must never be
+## able to hide the tool it is there for, so `--story-editor` (after `--`) or
+## `WHERE_IS_SCHOOL_STORY_EDITOR=1` turns the editor on for one run without writing anything.
+## It is honoured only where this build carries the editor's scripts, which is the same rule
+## as the row in the settings screen: the desktop and Android player exports leave them out,
+## so a shipped copy cannot be switched on from a command line.
+const DEVELOPMENT_ARGUMENT := "--story-editor"
+const DEVELOPMENT_ENVIRONMENT := "WHERE_IS_SCHOOL_STORY_EDITOR"
+
+
+static func scripts_present() -> bool:
+	return ResourceLoader.exists(BOOTSTRAP_PATH, "GDScript")
 
 
 static func available(root: Window) -> bool:
-	return not root.has_node(AUTHOR_APP) and ResourceLoader.exists(BOOTSTRAP_PATH, "GDScript")
+	return not root.has_node(AUTHOR_APP) and scripts_present()
+
+
+## The rule apart from the process, so a test can hand it a launch of its own.
+static func development_requested(args: PackedStringArray, environment: String) -> bool:
+	return scripts_present() and (args.has(DEVELOPMENT_ARGUMENT) or environment == "1")
+
+
+## True when this run was launched as an author's copy. Read-only by design: the file keeps
+## saying whatever it said, so a player's copy is unaffected by how the project was launched.
+static func development_override() -> bool:
+	return development_requested(
+		OS.get_cmdline_user_args(), OS.get_environment(DEVELOPMENT_ENVIRONMENT)
+	)
 
 
 ## Settings calls this deferred, after the autoload/scene change that read the preference.
@@ -32,6 +60,20 @@ static func reconcile(root: Window, enabled: bool) -> void:
 
 static func installed(root: Window) -> Node:
 	return root.get_node_or_null(NodePath(NODE_NAME))
+
+
+## The live editor is never a mid-run switch. Staging sets a new project identity
+## before Godot opens user://, so progress, read log and drafts are isolated from boot.
+static func isolated_author(root: Window) -> Node:
+	if ProjectSettings.get_setting("application/config/name") != AUTHOR_PROJECT_NAME \
+			or bool(ProjectSettings.get_setting("application/config/use_custom_user_dir", false)):
+		return null
+	return root.get_node_or_null(AUTHOR_APP)
+
+
+static func for_pause(root: Window) -> Node:
+	var author := isolated_author(root)
+	return author if author != null else installed(root)
 
 
 static func is_editing(root: Window) -> bool:

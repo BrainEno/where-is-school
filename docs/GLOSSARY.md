@@ -82,10 +82,14 @@
 | `b` | B | B | 生物老师。序章缺席，只出现在想象与他人转述里 |
 | `n` | N | N | 年轻的代课老师，最后宣布自习 |
 | `student` | 同学 | Classmate | 无名的其他学生 |
-| `voice_orientation` | 路感 | Orientation | 内心声音，见下 |
-| `voice_whimsy` | 异想天开 | Flight of Fancy | 内心声音（第 7 轮占位，数值 3；还没有被动规则），只在想象场景里检定，见下 |
+| `voice_insight` | 洞察 | Insight | 言外之意、矛盾与动机假说，不是导航 |
+| `voice_scrutiny` | 细察 | Scrutiny | 观察、细节与证据；窗帘细节等归此 |
+| `voice_echo` | 回声 | Echo | 记忆、经验与联想；检定不把记忆变成事实 |
+| `voice_imagination` | 臆想 | Imagination | 想象、潜意识与推测性联想；主观会话唯一可用的检定能力 |
+| `voice_inference` | 推演 | Inference | 逻辑分析、推理与因果 |
+| `voice_resonance` | 共鸣 | Resonance | 情绪、共情与人际信号；已注册，暂无合适的现有检定文案 |
 
-**内心声音**（[叙事圣经](NARRATIVE_BIBLE.md#inner-voices)定稿六个，目前只实装路感）。另有第 7 轮加的「异想天开」Flight of Fancy（`whimsy`）：想象场景 `expected_b` 荒诞方向里的检定，把荒诞分成高、低两支；这是唯一允许在主观会话里掷的检定，说明文字待作者：路感 Orientation（空间、方向）、细察 Scrutiny（细节与证据）、回声 Echo（记忆与联想）、臆想 Imagination（想象与潜意识）、推演 Inference（推理与因果）、共鸣 Resonance（情绪与人际）。
+**内心声音：** [叙事圣经](NARRATIVE_BIBLE.md#inner-voices)确定的六声部均已注册，暂定基础值都为 3。19 个既有检定按行为语义分配，而非统一改成洞察；旧 `orientation`／`whimsy` 不再是有效的注册能力，幻想检定归入 `imagination`，不另增第七项。旧节点 `e3_whimsy` 和被动规则的 `*_orientation` 是稳定存档键，故保留拼写；兼容层只更新已知旧检定的归属，不重掷或重算结果。成长、人格与新增台词尚未实现，见[内容契约](../data/dialogue_schema/README.md#six-voice-registry-and-reviewed-attempts-280)。
 
 **知识来源与徽章：**
 
@@ -109,7 +113,7 @@
 | `residential` | 到达居民楼、楼梯、绿色动物 |
 | `alley` | 到达小巷 |
 | `playground` | 到达操场、器材棚、球 |
-| `inner_voice` | 路感的被动开口 `voice_*` |
+| `inner_voice` | 洞察、推演与细察的三个既有被动开口 `voice_*` |
 
 ## 5. autoload：节点名 ↔ 脚本
 
@@ -135,7 +139,7 @@
 | **beat** | 一段被编排的场景节拍：`begin_beat()` 到 `end_beat()` 之间，房间归这一拍所有。不是「关卡」。 | `scripts/world/opening_sequence.gd` |
 | **step** | 序章的一步（`wake`、`q_wake`、`expectation`、`bag`、`bell`、`substitute`；第 7 轮起想象场景在 Q 的对话里选择进入，排在翻书包之前），每步由一个 flag 证明已完成，读档从第一个未完成的步继续。 | `scripts/world/prologue_steps.gd` |
 | **Source** | 一条知识的来路，见第 3 节徽章表。 | `data/dialogue_schema/README.md` |
-| **subjective** | 主观会话（想象、回忆）：不能设 flag、不能有 `once` 选项，只能记录 `recalled` / `imagined`；检定只允许「异想天开」（`whimsy`，第 7 轮），其余能力的检定一律拒绝。 | 同上 |
+| **subjective** | 主观会话（想象、回忆）：不能设 flag、不能有 `once` 选项，只能记录 `recalled` / `imagined`；检定只允许「臆想」（`imagination`），其余能力的检定一律拒绝。 | 同上 |
 | **恍惚 / 拼贴滤镜** | 序章摔伤（`curtain_landing_injured`）落到集装箱顶那一刻起的画面风格：静止的后现代拼贴，约四分钟游戏时间内淡出（先快后慢）；从集装箱顶跳下会再摔一次、滤镜更重；操场水龙头喝一口减轻三分之一，洗脸立刻清醒。`concussion_seconds_left` 记剩余秒数。只是美术，不晃不动。 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) |
 | **flag** | 一个剧情布尔（少数带值），存在 `GameState` 里。常量表在 `scripts/narrative/story_flags.gd`。**该文件是文档索引，不是白名单**：`set_flag()` 只拒绝空名，不校验常量表。 | `scripts/autoload/game_state.gd` |
 | **`seen:<inspection>`** | 看过某个检视物的落盘键，由检视自动写入，可以在 conditions 与检定加值里读。 | `scripts/narrative/story_flags.gd` |

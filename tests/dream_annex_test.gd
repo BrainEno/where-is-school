@@ -21,6 +21,7 @@ const Harness = preload("res://tests/test_harness.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const OFFICE := "res://scenes/locations/staff_office/staff_office.tscn"
 const COAT_SHADER := "res://assets/shaders/school/stable_coat.gdshader"
+const FRONT_YARD_DIRT := "res://scenes/environment/props/stage_art/materials/yard_dirt.tres"
 const REQUIRED: Array[NodePath] = [
 	^"DreamAnnex/Escalator/Tilt/Belt",
 	^"DreamAnnex/Totem",
@@ -53,7 +54,7 @@ const WAITING_CROWD := {
 }
 const STENCH_SHADER := "res://assets/shaders/school/stench_haze.gdshader"
 const STENCH_POINTS := {
-	"the muck heap": [Vector3(-35.6, -3.4, 5.6), 0.99, 1.01],
+	"the muck heap": [Vector3(-41.9, -3.4, 13.45), 0.99, 1.01],
 	"the yard": [Vector3(-35.0, -3.4, 13.4), 0.5, 0.95],
 	"the glass entrance": [Vector3(-20.0, -3.4, 18.2), -0.01, 0.01],
 	"the 01 gallery": [Vector3(-11.4, -3.4, 12.6), -0.01, 0.01],
@@ -67,7 +68,12 @@ const ENTRANCE_ROUTES := {
 	"the archive door landing": Vector3(-14.48, -3.4, 12.0),
 	"the plan room door landing": Vector3(-6.45, -3.4, 8.0),
 	"the foot of the blue stair": Vector3(-9.94, -3.4, 12.54),
+	"the walk-out forecourt": Vector3(-17.65, -3.64, 21.3),
 }
+## Round 23: the board across the lane's mouth (build_dream_annex.lane_barrier), world x and
+## the z where it starts. Routes into the stable yard squeeze past its north end.
+const BARRIER_X := -24.95
+const BARRIER_NORTH_Z := 16.35
 const KEPT_POINTS := {
 	"the 01 gallery": Vector3(-11.4, -3.4, 12.6),
 	"the restroom door": Vector3(-25.0, -3.4, 12.6),
@@ -197,12 +203,23 @@ func _check_stable_surfaces(annex: Node) -> void:
 		var lane_mat := connector.material_override as ShaderMaterial
 		if _check.expect(yard_mat != null and lane_mat != null and yard_mat.shader != null
 				and yard_mat.shader == lane_mat.shader, "The connector no longer shares the yard soil shader"):
-			var offset: Vector2 = lane_mat.get_shader_parameter(&"ground_offset")
-			_check.expect(offset.is_equal_approx(Vector2(-18.75, 16.565)),
-				"The connector's soil coordinates no longer meet the yard's")
+			# Round 22: both are painted with the front yard's packed dirt, laid in world space.
+			var front := load(FRONT_YARD_DIRT) as StandardMaterial3D
+			var yard_dirt: Texture2D = yard_mat.get_shader_parameter(&"dirt")
+			var lane_dirt: Texture2D = lane_mat.get_shader_parameter(&"dirt")
+			_check.expect(front != null and yard_dirt != null and yard_dirt == front.albedo_texture
+				and lane_dirt == yard_dirt and front.uv1_world_triplanar,
+				"The stable soil is no longer the front yard's dirt")
 		var bounds := connector.mesh.get_aabb()
 		_check.expect(is_equal_approx(connector.position.x + bounds.position.x, -24.75),
 			"The connector overlaps or leaves a gap at the yard soil edge")
+	# Round 22: the corner posts stand proud of the stall front and end walls, not flush with
+	# them; bottoms on the floor and tops under the upper floor are buried, so only x and z.
+	var house := annex.get_node_or_null(^"StableYard/DreamHouse")
+	if _check.expect(house != null, "The stable house is missing"):
+		var house_parts := ["NorthWall", "SouthWall", "StallBack", "Partition0", "Partition1", "Partition2"]
+		house_parts.append_array(["Post0", "Post1", "Post2", "Post3"])
+		_check_no_shared_faces(house, house_parts, [0, 2])
 	# On each low wall, the lime is proud of the mud; caps stop at the ends.
 	for wall: String in ["WallSouth", "WallWest", "WallNorth", "WallNorthEast"]:
 		var base := "StableYard/" + wall + "/"
@@ -285,6 +302,41 @@ func _check_restroom_shell(corridor: Node) -> void:
 		_check.expect(door.global_position.x > bounds.end.x + .4, "The restroom shell covers its own door.")
 	for part: String in ["Plaster", "Light0/Frost", "Downpipe"]:
 		_check.expect(shell.get_node_or_null(NodePath(part)) is MeshInstance3D, "The restroom shell lost its " + part)
+	# Round 22: the roof membrane and the cornice shared their top face and flickered.
+	_check_no_shared_faces(
+		shell, ["Plinth", "Plaster", "Cornice", "Roof", "Coping0", "Coping1", "Coping2", "Coping3"], [0, 1, 2]
+	)
+
+
+## Fails where two box meshes with different materials have a face in the same plane, facing
+## the same way and overlapping by more than a sliver: those faces z-fight as the camera moves.
+## `axes` lists the axes to compare (0 = x, 1 = y, 2 = z), so faces known to be buried can be skipped.
+func _check_no_shared_faces(owner: Node, parts: Array, axes: Array) -> void:
+	var boxes: Array[AABB] = []
+	var materials: Array[Material] = []
+	var names: Array[String] = []
+	for part: String in parts:
+		var piece := owner.get_node_or_null(NodePath(part)) as MeshInstance3D
+		if not _check.expect(piece != null and piece.mesh is BoxMesh, "%s lost its %s" % [owner.name, part]):
+			continue
+		boxes.append(piece.global_transform * piece.mesh.get_aabb())
+		materials.append(piece.material_override)
+		names.append(part)
+	for i in boxes.size():
+		for j in range(i + 1, boxes.size()):
+			if materials[i] == materials[j]:
+				continue
+			for axis: int in axes:
+				var u := (axis + 1) % 3
+				var v := (axis + 2) % 3
+				var a: AABB = boxes[i]
+				var b: AABB = boxes[j]
+				var span_u := minf(a.end[u], b.end[u]) - maxf(a.position[u], b.position[u])
+				var span_v := minf(a.end[v], b.end[v]) - maxf(a.position[v], b.position[v])
+				if span_u < .005 or span_v < .005:
+					continue
+				var shared := absf(a.position[axis] - b.position[axis]) < .002 or absf(a.end[axis] - b.end[axis]) < .002
+				_check.expect(not shared, "%s: %s and %s share a face; it flickers" % [owner.name, names[i], names[j]])
 
 
 func _check_stench(corridor: Node) -> void:
@@ -496,6 +548,7 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		var path := NavigationServer3D.map_get_path(map, entrance, spot, true)
 		_check.expect(path.size() >= 2 and path[path.size() - 1].distance_to(spot) < 0.3,
 			"%s cannot be reached from the glass entrance." % label)
+	_check_barrier(map, entrance)
 	for label: String in KEPT_POINTS:
 		var wanted: Vector3 = KEPT_POINTS[label]
 		var spot := NavigationServer3D.map_get_closest_point(map, wanted)
@@ -508,6 +561,23 @@ func _check_routes(corridor: LocationRoot, nav: LocationNavigation) -> void:
 		length += climb[i - 1].distance_to(climb[i])
 	_check.expect(climb.size() >= 2 and climb[climb.size() - 1].distance_to(top) < 0.3 and length < 18.0,
 		"The stair under the escalator no longer climbs 02 -> 03 directly (%.1f m)." % length)
+
+
+## The lane barrier must turn the yard route through the gap by the wall, not let it pass
+## straight through the board.
+func _check_barrier(map: RID, entrance: Vector3) -> void:
+	var yard := NavigationServer3D.map_get_closest_point(map, ENTRANCE_ROUTES["the yard"])
+	var path := NavigationServer3D.map_get_path(map, entrance, yard, true)
+	var crossed := false
+	for i in range(1, path.size()):
+		var a := path[i - 1]
+		var b := path[i]
+		if (a.x - BARRIER_X) * (b.x - BARRIER_X) > 0.0 or is_equal_approx(a.x, b.x):
+			continue
+		var z := lerpf(a.z, b.z, (BARRIER_X - a.x) / (b.x - a.x))
+		crossed = true
+		_check.expect(z < BARRIER_NORTH_Z, "The yard route passes through the lane barrier at z %.2f." % z)
+	_check.expect(crossed, "The yard route never crosses the lane barrier's line: %s." % str(path))
 
 
 ## The baked surface floats a cell or two above the collider, so only the plan

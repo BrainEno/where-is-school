@@ -12,7 +12,8 @@ reasoning and the evidence.
   mesh. The click ripples once where it landed and leaves a quiet ring that turns and
   breathes while the character walks; the ring collapses and fades when the walk ends.
 - **Click a person, a prop or a door** and the character walks to a spot inside that
-  object's interaction radius and uses it on arrival. Clicking something already
+  controller's interaction reach and uses it on arrival (or sooner if it reaches a clear
+  usable position). Clicking something already
   within reach uses it immediately, without a step.
 - **Hear the click land.** Every one of those clicks answers in the ears as well as on the
   floor: a soft tick where a walk was accepted, the same tick a little brighter on an object,

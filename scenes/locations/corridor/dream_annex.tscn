@@ -1,7 +1,8 @@
-[gd_scene load_steps=397 format=3]
+[gd_scene load_steps=402 format=3]
 
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_escalator.gdshader" id="dream_escalator"]
 [ext_resource type="Shader" path="res://assets/shaders/school/dream_motion.gdshader" id="dream_motion"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/yard_dirt.png" id="front_yard_dirt"]
 [ext_resource type="Shader" path="res://assets/shaders/school/stable_earth.gdshader" id="stable_earth"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/yard_earth.tres" id="stable_yard_earth"]
 [ext_resource type="ArrayMesh" path="res://scenes/locations/corridor/stable_meshes/loose_straw.tres" id="stable_loose_straw"]
@@ -517,20 +518,16 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.435, 0.427, 0.475, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_earth_f622af2af40bdd01"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_80db0e56e48c45ba"]
 shader = ExtResource("stable_earth")
+shader_parameter/dirt = ExtResource("front_yard_dirt")
 shader_parameter/fill = 0.5
-shader_parameter/ground_offset = Vector2(-18.75, 16.565)
 
-[sub_resource type="StandardMaterial3D" id="Mat_earth_dark"]
-diffuse_mode = 3
-specular_mode = 2
-roughness = 1.0
-albedo_color = Color(0.376, 0.306, 0.227, 1)
-
-[sub_resource type="ShaderMaterial" id="Mat_stable_earth_8e76a807725f1c9f"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_95b61262405cd4e2"]
 shader = ExtResource("stable_earth")
+shader_parameter/dirt = ExtResource("front_yard_dirt")
 shader_parameter/fill = 0.5
+shader_parameter/shade = 0.75
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_coat_2ea4776f0150e094"]
 shader = ExtResource("stable_coat")
@@ -589,6 +586,12 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.173, 0.141, 0.118, 1)
 
+[sub_resource type="ShaderMaterial" id="Mat_stable_earth_428dda26f603a1a5"]
+shader = ExtResource("stable_earth")
+shader_parameter/dirt = ExtResource("front_yard_dirt")
+shader_parameter/fill = 0.5
+shader_parameter/shade = 0.8
+
 [sub_resource type="StandardMaterial3D" id="Mat_timber"]
 diffuse_mode = 3
 specular_mode = 2
@@ -601,7 +604,7 @@ specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.494, 0.463, 0.439, 1)
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_3bf845022ae3c19f"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_64c992a38f3ea171"]
 shader = ExtResource("stable_coat")
 shader_parameter/neck_pivot = Vector3(0, 1.3, 0.5)
 shader_parameter/tail_pivot = Vector3(0, 1.36, -0.93)
@@ -611,8 +614,9 @@ shader_parameter/swish = 0.32
 shader_parameter/swish_rate = 0.44
 shader_parameter/phase = 0.1
 shader_parameter/sheen = 0.3
+shader_parameter/fill = 0.46
 
-[sub_resource type="ShaderMaterial" id="Mat_stable_coat_714630024ea3d10a"]
+[sub_resource type="ShaderMaterial" id="Mat_stable_coat_5646907d3535a0fd"]
 shader = ExtResource("stable_coat")
 shader_parameter/neck_pivot = Vector3(0, 1.3, 0.5)
 shader_parameter/tail_pivot = Vector3(0, 1.36, -0.93)
@@ -622,6 +626,7 @@ shader_parameter/swish = 0.2
 shader_parameter/swish_rate = 0.53
 shader_parameter/phase = 0.55
 shader_parameter/sheen = 0.3
+shader_parameter/fill = 0.3
 
 [sub_resource type="ShaderMaterial" id="Mat_stable_paint_04687412a0101c4d"]
 shader = ExtResource("stable_paint")
@@ -2020,10 +2025,10 @@ size = Vector3(0.7, 1.3, 0.2)
 size = Vector3(7.5, 0.12, 6.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art159"]
-size = Vector3(0.2, 3.1, 0.2)
+size = Vector3(0.22, 3.1, 0.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art160"]
-size = Vector3(2.8, 1.6, 0.08)
+size = Vector3(2.78, 1.6, 0.08)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art161"]
 size = Vector3(0.82, 1.96, 0.02)
@@ -2250,6 +2255,18 @@ size = Vector3(0.01, 0.16, 0.04)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art217"]
 size = Vector3(0.01, 0.12, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art218"]
+size = Vector3(0.16, 1.15, 2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art219"]
+size = Vector3(0.1, 1.2, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art220"]
+size = Vector3(0.05, 0.24, 1.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art221"]
+size = Vector3(0.06, 0.26, 0.3)
 
 [node name="DreamAnnex" type="Node3D"]
 
@@ -5405,7 +5422,7 @@ cast_shadow = 0
 [node name="StableLaneConnectorEarth" type="MeshInstance3D" parent="."]
 position = Vector3(-22.75, -3.396, 16.565)
 mesh = SubResource("PlaneMesh_art120")
-material_override = SubResource("Mat_stable_earth_f622af2af40bdd01")
+material_override = SubResource("Mat_stable_earth_80db0e56e48c45ba")
 cast_shadow = 0
 
 [node name="Lane" type="StaticBody3D" parent="StableYard"]
@@ -5443,13 +5460,13 @@ cast_shadow = 0
 [node name="VillageGround" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(-49.5, -3.53, 6)
 mesh = SubResource("BoxMesh_art125")
-material_override = SubResource("Mat_earth_dark")
+material_override = SubResource("Mat_stable_earth_95b61262405cd4e2")
 cast_shadow = 0
 
 [node name="YardEarth" type="MeshInstance3D" parent="StableYard"]
 position = Vector3(0, -3.4, 0)
 mesh = ExtResource("stable_yard_earth")
-material_override = SubResource("Mat_stable_earth_8e76a807725f1c9f")
+material_override = SubResource("Mat_stable_earth_80db0e56e48c45ba")
 cast_shadow = 0
 
 [node name="LooseStraw" type="MeshInstance3D" parent="StableYard"]
@@ -5678,7 +5695,7 @@ cast_shadow = 0
 [node name="StallFloor" type="MeshInstance3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.1, 0.02, 0)
 mesh = SubResource("BoxMesh_art149")
-material_override = SubResource("Mat_earth_dark")
+material_override = SubResource("Mat_stable_earth_428dda26f603a1a5")
 cast_shadow = 0
 
 [node name="UpperFloor" type="MeshInstance3D" parent="StableYard/DreamHouse"]
@@ -5759,7 +5776,7 @@ mesh = SubResource("BoxMesh_art159")
 material_override = SubResource("Mat_timber")
 
 [node name="Partition0" type="MeshInstance3D" parent="StableYard/DreamHouse"]
-position = Vector3(2.1, 0.8, -0.9667)
+position = Vector3(2.09, 0.8, -0.9667)
 mesh = SubResource("BoxMesh_art160")
 material_override = SubResource("Mat_timber")
 cast_shadow = 0
@@ -5767,11 +5784,11 @@ cast_shadow = 0
 [node name="StallLamp0" type="OmniLight3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.6, 2.5, -1.8833)
 light_color = Color(1, 0.8, 0.588, 1)
-light_energy = 0.95
-omni_range = 3.8
+light_energy = 1.7
+omni_range = 4.4
 
 [node name="Partition1" type="MeshInstance3D" parent="StableYard/DreamHouse"]
-position = Vector3(2.1, 0.8, 0.9667)
+position = Vector3(2.09, 0.8, 0.9667)
 mesh = SubResource("BoxMesh_art160")
 material_override = SubResource("Mat_timber")
 cast_shadow = 0
@@ -5783,7 +5800,7 @@ light_energy = 0.95
 omni_range = 3.8
 
 [node name="Partition2" type="MeshInstance3D" parent="StableYard/DreamHouse"]
-position = Vector3(2.1, 0.8, 2.8)
+position = Vector3(2.09, 0.8, 2.8)
 mesh = SubResource("BoxMesh_art160")
 material_override = SubResource("Mat_timber")
 cast_shadow = 0
@@ -5798,26 +5815,26 @@ omni_range = 3.8
 position = Vector3(2.35, 0, -1.8833)
 rotation_degrees = Vector3(0, 90, 0)
 mesh = ExtResource("stable_bay_horse")
-material_override = SubResource("Mat_stable_coat_3bf845022ae3c19f")
+material_override = SubResource("Mat_stable_coat_64c992a38f3ea171")
 custom_aabb = AABB(-0.7, -0.05, -1.6, 1.4, 2.6, 3.4)
 
 [node name="Limbs" type="MeshInstance3D" parent="StableYard/DreamHouse/BayHorse"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_bay_horse_limbs")
-material_override = SubResource("Mat_stable_coat_3bf845022ae3c19f")
+material_override = SubResource("Mat_stable_coat_64c992a38f3ea171")
 custom_aabb = AABB(-0.7, -0.05, -1.6, 1.4, 2.6, 3.4)
 
 [node name="GreyHorse" type="MeshInstance3D" parent="StableYard/DreamHouse"]
 position = Vector3(2.33, 0, 1.8833)
 rotation_degrees = Vector3(0, 84, 0)
 mesh = ExtResource("stable_grey_horse")
-material_override = SubResource("Mat_stable_coat_714630024ea3d10a")
+material_override = SubResource("Mat_stable_coat_5646907d3535a0fd")
 custom_aabb = AABB(-0.7, -0.05, -1.6, 1.4, 2.6, 3.4)
 
 [node name="Limbs" type="MeshInstance3D" parent="StableYard/DreamHouse/GreyHorse"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stable_grey_horse_limbs")
-material_override = SubResource("Mat_stable_coat_714630024ea3d10a")
+material_override = SubResource("Mat_stable_coat_5646907d3535a0fd")
 custom_aabb = AABB(-0.7, -0.05, -1.6, 1.4, 2.6, 3.4)
 
 [node name="StallBedding" type="MeshInstance3D" parent="StableYard/DreamHouse"]
@@ -6852,7 +6869,8 @@ material_override = SubResource("Mat_stable_coat_0bd92967cc194fed")
 custom_aabb = AABB(-0.3, -0.05, -0.3, 0.6, 0.6, 0.6)
 
 [node name="Heap" type="Node3D" parent="StableYard"]
-position = Vector3(-31.75, -3.4, 5.4)
+position = Vector3(-39.25, -3.4, 13.45)
+rotation_degrees = Vector3(0, 90, 0)
 
 [node name="Muck" type="MeshInstance3D" parent="StableYard/Heap"]
 position = Vector3(0, 0, 0)
@@ -6866,19 +6884,19 @@ mesh = ExtResource("stable_manure_bay")
 material_override = SubResource("Mat_stable_coat_71c9e8d0e30314f3")
 
 [node name="Flies0" type="MultiMeshInstance3D" parent="StableYard"]
-position = Vector3(-31.75, -2.4, 5.5)
+position = Vector3(-39.25, -2.4, 13.55)
 multimesh = SubResource("MultiMesh_art195")
 material_override = SubResource("Mat_stench_flies_c62b80bea652e670")
 cast_shadow = 0
 
 [node name="Stink0" type="MultiMeshInstance3D" parent="StableYard"]
-position = Vector3(-31.75, -2.7, 5.6)
+position = Vector3(-39.25, -2.7, 13.65)
 multimesh = SubResource("MultiMesh_art196")
 material_override = SubResource("Mat_stench_wisp_f7084e06cb34fcfd")
 cast_shadow = 0
 
 [node name="Smell0" type="MeshInstance3D" parent="StableYard"]
-position = Vector3(-31.75, -1.9, 5.7)
+position = Vector3(-39.25, -1.9, 13.75)
 mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_odor_18daccd8e8294487")
 cast_shadow = 0
@@ -7089,6 +7107,61 @@ font_size = 44
 pixel_size = 0.004
 outline_size = 0
 modulate = Color(0.11, 0.141, 0.227, 1)
+
+[node name="LaneBarrier" type="StaticBody3D" parent="StableYard" groups=["camera_occluder"]]
+position = Vector3(-20.95, -3.4, 17.35)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Solid" type="CollisionShape3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.575, 0)
+shape = SubResource("BoxShape3D_art218")
+
+[node name="Post0" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.6, -0.94)
+mesh = SubResource("BoxMesh_art219")
+material_override = SubResource("Mat_timber")
+
+[node name="Post1" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.6, 0.94)
+mesh = SubResource("BoxMesh_art219")
+material_override = SubResource("Mat_timber")
+
+[node name="LowBoard" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.42, 0)
+mesh = SubResource("BoxMesh_art220")
+material_override = SubResource("Mat_timber")
+
+[node name="Stripe0" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.75)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe1" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.45)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
+
+[node name="Stripe2" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, -0.15)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe3" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.15)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
+
+[node name="Stripe4" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.45)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_vermilion")
+
+[node name="Stripe5" type="MeshInstance3D" parent="StableYard/LaneBarrier"]
+position = Vector3(0, 0.92, 0.75)
+mesh = SubResource("BoxMesh_art221")
+material_override = SubResource("Mat_paper")
 
 [node name="YardLight0" type="OmniLight3D" parent="StableYard"]
 position = Vector3(-34, -0.7, 13)

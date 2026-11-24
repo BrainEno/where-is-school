@@ -52,7 +52,7 @@ func _check_formula() -> void:
 		if face < CheckResolver.MIN_TOTAL or face > CheckResolver.MAX_TOTAL:
 			_failures.append("2d6 produced %d, outside 2..12." % face)
 			return
-		var exact := resolver.roll(&"orientation", ABILITY_VALUE, face + ABILITY_VALUE, 0, key)
+		var exact := resolver.roll(&"scrutiny", ABILITY_VALUE, face + ABILITY_VALUE, 0, key)
 		if not bool(exact["success"]):
 			_failures.append(
 				"face %d + value %d should meet difficulty %d but failed."
@@ -62,7 +62,7 @@ func _check_formula() -> void:
 			_failures.append("The total is not die + ability value (got %d)." % int(exact["total"]))
 		if int(exact["margin"]) != 0:
 			_failures.append("A success exactly on the difficulty should have margin 0.")
-		var over := resolver.roll(&"orientation", ABILITY_VALUE, face + ABILITY_VALUE + 1, 0, key)
+		var over := resolver.roll(&"scrutiny", ABILITY_VALUE, face + ABILITY_VALUE + 1, 0, key)
 		if bool(over["success"]):
 			_failures.append(
 				"face %d + value %d should fail difficulty %d but succeeded."
@@ -81,10 +81,10 @@ func _check_edges() -> void:
 	if worst.is_empty() or best.is_empty():
 		_failures.append("Could not find keys for the lowest and highest rolls.")
 		return
-	var hopeful := resolver.roll(&"orientation", 6, 8, 0, worst)
+	var hopeful := resolver.roll(&"scrutiny", 6, 8, 0, worst)
 	if not bool(hopeful["success"]):
 		_failures.append("A 2 with a value of 6 should still reach difficulty 8.")
-	var hopeless := resolver.roll(&"orientation", 0, 13, 0, best)
+	var hopeless := resolver.roll(&"scrutiny", 0, 13, 0, best)
 	if bool(hopeless["success"]):
 		_failures.append("A 12 against difficulty 13 should fail even on the best roll.")
 
@@ -95,7 +95,7 @@ func _check_two_dice() -> void:
 	var resolver := CheckResolver.new(SEED)
 	for index in 40:
 		var key := "dice/%d" % index
-		var roll := resolver.roll(&"orientation", 3, 9, 0, key)
+		var roll := resolver.roll(&"scrutiny", 3, 9, 0, key)
 		var faces: Array = roll.get("dice", [])
 		if faces.size() != 2:
 			_failures.append("A roll did not record two dice (got %d)." % faces.size())
@@ -128,8 +128,8 @@ func _check_determinism() -> void:
 	var second := CheckResolver.new(SEED)
 	for index in 25:
 		var key := "same/%d" % index
-		var a := first.roll(&"orientation", 3, 9, 1, key)
-		var b := second.roll(&"orientation", 3, 9, 1, key)
+		var a := first.roll(&"scrutiny", 3, 9, 1, key)
+		var b := second.roll(&"scrutiny", 3, 9, 1, key)
 		if a != b:
 			_failures.append("Two resolvers with seed %d disagreed on '%s'." % [SEED, key])
 			return
@@ -149,9 +149,9 @@ func _check_determinism() -> void:
 ## The anti-reroll property: one key, one face, forever — inside the session.
 func _check_no_reroll_by_key() -> void:
 	var resolver := CheckResolver.new(SEED)
-	var first := resolver.roll(&"orientation", 4, 11, 0, "pg_shed/ps_boundary_check")
+	var first := resolver.roll(&"scrutiny", 4, 11, 0, "pg_shed/ps_boundary_check")
 	for attempt in 5:
-		var again := resolver.roll(&"orientation", 4, 11, 0, "pg_shed/ps_boundary_check")
+		var again := resolver.roll(&"scrutiny", 4, 11, 0, "pg_shed/ps_boundary_check")
 		if int(again["die"]) != int(first["die"]) or bool(again["success"]) != bool(first["success"]):
 			_failures.append("Re-rolling the same key changed the outcome on attempt %d." % attempt)
 			return
@@ -162,13 +162,13 @@ func _check_modifiers() -> void:
 	var key := "modifier/0"
 	var face := resolver.dice_total_for(key)
 	var difficulty := face + 3
-	var plain := resolver.roll(&"orientation", 3, difficulty, 0, key)
+	var plain := resolver.roll(&"scrutiny", 3, difficulty, 0, key)
 	if not bool(plain["success"]):
 		_failures.append("The unmodified baseline should succeed at the exact difficulty.")
-	var helped := resolver.roll(&"orientation", 3, difficulty + 2, 2, key)
+	var helped := resolver.roll(&"scrutiny", 3, difficulty + 2, 2, key)
 	if not bool(helped["success"]):
 		_failures.append("A +2 modifier did not turn the same difficulty into a success.")
-	var hurt := resolver.roll(&"orientation", 3, difficulty, -2, key)
+	var hurt := resolver.roll(&"scrutiny", 3, difficulty, -2, key)
 	if bool(hurt["success"]):
 		_failures.append("A -2 modifier did not turn the same difficulty into a failure.")
 
@@ -182,10 +182,10 @@ func _check_modifiers() -> void:
 
 func _check_clamping() -> void:
 	var resolver := CheckResolver.new(SEED)
-	var low := resolver.roll(&"orientation", 0, -5, 0, "clamp/low")
+	var low := resolver.roll(&"scrutiny", 0, -5, 0, "clamp/low")
 	if int(low["difficulty"]) != CheckResolver.MIN_DIFFICULTY:
 		_failures.append("A negative difficulty was not clamped to the minimum.")
-	var high := resolver.roll(&"orientation", 0, 999, 0, "clamp/high")
+	var high := resolver.roll(&"scrutiny", 0, 999, 0, "clamp/high")
 	if int(high["difficulty"]) != CheckResolver.MAX_DIFFICULTY:
 		_failures.append("An absurd difficulty was not clamped to the maximum.")
 	if CheckResolver.is_valid_difficulty(0) or CheckResolver.is_valid_difficulty(99):
@@ -194,7 +194,7 @@ func _check_clamping() -> void:
 
 func _check_reuse() -> void:
 	var resolver := CheckResolver.new(SEED)
-	var original := resolver.roll(&"orientation", 2, 8, 0, "reuse/0")
+	var original := resolver.roll(&"scrutiny", 2, 8, 0, "reuse/0")
 	var replayed := CheckResolver.reuse(original)
 	if bool(original.get("reused", false)):
 		_failures.append("A fresh roll should not be marked as reused.")
@@ -208,9 +208,9 @@ func _check_reuse() -> void:
 
 func _check_describe() -> void:
 	var resolver := CheckResolver.new(SEED)
-	var result := resolver.roll(&"orientation", 4, 11, -1, "describe/0")
+	var result := resolver.roll(&"scrutiny", 4, 11, -1, "describe/0")
 	var line := CheckResolver.describe(result)
-	if not line.begins_with("orientation 4 + 2d6 "):
+	if not line.begins_with("scrutiny 4 + 2d6 "):
 		_failures.append("The readable form does not name the voice and the roll: '%s'" % line)
 	if not (" vs 11 " in line):
 		_failures.append("The readable form does not show the difficulty: '%s'" % line)

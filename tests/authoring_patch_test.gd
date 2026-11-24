@@ -22,6 +22,7 @@ func _run() -> void:
 	_test_choice_followups()
 	_test_store_patch()
 	_test_empty_draft_recovery()
+	_test_live_round_transaction()
 	for name: String in DirAccess.get_files_at(_directory):
 		DirAccess.remove_absolute(_directory.path_join(name))
 	DirAccess.remove_absolute(_directory)
@@ -202,3 +203,35 @@ func _test_empty_draft_recovery() -> void:
 	_check.expect(journal.recover().is_empty() and not journal.problem.is_empty(), "Two corrupt slots were treated as a clean draft")
 	_check.expect(not journal.save({"draft": {}}) and FileAccess.get_file_as_string(path) == "{also torn",
 		"Journal silently overwrote both corrupt slots")
+
+
+func _test_live_round_transaction() -> void:
+	var directory := _directory.path_join("live")
+	var store := Store.new(directory, true)
+	store.load_workspace()
+	if not _check.expect(store.blocked.is_empty(), "Could not load live fixture: " + store.blocked):
+		return
+	var address := {"chapter": CHAPTER, "conversation": "student", "node": "st_reciting", "choice": "wait"}
+	var anchor := store.round_anchor(address)
+	var form := {"lines": [{"speaker": "student", "text": "Fixture line"}],
+		"choices": [{"text": "Continue fixture", "next": "st_1"}]}
+	var loop := form.duplicate(true)
+	loop["choices"].append({"text": "Invalid looping choice", "next": "st_reciting"})
+	_check.expect(not store.apply_live_round(address, anchor, loop) and store.round_anchor(address) == anchor,
+		"A round with a cyclic new choice changed its original anchor")
+	var slot := directory.path_join("draft-1.json")
+	_check.expect(DirAccess.make_dir_recursive_absolute(slot) == OK, "Could not inject a journal failure")
+	_check.expect(not store.apply_live_round(address, anchor, form) and store.has_save_error()
+		and store.round_anchor(address) == anchor and store.graph_override(CHAPTER, "zh-CN") == null,
+		"A failed durable write published one or more edges")
+	DirAccess.remove_absolute(slot)
+	_check.expect(store.apply_live_round(address, anchor, form), "Valid round rejected on retry: " + store.error)
+	var accepted := store.export_json()
+	_check.expect(not store.apply_live_round(address, anchor, form) and store.export_json() == accepted,
+		"Stale anchor changed or duplicated an accepted round")
+	var restored := Store.new(directory, true)
+	restored.load_workspace()
+	_check.expect(restored.blocked.is_empty() and restored.export_json() == accepted, "Retried transaction was not durable")
+	for name: String in DirAccess.get_files_at(directory):
+		DirAccess.remove_absolute(directory.path_join(name))
+	DirAccess.remove_absolute(directory)

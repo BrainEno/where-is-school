@@ -2,13 +2,29 @@
   "format_version": 1,
   "locale": "zh-CN",
   "abilities": {
-    "orientation": {
-      "name": "路感",
-      "description": "一种知道东西彼此相对位置的感觉：高低、接缝、什么对得齐、什么对不齐。它对形状有把握，对人无话可说。只有一个声音，而且仍是暂定。"
+    "insight": {
+      "name": "洞察",
+      "description": "言外之意、矛盾与动机假说。"
     },
-    "whimsy": {
-      "name": "异想天开",
-      "description": "待做·异想天开的说明（作者撰写）。"
+    "scrutiny": {
+      "name": "细察",
+      "description": "观察、细节与证据。"
+    },
+    "echo": {
+      "name": "回声",
+      "description": "记忆、经验与联想。"
+    },
+    "imagination": {
+      "name": "臆想",
+      "description": "想象、潜意识与推测性联想。"
+    },
+    "inference": {
+      "name": "推演",
+      "description": "逻辑分析、推理与因果。"
+    },
+    "resonance": {
+      "name": "共鸣",
+      "description": "情绪、共情与人际信号。"
     }
   }
 }

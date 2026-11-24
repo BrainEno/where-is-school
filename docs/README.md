@@ -20,8 +20,8 @@
 | [AGENT_EVALUATION.md](AGENT_EVALUATION.md) | 编码 Agent 的公平比较与选型协议 | 现行 | 仓库所有者 | 2026-11-17 | 与 [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) 配套使用 |
 | [AGENT_PROTOCOL.md](AGENT_PROTOCOL.md) | 强制协作、证据与合并边界规则 | 现行 | 仓库所有者 | 2026-11-17 | 唯一入口是 [AGENTS.md](../AGENTS.md)；文档状态入口是本页 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 运行时模块边界与交互规则 | 现行 | 工程 Agent | 2026-11-18 | 全局类型见 [MODULE_INDEX.md](MODULE_INDEX.md)，离线诊断见 §7c |
-| [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
-| [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
+| [ART_BIBLE.md](ART_BIBLE.md) | 英文美术方向源文档 | 现行 | 仓库所有者 | 2026-11-23 | 中文阅读副本为 [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) |
+| [ART_BIBLE.zh-CN.md](ART_BIBLE.zh-CN.md) | 美术方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-23 | 与 [ART_BIBLE.md](ART_BIBLE.md) 同步 |
 | [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) | 角色、肖像与第三方动画资产发行审计 | 证据/记录 | 仓库所有者 | 2026-11-17 | 含 #308 现用三张肖像的出处与发行边界；是证据台账而非许可证明，见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
 | [ASSET_PIPELINE.md](ASSET_PIPELINE.md) | 资产导入、Godot UID 与干净导入检查的合同 | 现行 | 工程 Agent | 2026-11-18 | §1 记本仓原生顶点色居民与导入模型的区别，§7 记录 UID 侧车和共享导入步骤，§10.2b 同步 N／学生几何修订合同 |
 | [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含 #308 现用肖像出处，以及教室帆布书包、操场集装箱铺盖与球场道具的第一方来源；记录不等于权利放行或美术批准 |
@@ -29,6 +29,8 @@
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐、翻包与主角步行摆幅；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-23 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md)；§9 为主角 V2 头部合同（issue #383），中文阅读副本为 [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) |
 | [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) | 角色外观中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-23 | 与 [CHARACTER_ART.md](CHARACTER_ART.md) 全文同步（含 §9 V2 头部合同），不独立声称获批 |
+| [CHARACTER_MODEL_STANDARD.md](CHARACTER_MODEL_STANDARD.md) | 人物 3D 模型的行业标准与执行方案：业余感的五个来源、可测量的头部比例、N 的改造记录 | 现行 | 仓库所有者 | 2026-11-23 | 评审工具在 `tools/character_review/` |
+
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–12 说明 N／学生几何、全员头部精修与主角步态，对照待所有者验收 |
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–12 几何修订同步，不独立声称获批 |
 | [CONCUSSION_VIEW.md](CONCUSSION_VIEW.md) | 序章摔伤后的“恍惚”画面：静止的后现代拼贴滤镜，落地最强、约四分钟内先快后慢淡出；再摔更重，水龙头可缓解或清除 | 实验 | 实现 PR 作者 | 2026-11-21 | 只做美术；检查见 `tests/concussion_view_test.gd` 与 `concussion-view-capture.yml` |
@@ -36,8 +38,8 @@
 | [CONCEPT_DIRECTION.zh-CN.md](CONCEPT_DIRECTION.zh-CN.md) | 概念方向中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-17 | 与 [CONCEPT_DIRECTION.md](CONCEPT_DIRECTION.md) 同步 |
 | [CORRIDOR_ART.md](CORRIDOR_ART.md) | 三层教学楼、走廊与两端房间的美术与路线 | 现行 | 实现 PR 作者 | 2026-11-20 | 共用舞台规则见 `tests/location_art_test.gd`；考试梦叠加层见 [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md)；同类改造见 [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) |
 | [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md) | 考试梦实验层：扶梯、售票处、03 考场/候考室与 01 后的马棚院子 | 实验 | 实现 PR 作者 | 2026-11-20 | 一楼进门右侧售票处；三人同步盖章，点脸可近看。检查见 `tests/dream_annex_test.gd`、`tests/ticket_counter_test.gd` |
-| [GLOSSARY.md](GLOSSARY.md) | 术语表：游戏文字用词、17 个地点 id ↔ 中英地名、人物与徽章、对话章节、10 个 autoload | 现行 | 文档 Agent | 2026-11-19 | 台词用词以本表为准（器材棚、居民楼、球场等）；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
-| [IMAGINED_LESSON.md](IMAGINED_LESSON.md) | 序章想象场景：B 的变形模型、残影与蒙克波浪滤镜 | 实验 | 实现 PR 作者 | 2026-11-21 | 美术已做；第 7 轮加了审问骨架（每句 B 的问话三个方向、2–4 轮占位、异想天开检定），文案待作者；检查见 `tests/imagined_lesson_test.gd` |
+| [GLOSSARY.md](GLOSSARY.md) | 术语表：游戏文字用词、17 个地点 id ↔ 中英地名、人物与徽章、对话章节、10 个 autoload | 现行 | 文档 Agent | 2026-11-23 | 台词用词以本表为准（器材棚、居民楼、球场等）；规则本身见 [ARCHITECTURE.md](ARCHITECTURE.md) |
+| [IMAGINED_LESSON.md](IMAGINED_LESSON.md) | 序章想象场景：B 的变形模型、残影与蒙克波浪滤镜 | 实验 | 实现 PR 作者 | 2026-11-23 | 美术已做；第 7 轮加了审问骨架（每句 B 的问话三个方向、2–4 轮占位、臆想检定），文案待作者；检查见 `tests/imagined_lesson_test.gd` |
 | [IMPLEMENTATION_NOTES_BUILD.md](IMPLEMENTATION_NOTES_BUILD.md) | 导出与字体子集化实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行发布流程见 [RELEASE.md](RELEASE.md) 与 [README.md](../README.md) |
 | [IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md](IMPLEMENTATION_NOTES_CORRIDOR_PROPS.md) | 走廊模型落地实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行资产台账见 [MODEL_LIBRARY.md](MODEL_LIBRARY.md) |
 | [IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md](IMPLEMENTATION_NOTES_DISPLAY_INPUT.zh-CN.md) | 显示与输入提示适配实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 唯一无英文配对的实现笔记；现行边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
@@ -48,34 +50,34 @@
 | [IMPLEMENTATION_NOTES_OPENING.md](IMPLEMENTATION_NOTES_OPENING.md) | 生物课序章实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行验收见 [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) |
 | [IMPLEMENTATION_NOTES_PLAYGROUND.md](IMPLEMENTATION_NOTES_PLAYGROUND.md) | 操场与内心声音实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |
 | [IMPLEMENTATION_NOTES_PROPS.md](IMPLEMENTATION_NOTES_PROPS.md) | 长椅与书包道具实现笔记 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) |
-| [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-18 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
-| [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) | 地图规划中文阅读副本 | 阅读副本 | 内容 Agent | 2026-11-17 | 与 [MAP_PLAN.md](MAP_PLAN.md) 同步 |
+| [MAP_PLAN.md](MAP_PLAN.md) | 学校及周边地图规划英文源 | 现行 | 仓库所有者 | 2026-11-23 | 中文阅读副本为 [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) |
+| [MAP_PLAN.zh-CN.md](MAP_PLAN.zh-CN.md) | 地图规划中文阅读副本 | 阅读副本 | 内容 Agent | 2026-11-23 | 与 [MAP_PLAN.md](MAP_PLAN.md) 同步 |
 | [MODEL_LIBRARY.md](MODEL_LIBRARY.md) | 可复用模型库与放置状态台账 | 现行 | 工程 Agent | 2026-11-18 | 导入合同见 [ASSET_PIPELINE.md](ASSET_PIPELINE.md)；记录当前角色几何计数，旧审计仍为历史记录 |
 | [MOBILE_BUILDS.md](MOBILE_BUILDS.md) | 原生移动构建、签名与设备验收 | 现行 | 工程 Agent | 2026-11-18 | 持久触控和紧凑菜单；独立 APK/IPA 工作流、Mac 模拟器与 Windows ADB 调试；桌面发布见 [RELEASE.md](RELEASE.md) |
-| [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-18 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
-| [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-17 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
+| [MODULE_INDEX.md](MODULE_INDEX.md) | 全局 class_name 公共类型索引 | 目录/索引 | 文档 Agent | 2026-11-23 | 开发前按 [AGENTS.md](../AGENTS.md) 要求读取 |
+| [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) | 游戏面向叙事约束 | 现行 | 仓库所有者 | 2026-11-23 | 产品范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md)；#280 六声部注册与旧检定兼容，不含成长与新增台词 |
 | [NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md](NARRATIVE_GAMEPLAY_REVIEW.zh-CN.md) | 剧情玩法评审、双语小试与回访切片 | 提案/待所有者 | 仓库所有者 | 2026-11-18 | 原基线 `76c5e77`，审计补核 `b8524c6` / `e143990`；不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) 或 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [OFFICE_ARCHIVE_ART.md](OFFICE_ARCHIVE_ART.md) | 环境美术实验第二轮：03 办公室后现代家具与档案室（学生档案、学校规章、检查卷宗的隐喻） | 实验 | 实现 PR 作者 | 2026-11-20 | 生成器 `tools/postmodern_office.py`、`tools/registry_archive.py`；检查见 `tests/office_archive_dressing_test.py`；第一轮见 [EXAM_DREAM_ART.md](EXAM_DREAM_ART.md) |
 | [OFFLINE_DIAGNOSTICS.md](OFFLINE_DIAGNOSTICS.md) | 离线事件审计、导出隐私及开发验证 | 现行 | 工程 Agent | 2026-11-18 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) §7c |
 | [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) | 所有者人工试玩验收清单 | 现行 | 仓库所有者 | 2026-11-17 | 发布流程见 [RELEASE.md](RELEASE.md) |
 | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) | 产品意图与范围 | 现行 | 仓库所有者 | 2026-11-17 | 叙事约束见 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md) |
 | [PROLOGUE_ART_MIGRATION.md](PROLOGUE_ART_MIGRATION.md) | 序章美术迁移与证据记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行截图证据说明见 [screenshots/README.md](screenshots/README.md) |
-| [PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md](PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md) | 生物老师 B 的主观幻想、异想天开、交织分支与人物刻板印象设计补充 | 提案/待所有者 | 仓库所有者 | 2026-11-21 | 不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md)；具体作者文本留白，待后续定稿 |
+| [PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md](PROLOGUE_DESIGN_SUPPLEMENT.zh-CN.md) | 生物老师 B 的主观幻想、异想天开、交织分支与人物刻板印象设计补充 | 提案/待所有者 | 仓库所有者 | 2026-11-23 | 不取代 [NARRATIVE_BIBLE.md](NARRATIVE_BIBLE.md)；具体作者文本留白，待后续定稿；首段注明本轮六声部决定优先于旧「独立异想天开」提案 |
 | [PROTOTYPE_BRIEF.md](PROTOTYPE_BRIEF.md) | 首个可玩垂直切片验收范围 | 现行 | 仓库所有者 | 2026-11-17 | 人工验收见 [PLAYTEST_CHECKLIST.md](PLAYTEST_CHECKLIST.md) |
 | [Q_MODEL_MIGRATION.md](Q_MODEL_MIGRATION.md) | Q 正式模型迁移记录 | 历史记录 | 实现 PR 作者 | 2026-11-17 | 现行来源台账见 [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md)；现行头部编辑见 [B/Q 头部精修](../art/character_models/sculpt/README.md) |
 | [RELEASE.md](RELEASE.md) | 双平台发布与导出验证流程 | 现行 | 工程 Agent | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md) |
-| [STORY_DOCS.zh-CN.md](STORY_DOCS.zh-CN.md) | 故事文档（台本）格式与 Google 文档往返流程 | 现行 | 内容 Agent | 2026-11-19 | 工具 `tools/story_doc.py`；内容契约见 [data/dialogue_schema/README.md](../data/dialogue_schema/README.md) |
-| [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-17 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
+| [STORY_DOCS.zh-CN.md](STORY_DOCS.zh-CN.md) | 故事文档（台本）格式与 Google 文档往返流程 | 现行 | 内容 Agent | 2026-11-23 | 工具 `tools/story_doc.py`；内容契约见 [data/dialogue_schema/README.md](../data/dialogue_schema/README.md) |
+| [TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) | 技术路线与阶段计划 | 现行 | 工程 Agent | 2026-11-23 | 运行时边界见 [ARCHITECTURE.md](ARCHITECTURE.md) |
 | [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) | 视觉实验开发场景说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用；同类实验见 [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) |
 | [adr/README.md](adr/README.md) | 架构决策记录索引 | 目录/索引 | 文档 Agent | 2026-11-17 | ADR 文件路径是编号权威；见 [README.md](README.md) |
 | [adr/0001-engine-and-rendering.md](adr/0001-engine-and-rendering.md) | ADR 0001：引擎、语言与渲染器 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |
 | [adr/0002-dialogue-and-narrative-state.md](adr/0002-dialogue-and-narrative-state.md) | ADR 0002：对话层与叙事知识状态 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |
-| [adr/0003-inner-abilities-and-checks.md](adr/0003-inner-abilities-and-checks.md) | ADR 0003：内心声音与骰子检定提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未接受；状态见 [adr/README.md](adr/README.md) |
+| [adr/0003-inner-abilities-and-checks.md](adr/0003-inner-abilities-and-checks.md) | ADR 0003：内心声音与骰子检定提案 | 提案/待所有者 | 仓库所有者 | 2026-11-23 | 未接受；状态见 [adr/README.md](adr/README.md) |
 | [adr/0004-art-direction.md](adr/0004-art-direction.md) | ADR 0004：美术方向、空间逻辑与相机 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 方向已确认但相机细节仍开放；状态见 [adr/README.md](adr/README.md) |
 | [adr/0005-saves.md](adr/0005-saves.md) | ADR 0005：存档格式、版本与恢复策略 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |
 | [adr/0006-painterly-rendering.md](adr/0006-painterly-rendering.md) | ADR 0006：绘画感渲染原型提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 实现与检查已落地但所有者采纳未决；状态见 [adr/README.md](adr/README.md) |
 | [adr/0007-large-binaries-and-repository-size.md](adr/0007-large-binaries-and-repository-size.md) | ADR 0007：大文件与仓库体积规则提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 规则与检查已落地但历史重写需所有者授权；状态见 [adr/README.md](adr/README.md) |
-| [scene_proposals/README.zh-CN.md](scene_proposals/README.zh-CN.md) | 三个场景提案的立项目录 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 不是实现；范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
+| [scene_proposals/README.zh-CN.md](scene_proposals/README.zh-CN.md) | 三个场景提案的立项目录 | 提案/待所有者 | 仓库所有者 | 2026-11-23 | 不是实现；范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md)；首段标明旧路感构想不可当作当前注册表 |
 | [scene_proposals/01_thirteenth_chair.zh-CN.md](scene_proposals/01_thirteenth_chair.zh-CN.md) | 场景提案：第十三把椅子 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |
 | [scene_proposals/02_room_2_3.zh-CN.md](scene_proposals/02_room_2_3.zh-CN.md) | 场景提案：2-3 教室 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |
 | [scene_proposals/03_through_the_picture.zh-CN.md](scene_proposals/03_through_the_picture.zh-CN.md) | 场景提案：穿过画 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需新 ADR 与所有者批准 |

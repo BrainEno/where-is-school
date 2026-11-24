@@ -25,6 +25,26 @@
     {
       "path": "visual_experiments",
       "owner": "docs/VISUAL_EXPERIMENTS.md"
+    },
+    {
+      "path": "teacher_n_ear",
+      "owner": "docs/CHARACTER_MODEL_STANDARD.md"
+    },
+    {
+      "path": "teacher_n_hairline",
+      "owner": "docs/CHARACTER_MODEL_STANDARD.md"
+    },
+    {
+      "path": "teacher_n_mouth",
+      "owner": "docs/CHARACTER_MODEL_STANDARD.md"
+    },
+    {
+      "path": "teacher_n_proportion",
+      "owner": "docs/CHARACTER_MODEL_STANDARD.md"
+    },
+    {
+      "path": "teacher_n_resting_face",
+      "owner": "docs/CHARACTER_MODEL_STANDARD.md"
     }
   ],
   "frames": [

@@ -154,16 +154,16 @@ func is_open() -> bool:
 ## Settings owns the optional runtime. This page only mirrors its saved switch.
 func sync_story_editor() -> void:
 	var settings := get_node_or_null(^"/root/Settings")
-	if settings != null and settings.has_method("is_story_editor_enabled") \
-			and bool(settings.call("is_story_editor_enabled")) \
-			and StoryEditorEntry.available(get_tree().root):
+	if StoryEditorEntry.isolated_author(get_tree().root) != null or (settings != null \
+			and settings.has_method("is_story_editor_enabled") and bool(settings.call("is_story_editor_enabled")) \
+			and StoryEditorEntry.available(get_tree().root)):
 		_make_story_entry()
 	else:
 		_drop_story_entry()
 
 
 func get_story_editor() -> Node:
-	return StoryEditorEntry.installed(get_tree().root)
+	return StoryEditorEntry.for_pause(get_tree().root)
 
 
 func open_story_editor() -> bool:

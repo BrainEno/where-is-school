@@ -154,7 +154,7 @@ const DREAM_VIEWS := [
 	["stable_yard", Vector3(-21.5, 2.2, 19.6), Vector3(-38.0, -1.6, 8.6)],
 	["stable_yard_air", Vector3(-15.0, 13.0, 28.0), Vector3(-37.0, -1.0, 7.0)],
 	["stink_stalls", Vector3(-31.9, -1.75, 10.2), Vector3(-36.9, -2.35, 6.9)],
-	["muck_heap", Vector3(-33.3, -2.35, 7.6), Vector3(-35.6, -2.95, 5.5)],
+	["muck_heap", Vector3(-40.0, -2.2, 15.7), Vector3(-43.2, -3.0, 13.4)],
 	["exam_conversation", Vector3(-2.76, 5.24, -43.83), Vector3(-1.49, 4.53, -41.38), 2.10],
 	["exam_revision", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 1.50],
 	["exam_revision_next", Vector3(14.33, 5.37, -43.80), Vector3(14.38, 4.52, -41.29), 2.78],
@@ -279,10 +279,28 @@ const STABLE_VIEWS := [
 	["stall_front", Vector3(-32.6, -1.2, 7.6), Vector3(-38.0, -2.2, 7.5)],
 	["hen_house", Vector3(-31.0, -2.3, 10.4), Vector3(-33.2, -3.2, 7.6)],
 	["hen", Vector3(-32.9, -2.85, 9.0), Vector3(-33.7, -3.2, 7.9)],
-	["muck_bay", Vector3(-32.8, -2.0, 8.2), Vector3(-35.0, -3.0, 5.6)],
+	["muck_bay", Vector3(-39.9, -1.9, 15.9), Vector3(-43.2, -3.0, 13.4)],
 	["workers", Vector3(-34.8, -1.2, 9.4), Vector3(-34.8, -2.85, 13.1)],
 	["restroom_wall", Vector3(-38.6, -0.4, 14.6), Vector3(-30.9, -1.9, 9.8)],
 	["yard_ground", Vector3(-33.0, -2.1, 11.8), Vector3(-35.6, -3.35, 9.0)],
+]
+## Round 23: the walk-out to the front yard, each stair's own character, the lane barrier
+## and the iron doors, all from the gameplay camera; then the glass entrance looking out
+## and the 01 gallery looking at the stairwell.
+const TEACHING_STAIR_STANCES := [
+	["walkout_apron", Vector3(-17.65, -3.4, 17.6)],
+	["walkout_gate", Vector3(-17.65, -3.64, 21.2)],
+	["stairwell_door", Vector3(-11.0, -3.4, 12.6)],
+	["bikes_at_turn", Vector3(-3.6, -1.7, 12.6)],
+	["railless_landing", Vector3(-11.5, 1.8, 5.2)],
+	["dogleg_landing", Vector3(2.2, 1.8, -35.7)],
+	["flooded_stair", Vector3(15.6, -1.5, -22.5)],
+	["lane_barrier", Vector3(-23.6, -3.4, 16.2)],
+	["iron_doors", Vector3(-9.6, -3.4, 8.8)],
+]
+const TEACHING_STAIR_VIEWS := [
+	["entrance_looking_out", Vector3(-17.65, -1.6, 11.5), Vector3(-17.65, -2.6, 20.0)],
+	["gallery_to_stairwell", Vector3(-15.0, -1.7, 12.9), Vector3(-7.5, -2.5, 12.6)],
 ]
 ## The gameplay shot that backs the camera off the yard edge to show the whole building.
 const SITE_SHOT_STANCE := Vector3(-21.9, 0.0, 13.4)
@@ -332,6 +350,7 @@ var _port := false
 var _front_yard := false
 var _annex_thresholds := false
 var _stable_yard := false
+var _teaching_stairs := false
 
 var _main: Node = null
 var _host: LocationHost = null
@@ -381,6 +400,8 @@ func _initialize() -> void:
 			_front_yard = true
 		elif arg == "stable-yard":
 			_stable_yard = true
+		elif arg == "teaching-stairs":
+			_teaching_stairs = true
 	if _teaching_wing:
 		_only = "corridor"
 	call_deferred("_run")
@@ -465,6 +486,9 @@ func _run() -> void:
 	elif _front_yard:
 		await _capture_views(out_dir, "front_yard", ^"RetractableGate", FRONT_YARD_STANCES, FRONT_YARD_VIEWS, "front_yard")
 		await _capture_views(out_dir, "street", ^"SideDoor", [], STREET_GATE_VIEWS, "front_yard_street_gate")
+	elif _teaching_stairs:
+		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Forecourt", TEACHING_STAIR_STANCES,
+			TEACHING_STAIR_VIEWS, "teaching_stairs")
 	elif _stable_yard:
 		await _capture_views(out_dir, "corridor", ^"DreamAnnex/StableYard/DreamHouse", STABLE_STANCES, STABLE_VIEWS,
 			"stable_yard")

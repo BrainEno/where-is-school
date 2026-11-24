@@ -305,7 +305,7 @@ func _attempt_shed_check_expecting_failure() -> void:
 			_failures.append("The visible check showed an impossible roll.")
 		if int(result.get("die", 0)) > CheckResolver.MAX_TOTAL:
 			_failures.append("The visible check rolled more than 2d6.")
-		if String(result.get("ability", "")) != "orientation":
+		if String(result.get("ability", "")) != "scrutiny":
 			_failures.append("The visible check did not name the voice that carried it.")
 	await _pump_until(func() -> bool: return not _dialogue.is_busy(), 45.0, "the shed attempt to finish")
 	if _flag_is(&"playground_shed_open"):

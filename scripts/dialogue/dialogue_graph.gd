@@ -27,11 +27,11 @@ const EFFECT_TYPES: Array[String] = ["set_flag", "set_objective", "record", "cam
 ## never record these, and never write flags or the objective.
 const FACTUAL_SOURCES: Array[String] = ["observed", "reported"]
 ## The only abilities whose check may be rolled inside a subjective conversation.
-## 「异想天开」 (`whimsy`, Flight of Fancy) measures how far the protagonist steers his own
-## fantasy, so its die belongs in the imagined scene (owner's decision, round 7). The result
+## 「臆想」 (`imagination`) measures how far the protagonist steers his own fantasy.
+## It replaces the retired `whimsy` id, not the scene's stable node ids. The result
 ## is still recorded under `check:<conversation>:<node>`, so replaying the fantasy cannot
 ## buy a better roll; that record is the one piece of story state such a scene may write.
-const IMAGINATION_ABILITIES: Array[StringName] = [&"whimsy"]
+const IMAGINATION_ABILITIES: Array[StringName] = [&"imagination"]
 
 
 class DialogueChoice extends RefCounted:
@@ -363,7 +363,7 @@ func _parse_choice(data: Dictionary, index: int, context: String) -> DialogueCho
 
 ## A check node rolls once and follows one of two branches (explicit null ends it):
 ##
-##   "check": {"ability": "orientation", "difficulty": 9, "kind": "visible",
+##   "check": {"ability": "scrutiny", "difficulty": 9, "kind": "visible",
 ##             "success": "looked_closely", "failure": "looked_badly",
 ##             "modifiers": [{"flag": "saw_set_square", "value": 1}],
 ##             "repeatable": false}

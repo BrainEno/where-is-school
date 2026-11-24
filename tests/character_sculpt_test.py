@@ -99,16 +99,25 @@ def read(doc, data, index):
     return np.asarray(accessor(doc,data,index))
 
 
+# N's runtime file is built by tools/prepare_teacher_n.py from the owner's export, not by
+# the sculpt pass: that build replaced the sculpt output in geometry revision 1, and its
+# bytes are pinned by `prepare_teacher_n.py --check` and tests/character_geometry_test.py.
+# Holding N to the sculpt's byte-for-byte reproduction would hold it to a file it no
+# longer comes from. Every other role is still checked byte for byte here.
+BUILT_BY_PREPARE = frozenset({'n'})
+SCULPTED = {role: path for role, path in sculpt.RUNTIME.items() if role not in BUILT_BY_PREPARE}
+
+
 class HeadSculpts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.bases = {role: snapshot(sculpt.BASE, sculpt.historic_path(role)) for role in sculpt.RUNTIME}
-        cls.review_bases = {role: snapshot(sculpt.REVIEW_BASE, sculpt.historic_path(role)) for role in sculpt.RUNTIME}
-        cls.before_polish = {role: snapshot(sculpt.BQ_POLISH_BASE, path) for role, path in sculpt.RUNTIME.items()}
+        cls.bases = {role: snapshot(sculpt.BASE, sculpt.historic_path(role)) for role in SCULPTED}
+        cls.review_bases = {role: snapshot(sculpt.REVIEW_BASE, sculpt.historic_path(role)) for role in SCULPTED}
+        cls.before_polish = {role: snapshot(sculpt.BQ_POLISH_BASE, path) for role, path in SCULPTED.items()}
         cls.before_closeup = snapshot(sculpt.Q_CLOSEUP_BASE, sculpt.RUNTIME['q'])
         cls.before_classroom = {role: snapshot(sculpt.CLASSROOM_POLISH_BASE, path)
-                                for role, path in sculpt.RUNTIME.items()}
-        cls.outputs = {role:(ROOT/path).read_bytes() for role,path in sculpt.RUNTIME.items()}
+                                for role, path in SCULPTED.items()}
+        cls.outputs = {role:(ROOT/path).read_bytes() for role,path in SCULPTED.items()}
         cls.layers = sculpt.read_layers()
 
     def test_reproducible_and_original_player_export_is_archived(self):

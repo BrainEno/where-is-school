@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_profile")
-character_id = &"voice_whimsy"
-display_name = "Flight of Fancy"
+character_id = &"voice_insight"
+display_name = "Insight"
 short_role = ""
-accent_color = Color(0.86, 0.5, 0.29, 1)
+accent_color = Color(0.64, 0.62, 0.56, 1)

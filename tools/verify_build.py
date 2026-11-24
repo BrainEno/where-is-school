@@ -205,10 +205,12 @@ CATEGORIES = (
 # The 8 MiB warning remains an early growth signal. The owner approved raising the
 # hard limit only after a real export with all 14 supplied score MP3s: a clean Linux
 # export on the pinned 4.7.2 source measured 36.95 MiB of packed entries (38,957,488
-# bytes including the PCK directory). 40 MiB gives it modest headroom without changing
-# the per-file limits. Earlier limits were 16, 24 and then 32 MiB.
+# bytes including the PCK directory). 40 MiB then gave it modest headroom; the owner
+# raised the pack limit to about 50 MiB when teacher N's blink and expression shapes
+# (about 0.3 MiB of dense morph data) pushed the iOS pack to 40.1 MiB. The per-file
+# limits are unchanged. Earlier limits were 16, 24, 32 and then 40 MiB.
 PACK_WARN_BYTES = 8 * MiB
-MAX_PACK_BYTES = 40 * MiB
+MAX_PACK_BYTES = 50 * MiB
 
 BY_NAME = {category.name: category for category in CATEGORIES}
 

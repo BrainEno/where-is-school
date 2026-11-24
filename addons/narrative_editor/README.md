@@ -109,7 +109,7 @@ clean checkout. Each one is either a visible fact or a `git diff` you can read.
    and whether the conversation is subjective.
 7. Node id, speaker and narrative source appear as text, not as fields, and none of them
    can be typed into. Same for the structure column.
-8. 内心声音文案 lists `orientation` and `whimsy`, shows each value, speaker and passive rules read-only,
+8. 内心声音文案 lists `insight`, `scrutiny`, `echo`, `imagination`, `inference`, `resonance`, shows each value, speaker and passive rules read-only,
    and offers only 名称 and 说明 for editing.
 
 **Searching**
@@ -134,7 +134,7 @@ clean checkout. Each one is either a visible fact or a `git diff` you can read.
     whitespace changes.
 16. Copy the English text into the Chinese box for one node and press 保存: it succeeds
     (text may be identical), and `git diff` still shows one line per file.
-17. Copy the English *description* of `orientation` into the Chinese 说明 and press 保存:
+17. Copy the English *description* of `scrutiny` into the Chinese 说明 and press 保存:
     the save is refused, the status area names the validator and the field, and nothing is
     written.
 18. Edit a line, then try to switch chapter (or content type, or node) without saving: a

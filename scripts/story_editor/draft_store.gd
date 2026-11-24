@@ -1,9 +1,11 @@
 extends RefCounted
 ## Author workspace: immutable shipped chapters, an operation log, and validated graphs.
-## All mutations below build a candidate first. The runtime is never rebound to it.
+## All mutations build a candidate first. The live path also proves bilingual parity
+## and writes the journal before publishing a replacement to the same game session.
 
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const Journal := preload("res://scripts/story_editor/draft_journal.gd")
+const NativeChapter := preload("res://scripts/story_editor/native_chapter.gd")
 const UNDO_LIMIT := 24
 # Leave space for escaped journal/bridge envelopes and a separate unfinished field.
 const LOG_LIMIT := 640 * 1024
@@ -18,19 +20,35 @@ var _followups := {}
 var _undo: Array[Dictionary] = []
 var _journal: Journal
 var _unapplied := {}
+var _live: bool
+var _sources := {}
+var _mirrors := {}
+var live_buffer := {}
 var blocked := ""
 var error := ""
 var buffer := {}
 var exported_digest := ""
 
 
-func _init(directory: String = Journal.DIRECTORY) -> void:
-	_journal = Journal.new(directory)
+func _init(directory: String = "", live: bool = false) -> void:
+	_journal = Journal.new(Journal.DIRECTORY if directory.is_empty() else directory)
+	_live = live
 
 
 func load_workspace() -> void:
 	for chapter: String in DialogueLibrary.CHAPTERS:
-		var data := Patch.read_json(DialogueLibrary.chapter_path(Patch.LOCALE, chapter))
+		var path := DialogueLibrary.chapter_path(Patch.LOCALE, chapter)
+		var data: Dictionary
+		if _live:
+			var zh := NativeChapter.read_source(path)
+			var en := NativeChapter.read_source(DialogueLibrary.chapter_path(NativeChapter.ENGLISH, chapter))
+			if zh.is_empty() or en.is_empty():
+				blocked = "无法读取双语基础章节：%s" % chapter
+				return
+			_sources[chapter] = {Patch.LOCALE: zh, NativeChapter.ENGLISH: en}
+			data = zh["data"]
+		else:
+			data = Patch.read_json(path)
 		var graph := DialogueGraph.load_from_data(data, chapter)
 		if not graph.is_valid() or graph.chapter != chapter or graph.locale != Patch.LOCALE:
 			blocked = "无法读取游戏对白：%s" % chapter
@@ -53,6 +71,8 @@ func load_workspace() -> void:
 	_unapplied = {}
 	if saved.get("buffer") is Dictionary:
 		buffer = saved["buffer"]
+	if saved.get("live_buffer") is Dictionary:
+		live_buffer = saved["live_buffer"]
 	if saved.get("exported") is String:
 		exported_digest = saved["exported"]
 
@@ -262,9 +282,88 @@ func apply_structure(mode: String, chapter: String, conversation: String, node: 
 	return {}
 
 
-func _commit(chapter: String, operation: Dictionary) -> bool:
+## Only the isolated author process asks for these overrides. Unchanged chapters still
+## come from DialogueLibrary, as do the other game's lookups of shipped content.
+func graph_override(chapter: String, locale: String) -> DialogueGraph:
+	if not _live or not blocked.is_empty() or not _data.has(chapter):
+		return null
+	if locale == Patch.LOCALE:
+		return _graphs[chapter]
+	if locale == NativeChapter.ENGLISH:
+		return _mirrors[chapter]["graph"]
+	return null
+
+
+func save_live_buffer(values: Dictionary) -> bool:
+	if not _live or not blocked.is_empty() or not _save_state(_entries, values):
+		return false
+	live_buffer = values.duplicate(true)
+	return true
+
+
+func live_body_anchor(address: Dictionary) -> String:
+	return _text_slot(address["chapter"], address["conversation"], address["node"], "").get("text", "")
+
+
+func apply_live_text(address: Dictionary, before: String, text: String) -> bool:
+	var slot := _text_slot(address["chapter"], address["conversation"], address["node"], "")
+	if slot.is_empty() or slot.get("text") != before:
+		error = "当前原文已改变；保留输入，没有覆盖。"
+		return false
+	return _commit(address["chapter"], {"kind": "text", "conversation": address["conversation"],
+		"node": address["node"], "choice": "", "before": before, "text": text}, true)
+
+
+func round_anchor(address: Dictionary) -> Dictionary:
+	var chapter: String = address["chapter"]
+	var conversation: String = address["conversation"]
+	var node: String = address["node"]
+	var choice: String = address["choice"]
+	var option := _text_slot(chapter, conversation, node, choice)
+	var followups: Patch.Followups = _followups.get(chapter)
+	var tail := followups.tail(conversation, node, choice) if followups != null else ""
+	var edge := Patch.followup_edge(nodes_for(chapter, conversation), option, tail)
+	if choice.is_empty() or option.is_empty() or not edge.get("next") is String or edge["next"].is_empty():
+		return {}
+	return {"guard": Patch.option_signature(option), "after": tail, "before": edge["next"]}
+
+
+func apply_live_round(address: Dictionary, anchor: Dictionary, values: Dictionary) -> bool:
+	if anchor.is_empty() or anchor != round_anchor(address):
+		error = "选项的去向已改变，或已接入带选项的下一轮。没有覆盖连接。"
+		return false
+	var lines: Array[Dictionary] = []
+	var choices: Array[Dictionary] = []
+	if not values.get("lines") is Array or not values.get("choices") is Array:
+		error = "后续表单格式无效。"
+		return false
+	for row: Variant in values["lines"]:
+		if not row is Dictionary:
+			error = "后续对白格式无效。"
+			return false
+		lines.append({"id": Patch.new_id(), "speaker": row.get("speaker"), "text": row.get("text"), "placeholder": false})
+	for row: Variant in values["choices"]:
+		if not row is Dictionary:
+			error = "新选项格式无效。"
+			return false
+		choices.append({"id": Patch.new_id(), "text": row.get("text"), "next": row.get("next")})
+	var operation := anchor.merged({"kind": "round", "conversation": address["conversation"],
+		"node": address["node"], "choice": address["choice"], "lines": lines, "choices": choices})
+	return _commit(address["chapter"], operation, true)
+
+
+func export_chapter(chapter: String) -> Dictionary:
+	if not _live or not blocked.is_empty() or not _data.has(chapter) or _data[chapter] == _base[chapter]:
+		return {"error": "这一章还没有可导出的已应用修改。"}
+	var followups: Patch.Followups = _followups.get(chapter)
+	if followups != null and not followups.placeholders.is_empty():
+		return {"error": "这一章仍有占位对白，请先补写。可从草稿抽屉导出原草稿。"}
+	return NativeChapter.files(chapter, _data[chapter], _mirrors[chapter], _sources[chapter])
+
+
+func _commit(chapter: String, operation: Dictionary, persist_live: bool = false) -> bool:
 	error = ""
-	if not blocked.is_empty() or not _base.has(chapter):
+	if not blocked.is_empty() or not _base.has(chapter) or (persist_live and not _live):
 		error = "修改目标不可用。"
 		return false
 	var all := _entries.duplicate(true)
@@ -287,7 +386,7 @@ func _commit(chapter: String, operation: Dictionary) -> bool:
 		error = "草稿已到容量上限，请先导出。"
 		return false
 	var before := _entries
-	if not _install(all):
+	if not _install(all, persist_live):
 		return false
 	_remember_undo(before)
 	return true
@@ -299,7 +398,7 @@ func _remember_undo(before: Dictionary) -> void:
 		_undo.pop_front()
 
 
-func _install(entries: Dictionary) -> bool:
+func _install(entries: Dictionary, persist_live: bool = false) -> bool:
 	var parsed := {}
 	var installed := entries.duplicate(true)
 	for chapter: Variant in installed:
@@ -316,18 +415,34 @@ func _install(entries: Dictionary) -> bool:
 			entry["result"] = Patch.digest(result["data"])
 		else:
 			entry.erase("result") # An unfinished chapter cannot be treated as published.
+		if _live:
+			var pair := NativeChapter.compile_pair(result["data"], result["graph"], _sources[chapter])
+			if pair.has("error"):
+				error = pair["error"]
+				return false
+			result["mirror"] = pair
 		parsed[chapter] = result
+	# A failed write cannot publish even a valid new edge. Keep the last accepted
+	# graph and the un-applied input intact; the author can try again.
+	if persist_live and not _save_state(installed, {}):
+		error = save_problem()
+		return false
 	for chapter: String in _data.keys():
 		if not parsed.has(chapter):
 			_graphs[chapter] = _original_graphs[chapter]
 	_data.clear()
 	_followups.clear()
+	_mirrors.clear()
 	for chapter: String in parsed:
 		_data[chapter] = parsed[chapter]["data"]
 		_graphs[chapter] = parsed[chapter]["graph"]
+		if _live:
+			_mirrors[chapter] = parsed[chapter]["mirror"]
 		if parsed[chapter].has("followups"):
 			_followups[chapter] = parsed[chapter]["followups"]
 	_entries = installed
+	if persist_live:
+		live_buffer = {}
 	return true
 
 
@@ -344,6 +459,7 @@ func reset() -> bool:
 		if _install({}):
 			_remember_undo(before)
 			buffer = {}
+			live_buffer = {}
 			return true
 	return false
 
@@ -351,14 +467,20 @@ func reset() -> bool:
 func portable_draft() -> Dictionary:
 	if not _unapplied.is_empty():
 		return _unapplied
+	return _envelope(_entries)
+
+
+func _envelope(entries: Dictionary) -> Dictionary:
 	return {"format": Patch.FORMAT, "version": Patch.VERSION, "locale": Patch.LOCALE,
-		"base_commit": ProjectSettings.get_setting("authoring/base_commit", "local"), "chapters": _entries}
+		"base_commit": ProjectSettings.get_setting("authoring/base_commit", "local"), "chapters": entries}
 
 
 func save_editor_state() -> bool:
-	if not blocked.is_empty():
-		return false
-	return _journal.save({"draft": portable_draft(), "buffer": buffer, "exported": exported_digest})
+	return blocked.is_empty() and _save_state(_entries, live_buffer)
+
+
+func _save_state(entries: Dictionary, input: Dictionary) -> bool:
+	return _journal.save({"draft": _envelope(entries), "buffer": buffer, "live_buffer": input, "exported": exported_digest})
 
 
 func recovery_notice() -> String:

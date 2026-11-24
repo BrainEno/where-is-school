@@ -16,6 +16,7 @@ const FIRST_BEND := Vector3(0, 0, -27.75)
 const SECOND_BEND := Vector3(-12, 3.6, -42.75)
 const UPPER_EAST := Vector3(11.2, 3.6, -42.75)
 const HALL_BY_WEST_STAIR := Vector3(0, 0, -8.45)
+const FORECOURT_GATE := Vector3(-17.65, -3.64, 21.3)
 const ROOM_WINDOW_Y := 2.15
 const FLOOR_RISE := 3.6
 const PLAYER_GLASS_LAYER := 4
@@ -403,6 +404,10 @@ func _check_glass_entrance() -> void:
 	if await _click_floor(doorway.to_global(Vector3(lane, 0, 2.08)), "mouse through the open glass entrance"):
 		if not _check.expect(doorway.to_local(_player.global_position).z > 1.0,
 			"The click accepted the hall side instead of crossing to the apron."):
+			return
+		# Round 23: the apron walks out. Down its two steps onto the forecourt's soil, to
+		# the gateposts; the exit stands between them, not on a railing at the apron's edge.
+		if not await _walk(FORECOURT_GATE, "down the walk-out to the gateposts"):
 			return
 		if await _use_exit(&"teaching_entrance_to_street", &"front_yard", &"FromCorridor"):
 			# Across the front yard and out of the side door: the school wall is the street's.

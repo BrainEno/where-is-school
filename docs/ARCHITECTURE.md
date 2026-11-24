@@ -300,8 +300,9 @@ other conversation plays that one.
 `InteractionController` resolves one target per physics frame from two inputs:
 
 - a screen-space ray from the camera through the pointer, restricted to the
-  interaction layer, with the same reach and line-of-sight rules as facing, plus one rule
-  of its own: the object has to be *drawn* at that pixel (`is_drawn_at_screen_ray`);
+  interaction layer, with the same reach and line-of-sight rules as facing for hover;
+  remote clicks need only the camera view initially and validate the player's sight on
+  approach. The object must be *drawn* at that pixel (`is_drawn_at_screen_ray`);
 - the facing/distance score that existed before, among objects in the eye's sight *and*
   drawn somewhere on screen (`is_seen_by_camera`, the anchor-sphere rule below): what has
   no outline gets no prompt and no E.
@@ -320,7 +321,9 @@ find the sheet while the outline, correctly, drew nothing.
   between hides the object at that pixel. This is per pixel, so a partly covered object is
   pointable on its uncovered part only, and asking again gives the same answer.
 - *On its anchor sphere, off the object*: it counts while any part is in view - a ray to the
-  centre or a corner of one of its boxes reaches the box first.
+  centre or a corner of one of its boxes reaches the box first. When hotspots overlap,
+  an eligible mesh-bounds hit takes priority over an anchor-only hit, and the nearest
+  mesh-bounds hit wins. These are still bounding boxes, not pixel-accurate silhouettes.
 - *Opaque drawn* means a visible mesh under the body, on a layer the camera renders, drawn
   with at least one material that writes depth - anything but an alpha-blended
   `BaseMaterial3D` (a `ShaderMaterial`, or no material, counts as opaque). A collider with
@@ -400,7 +403,8 @@ velocity, applies gravity, calls `move_and_slide()` and turns the visual; manual
 and path following both feed it a direction. A walk is started with
 `request_path_to(point)`, which refuses (returns false) when control is locked, when
 the map has no geometry, when the point is more than 0.75 m off the mesh horizontally
-or more than 1.5 m off it vertically, or when `map_get_path()` produces no route. The
+or more than 1.5 m off it vertically, or when `map_get_path()` produces no complete route
+(the endpoint must reach the snapped destination). The
 route that comes back is kept and walked in order: each physics frame the body steers
 at the next corner, dropping any corner it has arrived at (`waypoint_radius`, 0.35 m).
 The body follows the route itself rather than asking the `NavigationAgent3D` for a next
@@ -417,10 +421,12 @@ world. One click resolves to exactly one of three outcomes:
 
 1. an interactable under the cursor (picked with the same ray the hover uses, but
    without the reach limit, because a click may legitimately name something across the
-   room) becomes the target: find a spot inside its radius that is on the mesh, has a
-   real route and keeps line of sight, walk there, then **re-validate** — still valid,
-   still enabled, still in reach — and call
+   room and the player's current sight may be blocked) becomes the target: find a spot
+   inside the controller's actual reach that is on the mesh, has a complete route and
+   keeps line of sight, walk there, then **re-validate** — still valid, still enabled,
+   still in reach and visible to the player — and call
    `InteractionController.request_activation()`, the same call E makes. Activation
+   may happen earlier when the moving player reaches a clear usable position. Activation
    happens at most once, and the pending target is dropped on arrival, on failure, on
    cancellation, and on any location change;
 2. otherwise, walkable ground under the cursor is a destination: the ray only tests
@@ -860,12 +866,29 @@ checklist in that test's section of the pull request, because no CI runner opens
 `scripts/story_editor/`; the device builds also link the Files bridge. The separate author
 app starts its editor automatically. In the normal iPhone app `[authoring] story_editor` in
 `user://settings.cfg` is off by default. The row appears only when the runtime is packed,
-and does not apply the change if the staged settings write fails. `Settings` delegates to
+and does not apply the change if the staged settings write fails; the row then names the step
+of the swap the machine refused, and the swap publishes onto whichever backup name is free so
+a leftover nobody can remove cannot wedge every later preference (#394). A development run of
+the project can force the switch on for one session with `--story-editor` or
+`WHERE_IS_SCHOOL_STORY_EDITOR=1`, which writes nothing and is ignored by builds that leave
+`scripts/story_editor/` out (#395). `Settings` delegates to
 `StoryEditorEntry`, which dynamically installs one `StoryEditor` at the root and removes
 both it and its world overlay when turned off, including from the title screen. `PauseMenu`
-only mirrors the saved setting. Without opt-in no drafts are loaded. The
+mirrors the saved setting in this normal app. Without opt-in no drafts are loaded. The
 journal and Files exchange under `user://story_editor/` never write `user://save.json` or
 shipped story content. Android and desktop exclude both the runtime and the bridge.
+
+**Live author session.** The staged author app has a different project/user directory
+from boot (and a different bundle ID on iPhone), so its actual gameplay progress and
+read log never go into the player profile. From a paused, visible conversation, the
+pause entry hands off to `live_editor.gd`. It uses `DialoguePanel` itself for input and
+text redraw, not the drawer's detached panel. The controller opts into validated shadow
+chapter graphs only in this session. A silent `DialogueRuntime.rebind_graph()` keeps
+its current cursor and any resolved check; no line, camera or check event is replayed.
+New rounds are one guarded draft transaction; invalid/unapplied input stays in the
+journal, not on a live edge. The explicit chapter export writes a checked bilingual
+candidate ZIP outside the project, with baseline byte hashes and pending translations.
+See [the author workflow](../tools/authoring/README.zh-CN.md).
 
 **Completing a change (touch).** The story editor switch acknowledges a successful save in
 Settings, or leaves the old value and displays the failure. The phone's visible 「完成」

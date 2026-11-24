@@ -243,7 +243,8 @@ TAIL_PIVOT = (0.0, 1.36, -0.93)
 HEAD_SHIFT = (0.0, 0.05, 0.07)
 POLL = (0.0, 2.04, 1.03)
 
-BAY = {"name": "bay", "coat": (124, 66, 36), "dark": (92, 46, 26), "points": (30, 24, 22),
+# Round 22: a lighter, redder bay so the horse reads in its north stall at dusk.
+BAY = {"name": "bay", "coat": (160, 94, 54), "dark": (118, 66, 38), "points": (30, 24, 22),
        "hair": (26, 21, 20), "hair_hi": (58, 44, 38), "muzzle": (64, 44, 36), "hoof": (52, 46, 42),
        "white": (232, 226, 214)}
 GREY = {"name": "grey", "coat": (172, 170, 165), "dark": (120, 118, 116), "points": (88, 84, 84),

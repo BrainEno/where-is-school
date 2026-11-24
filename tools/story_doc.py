@@ -39,7 +39,7 @@ DATA = ROOT / "data"
 MASTER = "zh-CN"
 # The only abilities a subjective (imagined) conversation may roll; mirrors
 # `DialogueGraph.IMAGINATION_ABILITIES` in scripts/dialogue/dialogue_graph.gd.
-IMAGINATION_ABILITIES = ("whimsy",)
+IMAGINATION_ABILITIES = ("imagination",)
 MIRROR = "en"
 
 SOURCES = {"observed": "亲眼所见", "reported": "听人说的", "recalled": "记忆里的", "imagined": "想象中的"}
@@ -118,7 +118,7 @@ def chapters(kind: str) -> list[str]:
 
 
 class Names:
-    """Character id ↔ the label a writer reads (``Q``, ``你``, ``路感``…), from the data."""
+    """Character id ↔ the label a writer reads (``Q``, ``你``, ``细察``…), from the data."""
 
     def __init__(self) -> None:
         strings = load_json(DATA / "locale" / f"{MASTER}.json")["strings"]
@@ -332,7 +332,7 @@ def dec_check(raw: str, names: Names, where: str) -> dict:
     head, *extras = [p.strip() for p in raw.split(SEP)]
     match = CHECK_BODY.match(head)
     if not match:
-        raise DocError(f"{where}: 检定要写成「路感 难度 9 可见 → 成功 a，失败 b」：{head}")
+        raise DocError(f"{where}: 检定要写成「细察 难度 9 可见 → 成功 a，失败 b」：{head}")
     kind = {v: k for k, v in KINDS.items()}.get(match.group(3), match.group(3))
     check = {
         "ability": names.ability_id(match.group(1), where),
@@ -718,7 +718,7 @@ def validate_conversations(conversations: dict) -> list[str]:
                 errors.append(f"{here}: 台词是空的")
             if subjective:
                 if check and check.get("ability") not in IMAGINATION_ABILITIES:
-                    errors.append(f"{here}: 主观会话只能带「异想天开」检定")
+                    errors.append(f"{here}: 主观会话只能带「臆想」检定")
                 effects = [e for holder in [node, *node.get("choices", [])] for e in holder.get("effects", [])]
                 for effect in effects:
                     if effect.get("type") in ("set_flag", "set_objective"):

@@ -249,7 +249,8 @@ def yard_ground(b, y):
     slab(b, y, "Lane", LANE_X, LANE_Z, G)
     slab(b, y, "Yard", YARD_X, YARD_Z, G)
     # Everything past the wall is village ground, never walkable.
-    b.box("VillageGround", y, (-49.5, G - .13, 6), (45, .2, 40), "earth_dark")
+    # Round 22: the same front-yard dirt as the yard, a shade darker.
+    b.box("VillageGround", y, (-49.5, G - .13, 6), (45, .2, 40), dream_stable.earth_material(b, .75))
     # Round 19: the yard and lane are uneven earth over the flat slabs (tools/stable_ground.py).
     dream_stable.yard_ground(b, y)
 
@@ -278,7 +279,8 @@ def dream_house(b, y):
     b.box("NorthWall", body, (0, HOUSE_STOREY / 2, -d / 2 + .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
     b.box("SouthWall", body, (0, HOUSE_STOREY / 2, d / 2 - .12), (w, HOUSE_STOREY, .24), "mud_wall", shadow=True)
     b.box("StallBack", body, (w / 2 - stall_back, HOUSE_STOREY / 2, 0), (.2, HOUSE_STOREY, d - .4), "stall_dark")
-    b.box("StallFloor", body, (w / 2 - stall_back / 2, .02, 0), (stall_back, .04, d - .4), "earth_dark")
+    b.box("StallFloor", body, (w / 2 - stall_back / 2, .02, 0), (stall_back, .04, d - .4),
+          dream_stable.earth_material(b, .8))
     b.box("UpperFloor", body, (0, HOUSE_STOREY + .1, 0), (w + .1, .22, d + .1), "timber", shadow=True)
     # 2F is solid except for a one-metre slice behind the south window.
     top, sill, head, hall = HOUSE_TOP, HOUSE_STOREY + .8, HOUSE_STOREY + 2.1, 1.0
@@ -298,12 +300,16 @@ def dream_house(b, y):
     b.box("Roof", body, (0, HOUSE_TOP + .06, 0), (w + .5, .12, d + .5), "roof_tin", shadow=True)
     posts = (-d / 2 + .1, -d / 6, d / 6, d / 2 - .1)
     for i, z in enumerate(posts):
-        b.box(f"Post{i}", body, (w / 2 - .1, HOUSE_STOREY / 2, z), (.2, HOUSE_STOREY, .2), "timber", shadow=True)
+        # Round 22: 22 cm posts, 1 cm proud of the stall front and of the end walls they
+        # stand against, instead of sharing those faces (the corner posts flickered).
+        b.box(f"Post{i}", body, (w / 2 - .1, HOUSE_STOREY / 2, z), (.22, HOUSE_STOREY, .22), "timber", shadow=True)
     for i in range(3):
         z = (posts[i] + posts[i + 1]) / 2
-        b.box(f"Partition{i}", body, (w / 2 - stall_back / 2, .8, posts[i + 1]), (stall_back, 1.6, .08), "timber")
+        b.box(f"Partition{i}", body, (w / 2 - stall_back / 2 - .01, .8, posts[i + 1]), (stall_back - .02, 1.6, .08),
+              "timber")
         b.node(f"StallLamp{i}", body, "OmniLight3D", position=vec3((w / 2 - .9, 2.5, z)),
-               light_color=srgb((255, 204, 150)), light_energy=.95, omni_range=3.8)
+               light_color=srgb((255, 204, 150)), light_energy=1.7 if i == 0 else .95,
+               omni_range=4.4 if i == 0 else 3.8)
     # Round 18: sculpted horses with their heads over the half doors, grazing at their own pace.
     dream_stable.horse(b, body, "BayHorse", (w / 2 - 1.15, 0, (posts[0] + posts[1]) / 2), 90, dream_stable.sa.BAY,
                        graze=.62, phase=.1)
@@ -366,7 +372,7 @@ def chickens_and_smell(b, y):
     dream_stable.hens(b, y, (("YardHen0", (-29.7, G, 7.9), 20, white, .21),
                              ("YardHen1", (-28.5, G, 8.1), 205, brown, .58),
                              ("YardHen2", (-30.3, G, 9.3), 95, brown, .83)))
-    b.node("Heap", y, position=vec3(dream_stable.HEAP))
+    b.node("Heap", y, position=vec3(dream_stable.HEAP), rotation_degrees=vec3((0, dream_stable.HEAP_YAW, 0)))
     dream_stable.heap(b, y, child_path(y, "Heap"))
     dream_stable.flies(b, y)
     dream_stable.stink(b, y)
@@ -397,10 +403,10 @@ def stable_yard(b):
     # The connecting strip remains at the entrance so the route stays walkable.
     b.node(y, ".", position=vec3((-4, 0, 0)))
     slab(b, ".", "StableLaneConnector", (-24.8, -20.75), LANE_Z, G)
-    # The connector is a flat walking surface, but shares the yard's soil pigment.
-    # Its plane is centred in annex coordinates; the yard itself is shifted 4 m west.
+    # The connector is a flat walking surface, but shares the yard's soil; the dirt is laid
+    # in world space (round 22), so it meets the relief with no offset.
     connector_x, connector_z = -22.75, sum(LANE_Z) / 2
-    connector_soil = dream_stable.earth_material(b, (connector_x + 4, connector_z))
+    connector_soil = dream_stable.earth_material(b)
     # Meet the relief at x = -24.75 rather than overlapping its last five centimetres.
     b.flat("StableLaneConnectorEarth", ".", plane(b, 4.0, LANE_Z[1]-LANE_Z[0]), connector_soil,
            (connector_x, G + .004, connector_z))
@@ -434,10 +440,34 @@ def stable_yard(b):
                                  ("BackLeg", (.13, 1.94, .04, .16)), ("Tail", (.21, 2.08, .04, .12))):
         b.box(f"Horse{name}", p, (.095, py, pz), (.01, h, w), "wayfind")
     label(b, "Arrow", p, (.1, 1.86, 0), "↑", .004, rot=(0, 90, 0), ink=(28, 36, 58))
+    lane_barrier(b, y)
     for i, (pos, energy) in enumerate((((-34.0, G + 2.7, 13.0), .9), ((-29.6, G + 2.8, 8.0), .7),
                                        ((-23.5, G + 2.6, 16.6), .55))):
         b.node(f"YardLight{i}", y, "OmniLight3D", position=vec3(pos), light_color=srgb((255, 214, 160)),
                light_energy=energy, omni_range=8.5)
+
+
+# Round 23: a horizontal board (挡板) across the lane's mouth, so the stable is no longer
+# somewhere the player drifts into from the glass entrance. It closes the south of the lane
+# and leaves a squeeze against the teaching block's wall that is still wider than the
+# navigation agent (radius 0.5) plus a cell, so the yard stays routed (dream_annex_test).
+BARRIER_X = LANE_X[1] - .2
+BARRIER_Z = (16.35, LANE_Z[1] - .1)
+
+
+def lane_barrier(b, y):
+    z0, z1 = BARRIER_Z
+    span = z1 - z0
+    bar = solid(b, "LaneBarrier", y, (BARRIER_X, G, (z0 + z1) / 2), (.16, 1.15, span))
+    for i, z in enumerate((-span / 2 + .06, span / 2 - .06)):
+        b.box(f"Post{i}", bar, (0, .6, z), (.1, 1.2, .1), "timber", shadow=True)
+    b.box("LowBoard", bar, (0, .42, 0), (.05, .24, span - .2), "timber", shadow=True)
+    # The top board is painted in red and white stripes, the usual 挡板.
+    count = 6
+    for i in range(count):
+        length = (span - .2) / count
+        b.box(f"Stripe{i}", bar, (0, .92, -span / 2 + .1 + length * (i + .5)), (.06, .26, length),
+              "vermilion" if i % 2 == 0 else "paper", shadow=True)
 
 
 WAITING_LOOKS = (
