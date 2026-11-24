@@ -159,6 +159,16 @@ peck) about the neck pivot; 0.5 -> 0 the share of the tail swish; below 0.1 a fl
 Rates, amplitudes and phases are material values, so a whole animal moves without a
 skeleton, a script or an instance uniform.
 
+### Round 23 (2026-11-11): a board across the lane
+
+The stable was too easy to walk into from the glass entrance. `lane_barrier()` stands a
+horizontal board (挡板) across the lane's mouth at `BARRIER_X`, two posts with a timber low
+board and a red-and-white striped top board, one camera-fading body. It closes the south
+two metres of the 3.8 m lane and leaves a 1.7 m squeeze against the teaching block's wall,
+wider than the navigation agent (radius 0.5) plus a cell, so every yard route still works.
+`dream_annex_test._check_barrier` checks that the route to the yard crosses the board's line
+north of the board, and the walk-out forecourt joined `ENTRANCE_ROUTES`.
+
 ## Style rules of this layer
 
 - **Modern against municipal.** The exam floor uses hard colour fields, steel and rubber,

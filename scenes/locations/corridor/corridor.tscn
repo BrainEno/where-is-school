@@ -325,10 +325,10 @@ destination_spawn = &"FromCorridor"
 destination_id = &"front_yard"
 
 [node name="EntranceToStreet" parent="Interactables" instance=ExtResource("12_location_exit")]
-position = Vector3(-17.65, -2.7, 17.75)
+position = Vector3(-17.65, -2.94, 22.25)
 interact_id = &"teaching_entrance_to_street"
-outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/StreetPlate/Plate")
-support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/ApronRailSouth0")
+outline_paths = PackedStringArray("../../TeachingBlock/GroundFloor/Forecourt/GatePierWest/Cap", "../../TeachingBlock/GroundFloor/Forecourt/GatePierEast/Cap", "../../TeachingBlock/GroundFloor/Forecourt/GatePierWest/YardPlate/Plate")
+support_paths = PackedStringArray("../../TeachingBlock/GroundFloor/Forecourt/GateStop", "../../TeachingBlock/GroundFloor/Forecourt/GatePierWest", "../../TeachingBlock/GroundFloor/Forecourt/GatePierEast")
 prompt_key = "prompt.gate"
 radius = 1.35
 destination_scene = "res://scenes/locations/front_yard/front_yard.tscn"

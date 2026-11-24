@@ -167,6 +167,49 @@ The south end of the street has a visible works barrier where its physical road
 ends. Leaving the playable floor elsewhere has a same-location fallback (see
 [the placement contract](ARCHITECTURE.md#5h-entering-a-location-pre-flight-then-commit-implemented-contract)).
 
+## Round 23: the walk-out, five different stairs, iron doors
+
+The owner found leaving 01 for the front yard (前操场) strange - the glass entrance's apron
+ended at a railing with a STREET plate on it, a balcony over the void that you had to "use"
+to leave - and asked for a ground floor and doors with more character, and above all for
+stairs that each look different and are not found the moment you walk in. The imagery is
+the owner's novel: schools tangled into residential compounds, always grey, classrooms high
+up winding stairs, fitness equipment, iron doors that are only doors, and stairs that change.
+
+- **The walk-out.** The apron's south side is open (`guard_edges` no longer rails it). Two
+  0.12 m steps (`WALKOUT_STEP`, each under the body's 0.25 m step) go down to a dirt
+  forecourt at `FORECOURT_Y` in the front yard's own `yard_dirt` and trodden `yard_path`,
+  between the front yard's low railings, to two brick gateposts with a 前操场 plate. The
+  `EntranceToStreet` exit (in `corridor.tscn`) stands between them; `GateStop` closes the
+  opening to the capsule just past it, where the soil is only seen. A waist twister (扭腰器)
+  and one faint orange street lamp stand inside the rails. `GroundWingApron` now stops at
+  the apron's line so it no longer covers the lower soil.
+- **`flight()` styles.** `guard` is `panel` (the old balustrade), `bars` (painted iron
+  balusters under a round handrail), `bare` (no handrail drawn; the sides stay closed to
+  the capsule) or `wall` (a stairwell whose sides fade for the camera like other walls);
+  `treads="ramp"` shaves the steps into one slope with their ghosts left on it.
+  `guard_edges(..., bare=True)` draws only a kerb.
+- **Blue 01 stair:** a grey concrete stairwell. At 01 it sits behind grey jambs and a raised
+  roller shutter at the gallery's end (`StairwellJambNorth/South`, `StairwellLintel`), so
+  nothing of it shows from the glass entrance. Its right-angle turn is piled with two bikes,
+  two skateboards and roller skates (`RearStair/TurnPile`); the last flight is shaved into
+  a ramp under a thin, wrinkled, wet carpet with one dim bulb on a cord (`WetCarpet`).
+- **Red 03 stair:** no handrail and nearly equal bare cement steps; tyres stacked in the
+  landing's corner (with a collider) and a rolled carpet along its edge.
+- **North dogleg:** green iron balusters, and a pull-up bar on the half landing. The false
+  half-flight behind the screen is also blocked - tyres, a rolled carpet, rubbish bags.
+- **Yard stair:** walled and sunk, and flooded at the bottom (`Flood`, translucent), with big
+  spiky plants in the water and on a tread, and a straight ladder up the landing wall.
+- **West stair:** stays the dream annex's escalator.
+- **01 ground floor:** freshly mopped cement (translucent `WetPatch*` smears at distinct
+  heights) and the duty students' mop and bucket of murky water; classroom 103 behind an
+  iron grille with a padlock; two iron doors in the east wing (`IronDoorWest` "↓",
+  `IronDoorNorth` "01") that answer a knock with nothing (`corridor_iron_door_west/north`).
+
+`corridor_art_test` now walks down the walk-out to `FORECOURT_GATE` before taking the exit;
+`location_art_test` counts 36 corridor interactables; the `teaching_stairs` leg of
+`Location art capture` frames all of the above (11 frames, after only).
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.

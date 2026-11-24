@@ -63,7 +63,7 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 34, # Original 29, two mechanical controls and three clerk looks.
+		"interactables": 36, # Original 29, two mechanical controls, three clerk looks, two iron doors.
 		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
 			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
@@ -360,7 +360,9 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 	if id == "playground":
 		fitted = [&"pg_container_ladder"]
 	elif id == "corridor":
-		fitted = [&"corridor_stair_screen", &"corridor_bell_register"]
+		fitted = [
+			&"corridor_stair_screen", &"corridor_bell_register", &"corridor_iron_door_west", &"corridor_iron_door_north"
+		]
 	for anchor_id in fitted:
 		var control := (location as LocationRoot).find_interactable(anchor_id)
 		if control == null:
