@@ -30,6 +30,15 @@ gave N a look of her own (chalk) on the same shader. Option C's files are kept, 
 `scenes/dev/character_lab/looks/before/` for comparison. The seated classroom student is
 still out of scope.
 
+**V2 head update (issue #383).** The "no UVs, no GLB is modified" rule of §2 applied to the
+look round and is now deliberately superseded for the protagonist's head only: the head has
+its own V2 build (`tools/head_v2.py`) with a local UV atlas, a tangent basis, 1024² albedo
+and normal maps, and a denser hair cage that keeps the approved hairstyle. The approved V1
+model is kept byte for byte as `art/character_models/sculpt/lead_v1_head.glb` (its SHA-256
+is pinned in the builder, and `check` refuses to build from anything else). Body, wardrobe,
+skeleton, weights, animations, materials, node names and every other mesh are unchanged.
+Section 9 records the contract.
+
 ## Q replacement note
 
 The Q-specific measurements and review statements in sections 1–2 below are **historical**:
@@ -242,6 +251,10 @@ their bones or the state machine. The details and the numbers are in
 | `scripts/actors/character_motion_profile.gd` | the `CharacterMotionProfile` resource |
 | `scenes/environment/characters/protagonist.tscn`, `q.tscn` | the wrappers: `motion_profile` on the root, a `Look` node beside `Model` |
 | `art/characters/build_character_looks.py` | the palette table and the generator of both looks |
+| `tools/head_v2.py`, `tools/head_v2_textures.py` | the V2 head builder and its map generator (§9) |
+| `assets/characters/protagonist/textures/head_albedo.png`, `head_normal.png` | the head's local 1024² maps (§9.2) |
+| `scripts/actors/character_detail_maps.gd` | the detail-map draw the paint shader includes when a look names maps (§9.2) |
+| `tools/head_preview.py`, `tools/head_preview.c` | the offline renderer that reproduces the evidence frames (§9.3) |
 | `tests/capture_character_art.gd`, `.github/workflows/character-art-capture.yml` | the in-game capture (§7) |
 
 The model directories still hold only the `.glb` and its `.import` (tested). Nothing in the
@@ -266,6 +279,14 @@ are the only scenes touched, so every place that instances them gets the new loo
 - `tests/runtime_character_animation_test.gd`: in the running game, both characters are bound
   with their profile, drawn PAINTED with nothing kept, and do not share one tempo; all the
   existing idle, walk, hand-height, leg and get-up limits hold with the profiles applied.
+
+**Offline, beside the engine:**
+
+- `python3 tools/head_v2.py check`: rebuilds the head from the pinned V1 source, requires the
+  installed GLB to be that build byte for byte, and asserts the §9.3 contract (atlas, seam,
+  lids, aperture, hair locks, budget);
+- `python3 tests/model_library_test.py`: every model still parses, fits its budget, carries
+  no camera or light, and the runtime characters still match their manifest.
 
 **In the game, `Character art capture` workflow** (`tests/capture_character_art.gd`, Xvfb,
 OpenGL, 1600×900), one job per group:
@@ -297,3 +318,86 @@ development aid) are hidden for the frames.
   models should follow the portraits is an owner decision.
 - Options B and C can be compared at any time in a running scene:
   `$Look.apply_treatment(CharacterLookApplier.Treatment.PIGMENT)`.
+
+## 9. The V2 head (issue #383)
+
+### 9.1 What the build is
+
+A deterministic rebuild of the protagonist's head and hair, run only from the pinned V1
+source (`art/character_models/sculpt/lead_v1_head.glb`, SHA-256
+`2b24d063bee3044dac8b9eb11945ead8cf001b6decd045c48e1e0b2ee7c40e6e`; `check` refuses any
+other file):
+
+```bash
+python3 tools/head_v2.py build     # V1 -> build/head_v2/Protagonist_Character.glb
+python3 tools/head_v2.py install   # copy that build over the runtime GLB
+python3 tools/head_v2.py check     # rebuild, require the installed GLB to be this build's
+                                   # output byte for byte, assert the contract in §9.3
+```
+
+- **The skin** is subdivided once (four triangles per original), sculpted in rest space —
+  eye sockets, lids that wrap the eyeball, nose wings and underside, lips and their
+  surroundings, cheekbones, a widened jaw, a brought-forward chin, brow ridge, neck — then
+  given one continuous face-focused UV atlas (the back seam is split in the mesh), a tangent
+  basis, and its nine sparse morph targets resampled through the subdivision map (deltas
+  under a fifth of a micron are zeroed so the sparse targets stay honest).
+- **The hair keeps the owner's hairstyle**: the same 96 locks, roots, tips and silhouette —
+  the bounding box is identical to V1's. Each lock's five rings are subdivided in place:
+  the midpoint of every ring edge is inserted (5 → 10 columns, 45 → 90 triangles per lock;
+  2 799 → 5 199 vertices and 4 880 → 9 200 triangles overall, smaller than the strand-split
+  draft it replaces), thinned to 0.82 of its radius about the strand's own axis, and the
+  strand takes one gentle outward bend of at most `min(2 mm, 3 % of length) · sin(πt)` with
+  `t` the ring centre's axial parameter. The root ring and the tip take no bend, the scalp
+  cap is untouched, and the mesh stays manifold with no degenerate triangle.
+- **The eyes** are levelled (V1's right eye sat 2.5 mm high), their flat iris and pupil
+  discs domed, the iris given a limbal ring through vertex colour; the eyebrows are re-hung
+  on the brow ridge as tapered tubes; the ears get a bowl, helix, concha and lobe; the
+  mouth's interior follows the lips. The rebuilt face parts re-express the head's nine
+  morph targets against their new rest pose; the eye mesh itself carries none, as in V1.
+- **Body, wardrobe, skeleton, weights, animations, materials, node names and every other
+  mesh** are copied byte-for-byte from the runtime GLB.
+
+### 9.2 Maps and their wiring
+
+The head's fine relief and local colour live in 1024² maps, not in more triangles:
+`assets/characters/protagonist/textures/head_albedo.png` (lips, the bruised under-eye
+patch, stubble) and `head_normal.png` (creases and skin grain), generated by
+`tools/head_v2_textures.py`. `CharacterLook.detail_maps` names them,
+`CharacterLookApplier` binds them, and `scripts/actors/character_detail_maps.gd` is the
+draw the paint shader includes when a look names maps. The channel is **opt-in**: the
+protagonist's look enables it, every other character's look does not, and none of those
+models has UVs, so the old path is untouched. The A/B is one flag:
+
+```bash
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --out build/head_v2/look
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --no-detail-maps \
+    --out build/head_v2/look_nodetail
+```
+
+### 9.3 The contract `check` asserts
+
+| | |
+|---|---|
+| V1 source | SHA-256 pinned; any other file refuses to build |
+| Head | 11 332 vertices, 22 064 triangles, 9 morph targets, atlas inside [0, 1], no triangle spanning the back seam (max U span 0.49999), 4 lid shells, aperture 13.4 mm |
+| Hair | 5 199 vertices, 9 200 triangles, 96 locks + the cap, bounding box identical to V1 |
+| Eyes | 0 morph targets on the eye mesh |
+| Budget | installed GLB 1 409 780 B, under the 1 536 KiB model budget |
+
+Evidence frames are reproducible with `tools/head_preview.py` (clay = no `--look`, wired =
+the shipped look, `--views front,quarter,side,close`, `--no-detail-maps` for the A/B).
+At this head the offline check, the offline renders and the Python tests
+(`verify_build_test`, `model_library_test`, `character_geometry_capture_test`,
+`agent_docs_test`) were run locally; the engine tests in §7 run in CI; the owner's grey-model
+and textured acceptance is recorded on issue #383.
+
+### 9.4 Limits
+
+- The face pigment of §4.1 still samples object space for the head (the rest-coordinate
+  rebuild does not carry blend shapes), so those blocks shift a few millimetres when the
+  head nods; the new maps are UV-space and do not shift.
+- The hair's bend and taper are rest-pose geometry, not simulation.
+- `tools/head_v2.py extract` re-creates the V1 source from the pre-V2 runtime only; the
+  committed V1 file, not an extract, is what `build` reads.

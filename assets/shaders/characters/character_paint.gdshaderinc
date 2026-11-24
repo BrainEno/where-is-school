@@ -88,6 +88,20 @@ uniform float mark_contour_power : hint_range(0.5, 8.0) = 2.0;
 // How far a stroke wanders off its straight line, in spacings.
 uniform float mark_jitter : hint_range(0.0, 1.5) = 0.5;
 
+// Local maps, for a part that carries UVs and a look that opts in (the protagonist's V2
+// head). Both stay off for every other part, so a mesh without UVs — the body, Q, the
+// teacher, the seated student — draws exactly as it did: the same flat albedo, the same
+// object-space pigment. A part that has them samples them in its own UV space; the maps
+// are authored beside the mesh (`tools/head_v2_textures.py`) and are not a shared atlas.
+uniform bool has_detail_albedo = false;
+uniform sampler2D detail_albedo : source_color, filter_linear_mipmap, repeat_disable;
+// The map is a multiplier, not a replacement, so the pigment blocks, the look's patches and
+// its albedo still read through it: it carries the lips, the bruise and the stubble.
+uniform float detail_albedo_mix : hint_range(0.0, 1.0) = 1.0;
+uniform bool has_detail_normal = false;
+uniform sampler2D detail_normal : hint_normal, filter_linear_mipmap, repeat_disable;
+uniform float detail_normal_strength : hint_range(0.0, 2.0) = 1.0;
+
 varying vec3 paint_position;
 
 float hash31(vec3 p) {
@@ -261,6 +275,15 @@ void fragment() {
 				baked * 12.92, lessThanEqual(baked, vec3(0.0031308)));
 		}
 		colour *= baked;
+	}
+	if (has_detail_albedo) {
+		// `source_color` makes the engine decode the map to linear on every renderer, so
+		// this needs no OUTPUT_IS_SRGB branch of its own.
+		colour *= mix(vec3(1.0), texture(detail_albedo, UV).rgb, detail_albedo_mix);
+	}
+	if (has_detail_normal) {
+		NORMAL_MAP = texture(detail_normal, UV).rgb;
+		NORMAL_MAP_DEPTH = detail_normal_strength;
 	}
 	ALBEDO = clamp(colour, vec3(0.0), vec3(1.0));
 	ROUGHNESS = 1.0;
