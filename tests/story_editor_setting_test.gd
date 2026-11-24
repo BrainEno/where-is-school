@@ -411,7 +411,7 @@ func _check_packaging_keeps_the_authoring_out(check: Harness.Checker) -> void:
 	if not check.expect(config.load("res://export_presets.cfg") == OK,
 			"export_presets.cfg could not be read to check what ships out"):
 		return
-	var dropped := ["scripts/story_editor/*", "scripts/dev/*", "tests/*", "tools/*", "addons/*"]
+	var dropped: Array[String] = ["scripts/story_editor/*", "scripts/dev/*", "tests/*", "tools/*", "addons/*"]
 	var index := 0
 	var presets := 0
 	while config.has_section("preset.%d" % index):

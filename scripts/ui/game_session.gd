@@ -50,6 +50,10 @@ extends Node
 ## quarantines a file while a run is live.
 
 const OfflineDiagnostics := preload("res://scripts/autoload/diagnostics.gd")
+# Not a `class_name`: the entry is preloaded by every caller, the same way `Settings` and the
+# settings row reach it. Preloading only this file is safe for an export, because it loads the
+# editor's scripts by path at runtime, and only while it is allowed to.
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
 
 ## Emitted once a new game has actually started: everything cleared, the opening entered.
 signal new_game_started(report: Dictionary)
