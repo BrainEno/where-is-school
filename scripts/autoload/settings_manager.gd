@@ -234,7 +234,12 @@ func set_story_editor_enabled(value: bool) -> bool:
 		return true
 	# Do not install the editor or show the setting as on until the preference is stored.
 	if _store(SECTION_AUTHORING, "story_editor", value) != OK:
-		return false
+		# A player's copy refuses the change outright. An author's own run is not locked out of
+		# the tool by a file it cannot write, so the editor installs for this session and nothing
+		# is remembered (#395). Turning it *off* always needs the file: a session that starts off
+		# has to stay off, and a half-written preference is not a way to escape a stored choice.
+		if not (value and StoryEditorEntry.development_run()):
+			return false
 	_story_editor = value
 	_sync_story_editor.call_deferred()
 	setting_changed.emit(&"story_editor")

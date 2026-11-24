@@ -661,16 +661,12 @@ func _cycle(id: StringName, step: int) -> void:
 	if id == &"story_editor":
 		var settings := _settings()
 		var saved := settings != null and bool(settings.call("set_story_editor_enabled", value == "on"))
-		_story_feedback_args = {}
-		if saved:
-			_story_feedback = "settings.done_note"
-		else:
-			# "Try again" alone is not an answer the author can act on, and it is not a report
-			# anyone can diagnose: say which step of the write the machine refused (#394).
-			var refused := _store_failure_step(settings)
-			_story_feedback = "settings.save_failed" if refused.is_empty() \
-				else "settings.save_failed_step"
-			_story_feedback_args = {"step": refused}
+		var installed := settings != null and bool(settings.call("is_story_editor_enabled"))
+		var refused := _store_failure_step(settings)
+		# The step is what makes a refusal something the author can act on, instead of only a
+		# "try again" nobody can diagnose (#394).
+		_story_feedback_args = {"step": refused}
+		_story_feedback = _story_feedback_key(saved, installed, refused)
 		_sync_story_choice()
 		_refresh_status_hint()
 		return
@@ -906,7 +902,8 @@ func _refresh_status_hint() -> void:
 	if _status == null or is_capturing():
 		return
 	_status.add_theme_color_override(&"font_color",
-		MenuStyle.WARN if _story_feedback.begins_with("settings.save_failed") else MenuStyle.MUTED)
+		MenuStyle.WARN if _story_feedback.begins_with("settings.save_failed") \
+			or _story_feedback == "settings.session_only_note" else MenuStyle.MUTED)
 	if not _story_feedback.is_empty():
 		_status.text = L10n.t(_story_feedback, _story_feedback_args)
 		return
@@ -1102,6 +1099,19 @@ func _display_mode() -> Node:
 
 func _settings() -> Node:
 	return get_node_or_null(^"/root/Settings") if is_inside_tree() else null
+
+
+## Which note the story editor row shows after one cycle of the switch: `saved` is whether the
+## preference reached the file, `installed` whether the editor is on now. A development run can
+## be installed without being saved, and that deserves a different sentence (#395). A refusal
+## with no step cannot be the session-only case: the state only changes through a settings node
+## that reported one.
+static func _story_feedback_key(saved: bool, installed: bool, step: String) -> String:
+	if saved:
+		return "settings.done_note"
+	if not step.is_empty() and installed:
+		return "settings.session_only_note"
+	return "settings.save_failed" if step.is_empty() else "settings.save_failed_step"
 
 
 ## The step `Settings` refused its last write over, or "" when it has none to report. Read
