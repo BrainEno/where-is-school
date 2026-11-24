@@ -1,7 +1,7 @@
 # 文档索引与状态
 
 > **状态：** 现行
-> **最后核对：** 2026-11-20（仅核对索引、状态元数据与相对链接；不等于逐页内容或实机验收）
+> **最后核对：** 2026-11-24（仅核对索引、状态元数据与相对链接；不等于逐页内容或实机验收）
 > **负责人：** 文档 Agent；改动任一 `docs/**/*.md` 的 PR 作者必须同步本页与相关状态
 > **取代者：** 旧评审索引已归档到 [archive/full-code-review.md](archive/full-code-review.md)
 
@@ -27,7 +27,8 @@
 | [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) | 资产来源与权利证据台账 | 现行 | 仓库所有者 | 2026-11-18 | 发行审计见 [ASSET_LICENSE_AUDIT.md](ASSET_LICENSE_AUDIT.md)；含 #308 现用肖像出处，以及教室帆布书包、操场集装箱铺盖与球场道具的第一方来源；记录不等于权利放行或美术批准 |
 | [BIOLOGY_CLASSROOM_EXPERIMENT.md](BIOLOGY_CLASSROOM_EXPERIMENT.md) | 生物教室开发实验说明 | 实验 | 工程 Agent | 2026-11-17 | 开发专用且不导出；同类实验见 [VISUAL_EXPERIMENTS.md](VISUAL_EXPERIMENTS.md) |
 | [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) | 角色动画资产、重定向与集成说明 | 现行 | 工程/美术 Agent | 2026-11-18 | 含教室座位接触、起坐、翻包与主角步行摆幅；角色集成参见 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) |
-| [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-17 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md) |
+| [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-23 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md)；§9 为主角 V2 头部合同（issue #383），中文阅读副本为 [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) |
+| [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) | 角色外观中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-23 | 与 [CHARACTER_ART.md](CHARACTER_ART.md) 全文同步（含 §9 V2 头部合同），不独立声称获批 |
 | [CHARACTER_MODEL_STANDARD.md](CHARACTER_MODEL_STANDARD.md) | 人物 3D 模型的行业标准与执行方案：业余感的五个来源、可测量的头部比例、N 的改造记录 | 现行 | 仓库所有者 | 2026-11-23 | 评审工具在 `tools/character_review/` |
 
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–12 说明 N／学生几何、全员头部精修与主角步态，对照待所有者验收 |
@@ -75,7 +76,7 @@
 | [adr/0004-art-direction.md](adr/0004-art-direction.md) | ADR 0004：美术方向、空间逻辑与相机 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 方向已确认但相机细节仍开放；状态见 [adr/README.md](adr/README.md) |
 | [adr/0005-saves.md](adr/0005-saves.md) | ADR 0005：存档格式、版本与恢复策略 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |
 | [adr/0006-painterly-rendering.md](adr/0006-painterly-rendering.md) | ADR 0006：绘画感渲染原型提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 实现与检查已落地但所有者采纳未决；状态见 [adr/README.md](adr/README.md) |
-| [adr/0007-large-binaries-and-repository-size.md](adr/0007-large-binaries-and-repository-size.md) | ADR 0007：大文件与仓库体积规则提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 规则与检查已落地但历史重写需所有者授权；状态见 [adr/README.md](adr/README.md) |
+| [adr/0007-large-binaries-and-repository-size.md](adr/0007-large-binaries-and-repository-size.md) | ADR 0007：大文件与仓库体积规则提案 | 提案/待所有者 | 仓库所有者 | 2026-11-24 | 已补充主角/Q/N/B 正式运行时模型 4 MiB 预算；历史重写仍需单独授权；状态见 [adr/README.md](adr/README.md) |
 | [scene_proposals/README.zh-CN.md](scene_proposals/README.zh-CN.md) | 三个场景提案的立项目录 | 提案/待所有者 | 仓库所有者 | 2026-11-23 | 不是实现；范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md)；首段标明旧路感构想不可当作当前注册表 |
 | [scene_proposals/01_thirteenth_chair.zh-CN.md](scene_proposals/01_thirteenth_chair.zh-CN.md) | 场景提案：第十三把椅子 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |
 | [scene_proposals/02_room_2_3.zh-CN.md](scene_proposals/02_room_2_3.zh-CN.md) | 场景提案：2-3 教室 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |

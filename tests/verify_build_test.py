@@ -69,6 +69,12 @@ def test_classify() -> None:
         # The exporter's own names, which is what the build actually contains.
         "res://.godot/exported/abc/student_backpack.glb-5817e7e.scn": "model",
         "res://.godot/exported/abc/bench_playground.glb-0202f96.scn": "model",
+        "res://.godot/exported/abc/Protagonist_Character.glb-2a3b4c.scn": "character-model",
+        "res://.godot/exported/abc/protagonist.glb-2a3b4c.scn": "character-model",
+        "res://.godot/exported/abc/new-Q.glb-2a3b4c.scn": "character-model",
+        "res://.godot/exported/abc/teacher-n.glb-2a3b4c.scn": "character-model",
+        "res://.godot/exported/abc/teacher_b.glb-2a3b4c.scn": "character-model",
+        "res://.godot/exported/abc/unlisted_character.glb-2a3b4c.scn": "model",
         "res://.godot/exported/abc/NotoSansSC-Regular.ttf-4b8abad.fontdata": "font",
         "res://.godot/exported/abc/step.wav-aa11bb.sample": "audio",
         "res://.godot/exported/abc/wall.png-cc22dd.ctex": "texture",
@@ -117,6 +123,34 @@ def test_entry_boundaries() -> None:
     expect_problem(problems, "hard limit", "a file past the hard limit does not fail")
 
 
+
+def test_character_model_budgets() -> None:
+    category = vb.BY_NAME["character-model"]
+    check(category.warn == 1536 * vb.KiB, "the character-model warning threshold changed")
+    check(category.hard == 4 * vb.MiB, "the character-model hard limit changed")
+
+    # The V2 protagonist's imported PCK resource measured 2.59 MiB. It must warn,
+    # not block a release, while remaining bounded by the explicit character cap.
+    protagonist = "res://.godot/exported/abc/Protagonist_Character.glb-2a3b4c.scn"
+    problems, warnings = vb.verify_budgets([(protagonist, int(2.59 * vb.MiB))])
+    check(problems == [], f"a 2.59 MiB protagonist model was blocked: {problems}")
+    expect_problem(warnings, "warning line", "a large character model did not warn")
+
+    problems, warnings = vb.verify_budgets([(protagonist, category.hard)])
+    check(problems == [], f"a character model exactly at 4 MiB failed: {problems}")
+    check(bool(warnings), "a character model at the hard limit did not warn")
+
+    problems, _warnings = vb.verify_budgets([(protagonist, category.hard + 1)])
+    expect_problem(problems, "hard limit", "a character model over 4 MiB did not fail")
+
+    ordinary = "res://.godot/exported/abc/unlisted_character.glb-2a3b4c.scn"
+    problems, _warnings = vb.verify_budgets([(ordinary, int(2.59 * vb.MiB))])
+    expect_problem(problems, "hard limit", "an unlisted model inherited the character exception")
+
+    other = "res://project.binary"
+    problems, _warnings = vb.verify_budgets([(other, 2 * vb.MiB + 1)])
+    expect_problem(problems, "hard limit", "the generic file budget was accidentally raised")
+
 def test_every_category_has_a_ceiling() -> None:
     # The same boundary, once per category: the check is only worth having if no category
     # can quietly accept a file the old flat limit would have rejected.
@@ -131,6 +165,7 @@ def test_every_category_has_a_ceiling() -> None:
 def test_pack_totals() -> None:
     check(vb.MAX_PACK_BYTES == 50 * vb.MiB, "the approved 50 MiB pack limit changed")
     check(vb.BY_NAME["audio"].hard == 2 * vb.MiB, "the per-audio-file limit changed")
+    check(vb.BY_NAME["other"].hard == 2 * vb.MiB, "the generic file limit changed")
     chunk = vb.BY_NAME["other"].warn  # exactly at the warning line of its category
     count = vb.MAX_PACK_BYTES // chunk
     entries = [(f"res://.godot/exported/x/file{i}.bin", chunk) for i in range(count)]

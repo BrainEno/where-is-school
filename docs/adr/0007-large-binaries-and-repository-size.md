@@ -44,19 +44,18 @@ have different jobs:
 
 | Where | Class | Ceiling | Enforced by |
 |---|---|---|---|
-| `assets/**` | **runtime**: the engine imports it | 2 MiB per file, 50 MiB per pack (previously 16, 24, 32 and 40 MiB), as shipped | `tools/verify_build.py` on the exported PCK, every PR |
+| `assets/**` | **runtime**: the engine imports it | 4 MiB for the explicit protagonist/Q/teacher N/teacher B model allowlist; all other files retain their category limits (none above 2 MiB); 50 MiB per pack | `tools/verify_build.py` on the exported PCK, every PR |
 | `art/**`, `scenes/dev/**`, `docs/**` | **source / scratch / evidence**: never shipped | 12 MiB per file | `tools/repo_size.py --check`, every PR |
 | anywhere else | anything git tracks | 12 MiB per file | `tools/repo_size.py --check` |
 
 The owner approved the increase to 40 MiB after a clean Godot 4.7.2 source-build
 Linux export with all 14 score MP3s measured 36.95 MiB of packed entries (PCK file
-38,957,488 bytes). The 2 MiB per-file runtime limit and 12 MiB repository limit are
-unchanged. A standard release export still needs to verify the final artifact.
+38,957,488 bytes). The 12 MiB repository limit and every non-character runtime category
+limit remain unchanged. Named runtime character models use the separate 4 MiB budget below.
 
 The owner approved raising the pack limit from 40 MiB to about 50 MiB after the iOS and
 export packs reached 40.0–40.1 MiB with teacher N's blink and expression shapes (about
-0.3 MiB of dense morph data; main measured 39.79 MiB). The 8 MiB warning line and the
-2 MiB per-file limit are unchanged.
+0.3 MiB of dense morph data; main measured 39.79 MiB). The 8 MiB warning line and all non-character per-file limits are unchanged.
 
 `tools/repo_size.py` has **no exception list**. An exception list is how the 67 MiB file got
 in: a file that needs an exception needs a decision, and the decision is this ADR being
@@ -120,6 +119,11 @@ git clone --depth=1 …
 `--filter=blob:none` fetches commits and trees but no file contents until they are needed,
 which is exactly right for a code review, a documentation pass or an agent workspace that
 opens the current tree.
+
+
+### Runtime character model budget (2026-11-24)
+
+The protagonist, Q, substitute teacher N and biology teacher B are approved runtime characters, not ordinary props. Their imported geometry can legitimately include facial refinement, morph targets and character-specific detail. The exported PCK verifier therefore recognizes only these exact source basenames: `Protagonist_Character.glb`, `protagonist.glb`, `new-Q.glb`, `teacher-n.glb` and `teacher_b.glb`. These files warn above 1.5 MiB and fail above 4 MiB. Every unlisted model remains capped at 1.5 MiB; every other category retains its previous hard limit (no more than 2 MiB). The 50 MiB total PCK budget and 12 MiB tracked-source-file limit are unchanged. Tests cover the measured 2.59 MiB protagonist import, the 4 MiB boundary, an over-limit character, an unlisted model and a generic file.
 
 ## Consequences
 

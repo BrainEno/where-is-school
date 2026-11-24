@@ -109,6 +109,17 @@ jobs:
           done
           .venv/bin/python tests/character_sculpt_test.py
 
+      - name: Verify the V2 protagonist head export
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Issue #383: tools/head_v2.py re-exports the runtime head from the archived
+          # V1, so the contract -- a reproducible build, the UV atlas, the resampled
+          # morphs, the approved hair's 96 locks, and the body, clips and skeleton
+          # arriving from V1 with their values intact -- lives here, not in the sculpt
+          # chain that still owns V1.
+          .venv/bin/python tests/head_v2_test.py
+
       - name: Exercise the declared GDScript parser
         shell: bash
         run: |
