@@ -614,22 +614,6 @@ jobs:
 
           run_check_summary
 
-      # TEMPORARY (issue #383): the protagonist's imported .scn now breaks the model
-      # budget and the run log is not readable from the sandbox that needs this data,
-      # so the scene's composition is printed as annotations instead. Remove this step
-      # together with tools/scn_probe.gd once the budget question is settled.
-      - name: Temporary .scn composition probe (issue #383)
-        shell: bash
-        run: |
-          set -uo pipefail
-          for f in .godot/imported/Protagonist_Character.glb-*.scn; do
-            [ -e "$f" ] || continue
-            echo "::notice title=scn size::$f $(stat -c%s "$f") bytes"
-          done
-          if ! timeout 120 godot --headless --path . --script res://tools/scn_probe.gd 2>&1 | sed -n 's/^PROBE /::notice title=scn-probe:: /p'; then
-            echo "::notice title=scn probe::script exited non-zero (see comments)"
-          fi
-
       - name: Report the engine noise the checks left behind
         if: always()
         shell: bash
