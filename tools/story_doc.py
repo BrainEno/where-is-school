@@ -607,6 +607,7 @@ def apply_attr(target: dict, line: str, names: Names, where: str, is_choice: boo
 
 def parse_inspections(lines: list[str], names: Names) -> dict:
     result: dict = {}
+    item_locations: dict[str, dict[str, int]] = {}
     chapter = item_id = ""
     item = None
     reverse = {v: k for k, v in INSPECTION_FIELDS.items()}
@@ -626,6 +627,13 @@ def parse_inspections(lines: list[str], names: Names) -> dict:
             if not chapter:
                 raise DocError(f"{where}: 检视条目必须放在某个「▣ 章节 …」下面")
             item_id = match.group(1)
+            locations = item_locations.setdefault(chapter, {})
+            if item_id in locations:
+                raise DocError(
+                    f"{where}: 检视条目 {item_id} 与第 {locations[item_id]} 行重复"
+                    f"（同一章节「{chapter}」不可重复）"
+                )
+            locations[item_id] = number
             item = result[chapter][item_id] = {}
             continue
         if item is None:

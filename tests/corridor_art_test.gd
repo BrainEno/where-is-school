@@ -6,6 +6,8 @@ extends SceneTree
 const Harness = preload("res://tests/test_harness.gd")
 const DirectoryCase = preload("res://tests/corridor_directory_support.gd")
 const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
+const FRONT_YARD := "res://scenes/locations/front_yard/front_yard.tscn"
+const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
 const SCHOOL := ^"TeachingBlock"
 const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
 const DIRECTORY := &"corridor_folded_directory"
@@ -118,7 +120,15 @@ func _run() -> void:
 	var approach := corridor.get_spawn(&"FromSchoolyard")
 	if await _walk(approach.global_position, "fire stair bottom"):
 		if await _use_exit(&"to_schoolyard", &"playground", &"FromCorridor"):
-			await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
+			# Round 24: arriving, the player walks out from under the fire door and off its
+			# step, so the way back in is not under the cursor at their feet.
+			var yard_spawn := _host.get_current().get_spawn(&"FromCorridor").global_position
+			_check.expect(_player.global_position.distance_to(yard_spawn) > 1.2,
+				"Arriving in the yard did not walk the player off the fire step (%s)." % _player.global_position)
+			var yard_nav := _host.get_current().get_node(^"Navigation") as LocationNavigation
+			await Harness.wait_until(func() -> bool: return yard_nav.is_routable(), 7.0)
+			if await _walk(yard_spawn, "back under the fire door"):
+				await _use_exit(&"pg_to_corridor", &"corridor", &"FromSchoolyard")
 	if _host.get_current().location_id == &"corridor":
 		await _walk(FIRST_BEND, "climb back from the yard")
 		Harness.stage = "classroom and street returns"
@@ -131,6 +141,10 @@ func _run() -> void:
 						"Leaving the classroom did not land on the hall side of the front door.")
 		if _host.get_current().location_id == &"corridor" and await _walk(Vector3(0, 0, 5.4), "old 02 school gate"):
 			if await _use_exit(&"school_gate", &"front_yard", &"FromCorridor"):
+				# Round 24: down the gate steps the arrival walks on toward the gate (`entry_walk`).
+				var yard_arrival := _host.get_current().get_spawn(&"FromCorridor").global_position
+				_check.expect(_player.global_position.x - yard_arrival.x > 1.8,
+					"The front yard arrival did not walk on from %s (at %s)." % [yard_arrival, _player.global_position])
 				await _check_glass_entrance()
 	if _host.get_current().location_id == &"corridor":
 		await _check_rear_stair_and_laboratory(_host.get_current())
@@ -149,6 +163,7 @@ func _finish() -> void:
 
 
 func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
+	_check_entry_headings()
 	_check.expect(corridor.get_node_or_null(^"StageArt/Beyond") == null, "The old inaccessible extension was left in.")
 	var env := (corridor.get_node(^"WorldEnvironment") as WorldEnvironment).environment
 	_check.expect(env.fog_enabled and env.fog_mode == Environment.FOG_MODE_DEPTH, "The hall lost its depth haze.")
@@ -183,6 +198,24 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 
 ## The formerly identical faces were visible from the follow camera. The
 ## neighbouring boxes can meet or have a rebate, but cannot draw the same face.
+## The four doorway arrivals that carry an explicit heading (entry_facing). Each must face
+## the way the doorway needs: into the block when entering, away from the door when leaving.
+func _check_entry_headings() -> void:
+	var cases := [
+		[CORRIDOR, &"FromTeachingEntrance", Vector3.FORWARD],
+		[CORRIDOR, &"FromSchoolyard", Vector3.FORWARD],
+		[FRONT_YARD, &"FromCorridor", Vector3.RIGHT],
+		[PLAYGROUND, &"FromCorridor", Vector3.BACK],
+	]
+	for case in cases:
+		var scene := (load(case[0]) as PackedScene).instantiate() as Node3D
+		var spawn := scene.get_node_or_null(NodePath("SpawnPoints/%s" % case[1])) as Node3D
+		_check.expect(spawn != null and bool(spawn.get_meta(&"entry_facing", false))
+			and (-spawn.basis.z).dot(case[2]) > 0.99,
+			"%s %s does not declare its doorway heading." % [case[0].get_file(), case[1]])
+		scene.free()
+
+
 func _check_separate_box_faces(bay: Node3D, first: NodePath, second: NodePath) -> void:
 	var a := bay.get_node_or_null(first) as MeshInstance3D
 	var b := bay.get_node_or_null(second) as MeshInstance3D
@@ -353,6 +386,8 @@ func _check_glass_entrance() -> void:
 	if not _check.expect(doorway != null and arrival != null and doorway.scene_file_path == entrance_scene,
 		"The exterior and interior must share the same glass assembly."):
 		return
+	_check.expect(_player.get_facing_direction().dot(-arrival.global_basis.z) > 0.99,
+		"Arrival from the front yard must face into the block, not keep the old heading.")
 	var exterior := doorway.to_local(_player.global_position)
 	_check.expect(exterior.z > 1.0 and absf(exterior.x) < 0.08 and absf(exterior.y) < 0.09,
 		"Street arrival must put the player's feet outside, level with the door: %s." % exterior)

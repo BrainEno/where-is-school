@@ -49,6 +49,14 @@ BQ_BOUNDS = {
 # N's whole orbit deforms together. The seated student intentionally keeps
 # all eight cut eye layers and both separate lid rims out of the edit set.
 CLASSROOM_BOUNDS = {
+    # Q's eyes are widened about their centres (refine_q_face.py). Measured maxima on the
+    # shipped revision: sclera 5.5 mm, iris 2.7 mm, pupil 1.0 mm, skin 7.2 mm, brow 1.1 mm.
+    # Hair, body and mouth are not in this set and must stay exact.
+    'q': {
+        ('Q_Eyes', 'Q_Mat_Sclera'): .0065, ('Q_Eyes', 'Q_Mat_Iris'): .0035,
+        ('Q_Eyes', 'Q_Mat_Pupil'): .0015, ('Q_Head', 'Q_Mat_Skin'): .0080,
+        ('Q_Head', 'Q_Mat_Hair'): .0020,
+    },
     'n': {(f'ST_Eye_{side}', f'M_ST_{part}'): limit
           for side in 'LR' for part, limit in [('Sclera', .004), ('Iris', .002), ('Pupil', .0015)]} | {
         ('ST_Eyebrow_L', 'M_ST_Brow'): .006, ('ST_Eyebrow_R', 'M_ST_Brow'): .006,

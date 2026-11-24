@@ -224,7 +224,8 @@ func set_skip_scope(value: StringName) -> void:
 
 ## The story editor switch. Off is the player's game: no launcher, no overlay and no
 ## draft reads. On, the world offers 「剧情编辑」; drafts live in `user://story_editor/`, apart
-## from the save file.
+## from the save file. The return value is whether the preference file took the change, which on
+## an author's run is not the same question as whether the switch moved - see below.
 func is_story_editor_enabled() -> bool:
 	return _story_editor
 
@@ -232,13 +233,18 @@ func is_story_editor_enabled() -> bool:
 func set_story_editor_enabled(value: bool) -> bool:
 	if value == _story_editor:
 		return true
-	# Do not install the editor or show the setting as on until the preference is stored.
-	if _store(SECTION_AUTHORING, "story_editor", value) != OK:
+	var stored := _store(SECTION_AUTHORING, "story_editor", value) == OK
+	if not stored and not StoryEditorEntry.development_run():
+		# A player's copy refuses the change outright. An author's own run is not locked out of the
+		# tool by a file it cannot write, and is not trapped inside it either: the switch moves for
+		# this run, in both directions, and nothing is remembered (#395, #396). The file is how the
+		# author persists a choice, not who is allowed to make one - so a stored "on" still wins on
+		# the next run, and the `false` below is what tells the row to say that out loud.
 		return false
 	_story_editor = value
 	_sync_story_editor.call_deferred()
 	setting_changed.emit(&"story_editor")
-	return true
+	return stored
 
 
 func _sync_story_editor() -> void:

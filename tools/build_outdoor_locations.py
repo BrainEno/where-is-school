@@ -307,9 +307,22 @@ class Scene:
 
         lines.append('[node name="SpawnPoints" type="Node3D" parent="."]')
         lines.append('')
-        for name, pos in self.spawns:
+        for spawn in self.spawns:
+            # (name, pos) keeps the legacy "keep the previous heading" behaviour. A third
+            # element may declare the arrival heading: {"rotation": (x, y, z)} is written as
+            # rotation_degrees, and "entry_facing": True marks it as authoritative (see
+            # location_host.gd ENTRY_FACING_META). Doors into and out of the teaching block use it.
+            name, pos = spawn[0], spawn[1]
+            options = spawn[2] if len(spawn) > 2 else {}
             lines.append(f'[node name="{name}" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]')
             lines.append('position = %s' % v3(pos))
+            if 'rotation' in options:
+                lines.append('rotation_degrees = %s' % v3(options['rotation']))
+            if options.get('entry_facing'):
+                lines.append('metadata/entry_facing = true')
+            if options.get('entry_walk'):
+                # Metres walked straight ahead as part of arriving (LocationHost.ENTRY_WALK_META).
+                lines.append('metadata/entry_walk = %s' % float(options['entry_walk']))
             lines.append('')
         lines.append('[node name="Ambience" type="AudioStreamPlayer" parent="."]')
         lines.append(f'stream = ExtResource("{base + 2}_ambience")')
@@ -474,7 +487,11 @@ def build_street():
     ]
     # `FromCorridor` is outside the side door now; it keeps the name the route used to give it,
     # because saves taken in the street name it.
-    s.spawns = [("FromCorridor", (-7.4, 0, 15.2)), ("FromResidential", (10.5, 1.6, -35.4))]
+    # Back from the flats the player stands on the landing, on the very stair that is the way
+    # up again, so the arrival walks them down the flight and 0.9 m past its foot (round 24).
+    s.spawns = [("FromCorridor", (-7.4, 0, 15.2)),
+                ("FromResidential", (10.5, 1.6, -35.4),
+                 {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 5.8})]
     # The painted distance keeps going, but neither the asphalt nor the pavements
     # do. A low works barrier makes the playable southern edge physical and legible.
     s.box("SouthWorksBarrier", (0, 0.53, 19.79), (34, 1.06, 0.28), "concrete", ["camera_occluder"])
@@ -611,7 +628,12 @@ def build_front_yard():
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
          "id_dest": "street"},
     ]
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5)), ("FromStreet", (12.0, 0, d_mid))]
+    # Shared by the glass entrance and the gate steps (both leave the block). Faces east, toward
+    # the school gate. Split per exit in a later phase; see docs/CORRIDOR_ART.md. Round 24: the
+    # arrival walks 2.5 m on toward the gate, so the glass door (the way back in) is well behind.
+    s.spawns = [("FromCorridor", (-5.5, 0, 13.5),
+                 {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.5}),
+                ("FromStreet", (12.0, 0, d_mid))]
     return s
 
 
@@ -1169,7 +1191,11 @@ def build_playground(for_courtyard_view: bool = False):
         ("FromAlley", (0.0, 0, 16.0)),
         # The walkway's end door: this is the intended way into the yard, so the
         # player arrives from the school side rather than from the estate gate.
-        ("FromCorridor", (-3.0, 0, -17.6)),
+        # Round 24: arriving from the teaching block, the player walks out from under the fire
+        # door and off its step before control comes back. Standing on the spawn, the way
+        # back in (fire door and step, a 1.6 m sphere) was under every click at their feet.
+        ("FromCorridor", (-3.0, 0, -17.6),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 1.6}),
         # Arrival from classroom window curtain fall: lands on top of the blue container.
         ("FromSchool", (12.0, 2.6, -15.5)),
         # Out of the building site's gate, on the yard side of it.

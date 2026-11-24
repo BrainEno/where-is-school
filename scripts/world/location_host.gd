@@ -17,6 +17,16 @@ signal location_entered(location: LocationRoot, spawn_id: StringName)
 signal player_recovered
 
 const SAFE_SAMPLE_INTERVAL := 0.12
+## Marker metadata: the marker's rotation is the heading the player arrives with. Without
+## it, an identity rotation means "keep the previous heading" (PlayerController.teleport),
+## which is only right for restoring or interrupting a location, not for a doorway.
+const ENTRY_FACING_META := &"entry_facing"
+## Marker metadata: metres the player walks straight ahead (along the marker's -Z) as part
+## of arriving, before control is handed back. For a doorway whose way back - a fire door
+## with its step, a flight of stairs - would otherwise sit under the cursor at the player's
+## feet, so a stray click on it walked them straight back in (round 24). `LocationFlow`
+## walks it; a direct `load_location` (a test, a restored save) does not.
+const ENTRY_WALK_META := &"entry_walk"
 const SUPPORT_MARGIN := 0.38 # Wider than the playable capsule's 0.35 m radius.
 const SUPPORT_VERTICAL := 0.30 # Allows contact on either side of a normal stair slope.
 const WORLD_SOLIDS := 1
@@ -34,6 +44,8 @@ var _current_path: String = ""
 ## The marker the player was placed on when the current location was entered. A save
 ## needs it: the room says where the player *may* arrive, this says where they did.
 var _current_spawn: StringName = &""
+## Where the arrival walk of the current entry ends, or null (see `ENTRY_WALK_META`).
+var _entry_walk_target: Variant = null
 
 ## How far the body may end up from the marker before the placement counts as failed.
 ## A teleport assigns the position exactly; anything larger means the player refused
@@ -68,8 +80,8 @@ func _physics_process(delta: float) -> void:
 	if _current.is_below_playable_space(feet):
 		var target := _recovery_pose()
 		_player.teleport(target)
-		# Entry placement treats an identity basis as "keep facing". A recovered
-		# pose has a real heading even when it points along the default -Z axis.
+		# A recovered pose has a real heading even when it points along the default -Z
+		# axis, so it is set explicitly rather than read as "keep facing".
 		_player.face_toward(-target.basis.z)
 		player_recovered.emit()
 		return
@@ -136,6 +148,12 @@ func get_current_path() -> String:
 ## The spawn marker the current location was entered through.
 func get_current_spawn() -> StringName:
 	return _current_spawn
+
+
+## The point the player should walk to as part of arriving through the current spawn, or
+## null when the marker asks for no walk (`ENTRY_WALK_META`).
+func get_entry_walk_target() -> Variant:
+	return _entry_walk_target
 
 
 ## Loads `scene_path` and places `player` at the marker named `spawn_id`.
@@ -261,7 +279,8 @@ func _swap(
 	# Read the marker now that the scene has a parent: its global transform is then the
 	# one the player will stand on, whatever transform the host itself carries.
 	var target: Transform3D = spawn.global_transform
-	if not _place_player(player, target):
+	var face_entry: bool = spawn.get_meta(ENTRY_FACING_META, false)
+	if not _place_player(player, target, face_entry):
 		# Roll back: the rejected scene leaves the tree again and is freed now, so no
 		# frame ever sees it standing next to the old one. `_current` and `_current_path`
 		# were not replaced yet; they are restated here so a later reordering of this
@@ -279,6 +298,7 @@ func _swap(
 	_current = location
 	_current_path = scene_path
 	_current_spawn = spawn_id
+	_entry_walk_target = _entry_walk_from(spawn, target)
 	_player = player as PlayerController
 	_entry_pose = target
 	_safe_pose = target
@@ -295,9 +315,21 @@ func _swap(
 	return &"entered"
 
 
-## Places `player` at `target` and reports whether the body actually took it.
-func _place_player(player: Node3D, target: Transform3D) -> bool:
+func _entry_walk_from(spawn: Node, target: Transform3D) -> Variant:
+	var distance := float(spawn.get_meta(ENTRY_WALK_META, 0.0))
+	var ahead := -target.basis.z
+	ahead.y = 0.0
+	if distance <= 0.0 or ahead.length_squared() < 0.0001:
+		return null
+	return target.origin + ahead.normalized() * distance
+
+
+## Places `player` at `target` and reports whether the body actually took it. With
+## `face_entry`, the heading is the marker's own -Z even when its basis is identity.
+func _place_player(player: Node3D, target: Transform3D, face_entry: bool) -> bool:
 	player.call("teleport", target)
+	if face_entry:
+		player.call("face_toward", -target.basis.z)
 	var offset := player.global_position.distance_to(target.origin)
 	if offset > PLACEMENT_TOLERANCE:
 		push_error(

@@ -355,7 +355,7 @@ func _check_map(id: String, spec: Dictionary, location: Node) -> void:
 		return
 	var interactables := anchors.get_children()
 	# Keep the stage-pass contract on its own anchor list (e.g. the teaching wing's
-	# nine recessed windows have their own test). These controls live with their props.
+	# two hop-up high windows have their own test). These controls live with their props.
 	var fitted: Array[StringName] = []
 	if id == "playground":
 		fitted = [&"pg_container_ladder"]

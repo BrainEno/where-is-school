@@ -36,6 +36,11 @@ const CAMERA_SEE_THROUGH_LIMIT := 6
 const CAMERA_DEPTH_TOLERANCE := 0.01
 ## Bound overlapping hotspots while still looking beyond their anchor spheres.
 const POINTER_CANDIDATE_LIMIT := 64
+## A marked object (`Interactable.CueStyle.MARKER`: things to look at, people) is found by
+## the pointer on the object - its pick boxes - and otherwise only this close to its anchor.
+## Its proximity sphere (a metre or more) is no pointer target: that halo is what turned a
+## click on the floor beside a window into a hop at the window (round 24).
+const MARKER_ANCHOR_PICK_RADIUS := 0.18
 
 @export var player_path: NodePath = ^".."
 @export var sensor_path: NodePath = ^"../InteractionSensor"
@@ -145,7 +150,8 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 	# The first physics hit is often an oversized proximity sphere, not the thing
 	# drawn under the cursor. Inspect all overlapping areas and prefer actual mesh
 	# bounds; only use an anchor sphere when no drawn target was hit. In particular,
-	# a window's sphere must not steal a click on a person in front of it.
+	# a window's sphere must not steal a click on a person in front of it. A marked
+	# object's sphere is not used at all, apart from a pinpoint at its anchor.
 	var excluded: Array[RID] = []
 	var best: Interactable = null
 	var best_depth := INF
@@ -167,11 +173,12 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 			continue
 		if not is_drawn_at_screen_ray(from, direction, candidate):
 			continue
-		var depth := _nearest_box_entry(from, direction.normalized(), candidate.get_outline_meshes())
+		var ray := direction.normalized()
+		var depth := _nearest_box_entry(from, ray, candidate.get_outline_meshes())
 		if depth >= 0.0 and depth < best_depth:
 			best = candidate
 			best_depth = depth
-		elif depth < 0.0 and fallback == null:
+		elif depth < 0.0 and fallback == null and _accepts_anchor_pick(from, ray, candidate):
 			fallback = candidate
 	var selected := best if best != null else fallback
 	# Resolve what the player pointed at before applying reach. Otherwise an
@@ -181,6 +188,18 @@ func get_target_at_screen_position(screen_position: Vector2, require_reach: bool
 		if not _in_reach(selected) or not _has_line_of_sight(selected):
 			return null
 	return selected
+
+
+## Whether a ray that met `candidate`'s area but none of its drawn boxes may still pick it.
+## An outlined object (an exit) keeps its whole sphere; a marked one only a pinpoint around
+## its anchor (`MARKER_ANCHOR_PICK_RADIUS`), so an object with nothing to box (a probe, floor
+## paint) is still pointable exactly where it is anchored.
+func _accepts_anchor_pick(from: Vector3, ray: Vector3, candidate: Interactable) -> bool:
+	if not candidate.uses_marker_cue():
+		return true
+	var offset := candidate.global_position - from
+	var along := offset.dot(ray)
+	return along > 0.0 and (offset - ray * along).length() <= MARKER_ANCHOR_PICK_RADIUS
 
 
 ## Whether the camera sees `candidate` along this pixel's ray, by the rule the outline mask

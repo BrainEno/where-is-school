@@ -1,7 +1,7 @@
 # 文档索引与状态
 
 > **状态：** 现行
-> **最后核对：** 2026-11-20（仅核对索引、状态元数据与相对链接；不等于逐页内容或实机验收）
+> **最后核对：** 2026-11-24（仅核对索引、状态元数据与相对链接；不等于逐页内容或实机验收）
 > **负责人：** 文档 Agent；改动任一 `docs/**/*.md` 的 PR 作者必须同步本页与相关状态
 > **取代者：** 旧评审索引已归档到 [archive/full-code-review.md](archive/full-code-review.md)
 
@@ -76,7 +76,7 @@
 | [adr/0004-art-direction.md](adr/0004-art-direction.md) | ADR 0004：美术方向、空间逻辑与相机 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 方向已确认但相机细节仍开放；状态见 [adr/README.md](adr/README.md) |
 | [adr/0005-saves.md](adr/0005-saves.md) | ADR 0005：存档格式、版本与恢复策略 | 现行 | 仓库所有者 | 2026-11-17 | 已接受；状态见 [adr/README.md](adr/README.md) |
 | [adr/0006-painterly-rendering.md](adr/0006-painterly-rendering.md) | ADR 0006：绘画感渲染原型提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 实现与检查已落地但所有者采纳未决；状态见 [adr/README.md](adr/README.md) |
-| [adr/0007-large-binaries-and-repository-size.md](adr/0007-large-binaries-and-repository-size.md) | ADR 0007：大文件与仓库体积规则提案 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 规则与检查已落地但历史重写需所有者授权；状态见 [adr/README.md](adr/README.md) |
+| [adr/0007-large-binaries-and-repository-size.md](adr/0007-large-binaries-and-repository-size.md) | ADR 0007：大文件与仓库体积规则提案 | 提案/待所有者 | 仓库所有者 | 2026-11-24 | 已补充主角/Q/N/B 正式运行时模型 4 MiB 预算；历史重写仍需单独授权；状态见 [adr/README.md](adr/README.md) |
 | [scene_proposals/README.zh-CN.md](scene_proposals/README.zh-CN.md) | 三个场景提案的立项目录 | 提案/待所有者 | 仓库所有者 | 2026-11-23 | 不是实现；范围见 [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md)；首段标明旧路感构想不可当作当前注册表 |
 | [scene_proposals/01_thirteenth_chair.zh-CN.md](scene_proposals/01_thirteenth_chair.zh-CN.md) | 场景提案：第十三把椅子 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |
 | [scene_proposals/02_room_2_3.zh-CN.md](scene_proposals/02_room_2_3.zh-CN.md) | 场景提案：2-3 教室 | 提案/待所有者 | 仓库所有者 | 2026-11-17 | 未实现；开工需所有者批准与 [ADR 0004](adr/0004-art-direction.md) |
