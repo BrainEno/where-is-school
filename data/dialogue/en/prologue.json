@@ -739,20 +739,26 @@
         },
         {
           "id": "ad_square_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_echo",
           "source": "recalled",
           "text": "Put two things in place first. Desk in front, board behind. Where does the sound go?",
           "check": {
-            "ability": "orientation",
+            "ability": "echo",
             "difficulty": 9,
             "kind": "visible",
             "success": "ad_square_close",
-            "failure": "p_ad_square_unplaced"
+            "failure": "p_ad_square_unplaced",
+            "modifiers": [
+              {
+                "flag": "saw_set_square",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "ad_square_close",
-          "speaker": "voice_orientation",
+          "speaker": "voice_echo",
           "text": "The knock was close to your left hand.",
           "source": "recalled",
           "next": "q_ad_1",
@@ -1252,10 +1258,10 @@
         },
         {
           "id": "e3_whimsy",
-          "speaker": "voice_whimsy",
-          "text": "TODO · Flight of Fancy check",
+          "speaker": "voice_imagination",
+          "text": "TODO · Imagination check",
           "check": {
-            "ability": "whimsy",
+            "ability": "imagination",
             "difficulty": 10,
             "kind": "visible",
             "success": "e3_h1_p",
@@ -1265,13 +1271,13 @@
         {
           "id": "e3_h1_p",
           "speaker": "protagonist",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 1 · protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 1 · protagonist",
           "next": "e3_h1_b"
         },
         {
           "id": "e3_h1_b",
           "speaker": "b",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 1 · B",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 1 · B",
           "choices": [
             {
               "id": "go_on",
@@ -1288,13 +1294,13 @@
         {
           "id": "e3_h2_p",
           "speaker": "protagonist",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 2 · protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 2 · protagonist",
           "next": "e3_h2_b"
         },
         {
           "id": "e3_h2_b",
           "speaker": "b",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 2 · B",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 2 · B",
           "choices": [
             {
               "id": "go_on",
@@ -1311,13 +1317,13 @@
         {
           "id": "e3_h3_p",
           "speaker": "protagonist",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 3 · protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 3 · protagonist",
           "next": "e3_h3_b"
         },
         {
           "id": "e3_h3_b",
           "speaker": "b",
-          "text": "TODO · after “where's your textbook” · absurd, high Flight of Fancy (he steers the fantasy) · round 3 · B",
+          "text": "TODO · after “where's your textbook” · absurd, high Imagination (he steers the fantasy) · round 3 · B",
           "next": "b_e_4",
           "effects": [
             {
@@ -1325,20 +1331,20 @@
               "entry_id": "imagined_b_clue_whimsy",
               "source": "imagined",
               "speaker": "protagonist",
-              "text": "TODO · clue (only at the end of the high Flight of Fancy branch)"
+              "text": "TODO · clue (only at the end of the high Imagination branch)"
             }
           ]
         },
         {
           "id": "e3_l1_p",
           "speaker": "protagonist",
-          "text": "TODO · after “where's your textbook” · absurd, low Flight of Fancy (B's authority wins) · round 1 · protagonist",
+          "text": "TODO · after “where's your textbook” · absurd, low Imagination (B's authority wins) · round 1 · protagonist",
           "next": "e3_l1_b"
         },
         {
           "id": "e3_l1_b",
           "speaker": "b",
-          "text": "TODO · after “where's your textbook” · absurd, low Flight of Fancy (B's authority wins) · round 1 · B",
+          "text": "TODO · after “where's your textbook” · absurd, low Imagination (B's authority wins) · round 1 · B",
           "next": "e3_n3_p"
         },
         {
@@ -1678,7 +1684,14 @@
                 "not_flags": [
                   "check:classroom_curtain:cc_edges_check"
                 ]
-              }
+              },
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "curtain_edges_examined",
+                  "value": true
+                }
+              ]
             },
             {
               "id": "draw",
@@ -1694,19 +1707,25 @@
         },
         {
           "id": "cc_edges_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Wait. Look at the hem before you touch it.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "visible",
             "success": "cc_edges_ok",
-            "failure": "cc_edges_bad"
+            "failure": "cc_edges_bad",
+            "modifiers": [
+              {
+                "flag": "seen:classroom_window",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "cc_edges_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "It hangs dead straight. There should be a draft on this side of the room, but the hem hasn't moved once.",
           "effects": [
             {
@@ -1721,7 +1740,7 @@
         },
         {
           "id": "cc_edges_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Just a thick blue silk cloth, folded over and over in pleats.",
           "next": "cc_decide"
         },
@@ -1791,19 +1810,25 @@
         },
         {
           "id": "cv_balance_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Stop! One more step and you'll fall to your death!",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 10,
             "kind": "visible",
             "success": "cv_hold",
-            "failure": null
+            "failure": null,
+            "modifiers": [
+              {
+                "flag": "curtain_edges_examined",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "cv_hold",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Back foot. That's it. Shift your weight back onto your heel and take another step back. You've steadied yourself.",
           "next": null
         }
@@ -1977,7 +2002,7 @@
           "speaker": "protagonist",
           "text": "This door never opens, unless special means are used.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 10,
             "kind": "visible",
             "success": null,

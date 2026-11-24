@@ -28,7 +28,7 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 | `restroom` | `scenes/locations/restroom/restroom.tscn` | 01 西端。两只洗手池、一开一闭的隔间、地漏旁补过的砖。三项可选观察，回同一层门口。 | 已实现 |
 | `staff_office` | `scenes/locations/staff_office/staff_office.tscn` | 03 东端。无人值守的办公桌、收发格与钥匙板。三项可选观察，回同一层门口。 | 已实现 |
 | `restroom_02`, `restroom_03` | `scenes/locations/<id>/<id>.tscn` | 02、03 东端的普通厕所；从原门返回，不必检定。 | 已实现 |
-| `archive`、`plan_room`、`projection_room`、`computer_room`、`vacant_office`、`principal_office` | `scenes/locations/<id>/<id>.tscn` | 每层两间可选房；门前观察与路感检定，室内才显示对应错位。位置见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
+| `archive`、`plan_room`、`projection_room`、`computer_room`、`vacant_office`、`principal_office` | `scenes/locations/<id>/<id>.tscn` | 每层两间可选房；门前观察与细察／推演检定，室内才显示对应错位。位置见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
 
 室外改造的前后截图：`docs/screenshots/map_art/before/` 与 `after/`（由 `.github/workflows/location-art-capture.yml` 在 CI 中拍摄）。
 
@@ -133,7 +133,7 @@ flowchart TB
 | 教师办公室 | 没有人的权威；未填完的日常文书 | 值日表底稿、收发格与空钩；不推断操场轮值表的来处 | 03 东端，`staff_office` | 已实现 |
 | 实验室 | 采用独立色系的工作间 | 九处可选检视，不增加目标 | 01 凹口，`laboratory` | 已实现 |
 | 厕所 | 失修，不解释异常 | 蹲便、小便池、积水、苍蝇；保留洗手池、插销和地漏的检视 | 01 西端及 02、03 东端 | 已实现 |
-| 校准片后的六间房 | 路感不等于相信地标 | 找门上成对的痕迹，检定或手动校准；进屋后看它怎样失配 | 每层两间，从各自原门返回 | 已实现 |
+| 校准片后的六间房 | 校准不等于相信地标 | 找门上成对的痕迹，检定或手动校准；进屋后看它怎样失配 | 每层两间，从各自原门返回 | 已实现 |
 | 体育馆 | 叙事圣经列出的候选空间 | 尚未排入路线 | 若选用，独立场景 | 已确定但未实现（候选） |
 | 未完成的楼梯间 | 叙事圣经列出的候选空间 | 一段到头就断的楼梯；一个往外看的位置 | 楼梯间场景的区域 | 已确定但未实现（候选） |
 | 一楼连接空间 | 连接楼梯、房间和操场的 `FromSchool` 出生点 | 让 `FromSchool` 有用 | 独立场景或楼梯间的区域 | 建议新增 |
@@ -144,7 +144,7 @@ flowchart TB
 
 | 研究 | 对地图的影响 | 独立场景 / 区域 | 状态 |
 |---|---|---|---|
-| 生物教室：蓝帘遮住西墙的断口 | 从楼上教室通往 `playground` 的单向路线，与走廊、操场的普通入口分开 | 现有 `classroom` 与 `playground` 场景 | **已实现：** 路感检定失败失足，落在 `FromSchool` 并伤脚；成功留在楼上，之后可主动下落。两个分支都落在箱顶，并可顺铁梯下到操场。 |
+| 生物教室：蓝帘遮住西墙的断口 | 从楼上教室通往 `playground` 的单向路线，与走廊、操场的普通入口分开 | 现有 `classroom` 与 `playground` 场景 | **已实现：** 细察检定失败失足，落在 `FromSchool` 并伤脚；成功留在楼上，之后可主动下落。两个分支都落在箱顶，并可顺铁梯下到操场。 |
 | 生物教室：打开后门，是悬在教室里的楼梯 | 一条与建筑不相容的垂直连接 | 生物教室内的区域 | **已在 #159 中从 `classroom` 撤下**：后门（东墙靠后的白色门 `WallEast/RearDoor`）从来不会打开，“除非使用特殊的手段”，教室里不放置楼梯。特殊手段是什么、楼梯放在哪里：尚待作者决定 |
 | 镜面爬行通道或管道 | 两个地点之间的狭窄连接 | 简短的独立场景 | 已确定但未实现；连接哪里：尚待作者决定 |
 | 操场上不可能出现的动物（例如鳄鱼、狮子） | 操场里的“住客”，平静呈现，不是战斗 | 在 `playground` 内（操场中央留给事件） | 已确定但未实现；与绿色动物的关系：尚待作者决定 |

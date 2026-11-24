@@ -10,10 +10,10 @@
       "nodes": [
         {
           "id": "vn_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "等一下。这里好像有点不太对劲。",
           "check": {
-            "ability": "orientation",
+            "ability": "insight",
             "difficulty": 8,
             "kind": "hidden",
             "success": "vn_ok",
@@ -22,13 +22,13 @@
         },
         {
           "id": "vn_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "通知单几乎都贴在同一高度，只有一张例外。那张贴得更高一些，而且是歪的，边角上的胶带也很不规则。不像是学校的员工贴的。",
           "next": null
         },
         {
           "id": "vn_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_insight",
           "text": "一块公告板上贴了几张纸。还有什么？",
           "next": "vn_bad_2"
         },
@@ -47,10 +47,10 @@
       "nodes": [
         {
           "id": "va_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "这块操场跟以前一样，又小又破，地面都裂开了。但是有很多让人意想不到的近路。",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 9,
             "kind": "hidden",
             "success": "va_ok",
@@ -59,13 +59,13 @@
         },
         {
           "id": "va_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "水泥地中间有一道接缝，所以说这块场地是分两次浇成的。接缝一直通到另一头，可大门偏偏开在这边。",
           "next": null
         },
         {
           "id": "va_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "一块操场。两个篮架、一间器材棚、一条长椅。等等！为什么有一个篮筐是对着球场外面的。",
           "next": "va_bad_2"
         },
@@ -84,10 +84,10 @@
       "nodes": [
         {
           "id": "vh_1",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "等一下。看那根篮架的杆子立在哪里。",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "hidden",
             "success": "vh_ok",
@@ -96,13 +96,13 @@
         },
         {
           "id": "vh_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "杆子周围的水泥比操场其他地方新，篮板看上去有点奇怪。地面上还有几个旧螺栓孔，是用来固定铁杆的，也刷了一遍深蓝色的漆。篮架以前应该在别处，应该有个底座。",
           "next": null
         },
         {
           "id": "vh_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "篮圈的高度看起来没什么问题，只是它的朝向有问题。",
           "next": "vh_bad_2"
         },

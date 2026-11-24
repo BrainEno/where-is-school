@@ -1,7 +1,7 @@
 extends SceneTree
 ## Proves the inner-voice system supports more than one voice, on fixtures only.
 ##
-## The shipped content has its own voices (`orientation`, `whimsy`) and this test does not
+## The shipped content has its own voices (see `data/abilities/`) and this test does not
 ## touch them: the two voices
 ## below (`probe_a`, `probe_b`) exist in `user://` for the length of the run and are
 ## written through the same loaders the game uses. Nothing here is added to
@@ -289,8 +289,8 @@ func _check_registry(registry: InnerAbilities, directory: CharacterDirectory) ->
 		_failures.append("Speaker 'voice_probe_a' does not resolve to probe_a.")
 	if registry.get_ability_for_speaker(&"voice_probe_b") != registry.get_ability(&"probe_b"):
 		_failures.append("Speaker 'voice_probe_b' does not resolve to probe_b.")
-	if registry.get_ability_for_speaker(&"orientation") != null:
-		# A shipped speaker must not be reachable from a fixture registry: the resolution
+	if registry.get_ability_for_speaker(&"probe_a") != null:
+		# An ability id is not a speaker id, even when that ability exists. Resolution
 		# is by declared speaker id, never by "the only voice there is".
 		_failures.append("A fixture registry resolved a speaker it does not declare.")
 	# Profiles: each speaker to its own file, no sharing.

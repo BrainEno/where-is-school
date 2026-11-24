@@ -1,7 +1,7 @@
 # The imagined lesson (teacher B in `expected_b`)
 
 > **Status:** experiment in the shipped classroom. The art layer is done; the gameplay layer
-> (B's questioning, the protagonist's answers in three directions, the 「异想天开」 check and
+> (B's questioning, the protagonist's answers in three directions, the 「臆想」 check and
 > the exit) is built with placeholder text that waits for the author's wording.
 > **Owner:** implementation PR author; art direction is the owner's.
 
@@ -127,10 +127,10 @@ unchanged; every new line reads 「待做·…」 / "TODO · …" and waits for 
   rounds of protagonist/B placeholders; a B line between rounds offers `go_on` and `exit`,
   and two of them cross over between normal and absurd. The directions rejoin B's next
   authored line; the last hub reaches the authored recollection `rec_1` and `b_e_5`.
-- **「异想天开」.** In the absurd direction after "where's your textbook" a visible check of
-  the new inner voice `whimsy` (value 3, placeholder) splits it: high (the protagonist steers
+- **「臆想」.** In the absurd direction after "where's your textbook" a visible check of
+  the inner voice `imagination` (value 3, provisional) splits it: high (the protagonist steers
   the fantasy, 3 rounds) or low (B's authority wins, 1 round, then back to normal). The rules
-  were changed for it: a `whimsy` check is the only check a subjective conversation may roll
+  were changed for it: an `imagination` check is the only check a subjective conversation may roll
   (`DialogueGraph.IMAGINATION_ABILITIES`), and it records only its own roll.
 - **Leaving.** `exit` goes to two placeholder lines and ends the scene; leaving before
   `rec_1` writes `expectation_left_early`, which keeps the later lines that lean on the

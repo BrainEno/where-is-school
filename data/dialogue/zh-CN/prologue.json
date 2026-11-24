@@ -739,20 +739,26 @@
         },
         {
           "id": "ad_square_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_echo",
           "source": "recalled",
           "text": "先放好两样东西。讲桌在前，黑板在后。那一声落在哪边？",
           "check": {
-            "ability": "orientation",
+            "ability": "echo",
             "difficulty": 9,
             "kind": "visible",
             "success": "ad_square_close",
-            "failure": "p_ad_square_unplaced"
+            "failure": "p_ad_square_unplaced",
+            "modifiers": [
+              {
+                "flag": "saw_set_square",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "ad_square_close",
-          "speaker": "voice_orientation",
+          "speaker": "voice_echo",
           "text": "那一下离你左手很近。",
           "source": "recalled",
           "next": "q_ad_1",
@@ -1252,10 +1258,10 @@
         },
         {
           "id": "e3_whimsy",
-          "speaker": "voice_whimsy",
-          "text": "待做·异想天开检定",
+          "speaker": "voice_imagination",
+          "text": "待做·臆想检定",
           "check": {
-            "ability": "whimsy",
+            "ability": "imagination",
             "difficulty": 10,
             "kind": "visible",
             "success": "e3_h1_p",
@@ -1265,13 +1271,13 @@
         {
           "id": "e3_h1_p",
           "speaker": "protagonist",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第1轮·主角",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第1轮·主角",
           "next": "e3_h1_b"
         },
         {
           "id": "e3_h1_b",
           "speaker": "b",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第1轮·B",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第1轮·B",
           "choices": [
             {
               "id": "go_on",
@@ -1288,13 +1294,13 @@
         {
           "id": "e3_h2_p",
           "speaker": "protagonist",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第2轮·主角",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第2轮·主角",
           "next": "e3_h2_b"
         },
         {
           "id": "e3_h2_b",
           "speaker": "b",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第2轮·B",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第2轮·B",
           "choices": [
             {
               "id": "go_on",
@@ -1311,13 +1317,13 @@
         {
           "id": "e3_h3_p",
           "speaker": "protagonist",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第3轮·主角",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第3轮·主角",
           "next": "e3_h3_b"
         },
         {
           "id": "e3_h3_b",
           "speaker": "b",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开高（主角主导幻想）·第3轮·B",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想高（主角主导幻想）·第3轮·B",
           "next": "b_e_4",
           "effects": [
             {
@@ -1325,20 +1331,20 @@
               "entry_id": "imagined_b_clue_whimsy",
               "source": "imagined",
               "speaker": "protagonist",
-              "text": "待做·线索（「课本呢」·异想天开高走到底才得到）"
+              "text": "待做·线索（「课本呢」·臆想高走到底才得到）"
             }
           ]
         },
         {
           "id": "e3_l1_p",
           "speaker": "protagonist",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开低（B 的权威压倒主角）·第1轮·主角",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想低（B 的权威压倒主角）·第1轮·主角",
           "next": "e3_l1_b"
         },
         {
           "id": "e3_l1_b",
           "speaker": "b",
-          "text": "待做·「课本呢」之后·方向荒诞·异想天开低（B 的权威压倒主角）·第1轮·B",
+          "text": "待做·「课本呢」之后·方向荒诞·臆想低（B 的权威压倒主角）·第1轮·B",
           "next": "e3_n3_p"
         },
         {
@@ -1678,7 +1684,14 @@
                 "not_flags": [
                   "check:classroom_curtain:cc_edges_check"
                 ]
-              }
+              },
+              "effects": [
+                {
+                  "type": "set_flag",
+                  "flag": "curtain_edges_examined",
+                  "value": true
+                }
+              ]
             },
             {
               "id": "draw",
@@ -1694,19 +1707,25 @@
         },
         {
           "id": "cc_edges_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "等一下。碰它之前，先看看下摆。",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "visible",
             "success": "cc_edges_ok",
-            "failure": "cc_edges_bad"
+            "failure": "cc_edges_bad",
+            "modifiers": [
+              {
+                "flag": "seen:classroom_window",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "cc_edges_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "它垂得笔直。这一侧应该有风，可下摆一下也没动过。",
           "effects": [
             {
@@ -1721,7 +1740,7 @@
         },
         {
           "id": "cc_edges_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "只是很厚的蓝色丝绸布，一道道折在一起，褶子。",
           "next": "cc_decide"
         },
@@ -1791,19 +1810,25 @@
         },
         {
           "id": "cv_balance_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "停下！再往前走就要摔死了！",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 10,
             "kind": "visible",
             "success": "cv_hold",
-            "failure": null
+            "failure": null,
+            "modifiers": [
+              {
+                "flag": "curtain_edges_examined",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "cv_hold",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "后脚。对，把重心放回后脚跟，再往后退一步，你稳住了自己。",
           "next": null
         }
@@ -1977,7 +2002,7 @@
           "speaker": "protagonist",
           "text": "这扇门从来不会打开，除非使用特殊的手段。",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 10,
             "kind": "visible",
             "success": null,

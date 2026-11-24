@@ -88,10 +88,10 @@
         },
         {
           "id": "ps_boundary_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Hold on. Look at the gap between the door and its frame.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "visible",
             "success": "ps_boundary_ok",
@@ -100,7 +100,7 @@
         },
         {
           "id": "ps_boundary_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "The door has not warped. There is a gap by the hinges, about the same width from top to bottom. Whatever used to fill it seems to have been taken out.",
           "effects": [
             {
@@ -137,7 +137,7 @@
         },
         {
           "id": "ps_boundary_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "The frame does not look crooked. You cannot see what is wrong with it.",
           "next": "ps_boundary_bad_2"
         },
@@ -168,19 +168,25 @@
         },
         {
           "id": "ps_ledger_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Look at the sheet in the window. Pay attention to where it has been stuck.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 8,
             "kind": "visible",
             "success": "ps_ledger_ok",
-            "failure": "ps_ledger_bad"
+            "failure": "ps_ledger_bad",
+            "modifiers": [
+              {
+                "flag": "seen:staff_office_rota",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "ps_ledger_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Nine rows. The edges line up neatly with the window frame. The last two rows list the same day, but the second one is dated a week later.",
           "effects": [
             {
@@ -205,7 +211,7 @@
         },
         {
           "id": "ps_ledger_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "A duty rota on the window. Lines down the sides, blank space in the middle.",
           "next": "ps_ledger_bad_2"
         },
@@ -286,19 +292,25 @@
         },
         {
           "id": "pb_boundary_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "Put your hand in and feel around. I'll help you work out how far it goes.",
           "check": {
-            "ability": "orientation",
+            "ability": "scrutiny",
             "difficulty": 9,
             "kind": "visible",
             "success": "pb_boundary_ok",
-            "failure": "pb_boundary_bad"
+            "failure": "pb_boundary_bad",
+            "modifiers": [
+              {
+                "flag": "playground_shadow_measured",
+                "value": 1
+              }
+            ]
           }
         },
         {
           "id": "pb_boundary_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "A hand's depth in, you touch concrete, then an edge. There is a small ledge behind the ball, with something on it. It is not round.",
           "effects": [
             {
@@ -329,7 +341,7 @@
         },
         {
           "id": "pb_boundary_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_scrutiny",
           "text": "There is nothing behind it. A hand's depth in, and then the gap ends.",
           "next": "pb_boundary_bad_2"
         },
@@ -360,10 +372,10 @@
         },
         {
           "id": "pb_ledger_check",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "Try the shadow first. Better than scraping your knuckles.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 7,
             "kind": "visible",
             "success": "pb_ledger_ok",
@@ -372,7 +384,7 @@
         },
         {
           "id": "pb_ledger_ok",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "The shadow reaches further than the gap. The thing under the hedge is closer to you, and it is not shaped like a ball.",
           "effects": [
             {
@@ -397,7 +409,7 @@
         },
         {
           "id": "pb_ledger_bad",
-          "speaker": "voice_orientation",
+          "speaker": "voice_inference",
           "text": "One gap, one ball, one shadow. It all seems to line up.",
           "next": "pb_ledger_bad_2"
         },
@@ -537,10 +549,10 @@
         },
         {
           "id": "prj_check",
-          "speaker": "voice_orientation",
-          "text": "TODO · orientation: down behind the container, which hides you from him.",
+          "speaker": "voice_inference",
+          "text": "TODO · Inference: down behind the container, which hides you from him.",
           "check": {
-            "ability": "orientation",
+            "ability": "inference",
             "difficulty": 10,
             "kind": "visible",
             "success": "prj_hidden",
