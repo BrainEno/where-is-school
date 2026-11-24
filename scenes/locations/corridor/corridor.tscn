@@ -631,9 +631,13 @@ position = Vector3(0, 0, 5.4)
 
 [node name="FromTeachingEntrance" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-17.65, -3.4, 16.38)
+rotation_degrees = Vector3(0, 0, 0)
+metadata/entry_facing = true
 
 [node name="FromSchoolyard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(15.6, -3.4, -19.48)
+rotation_degrees = Vector3(0, 0, 0)
+metadata/entry_facing = true
 
 [node name="FromLaboratory" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-25, -3.4, 6.95)

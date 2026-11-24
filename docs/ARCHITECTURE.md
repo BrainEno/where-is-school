@@ -790,10 +790,15 @@ of the location that was actually entered — after it was checked against the e
 claim — not from the exit's `destination_id` on its own. The exit and the scene can no
 longer disagree about which room the player is in.
 
-**Spawn markers carry position, not heading.** Every marker that ships is position-only,
-so arrival keeps the heading the player already had; the mechanism is real (a marker
-with a rotation does set the arrival facing, and the test pins that on a fixture), and
-authoring a rotation on a marker is what changes it. Which marker an exit names is
+**Spawn markers carry position, and a heading only when they declare one.** A marker
+without `metadata/entry_facing` is position-only: arrival keeps the heading the player
+already had, because `PlayerController.teleport()` reads an identity basis as "keep".
+A marker with `metadata/entry_facing = true` sets the arrival heading from its own -Z,
+even when its rotation is identity (`LocationHost` applies it after the teleport). The
+four doorway markers of the teaching block and its yard use it (see
+[CORRIDOR_ART.md](CORRIDOR_ART.md)). Restoring a save sets the saved heading explicitly.
+Unmarked doorway markers in other scenes still keep the previous heading; converting them
+is not done yet. The test pins the declared headings. Which marker an exit names is
 checked by the test above: the marker must exist, must be the one the player lands on,
 must be walkable ground, and for a return trip must sit by the exit that leads back.
 
