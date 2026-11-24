@@ -965,6 +965,7 @@ destination_id = &"street"
 position = Vector3(-5.5, 0, 13.5)
 rotation_degrees = Vector3(0, -90, 0)
 metadata/entry_facing = true
+metadata/entry_walk = 2.5
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(12.0, 0, 15.8)

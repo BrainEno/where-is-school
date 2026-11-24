@@ -240,15 +240,16 @@ func transition_to(
 
 
 ## The few steps a doorway asks for before control comes back (`LocationHost.ENTRY_WALK_META`):
-## out from under the fire door and off its step, so the way back is behind the player and
-## not under the cursor. Still inside the transition beat, so no click can turn it round.
-## A walk the capsule cannot make (something parked on the line) is skipped, not forced.
+## out from under the fire door and off its step, or down the whole flight from a landing,
+## so the way back is behind the player and not under the cursor. Still inside the
+## transition beat, so no click can turn it round. A walk the capsule cannot make
+## (something parked on the line) is skipped, not forced.
 func _walk_off_entry() -> void:
 	var target: Variant = _locations.get_entry_walk_target()
 	if target == null or _player == null:
 		return
 	var goal: Vector3 = target
-	await StagedActorMotion.walk_to(_player, Vector3(goal.x, _player.global_position.y, goal.z))
+	await StagedActorMotion.walk_down_to(_player, goal)
 
 
 ## Runs a refused transition's `on_failure` once and waits for it, but never longer than
