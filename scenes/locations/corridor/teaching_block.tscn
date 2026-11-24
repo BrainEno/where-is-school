@@ -1,4 +1,4 @@
-[gd_scene load_steps=835 format=3]
+[gd_scene load_steps=836 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -16,7 +16,7 @@
 [ext_resource type="Material" path="res://assets/materials/corridor/graffiti/rose_plaster.tres" id="art_rose_plaster"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/wall_graffiti.tscn" id="wall_graffiti"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_entrance.tscn" id="teaching_entrance"]
-[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_dirt.tres" id="art_yard_dirt"]
+[ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/yard_dirt.png" id="yard_dirt_tex"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/yard_path.tres" id="art_yard_path"]
 [ext_resource type="FontFile" path="res://assets/fonts/NotoSansSC-Regular.ttf" id="cjk_font"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/restroom_door.tscn" id="restroom_door"]
@@ -464,6 +464,15 @@ diffuse_mode = 3
 specular_mode = 2
 roughness = 1.0
 albedo_color = Color(0.165, 0.271, 0.286, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_forecourt_soil"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("yard_dirt_tex")
+texture_filter = 3
+uv1_scale = Vector3(7.075, 2.5125, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_yard_rail"]
 diffuse_mode = 3
@@ -2245,8 +2254,8 @@ size = Vector3(6.2, 0.27, 0.6)
 [sub_resource type="BoxShape3D" id="BoxShape3D_art566"]
 size = Vector3(8.5, 0.1, 4.4)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art567"]
-size = Vector3(28.3, 0.3, 10.05)
+[sub_resource type="PlaneMesh" id="PlaneMesh_art567"]
+size = Vector2(28.3, 10.05)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_art568"]
 size = Vector2(2.4, 9.45)
@@ -16425,9 +16434,9 @@ position = Vector3(0, -0.05, 0)
 shape = SubResource("BoxShape3D_art566")
 
 [node name="Earth" type="MeshInstance3D" parent="GroundFloor/Forecourt"]
-position = Vector3(-16, -3.79, 23.475)
-mesh = SubResource("BoxMesh_art567")
-material_override = ExtResource("art_yard_dirt")
+position = Vector3(-16, -3.64, 23.475)
+mesh = SubResource("PlaneMesh_art567")
+material_override = SubResource("Mat_forecourt_soil")
 cast_shadow = 0
 
 [node name="Path" type="MeshInstance3D" parent="GroundFloor/Forecourt"]

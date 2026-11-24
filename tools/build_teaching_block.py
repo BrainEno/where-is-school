@@ -98,8 +98,8 @@ WALK_SURFACE = 0.10
 EXTERNAL = {
     **{name: f"{STAGE}/materials/{name}.tres" for name in (
         "walk_plaster", "walk_dado", "walk_step", "school_haze_floor",
-        # Round 23: the walk-out forecourt shares the front yard's (前操场) soil and trodden line.
-        "yard_dirt", "yard_path",
+        # Round 23: the walk-out forecourt shares the front yard's (前操场) trodden line.
+        "yard_path",
     )},
     **{name: f"{YARD}/materials/{name}.tres" for name in ("exit_frame", "exit_glass", "exit_steel")},
     "rose_plaster": "res://assets/materials/corridor/graffiti/rose_plaster.tres",
@@ -1314,9 +1314,15 @@ def walkout(b, g):
     z0, z1 = ENTRANCE_APRON_END, FORECOURT_Z[1]
     ground = b.shell("Ground", f, ((x0+x1)/2, FORECOURT_Y, (z0+z1)/2))
     b.shape("Solid", ground, (0, -WALK_SURFACE/2, 0), (x1-x0, WALK_SURFACE, z1-z0))
-    # The soil runs on past the rails and the gate, where the yard is only seen.
-    far = 28.5
-    b.box("Earth", f, (-16.0, FORECOURT_Y-0.15, (z0+far)/2), (28.3, 0.3, far-z0), "yard_dirt")
+    # The soil runs on past the rails and the gate, where the yard is only seen. It samples
+    # the front yard's dirt at the same 4 m tile, on a plain plane: the yard's world-triplanar
+    # material was the corridor's only one, and its box leaked at exit in every corridor
+    # capture (GL Compatibility).
+    far, soil_w = 28.5, 28.3
+    dirt = b.bind("yard_dirt_tex", f"{STAGE}/textures/yard_dirt.png", "Texture2D")
+    b.mat("forecourt_soil", albedo_color="Color(1, 1, 1, 1)", albedo_texture=dirt, texture_filter=3,
+          uv1_scale=vec3((soil_w/4, (far-z0)/4, 1)))
+    b.flat("Earth", f, plane(b, soil_w, far-z0), "forecourt_soil", (-16.0, FORECOURT_Y, (z0+far)/2))
     b.flat("Path", f, plane(b, 2.4, far-FORECOURT_Z[0]), "yard_path",
            (ENTRANCE_X, FORECOURT_Y+0.003, (FORECOURT_Z[0]+far)/2))
     for name, a, c in (("RailWest", (x0, z0), (x0, z1)), ("RailEast", (x1, z0), (x1, z1)),
