@@ -81,17 +81,13 @@ jobs:
           if [ "${code}" -ne 0 ] || [ "${frames}" -lt 360 ] || [ "${frames}" -gt 720 ] || \
               grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/record.log" || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/record.log"; then
-            echo "::error title=face close-up::${frames} frames were written (exit ${code})"
-            # Every line of the verdict, as error annotations: the step log itself is
-            # not readable from the API, and a missing PASS needs its context.
-            grep -E 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:|^PASS:|FACE_CLOSEUP|WARNING' \
-              "${RUNNER_TEMP}/record.log" | cut -c1-400 | sort -u | head -n 30 | while IFS= read -r msg; do
-                printf '::error title=face close-up log::%s\n' "$msg"
+            echo "::error title=face close-up::${frames} frames were written (exit ${code}); PASS=$(grep -c '^PASS:' "${RUNNER_TEMP}/record.log" || true) SCRIPT_ERROR=$(grep -c 'SCRIPT ERROR' "${RUNNER_TEMP}/record.log" || true) TEST_FAILURE=$(grep -c 'TEST FAILURE' "${RUNNER_TEMP}/record.log" || true) FAIL=$(grep -c '^FAIL:' "${RUNNER_TEMP}/record.log" || true)"
+            # Ten annotations is the step's cap, so the verdict lines come first and
+            # FACE_CLOSEUP beats stay out of them: the failure itself is what matters.
+            grep -E '^ERROR:|SCRIPT ERROR|TEST FAILURE|^FAIL:|^PASS:' \
+              "${RUNNER_TEMP}/record.log" | cut -c1-400 | sort -u | head -n 8 | while IFS= read -r msg; do
+                printf '::error title=record verdict::%s\n' "$msg"
               done
-            echo "::error title=face close-up verdict::PASS present: $(grep -c '^PASS:' "${RUNNER_TEMP}/record.log" || true); errors: $(grep -cE '^ERROR:|TEST FAILURE|^FAIL:' "${RUNNER_TEMP}/record.log" || true); last lines:"
-            tail -n 25 "${RUNNER_TEMP}/record.log" | cut -c1-400 | while IFS= read -r line; do
-              printf '::error title=record tail::%s\n' "$line"
-            done
             exit 1
           fi
           echo "::notice title=face close-up::recorded ${frames} frames at 24 fps (exit ${code})"
