@@ -370,8 +370,15 @@ func _check_conversation() -> void:
 		_checks.fail("Q did not take the attention state inside his own insert.")
 	_checks.expect(_focus.get_glance() == _room.find_interactable(&"q_talk"),
 		"The insert glance is not held on QTalk.")
+	# The watch engages on the same signal as the state; its weight is a modifier
+	# blend, so give it wall-clock time before calling it dead (and say what the
+	# snapshot looked like if it never arrives).
+	var engaged := await Harness.wait_until(func() -> bool:
+		var gaze_now := _q_actor.get_gaze()
+		return gaze_now != null and _q_actor.is_watching() and gaze_now.get_weight() > 0.5,
+		5.0)
 	var gaze := _q_actor.get_gaze()
-	if not (gaze != null and _q_actor.is_watching() and gaze.get_weight() > 0.5):
+	if not engaged:
 		var director := world.get_node_or_null(^"CharacterFaceDirector")
 		var camera = director.call("_camera") if director != null else null
 		_checks.fail("Q's insert gaze did not engage. (gaze=%s watching=%s weight=%.2f glance=%s camera=%s)"
@@ -413,17 +420,24 @@ func _check_conversation() -> void:
 			return not _dialogue.is_busy(), 15.0):
 		_checks.fail("q_end_grin did not end the conversation.")
 		return
-	await _frames(30)
-	_checks.expect(_q_look.get_face_state_weight() == 0.0
-			and _player_look.get_face_state_weight() == 0.0,
-		"A face state survived the end of the conversation.")
+	# The settle is a wall-clock blend; a fixed frame count in headless is not a
+	# duration, so wait for the values themselves.
+	var states_down := await Harness.wait_until(func() -> bool:
+		return (_q_look.get_face_state_weight() == 0.0
+			and _player_look.get_face_state_weight() == 0.0), 6.0)
+	_checks.expect(states_down,
+		"A face state survived the end of the conversation (q=%.3f protagonist=%.3f)."
+			% [_q_look.get_face_state_weight(), _player_look.get_face_state_weight()])
 	var q_rest: Dictionary = _q_look.get_composed_face()
 	for shape in _q_look.look.expression:
 		_checks.expect(is_equal_approx(float(q_rest.get(shape, -1.0)),
 				float(_q_look.look.expression[shape])),
 			"Q's %s did not settle to rest." % shape)
-	_checks.expect(_rig.get_focus_weight() == 0.0 and _rig.get_focus_subject() == null,
-		"The camera did not return to its gameplay framing.")
+	var camera_home := await Harness.wait_until(func() -> bool:
+		return _rig.get_focus_weight() == 0.0 and _rig.get_focus_subject() == null, 6.0)
+	_checks.expect(camera_home,
+		"The camera did not return to its gameplay framing (weight=%.3f subject=%s)."
+			% [_rig.get_focus_weight(), str(_rig.get_focus_subject())])
 	if gaze != null:
 		_checks.expect(gaze.get_weight() <= 0.001 and not _q_actor.is_watching(),
 			"Q's gaze survived the end of the conversation.")
