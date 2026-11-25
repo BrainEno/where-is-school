@@ -150,23 +150,21 @@ jobs:
       - name: Upload recording
         if: always()
         run: |
-          # Everything the artifact must carry is staged as plain files under build/,
-          # so the upload sees only relative in-workspace paths (the laboratory
-          # walkthrough's proven shape) and the listing is part of the record.
-          cp "$RUNNER_TEMP/record.log" build/face_closeup_record.log || true
-          cp "$RUNNER_TEMP/ffmpeg.log" build/face_closeup_ffmpeg.log || true
-          ls -la build/ > build/face_closeup_filelist.txt 2>&1 || true
-          echo "::notice title=face close-up files::$(tr '\n' ';' < build/face_closeup_filelist.txt | cut -c1-600)"
+          # build/ is gitignored, and the artifact action skips ignored files - the
+          # laboratory walkthrough's artifact is really just its verbose log for the
+          # same reason. Stage the evidence in an unignored directory instead.
+          mkdir -p evidence/face_closeup
+          cp build/face_closeup_video.mp4 evidence/face_closeup/ 2>/dev/null || true
+          cp build/face_closeup_start.png evidence/face_closeup/ 2>/dev/null || true
+          cp build/face_closeup_end.png evidence/face_closeup/ 2>/dev/null || true
+          cp "$RUNNER_TEMP/record.log" evidence/face_closeup/record.log 2>/dev/null || true
+          cp "$RUNNER_TEMP/ffmpeg.log" evidence/face_closeup/ffmpeg.log 2>/dev/null || true
+          ls -la evidence/face_closeup/ > evidence/face_closeup/filelist.txt 2>&1 || true
+          echo "::notice title=face close-up files::$(tr '\n' ';' < evidence/face_closeup/filelist.txt | cut -c1-600)"
       - name: Upload recording
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: face-closeup-${{ github.run_attempt }}
-          path: |
-            build/face_closeup_video.mp4
-            build/face_closeup_start.png
-            build/face_closeup_end.png
-            build/face_closeup_record.log
-            build/face_closeup_ffmpeg.log
-            build/face_closeup_filelist.txt
+          path: evidence/face_closeup/
           if-no-files-found: warn
