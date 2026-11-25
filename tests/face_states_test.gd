@@ -331,6 +331,10 @@ func _check_conversation() -> void:
 	_q_look = _q_visual.get_node(^"Look") as CharacterLookApplier
 	_player_look = _player.get_character_animator().get_node(^"Look") as CharacterLookApplier
 
+	# autostart is off, so no beat runs: hand the room over the supported way or the
+	# activation below is a silent no-op (interactions stay disabled).
+	_sequence.allow_player_control()
+
 	# Activation through the same dispatcher a click uses: route "q" with no flags is
 	# the wake conversation, framed by Q's wide talk shot.
 	var interaction := _player.get_node(^"InteractionController") as InteractionController
