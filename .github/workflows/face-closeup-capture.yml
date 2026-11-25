@@ -149,6 +149,10 @@ jobs:
 
       - name: Upload recording
         if: always()
+        run: |
+          echo "::notice title=face close-up files::$(du -h build/face_closeup_video.* build/face_closeup_start.png build/face_closeup_end.png 2>/dev/null | tr '\n' ' ')"
+      - name: Upload recording
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: face-closeup-${{ github.run_attempt }}
