@@ -150,18 +150,17 @@ jobs:
       - name: Upload recording
         if: always()
         run: |
-          echo "::notice title=face close-up files::$(du -h build/face_closeup_video.* build/face_closeup_start.png build/face_closeup_end.png 2>/dev/null | tr '\n' ' ')"
+          ls -la build/ >> "$RUNNER_TEMP/filelist.txt" 2>&1 || true
+          ls -la "$RUNNER_TEMP/record.log" "$RUNNER_TEMP/ffmpeg.log" >> "$RUNNER_TEMP/filelist.txt" 2>&1 || true
+          cp "$RUNNER_TEMP/filelist.txt" build/face_closeup_filelist.txt || true
+          echo "::notice title=face close-up files::$(tr '\n' ';' < build/face_closeup_filelist.txt | cut -c1-600)"
       - name: Upload recording
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: face-closeup-${{ github.run_attempt }}
           path: |
-            build/face_closeup_video.mp4
-            build/face_closeup_video.webm
-            build/face_closeup_video.gif
-            build/face_closeup_start.png
-            build/face_closeup_end.png
+            build/
             ${{ runner.temp }}/record.log
             ${{ runner.temp }}/ffmpeg.log
           if-no-files-found: warn
