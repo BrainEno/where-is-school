@@ -1,8 +1,9 @@
 class_name ScoreDirector
 extends Node
 ## Chooses music for a committed location and the prologue's existing beats. Music
-## remains the sole playback owner. The 04b/05b/07b files are shipped alternatives,
-## not randomized: no narrative trigger for choosing one has been authored.
+## remains the sole playback owner. The 04b/07b files are shipped alternatives with no
+## authored trigger yet. 05b plays in the residential courtyard once the green animal
+## has been seen (`animal_seen`); it is selected by that flag, never randomized.
 
 const BASE := "res://assets/audio/music/score/"
 const ROOM_TRACKS := {
@@ -90,6 +91,10 @@ func refresh() -> void:
 static func track_for(id: StringName, position: Vector3, imagining: bool, state: Node) -> String:
 	if imagining:
 		return BASE + "08_imagined_lesson.mp3"
+	if id == &"residential" and state != null and bool(state.get_flag(StoryFlags.ANIMAL_SEEN, false)):
+		# Heavier, dirtier courtyard after the animal is seen: the cue sheet's
+		# "stay or approach the animal" version. Before that, the base track plays.
+		return BASE + "05b_residential_heavy.mp3"
 	if id == &"classroom" and state != null:
 		# In old saves MET_Q implied Q's talk was already complete. New saves
 		# distinguish his first line from the end of the conversation.
