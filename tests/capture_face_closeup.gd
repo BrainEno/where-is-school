@@ -106,9 +106,19 @@ func _run() -> void:
 
 	# --- activation: the wide talk shot, Q's own first line --------------------
 	var interaction := _player.get_node(^"InteractionController") as InteractionController
+	var controller := _main.get_node(^"DialogueController") as DialogueController
 	interaction.request_activation(_talk)
-	if not await _arrive(&"q_1", &"", 90):
-		Harness.finish(self, ["q_wake did not start at q_1."], "")
+	# One beat of settle, then a diagnostic line whatever happens: a silent early
+	# return in the activation chain is otherwise invisible from a CI annotation.
+	await _frames(15)
+	var diag := "activation: enabled=%s busy=%s mode=%d beat=%s slice=%s glance=%s current=%s" % [
+		interaction.is_enabled(), controller.is_busy(), int(controller.get_mode()),
+		_sequence.is_beat_active(), _sequence.is_slice_finished(),
+		str(_focus.get_glance()),
+		String(controller.get_current_line().get("node_id", "?"))]
+	print("FACE_CLOSEUP: ", diag)
+	if not await _arrive(&"q_1", &"", 120):
+		Harness.finish(self, ["q_wake did not start at q_1. (" + diag + ")"], "")
 		return
 	await _frames(KEY_HOLD)
 	_face_note("q_1")
