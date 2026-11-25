@@ -577,6 +577,13 @@ func _check_talk_bubble() -> void:
 	var prop := _make_prop(&"talk_probe", Vector3(0.0, 0.0, -9.0), Interactable.CueStyle.AUTO)
 	var probe := prop["probe"] as Interactable
 	probe.speaker_id = &"q"
+	# The bubble is placed by projecting the person onto the screen, and projection needs
+	# a camera: without one in the tree `get_camera_3d()` answers null and the cue never
+	# claims the bubble - headless CI has no window, and no camera comes with it. One
+	# camera here, facing the probe from a few metres up the +z side, serves the check.
+	var camera := Camera3D.new()
+	camera.position = Vector3(0.0, 1.5, -5.0)
+	root.add_child(camera)
 	await process_frame
 	await process_frame
 	probe.set_highlighted(true)
@@ -637,6 +644,7 @@ func _check_talk_bubble() -> void:
 	await _wait(FADE_WAIT)
 	_expect(cue.get_bubble() == null, "The talk bubble is still claimed after the highlight ended.")
 	(prop["holder"] as Node).queue_free()
+	camera.queue_free()
 	await process_frame
 
 
