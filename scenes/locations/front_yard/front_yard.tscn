@@ -1785,6 +1785,9 @@ metadata/entry_walk = 3.0
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(12.0, 0, 15.8)
+rotation_degrees = Vector3(0, 90, 0)
+metadata/entry_facing = true
+metadata/entry_walk = 2.4
 
 [node name="FromGrove" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(13.45, 0, 8.6)

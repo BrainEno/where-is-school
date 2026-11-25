@@ -119,6 +119,8 @@ jobs:
           - {location: north_grove, side: forward-plus}
           - {location: gym, side: after}
           - {location: gym, side: forward-plus}
+          - {location: street_details, side: after}
+          - {location: street_details, side: forward-plus}
           - {location: stable_yard, side: before}
           - {location: stable_yard, side: after}
           - {location: teaching_stairs, side: after}
@@ -268,6 +270,15 @@ jobs:
               detail=(gym review_width=380)
               width=1280
               expect=8
+              ;;
+            street_details)
+              # Round 30: the street's own grounds - two follow-camera stances (by the
+              # shopfront, by the school gate) and three fixed views (the school front
+              # from the road, the shopfront with its awning and sign, the zebra
+              # crossing by the ditch slabs).
+              detail=(street-details review_width=380)
+              width=1280
+              expect=5
               ;;
             stable_yard)
               # The stable yard behind 01, in the live corridor: one follow-camera stance and

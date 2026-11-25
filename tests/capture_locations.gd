@@ -285,6 +285,17 @@ const FRONT_YARD_VIEWS := [
 	# Round 29: the running track's chalk oval (操场跑道) on the dirt, from the south-east.
 	["track", Vector3(14.0, 6.5, 24.0), Vector3(6.5, 0.0, 9.5)],
 ]
+## Round 30: the street's own grounds - by the shopfront and by the school gate - and
+## three fixed views (the school front from the road, the shopfront, the zebra crossing).
+const STREET_STANCES := [
+	["shopfront", Vector3(6.8, 0.0, -21.0)],
+	["school_gate", Vector3(-6.0, 0.0, -18.0)],
+]
+const STREET_VIEWS := [
+	["school_front", Vector3(8.0, 3.4, 10.0), Vector3(-10.0, 1.5, -10.0)],
+	["shopfront", Vector3(4.5, 2.2, -18.5), Vector3(9.8, 1.8, -24.0)],
+	["crossing", Vector3(2.0, 3.0, -38.0), Vector3(-7.5, 0.2, -28.0)],
+]
 ## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
 ## the east leg, and one high view down the whole L towards the court's opening.
 const NORTH_GROVE_STANCES := [
@@ -402,6 +413,7 @@ var _port := false
 var _front_yard := false
 var _north_grove := false
 var _gym := false
+var _street_details := false
 var _annex_thresholds := false
 var _stable_yard := false
 var _teaching_stairs := false
@@ -456,6 +468,8 @@ func _initialize() -> void:
 			_north_grove = true
 		elif arg == "gym":
 			_gym = true
+		elif arg == "street-details":
+			_street_details = true
 		elif arg == "stable-yard":
 			_stable_yard = true
 		elif arg == "teaching-stairs":
@@ -547,6 +561,8 @@ func _run() -> void:
 	elif _north_grove:
 		await _capture_views(out_dir, "north_grove", ^"GroveWallEast", NORTH_GROVE_STANCES, NORTH_GROVE_VIEWS,
 			"north_grove")
+	elif _street_details:
+		await _capture_views(out_dir, "street", ^"SchoolWall", STREET_STANCES, STREET_VIEWS, "street_details")
 	elif _gym:
 		await _capture_views(out_dir, "gym", ^"GymWallNorth", GYM_STANCES, GYM_VIEWS, "gym")
 	elif _teaching_stairs:

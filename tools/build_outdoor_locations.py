@@ -472,6 +472,24 @@ def build_street():
     s.box("LampPost", (10.6, 3.1, -18), (0.24, 6.2, 0.24), "metal")
     s.box("LampHead", (10.6, 6.1, -18), (1.5, 0.3, 0.5), "metal", None, False)
     s.box("LampGlow", (10.5, 5.95, -18), (1.2, 0.06, 0.4), "lamp", None, False)
+    # Round 30, street deepening: a second lamp down the road, the crossing's zebra, a
+    # manhole, bollards on the kerb line, a bench by the shop, and the shopfront's blank
+    # sign under an awning - mesh-only, so the road's walk and the shape counts stay.
+    s.box("LampPost2", (10.6, 3.1, 6), (0.24, 6.2, 0.24), "metal")
+    s.box("LampHead2", (10.6, 6.1, 6), (1.5, 0.3, 0.5), "metal", None, False)
+    s.box("LampGlow2", (10.5, 5.95, 6), (1.2, 0.06, 0.4), "lamp", None, False)
+    for i in range(12):
+        s.box(f"Zebra{i}", (-7.9 + i * 1.5, 0.03, -30.0), (0.75, 0.06, 2.4), "paper", None, False)
+    s.box("Manhole", (1.0, 0.03, -4.0), (1.1, 0.06, 0.9), "metal", None, False)
+    for i, z in enumerate((-19.5, -18.0, -16.5)):
+        s.box(f"Bollard{i}", (8.55, 0.375, z), (0.16, 0.75, 0.16), "metal")
+    s.box("BenchSeat", (10.5, 0.48, -20.2), (0.45, 0.07, 1.8), "wood")
+    s.box("BenchLegNorth", (10.5, 0.225, -20.9), (0.4, 0.45, 0.08), "metal")
+    s.box("BenchLegSouth", (10.5, 0.225, -19.5), (0.4, 0.45, 0.08), "metal")
+    s.box("ShopAwning", (9.5, 2.9, -24.0), (0.85, 0.08, 6.0), "trim")
+    s.box("ShopSign", (9.82, 3.5, -24.0), (0.08, 0.7, 4.6), "paper")
+    s.box("ShopPoster", (9.83, 1.6, -21.0), (0.04, 0.8, 0.55), "paper", None, False)
+    s.box("FlatPoster", (11.83, 1.8, 9.8), (0.04, 1.0, 0.7), "paper", None, False)
     s.box("NoticePole", (9.4, 1.4, 2.0), (0.14, 2.8, 0.14), "metal")
     s.box("NoticeSheet", (9.32, 2.0, 2.0), (0.04, 0.6, 0.42), "paper", None, False)
     s.box("BinsA", (10.9, 0.55, -2), (0.7, 1.1, 0.7), "shutter")
@@ -862,7 +880,10 @@ def build_front_yard():
     # the foot of the ramp), so the doors (the way back in) are well behind.
     s.spawns = [("FromCorridor", (-9.8, FRONT_PORCH_TOP, 15.8),
                  {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 3.0}),
-                ("FromStreet", (12.0, 0, d_mid)),
+                # Round 30: in through the gate's side door, facing west onto the dirt and
+                # walking clear of the wall - the arrival stood still, facing north along it.
+                ("FromStreet", (12.0, 0, d_mid),
+                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
                 # Round 26: back from the grove, beside the gate's north pier, facing west
                 # onto the dirt; the arrival walks 2.4 m clear of the tree and the exit.
                 ("FromGrove", (13.45, 0, 8.6),
@@ -1571,9 +1592,11 @@ def build_north_grove():
          {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
         ("FromPlayground", (-23.8, 0, -18.85),
          {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.6}),
-        # Round 28: back through the gym's door, walking up the strip's east leg.
+        # Round 28, corrected in round 30: back out of the gym's door, walking SOUTH down
+        # the east leg toward the mouth - the arrival must leave the door it came through
+        # behind it (the round-26 pattern; facing north walked it into the door again).
         ("FromGym", (1.8, 0, -19.0),
-         {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 2.6}),
     ]
     return s
 

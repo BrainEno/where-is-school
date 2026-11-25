@@ -168,8 +168,10 @@ const LOCATIONS := {
 		# replace the block, its plinth, the entrance's return and end wall, the entrance's
 		# pavement and the glass entrance (9); the side door outlines two meshes, not three.
 		# The wall's three capped piers carry a second, mesh-less collider each, as wide as
-		# its stage-pass coping, so the copings fade with the wall (3).
-		"shapes": 91,
+		# its stage-pass coping, so the copings fade with the wall (3). Round 30: a second
+		# lamp, three bollards on the kerb line, the bench by the shop and the shopfront's
+		# awning and sign add nine bodies; the zebra, the manhole and the posters are paint.
+		"shapes": 100,
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

@@ -453,6 +453,33 @@ and the sketch carries no library).
 changing room's four bodies, the look's sphere and pick box). The `front_yard` capture
 leg adds the changing-room stance and the track view (expect=22).
 
+## Round 30: the bubble follows the pointer, the walk-through audit, and the street's details
+
+Three threads in one round:
+
+- **The talk bubble follows the pointer** (the closed pull request #426, taken over and
+  fixed): a person's talk mark is a screen-space speech bubble beside the pointer now, its
+  tail on the pointer while the pointer is on the person's screen box and on the point
+  above their head when it is not; it mirrors before it would cross the right edge. The
+  look ring keeps the green for objects; `Palette.LOOK_GREEN` is the one green. The parse
+  error that broke opening the project is the fix the round is named for here: the bubble
+  had defined `get_anchor()` on a `Control`, whose own `get_anchor(Side) -> float` a
+  signature may not shadow - it is `tail_anchor()` now.
+- **The walk-through audit.** Every exit's prompt matches its destination (all fourteen
+  keys re-read against their scenes), the exit graph is closed (every exit pairs with a
+  spawn back), and every spawn walks away from the door it came through. Two fixes: the
+  grove's gym arrival had been facing north - into the door it just left - and now walks
+  south down the east leg; the yard's street arrival had been dropped still, facing north
+  along the wall, and now faces west onto the dirt with the round-26 entry walk. The maze
+  stays in the art and the hidden mouths (the grove's inset, the wall's door), not in
+  blocked paths.
+- **The street's details.** Mesh-only dressing east of the road: a second lamp post, the
+  zebra crossing at the ditch slabs (twelve pale stripes), a manhole, three bollards on
+  the kerb line, a bench by the shop, and the shopfront's blank sign under an awning with
+  a poster beside the shutter and one on the flats. Nine bodies (lamp, bollards, bench,
+  awning, sign) put the street at 100 shapes; the paint adds none. The `street_details`
+  capture leg (two stances, three views, expect=5) is new.
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.
