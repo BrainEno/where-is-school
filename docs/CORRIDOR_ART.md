@@ -419,10 +419,12 @@ carries its door where the grove's east leg ends.
   the ball cage; `data/inspections/*/gym.json`) - the gym's own texts are the owner's.
 
 `location_art_test` pins the front yard at 125 shapes and 8 interactables (the wall's
-split), the grove at 69 shapes and 4 (the split, the leaf, the far shell's three, and
-the way in's sphere and pick box), and the gym at
-30 shapes and 4 (twenty bodies, the exit's sphere and two leaf pick boxes, three looks
-with four pick boxes - the mats' look outlines both stacks). The `front_yard` capture
+split), the grove at 72 shapes and 4 (the split, the leaf, the far shell's three, and
+the way in's sphere and four pick boxes - a pick per MeshInstance3D under the outlined
+leaf, the stage frame included), and the gym at 38 shapes and 4 (nineteen bodies, then
+a sphere per interactable and a pick per mesh under each outlined node: the scoreboard
+look outlines board, slate and six dashes (9), the mats two stacks (3), the cage (2),
+the way out two leaves with a jamb each (5)). The `front_yard` capture
 leg adds the gym-door stance and view (expect=20); the grove's leg adds its door stance,
 door view and over-the-wall view (expect=4); the gym's own leg (three stances, five
 views, expect=8) is new.

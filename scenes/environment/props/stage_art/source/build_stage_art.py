@@ -195,6 +195,7 @@ MATERIALS: dict[str, dict] = {
                                   "scale": ((SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]) / 8.0, 11.4 / 6.5, 1.0)},
     "front_yard_distance": {"texture": stex("distance_front_yard"), "unshaded": True},
     "north_grove_distance": {"texture": stex("distance_north_grove"), "unshaded": True},
+    "gym_distance": {"texture": stex("distance_gym"), "unshaded": True},
     # the courtyard
     "court_concrete": tiled((132, 124, 120), "plaster_tile"),
     "housing_yellow": tiled((178, 160, 116), scale=0.2),
@@ -599,6 +600,9 @@ def gym_nodes() -> Builder:
     b = Builder()
     A = "StageArt"
     b.nodes.append(MARKER + "\n")
+    # The painted distance: a sky floor 1.4 m under the hall floor (its top must sit a
+    # metre below the floor box's underside, the lowest box bottom in the room).
+    distance(b, A, "gym", "gym_distance", -0.2)
     # The court's lines on the parquet (GymFloor's top, y 1.2): the border and the mid line.
     b.node("Court", A)
     b.flat("LineNorth", f"{A}/Court", yard.plane(b, 13.0, 0.06), "court_line", (6.5, 1.206, -31.9))

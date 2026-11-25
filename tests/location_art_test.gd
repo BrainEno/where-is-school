@@ -131,9 +131,10 @@ const LOCATIONS := {
 		# mouth inset and the last railing post. The tree look adds a sphere and a pick box.
 		# Round 28: the north run carries the gym's door (the run splits in two and the
 		# leaf fills the gap: 2), the gym's shell, plinth and terrace stand in the painted
-		# distance beyond the wall (3), and the way in through the door adds a sphere and
-		# its pick box (2).
-		"shapes": 69,
+		# distance beyond the wall (3), and the way in adds a sphere and four pick boxes -
+		# a pick box per MeshInstance3D under the outlined leaf (the leaf and the stage
+		# frame's three pieces) (5).
+		"shapes": 72,
 		"interactables": 4,
 		"spawns": ["FromFrontYard", "FromPlayground", "FromGym"],
 		"exits": {
@@ -148,9 +149,11 @@ const LOCATIONS := {
 	"gym": {
 		"scene": "res://scenes/locations/gym/gym.tscn",
 		"stage": true,
-		# 20 bodies, the way out's sphere and its two pick boxes (one per outlined leaf),
-		# three looks (a sphere each) and their pick boxes (the mats' look outlines two).
-		"shapes": 30,
+		# 19 bodies; then a sphere per interactable and a pick box per MeshInstance3D
+		# under each outlined node: the scoreboard look outlines the board, its slate face
+		# and six dashes (9), the mats' look two stacks (3), the cage one (2), the way out
+		# two leaves with a jamb each (5).
+		"shapes": 38,
 		"interactables": 4,
 		"spawns": ["FromGrove"],
 		"exits": {

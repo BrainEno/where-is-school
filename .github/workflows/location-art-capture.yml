@@ -313,12 +313,16 @@ jobs:
           shopt -s nullglob
           frames=("$out/""${LOCATION}"_*.jpg)
           views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
+          # Engine exit accounting (RID allocations, buffers and resources leaked at
+          # exit) prints ERROR lines after the PASS and is not a content failure; the
+          # other ERROR lines stay fatal.
+          noise='^(ERROR|WARNING): ([0-9]+ (RID allocations|resources still in use)|Buffer with GL ID|.*leaked)'
           if [ "$code" -ne 0 ] || [ "${#frames[@]}" -lt 2 ] || [ "${#views[@]}" -ne "$expect" ] || \
-              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/capture.log" || \
+              grep -Ev "$noise" "${RUNNER_TEMP}/capture.log" | grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
             tail -n 40 "${RUNNER_TEMP}/capture.log"
-            awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:|res:\/\/data\/)/ {print; if (++count == 6) exit}' \
-              "${RUNNER_TEMP}/capture.log" | while read -r issue; do
+            grep -Ev "$noise" "${RUNNER_TEMP}/capture.log" | awk '/^(SCRIPT ERROR|TEST FAILURE|FAIL:|ERROR:|res:\/\/data\/)/ {print; if (++count == 6) exit}' \
+              | while read -r issue; do
               echo "::error title=location capture diagnostic::$issue"
             done
             echo "::error title=location capture::$LOCATION/$SIDE wrote ${#frames[@]} frames, ${#views[@]}/$expect detail frames, exit $code"
