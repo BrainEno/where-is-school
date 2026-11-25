@@ -50,6 +50,7 @@ func _run() -> void:
 	await _check_outline_hand_over()
 	await _check_outline_fallback()
 	await _check_marker_on_the_object()
+	await _check_talk_bubble()
 	await _check_pick_where_drawn()
 	Harness.finish(
 		self,
@@ -58,7 +59,8 @@ func _run() -> void:
 		% _checks
 		+ "object cue outlines the object's own meshes, hands over cleanly, restores what it "
 		+ "marked, falls back when there is nothing to trace, and is pointable where drawn; a look "
-		+ "or talk target gets the small ring on the object instead, pointable only on it."
+		+ "target gets the small ring on the object, a person to talk to a speech bubble above "
+		+ "the head, both pointable only on the object."
 	)
 
 
@@ -540,6 +542,77 @@ func _check_marker_on_the_object() -> void:
 	_expect(controller._accepts_anchor_pick(beside, off_anchor, probe),
 		"An outlined object lost its anchor sphere as a pointer target.")
 	controller.free()
+	(prop["holder"] as Node).queue_free()
+	await process_frame
+
+
+# --- the talk bubble --------------------------------------------------------
+
+
+## A person to talk to is marked like a look target, but with a speech bubble above the head
+## instead of a ring. Only the glyph and the place differ: the pen, the fade, the pointer rule
+## and the untouched layers are the marker's.
+func _check_talk_bubble() -> void:
+	Harness.stage = "talk bubble"
+	var person := InteractableScene.instantiate() as Interactable
+	person.speaker_id = &"q"
+	_expect(person.uses_talk_cue(), "A named speaker does not get the talk bubble by default.")
+	person.speaker_id = &""
+	_expect(not person.uses_talk_cue(), "An object with no speaker gets the talk bubble.")
+	person.cue_style = Interactable.CueStyle.TALK
+	_expect(
+		person.uses_talk_cue() and person.uses_marker_cue(),
+		"cue_style = TALK does not select the talk bubble."
+	)
+	person.cue_style = Interactable.CueStyle.MARKER
+	_expect(not person.uses_talk_cue(), "cue_style = MARKER still selects the talk bubble.")
+	person.free()
+
+	var exit := LocationExit.new()
+	exit.speaker_id = &"q"
+	_expect(not exit.uses_talk_cue(), "A way out with a speaker was given the talk bubble.")
+	exit.free()
+
+	var prop := _make_prop(&"talk_probe", Vector3(0.0, 0.0, -9.0), Interactable.CueStyle.AUTO)
+	var probe := prop["probe"] as Interactable
+	probe.speaker_id = &"q"
+	var body := prop["body"] as MeshInstance3D
+	await process_frame
+	await process_frame
+	probe.set_highlighted(true)
+	var cue := probe.get_cue()
+	if not _expect_true(cue != null and cue.is_revealed(), "The talk target has no revealed cue."):
+		(prop["holder"] as Node).queue_free()
+		return
+	_expect(cue.is_marking(), "A person to talk to was not marked.")
+	_expect(cue.is_talking(), "A person to talk to was not given the speech bubble.")
+	await _wait(FADE_WAIT)
+	var marker := cue.get_marker()
+	if marker != null:
+		var material := marker.material_override as ShaderMaterial
+		_expect(
+			material != null and int(material.get_shader_parameter(&"glyph")) == 1,
+			"The talk bubble's glyph is not selected on the marker."
+		)
+		var top := (body.global_transform * body.get_aabb()).end.y
+		var expected := probe.get_talk_marker_position()
+		_expect(
+			marker.global_position.distance_to(expected) < 0.01,
+			"The talk bubble is at %s, not where the cue puts it %s."
+			% [marker.global_position, expected]
+		)
+		_expect(
+			absf(expected.y - (top + Interactable.TALK_BUBBLE_CLEARANCE)) < 0.01,
+			"The talk bubble sits at %.3f m, not just above the head at %.3f m."
+			% [expected.y, top]
+		)
+		_expect(
+			expected.y > probe.get_marker_position().y,
+			"The talk bubble is not above the middle of the person."
+		)
+	probe.set_highlighted(false)
+	await _wait(FADE_WAIT)
+	_expect(not cue.visible, "The talk bubble is still drawn after the highlight ended.")
 	(prop["holder"] as Node).queue_free()
 	await process_frame
 

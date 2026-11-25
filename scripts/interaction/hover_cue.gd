@@ -2,14 +2,17 @@ class_name HoverCue
 extends Node3D
 ## The cue on the object the player can use right now - the thing E would act on.
 ##
-## Two looks, chosen by the object (`Interactable.CueStyle`, `docs/ARCHITECTURE.md, "Marker or outline"`):
+## Three looks, chosen by the object (`Interactable.CueStyle`, `docs/ARCHITECTURE.md, "Marker or outline"`):
 ##
-## * **Marker** (things to look at, people to talk to, controls): a small green ring with a
-##   pale dot, sitting on the middle of the object - Disco Elysium's look/talk mark. It is a
-##   billboard of constant pixel size (`assets/shaders/interaction/look_marker.gdshader`)
-##   and follows the object if it moves (a person walking to their talk spot). The owner
-##   asked for it in round 24: the outline on every prop and every window made the whole
-##   hall light up under a wandering cursor.
+## * **Marker** (things to look at, controls): a small green ring with a pale dot, sitting on
+##   the middle of the object - Disco Elysium's look mark. It is a billboard of constant pixel
+##   size (`assets/shaders/interaction/look_marker.gdshader`) and follows the object if it
+##   moves. The owner asked for it in round 24: the outline on every prop and every window
+##   made the whole hall light up under a wandering cursor.
+## * **Talk** (a person to talk to, `Interactable.uses_talk_cue`): the same marker, pen and
+##   size, drawn as a small green speech bubble with three dots above the person's head
+##   (`Interactable.get_talk_marker_position`) - Disco Elysium's talk mark. It follows the
+##   person as they walk to their talk spot.
 ## * **Outline** (ways out: doors, gates, stairs): the object's own silhouette gets a thin
 ##   warm line, a dark rim and a faint wash, and nothing is added to the floor. The cue
 ##   before that was a dashed ring on the ground with a halo and a floating diamond; the
@@ -56,6 +59,7 @@ var _shard: MeshInstance3D = null
 var _marker: MeshInstance3D = null
 var _marker_material: ShaderMaterial = null
 var _marking: bool = false
+var _talking: bool = false
 var _time: float = 0.0
 
 
@@ -89,6 +93,11 @@ func is_marking() -> bool:
 	return _marking
 
 
+## True when the last reveal drew the talk bubble (a marker, but for a person to talk to).
+func is_talking() -> bool:
+	return _talking
+
+
 ## The ring, or null when this cue has never marked anything. Public for tests.
 func get_marker() -> MeshInstance3D:
 	return _marker
@@ -113,12 +122,14 @@ func reveal() -> void:
 	if _source != null:
 		_meshes = _source.get_outline_meshes()
 	_marking = _source != null and _source.uses_marker_cue()
+	_talking = _marking and _source.uses_talk_cue()
 	if _marking:
 		# A previous outline reveal of this same object may still own the overlay.
 		if _overlay != null and is_instance_valid(_overlay):
 			_overlay.release(self)
 		_overlay = null
 		_ensure_marker()
+		_marker_material.set_shader_parameter(&"glyph", 1 if _talking else 0)
 		_place_marker()
 	else:
 		_overlay = OutlineOverlay.for_node(self) if not _meshes.is_empty() else null
@@ -236,7 +247,8 @@ func _ensure_marker() -> void:
 func _place_marker() -> void:
 	if _marker == null or _source == null or not _marker.is_inside_tree():
 		return
-	_marker.global_transform = Transform3D(Basis.IDENTITY, _source.get_marker_position())
+	var at := _source.get_talk_marker_position() if _talking else _source.get_marker_position()
+	_marker.global_transform = Transform3D(Basis.IDENTITY, at)
 
 
 func _kill_tween() -> void:
