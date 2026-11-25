@@ -377,6 +377,9 @@ def front_yard_nodes() -> Builder:
         ("RowFlats", "row_flats", (-6.0, -50.0), 30, 1.3),
         ("RowPylon", "row_pylon", (16.0, -44.0), 40, 1.0),
         ("RowTower", "row_tower", (-26.0, -58.0), 20, 1.5),
+        # Round 27: the rows lined up south, beyond the rail and the gym, facing the yard.
+        ("RowFlatsSouth", "row_flats", (-2.0, 58.0), 180, 1.3),
+        ("RowTowerSouth", "row_tower", (12.0, 64.0), 180, 1.5),
     ], -1.6)
     # The sports ground past the railings, north and south: the same dirt into the haze, a
     # few more dead trees, and a football goal with no net, far off to the north.
@@ -448,6 +451,17 @@ def front_yard_nodes() -> Builder:
     b.flat("StageWindows", "SchoolBlockSouth", yard.quad(b, south, 11.4), "yard_school_windows_south",
            (5.006, 0.5, 0.0), (0, 90, 0))
     school_wall_art(b, street=False)
+    # Round 27: the gym (体育馆) beyond the school wall's north-east corner - a high window
+    # band and its shut double doors on the south face, as children of the graybox body so
+    # they fade with it. The equipment room's (器材室) graybox leaf stays; the stage pass
+    # adds the frame round it.
+    b.flat("StageGymWindows", "Gym", yard.quad(b, 13.0, 2.6), "yard_school_windows", (0, 1.9, 4.506))
+    for name, x in (("StageGymDoorWest", -0.36), ("StageGymDoorEast", 0.36)):
+        b.flat(name, "Gym", box(b, (0.72, 2.5, 0.12)), "gate_steel", (x, -1.85, 4.55), shadow=True)
+    for side in (-1, 1):
+        b.flat(f"StageDoorJamb{side}", "EquipmentRoom", box(b, (0.08, 2.3, 0.26)), "metal_ink",
+               (side * 0.69, 0.45, 1.74), shadow=True)
+    b.flat("StageDoorHead", "EquipmentRoom", box(b, (1.6, 0.12, 0.26)), "metal_ink", (0, 1.75, 1.74), shadow=True)
     return b
 
 

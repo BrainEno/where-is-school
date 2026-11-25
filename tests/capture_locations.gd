@@ -256,7 +256,9 @@ const FRONT_YARD_STANCES := [
 	["porch", Vector3(-9.7, 0.6, 15.8)],
 	["trees", Vector3(-3.5, 0.0, 2.0)],
 	# Round 26: the grove's mouth, and the strip's trees behind the north railing.
+	# Round 27: the equipment room and the gym's mass beyond the school wall.
 	["grove_mouth", Vector3(11.9, 0.0, 7.0)],
+	["equipment_room", Vector3(10.5, 0.0, -2.2)],
 ]
 const FRONT_YARD_VIEWS := [
 	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
@@ -266,6 +268,8 @@ const FRONT_YARD_VIEWS := [
 	["entrance", Vector3(2.0, 3.2, 21.0), Vector3(-10.6, 1.6, 15.8)],
 	["porch_steps", Vector3(-4.0, 2.4, 20.5), Vector3(-9.8, 0.8, 15.8)],
 	["north_wall", Vector3(6.0, 5.0, -10.0), Vector3(-8.0, 0.6, -20.4)],
+	# Round 27: the gym across the wall, from just inside the yard's north rail.
+	["gym", Vector3(6.5, 4.0, -6.0), Vector3(6.5, 3.2, -28.0)],
 ]
 ## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
 ## the east leg, and one high view down the whole L towards the court's opening.

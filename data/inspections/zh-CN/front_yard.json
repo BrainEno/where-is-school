@@ -21,5 +21,12 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "待做·一棵枯树，一片叶子也没有"
+  },
+  "front_yard_equipment_room": {
+    "title": "器材室",
+    "prompt": "看看器材室",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·操场的器材收在墙根下，器材室的铁门关着"
   }
 }

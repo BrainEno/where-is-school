@@ -705,6 +705,26 @@ def build_front_yard():
     s.box("GroveHintTree", (12.6, 3.55, 4.3), (5.4, 7.3, 5.4), "soil", occ, True, GROVE_FADE_LAYER)
     s.box("GroveHintTreeTrunk", (12.6, 1.0, 4.3), (0.42, 2.0, 0.42), "soil")
 
+    # Round 27, phase 3 (docs/MAP_PLAN.md §5): the equipment room (器材室) in the yard's
+    # north-east corner beside the grove's mouth, with the yard's stored gear beside it -
+    # two backboards stacked flat, two poles, and the ball cart. The gym (体育馆) rises
+    # beyond the school wall's north-east corner, where the block's future north door will
+    # face. Both are shells: the gym's interior is a later room, and the room's text is the
+    # owner's to write (data/inspections/*/front_yard.json). The stage pass dresses the
+    # gym's windows and shut doors and lines up the distant rows south
+    # (build_stage_art.py, FRONT_YARD).
+    s.box("EquipmentRoom", (10.5, 1.9, -5.9), (4.2, 3.8, 3.4), "wall", occ)
+    s.box("EquipmentRoomPlinth", (10.5, 0.6, -5.9), (4.4, 1.2, 3.6), "concrete", occ)
+    s.box("EquipmentRoomDoor", (10.5, 2.35, -4.16), (1.3, 2.3, 0.08), "metal")
+    s.box("EquipmentRoomLintel", (10.5, 3.65, -4.14), (1.6, 0.3, 0.14), "concrete")
+    s.box("HoopBoard0", (8.15, 0.08, -5.3), (1.8, 0.16, 1.1), "concrete")
+    s.box("HoopBoard1", (8.15, 0.24, -5.3), (1.8, 0.16, 1.1), "concrete")
+    s.box("HoopPole0", (9.6, 0.06, -5.55), (3.2, 0.12, 0.12), "metal")
+    s.box("HoopPole1", (9.6, 0.18, -5.55), (3.2, 0.12, 0.12), "metal")
+    s.box("BallCart", (11.5, 0.28, -3.7), (0.9, 0.55, 0.6), "metal")
+    s.box("Gym", (6.5, 4.3, -28.0), (14.0, 8.6, 9.0), "wall", occ)
+    s.box("GymPlinth", (6.5, 0.6, -28.0), (14.4, 1.2, 9.4), "concrete", occ)
+
     s.interactables = [
         # placeholders until the owner writes them (data/inspections/*/front_yard.json)
         {"name": "CardReaderLook", "pos": (14.62, 1.3, STREET_DOOR_Z[1] + GATE_PIER / 2), "id": "front_yard_card_reader",
@@ -716,6 +736,10 @@ def build_front_yard():
         {"name": "DeadTreeLook", "pos": (tx + 0.45, 1.2, FRONT_YARD_TREES[0][1] + 0.45), "id": "front_yard_dead_tree",
          "inspection": "front_yard_dead_tree", "radius": 1.3,
          "support": ("../../DeadTree0Trunk",), "outline": ("DeadTree0/StageTree/Trunk",)},
+        # Round 27: the equipment room's shut door (器材室), with the stored gear beside it.
+        {"name": "EquipmentRoomLook", "pos": (10.5, 1.1, -3.3), "id": "front_yard_equipment_room",
+         "inspection": "front_yard_equipment_room", "radius": 1.3,
+         "outline": ("EquipmentRoomDoor/MeshInstance3D",)},
     ]
     s.exits = [
         {"name": "BackInside", "pos": (-9.6, FRONT_PORCH_TOP + 0.75, 15.8), "id": "front_yard_back_inside",

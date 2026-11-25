@@ -95,9 +95,11 @@ const LOCATIONS := {
 		# anchor spheres and the pick boxes of thirteen outline meshes (the leaves' frames: 8).
 		# Round 26: the north wall's two runs and two rail gaps, the mouth tree and the
 		# strip's three trees (each with a trunk, 12), the new exit's sphere and its
-		# outline pick box.
-		"shapes": 84,
-		"interactables": 6,
+		# outline pick box. Round 27: the equipment room (room, plinth, door, lintel: 4) and
+		# its stored gear (two boards, two poles, the cart: 5), the gym's shell and plinth,
+		# and the new look's sphere and pick box (2).
+		"shapes": 97,
+		"interactables": 7,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove"],
 		"exits": {
 			"front_yard_back_inside": "corridor/FromTeachingEntrance",

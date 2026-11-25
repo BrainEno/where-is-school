@@ -180,7 +180,7 @@ equipment, moved off the court. Elsewhere: school buildings such as a gym.
 |---|---|---|
 | 1 | Out of 01 by a big two-leaf glass door facing east (down the blue stair); a click lands the player on a porch's steps above the dirt yard, and they walk down onto it. The 02 gate steps and the small forecourt are gone; a plain side door from the 01 gallery leads to the stable lane. See [CORRIDOR_ART.md](CORRIDOR_ART.md), round 25. | 已实现 |
 | 2 | The school wall round the block, and the north grove as a new walkable location joining the two yards. Round 26: the wall's north runs and the grove are in; the rail gaps by the porch steps are closed. | 已实现 |
-| 3 | The sports equipment south, a gym, distant buildings lined up with the map | 已确定但未实现 |
+| 3 | The sports equipment south, a gym, distant buildings lined up with the map | 部分实现 (round 27: the equipment room 器材室 with the yard's stored gear stands in the front yard's north-east corner, and the gym 体育馆 rises beyond the school wall's north-east corner - a shell only, its interior and the block's north door are future work; the distant rows line up south) |
 
 ## 6. Expansions around the campus
 
@@ -213,7 +213,7 @@ All of these must stay inside the existing scene-transition transaction and keep
 |---|---|---|---|
 | classroom | Waking; the ordinary day that is not | Desk, board, door | 已实现 |
 | corridor | Leaving; the first wrong perspective | Noticeboard, speaker, trolley, glass, the wait at the window; the offset stair and lab recess controls | 已实现 |
-| front_yard | Out of the building, still inside the walls | Dead trees, the shut gate, the card reader | 已实现 (inspection text: 尚待作者决定) |
+| front_yard | Out of the building, still inside the walls | Dead trees, the shut gate, the card reader; the equipment room's shut door and its stored gear (round 27) | 已实现 (inspection text: 尚待作者决定) |
 | street | Outside, but the school is still the biggest thing | Notice pole, bins, camera, puddle | 已实现 |
 | residential | Somebody's home life, overheard | The animal, the stains, washing, the chair | 已实现 (animal's role: 尚待作者决定) |
 | alley | Pressure; the way narrows | The skip and its chair, notices, the service door | 已实现 |
