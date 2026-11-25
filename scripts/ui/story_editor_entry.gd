@@ -45,6 +45,39 @@ static func development_run() -> bool:
 	return debug_run and scripts_present()
 
 
+## Whether a development run boots with the editor already on, with nothing to press, save or
+## launch differently (#395): during development the tool is wanted in every run, so a
+## preferences file a machine refuses must not be the thing that decides whether it exists.
+## `development_run()` is the first line, and the rest is who else that description also
+## happens to fit and must not be dragged in along with the author:
+## - the iPhone player pack carries `scripts/story_editor/` too, and the normal app there is
+##   opt-in from the settings row - this default stays off that platform;
+## - a windowless run is an import, a batch job or a capture step with nobody at it;
+## - CI renders the player's view on purpose, so a screenshot never carries the author's
+##   launcher (the capture workflows run the real project windowed on a runner);
+## - `--script` is the test harness, which has to be able to speak as a player's copy -
+##   `tests/story_editor_setting_test.gd` reads this file as the off-by-default contract.
+## The desktop and Android player exports leave the scripts out entirely, so they fail the
+## first line; the Windows developer preset keeps them in, and that double-click run is
+## exactly who this default is for. The switch still stores whatever the author last chose -
+## this decides only what a development run starts at, and F9 or the settings row can still
+## close the editor for the session.
+static func development_default() -> bool:
+	if not development_run():
+		return false
+	# Mobile packs are player-shaped artifacts even as debug builds: the iPhone pack
+	# ships these scripts and stays opt-in (#394), and the Android preview APK is
+	# smoke-launched as a player on an emulator. The author-at-a-window run this
+	# default exists for is a desktop one.
+	if OS.has_feature("ios") or OS.has_feature("android"):
+		return false
+	if DisplayServer.get_name() == "headless":
+		return false
+	if OS.get_environment("GITHUB_ACTIONS") == "true":
+		return false
+	return "--script" not in OS.get_cmdline_args()
+
+
 ## True when this run asked for the editor on its own terms. Read-only by design: the file keeps
 ## saying whatever it said, so a player's copy is unaffected by how the project was launched.
 static func development_override() -> bool:

@@ -522,8 +522,9 @@ func load_settings() -> void:
 		for key: StringName in VOLUME_KEYS:
 			_volumes[key] = _read_volume(config, String(key))
 		_load_bindings(config)
-	if StoryEditorEntry.development_override():
-		# An author's launch turns the switch on for this run whatever the file says (#394).
+	if StoryEditorEntry.development_override() or StoryEditorEntry.development_default():
+		# An author's launch (#394), or a development run's boot default (#395), turns the
+		# switch on for this run whatever the file says - `development_default()` says who.
 		_story_editor = true
 	_apply_all_volumes()
 	_apply_ui_scale()

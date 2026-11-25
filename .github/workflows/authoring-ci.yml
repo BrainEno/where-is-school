@@ -143,6 +143,106 @@ jobs:
       - name: Edit in place and load the native chapter with authoring off
         shell: bash
         run: bash tools/authoring/test_live_classroom.sh "$RUNNER_TEMP/author-live" --render
+  windows-dev:
+    # The packaged development run of #395: a double-click Windows executable that carries
+    # `scripts/story_editor/*` and boots with the editor on (`StoryEditorEntry.development_default()`),
+    # so the owner's editing loop does not depend on opening the Godot editor. The content
+    # check below is the pack-level twin of the preset assertion in
+    # `tests/story_editor_setting_test.gd`; release.yml never exports this preset.
+    name: Export the Windows developer build with the story editor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+        with:
+          include-templates: true
+      - name: Export the developer preset
+        shell: bash
+        run: |
+          set -euo pipefail
+          # No XDG_DATA_HOME override here: the export templates setup-godot installed
+          # live under the default editor data directory, and pointing Godot at an empty
+          # one makes `can_export` fail with "No export template found at the expected
+          # path" - a plain line, which is why the annotation capture below also keeps
+          # the reasons that carry neither an ERROR prefix nor an indent.
+          bash tools/ci_import_godot.sh "$RUNNER_TEMP/windows-dev-import"
+          mkdir -p build/windows-dev
+          log="$RUNNER_TEMP/windows-dev-export.log"
+          result=0
+          timeout 300 godot --headless --path . --export-debug "Windows Dev" \
+            "build/windows-dev/where-is-school-dev.exe" 2>&1 | tee "$log" || result=$?
+          if (( result != 0 )); then
+            # The cause of a configuration failure is not one shape: an indented detail
+            # line under the `ERROR: ... configuration errors:` header, or - as with a
+            # missing export template - a plain reason line carrying neither an ERROR
+            # prefix nor an indent. Keep both, and keep the tail, where the block sits.
+            grep -E 'SCRIPT ERROR|Parse Error|ERROR|Failed|template|not found|configuration|^[[:space:]]+[^[:space:]]' "$log" |
+              tail -25 | cut -c1-600 |
+              while IFS= read -r failure; do printf '::error title=Windows Dev export::%s\n' "$failure"; done || true
+            exit 1
+          fi
+          test -f build/windows-dev/where-is-school-dev.exe
+      - name: The pack carries the story editor and keeps the player's exclusions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys, traceback
+          sys.path.insert(0, "tools")
+          from godot_pck import PackError, load_blob
+
+          def fail(message):
+              # The checks page cannot read this step's log; carry the reason over.
+              print(f"::error title=Windows Dev pack::{message}")
+              raise SystemExit(1)
+
+          try:
+              # With the console wrapper Godot may place the embedded pack in either
+              # half of the pair; whichever half carries it must satisfy the contract.
+              candidates = ["build/windows-dev/where-is-school-dev.exe",
+                            "build/windows-dev/where-is-school-dev.console.exe"]
+              packs = []
+              for path in candidates:
+                  try:
+                      entries, _header = load_blob(open(path, "rb").read(), embedded=True)
+                      packs.append((path, [p for p, _s in entries]))
+                  except (FileNotFoundError, PackError) as error:
+                      print(f"pack note: {path}: {error}")
+              if not packs:
+                  fail("neither half of the developer build carries an embedded pack")
+              sizes = {path: len(paths) for path, paths in packs}
+              # script_export_mode=2 packs scripts as .gd, .gdc or .gd.remap; the
+              # contract is the folder, not the suffix (authoring_build.py reads the
+              # same three).
+              carrying = [path for path, paths in packs
+                          if any(p.startswith("res://scripts/story_editor/bootstrap.")
+                                 for p in paths)]
+              if not carrying:
+                  story = {path: [p for p in paths if "story_editor" in p][:5]
+                           for path, paths in packs}
+                  fail("the developer pack does not carry the story editor it exists for "
+                       f"(#395); packs seen: {sizes}; story_editor entries: {story}")
+              for path, paths in packs:
+                  leaked = [p for p in paths
+                            if p.startswith(("res://tests/", "res://tools/", "res://addons/"))]
+                  if leaked:
+                      fail(f"player exclusions leaked into {path}: {leaked[:5]}")
+              print(f"OK: carries={carrying}; sizes={sizes}")
+          except SystemExit:
+              raise
+          except Exception:
+              traceback.print_exc()
+              fail("pack check crashed; see traceback above")
+          PY
+      - name: Upload the developer build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: where-is-school-windows-dev
+          path: build/windows-dev/
+          if-no-files-found: error
   iphone:
     name: Verify unsigned author and retail iPhone archives
     runs-on: macos-26

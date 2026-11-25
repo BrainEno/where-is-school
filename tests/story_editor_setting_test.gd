@@ -264,6 +264,11 @@ func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
 			== StoryEditorEntry.development_requested(
 				OS.get_cmdline_user_args(), OS.get_environment(StoryEditorEntry.DEVELOPMENT_ENVIRONMENT)),
 		"The override the settings load honours is not the rule it states")
+	# The boot default of #395 must not reach in here: this harness is a `--script` launch,
+	# which is precisely the run `development_default()` excludes so a test can still speak
+	# as a player's copy - so `Settings` reading a fresh file below really does start off.
+	check.expect(not StoryEditorEntry.development_default(),
+		"A scripted harness run must not boot with the story editor forced on")
 	# What each outcome reads as on the row, and the step inside it: `saved` is the file, `moved`
 	# is the switch, and the two come apart in a development run - which is why one sentence cannot
 	# serve both. The tables have to carry the placeholder, or the sentence arrives with "{step}"
@@ -404,16 +409,21 @@ func _check_hotkey_over_a_refused_write(check: Harness.Checker, settings: Node) 
 ## The separation the author has to be able to count on: the tool lives in one folder, the export
 ## presets switch it off, and the code that stays in a player's package answers only while that
 ## folder is really in it. This reads the file the exporter reads, so a preset added later without
-## the filter fails here rather than shipping a menu nobody meant to publish.
+## the filter fails here rather than shipping a menu nobody meant to publish. The one preset that
+## exists to carry the tool - the Windows developer build of #395 - is asserted the other way
+## round: if it ever stops including `scripts/story_editor/*`, the double-click run loses the
+## editor this issue is about, and this check says so before the export does.
 func _check_packaging_keeps_the_authoring_out(check: Harness.Checker) -> void:
-	Harness.stage = "what a player's export leaves out"
+	Harness.stage = "what a player's export leaves out, and what the developer build carries"
 	var config := ConfigFile.new()
 	if not check.expect(config.load("res://export_presets.cfg") == OK,
 			"export_presets.cfg could not be read to check what ships out"):
 		return
 	var dropped: Array[String] = ["scripts/story_editor/*", "scripts/dev/*", "tests/*", "tools/*", "addons/*"]
+	var kept_out: Array[String] = ["scripts/dev/*", "tests/*", "tools/*", "addons/*"]
 	var index := 0
 	var presets := 0
+	var developer := false
 	while config.has_section("preset.%d" % index):
 		var section := "preset.%d" % index
 		var preset := String(config.get_value(section, "name", ""))
@@ -423,6 +433,17 @@ func _check_packaging_keeps_the_authoring_out(check: Harness.Checker) -> void:
 			# `_check_hotkey_presses` is the evidence that a released run of it answers nothing.
 			check.expect(excludes.contains("addons/*") and excludes.contains("tests/*"),
 				"The iOS export ships the editor-only addon or the test scripts")
+		elif preset == "Windows Dev":
+			# The developer build is the exception that proves the rule above: it carries the
+			# editor on purpose (and `development_default()` turns it on at boot), while still
+			# leaving the harness and the authoring sources themselves out of the pack.
+			developer = true
+			check.expect(not excludes.contains("scripts/story_editor/*"),
+				"The Windows Dev export leaves the story editor out of the pack it exists to carry")
+			for filter: String in kept_out:
+				check.expect(excludes.contains(filter),
+					"The Windows Dev export ships %s, which is not part of the game it previews"
+					% filter)
 		else:
 			for filter: String in dropped:
 				check.expect(excludes.contains(filter),
@@ -431,6 +452,8 @@ func _check_packaging_keeps_the_authoring_out(check: Harness.Checker) -> void:
 		index += 1
 	check.expect(presets >= 3,
 		"Fewer than the three player-facing export presets were readable")
+	check.expect(developer,
+		"The Windows Dev preset is gone, so there is no packaged development run left (#395)")
 
 
 ## A `Settings` stand-in that only reports a refused write, so the settings row's message can
