@@ -47,8 +47,8 @@ const POINTER_MARGIN := 12.0
 const SCREEN_MARGIN := 4.0
 const PAPER := Color(0.96, 0.98, 0.93)
 const INK := Color(0.04, 0.08, 0.05)
-## The same green as the look ring (`HoverCue.MARKER_COLOR`), so the two marks read as one set.
-const GREEN := Color(0.55, 0.92, 0.5)
+## The same green as the look ring (`Palette.LOOK_GREEN`), so the two marks read as one set.
+const GREEN := Palette.LOOK_GREEN
 const SHADOW := Color(0.0, 0.0, 0.0, 0.22)
 
 static var _fallback: WeakRef = null

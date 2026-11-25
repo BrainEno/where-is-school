@@ -46,7 +46,7 @@ const MARKER_SHADER := preload("res://assets/shaders/interaction/look_marker.gds
 ## The ring's diameter in pixels at a 900-pixel-high window (the shader scales it with the
 ## window). Small on purpose: a mark on the thing, not a target painted over it.
 const MARKER_PIXEL_SIZE := 24.0
-const MARKER_COLOR := Color(0.55, 0.92, 0.5, 1.0)
+const MARKER_COLOR := Palette.LOOK_GREEN
 const MARKER_PULSE_SECONDS := 1.8
 
 var _source: Interactable = null
@@ -311,7 +311,8 @@ func _update_bubble() -> void:
 func _screen_box(camera: Camera3D, bounds: AABB) -> Rect2:
 	var box := Rect2()
 	var first := true
-	for corner in bounds.get_endpoints():
+	for index in 8:
+		var corner := bounds.get_endpoint(index)
 		if camera.is_position_behind(corner):
 			continue
 		var on_screen := camera.unproject_position(corner)
