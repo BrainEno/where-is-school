@@ -401,7 +401,7 @@ func _case_load_and_locate() -> void:
 	if not opened:
 		return
 	_expect(store.is_loaded(), "打开成功但没有标记为已加载。")
-	_expect(store.file_paths().size() == L10n.LOCALES.size(), "应该每个语言一个文件，实际 %s。" % str(store.file_paths()))
+	_expect(store.file_paths().size() == L10n.locales.size(), "应该每个语言一个文件，实际 %s。" % str(store.file_paths()))
 	for path: String in store.file_paths():
 		_expect(path.begins_with(ROOT), "编辑器读到了 fixture 之外的文件：%s" % path)
 	_expect(store.warnings.is_empty(), "加载时不该有警告：%s" % str(store.warnings))
@@ -426,8 +426,8 @@ func _case_load_and_locate() -> void:
 	if text_field.is_empty():
 		return
 	var values: Dictionary = text_field["values"]
-	_expect(values.size() == L10n.LOCALES.size(), "正文应该有两种语言的输入，实际 %d 个。" % values.size())
-	for locale: String in L10n.LOCALES:
+	_expect(values.size() == L10n.locales.size(), "正文应该有两种语言的输入，实际 %d 个。" % values.size())
+	for locale: String in L10n.locales:
 		_expect(not String(values.get(locale, "")).strip_edges().is_empty(), "%s 的正文是空的。" % locale)
 
 
@@ -738,7 +738,7 @@ func _case_failed_save_keeps_both_languages() -> void:
 
 
 func _case_external_edits_are_conflicts() -> void:
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_reset_fixture()
 		var en_path := _dialogue_path("en", "alley")
 		var zh_path := _dialogue_path("zh-CN", "alley")
@@ -781,7 +781,7 @@ func _case_external_edits_are_conflicts() -> void:
 
 
 func _case_deleted_target_is_a_conflict() -> void:
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_reset_fixture()
 		var en_path := _dialogue_path("en", "alley")
 		var zh_path := _dialogue_path("zh-CN", "alley")
@@ -832,7 +832,7 @@ func _case_unreadable_target_is_a_conflict() -> void:
 
 
 func _case_in_save_external_rewrites_preserved() -> void:
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_reset_fixture()
 		var en_path := _dialogue_path("en", "alley")
 		var zh_path := _dialogue_path("zh-CN", "alley")
@@ -859,7 +859,7 @@ func _case_in_save_external_rewrites_preserved() -> void:
 
 
 func _case_in_save_target_deletions_preserved() -> void:
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_reset_fixture()
 		var en_path := _dialogue_path("en", "alley")
 		var zh_path := _dialogue_path("zh-CN", "alley")
@@ -1059,8 +1059,8 @@ func _case_rechecks_after_staging() -> void:
 
 func _case_late_saving_artifact_is_preserved() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1106,8 +1106,8 @@ func _case_late_saving_artifact_is_preserved() -> void:
 
 func _case_external_edit_survives_rollback() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1142,8 +1142,8 @@ func _case_external_edit_survives_rollback() -> void:
 
 func _case_second_target_conflict_rolls_back_first() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1167,8 +1167,8 @@ func _case_second_target_conflict_rolls_back_first() -> void:
 
 func _case_rollback_isolation_conflict_preserved() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1200,12 +1200,12 @@ func _case_rollback_isolation_conflict_preserved() -> void:
 
 func _case_rollback_cleanup_conflict_preserved() -> void:
 	_reset_fixture()
-	var first_path := _dialogue_path(L10n.LOCALES[0], "alley")
-	var second_path := _dialogue_path(L10n.LOCALES[1], "alley")
+	var first_path := _dialogue_path(L10n.locales[0], "alley")
+	var second_path := _dialogue_path(L10n.locales[1], "alley")
 	var before_first := _read(first_path)
 	var before_second := _read(second_path)
 	var external_backup := "external backup created during rollback cleanup"
-	var new_first := "Pending English edit." if L10n.LOCALES[0] == "en" else "未保存的中文修改。"
+	var new_first := "Pending English edit." if L10n.locales[0] == "en" else "未保存的中文修改。"
 	var writer := InjectedWriter.new()
 	writer.fail_install_target = second_path
 	writer.hook_phase = "rollback_candidate_cleanup_after_review_before_unlink"
@@ -1238,8 +1238,8 @@ func _case_rollback_cleanup_conflict_preserved() -> void:
 
 func _case_target_recreated_after_rollback_isolation() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1275,8 +1275,8 @@ func _case_target_recreated_after_rollback_isolation() -> void:
 
 func _case_saving_cleanup_replacement_preserved() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1310,8 +1310,8 @@ func _case_saving_cleanup_replacement_preserved() -> void:
 
 func _case_backup_cleanup_replacement_preserved() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1341,8 +1341,8 @@ func _case_backup_cleanup_replacement_preserved() -> void:
 
 func _case_isolation_move_inspects_actual_file() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1369,8 +1369,8 @@ func _case_isolation_move_inspects_actual_file() -> void:
 
 func _case_bilingual_late_conflict_keeps_both_backups() -> void:
 	_reset_fixture()
-	var first_locale := L10n.LOCALES[0]
-	var second_locale := L10n.LOCALES[1]
+	var first_locale := L10n.locales[0]
+	var second_locale := L10n.locales[1]
 	var first_path := _dialogue_path(first_locale, "alley")
 	var second_path := _dialogue_path(second_locale, "alley")
 	var before_first := _read(first_path)
@@ -1413,12 +1413,12 @@ func _case_bilingual_late_conflict_keeps_both_backups() -> void:
 
 func _case_final_quarantine_conflict_keeps_bilingual_backups() -> void:
 	_reset_fixture()
-	var first_path := _dialogue_path(L10n.LOCALES[0], "alley")
-	var second_path := _dialogue_path(L10n.LOCALES[1], "alley")
+	var first_path := _dialogue_path(L10n.locales[0], "alley")
+	var second_path := _dialogue_path(L10n.locales[1], "alley")
 	var before_first := _read(first_path)
 	var before_second := _read(second_path)
 	var external_second := before_second + " late edit after final quarantine"
-	var first_edit := "Pending English edit." if L10n.LOCALES[0] == "en" else "未保存的中文修改。"
+	var first_edit := "Pending English edit." if L10n.locales[0] == "en" else "未保存的中文修改。"
 	var writer := InjectedWriter.new()
 	writer.hook_phase = "pair_backup_cleanup_after_final_isolate_before_unlink"
 	writer.hook_target = second_path
@@ -1605,12 +1605,12 @@ func _case_chapter_list_matches_the_tree() -> void:
 	)
 	var inspection_chapters := store.available_chapters("inspections")
 	_expect(
-		inspection_chapters == _sorted(InspectionLibrary.CHAPTERS),
+		inspection_chapters == _sorted(InspectionLibrary.chapter_list),
 		"检视频道章节清单和磁盘不一致：%s" % str(inspection_chapters)
 	)
 	_expect(
 		store.paths.chapter_warnings("inspections").is_empty(),
-		"InspectionLibrary.CHAPTERS 和磁盘上的章节对不上：%s"
+		"InspectionLibrary.chapter_list 和磁盘上的章节对不上：%s"
 		% str(store.paths.chapter_warnings("inspections"))
 	)
 	_expect(store.available_chapters("abilities").is_empty(), "内心声音文案不该有章节。")
@@ -1623,13 +1623,13 @@ func _build_fixture() -> bool:
 	_clear_dir(ROOT)
 	var ok := true
 	for chapter: String in DIALOGUE_CHAPTERS:
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			ok = _copy(
 				"res://data/dialogue/%s/%s.json" % [locale, chapter],
 				_dialogue_path(locale, chapter)
 			) and ok
 	for chapter: String in INSPECTION_CHAPTERS:
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			ok = _copy(
 				"res://data/inspections/%s/%s.json" % [locale, chapter],
 				_inspection_path(locale, chapter)
@@ -1655,7 +1655,7 @@ func _inspection_path(locale: String, chapter: String) -> String:
 
 func _content_files() -> Array[String]:
 	var files: Array[String] = []
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		for kind: String in ["dialogue", "inspections"]:
 			var dir := "res://data/%s/%s" % [kind, locale]
 			for name: String in DirAccess.get_files_at(dir):

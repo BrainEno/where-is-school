@@ -493,7 +493,7 @@ func _count_presentable_lines(locale: String) -> int:
 			for node: Variant in (conversation as Dictionary).get("nodes", []):
 				if not String((node as Dictionary).get("text", "")).is_empty():
 					count += 1
-	for chapter: String in InspectionLibrary.CHAPTERS:
+	for chapter: String in InspectionLibrary.chapter_list:
 		var data: Variant = _read_json(InspectionLibrary.chapter_path(locale, chapter))
 		if not data is Dictionary:
 			continue

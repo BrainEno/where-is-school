@@ -208,7 +208,7 @@ func _check_blocked_door_text(inspections: InspectionLibrary) -> void:
 		"en": ["isn't shut", "let alone locked", "feel someone watching", "take your hand off"],
 	}
 	var named_character := RegEx.create_from_string("(^|[^a-zA-Z])[QBN]([^a-zA-Z]|$)")
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		if not inspections.set_locale(locale):
 			_failures.append("%s: could not select the inspection language." % locale)
 			continue
@@ -274,7 +274,7 @@ func _check_q_studying(library: DialogueLibrary, characters: CharacterDirectory)
 		if got != case["want"]:
 			_failures.append("Q route %s selected '%s', wanted '%s'." % [case["flags"], got, case["want"]])
 
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		library.set_locale(locale)
 		var opening := library.get_conversation(OPENING_CONVERSATION)
 		var first: DialogueGraph.DialogueNode = opening.nodes[&"q_1"]

@@ -76,7 +76,7 @@ var _loaded: bool = false
 func _init(data_root: String = NarrativePaths.DEFAULT_DATA_ROOT, file_writer: Variant = null) -> void:
 	paths = NarrativePaths.new(data_root)
 	writer = file_writer if file_writer != null else FileWriter.new()
-	locales = L10n.LOCALES.duplicate()
+	locales = L10n.locales.duplicate()
 	if not locales.is_empty():
 		reference_locale = locales[0]
 	_describer = NarrativeDescriber.new()
@@ -118,7 +118,7 @@ func open(unit_kind: String, unit_chapter: String = "") -> bool:
 		errors.append("未知的内容类型：%s。" % kind)
 		return false
 	if locales.is_empty():
-		errors.append("项目没有登记任何语言（L10n.LOCALES 是空的）。")
+		errors.append("项目没有登记任何语言（L10n.locales 是空的）。")
 		return false
 	_recover_incomplete_save()
 	for locale: String in locales:

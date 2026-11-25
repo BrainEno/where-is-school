@@ -72,11 +72,11 @@ func _check_dialogue(library: DialogueLibrary) -> void:
 	_expect(int(report.get("total_usec", 0)) > 0, "The dialogue load was not timed.")
 	var locales: Dictionary = report.get("locales", {})
 	_expect(
-		locales.size() == L10n.LOCALES.size(),
+		locales.size() == L10n.locales.size(),
 		"The dialogue report covers %d language(s), the game has %d."
-		% [locales.size(), L10n.LOCALES.size()]
+		% [locales.size(), L10n.locales.size()]
 	)
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_expect(locales.has(locale), "The dialogue report has no entry for %s." % locale)
 		if not locales.has(locale):
 			continue
@@ -131,8 +131,8 @@ func _check_dialogue(library: DialogueLibrary) -> void:
 	# Both languages carry the same content: a chapter added to one and not the other is a
 	# parity break, and the report would show it as unequal totals.
 	if locales.size() >= 2:
-		var first: Dictionary = locales[L10n.LOCALES[0]]
-		var second: Dictionary = locales[L10n.LOCALES[1]]
+		var first: Dictionary = locales[L10n.locales[0]]
+		var second: Dictionary = locales[L10n.locales[1]]
 		_expect(
 			int(first["conversations"]) == int(second["conversations"]),
 			"The languages disagree on how many conversations exist: %d vs %d."
@@ -145,7 +145,7 @@ func _check_dialogue(library: DialogueLibrary) -> void:
 		)
 
 	var text := library.describe_load_report()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_expect(text.find(locale) >= 0, "The dialogue report does not name %s." % locale)
 	for chapter: String in DialogueLibrary.CHAPTERS:
 		_expect(text.find(chapter) >= 0, "The dialogue report does not name chapter '%s'." % chapter)
@@ -163,11 +163,11 @@ func _check_inspections(library: InspectionLibrary) -> void:
 	_expect(int(report.get("total_usec", 0)) > 0, "The inspection load was not timed.")
 	var locales: Dictionary = report.get("locales", {})
 	_expect(
-		locales.size() == L10n.LOCALES.size(),
+		locales.size() == L10n.locales.size(),
 		"The inspection report covers %d language(s), the game has %d."
-		% [locales.size(), L10n.LOCALES.size()]
+		% [locales.size(), L10n.locales.size()]
 	)
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_expect(locales.has(locale), "The inspection report has no entry for %s." % locale)
 		if not locales.has(locale):
 			continue
@@ -178,7 +178,7 @@ func _check_inspections(library: InspectionLibrary) -> void:
 		var chapters: Dictionary = entry["chapters"]
 		var chapter_bytes := 0
 		var chapter_entries := 0
-		for chapter: String in InspectionLibrary.CHAPTERS:
+		for chapter: String in InspectionLibrary.chapter_list:
 			_expect(
 				chapters.has(chapter),
 				"%s: inspection chapter '%s' is missing from the report." % [locale, chapter]
@@ -213,8 +213,8 @@ func _check_inspections(library: InspectionLibrary) -> void:
 		)
 
 	if locales.size() >= 2:
-		var first: Dictionary = locales[L10n.LOCALES[0]]
-		var second: Dictionary = locales[L10n.LOCALES[1]]
+		var first: Dictionary = locales[L10n.locales[0]]
+		var second: Dictionary = locales[L10n.locales[1]]
 		_expect(
 			int(first["entries"]) == int(second["entries"]),
 			"The languages disagree on how many inspectables exist: %d vs %d."
@@ -222,7 +222,7 @@ func _check_inspections(library: InspectionLibrary) -> void:
 		)
 
 	var text := library.describe_load_report()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_expect(text.find(locale) >= 0, "The inspection report does not name %s." % locale)
 
 

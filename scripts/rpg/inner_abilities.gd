@@ -117,7 +117,7 @@ static func load_all(data_dir: String = DATA_DIR) -> InnerAbilities:
 	var registry := InnerAbilities.new()
 	registry._data_dir = data_dir
 	registry._parse_structure()
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		registry._parse_text(locale)
 	registry._check_text_parity()
 	registry.set_locale(L10n.current)
@@ -444,7 +444,7 @@ func _parse_text(locale: String) -> void:
 	if not (raw is Dictionary):
 		errors.append("%s: 'abilities' must be an object." % path)
 		return
-	var is_reference := not L10n.LOCALES.is_empty() and locale == L10n.LOCALES[0]
+	var is_reference := not L10n.locales.is_empty() and locale == L10n.locales[0]
 	for key: Variant in (raw as Dictionary).keys():
 		var ability_id := StringName(String(key))
 		var entry: Variant = (raw as Dictionary)[key]
@@ -543,12 +543,12 @@ func _parse_exceptions(
 ## exception cannot quietly outlive the reason it was added. `tests/ability_validation_test.gd`
 ## covers all three cases.
 func _check_text_parity() -> void:
-	if L10n.LOCALES.is_empty():
+	if L10n.locales.is_empty():
 		return
-	var reference: String = L10n.LOCALES[0]
+	var reference: String = L10n.locales[0]
 	var reference_ids: Array = _text.get(reference, {}).keys()
 	reference_ids.sort()
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		var path := text_path(locale)
 		var ids: Array = _text.get(locale, {}).keys()
 		ids.sort()

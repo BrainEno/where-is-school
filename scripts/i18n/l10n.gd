@@ -12,7 +12,7 @@ extends RefCounted
 ## signal-backed part (persisting the choice and telling the UI to redraw) lives
 ## in scripts/i18n/loc.gd, which is the autoload `Loc`.
 
-static var LOCALES: Array[String]:
+static var locales: Array[String]:
 	get:
 		return Locales.codes()
 const DEFAULT_LOCALE := Locales.DEFAULT_LOCALE
@@ -39,7 +39,7 @@ static func normalize(locale: String) -> String:
 
 
 static func is_supported(locale: String) -> bool:
-	return LOCALES.has(locale.strip_edges())
+	return locales.has(locale.strip_edges())
 
 
 ## Loads every locale table once. Returns the accumulated errors (empty is good);
@@ -49,7 +49,7 @@ static func load_tables() -> Array[String]:
 		return _errors
 	_loaded = true
 	_errors.clear()
-	for locale in LOCALES:
+	for locale in locales:
 		var path := table_path(locale)
 		if not FileAccess.file_exists(path):
 			_errors.append("Locale file not found: %s" % path)
@@ -121,7 +121,7 @@ static func errors() -> Array[String]:
 
 
 static func available_locales() -> Array[String]:
-	return LOCALES
+	return locales
 
 
 ## Self-name of the locale ("简体中文"), so the switch hint never shows a
@@ -134,8 +134,8 @@ static func locale_name(locale: String = "") -> String:
 
 static func other_locale() -> String:
 	load_tables()
-	var index := LOCALES.find(current)
-	return LOCALES[(index + 1) % LOCALES.size()]
+	var index := locales.find(current)
+	return locales[(index + 1) % locales.size()]
 
 
 ## Switches the display language. Returns true when something changed.

@@ -38,9 +38,9 @@ func _reset_settings() -> void:
 
 
 func _check_profiles() -> void:
-	if L10n.LOCALES != Locales.codes() or L10n.DEFAULT_LOCALE != Locales.DEFAULT_LOCALE:
+	if L10n.locales != Locales.codes() or L10n.DEFAULT_LOCALE != Locales.DEFAULT_LOCALE:
 		_failures.append("L10n does not use the locale registry.")
-	for code: String in L10n.LOCALES:
+	for code: String in L10n.locales:
 		if L10n.normalize(code) != code or Locales.reading_cps(code) <= 0.0:
 			_failures.append("Locale profile is not usable: %s." % code)
 	if L10n.normalize("unknown") != L10n.DEFAULT_LOCALE:
@@ -48,7 +48,7 @@ func _check_profiles() -> void:
 	if Locales.reading_cps("unknown") != Locales.DEFAULT_READING_CPS:
 		_failures.append("Unknown reading speed should use the neutral fallback.")
 	var playback := DialoguePlayback.new()
-	for code: String in L10n.LOCALES + ["unknown"]:
+	for code: String in L10n.locales + ["unknown"]:
 		playback.begin_line("test", 90, false, code)
 		var expected := clampf(
 			DialoguePlayback.BASE_PAUSE + 90.0 / Locales.reading_cps(code),
@@ -70,14 +70,14 @@ func _check_profiles() -> void:
 
 
 func _check_tables() -> void:
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		if L10n.keys(locale).is_empty():
 			_failures.append("Locale '%s' has no strings." % locale)
 		for key in L10n.keys(locale):
 			if L10n.t_for(key, locale).strip_edges().is_empty():
 				_failures.append("%s: '%s' is empty." % [locale, key])
 	var reference := L10n.keys(L10n.DEFAULT_LOCALE)
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		if L10n.keys(locale) != reference:
 			_failures.append("Locale '%s' does not define the same keys as %s." % [locale, L10n.DEFAULT_LOCALE])
 

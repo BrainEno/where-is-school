@@ -897,7 +897,7 @@ there is no state where one language is saved and the tool says it worked.
 
 **The chapter list is the directory.** `core/narrative_paths.gd` reads the chapter files
 instead of keeping a second copy of `DialogueLibrary.CHAPTERS` /
-`InspectionLibrary.CHAPTERS`; those constants are then cross-checked against the tree and a
+`InspectionLibrary.chapter_list`; those constants are then cross-checked against the tree and a
 disagreement is reported in the dock, because the runtime iterates the constants and a
 chapter that only exists on disk would never load.
 

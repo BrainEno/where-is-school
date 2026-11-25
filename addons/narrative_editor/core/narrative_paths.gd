@@ -2,7 +2,7 @@ extends RefCounted
 ## Editor-only: where content lives, and how many chapters there really are.
 ##
 ## The chapter list is read from the directory tree, not from a second constant. The
-## project already keeps `DialogueLibrary.CHAPTERS` and `InspectionLibrary.CHAPTERS`, and
+## project already keeps `DialogueLibrary.CHAPTERS` and `InspectionLibrary.chapter_list`, and
 ## a tool with its own copy of that list would silently fall out of date the first time a
 ## chapter is added. So the files are the list; the constants are then used as a
 ## cross-check, and a disagreement is reported in the dock instead of being hidden.
@@ -55,7 +55,7 @@ func dir_for(kind: String) -> String:
 ## open loudly, not vanish from the tool as if it had never been written.
 func chapters_on_disk(kind: String) -> Array[String]:
 	var seen: Dictionary = {}
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		for stem: String in _json_stems("%s/%s" % [dir_for(kind), locale]):
 			seen[stem] = true
 	var chapters: Array[String] = []
@@ -69,7 +69,7 @@ func chapters_on_disk(kind: String) -> Array[String]:
 ## runtime does.
 func missing_files(kind: String) -> Array[String]:
 	var missing: Array[String] = []
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		for chapter: String in chapters_on_disk(kind):
 			var file := (
 				dialogue_file(locale, chapter)
@@ -91,7 +91,7 @@ func chapter_warnings(kind: String) -> Array[String]:
 		return warnings
 	var declared: Array[String] = []
 	for name: Variant in (
-		DialogueLibraryScript.CHAPTERS if kind == "dialogue" else InspectionLibraryScript.CHAPTERS
+		DialogueLibraryScript.CHAPTERS if kind == "dialogue" else InspectionLibraryScript.chapter_list
 	):
 		declared.append(String(name))
 	declared.sort()
@@ -100,13 +100,13 @@ func chapter_warnings(kind: String) -> Array[String]:
 		if not declared.has(chapter):
 			warnings.append(
 				"章节 '%s' 在 %s 下有文件，但没有登记在 %s 里，游戏不会加载它。"
-				% [chapter, dir_for(kind), "DialogueLibrary.CHAPTERS" if kind == "dialogue" else "InspectionLibrary.CHAPTERS"]
+				% [chapter, dir_for(kind), "DialogueLibrary.CHAPTERS" if kind == "dialogue" else "InspectionLibrary.chapter_list"]
 			)
 	for chapter: String in declared:
 		if not on_disk.has(chapter):
 			warnings.append(
 				"章节 '%s' 登记在 %s 里，但没有对应的文件（%s）。"
-				% [chapter, "DialogueLibrary.CHAPTERS" if kind == "dialogue" else "InspectionLibrary.CHAPTERS", dir_for(kind)]
+				% [chapter, "DialogueLibrary.CHAPTERS" if kind == "dialogue" else "InspectionLibrary.chapter_list", dir_for(kind)]
 			)
 	return warnings
 

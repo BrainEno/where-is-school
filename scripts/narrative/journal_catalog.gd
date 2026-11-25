@@ -57,7 +57,7 @@ static func build(
 	comparisons_path: String = COMPARISONS_PATH
 ) -> JournalCatalog:
 	var catalog := JournalCatalog.new()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		catalog._index[locale] = {}
 		var counter := 0
 		if dialogue != null:
@@ -100,7 +100,7 @@ func text_for(entry: NarrativeEntry, locale: String) -> String:
 
 ## The chapter an entry was authored in, or "" when the content does not know it.
 func chapter_for(entry_id: StringName) -> String:
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var found := lookup(entry_id, locale)
 		if not found.is_empty():
 			return String(found.get("chapter", ""))
@@ -129,7 +129,7 @@ func order_of(entry_id: StringName) -> int:
 
 
 func get_entry_ids(locale: String = "") -> Array[StringName]:
-	var code := L10n.normalize(locale) if not locale.is_empty() else L10n.LOCALES[0]
+	var code := L10n.normalize(locale) if not locale.is_empty() else L10n.locales[0]
 	var ids: Array[StringName] = []
 	for key: Variant in (_index.get(code, {}) as Dictionary).keys():
 		ids.append(StringName(key))
@@ -138,7 +138,7 @@ func get_entry_ids(locale: String = "") -> Array[StringName]:
 
 
 func size(locale: String = "") -> int:
-	var code := L10n.normalize(locale) if not locale.is_empty() else L10n.LOCALES[0]
+	var code := L10n.normalize(locale) if not locale.is_empty() else L10n.locales[0]
 	return (_index.get(code, {}) as Dictionary).size()
 
 
@@ -184,7 +184,7 @@ func _load_comparisons(path: String) -> void:
 		var title_key := "journal.comparison.%s.title" % id
 		var question_key := "journal.comparison.%s.question" % id
 		var valid := true
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			for entry_id: String in [left, right]:
 				if lookup(StringName(entry_id), locale).is_empty():
 					_problems.append("%s '%s': unknown entry '%s' in %s." % [where, id, entry_id, locale])
@@ -266,7 +266,7 @@ func _index_inspections(library: InspectionLibrary, locale: String, counter: int
 		if not by_chapter.has(inspection.chapter):
 			by_chapter[inspection.chapter] = []
 		(by_chapter[inspection.chapter] as Array).append(inspection)
-	for chapter: String in InspectionLibrary.CHAPTERS:
+	for chapter: String in InspectionLibrary.chapter_list:
 		for item: Variant in by_chapter.get(chapter, []):
 			var inspection := item as InspectionLibrary.InspectionData
 			if not String(inspection.record_entry_id).is_empty():
@@ -334,9 +334,9 @@ func _add(locale: String, descriptor: Dictionary) -> void:
 
 
 func _check_parity() -> void:
-	var reference: String = L10n.LOCALES[0]
+	var reference: String = L10n.locales[0]
 	var reference_table: Dictionary = _index.get(reference, {})
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		if locale == reference:
 			continue
 		var table: Dictionary = _index.get(locale, {})

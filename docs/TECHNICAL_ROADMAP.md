@@ -533,7 +533,7 @@ and attributes old passive uses by stable fired-rule ids. See the
   aside, and a failure restores what was already written and reports it. A save that
   reports failure has not written half a conversation.
 - The chapter list is read from `data/dialogue/<locale>/` and `data/inspections/<locale>/`
-  and cross-checked against `DialogueLibrary.CHAPTERS` / `InspectionLibrary.CHAPTERS`,
+  and cross-checked against `DialogueLibrary.CHAPTERS` / `InspectionLibrary.chapter_list`,
   rather than being copied into the tool.
 - The inner-voice validator is stricter than it was: `once` must be a JSON boolean,
   `requires` must be an array of non-empty flag names, a rule's `id`/`ability`/

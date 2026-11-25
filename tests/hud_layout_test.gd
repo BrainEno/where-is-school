@@ -486,7 +486,7 @@ func _expected_resolution() -> Vector2i:
 ## for the prompt line, read from the game's own content rather than typed here.
 func _longest_prompt(locale: String) -> String:
 	var best := ""
-	var chapters: Array[String] = InspectionLibrary.CHAPTERS
+	var chapters: Array[String] = InspectionLibrary.chapter_list
 	for chapter: String in chapters:
 		var path := InspectionLibrary.chapter_path(locale, chapter)
 		var file := FileAccess.open(path, FileAccess.READ)

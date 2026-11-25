@@ -372,7 +372,7 @@ func _menu_geometry() -> void:
 	_ui.hud.set_objective("objective.leave_classroom")
 	for metrics: Array in SCREENS + [PORTRAIT]:
 		await _set_screen(metrics)
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			loc.call("set_locale", locale)
 			await process_frame
 			var stick := _stick()
@@ -573,7 +573,7 @@ func _compare_touch() -> void:
 			narrative.record(id, int(note["source"]), StringName(note["speaker_id"]), String(note["text"]))
 	for metrics: Array in SCREENS:
 		await _set_screen(metrics)
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			await _swipe_comparison(journal, pairs, loc, locale, "%s %s" % [metrics[0], locale])
 	await _tap_control(journal.get_back_button())
 	_check.expect(not journal.is_open(), "Mobile Back did not close the notebook after scrolling")

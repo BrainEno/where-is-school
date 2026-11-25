@@ -202,7 +202,7 @@
 
 **扩写前值得补的一个切语用例（静态发现，未实测）：** 在三角尺的首读观察上切 `en → zh-CN`，再推进到排队中的回想。[DialogueController](../scripts/dialogue/dialogue_controller.gd) 在打开检视时已把回想文本放进 `_queue`，而 `_refresh_inspection_text()` 只重绘正在显示的那一行，排队文本可能仍是英文。[现有切语用例](../tests/language_switch_test.gd) 在回想已经进入历史后换语，不覆盖这一拍。要扩写多段检视，先确认这条路径，要求回想按当前语言显示且只记录一次，来源仍是 `recalled`。
 
-**一处已核对的文档偏差：** [内容编辑指南](../data/dialogue_schema/README.md) 的检视章节表仍少实验室，并写成手动登记 `InspectionLibrary.CHAPTERS`；[现行加载器](../scripts/narrative/inspection_library.gd) 已按 `LocationCatalog` 派生。后续加地点时以目录与实际校验为准，不另造清单。对话章节仍用 `DialogueLibrary.CHAPTERS`；两者不是一回事。本评审不覆盖改写现行指南。
+**一处已核对的文档偏差：** [内容编辑指南](../data/dialogue_schema/README.md) 的检视章节表仍少实验室，并写成手动登记 `InspectionLibrary.chapter_list`；[现行加载器](../scripts/narrative/inspection_library.gd) 已按 `LocationCatalog` 派生。后续加地点时以目录与实际校验为准，不另造清单。对话章节仍用 `DialogueLibrary.CHAPTERS`；两者不是一回事。本评审不覆盖改写现行指南。
 
 **本轮证据边界：** 原评审仅从可见讨论提取作者表态、旧建议与游戏动作，不收录共享地址、手稿或未批准台词。审计补充用 `git show` / `git grep` 对照三版的场景、双语数据、脚本和已有测试，用 Python 重数结构；报告的运行结果不外推到本分支或目标端。这里只更新建议和后续验收方法，不实现玩法，不宣称做过 Godot 或真人验证。
 

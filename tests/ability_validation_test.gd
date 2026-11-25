@@ -303,7 +303,7 @@ func _case_existing_checks_still_fire() -> void:
 		"value": 1, "speaker": speaker, "max_passive": 1
 	}
 	text = _base_text_copy()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		(text[locale]["abilities"] as Dictionary)["probe_voice"] = {
 			"name": "探针" if locale == "zh-CN" else "Probe",
 			"description": "第二个声音，只在这个测试里存在。" if locale == "zh-CN" else "A second voice, only in this test.",
@@ -350,7 +350,7 @@ func _load_base() -> bool:
 		_failures.append("读不出 %s。" % STRUCTURE)
 		return false
 	_base_structure = structure
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var path := "res://data/abilities/%s.json" % locale
 		var text: Variant = JSON.parse_string(_read(path))
 		if not (text is Dictionary):
@@ -366,7 +366,7 @@ func _base_structure_copy() -> Dictionary:
 
 func _base_text_copy() -> Dictionary:
 	var copy: Dictionary = {}
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		copy[locale] = (_base_text[locale] as Dictionary).duplicate(true)
 	return copy
 
@@ -420,7 +420,7 @@ func _load(case_name: String, structure: Dictionary, text: Dictionary) -> InnerA
 	var dir := "%s/%s" % [ROOT, case_name]
 	_clear_dir(dir)
 	_write("%s/abilities.json" % dir, JSON.stringify(structure, "  "))
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_write("%s/%s.json" % [dir, locale], JSON.stringify(text[locale], "  "))
 	return InnerAbilities.load_all(dir)
 

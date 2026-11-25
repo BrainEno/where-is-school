@@ -54,7 +54,7 @@ func _check_inspection_extension(catalog: LocationCatalog) -> void:
 	var actual: Array[String] = []
 	for id: StringName in catalog.get_ids_in_file_order():
 		actual.append(String(id))
-	if InspectionLibrary.CHAPTERS != actual:
+	if InspectionLibrary.chapter_list != actual:
 		_failures.append("Inspection chapters do not match the location catalog.")
 	var root := "user://inspection_location_fixture"
 	var catalog_path := root + "/locations.json"
@@ -72,7 +72,7 @@ func _check_inspection_extension(catalog: LocationCatalog) -> void:
 		return
 	file.store_string(JSON.stringify(fixture))
 	file.close()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var folder := root + "/" + locale
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
 		var target := FileAccess.open(folder + "/temporary_room.json", FileAccess.WRITE)
@@ -87,7 +87,7 @@ func _check_inspection_extension(catalog: LocationCatalog) -> void:
 	var library := InspectionLibrary.load_all(catalog_path, root)
 	if not library.is_valid():
 		_failures.append("The data-only inspection did not load: %s" % library.describe_errors())
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var report: Dictionary = library.get_load_report().get("locales", {}).get(locale, {})
 		if not report.get("chapters", {}).has("temporary_room"):
 			_failures.append("The new location is missing from %s's inspection report." % locale)
@@ -150,7 +150,7 @@ func _check_doors_point_at_described_rooms(catalog: LocationCatalog) -> void:
 
 
 func _check_objective_keys(catalog: LocationCatalog) -> void:
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		var strings := _strings(locale)
 		if strings.is_empty():
 			_failures.append("data/locale/%s.json could not be read." % locale)
@@ -172,7 +172,7 @@ func _check_arrival_conversations(catalog: LocationCatalog) -> void:
 	if not library.is_valid():
 		_failures.append(library.describe_errors())
 		return
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		library.set_locale(locale)
 		for location_id: StringName in catalog.get_ids():
 			var conversation := catalog.get_entry(location_id).arrival_conversation

@@ -170,7 +170,7 @@ func _parse_document(data: Dictionary, path: String) -> void:
 		errors.append("%s: 'chapter' is required (for example \"prologue\")." % path)
 	if not L10n.is_supported(locale):
 		errors.append(
-			"%s: locale '%s' is not one of %s." % [path, locale, ", ".join(L10n.LOCALES)]
+			"%s: locale '%s' is not one of %s." % [path, locale, ", ".join(L10n.locales)]
 		)
 
 	var raw_conversations: Variant = data.get("conversations")

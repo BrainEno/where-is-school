@@ -29,7 +29,7 @@ asked, and keeping it separate makes it obvious how much of the game is the
 protagonist talking to himself. `prologue` has no inspections (classroom is the
 prologue's room) and `classroom` has no conversations.
 
-The runtime iterates `DialogueLibrary.CHAPTERS` and `InspectionLibrary.CHAPTERS`,
+The runtime iterates `DialogueLibrary.CHAPTERS` and `InspectionLibrary.chapter_list`,
 so a chapter file that is not in those constants is never loaded. The editor dock
 reads the directory instead and warns when the two disagree — see “Editing in the
 editor” below.
@@ -91,7 +91,7 @@ Saving is one button and it is careful:
 
 The dock never writes on its own: no watcher, no save-on-blur, no “fix on open”. Its
 chapter list comes from the chapter files, and it warns if that disagrees with
-`DialogueLibrary.CHAPTERS` / `InspectionLibrary.CHAPTERS`.
+`DialogueLibrary.CHAPTERS` / `InspectionLibrary.chapter_list`.
 
 ## Conversation file
 
@@ -417,15 +417,15 @@ hand.
 **Chapter:** create `data/dialogue/<locale>/<chapter>.json` for every locale and add
 the chapter name to `DialogueLibrary.CHAPTERS`; if the chapter has inspectable
 objects, add `data/inspections/<locale>/<chapter>.json` for every locale and the
-chapter to `InspectionLibrary.CHAPTERS` as well. Loading is by chapter file, so nothing
+chapter to `InspectionLibrary.chapter_list` as well. Loading is by chapter file, so nothing
 else changes — but the constants are the list the game loads, so a file without a
 constant is dead content. The editor dock reads the directory instead of the constants
 and warns when the two disagree, which is the cheapest way to notice a missing entry.
 
 **Language:** copy `data/locale/en.json`, the whole `data/dialogue/en/` and
 `data/inspections/en/` trees and `data/abilities/en.json`, translate the text, then add
-the locale code to `L10n.LOCALES` and to `project.godot` if it needs a different font. The switch key
-(`L`) cycles through `L10n.LOCALES`, and the language name is read from the locale
+the locale code to `L10n.locales` and to `project.godot` if it needs a different font. The switch key
+(`L`) cycles through `L10n.locales`, and the language name is read from the locale
 file's `name` field, so the hint is never hard-coded.
 
 ## Lines pending author review

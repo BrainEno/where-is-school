@@ -7,7 +7,7 @@ extends RefCounted
 ## without reading a paragraph.
 
 ## Compatibility view; the catalog is the only source of location IDs.
-static var CHAPTERS: Array[String]:
+static var chapter_list: Array[String]:
 	get:
 		return chapters()
 const INSPECTION_DIR := "res://data/inspections"
@@ -74,7 +74,7 @@ static func load_all(catalog_path: String = LocationCatalog.PATH, data_dir: Stri
 	library.errors.append_array(catalog.errors)
 	var chapter_ids := chapters(catalog)
 	var started := Time.get_ticks_usec()
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		library._entries[locale] = {}
 		for chapter in chapter_ids:
 			var path := "%s/%s/%s.json" % [data_dir, locale, chapter]
@@ -144,7 +144,7 @@ func describe_load_report() -> String:
 			]
 		)
 		var chapters: Dictionary = entry["chapters"]
-		for chapter: String in CHAPTERS:
+		for chapter: String in chapter_list:
 			if not chapters.has(chapter):
 				continue
 			var chapter_entry: Dictionary = chapters[chapter]
@@ -346,12 +346,12 @@ func _parse_effects(raw: Variant, context: String, locale: String) -> Array:
 
 
 func _check_parity() -> void:
-	var reference_locale: String = L10n.LOCALES[0]
+	var reference_locale: String = L10n.locales[0]
 	var reference := InspectionLibrary.new()
 	# get_ids()/get_inspection() read the library's own locale, so the two shells
 	# used for the comparison must be told which language they are holding.
 	reference._locale = reference_locale
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		if locale == reference_locale:
 			reference._entries[reference_locale] = _entries[reference_locale]
 			continue
