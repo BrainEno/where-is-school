@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "north_grove_tree": {
+    "title": "枯树",
+    "prompt": "看枯树",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·栏杆夹着的一棵枯树，一片叶子也没有"
+  }
+}

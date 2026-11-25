@@ -22,6 +22,13 @@
         "front_yard_arrived"
       ]
     },
+    "north_grove": {
+      "scene": "res://scenes/locations/north_grove/north_grove.tscn",
+      "spawn": "FromFrontYard",
+      "arrival_flags": [
+        "north_grove_visited"
+      ]
+    },
     "street": {
       "scene": "res://scenes/locations/street/street.tscn",
       "objective": "objective.outside",

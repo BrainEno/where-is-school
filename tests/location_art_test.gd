@@ -93,12 +93,34 @@ const LOCATIONS := {
 		# trunk and a fader box each), round 25's porch (three steps, two rails, the landing's
 		# surface and tread, the ramp: 8), the glass entrance's 11 (two shut leaves), five
 		# anchor spheres and the pick boxes of thirteen outline meshes (the leaves' frames: 8).
-		"shapes": 70,
-		"interactables": 5,
-		"spawns": ["FromCorridor", "FromStreet"],
+		# Round 26: the north wall's two runs and two rail gaps, the mouth tree and the
+		# strip's three trees (each with a trunk, 12), the new exit's sphere and its
+		# outline pick box.
+		"shapes": 84,
+		"interactables": 6,
+		"spawns": ["FromCorridor", "FromStreet", "FromGrove"],
 		"exits": {
 			"front_yard_back_inside": "corridor/FromTeachingEntrance",
 			"front_yard_to_street": "street/FromCorridor",
+			"front_yard_to_grove": "north_grove/FromFrontYard",
+		},
+	},
+	# Round 26: the north grove (北面枯树小道) between the two yards - the wall's east and
+	# north runs (with the mouth), the two railing runs and three posts, the block's north
+	# face, the ground, and fifteen dead trees with a trunk each. Two exits.
+	"north_grove": {
+		"scene": "res://scenes/locations/north_grove/north_grove.tscn",
+		"stage": true,
+		# 56 bodies (two ground boxes, three wall runs, the block's face and plinth, two
+		# railing runs and three posts, fifteen strip trees and seven far trees, each with
+		# a trunk, all on the fade layer), two exit spheres, and the pick boxes of the
+		# mouth inset and the last railing post. The tree look adds a sphere and a pick box.
+		"shapes": 62,
+		"interactables": 3,
+		"spawns": ["FromFrontYard", "FromPlayground"],
+		"exits": {
+			"north_grove_to_front_yard": "front_yard/FromGrove",
+			"north_grove_to_playground": "playground/FromGrove",
 		},
 	},
 	"street": {
@@ -150,15 +172,18 @@ const LOCATIONS := {
 		# fences (west and east), the invisible edge along the building site, the alley
 		# threshold and the skipping girl are a box each, and the fourth stacked tyre adds
 		# a pick box to the tyre look.
-		"shapes": 106,
-		"interactables": 18, # The new paper read is separate from the view through the doorway.
-		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard"],
+		# Round 26: the way to the north grove (a mesh-only trunk and rail stub outlined)
+		# adds a sphere and two pick boxes.
+		"shapes": 109,
+		"interactables": 19, # The new paper read is separate from the view through the doorway.
+		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard", "FromGrove"],
 		"exits": {
 			"pg_back_to_alley": "alley/FromPlayground",
 			"pg_to_corridor": "corridor/FromSchoolyard",
 			"pg_site_gate": "site_interior/FromPorch",
 			"pg_site_climb": "site_interior/FromPorch",
 			"pg_container_yard": "container_yard/FromPlayground",
+		"playground_to_grove": "north_grove/FromPlayground",
 		},
 	},
 	"laboratory": {

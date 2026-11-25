@@ -809,7 +809,7 @@ entered, and how many location scenes were alive at the swap — two is correct 
 swap is in flight, more than two is a leak. The timing wraps the transaction instead of
 living inside it, so a *failed* transition is measured too, and a rollback still leaves the
 old room current. Release builds print nothing. `tests/location_pressure_test.gd` enters all
-six locations, asserts the numbers are real, and asserts that three round trips leave the
+eight locations, asserts the numbers are real, and asserts that three round trips leave the
 node count and the orphan count where they started.
 
 **The story flag follows the verified scene.** `CURRENT_LOCATION` is written from the id
@@ -822,8 +822,8 @@ without `metadata/entry_facing` is position-only: arrival keeps the heading the 
 already had, because `PlayerController.teleport()` reads an identity basis as "keep".
 A marker with `metadata/entry_facing = true` sets the arrival heading from its own -Z,
 even when its rotation is identity (`LocationHost` applies it after the teleport). The
-four doorway markers of the teaching block and its yard use it (see
-[CORRIDOR_ART.md](CORRIDOR_ART.md)). Restoring a save sets the saved heading explicitly.
+eight doorway markers of the teaching block, its yard and the north grove use it (see
+[CORRIDOR_ART.md(CORRIDOR_ART.md)). Restoring a save sets the saved heading explicitly.
 Unmarked doorway markers in other scenes still keep the previous heading; converting them
 is not done yet. The test pins the declared headings. Which marker an exit names is
 checked by the test above: the marker must exist, must be the one the player lands on,

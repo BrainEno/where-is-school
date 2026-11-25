@@ -52,6 +52,7 @@ on:
       - "scenes/locations/corridor/**"
       - "scenes/locations/street/**"
       - "scenes/locations/front_yard/**"
+      - "scenes/locations/north_grove/**"
       - "data/inspections/*/front_yard.json"
       - "scenes/locations/residential/**"
       - "scenes/locations/alley/**"
@@ -112,6 +113,8 @@ jobs:
           - {location: port, side: forward-plus}
           - {location: front_yard, side: after}
           - {location: front_yard, side: forward-plus}
+          - {location: north_grove, side: after}
+          - {location: north_grove, side: forward-plus}
           - {location: stable_yard, side: before}
           - {location: stable_yard, side: after}
           - {location: teaching_stairs, side: after}
@@ -236,7 +239,14 @@ jobs:
               # and the same gate from the street (two views: the gate, and over the wall).
               detail=(front-yard review_width=380)
               width=1280
-              expect=12
+              expect=14
+              ;;
+            north_grove)
+              # Round 26: the north grove (北面枯树小道) between the yards: one follow-camera
+              # stance up the east leg and one high view down the whole L to the court's gap.
+              detail=(north-grove review_width=380)
+              width=1280
+              expect=2
               ;;
             stable_yard)
               # The stable yard behind 01, in the live corridor: one follow-camera stance and

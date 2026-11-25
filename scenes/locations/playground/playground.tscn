@@ -1,4 +1,4 @@
-[gd_scene load_steps=246 format=3]
+[gd_scene load_steps=248 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="12_interactable"]
@@ -634,6 +634,12 @@ size = Vector3(25.225, 1.2, 0.4)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art139"]
 size = Vector3(1.3, 1, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_grove_stub_tree"]
+size = Vector3(0.42, 2.0, 0.42)
+
+[sub_resource type="BoxMesh" id="BoxMesh_grove_stub_rail"]
+size = Vector3(0.5, 1.2, 0.1)
 
 [node name="Playground" type="Node3D"]
 script = ExtResource("1_location_root")
@@ -1917,6 +1923,16 @@ mesh = SubResource("BoxMesh_art139")
 material_override = ExtResource("art_fence_panel")
 cast_shadow = 0
 
+[node name="GroveStubTree" type="MeshInstance3D" parent="."]
+position = Vector3(19.55, 1.0, -19.7)
+mesh = SubResource("BoxMesh_grove_stub_tree")
+material_override = ExtResource("art_trunk")
+
+[node name="GroveStubRail" type="MeshInstance3D" parent="."]
+position = Vector3(19.9, 0.6, -19.7)
+mesh = SubResource("BoxMesh_grove_stub_rail")
+material_override = ExtResource("art_metal_ink")
+
 [node name="Interactables" type="Node3D" parent="."]
 
 [node name="HoopLook" parent="Interactables" instance=ExtResource("12_interactable")]
@@ -2067,6 +2083,16 @@ destination_scene = "res://scenes/locations/container_yard/container_yard.tscn"
 destination_spawn = &"FromPlayground"
 destination_id = &"container_yard"
 
+[node name="ToNorthGrove" parent="Interactables" instance=ExtResource("13_location_exit")]
+position = Vector3(18.6, 0.9, -17.9)
+interact_id = &"playground_to_grove"
+prompt_key = "prompt.court_to_grove"
+radius = 1.3
+outline_paths = PackedStringArray("../../GroveStubTree", "../../GroveStubRail")
+destination_scene = "res://scenes/locations/north_grove/north_grove.tscn"
+destination_spawn = &"FromPlayground"
+destination_id = &"north_grove"
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromAlley" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
@@ -2086,6 +2112,12 @@ position = Vector3(-21.6, 0, 13.2)
 
 [node name="FromContainerYard" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(13.0, 0, -17.6)
+
+[node name="FromGrove" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(18.6, 0, -17.9)
+rotation_degrees = Vector3(0, 180, 0)
+metadata/entry_facing = true
+metadata/entry_walk = 2.4
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("14_ambience")

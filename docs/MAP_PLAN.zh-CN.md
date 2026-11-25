@@ -20,6 +20,7 @@ README 里的路线（教室 → 走廊 → 街道 → 居民区 → 小巷 → 
 | `classroom` | `scenes/locations/classroom/classroom.tscn` | 起点（`PlayerStart`）。手绘风格教室；醒来与自习。 | 已实现 |
 | `corridor` | `scenes/locations/corridor/corridor.tscn` | 三层相连：01 有双开大玻璃门（点击出去，到前操场的台阶上，第 25 轮）、折叠目录和通往马厩小巷的小门；02 保留生物教室；03 的上层长廊接成环。尽头的可选房间见下表。原消防梯仍通往操场。见 [CORRIDOR_ART.md](CORRIDOR_ART.md)。 | 已实现 |
 | `front_yard` | `scenes/locations/front_yard/front_yard.tscn` | 第 16 轮新增。从 01 玻璃门出来是三级台阶（第 25 轮），下面是前操场：裸露的黄土地，踩出来的小路，边上是枯草，没有马路。七棵枯树；南北两头是矮栏杆，栏杆外还是土操场，所以教学楼两边都是操场。东边是围墙和校门：一扇停车场式的伸缩门，关着；旁边只容一人通过的小门，门里的门垛上装着刷卡机。刷卡机只能看，不刷卡也能过小门。三处检视，正文待作者撰写。 | 已实现 |
+| `north_grove` | `scenes/locations/north_grove/north_grove.tscn` | 第 26 轮。北面枯树小道：枯树夹在铁栏杆与校墙之间的镜像 L 形窄道，贴着校园东北角——从前操场校门旁往北，再沿北墙往西，到球场开口处（墙上留的那一个缺口）。两个操场各有一个点击出口进小道；见 [CORRIDOR_ART.md](CORRIDOR_ART.md) 第 26 轮。 | 已实现 |
 | `street` | `scenes/locations/street/street.tscn` | 第 16 轮起只能从校门旁的小门出来。西侧是围墙，南端是校门，墙脚一道象牙色墙裙；墙那边是前操场的土地、枯树和带铁栅窗的教学楼，远远立着，走不过去。路面中线断断续续、斑马线少一道，东侧是玫瑰色住宅楼和赭黄色商店，楼梯通往住宅楼的过道。学校一侧路缘下是一条明沟：沟壁有衬砌，水面映着一条发白的天空，靠马路一侧是干裂的裸土，从斑马线到校门一段盖着预制盖板，井盖比流向它的水还高。道路北端直接伸进铺平的天空，那里立着一块空白路牌，水沟的延长线上立着一块淡黄色的肋板。 | 已实现 |
 | `residential` | `scenes/locations/residential/residential.tscn` | 三栋颜色都有点“不对”的楼（黄、玫瑰、灰绿）围成的院子；滑梯、花坛、晾衣绳、长椅、椅子、绿色动物；粉笔跳房子，其中一格被画了两次；楼顶有水箱和一根歪的天线；北楼有一扇不在窗格网格上的长条亮窗。 | 已实现 |
 | `alley` | `scenes/locations/alley/alley.tscn` | 两堵冷蓝色、带雨痕的墙夹着 7 米宽的巷子；西墙越过压顶继续往上，并向巷内倾斜；有一个带检修门的凹口；装着椅子的垃圾箱；通往操场的门，门后是光；近处尺度不对的剪影屋顶。 | 已实现 |
@@ -43,6 +44,7 @@ flowchart LR
   residential["居民区院子"]
   alley["小巷"]
   playground["操场"]
+  north_grove["枯树小道"]
   laboratory["实验室 / 01 凹口"]
   restroom["厕所 / 01 西端"]
   staff_office["教师办公室 / 03 东端"]
@@ -55,6 +57,10 @@ flowchart LR
   front_yard -- "front_yard_to_street → FromCorridor" --> street
   street -- "street_back_to_school → FromStreet" --> front_yard
   corridor -- "to_schoolyard → FromCorridor" --> playground
+  front_yard -- "front_yard_to_grove → FromFrontYard" --> north_grove
+  north_grove -- "north_grove_to_front_yard → FromGrove" --> front_yard
+  north_grove -- "north_grove_to_playground → FromGrove" --> playground
+  playground -- "playground_to_grove → FromGrove" --> north_grove
   playground -- "pg_to_corridor → FromSchoolyard" --> corridor
   street -- "street_to_residential → FromStreet" --> residential
   residential -- "res_back_to_street → FromResidential" --> street
@@ -83,6 +89,7 @@ flowchart LR
 | 围墙、校门，墙那边的教学楼 | 街道西侧 | 人在校外，学校依然在场 | 已实现 |
 | 伸缩门、小门和刷卡机 | 前操场东侧 | 出去的路只容一个人 | 已实现 |
 | 黄土上的枯树 | 前操场 | 教学楼两边都是操场，什么也不长 | 已实现 |
+| 小道的铁栏杆与枯树 | 北面枯树小道 | 贴着墙、一棵一棵往里绕的窄道 | 已实现 |
 | 不在网格上的长条亮窗 | 居民区北楼 | 普通楼里唯一不对劲的地方 | 已实现 |
 | 水箱、歪天线 | 居民区楼顶 | 轮廓；从高处一看就是住宅 | 已实现 |
 | 倾斜的西墙、门后的光 | 小巷 | 收窄；巷子尽头的目标 | 已实现 |
@@ -156,7 +163,7 @@ flowchart TB
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | 从蓝色楼梯下到 01，朝东的双开大玻璃门；点击后人站在门外台阶上，自动走下台阶到黄土操场。02 的出校门三级台阶和门外的小院已拆除；01 走廊西端新开一扇普通小门，直通马厩小巷。见 [CORRIDOR_ART.md](CORRIDOR_ART.md) 第 25 轮。 | 已实现 |
-| 2 | 教学楼外的学校围墙，以及北面枯树林作为新的可行走地点，连接两个操场 | 已确定但未实现 |
+| 2 | 教学楼外的学校围墙，以及北面枯树林作为新的可行走地点，连接两个操场。第 26 轮：北墙两段与枯树小道已建，门廊台阶旁的栏杆缺口已补。 | 已实现 |
 | 3 | 运动器材移到南面、体育馆、与地图对齐的远处建筑 | 已确定但未实现 |
 
 ## 6. 校园周边扩展

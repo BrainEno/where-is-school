@@ -126,11 +126,18 @@ const EXITS := {
 		Vector3(13.0, 0.9, -18.2), "res://scenes/locations/container_yard/container_yard.tscn",
 		&"FromPlayground", false,
 	],
+	# Round 26: into the north grove, at the east end of the strip between the fence and
+	# the school's back wall.
+	"playground_to_grove": [
+		Vector3(18.6, 0.9, -17.9), "res://scenes/locations/north_grove/north_grove.tscn",
+		&"FromPlayground", false,
+	],
 }
 const SPAWNS := {
 	"FromAlley": Vector3(0.0, 0.0, 16.0), "FromCorridor": Vector3(-3.0, 0.0, -17.6),
 	"FromSchool": Vector3(12.0, 2.6, -15.5), "FromSite": Vector3(-21.6, 0.0, 13.2),
 	"FromContainerYard": Vector3(13.0, 0.0, -17.6),
+	"FromGrove": Vector3(18.6, 0.0, -17.9),
 }
 ## Godot 4.7.2 bake with the smaller shed, no return-board posts, and (round 21) the
 ## razor-wire edges, the alley threshold and the skipping girl's box.
