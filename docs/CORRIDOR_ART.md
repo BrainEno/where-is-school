@@ -429,6 +429,30 @@ leg adds the gym-door stance and view (expect=20); the grove's leg adds its door
 door view and over-the-wall view (expect=4); the gym's own leg (three stances, five
 views, expect=8) is new.
 
+## Round 29: the changing room and the running track
+
+The sketch's remaining yard labels: the 更衣室 by the equipment room, and the 操场跑道
+ring on the dirt (docs/MAP_PLAN.md §5, phase 3; the 消防门 and the 东门 were rounds 25-27,
+and the sketch carries no library).
+
+- **The changing room (更衣室).** In `build_outdoor_locations.build_front_yard`: the
+  equipment room's twin directly south of it (x 8.4..12.6, z -4.2..-0.8) - teal room on
+  an ivory plinth, a shut iron leaf on the south face under a concrete lintel, and the
+  stage pass frames the leaf (two jambs and a head, as the equipment room's).
+  `ChangingRoomLook` (`front_yard_changing_room`, "Look at the changing room") picks by
+  the leaf; the room's own text is the owner's to write
+  (`data/inspections/*/front_yard.json`, a TODO placeholder).
+- **The running track (操场跑道).** The stage pass paints the chalk ring on the dirt
+  east of the block: three concentric lanes as one 9 x 15 m flat decal
+  (`track_oval.png`, drawn on transparency by `paint_stage_textures.track_oval`), centred
+  at (7.0, 12.0) - a clear of the side door's path, the retractable gate and the fence's
+  tree at x 10.2. Paint on the ground: no collider, the ground's own body answers every
+  sight line that crosses it.
+
+`location_art_test` counts the front yard at 131 shapes and 9 interactables (the
+changing room's four bodies, the look's sphere and pick box). The `front_yard` capture
+leg adds the changing-room stance and the track view (expect=22).
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.

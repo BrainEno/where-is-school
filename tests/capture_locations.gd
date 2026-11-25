@@ -265,6 +265,8 @@ const FRONT_YARD_STANCES := [
 	["block_north", Vector3(-10.6, 0.0, -7.3)],
 	# Round 28: the school wall's door to the gym (体育馆的门), over the north rail.
 	["gym_door", Vector3(5.0, 0.0, -7.6)],
+	# Round 29: the changing room's door (更衣室), south of the equipment room.
+	["changing_room", Vector3(10.5, 0.0, 0.6)],
 ]
 const FRONT_YARD_VIEWS := [
 	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
@@ -280,6 +282,8 @@ const FRONT_YARD_VIEWS := [
 	["north_door", Vector3(-6.4, 3.8, -4.6), Vector3(-13.05, 1.0, -9.2)],
 	# Round 28: the wall's door to the gym (体育馆的门), over the north rail.
 	["gym_door", Vector3(5.0, 2.6, -7.2), Vector3(1.8, 1.2, -20.7)],
+	# Round 29: the running track's chalk oval (操场跑道) on the dirt, from the south-east.
+	["track", Vector3(14.0, 6.5, 24.0), Vector3(6.5, 0.0, 9.5)],
 ]
 ## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
 ## the east leg, and one high view down the whole L towards the court's opening.
