@@ -150,9 +150,12 @@ jobs:
       - name: Upload recording
         if: always()
         run: |
-          ls -la build/ >> "$RUNNER_TEMP/filelist.txt" 2>&1 || true
-          ls -la "$RUNNER_TEMP/record.log" "$RUNNER_TEMP/ffmpeg.log" >> "$RUNNER_TEMP/filelist.txt" 2>&1 || true
-          cp "$RUNNER_TEMP/filelist.txt" build/face_closeup_filelist.txt || true
+          # Everything the artifact must carry is staged as plain files under build/,
+          # so the upload sees only relative in-workspace paths (the laboratory
+          # walkthrough's proven shape) and the listing is part of the record.
+          cp "$RUNNER_TEMP/record.log" build/face_closeup_record.log || true
+          cp "$RUNNER_TEMP/ffmpeg.log" build/face_closeup_ffmpeg.log || true
+          ls -la build/ > build/face_closeup_filelist.txt 2>&1 || true
           echo "::notice title=face close-up files::$(tr '\n' ';' < build/face_closeup_filelist.txt | cut -c1-600)"
       - name: Upload recording
         if: always()
@@ -160,7 +163,10 @@ jobs:
         with:
           name: face-closeup-${{ github.run_attempt }}
           path: |
-            build/
-            ${{ runner.temp }}/record.log
-            ${{ runner.temp }}/ffmpeg.log
+            build/face_closeup_video.mp4
+            build/face_closeup_start.png
+            build/face_closeup_end.png
+            build/face_closeup_record.log
+            build/face_closeup_ffmpeg.log
+            build/face_closeup_filelist.txt
           if-no-files-found: warn
