@@ -67,6 +67,8 @@ const MIN_VALUE := 0
 const MAX_VALUE := 10
 const MIN_MAX_PASSIVE := 0
 const MAX_MAX_PASSIVE := 20
+## Reading helpers, split out to keep this file under the size cap (issue #349).
+const Reader := preload("res://scripts/rpg/inner_ability_reader.gd")
 
 
 class AbilityData extends RefCounted:
@@ -229,18 +231,18 @@ func describe_errors() -> String:
 
 func _parse_structure() -> void:
 	var path := structure_path()
-	var data := _read_json(path)
+	var data := Reader.read_json(path, errors)
 	if data.is_empty():
 		return
-	var version := _read_int(data, "format_version", 0, path)
+	var version := Reader.read_int(data, "format_version", 0, path, errors)
 	if version != FORMAT_VERSION:
 		errors.append(
 			"%s: format_version %d is not supported (expected %d)."
 			% [path, version, FORMAT_VERSION]
 		)
 		return
-	var default_cap := _read_int(
-		data, "max_passive_per_session", DEFAULT_MAX_PASSIVE_PER_SESSION, path
+	var default_cap := Reader.read_int(
+		data, "max_passive_per_session", DEFAULT_MAX_PASSIVE_PER_SESSION, path, errors
 	)
 	if default_cap < MIN_MAX_PASSIVE or default_cap > MAX_MAX_PASSIVE:
 		errors.append(
@@ -264,7 +266,7 @@ func _parse_structure() -> void:
 			errors.append("%s must be an object." % context)
 			continue
 		var entry: Dictionary = raw
-		ability.value = _read_int(entry, "value", 0, context)
+		ability.value = Reader.read_int(entry, "value", 0, context, errors)
 		if ability.value < MIN_VALUE or ability.value > MAX_VALUE:
 			errors.append(
 				"%s has value %d; keep it between %d and %d."
@@ -275,7 +277,7 @@ func _parse_structure() -> void:
 			errors.append("%s needs a non-empty 'speaker' string." % context)
 			continue
 		ability.speaker_id = StringName(String(raw_speaker).strip_edges())
-		ability.max_passive = _read_int(entry, "max_passive", default_cap, context)
+		ability.max_passive = Reader.read_int(entry, "max_passive", default_cap, context, errors)
 		if ability.max_passive < MIN_MAX_PASSIVE or ability.max_passive > MAX_MAX_PASSIVE:
 			errors.append(
 				"%s has max_passive %d; keep it between %d and %d."
@@ -421,10 +423,10 @@ func _parse_rule(raw: Variant, index: int) -> PassiveRule:
 func _parse_text(locale: String) -> void:
 	var path := text_path(locale)
 	_text[locale] = {}
-	var data := _read_json(path)
+	var data := Reader.read_json(path, errors)
 	if data.is_empty():
 		return
-	var version := _read_int(data, "format_version", 0, path)
+	var version := Reader.read_int(data, "format_version", 0, path, errors)
 	if version != FORMAT_VERSION:
 		errors.append(
 			"%s: format_version %d is not supported (expected %d)."
@@ -466,64 +468,11 @@ func _parse_text(locale: String) -> void:
 			if value_text.is_empty():
 				errors.append("%s: ability '%s' has no '%s'." % [path, ability_id, field])
 			values[field] = value_text
-		var exceptions := _parse_exceptions(text, path, ability_id, locale, is_reference)
+		var exceptions := Reader.parse_exceptions(
+			text, path, ability_id, is_reference, errors, EXCEPTION_KEY, TEXT_FIELDS
+		)
 		values[EXCEPTION_KEY] = exceptions
 		_text[locale][ability_id] = values
-
-
-## Which fields of this voice may keep the source wording. Deliberately field by field:
-## an exception is a decision about one string, and a per-voice or per-file switch would
-## quietly excuse the next copied line too.
-func _parse_exceptions(
-	text: Dictionary, path: String, ability_id: StringName, locale: String, is_reference: bool
-) -> Array[String]:
-	var declared: Array[String] = []
-	if not text.has(EXCEPTION_KEY):
-		return declared
-	var raw: Variant = text[EXCEPTION_KEY]
-	if not (raw is Array):
-		errors.append(
-			"%s: ability '%s': '%s' must be an array of field names (got %s)."
-			% [path, ability_id, EXCEPTION_KEY, JSON.stringify(raw)]
-		)
-		return declared
-	if is_reference:
-		errors.append(
-			"%s: ability '%s': '%s' only makes sense in a translated language, not in the "
-			% [path, ability_id, EXCEPTION_KEY]
-			+ "reference one — its text is the source."
-		)
-		return declared
-	var entries: Array = raw
-	for position in entries.size():
-		var entry: Variant = entries[position]
-		if not (entry is String) or String(entry).strip_edges().is_empty():
-			errors.append(
-				"%s: ability '%s': %s[%d] must be a field name (got %s)."
-				% [path, ability_id, EXCEPTION_KEY, position, JSON.stringify(entry)]
-			)
-			continue
-		var field := String(entry).strip_edges()
-		if not TEXT_FIELDS.has(field):
-			errors.append(
-				"%s: ability '%s': %s names '%s', which is not translated text; use one of %s."
-				% [
-					path,
-					ability_id,
-					EXCEPTION_KEY,
-					field,
-					", ".join(TEXT_FIELDS),
-				]
-			)
-			continue
-		if declared.has(field):
-			errors.append(
-				"%s: ability '%s': '%s' is listed twice in %s."
-				% [path, ability_id, field, EXCEPTION_KEY]
-			)
-			continue
-		declared.append(field)
-	return declared
 
 
 ## Every language must name the same voices, and must actually name them: a missing
@@ -600,32 +549,3 @@ func _check_text_parity() -> void:
 				"%s: ability '%s' from %s has no text."
 				% [text_path(reference), ability_id, structure_path()]
 			)
-
-
-## Reads an integer field without ever guessing. JSON has one number type, so a
-## fractional or non-numeric value would otherwise become 0 through `int()` and a
-## mistyped difficulty would quietly turn into an easy check.
-func _read_int(source: Dictionary, key: String, fallback: int, context: String) -> int:
-	if not source.has(key):
-		return fallback
-	var raw: Variant = source[key]
-	if not (raw is int or raw is float):
-		errors.append(
-			"%s: '%s' must be a number (got %s)." % [context, key, JSON.stringify(raw)]
-		)
-		return fallback
-	if raw is float and not is_equal_approx(float(raw), roundf(float(raw))):
-		errors.append(
-			"%s: '%s' must be a whole number (got %s)." % [context, key, str(raw)]
-		)
-	return int(raw)
-
-
-func _read_json(path: String) -> Dictionary:
-	return JsonTable.read_dict(
-		path,
-		errors,
-		"%s: root value must be an object.",
-		"File not found: %s",
-		"Could not open %s (error %d)."
-	)
