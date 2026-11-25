@@ -405,6 +405,27 @@ def quad(b: Builder, w: float, h: float) -> str:
     return b.mesh("QuadMesh", size=f"Vector2({w:g}, {h:g})")
 
 
+def route_mark(b: Builder, parent: str, name: str, center, mat: str, *, mirrored=False, scale=1.0) -> None:
+    """One long stroke, two short strokes at the same end. Local +Z is the printed face."""
+    x, y, z = center
+    sign = -1 if mirrored else 1
+    for i, (dx, dy, width, height) in enumerate(((0, 0.075, 0.46, 0.055),
+                                                 (0.075, -0.022, 0.045, 0.15),
+                                                 (0.181, -0.001, 0.052, 0.11))):
+        b.flat(f"{name}Stroke{i}", parent, b.mesh("BoxMesh", size=vec3((width * scale, height * scale, 0.006))),
+               mat, (x + sign * dx * scale, y + dy * scale, z + (0.002 if i else 0)))
+
+
+def route_arrow(b: Builder, parent: str, name: str, center, mat: str, *, direction=1, scale=1.0) -> None:
+    x, y, z = center
+    b.flat(name + "Shaft", parent, b.mesh("BoxMesh", size=vec3((0.41 * scale, 0.038 * scale, 0.006))),
+           mat, (x, y, z))
+    for index, side in enumerate((-1, 1)):
+        b.flat(f"{name}Head{index}", parent, b.mesh("BoxMesh", size=vec3((0.15 * scale, 0.035 * scale, 0.006))),
+               mat, (x + direction * 0.173 * scale, y + side * 0.044 * scale, z + 0.004 + 0.001 * index),
+               (0, 0, -side * direction * 40))
+
+
 def school_exit_fittings(b: Builder, parent: str, width: float, height: float, face_z: float,
                          *, inside: bool) -> None:
     """Dress a closed leaf centred at the local origin, seen from +Z. Keep the leaf/step

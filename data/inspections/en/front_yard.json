@@ -21,5 +21,12 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "TODO · a dead tree, not a single leaf on it"
+  },
+  "front_yard_equipment_room": {
+    "title": "The equipment room",
+    "prompt": "Look at the equipment room",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the yard's sports gear stored at the wall's foot, the room's iron door shut"
   }
 }

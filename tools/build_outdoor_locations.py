@@ -151,10 +151,19 @@ class Scene:
         self.spawns = []
         self.ambience = None
         self.ramps = []      # (name, pos, size, rotation, collision_layer) - see _ramp/_tread
+        self.shapes = []     # (name, body, pos, size) - an extra shape-only collider on a box
 
 
     def box(self, name, pos, size, mat, group=None, body=True, collision_layer=1):
         self.boxes.append((name, pos, size, mat, group, body, collision_layer))
+
+    def shape(self, name, body, pos, size):
+        """An extra collider on a body `box()` already declared, with no mesh of its own.
+
+        For art hung above a body's own box (a coping on a pier): the collider is as wide
+        as the hung art, so a sight line that crosses the art also crosses a collider of
+        the same camera_occluder body and the fader fades it. `pos` is body-local."""
+        self.shapes.append((name, body, pos, size))
 
     def ramp(self, name, pos, size, rotation, collision_layer=1):
         self.ramps.append((name, pos, size, rotation, collision_layer))
@@ -225,6 +234,11 @@ class Scene:
             sub_ids.append((shape_id, mesh_id))
         for index, (name, pos, size, rotation, collision_layer) in enumerate(self.ramps):
             subs.append((f'RampShape_{index}', 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
+        shape_subs = []
+        for index, (_, _, _, size) in enumerate(self.shapes):
+            sid = f'ExtraShape_{index}'
+            shape_subs.append(sid)
+            subs.append((sid, 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
 
         lines.append('[gd_scene load_steps=%d format=3]\n' % (len(ext) + len(subs) + 2))
         for kind, path, rid in ext:
@@ -269,6 +283,10 @@ class Scene:
         lines.append('directional_shadow_max_distance = 90.0')
         lines.append('')
 
+        shapes_of_body = {}
+        for index, (name, body, pos, size) in enumerate(self.shapes):
+            shapes_of_body.setdefault(body, []).append((name, pos, shape_subs[index]))
+
         for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
             shape_id, mesh_id = sub_ids[index]
             group_text = f' groups=[{", ".join(chr(34) + g + chr(34) for g in group)}]' if group else ''
@@ -281,6 +299,11 @@ class Scene:
                 lines.append(f'[node name="CollisionShape3D" type="CollisionShape3D" parent="{name}"]')
                 lines.append(f'shape = SubResource("{shape_id}")')
                 lines.append('')
+                for shape_name, shape_pos, shape_sid in shapes_of_body.get(name, []):
+                    lines.append(f'[node name="{shape_name}" type="CollisionShape3D" parent="{name}"]')
+                    lines.append('position = %s' % v3(shape_pos))
+                    lines.append(f'shape = SubResource("{shape_sid}")')
+                    lines.append('')
                 lines.append(f'[node name="MeshInstance3D" type="MeshInstance3D" parent="{name}"]')
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
@@ -586,6 +609,13 @@ def _school_wall(s, x, span, face):
     # coping crosses the collider too.
     s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.5, 0.5, d1 - d0 + 0.04), "wall", occ, True,
           FADE_ONLY_LAYER)
+    # The stage pass caps each pier with a coping a lip wider than the pier's own box
+    # (build_stage_art.py). A sight line through such a cap meets no collider of the pier
+    # body, so the fader left the cap opaque while it covered the player. Each body gets a
+    # second, mesh-less collider as wide as its coping, so the cap fades with the body the
+    # same way a sight line through the lintel crosses the lintel's collider above.
+    for pier, depth in (("GatePierNorth", p), ("GatePierSouth", d0 - g1), ("SideDoorPier", p)):
+        s.shape("CopingShape", pier, (0, h / 2 + 0.21, 0), (p + 0.12, 0.12, depth + 0.12))
 
 
 def _teaching_front(s):
@@ -705,6 +735,26 @@ def build_front_yard():
     s.box("GroveHintTree", (12.6, 3.55, 4.3), (5.4, 7.3, 5.4), "soil", occ, True, GROVE_FADE_LAYER)
     s.box("GroveHintTreeTrunk", (12.6, 1.0, 4.3), (0.42, 2.0, 0.42), "soil")
 
+    # Round 27, phase 3 (docs/MAP_PLAN.md §5): the equipment room (器材室) in the yard's
+    # north-east corner beside the grove's mouth, with the yard's stored gear beside it -
+    # two backboards stacked flat, two poles, and the ball cart. The gym (体育馆) rises
+    # beyond the school wall's north-east corner, where the block's future north door will
+    # face. Both are shells: the gym's interior is a later room, and the room's text is the
+    # owner's to write (data/inspections/*/front_yard.json). The stage pass dresses the
+    # gym's windows and shut doors and lines up the distant rows south
+    # (build_stage_art.py, FRONT_YARD).
+    s.box("EquipmentRoom", (10.5, 1.9, -5.9), (4.2, 3.8, 3.4), "wall", occ)
+    s.box("EquipmentRoomPlinth", (10.5, 0.6, -5.9), (4.4, 1.2, 3.6), "concrete", occ)
+    s.box("EquipmentRoomDoor", (10.5, 2.35, -4.16), (1.3, 2.3, 0.08), "metal")
+    s.box("EquipmentRoomLintel", (10.5, 3.65, -4.14), (1.6, 0.3, 0.14), "concrete")
+    s.box("HoopBoard0", (8.15, 0.08, -5.3), (1.8, 0.16, 1.1), "concrete")
+    s.box("HoopBoard1", (8.15, 0.24, -5.3), (1.8, 0.16, 1.1), "concrete")
+    s.box("HoopPole0", (9.6, 0.06, -5.55), (3.2, 0.12, 0.12), "metal")
+    s.box("HoopPole1", (9.6, 0.18, -5.55), (3.2, 0.12, 0.12), "metal")
+    s.box("BallCart", (11.5, 0.28, -3.7), (0.9, 0.55, 0.6), "metal")
+    s.box("Gym", (6.5, 4.3, -28.0), (14.0, 8.6, 9.0), "wall", occ)
+    s.box("GymPlinth", (6.5, 0.6, -28.0), (14.4, 1.2, 9.4), "concrete", occ)
+
     s.interactables = [
         # placeholders until the owner writes them (data/inspections/*/front_yard.json)
         {"name": "CardReaderLook", "pos": (14.62, 1.3, STREET_DOOR_Z[1] + GATE_PIER / 2), "id": "front_yard_card_reader",
@@ -716,6 +766,10 @@ def build_front_yard():
         {"name": "DeadTreeLook", "pos": (tx + 0.45, 1.2, FRONT_YARD_TREES[0][1] + 0.45), "id": "front_yard_dead_tree",
          "inspection": "front_yard_dead_tree", "radius": 1.3,
          "support": ("../../DeadTree0Trunk",), "outline": ("DeadTree0/StageTree/Trunk",)},
+        # Round 27: the equipment room's shut door (器材室), with the stored gear beside it.
+        {"name": "EquipmentRoomLook", "pos": (10.5, 1.1, -3.3), "id": "front_yard_equipment_room",
+         "inspection": "front_yard_equipment_room", "radius": 1.3,
+         "outline": ("EquipmentRoomDoor/MeshInstance3D",)},
     ]
     s.exits = [
         {"name": "BackInside", "pos": (-9.6, FRONT_PORCH_TOP + 0.75, 15.8), "id": "front_yard_back_inside",

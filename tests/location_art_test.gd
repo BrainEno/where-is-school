@@ -95,9 +95,12 @@ const LOCATIONS := {
 		# anchor spheres and the pick boxes of thirteen outline meshes (the leaves' frames: 8).
 		# Round 26: the north wall's two runs and two rail gaps, the mouth tree and the
 		# strip's three trees (each with a trunk, 12), the new exit's sphere and its
-		# outline pick box.
-		"shapes": 84,
-		"interactables": 6,
+		# outline pick box. Round 27: the equipment room (room, plinth, door, lintel: 4) and
+		# its stored gear (two boards, two poles, the cart: 5), the gym's shell and plinth,
+		# and the new look's sphere and pick box (2), plus a second, mesh-less collider on
+		# each of the wall's three capped piers, as wide as its stage-pass coping (3).
+		"shapes": 100,
+		"interactables": 7,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove"],
 		"exits": {
 			"front_yard_back_inside": "corridor/FromTeachingEntrance",
@@ -129,7 +132,9 @@ const LOCATIONS := {
 		# The school front became the school wall: seven pieces of wall and gate and its foot
 		# replace the block, its plinth, the entrance's return and end wall, the entrance's
 		# pavement and the glass entrance (9); the side door outlines two meshes, not three.
-		"shapes": 88,
+		# The wall's three capped piers carry a second, mesh-less collider each, as wide as
+		# its stage-pass coping, so the copings fade with the wall (3).
+		"shapes": 91,
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

@@ -341,6 +341,36 @@ door instead of the forecourt; `wall_graffiti_test` stands in the lane; `opening
 counts 35 corridor interactables and 70 front-yard shapes. The `teaching_stairs` and
 `front_yard` capture legs add the doors, the lane door and the porch.
 
+## Round 27: the equipment room, the gym's shell, and the rows lined up south
+
+Phase 3 begins ([MAP_PLAN.md](MAP_PLAN.md)): the sketch's 器材室 becomes the front yard's
+equipment room in the yard's north-east corner beside the grove's mouth, the 体育馆 rises
+beyond the school wall's north-east corner - where the block's future north door will
+face - and the distant rows line up south past the rail.
+
+- **The equipment room (器材室).** In `build_outdoor_locations.build_front_yard`: a teal
+  room body with an ivory plinth on the dirt (x 8.4..12.6, z -7.6..-4.2), an iron door on
+  its east face under a concrete lintel, and the yard's stored gear beside it: two
+  backboards stacked flat, two poles, and the ball cart. `EquipmentRoomLook`
+  (`front_yard_equipment_room`, "Look at the equipment room") picks by the door; the
+  room's own text is the owner's to write (`data/inspections/*/front_yard.json`, a TODO
+  placeholder).
+- **The gym (体育馆).** A shell beyond the wall: a 14 × 9 m body 8.6 m tall with its own
+  plinth, its south face carrying a window band and two shut steel doors (stage pass, as
+  children of the body so they fade with it). Nothing clickable, nothing walkable: the
+  interior is a later room. The block's north door that will face it stays future work.
+- **The rows south.** The stage pass adds `RowFlatsSouth` and `RowTowerSouth` beyond the
+  south rail, facing the yard, so the campus reads as lined up on both sides now.
+
+`location_art_test` counts the front yard at 100 shapes and 7 interactables; the wall's
+three capped piers carry a second, mesh-less collider each, as wide as its stage-pass
+coping, so a sight line through a coping fades the pier the way a sight line through the
+side door's lintel crosses that lintel. The street scene shares the wall and catches up:
+its stage pass had been crashing since the playground rebuild dropped the route stamps it
+prints (`route_mark` and `route_arrow` are back in `build_playground_art.py`), so three
+grove trees it could not yet draw return over the wall. The `front_yard` capture leg adds
+the equipment-room stance and the gym view (expect=16).
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.

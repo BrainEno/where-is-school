@@ -233,13 +233,15 @@ jobs:
               expect=15
               ;;
             front_yard)
-              # The front yard (前操场): four follow-camera stances (the side door, the
-              # trodden path, the porch, the dead trees), six fixed views (overhead, the gate
-              # from inside, the card reader, the trees, the glass entrance, the porch steps),
-              # and the same gate from the street (two views: the gate, and over the wall).
+              # The front yard (前操场): six follow-camera stances (the side door, the
+              # trodden path, the porch, the dead trees, the grove's mouth, and since
+              # round 27 the equipment room), eight fixed views (overhead, the gate from
+              # inside, the card reader, the trees, the glass entrance, the porch steps,
+              # the north wall, and since round 27 the gym across the wall), plus the
+              # same gate from the street (two views: the gate, and over the wall).
               detail=(front-yard review_width=380)
               width=1280
-              expect=14
+              expect=16
               ;;
             north_grove)
               # Round 26: the north grove (北面枯树小道) between the yards: one follow-camera
