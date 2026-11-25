@@ -41,7 +41,7 @@ func _filter_and_privacy() -> void:
 	var log := _new_log(path)
 	checks.expect(not DirAccess.dir_exists_absolute(path), "A new logger should not require a directory at startup.")
 	log.record("assets.text_load_timing", {"elapsed_ms": 123}) # DEBUG filtered by default
-	log.set_filter(Log.Level.WARNING, ["world"])
+	log.set_filter(Log.LEVEL.WARNING, ["world"])
 	log.record("dialogue.effect_refused") # category filtered
 	log.record("world.entered", {"to_location": "classroom"}) # INFO filtered
 	log.record(SECRET, {"message": PRIVATE_PATH}) # unregistered event filtered
@@ -51,7 +51,7 @@ func _filter_and_privacy() -> void:
 			"text": PRIVATE_PATH, "save": {"secret": SECRET},
 		})
 	log.record("world.transition_refused", {"from_location": "corridor", "reason": "no_spawn"})
-	log.set_filter(Log.Level.DEBUG, ["assets"])
+	log.set_filter(Log.LEVEL.DEBUG, ["assets"])
 	log.record("assets.text_load_timing", {"elapsed_ms": 19, "dialogue_locales": PRIVATE_PATH})
 	checks.expect(log.flush() == OK, "First flush could not create the missing directory/file.")
 	var filename := path.path_join(FIRST_FILE)
@@ -84,7 +84,7 @@ func _filter_and_privacy() -> void:
 		file.close()
 	FileAccess.open(path.path_join("godot.log"), FileAccess.WRITE).store_string(PRIVATE_PATH)
 	FileAccess.open(path.path_join("save.json"), FileAccess.WRITE).store_string(SECRET)
-	log.set_filter(Log.Level.INFO)
+	log.set_filter(Log.LEVEL.INFO)
 	log.record("save.recovered")
 	var result: Dictionary = log.export_report()
 	checks.expect(result["ok"] and result["partial"], "Export did not report skipped/corrupt history.")
@@ -107,7 +107,7 @@ func _filter_and_privacy() -> void:
 func _rotation() -> void:
 	var path := _base.path_join("rotation")
 	var log := _new_log(path)
-	log.set_filter(Log.Level.INFO, ["save"])
+	log.set_filter(Log.LEVEL.INFO, ["save"])
 	for index: int in 2000:
 		log.record("save.written", {"version": index})
 		if index % Log.BUFFER_LIMIT == Log.BUFFER_LIMIT - 2:

@@ -47,7 +47,7 @@ var _areas: Array[String] = []
 ## may be null (nothing to count from it).
 static func build(dialogue: DialogueLibrary, inspections: InspectionLibrary) -> ReadingProgress:
 	var progress := ReadingProgress.new()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		if dialogue != null:
 			progress._add_dialogue(dialogue, locale)
 		if inspections != null:
@@ -214,7 +214,7 @@ static func _is_line_read(read_log: ReadLog, line: Dictionary, locale: String) -
 	var texts: Dictionary = line["texts"]
 	if texts.has(locale):
 		return read_log.is_read(identity, locale, String(texts[locale]))
-	for other: String in L10n.LOCALES:
+	for other: String in L10n.locales:
 		if texts.has(other):
 			return read_log.is_read(identity, other, String(texts[other]))
 	return false

@@ -55,7 +55,7 @@ func _run() -> void:
 		return
 	L10n.load_tables()
 
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		_inspections.set_locale(locale)
 		_library.set_locale(locale)
 		L10n.current = locale
@@ -210,7 +210,7 @@ func _check_student_talk() -> void:
 		var target := ConversationRouter.select(talk.conversation_route, {})
 		if target != &"student":
 			_failures.append("classroom: StudentTalk's route '%s' selects '%s', not the 'student' conversation." % [talk.conversation_route, target])
-		for locale in L10n.LOCALES:
+		for locale in L10n.locales:
 			_library.set_locale(locale)
 			if not _library.has_conversation(&"student"):
 				_failures.append("%s: the 'student' conversation is missing." % locale)

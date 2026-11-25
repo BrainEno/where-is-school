@@ -111,7 +111,7 @@ func _check_catalog() -> void:
 		_failures.append("A: %s" % problem)
 	_check_comparison_catalog(dialogue, inspections)
 
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var expected := _scan_content(locale)
 		_expect(expected.size() >= 40,
 			"A: only %d recorded entries were found in the %s content." % [expected.size(), locale])
@@ -185,7 +185,7 @@ func _scan_content(locale: String) -> Dictionary:
 	var found: Dictionary = {}
 	for chapter: String in DialogueLibrary.CHAPTERS:
 		_walk(_read_json(DialogueLibrary.chapter_path(locale, chapter)), found, false)
-	for chapter: String in InspectionLibrary.CHAPTERS:
+	for chapter: String in InspectionLibrary.chapter_list:
 		var data: Variant = _read_json(InspectionLibrary.chapter_path(locale, chapter))
 		if not (data is Dictionary):
 			continue
@@ -283,7 +283,7 @@ func _check_page() -> void:
 	_expect(JournalPage.step_filter(JournalPage.COMPARE, 1) == JournalPage.ALL,
 		"B: the tabs do not wrap forwards to All.")
 	for filter: int in JournalPage.filter_order():
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			_expect(L10n.has_key(JournalPage.caveat_key(filter), locale),
 				"B: %s has no caveat for %s." % [locale, JournalPage.caveat_key(filter)])
 			_expect(L10n.has_key(JournalPage.filter_label_key(filter), locale),
@@ -645,7 +645,7 @@ func _check_comparison_page() -> void:
 		entries.append(_stored_entry(pair["left"]))
 		expected.append(pair["left"])
 		expected.append(pair["right"])
-		for locale: String in L10n.LOCALES:
+		for locale: String in L10n.locales:
 			page = JournalPage.compose(entries, _catalog, locale, JournalPage.COMPARE)
 			_expect(JournalPage.row_ids(page) == expected,
 				"F: %s: completed pairs do not keep the authored order." % locale)
@@ -689,7 +689,7 @@ func _check_comparison_panel(menu: PauseMenu, journal: JournalPanel) -> void:
 	var expected: Array[StringName] = [&"saw_staff_office_rota", &"pg_rota_read"]
 	_expect(await Harness.wait_until(func() -> bool: return journal.get_row_ids() == expected, 2.0),
 		"F: recording the other half did not reveal exactly two rows.")
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_set_locale(locale)
 		await _frames(2)
 		_expect(journal.get_row_ids() == expected and compare.has_focus(),

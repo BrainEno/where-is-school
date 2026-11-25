@@ -671,7 +671,7 @@ func _check_texts() -> void:
 		_failures.append("inspections: " + library.describe_errors())
 		return
 	var per_locale := {}
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		library.set_locale(locale)
 		var ids := {}
 		for id: StringName in library.get_ids(locale):
@@ -686,7 +686,7 @@ func _check_texts() -> void:
 					_failures.append("%s/%s: the text is too short to describe anything." % [locale, wanted])
 				if entry.prompt.is_empty() or entry.prompt.length() > 32:
 					_failures.append("%s/%s: the prompt is '%s'." % [locale, wanted, entry.prompt])
-	var locales: Array = L10n.LOCALES
+	var locales: Array = L10n.locales
 	for index in locales.size():
 		for other in range(index + 1, locales.size()):
 			var a: Dictionary = per_locale[locales[index]]
@@ -723,7 +723,7 @@ func _check_texts() -> void:
 			)
 	if anchors != INTERACTABLES.size():
 		_failures.append("The room has %d anchors, not %d." % [anchors, INTERACTABLES.size()])
-	_notes.append("inspections %d x %d locales" % [INTERACTABLES.size(), L10n.LOCALES.size()])
+	_notes.append("inspections %d x %d locales" % [INTERACTABLES.size(), L10n.locales.size()])
 
 
 # --- 7. the running machine ---------------------------------------------------------------

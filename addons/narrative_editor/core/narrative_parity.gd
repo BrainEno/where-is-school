@@ -12,7 +12,7 @@ extends RefCounted
 ## the tool is allowed to differ between languages is skipped by the caller's `ignore`
 ## callable, which receives the address of each value as a `PackedStringArray`.
 ##
-## The reference is the first language in `L10n.LOCALES`, matching `DialogueParity`.
+## The reference is the first language in `L10n.locales`, matching `DialogueParity`.
 
 const MAX_REPORTED := 12
 

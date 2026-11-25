@@ -42,7 +42,7 @@ const SKIP_SCOPES: Array[StringName] = [&"read", &"all"]
 const BASE_PAUSE := 0.9
 ## Characters a reader gets through per second at the normal speed. Chinese is counted in
 ## characters and read at roughly a third of the rate of English letters.
-static var READING_CPS: Dictionary:
+static var reading_cps: Dictionary:
 	get:
 		return Locales.reading_speeds()
 const DEFAULT_READING_CPS := Locales.DEFAULT_READING_CPS

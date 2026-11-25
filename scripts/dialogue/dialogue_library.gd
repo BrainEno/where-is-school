@@ -57,7 +57,7 @@ static func load_all(abilities: InnerAbilities = null) -> DialogueLibrary:
 	var library := DialogueLibrary.new()
 	library._abilities = abilities
 	var started := Time.get_ticks_usec()
-	for locale in L10n.LOCALES:
+	for locale in L10n.locales:
 		library._graphs[locale] = {}
 		library._index[locale] = {}
 		for chapter in CHAPTERS:
@@ -240,10 +240,10 @@ func get_referenced_speaker_ids(locale: String = "") -> Array[StringName]:
 
 
 func _check_parity() -> void:
-	var reference_locale: String = L10n.LOCALES[0]
+	var reference_locale: String = L10n.locales[0]
 	for chapter in CHAPTERS:
 		var reference: DialogueGraph = _graphs[reference_locale][chapter]
-		for locale in L10n.LOCALES:
+		for locale in L10n.locales:
 			if locale == reference_locale:
 				continue
 			var other: DialogueGraph = _graphs[locale][chapter]

@@ -481,7 +481,7 @@ func _check_directory(corridor: LocationRoot) -> void:
 		"The information panel is not inspectable."):
 		return
 	var library := InspectionLibrary.load_all()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		library.set_locale(locale)
 		var record := library.get_inspection(DIRECTORY)
 		_check.expect(record != null and not record.prompt.is_empty() and not record.text.is_empty(),

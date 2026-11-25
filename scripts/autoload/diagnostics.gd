@@ -4,7 +4,7 @@ extends Node
 
 const Schema := preload("res://scripts/diagnostics/event_schema.gd")
 const Store := preload("res://scripts/diagnostics/log_store.gd")
-const Level := Schema.Level
+const LEVEL := Schema.Level
 const LOG_DIR := "user://logs"
 const EXPORT_NAME := Store.EXPORT_NAME
 const BUFFER_LIMIT := 64
@@ -14,7 +14,7 @@ const DEDUPE_MSEC := 1500
 
 var _directory: String
 var _schema := Schema.new()
-var _minimum: int = Level.INFO
+var _minimum: int = LEVEL.INFO
 var _categories: Array[String] = []
 var _pending: Array[Dictionary] = []
 var _in_flight: Array[Dictionary] = []
@@ -52,7 +52,7 @@ func _ready() -> void:
 ## Changes what is collected from now on, not what is already in history.
 ## An empty category list means all categories; INFO and above are on by default.
 func set_filter(minimum: int, categories: Array[String] = []) -> void:
-	_minimum = clampi(minimum, Level.DEBUG, Level.ERROR)
+	_minimum = clampi(minimum, LEVEL.DEBUG, LEVEL.ERROR)
 	_categories = categories.duplicate()
 
 

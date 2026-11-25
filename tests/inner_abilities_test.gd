@@ -245,7 +245,7 @@ func _check_rules() -> void:
 	var inspections := InspectionLibrary.load_all()
 	var locations := LocationCatalog.load_all()
 	var previous_locale := _library.get_locale()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		if not _library.set_locale(locale) or not inspections.set_locale(locale):
 			_failures.append("Could not check passive rules in %s." % locale)
 			continue
@@ -344,7 +344,7 @@ func _check_presentation_names() -> void:
 func _check_shipped_allocations() -> void:
 	if VoiceMigration.CHECK_ABILITIES.size() != CHECK_OWNERS.size():
 		_failures.append("The compatibility map does not cover exactly the 19 shipped attempts.")
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		_abilities.set_locale(locale)
 		var found: Dictionary = {}
 		for graph: DialogueGraph in _library.get_graphs_for(locale):

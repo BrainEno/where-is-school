@@ -221,7 +221,7 @@ func _write_registry(dir: String, structure: Dictionary, texts: Dictionary) -> b
 		return false
 	if not _write_json("%s/abilities.json" % dir, structure):
 		return false
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var payload: Variant = texts.get(locale, {})
 		if not (payload is Dictionary):
 			_failures.append("Fixture text for '%s' is not an object." % locale)
@@ -362,7 +362,7 @@ func _check_identity_rejections(registry: InnerAbilities) -> void:
 	)
 
 	var ghost_text := _texts()
-	for locale: String in L10n.LOCALES:
+	for locale: String in L10n.locales:
 		var table: Dictionary = (ghost_text[locale] as Dictionary)["abilities"]
 		table["probe_ghost"] = {"name": "Ghost", "description": "No such voice."}
 	var ghost_errors := _load_registry_errors("ghost_text", _structure(), ghost_text)
