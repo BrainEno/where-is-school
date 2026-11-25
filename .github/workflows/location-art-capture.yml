@@ -53,7 +53,9 @@ on:
       - "scenes/locations/street/**"
       - "scenes/locations/front_yard/**"
       - "scenes/locations/north_grove/**"
+      - "scenes/locations/gym/**"
       - "data/inspections/*/front_yard.json"
+      - "data/inspections/*/gym.json"
       - "scenes/locations/residential/**"
       - "scenes/locations/alley/**"
       - "scenes/locations/playground/**"
@@ -115,6 +117,8 @@ jobs:
           - {location: front_yard, side: forward-plus}
           - {location: north_grove, side: after}
           - {location: north_grove, side: forward-plus}
+          - {location: gym, side: after}
+          - {location: gym, side: forward-plus}
           - {location: stable_yard, side: before}
           - {location: stable_yard, side: after}
           - {location: teaching_stairs, side: after}
@@ -234,23 +238,35 @@ jobs:
               expect=15
               ;;
             front_yard)
-              # The front yard (前操场): seven follow-camera stances (the side door, the
-              # trodden path, the porch, the dead trees, the grove's mouth, and since
-              # round 27 the equipment room and the block's north door), nine fixed
-              # views (overhead, the gate from inside, the card reader, the trees, the
-              # glass entrance, the porch steps, the north wall, and since round 27 the
-              # gym across the wall and the north door's corner), plus the same gate
-              # from the street (two views: the gate, and over the wall).
+              # The front yard (前操场): eight follow-camera stances (the side door, the
+              # trodden path, the porch, the dead trees, the grove's mouth, the
+              # equipment room and the block's north door, and since round 28 the wall's
+              # door to the gym), ten fixed views (overhead, the gate from inside, the
+              # card reader, the trees, the glass entrance, the porch steps, the north
+              # wall, the gym across the wall, the north door's corner, and since round
+              # 28 the gym's door in the wall), plus the same gate from the street (two
+              # views: the gate, and over the wall).
               detail=(front-yard review_width=380)
               width=1280
-              expect=18
+              expect=20
               ;;
             north_grove)
               # Round 26: the north grove (北面枯树小道) between the yards: one follow-camera
-              # stance up the east leg and one high view down the whole L to the court's gap.
+              # stance up the east leg and one high view down the whole L to the court's
+              # gap. Round 28: at the wall's door to the gym, a close view of it, and the
+              # shell's face over the wall.
               detail=(north-grove review_width=380)
               width=1280
-              expect=2
+              expect=4
+              ;;
+            gym)
+              # Round 28: inside the gym (体育馆): three follow-camera stances (the court's
+              # mid line, the east corner, the stage's front) and five fixed views (the
+              # hall from above, the steel doors, the bleacher run, the stage, the
+              # scoreboard).
+              detail=(gym review_width=380)
+              width=1280
+              expect=8
               ;;
             stable_yard)
               # The stable yard behind 01, in the live corridor: one follow-camera stance and

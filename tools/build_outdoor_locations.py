@@ -94,6 +94,14 @@ GROVE_RAIL_Z = -17.15           # the horizontal run's railing line
 GROVE_WEST_X = -23.6            # where the railing ends and the court opens
 GROVE_RAIL_V_LEN = 20.55        # the west railing run, mouth post to the corner
 GROVE_RAIL_H_LEN = 23.6         # the south railing run, corner post to the west end post
+# Round 28, the gym's bleacher tiers (看台): four steps rising north from the court,
+# a full-width run on the north wall's foot (build_gym).
+BLEACHER_TIERS = 4
+BLEACHER_RISE = 0.45
+BLEACHER_RUN = 0.9
+BLEACHER_C_X = 8.0
+BLEACHER_WIDTH = 10.4
+BLEACHER_Z0 = -29.0
 # A crown box on its own layer: in the camera_occluder group so the fader finds it, but on
 # a layer neither the bake (mask 25) nor the body (mask 5) reads - a crown that fades
 # without sealing the strip the route has to weave through.
@@ -132,6 +140,9 @@ MATS = {
     "dusk": "res://assets/materials/dusk_glow.tres",
     "wall": "res://assets/materials/wall_paint.tres",
     "floor": "res://assets/materials/floor_concrete.tres",
+    "wood": "res://assets/materials/desk_wood.tres",
+    "trim": "res://assets/materials/wall_trim.tres",
+    "slate": "res://assets/materials/board_slate.tres",
     "paper": "res://assets/materials/paper_pale.tres",
     "green": "res://assets/materials/animal_green.tres",
 }
@@ -721,7 +732,13 @@ def build_front_yard():
     # from the yard it reads as the tree line the wall closes. The wall stops at the block's
     # north-west corner - west of the court it never closes, the one gap the owner allowed.
     s.box("SchoolWallNorthExt", (YARD_WALL_X, SCHOOL_WALL_H / 2, -14.425), (0.3, SCHOOL_WALL_H, 12.85), "wall", occ)
-    s.box("SchoolWallNorth", (2.15, SCHOOL_WALL_H / 2, -20.7), (26.3, SCHOOL_WALL_H, 0.3), "wall", occ)
+    # Round 28: the wall's north run carries the gym's door (体育馆的门) - the strip's east
+    # leg ends against it, and the leaf fills its gap full height. The yard's ground ends
+    # at the NorthRail, so the door is dressing here (the exit lives on the strip's side,
+    # in the grove); the stage pass frames it on both faces (build_stage_art.py).
+    s.box("SchoolWallNorthWest", (-5.0, SCHOOL_WALL_H / 2, -20.7), (12.0, SCHOOL_WALL_H, 0.3), "wall", occ)
+    s.box("SchoolWallNorthEast", (8.95, SCHOOL_WALL_H / 2, -20.7), (12.7, SCHOOL_WALL_H, 0.3), "wall", occ)
+    s.box("SchoolWallNorthDoor", (1.8, GROVE_WALL_H / 2, -20.7), (1.6, GROVE_WALL_H, 0.12), "metal", occ)
     # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):
@@ -1467,12 +1484,24 @@ def build_north_grove():
           (0.4, GROVE_WALL_H, m0 - corner + 0.3), "wall", occ)
     s.box("GroveWallSouth", (3.6, GROVE_WALL_H / 2, (m1 + GROVE_SOUTH_Z + 0.4) / 2),
           (0.4, GROVE_WALL_H, GROVE_SOUTH_Z - m1 + 0.4), "wall", occ)
-    s.box("GroveWallNorth", (-10.35, GROVE_WALL_H / 2, corner - 0.15), (27.5, GROVE_WALL_H, 0.3), "wall", occ)
+    s.box("GroveWallNorthWest", (-11.55, GROVE_WALL_H / 2, corner - 0.15), (25.1, GROVE_WALL_H, 0.3), "wall", occ)
+    s.box("GroveWallNorthEast", (3.0, GROVE_WALL_H / 2, corner - 0.15), (0.8, GROVE_WALL_H, 0.3), "wall", occ)
+    # Round 28: the gym's door (体育馆的门) in the north wall, where the east leg's walk
+    # ends against it; through it the porch runs to the gym's south face (the stage pass
+    # frames the leaf and draws the porch and the shell beyond, both scenes see them).
+    s.box("GroveWallDoor", (1.8, GROVE_WALL_H / 2, corner - 0.15), (1.6, GROVE_WALL_H, 0.12), "metal", occ)
     # Beyond the railing at the west end, the teaching block's north face with its plinth:
     # the corner the strip rounds on its way out to the court (the front yard sees the same
     # block face ten metres east, so the strip runs just past its north wall).
     s.box("GroveBlockFacade", (-27.75, 6.5, -16.85), (10.0, 13, 0.4), "wall", occ)
     s.box("GroveBlockPlinth", (-27.75, 0.6, -16.85), (10.2, 1.2, 0.6), "concrete", occ)
+    # Round 28: the gym's shell (体育馆) beyond the school wall's north run - the front
+    # yard's graybox again, seen over the wall from the strip; the terrace between wall
+    # and shell, and the stage pass paints the plinth, the doors and the window band on
+    # the shell's south face (build_stage_art.py).
+    s.box("GymYardBand", (6.4, -0.25, -22.0), (14.6, 0.2, 3.6), "soil")
+    s.box("GymShellFar", (6.5, 4.3, -28.0), (14.0, 8.6, 9.0), "wall", occ)
+    s.box("GymPlinthFar", (6.5, 0.6, -28.0), (14.4, 1.2, 9.4), "concrete", occ)
     # The iron railings (铁栏杆): the west run from the mouth post to the corner and the
     # south run from the corner to the west end post, with a post covering each end, the
     # joint and the mouth. The stage pass hides the runs and hangs the railing meshes on them.
@@ -1514,6 +1543,13 @@ def build_north_grove():
          "outline": ("GroveRailPostWest",),
          "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromGrove",
          "id_dest": "playground"},
+        # Round 28: through the gym's door (体育馆的门) into the porch it opens on - the
+        # strip's east leg ends against it, a step south of the wall's foot.
+        {"name": "ToGym", "pos": (1.8, 0.9, -20.05), "id": "north_grove_to_gym",
+         "prompt_key": "prompt.to_gym", "radius": 1.2,
+         "outline": ("GroveWallDoor",),
+         "scene": "res://scenes/locations/gym/gym.tscn", "spawn": "FromGrove",
+         "id_dest": "gym"},
     ]
     s.spawns = [
         # Round 26 arrivals: each walks straight up its leg, away from the exit it came in by,
@@ -1522,6 +1558,9 @@ def build_north_grove():
          {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
         ("FromPlayground", (-23.8, 0, -18.85),
          {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.6}),
+        # Round 28: back through the gym's door, walking up the strip's east leg.
+        ("FromGym", (1.8, 0, -19.0),
+         {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
     ]
     return s
 
@@ -1687,6 +1726,91 @@ def write(scene, path):
     print("wrote", path.replace(ROOT + "/", ""))
 
 
+def build_gym():
+    """Round 28: inside the gym (体育馆), through the doors in its south face.
+
+    The shell is the front yard's graybox (build_front_yard): 14 by 9 m at (6.5, -28.0),
+    standing on a 1.2 m plinth, so the hall's floor is the plinth top and the steel double
+    doors the yard paints sit at walking height. The grove's door in the school wall (its
+    north run) opens onto the plinth terrace behind it; its exit drops the player here,
+    inside the doors, walking north up the court's mid line. The room: the court floor,
+    four bleacher tiers against the north wall, a stage platform against the west wall,
+    the stacked mats and the ball cage in the east corner, the scoreboard on the east
+    wall, and the window band glowing on the south face (docs/MAP_PLAN.md §5, phase 3).
+    The shell's dressing is the stage pass's (build_stage_art.py, GYM); here are the room,
+    the walls, the props, the route and the exit back out to the strip.
+    """
+    s = Scene("Gym", "gym")
+    s.env = {
+        'sky': 'Color(0.243, 0.196, 0.176, 1)',
+        'ambient': 'Color(0.55, 0.46, 0.4, 1)',
+        'energy': '1.1',
+        'fog': 'Color(0.34, 0.27, 0.22, 1)',
+        'fog_density': '0.0035',
+        'saturation': '0.85',
+    }
+    s.sun = {'rotation': (-14, 38, 0), 'color': 'Color(1, 0.72, 0.5, 1)', 'energy': 1.6}
+    s.ambience = {'volume': -20.0, 'target': -27.0}
+    occ = ["camera_occluder"]
+    # The room, standing on the plinth: the floor box is the bounds (a third kind keeps
+    # the nav bake inside and the player on the ground); the walls are camera occluders.
+    # The south face carries the door bay (x 5.7..7.3), split round it, its head filled.
+    s.box("GymFloor", (6.5, 1.05, -28.0), (13.8, 0.3, 8.8), "floor")
+    s.box("GymCeiling", (6.5, 8.45, -28.0), (14.4, 0.3, 9.4), "concrete", occ)
+    s.box("GymWallSouthWest", (2.5, 4.825, -23.65), (6.4, 7.25, 0.3), "wall", occ)
+    s.box("GymWallSouthEast", (10.5, 4.825, -23.65), (6.4, 7.25, 0.3), "wall", occ)
+    s.box("GymDoorHead", (6.5, 6.075, -23.65), (1.6, 4.75, 0.3), "wall", occ)
+    s.box("GymWallNorth", (6.5, 4.825, -32.35), (14.0, 7.25, 0.3), "wall", occ)
+    s.box("GymWallWest", (-0.35, 4.825, -28.0), (0.3, 7.25, 9.0), "wall", occ)
+    s.box("GymWallEast", (13.35, 4.825, -28.0), (0.3, 7.25, 9.0), "wall", occ)
+    # The steel double doors, shut and clickable (the way out): the same leaves the yard
+    # paints on the face outside, flush with the room's side of the wall.
+    s.box("GymDoorWest", (6.14, 2.45, -23.86), (0.72, 2.5, 0.12), "metal", occ)
+    s.box("GymDoorEast", (6.86, 2.45, -23.86), (0.72, 2.5, 0.12), "metal", occ)
+    # The bleacher tiers (看台), four steps rising north on the north wall's foot.
+    for i in range(BLEACHER_TIERS):
+        step = (i + 1) * BLEACHER_RISE
+        s.box(f"Bleacher{i}", (BLEACHER_C_X, 1.2 + step / 2, BLEACHER_Z0 - i * BLEACHER_RUN),
+              (BLEACHER_WIDTH, step, BLEACHER_RUN), "wood", occ)
+    # The stage platform (舞台, the Deck) against the west wall, mid court. Its name
+    # avoids the Stage prefix: the dressing pass recycles every Stage* node it finds.
+    s.box("Deck", (1.05, 1.65, -28.0), (2.5, 0.9, 5.0), "wood", occ)
+    # The stacked mats (垫子) and the ball cage (球架) in the court's east corner.
+    s.box("MatStack", (11.9, 1.7, -24.8), (1.9, 1.0, 1.3), "trim", occ)
+    s.box("MatStack2", (11.95, 2.4, -24.75), (1.5, 0.4, 1.1), "trim", occ)
+    s.box("BallCage", (9.1, 1.95, -24.5), (2.2, 1.5, 1.2), "metal", occ)
+    # The scoreboard (记分牌) hangs off the east wall, mid court.
+    s.box("Scoreboard", (13.05, 4.6, -28.0), (0.24, 1.5, 3.0), "metal", occ)
+    s.exits = [
+        # Out through the steel double doors: the strip's terrace and the school wall's
+        # door lie beyond them, and the leaves frame the way out.
+        {"name": "ToGrove", "pos": (6.5, 2.1, -24.2), "id": "gym_to_grove",
+         "prompt_key": "prompt.gym_to_grove", "radius": 1.25,
+         "outline": ("GymDoorWest", "GymDoorEast"),
+         "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromGym",
+         "id_dest": "north_grove"},
+    ]
+    s.spawns = [
+        # Round 28: in from the grove, just inside the doors, walking north up the court's
+        # mid line; the way back (the doors) stays behind.
+        ("FromGrove", (6.5, 1.2, -25.2), {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.8}),
+    ]
+    s.interactables = [
+        # One look for now; the gym's own texts are the owner's to write
+        # (data/inspections/*/gym.json).
+        {"name": "ScoreboardLook", "pos": (12.0, 3.8, -28.0), "id": "gym_scoreboard",
+         "inspection": "gym_scoreboard", "radius": 1.7,
+         "support": ("../../Scoreboard",), "outline": ("Scoreboard",)},
+        {"name": "MatStackLook", "pos": (11.0, 1.7, -24.8), "id": "gym_mat_stack",
+         "inspection": "gym_mat_stack", "radius": 1.4,
+         "support": ("../../MatStack",), "outline": ("MatStack", "MatStack2")},
+        {"name": "BallCageLook", "pos": (8.2, 1.95, -24.5), "id": "gym_ball_cage",
+         "inspection": "gym_ball_cage", "radius": 1.3,
+         "support": ("../../BallCage",), "outline": ("BallCage",)},
+    ]
+    return s
+
+
 BUILDERS = {
     "front_yard": build_front_yard,
     "street": build_street,
@@ -1694,6 +1818,7 @@ BUILDERS = {
     "alley": build_alley,
     "playground": build_playground,
     "north_grove": build_north_grove,
+    "gym": build_gym,
 }
 
 

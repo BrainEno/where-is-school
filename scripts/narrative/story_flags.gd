@@ -56,6 +56,8 @@ const LEFT_CLASSROOM: StringName = &"left_classroom"
 const FRONT_YARD_ARRIVED: StringName = &"front_yard_arrived"
 ## bool: the player walked the north grove (北面枯树小道) between the two yards (round 26).
 const NORTH_GROVE_VISITED: StringName = &"north_grove_visited"
+## bool: the player has stepped inside the gym (体育馆) through its steel doors (round 28).
+const GYM_VISITED: StringName = &"gym_visited"
 ## bool: the player went out through the school gate's side door into the street.
 const LEFT_SCHOOL: StringName = &"left_school"
 ## bool: the first street conversation has played.
@@ -205,6 +207,7 @@ const ALL_FLAGS: Array[StringName] = [
 	LEFT_CLASSROOM,
 	FRONT_YARD_ARRIVED,
 	NORTH_GROVE_VISITED,
+	GYM_VISITED,
 	LEFT_SCHOOL,
 	STREET_ARRIVED,
 	STREET_WALL_SEEN,

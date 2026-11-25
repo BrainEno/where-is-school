@@ -51,7 +51,8 @@ from paint_stage_textures import DISTANCE  # noqa: E402
 
 sys.path.insert(0, str(ROOT / "tools"))
 from build_outdoor_locations import (  # noqa: E402
-    DOOR_HEIGHT, FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER, GROVE_RAIL_H_LEN,
+    BLEACHER_C_X, BLEACHER_RISE, BLEACHER_RUN, BLEACHER_TIERS, BLEACHER_WIDTH, DOOR_HEIGHT,
+    FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER, GROVE_RAIL_H_LEN,
     GROVE_FAR_TREES, GROVE_RAIL_V_LEN, GROVE_RAIL_Z, GROVE_TREES, SCHOOL_SOUTH_Z,
     SCHOOL_WALL_H, SCHOOL_WALL_X, STREET_DOOR_Z, STREET_GATE_Z, STREET_SCHOOL_Z, YARD_WALL_X,
 )
@@ -133,6 +134,13 @@ MATERIALS: dict[str, dict] = {
     "walk_distance": {"texture": stex("distance_corridor"), "unshaded": True},
     "yard_ground": tiled((214, 196, 164), "ground_tile"),
     "yard_court": {"texture": ptex("court_tile"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
+    # the gym (体育馆): the hall's parquet floor and the court's lines on it, painted
+    # boards on the bleacher tiers and the stage, and the scoreboard's slate.
+    "gym_floor": {"color": (184, 148, 108), "roughness": 0.75, "outline": True},
+    "court_line": {"texture": ptex("court_line"), "cut": 0.5, "scale": (3.0, 1.0, 1.0)},
+    "bleacher_wood": {"color": (150, 112, 76), "roughness": 0.8, "outline": True},
+    "stage_wood": {"color": (128, 94, 64), "roughness": 0.8, "outline": True},
+    "score_slate": {"color": (58, 66, 64), "roughness": 0.6},
     # the street
     "street_asphalt": tiled((100, 98, 116), "plaster_tile"),
     "pavement": tiled((156, 148, 138), "plaster_tile"),
@@ -279,7 +287,8 @@ def return_plate(b: Builder, parent: str, name: str, pos, *, yaw=90, reverse=Fal
 
 # The front yard's x minus this is the street's: the same wall, seen from either side.
 YARD_TO_STREET = YARD_WALL_X - SCHOOL_WALL_X
-WALL_PATHS = (r"(SchoolWallNorthExt|SchoolWallNorth|SchoolWall|SchoolWallSouth|GatePierNorth|"
+WALL_PATHS = (r"(SchoolWallNorthExt|SchoolWallNorthWest|SchoolWallNorthEast|SchoolWallNorthDoor|SchoolWallNorth|"
+              r"SchoolWall|SchoolWallSouth|GatePierNorth|"
               r"GatePierSouth|SideDoorPier|SideDoorLintel)/MeshInstance3D")
 
 
@@ -426,8 +435,14 @@ def front_yard_nodes() -> Builder:
     # box is on the grove's fade layer, so the stage tree fades with it like the yard's).
     b.flat("StageCoping", "SchoolWallNorthExt", box(b, (0.42, 0.1, 4.8)), "wall_coping",
            (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
-    b.flat("StageCoping", "SchoolWallNorth", box(b, (26.0, 0.1, 0.42)), "wall_coping",
+    # Round 28: the north run carries the gym's door - coping on its two runs and a cap
+    # over the leaf (the leaf's frame is the grove's business, on its side of the wall).
+    b.flat("StageCoping", "SchoolWallNorthWest", box(b, (12.0, 0.1, 0.42)), "wall_coping",
            (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "SchoolWallNorthEast", box(b, (12.7, 0.1, 0.42)), "wall_coping",
+           (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "SchoolWallNorthDoor", box(b, (1.72, 0.1, 0.44)), "wall_coping",
+           (0, 1.65, 0), shadow=True)
     dead_tree(b, "GroveHintTree", "StageTree", (0, -3.55, 0), "c", 90)
     d_mid = sum(STREET_DOOR_Z) / 2.0
     b.node("Ground", A)
@@ -522,11 +537,26 @@ def north_grove_nodes() -> Builder:
     h = SCHOOL_WALL_H
     b.flat("StageCoping", "GroveWallEast", box(b, (0.52, 0.1, 20.85)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
     b.flat("StageCoping", "GroveWallSouth", box(b, (0.52, 0.1, 2.4)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
-    b.flat("StageCoping", "GroveWallNorth", box(b, (27.5, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    # Round 28: the north run carries the gym's door - coping on its two runs and a cap
+    # over the leaf, then the leaf's own frame and dark inset (the exit outlines it).
+    b.flat("StageCoping", "GroveWallNorthWest", box(b, (25.1, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "GroveWallNorthEast", box(b, (0.8, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "GroveWallDoor", box(b, (1.72, 0.1, 0.52)), "wall_coping", (0, 1.35, 0), shadow=True)
     b.flat("StageCoping", "GroveBlockFacade", box(b, (10.4, 0.1, 0.6)), "wall_coping", (0, 6.55, 0), shadow=True)
     # The mouth: a dark inset filling the east wall's opening, so the strip's south end
     # reads as a way through (and gives the exit something to outline).
     b.flat("Mouth", A, yard.quad(b, 1.4, 2.1), "metal_ink", (3.39, 1.05, 0.7), (0, -90, 0))
+    # Round 28: the gym beyond the wall - the shell's south face carries the plinth edge,
+    # the steel double doors and the window band, the yard's dressing again (children of
+    # the far shell and its plinth, so they fade with them); the wall's own door gets its
+    # jambs, head and a dark inset, so the strip's north end reads as a way through too.
+    b.flat("StageGymWindowsFar", "GymShellFar", yard.quad(b, 13.0, 2.6), "yard_school_windows", (0, 1.9, 4.506))
+    for name, x in (("StageGymDoorWestFar", -0.36), ("StageGymDoorEastFar", 0.36)):
+        b.flat(name, "GymShellFar", box(b, (0.72, 2.5, 0.12)), "gate_steel", (x, -1.85, 4.55), shadow=True)
+    b.flat("StageGymPlinthFar", "GymPlinthFar", box(b, (14.44, 0.12, 9.44)), "wall_coping", (0, 0.61, 0), shadow=True)
+    b.flat("StageDoorJamb", "GroveWallDoor", box(b, (0.08, 2.7, 0.2)), "metal_ink", (-0.84, 0.05, 0.1), shadow=True)
+    b.flat("StageDoorJamb", "GroveWallDoor", box(b, (0.08, 2.7, 0.2)), "metal_ink", (0.84, 0.05, 0.1), shadow=True)
+    b.flat("StageDoorHead", "GroveWallDoor", box(b, (1.84, 0.2, 0.2)), "metal_ink", (0, 1.45, 0.1), shadow=True)
     # Dead grass along the railings and the wall foot, and round the trees.
     rng_pts = []
     for i in range(12):
@@ -557,6 +587,62 @@ NORTH_GROVE = {
     "hidden": [r"(GroveTree\d+(Trunk)?)/MeshInstance3D",
                r"(GroveRailRunWest|GroveRailRunSouth)/MeshInstance3D"],
     "nodes": north_grove_nodes,
+}
+
+
+# --- the gym ------------------------------------------------------------------------------------
+
+
+def gym_nodes() -> Builder:
+    """The hall's dressing: the court's lines, the bleacher seats, the stage's boards, the
+    doors' frame, the window band glowing on the south face, the scoreboard's face."""
+    b = Builder()
+    A = "StageArt"
+    b.nodes.append(MARKER + "\n")
+    # The court's lines on the parquet (GymFloor's top, y 1.2): the border and the mid line.
+    b.node("Court", A)
+    b.flat("LineNorth", f"{A}/Court", yard.plane(b, 13.0, 0.06), "court_line", (6.5, 1.206, -31.9))
+    b.flat("LineSouth", f"{A}/Court", yard.plane(b, 13.0, 0.06), "court_line", (6.5, 1.206, -24.1))
+    b.flat("LineWest", f"{A}/Court", yard.plane(b, 0.06, 7.9), "court_line", (2.36, 1.206, -28.0))
+    b.flat("LineEast", f"{A}/Court", yard.plane(b, 0.06, 7.9), "court_line", (13.0, 1.206, -28.0))
+    b.flat("LineMid", f"{A}/Court", yard.plane(b, 0.06, 2.2), "court_line", (6.5, 1.206, -25.2))
+    # The bleacher seats' painted boards (children of the tiers, so they fade with them).
+    for i in range(BLEACHER_TIERS):
+        b.flat(f"StageSeat{i}", f"Bleacher{i}", yard.plane(b, BLEACHER_WIDTH - 0.1, BLEACHER_RUN - 0.05),
+               "bleacher_wood", (0, (i + 1) * BLEACHER_RISE / 2 + 0.006, 0))
+    # The stage's boards: the platform top and its front face (children of the Deck body;
+    # the flats keep the Stage prefix, so the surgery recycles them with the rest).
+    b.flat("StageTop", "Deck", yard.plane(b, 2.4, 4.9), "stage_wood", (0.0, 0.48, 0))
+    b.flat("StageFace", "Deck", yard.quad(b, 4.9, 0.9), "stage_wood", (1.26, 0.0, 0.0), (0, 90, 0))
+    # The steel doors' frame round the leaves, and the window band glowing on the south
+    # face's inside (the same band the yard paints on the face outside, one quad per run
+    # of the wall so each fades with its own body).
+    b.flat("StageDoorJamb", "GymDoorWest", box(b, (0.1, 2.6, 0.2)), "metal_ink", (-0.41, -0.05, 0.0), shadow=True)
+    b.flat("StageDoorJamb", "GymDoorEast", box(b, (0.1, 2.6, 0.2)), "metal_ink", (0.41, -0.05, 0.0), shadow=True)
+    b.flat("StageDoorHead", "GymDoorHead", box(b, (1.7, 0.1, 0.2)), "metal_ink", (0, -2.325, -0.05), shadow=True)
+    b.flat("StageWindowsIn", "GymWallSouthWest", yard.quad(b, 6.0, 2.6), "yard_school_windows", (0.2, 1.4, -0.16))
+    b.flat("StageWindowsIn", "GymWallSouthEast", yard.quad(b, 6.0, 2.6), "yard_school_windows", (-0.2, 1.4, -0.16))
+    # The scoreboard's slate face and its pale score dashes (children of the board).
+    b.flat("StageScoreFace", "Scoreboard", yard.quad(b, 3.0, 1.5), "score_slate", (-0.13, 0.0, 0.0), (0, -90, 0))
+    for i, z in enumerate((-0.85, -0.65, -0.45, 0.45, 0.65, 0.85)):
+        b.flat(f"StageScoreDash{i}", "Scoreboard", box(b, (0.005, 0.28, 0.12)), "pale", (-0.15, 0.2, z), shadow=False)
+    return b
+
+
+GYM = {
+    "scene": LOC / "gym" / "gym.tscn",
+    "environment": environment(SKY, COOL, 1.0, 0.8, 0.003, 1.0),
+    "sun": sun(-48, 38, 0.5),
+    "by_material": {
+        "outdoor_concrete.tres": "pavement",
+        "wall_paint.tres": "school_teal",
+        "metal_dark.tres": "metal_ink",
+        "floor_concrete.tres": "gym_floor",
+        "desk_wood.tres": "stage_wood",
+    },
+    "by_path": {},
+    "hidden": [],
+    "nodes": gym_nodes,
 }
 
 
@@ -810,7 +896,7 @@ ALLEY = {
     "nodes": alley_nodes,
 }
 
-SCENES = {"front_yard": FRONT_YARD, "north_grove": NORTH_GROVE, "street": STREET, "residential": RESIDENTIAL, "alley": ALLEY}
+SCENES = {"front_yard": FRONT_YARD, "north_grove": NORTH_GROVE, "street": STREET, "residential": RESIDENTIAL, "alley": ALLEY, "gym": GYM}
 
 
 # --- scene surgery ------------------------------------------------------------------------------

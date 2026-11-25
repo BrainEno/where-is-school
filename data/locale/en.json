@@ -57,6 +57,8 @@
     "prompt.to_grove": "Into the dead trees by the wall",
     "prompt.court_to_grove": "Into the trees past the wall's end",
     "prompt.grove_to_yard": "Back out by the school gate",
+    "prompt.to_gym": "Into the gym",
+    "prompt.gym_to_grove": "Back out to the dead trees",
     "prompt.grove_to_court": "On to the court",
     "prompt.back_to_school": "Go back into the school",
     "check.detail": "{value} + {dice} {die}{modifier}  vs  {difficulty}",

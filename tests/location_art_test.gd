@@ -105,8 +105,11 @@ const LOCATIONS := {
 		# its concrete pocket (4), the door wrapper's ten colliders of its own (two leaves,
 		# two jambs, two blind piers, the header's lintel and spandrel, and the panes' bake
 		# safety), the way back in through it (the exit's sphere and the eight pick boxes
-		# on its outlined leaves, as on the 01 entrance) (23).
-		"shapes": 123,
+		# on its outlined leaves, as on the 01 entrance) (23). Round 28: the north run
+		# carries the gym's door (the run splits in two and the leaf fills the gap: 2) -
+		# dressing here, the exit lives on the strip's side (the yard's ground ends at
+		# the NorthRail).
+		"shapes": 125,
 		"interactables": 8,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove", "FromBlockNorth"],
 		"exits": {
@@ -126,12 +129,32 @@ const LOCATIONS := {
 		# railing runs and three posts, fifteen strip trees and seven far trees, each with
 		# a trunk, all on the fade layer), two exit spheres, and the pick boxes of the
 		# mouth inset and the last railing post. The tree look adds a sphere and a pick box.
-		"shapes": 62,
-		"interactables": 3,
-		"spawns": ["FromFrontYard", "FromPlayground"],
+		# Round 28: the north run carries the gym's door (the run splits in two and the
+		# leaf fills the gap: 2), the gym's shell, plinth and terrace stand in the painted
+		# distance beyond the wall (3), and the way in through the door adds a sphere and
+		# its pick box (2).
+		"shapes": 69,
+		"interactables": 4,
+		"spawns": ["FromFrontYard", "FromPlayground", "FromGym"],
 		"exits": {
 			"north_grove_to_front_yard": "front_yard/FromGrove",
 			"north_grove_to_playground": "playground/FromGrove",
+			"north_grove_to_gym": "gym/FromGrove",
+		},
+	},
+	# Round 28: inside the gym (体育馆), through the doors in its south face: the floor on
+	# the plinth, four walls round it, the shut steel double doors and their head, four
+	# bleacher tiers, the stage platform, the mats and the ball cage, and the scoreboard.
+	"gym": {
+		"scene": "res://scenes/locations/gym/gym.tscn",
+		"stage": true,
+		# 20 bodies, the way out's sphere and its two pick boxes (one per outlined leaf),
+		# three looks (a sphere each) and their pick boxes (the mats' look outlines two).
+		"shapes": 30,
+		"interactables": 4,
+		"spawns": ["FromGrove"],
+		"exits": {
+			"gym_to_grove": "north_grove/FromGym",
 		},
 	},
 	"street": {

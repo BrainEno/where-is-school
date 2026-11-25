@@ -384,6 +384,49 @@ grove trees it could not yet draw return over the wall. The `front_yard` capture
 the equipment-room stance, the gym view, the north-door stance and the north-door view
 (expect=18), and the corridor's stills gain the door from inside (expect=5).
 
+## Round 28: inside the gym
+
+Phase 3 closes ([MAP_PLAN.md](MAP_PLAN.md)): the sketch's 体育馆 is a room now. The shell
+r27 left beyond the school wall's north-east corner gains a hall, and the wall's north run
+carries its door where the grove's east leg ends.
+
+- **The door in the school wall (体育馆的门).** In `build_outdoor_locations`: the wall's
+  north run splits in two (`SchoolWallNorthWest`, `SchoolWallNorthEast`) round a gap at
+  x 1.0..2.6, and a metal leaf (`SchoolWallNorthDoor`) fills the gap full height - solid,
+  clickable, the way in. The grove's side builds the same wall again in its own scene
+  (`GroveWallNorthWest`/`GroveWallNorthEast`/`GroveWallDoor`), and the stage pass frames
+  the leaf on both faces (jambs, head, a dark inset in the grove's view; a coping cap on
+  the yard's). The gym's shell and plinth return in the grove's painted distance
+  (`GymShellFar`, `GymPlinthFar`, plus the terrace strip between wall and shell), dressed
+  with the same window band, steel doors and plinth edge the yard paints - the strip's
+  north end now reads as a way through, over the wall.
+- **The hall.** `build_gym()` builds the room inside the committed shell: 14 × 9 m on the
+  1.2 m plinth (the floor is the plinth top, so the yard's painted steel doors sit at
+  walking height), floor on `GymFloor`, walls as camera occluders, ceiling at the shell's
+  8.6 m top. The south face carries the door bay (x 5.7..7.3, split round it, head
+  filled) with the steel double leaves shut and clickable - the way out
+  (`gym_to_grove`, a click lands the player on the grove's east leg walking south). The
+  way in lands just inside the doors and walks north up the court's mid line
+  (`gym/FromGrove`).
+- **The room's kit.** Four bleacher tiers (`BLEACHER_*` in `tools/build_outdoor_locations.py`)
+  rise north on the north wall's foot, a full-width run; a stage platform (舞台) stands
+  against the west wall, mid court; the stacked mats (垫子) and the ball cage (球架)
+  fill the east corner; the scoreboard (记分牌) hangs off the east wall. The stage pass
+  paints the court's lines (the border and the mid line, the playground's `court_line`
+  kit), the bleacher seats' boards, the stage's boards, the doors' frame, the window
+  band glowing on the south face's inside, and the scoreboard's slate face with its pale
+  dashes. Three looks ship with the round's TODO placeholder (the scoreboard, the mats,
+  the ball cage; `data/inspections/*/gym.json`) - the gym's own texts are the owner's.
+
+`location_art_test` pins the front yard at 125 shapes and 8 interactables (the wall's
+split), the grove at 69 shapes and 4 (the split, the leaf, the far shell's three, and
+the way in's sphere and pick box), and the gym at
+30 shapes and 4 (twenty bodies, the exit's sphere and two leaf pick boxes, three looks
+with four pick boxes - the mats' look outlines both stacks). The `front_yard` capture
+leg adds the gym-door stance and view (expect=20); the grove's leg adds its door stance,
+door view and over-the-wall view (expect=4); the gym's own leg (three stances, five
+views, expect=8) is new.
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.

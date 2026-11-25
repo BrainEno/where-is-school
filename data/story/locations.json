@@ -29,6 +29,13 @@
         "north_grove_visited"
       ]
     },
+    "gym": {
+      "scene": "res://scenes/locations/gym/gym.tscn",
+      "spawn": "FromGrove",
+      "arrival_flags": [
+        "gym_visited"
+      ]
+    },
     "street": {
       "scene": "res://scenes/locations/street/street.tscn",
       "objective": "objective.outside",
