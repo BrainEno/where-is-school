@@ -244,6 +244,7 @@ policy. See [ARCHITECTURE.md](ARCHITECTURE.md) for the dependency/lifecycle boun
 | `Save` | [scripts/autoload/save_manager.gd](../scripts/autoload/save_manager.gd) | Versioned save payload, safe file writes, recovery and world binding. |
 | `Loc` | [scripts/i18n/loc.gd](../scripts/i18n/loc.gd) | Persist locale choice and emit locale changes; delegate lookup to L10n. |
 | `CueAudio` | [scripts/audio/cue_audio.gd](../scripts/audio/cue_audio.gd) | Shared interaction-cue buffers and players, not one copy per caller. |
+| `WorldAudio` | [scripts/audio/world_audio.gd](../scripts/audio/world_audio.gd) | Sounds the world makes when touched (the world and SFX buses), separate from the pointer cues in `CueAudio`. |
 | `Music` | [scripts/autoload/music_player.gd](../scripts/autoload/music_player.gd) | One background-music player across room changes. |
 | `Settings` | [scripts/autoload/settings_manager.gd](../scripts/autoload/settings_manager.gd) | Preferences, bindings, active input device and change notifications. |
 | `Session` | [scripts/ui/game_session.gd](../scripts/ui/game_session.gd) | Title/new-game/save-and-quit transactions; menus do not delete saves themselves. |
