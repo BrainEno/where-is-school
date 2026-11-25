@@ -274,6 +274,16 @@ radius = 1.2
 destination_scene = "res://scenes/locations/front_yard/front_yard.tscn"
 destination_spawn = &"FromCorridor"
 destination_id = &"front_yard"
+[node name="BlockNorthToYard" parent="Interactables" instance=ExtResource("12_location_exit")]
+position = Vector3(1.2, 0.9, -23.47)
+interact_id = &"block_north_to_yard"
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/BlockNorthDoor/Left/LeafMeet", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Left/LeafHinge", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Left/LeafTop", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Left/LeafKick", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Right/LeafMeet", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Right/LeafHinge", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Right/LeafTop", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Right/LeafKick")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/BlockNorthDoor/Left", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Right", "../../TeachingBlock/LowerFloor/BlockNorthDoor/Header")
+prompt_key = "prompt.gate"
+radius = 1.2
+destination_scene = "res://scenes/locations/front_yard/front_yard.tscn"
+destination_spawn = &"FromBlockNorth"
+destination_id = &"front_yard"
 
 [node name="TicketClerk0Look" parent="Interactables" instance=ExtResource("11_interactable")]
 script = ExtResource("ticket_look")
@@ -339,8 +349,8 @@ support_paths = PackedStringArray("../../CorridorTrolley")
 [node name="WindowWait" parent="Interactables" instance=ExtResource("11_interactable")]
 position = Vector3(1.72, 1.11, -2.81)
 interact_id = &"corridor_wait"
-outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5/WindowSill")
-support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
+outline_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_4/WindowSill")
+support_paths = PackedStringArray("../../TeachingBlock/LowerFloor/EastGlazing/Bay0_4")
 prompt_text = "Pause at the window"
 prompt_key = "prompt.corridor_wait"
 conversation_route = &"corridor_wait"
@@ -568,6 +578,11 @@ rotation_degrees = Vector3(0, -90, 0)
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0, 0, 5.4)
+
+[node name="FromBlockNorth" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
+position = Vector3(-0.2, 0, -23.47)
+rotation_degrees = Vector3(0, 90, 0)
+metadata/entry_facing = true
 
 [node name="FromTeachingEntrance" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-17.65, -3.4, 12.6)

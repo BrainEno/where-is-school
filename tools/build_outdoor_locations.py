@@ -708,9 +708,11 @@ def build_front_yard():
     _teaching_front(s)
     # North and south, a low railing (栏杆): the sports ground goes on past it, dirt and dead
     # trees into the haze, so the block has playground on both sides. East, the school wall
-    # with the gate in it.
-    for name, z in (("NorthRail", z0 + 0.15), ("SouthRail", z1 - 0.15)):
-        s.box(name, ((x0 + x1) / 2, 0.6, z), (x1 - x0, 1.2, 0.1), "metal", occ)
+    # with the gate in it. Round 27: the north rail starts past the block's north door
+    # (北门) - the door's fenced threshold pocket stands against the block's north face,
+    # and the rail leaves the pocket's mouth open onto the dirt.
+    s.box("NorthRail", ((-8.8 + x1) / 2, 0.6, z0 + 0.15), (x1 + 8.8, 1.2, 0.1), "metal", occ)
+    s.box("SouthRail", ((x0 + x1) / 2, 0.6, z1 - 0.15), (x1 - x0, 1.2, 0.1), "metal", occ)
     _school_wall(s, YARD_WALL_X, (z0 + 0.3, z1 - 0.3), -1)
     # Round 26: the school wall's north run (校墙) so the teaching block stands inside the
     # wall: the east wall carried on past the yard's north rail to the grounds' north-east
@@ -755,6 +757,25 @@ def build_front_yard():
     s.box("Gym", (6.5, 4.3, -28.0), (14.0, 8.6, 9.0), "wall", occ)
     s.box("GymPlinth", (6.5, 0.6, -28.0), (14.4, 1.2, 9.4), "concrete", occ)
 
+    # The block's north door (北门, phase 3 part 2): a two-leaf glass door in the block
+    # face's north run, its whole assembly west of the face's north-east corner (the
+    # graybox block ends at x -11), opening north onto the dirt toward the gym. The
+    # wrapper (scenes/environment/props/teaching_block_north_door.tscn, the same assembly
+    # the corridor turns east in its glazing) carries the leaves and their collision; here
+    # is the threshold it opens onto: a concrete pocket over the void north of the yard's
+    # ground, fenced on three sides. Its floor laps 0.4 m into the yard east of the block,
+    # which is the pocket's mouth onto the dirt; the east rail runs back to the yard's
+    # north rail and closes the pocket's east side.
+    s.box("BlockNorthApron", (-12.0, 0.03, -9.3), (6.4, 0.06, 2.8), "concrete")
+    for name, pos, size in (
+        ("BlockNorthRailNorth", (-12.0, 0.51, -10.66), (6.4, 0.9, 0.06)),
+        ("BlockNorthRailWest", (-15.14, 0.51, -9.51), (0.06, 0.9, 2.3)),
+        ("BlockNorthRailEast", (-8.86, 0.51, -9.405), (0.06, 0.9, 2.51)),
+    ):
+        s.box(name, pos, size, "metal", occ)
+    s.props.append(("BlockNorthDoor", "res://scenes/environment/props/teaching_block_north_door.tscn",
+                    (-13.05, 0.06, -8.3), 0))
+
     s.interactables = [
         # placeholders until the owner writes them (data/inspections/*/front_yard.json)
         {"name": "CardReaderLook", "pos": (14.62, 1.3, STREET_DOOR_Z[1] + GATE_PIER / 2), "id": "front_yard_card_reader",
@@ -795,6 +816,16 @@ def build_front_yard():
          "outline": ("GroveHintTree/StageTree/Trunk",),
          "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromFrontYard",
          "id_dest": "north_grove"},
+        # Round 27, phase 3: back inside through the block's north door (北门), from its
+        # fenced threshold pocket.
+        {"name": "BlockNorthInside", "pos": (-13.05, 0.96, -9.0), "id": "front_yard_north_inside",
+         "prompt_key": "prompt.back_inside", "radius": 1.25,
+         "support": ("../../BlockNorthDoor/Left", "../../BlockNorthDoor/Right",
+                     "../../BlockNorthDoor/Header"),
+         "outline": tuple(f"BlockNorthDoor/{side}/{part}" for side in ("Left", "Right")
+                          for part in ("LeafMeet", "LeafHinge", "LeafTop", "LeafKick")),
+         "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromBlockNorth",
+         "id_dest": "corridor"},
     ]
     # Round 25: out of the glass doors onto the porch landing, facing east toward the school
     # gate, and the arrival walks down the three steps onto the dirt (3 m, ending 0.45 m past
@@ -805,7 +836,12 @@ def build_front_yard():
                 # Round 26: back from the grove, beside the gate's north pier, facing west
                 # onto the dirt; the arrival walks 2.4 m clear of the tree and the exit.
                 ("FromGrove", (13.45, 0, 8.6),
-                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4})]
+                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
+                # Round 27: out of the block's north door (北门) into its fenced threshold
+                # pocket, facing south-east onto the dirt; the arrival walks 2.6 m through
+                # the pocket's opening and clear of the rails.
+                ("FromBlockNorth", (-11.3, 0.06, -9.2),
+                 {"rotation": (0, 225, 0), "entry_facing": True, "entry_walk": 2.6})]
     return s
 
 

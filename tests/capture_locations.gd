@@ -63,6 +63,8 @@ const SCHOOL_STILLS := {
 		["detail_restroom_door", Vector3(-24.40, -3.4, 12.56)],
 		["detail_right_wall_02", Vector3(0.0, 0, -15.37)],
 		["detail_right_wall_03", Vector3(-11.89, 3.6, -23.36)],
+		# Round 27: the block's north door (北门) at the east wing's inner corner.
+		["detail_north_door", Vector3(0.2, 0, -22.6)],
 	],
 	"laboratory": [
 		["detail_wet_station", Vector3(-5.98, 0, -2.91)],
@@ -259,6 +261,8 @@ const FRONT_YARD_STANCES := [
 	# Round 27: the equipment room and the gym's mass beyond the school wall.
 	["grove_mouth", Vector3(11.9, 0.0, 7.0)],
 	["equipment_room", Vector3(10.5, 0.0, -2.2)],
+	# Round 27: the block's north door (北门) and its fenced threshold, from the dirt.
+	["block_north", Vector3(-10.6, 0.0, -7.3)],
 ]
 const FRONT_YARD_VIEWS := [
 	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
@@ -270,6 +274,8 @@ const FRONT_YARD_VIEWS := [
 	["north_wall", Vector3(6.0, 5.0, -10.0), Vector3(-8.0, 0.6, -20.4)],
 	# Round 27: the gym across the wall, from just inside the yard's north rail.
 	["gym", Vector3(6.5, 4.0, -6.0), Vector3(6.5, 3.2, -28.0)],
+	# Round 27: the block's north door in the face's north-east corner, from the dirt.
+	["north_door", Vector3(-6.4, 3.8, -4.6), Vector3(-13.05, 1.0, -9.2)],
 ]
 ## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
 ## the east leg, and one high view down the whole L towards the court's opening.

@@ -1,0 +1,378 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_frame.tres" id="art_exit_frame"]
+[ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_pane_mat"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+transparency = 1
+cull_mode = 2
+albedo_color = Color(0.52, 0.77, 0.72, 0.32)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ribbon_mat"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+shading_mode = 0
+albedo_color = Color(0.67, 0.81, 0.73, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_entry_glaze"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.165, 0.271, 0.286, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_brass_rule"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.855, 0.6, 0.318, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_gallery_frame"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.251, 0.286, 0.325, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_office_sage"]
+diffuse_mode = 3
+specular_mode = 2
+roughness = 1.0
+albedo_color = Color(0.439, 0.58, 0.533, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art1"]
+size = Vector3(0.16, 3.15, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art2"]
+size = Vector3(0.16, 3.15, 0.26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art3"]
+size = Vector3(1.39, 2.5, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art4"]
+size = Vector3(0.06, 2.5, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art5"]
+size = Vector3(0.09, 2.5, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art6"]
+size = Vector3(1.27, 0.08, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art7"]
+size = Vector3(1.27, 0.28, 0.07)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art8"]
+size = Vector2(1.2, 2.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art9"]
+size = Vector3(1.2, 0.037, 0.043)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art10"]
+size = Vector3(0.052, 0.62, 0.066)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art11"]
+size = Vector3(0.061, 0.058, 0.17)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art12"]
+size = Vector3(0.056, 0.058, 0.155)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art13"]
+size = Vector3(1.39, 2.5, 0.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art14"]
+size = Vector3(3.32, 0.17, 0.24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art15"]
+size = Vector3(3.32, 0.17, 0.24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art16"]
+size = Vector3(4.056, 0.65, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art17"]
+size = Vector3(4.056, 0.65, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art18"]
+size = Vector3(4.056, 0.07, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art19"]
+size = Vector3(0.368, 2.5, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art20"]
+size = Vector3(0.368, 1.06, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art21"]
+size = Vector3(0.368, 1.44, 0.26)
+
+[node name="TeachingBlockNorthDoor" type="Node3D"]
+
+[node name="Left" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="JambBody" type="CollisionShape3D" parent="Left"]
+position = Vector3(-1.58, 1.575, 0)
+shape = SubResource("BoxShape3D_art1")
+
+[node name="Jamb" type="MeshInstance3D" parent="Left"]
+position = Vector3(-1.58, 1.575, 0)
+mesh = SubResource("BoxMesh_art2")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafBody" type="CollisionShape3D" parent="Left"]
+position = Vector3(-0.795, 1.25, 0)
+shape = SubResource("BoxShape3D_art3")
+
+[node name="LeafHinge" type="MeshInstance3D" parent="Left"]
+position = Vector3(-1.47, 1.25, 0)
+mesh = SubResource("BoxMesh_art4")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafMeet" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.045, 1.25, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafTop" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.795, 2.46, 0)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_entry_glaze")
+cast_shadow = 0
+
+[node name="LeafKick" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.795, 0.14, 0)
+mesh = SubResource("BoxMesh_art7")
+material_override = ExtResource("art_exit_frame")
+cast_shadow = 0
+
+[node name="LeafPane" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.795, 1.32, 0)
+mesh = SubResource("QuadMesh_art8")
+material_override = SubResource("Mat_pane_mat")
+cast_shadow = 0
+
+[node name="LeafBand" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.795, 1.3, -0.004)
+mesh = SubResource("BoxMesh_art9")
+material_override = SubResource("Mat_ribbon_mat")
+cast_shadow = 0
+
+[node name="OutsidePull" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 1.03, -0.155)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="OutsideMount0" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 0.77, -0.0775)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="OutsideMount1" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 1.29, -0.0775)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsidePull" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 1.03, 0.14)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsideMount0" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 0.781, 0.07)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsideMount1" type="MeshInstance3D" parent="Left"]
+position = Vector3(-0.24, 1.301, 0.07)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="GlassSafety" type="StaticBody3D" parent="Left"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 20
+collision_mask = 0
+
+[node name="Pane" type="CollisionShape3D" parent="Left/GlassSafety"]
+position = Vector3(-0.795, 1.25, 0)
+shape = SubResource("BoxShape3D_art13")
+
+[node name="Right" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="JambBody" type="CollisionShape3D" parent="Right"]
+position = Vector3(1.58, 1.575, 0)
+shape = SubResource("BoxShape3D_art1")
+
+[node name="Jamb" type="MeshInstance3D" parent="Right"]
+position = Vector3(1.58, 1.575, 0)
+mesh = SubResource("BoxMesh_art2")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafBody" type="CollisionShape3D" parent="Right"]
+position = Vector3(0.795, 1.25, 0)
+shape = SubResource("BoxShape3D_art3")
+
+[node name="LeafHinge" type="MeshInstance3D" parent="Right"]
+position = Vector3(1.47, 1.25, 0)
+mesh = SubResource("BoxMesh_art4")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafMeet" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.045, 1.25, 0)
+mesh = SubResource("BoxMesh_art5")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="LeafTop" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.795, 2.46, 0)
+mesh = SubResource("BoxMesh_art6")
+material_override = SubResource("Mat_entry_glaze")
+cast_shadow = 0
+
+[node name="LeafKick" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.795, 0.14, 0)
+mesh = SubResource("BoxMesh_art7")
+material_override = ExtResource("art_exit_frame")
+cast_shadow = 0
+
+[node name="LeafPane" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.795, 1.32, 0)
+mesh = SubResource("QuadMesh_art8")
+material_override = SubResource("Mat_pane_mat")
+cast_shadow = 0
+
+[node name="LeafBand" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.795, 1.3, -0.004)
+mesh = SubResource("BoxMesh_art9")
+material_override = SubResource("Mat_ribbon_mat")
+cast_shadow = 0
+
+[node name="OutsidePull" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 1.03, -0.155)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="OutsideMount0" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 0.77, -0.0775)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="OutsideMount1" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 1.29, -0.0775)
+mesh = SubResource("BoxMesh_art11")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsidePull" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 1.03, 0.14)
+mesh = SubResource("BoxMesh_art10")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsideMount0" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 0.781, 0.07)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="InsideMount1" type="MeshInstance3D" parent="Right"]
+position = Vector3(0.24, 1.301, 0.07)
+mesh = SubResource("BoxMesh_art12")
+material_override = SubResource("Mat_brass_rule")
+cast_shadow = 0
+
+[node name="GlassSafety" type="StaticBody3D" parent="Right"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 20
+collision_mask = 0
+
+[node name="Pane" type="CollisionShape3D" parent="Right/GlassSafety"]
+position = Vector3(0.795, 1.25, 0)
+shape = SubResource("BoxShape3D_art13")
+
+[node name="Header" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Lintel" type="CollisionShape3D" parent="Header"]
+position = Vector3(0, 2.585, 0)
+shape = SubResource("BoxShape3D_art14")
+
+[node name="Shoe" type="MeshInstance3D" parent="Header"]
+position = Vector3(0, 2.585, 0)
+mesh = SubResource("BoxMesh_art15")
+material_override = SubResource("Mat_entry_glaze")
+
+[node name="Spandrel" type="CollisionShape3D" parent="Header"]
+position = Vector3(0, 2.825, 0)
+shape = SubResource("BoxShape3D_art16")
+
+[node name="SpandrelWall" type="MeshInstance3D" parent="Header"]
+position = Vector3(0, 2.825, 0)
+mesh = SubResource("BoxMesh_art17")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="SpandrelBase" type="MeshInstance3D" parent="Header"]
+position = Vector3(0, 2.535, 0)
+mesh = SubResource("BoxMesh_art18")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="PierWest" type="StaticBody3D" parent="Header" groups=["camera_occluder"]]
+position = Vector3(-1.844, 1.25, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Body" type="CollisionShape3D" parent="Header/PierWest"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art19")
+
+[node name="Sill" type="MeshInstance3D" parent="Header/PierWest"]
+position = Vector3(0, 0.53, 0)
+mesh = SubResource("BoxMesh_art20")
+material_override = SubResource("Mat_office_sage")
+cast_shadow = 0
+
+[node name="Field" type="MeshInstance3D" parent="Header/PierWest"]
+position = Vector3(0, 1.78, 0)
+mesh = SubResource("BoxMesh_art21")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="PierEast" type="StaticBody3D" parent="Header" groups=["camera_occluder"]]
+position = Vector3(1.844, 1.25, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Body" type="CollisionShape3D" parent="Header/PierEast"]
+position = Vector3(0, 0, 0)
+shape = SubResource("BoxShape3D_art19")
+
+[node name="Sill" type="MeshInstance3D" parent="Header/PierEast"]
+position = Vector3(0, 0.53, 0)
+mesh = SubResource("BoxMesh_art20")
+material_override = SubResource("Mat_office_sage")
+cast_shadow = 0
+
+[node name="Field" type="MeshInstance3D" parent="Header/PierEast"]
+position = Vector3(0, 1.78, 0)
+mesh = SubResource("BoxMesh_art21")
+material_override = ExtResource("art_walk_plaster")

@@ -361,15 +361,28 @@ face - and the distant rows line up south past the rail.
   interior is a later room. The block's north door that will face it stays future work.
 - **The rows south.** The stage pass adds `RowFlatsSouth` and `RowTowerSouth` beyond the
   south rail, facing the yard, so the campus reads as lined up on both sides now.
+- **The block's north door (北门).** A two-leaf glass door in the lower east glazing's
+  first bay, at the inner corner where the east wing turns north: the bay is carved out
+  of `EastGlazing` (`NORTH_DOOR_BAY` in `tools/build_teaching_block.py`, so every later
+  bay boundary stays put) and the same assembly (`teaching_block_north_door.tscn`)
+  stands in the front yard's block face at its north-east corner, opening north onto the
+  dirt toward the gym. Outside it is a fenced concrete pocket over the void north of the
+  yard's ground: four steel rails on three sides and a person-wide opening south. A
+  click lands the player in the pocket and walks them out onto the dirt
+  (`front_yard/FromBlockNorth`); from the yard the same door is the way back in
+  (`corridor/FromBlockNorth`). The corridor-side bay carving shifts the east glazing's
+  bay numbers down by one (`Bay0_0` becomes the door bay); the corridor_wait window and
+  the glass-collision test follow theirs.
 
-`location_art_test` counts the front yard at 100 shapes and 7 interactables; the wall's
+`location_art_test` counts the front yard at 124 shapes and 8 interactables; the wall's
 three capped piers carry a second, mesh-less collider each, as wide as its stage-pass
 coping, so a sight line through a coping fades the pier the way a sight line through the
 side door's lintel crosses that lintel. The street scene shares the wall and catches up:
 its stage pass had been crashing since the playground rebuild dropped the route stamps it
 prints (`route_mark` and `route_arrow` are back in `build_playground_art.py`), so three
 grove trees it could not yet draw return over the wall. The `front_yard` capture leg adds
-the equipment-room stance and the gym view (expect=16).
+the equipment-room stance, the gym view, the north-door stance and the north-door view
+(expect=18), and the corridor's stills gain the door from inside (expect=5).
 
 ## Build and check
 

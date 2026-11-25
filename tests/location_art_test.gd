@@ -63,13 +63,15 @@ const LOCATIONS := {
 		"scene": "res://scenes/locations/corridor/corridor.tscn",
 		"stage": true,
 		# The teaching block is not the old graybox; corridor_art tests its solids and route.
-		"interactables": 35, # Original 29, two controls, three clerk looks, two iron doors, less the 02 gate (r25).
-		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromSchoolyard", "FromLaboratory",
+		"interactables": 36, # Original 29, two controls, three clerk looks, two iron doors, less the 02 gate (r25),
+		# plus the block's north door out to the yard (r27).
+		"spawns": ["FromClassroom", "FromStreet", "FromTeachingEntrance", "FromBlockNorth", "FromSchoolyard", "FromLaboratory",
 			"FromStaffOffice", "FromRestroom", "FromArchive", "FromPlanRoom", "FromProjectionRoom",
 			"FromComputerRoom", "FromVacantOffice", "FromPrincipalOffice", "FromRestroom02", "FromRestroom03"],
 		"exits": {
 			"back_to_classroom": "classroom/FromCorridor",
 			"teaching_entrance_to_street": "front_yard/FromCorridor",
+			"block_north_to_yard": "front_yard/FromBlockNorth",
 			"to_schoolyard": "playground/FromCorridor",
 			"to_laboratory": "laboratory/FromCorridor",
 			"to_staff_office": "staff_office/FromCorridor",
@@ -99,13 +101,19 @@ const LOCATIONS := {
 		# its stored gear (two boards, two poles, the cart: 5), the gym's shell and plinth,
 		# and the new look's sphere and pick box (2), plus a second, mesh-less collider on
 		# each of the wall's three capped piers, as wide as its stage-pass coping (3).
-		"shapes": 100,
-		"interactables": 7,
-		"spawns": ["FromCorridor", "FromStreet", "FromGrove"],
+		# Round 27 part 2: the block's north door (北门) - the threshold's three rails and
+		# its concrete pocket (4), the door wrapper's ten colliders of its own (two leaves,
+		# two jambs, two blind piers, the header's lintel and spandrel, and the panes' bake
+		# safety), the way back in through it (the exit's sphere and the eight pick boxes
+		# on its outlined leaves, as on the 01 entrance) (23).
+		"shapes": 123,
+		"interactables": 8,
+		"spawns": ["FromCorridor", "FromStreet", "FromGrove", "FromBlockNorth"],
 		"exits": {
 			"front_yard_back_inside": "corridor/FromTeachingEntrance",
 			"front_yard_to_street": "street/FromCorridor",
 			"front_yard_to_grove": "north_grove/FromFrontYard",
+			"front_yard_north_inside": "corridor/FromBlockNorth",
 		},
 	},
 	# Round 26: the north grove (北面枯树小道) between the two yards - the wall's east and
