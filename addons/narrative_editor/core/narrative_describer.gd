@@ -5,6 +5,8 @@ extends RefCounted
 ## structure dictionaries to present the data without owning or changing the underlying files.
 
 const JsonText := preload("res://addons/narrative_editor/core/narrative_json_text.gd")
+## Pure text for structure descriptions; split out to keep this file under the size cap (#349).
+const StructureText := preload("res://addons/narrative_editor/core/narrative_describer_text.gd")
 
 const KIND_DIALOGUE := "dialogue"
 const KIND_INSPECTIONS := "inspections"
@@ -369,10 +371,10 @@ func _describe_node(
 	lines.append("节点：%s（文件里的第 %d 个）" % [String(node.get("id", "")), node_index + 1])
 	lines.append("说话者：%s" % String(node.get("speaker", "")))
 	lines.append("叙述来源：%s" % String(node.get("source", "（跟随默认值）")))
-	lines.append("下一节点：%s" % _describe_next(node))
-	lines.append("条件：%s" % _describe_conditions(node.get("conditions", null)))
-	lines.append("效果：%s" % _describe_effects(node.get("effects", [])))
-	lines.append("检定：%s" % _describe_check(node.get("check", null)))
+	lines.append("下一节点：%s" % StructureText.describe_next(node))
+	lines.append("条件：%s" % StructureText.describe_conditions(node.get("conditions", null)))
+	lines.append("效果：%s" % StructureText.describe_effects(node.get("effects", [])))
+	lines.append("检定：%s" % StructureText.describe_check(node.get("check", null)))
 	var tags: Variant = node.get("tags", null)
 	if tags is Array and (tags as Array).size() > 0:
 		lines.append("标签：%s" % ", ".join(PackedStringArray(tags)))
@@ -395,7 +397,7 @@ func _describe_node(
 					]
 				)
 				if data.has("effects"):
-					lines.append("     效果：%s" % _describe_effects(data.get("effects", [])))
+					lines.append("     效果：%s" % StructureText.describe_effects(data.get("effects", [])))
 			index += 1
 	else:
 		lines.append("选项：无")
@@ -406,10 +408,10 @@ func _describe_inspection(entry: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append("说话者：%s" % String(entry.get("speaker", "protagonist")))
 	lines.append("叙述来源：%s" % String(entry.get("source", "")))
-	lines.append("回忆条目 ID：%s" % _entry_id(entry, "recall"))
-	lines.append("记录条目 ID：%s" % _entry_id(entry, "record"))
-	lines.append("记录来源：%s" % _record_source(entry))
-	lines.append("效果（只读）：%s" % _describe_effects(entry.get("effects", [])))
+	lines.append("回忆条目 ID：%s" % StructureText.entry_id(entry, "recall"))
+	lines.append("记录条目 ID：%s" % StructureText.entry_id(entry, "record"))
+	lines.append("记录来源：%s" % StructureText.record_source(entry))
+	lines.append("效果（只读）：%s" % StructureText.describe_effects(entry.get("effects", [])))
 	return "\n".join(lines)
 
 
@@ -437,85 +439,6 @@ func _describe_ability(ability_id: String, entry: Dictionary) -> String:
 			]
 		)
 	return "\n".join(lines)
-
-
-func _describe_next(node: Dictionary) -> String:
-	if not node.has("next"):
-		return "（不写：接着文件里的下一条）"
-	var raw: Variant = node["next"]
-	if raw == null:
-		return "null（对话到这里结束）"
-	return String(raw)
-
-
-func _describe_conditions(raw: Variant) -> String:
-	if not (raw is Dictionary):
-		return "无"
-	var data: Dictionary = raw
-	var parts: Array[String] = []
-	for key: Variant in data.keys():
-		parts.append("%s=%s" % [String(key), JSON.stringify(data[key])])
-	if parts.is_empty():
-		return "无"
-	return "；".join(PackedStringArray(parts))
-
-
-func _describe_effects(raw: Variant) -> String:
-	if not (raw is Array) or (raw as Array).is_empty():
-		return "无"
-	var parts: Array[String] = []
-	for effect: Variant in (raw as Array):
-		if not (effect is Dictionary):
-			parts.append(str(effect))
-			continue
-		var data: Dictionary = effect
-		var effect_type := String(data.get("type", ""))
-		match effect_type:
-			"set_flag":
-				parts.append("设为 %s=%s" % [String(data.get("flag", "")), JSON.stringify(data.get("value", true))])
-			"set_objective":
-				parts.append("目标 → %s" % String(data.get("key", "")))
-			"record":
-				parts.append(
-					"记录 %s（%s）" % [String(data.get("entry_id", "")), String(data.get("source", ""))]
-				)
-			"camera_focus":
-				parts.append("聚焦 → %s" % String(data.get("target", "")))
-			_:
-				parts.append(JSON.stringify(data))
-	return "；".join(PackedStringArray(parts))
-
-
-func _describe_check(raw: Variant) -> String:
-	if not (raw is Dictionary):
-		return "无"
-	var data: Dictionary = raw
-	var parts: Array[String] = [
-		"能力=%s" % String(data.get("ability", "")),
-		"难度=%s" % str(data.get("difficulty", "")),
-		"类型=%s" % String(data.get("kind", "")),
-		"成功→%s" % String(data.get("success", "")),
-		"失败→%s" % String(data.get("failure", "")),
-	]
-	if data.has("modifiers"):
-		parts.append("修正=%s" % JSON.stringify(data.get("modifiers")))
-	if bool(data.get("repeatable", false)):
-		parts.append("可重复")
-	return "，".join(PackedStringArray(parts))
-
-
-func _entry_id(entry: Dictionary, key: String) -> String:
-	var block: Variant = entry.get(key, null)
-	if not (block is Dictionary):
-		return "（无）"
-	return String((block as Dictionary).get("entry_id", "（无）"))
-
-
-func _record_source(entry: Dictionary) -> String:
-	var block: Variant = entry.get("record", null)
-	if not (block is Dictionary):
-		return "（无）"
-	return String((block as Dictionary).get("source", ""))
 
 
 func _list_label(

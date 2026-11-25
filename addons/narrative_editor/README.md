@@ -63,6 +63,7 @@ addons/narrative_editor/
   core/narrative_file_cleanup.gd    (its base) isolate, discard and quarantine afterwards
   core/narrative_file_primitives.gd (its base) filesystem seams, verified moves, diagnostics
   core/narrative_describer.gd       listings, editable-field models, read-only structure text
+  core/narrative_describer_text.gd  pure text for one node, inspection or passive rule (split from the describer)
   core/narrative_validator.gd       candidate JSON, parity, field rules and runtime validation
   core/narrative_store.gd           the session: open, edit, validate, save, search
   ui/narrative_editor_dock.gd       the dock itself (Controls, no file I/O)
