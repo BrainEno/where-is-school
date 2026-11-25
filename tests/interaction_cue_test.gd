@@ -549,9 +549,10 @@ func _check_marker_on_the_object() -> void:
 # --- the talk bubble --------------------------------------------------------
 
 
-## A person to talk to is marked like a look target, but with a speech bubble above the head
-## instead of a ring. Only the glyph and the place differ: the pen, the fade, the pointer rule
-## and the untouched layers are the marker's.
+## A person to talk to is marked by a speech bubble beside the pointer, not by the ring and not
+## over the head. The bubble is claimed by the cue while it is the target and given back when it
+## is not; its tail touches the pointer when the pointer is on the person, and the point above the
+## person's head when it is not.
 func _check_talk_bubble() -> void:
 	Harness.stage = "talk bubble"
 	var person := InteractableScene.instantiate() as Interactable
@@ -576,7 +577,6 @@ func _check_talk_bubble() -> void:
 	var prop := _make_prop(&"talk_probe", Vector3(0.0, 0.0, -9.0), Interactable.CueStyle.AUTO)
 	var probe := prop["probe"] as Interactable
 	probe.speaker_id = &"q"
-	var body := prop["body"] as MeshInstance3D
 	await process_frame
 	await process_frame
 	probe.set_highlighted(true)
@@ -586,33 +586,56 @@ func _check_talk_bubble() -> void:
 		return
 	_expect(cue.is_marking(), "A person to talk to was not marked.")
 	_expect(cue.is_talking(), "A person to talk to was not given the speech bubble.")
-	await _wait(FADE_WAIT)
 	var marker := cue.get_marker()
-	if marker != null:
-		var material := marker.material_override as ShaderMaterial
+	_expect(marker == null or not marker.visible, "A person to talk to is still drawn with the ring.")
+	await _wait(FADE_WAIT)
+	var bubble := cue.get_bubble()
+	if _expect_true(bubble != null and bubble.is_showing_for(cue), "The talk target did not claim the bubble."):
+		_expect(bubble.get_opacity() > 0.95, "The talk bubble never faded in (%.2f)." % bubble.get_opacity())
+
+	# The anchor rule, without a window: the pointer on the person owns the tail, a pointer away
+	# from them does not, and an empty screen box never does.
+	var above_head := Vector2(400.0, 300.0)
+	var person_box := Rect2(Vector2(380.0, 200.0), Vector2(60.0, 120.0))
+	_expect(
+		TalkBubble.choose_anchor(Vector2(420.0, 250.0), person_box, above_head) == Vector2(420.0, 250.0),
+		"A pointer on the person does not own the talk bubble's tail."
+	)
+	_expect(
+		TalkBubble.choose_anchor(Vector2(100.0, 100.0), person_box, above_head) == above_head,
+		"A pointer away from the person does not leave the bubble above the head."
+	)
+	_expect(
+		TalkBubble.choose_anchor(Vector2(372.0, 250.0), person_box, above_head) == Vector2(372.0, 250.0),
+		"The pointer margin is not applied at the person's edge."
+	)
+	_expect(
+		TalkBubble.choose_anchor(Vector2(420.0, 250.0), Rect2(), above_head) == above_head,
+		"An empty screen box lets the pointer claim the talk bubble."
+	)
+
+	# The shape: the tail tip is the anchor, the body sits beside it, mirrored or not.
+	for mirrored in [false, true]:
+		var shape := TalkBubble.shape_points(above_head, 1.0, mirrored)
+		_expect(shape.has(above_head), "The talk bubble's tail does not touch its anchor (mirrored %s)." % mirrored)
+		var body_box := TalkBubble.body_rect(above_head, 1.0, mirrored)
+		_expect(not body_box.has_point(above_head), "The talk bubble body covers its anchor (mirrored %s)." % mirrored)
+	var dots := TalkBubble.dot_centres(above_head, 1.0, false)
+	_expect(dots.size() == 3, "The talk bubble does not have three dots.")
+	if dots.size() == 3:
 		_expect(
-			material != null and int(material.get_shader_parameter(&"glyph")) == 1,
-			"The talk bubble's glyph is not selected on the marker."
+			dots[0].x < dots[1].x and dots[1].x < dots[2].x and is_equal_approx(dots[0].y, dots[2].y),
+			"The three dots of the talk bubble are not in a row."
 		)
-		var top := (body.global_transform * body.get_aabb()).end.y
-		var expected := probe.get_talk_marker_position()
-		_expect(
-			marker.global_position.distance_to(expected) < 0.01,
-			"The talk bubble is at %s, not where the cue puts it %s."
-			% [marker.global_position, expected]
-		)
-		_expect(
-			absf(expected.y - (top + Interactable.TALK_BUBBLE_CLEARANCE)) < 0.01,
-			"The talk bubble sits at %.3f m, not just above the head at %.3f m."
-			% [expected.y, top]
-		)
-		_expect(
-			expected.y > probe.get_marker_position().y,
-			"The talk bubble is not above the middle of the person."
-		)
+
+	# Hand-over: a release from a cue that does not own the bubble is ignored, and the bubble is
+	# given back when the highlight ends.
+	if bubble != null:
+		bubble.release(probe)
+		_expect(bubble.is_showing_for(cue), "A release from another cue took the talk bubble.")
 	probe.set_highlighted(false)
 	await _wait(FADE_WAIT)
-	_expect(not cue.visible, "The talk bubble is still drawn after the highlight ended.")
+	_expect(cue.get_bubble() == null, "The talk bubble is still claimed after the highlight ended.")
 	(prop["holder"] as Node).queue_free()
 	await process_frame
 

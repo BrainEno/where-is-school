@@ -137,6 +137,7 @@ author key: `hotkey_pressed()` says what counts as a press, `hotkey_allowed()` w
 |---|---|---|
 | `DestinationCue` | [`scripts/interaction/destination_cue.gd`](../scripts/interaction/destination_cue.gd) | Own the lifetime and gesture of the click destination/refusal mark; use WorldCue for its visual primitives. |
 | `HoverCue` | [`scripts/interaction/hover_cue.gd`](../scripts/interaction/hover_cue.gd) | Present the currently usable object through OutlineOverlay; do not draw a second ground highlight. |
+| `TalkBubble` | [`scripts/interaction/talk_bubble.gd`](../scripts/interaction/talk_bubble.gd) | The screen-space talk bubble beside the pointer (or above the head), one shared node per tree, claimed by the talk target; not a second talk mark in the world. |
 | `Interactable` | [`scripts/interaction/interactable.gd`](../scripts/interaction/interactable.gd) | Authored activation contract and outline meshes; emits requests, never opens UI or loads rooms itself. |
 | `InteractionController` | [`scripts/interaction/interaction_controller.gd`](../scripts/interaction/interaction_controller.gd) | Sole owner of the highlighted target and E activation, reconciling pointer and facing selection. |
 | `LocationExit` | [`scripts/interaction/location_exit.gd`](../scripts/interaction/location_exit.gd) | Declare destination scene/id/spawn and report exit intent; LocationFlow performs the transition. |

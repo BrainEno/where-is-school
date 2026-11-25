@@ -249,7 +249,7 @@ func _talks_by_default() -> bool:
 ## sheet, the person's chest, the window pane - not on the anchor, which for a door or a
 ## notice is a point in the air in front of it. The anchor when there is nothing to trace.
 func get_marker_position() -> Vector3:
-	var bounds := _traced_bounds()
+	var bounds := get_traced_bounds()
 	if bounds.size == Vector3.ZERO:
 		return global_position
 	return bounds.get_center()
@@ -259,14 +259,15 @@ func get_marker_position() -> Vector3:
 ## above the head, so the bubble reads as a line of speech and covers neither face nor body.
 ## The anchor when there is nothing to trace.
 func get_talk_marker_position() -> Vector3:
-	var bounds := _traced_bounds()
+	var bounds := get_traced_bounds()
 	if bounds.size == Vector3.ZERO:
 		return global_position
 	return Vector3(bounds.get_center().x, bounds.end.y + TALK_BUBBLE_CLEARANCE, bounds.get_center().z)
 
 
 ## The world-space box around the outline meshes, or an empty box when there are none.
-func _traced_bounds() -> AABB:
+## Public for the cues that place themselves by the person's screen box (`HoverCue`).
+func get_traced_bounds() -> AABB:
 	var meshes := get_outline_meshes()
 	if meshes.is_empty():
 		return AABB()
