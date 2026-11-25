@@ -362,8 +362,14 @@ face - and the distant rows line up south past the rail.
 - **The rows south.** The stage pass adds `RowFlatsSouth` and `RowTowerSouth` beyond the
   south rail, facing the yard, so the campus reads as lined up on both sides now.
 
-`location_art_test` counts the front yard at 95 shapes and 7 interactables; the
-`front_yard` capture leg adds the equipment-room stance and the gym view (expect=16).
+`location_art_test` counts the front yard at 100 shapes and 7 interactables; the wall's
+three capped piers carry a second, mesh-less collider each, as wide as its stage-pass
+coping, so a sight line through a coping fades the pier the way a sight line through the
+side door's lintel crosses that lintel. The street scene shares the wall and catches up:
+its stage pass had been crashing since the playground rebuild dropped the route stamps it
+prints (`route_mark` and `route_arrow` are back in `build_playground_art.py`), so three
+grove trees it could not yet draw return over the wall. The `front_yard` capture leg adds
+the equipment-room stance and the gym view (expect=16).
 
 ## Build and check
 

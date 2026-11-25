@@ -1,4 +1,4 @@
-[gd_scene load_steps=288 format=3]
+[gd_scene load_steps=291 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/paper_pale.tres" id="4_paper"]
@@ -460,6 +460,15 @@ size = Vector3(2.35, 0.1, 6.6)
 
 [sub_resource type="BoxShape3D" id="RampShape_2"]
 size = Vector3(1.5232, 0.1, 5.6)
+
+[sub_resource type="BoxShape3D" id="ExtraShape_0"]
+size = Vector3(0.72, 0.12, 0.72)
+
+[sub_resource type="BoxShape3D" id="ExtraShape_1"]
+size = Vector3(0.72, 0.12, 0.7199999999999996)
+
+[sub_resource type="BoxShape3D" id="ExtraShape_2"]
+size = Vector3(0.72, 0.12, 0.72)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_art1"]
 size = Vector2(200, 200)
@@ -1010,6 +1019,10 @@ position = Vector3(15.15, 1.45, 8.2)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GatePierNorth"]
 shape = SubResource("BoxShape3D_24")
 
+[node name="CopingShape" type="CollisionShape3D" parent="GatePierNorth"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_0")
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GatePierNorth"]
 mesh = SubResource("BoxMesh_24")
 material_override = ExtResource("art_school_wall")
@@ -1031,6 +1044,10 @@ position = Vector3(15.15, 1.45, 14.95)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GatePierSouth"]
 shape = SubResource("BoxShape3D_26")
 
+[node name="CopingShape" type="CollisionShape3D" parent="GatePierSouth"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_1")
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GatePierSouth"]
 mesh = SubResource("BoxMesh_26")
 material_override = ExtResource("art_school_wall")
@@ -1051,6 +1068,10 @@ position = Vector3(15.15, 1.45, 16.650000000000002)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SideDoorPier"]
 shape = SubResource("BoxShape3D_28")
+
+[node name="CopingShape" type="CollisionShape3D" parent="SideDoorPier"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_2")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SideDoorPier"]
 mesh = SubResource("BoxMesh_28")

@@ -151,10 +151,19 @@ class Scene:
         self.spawns = []
         self.ambience = None
         self.ramps = []      # (name, pos, size, rotation, collision_layer) - see _ramp/_tread
+        self.shapes = []     # (name, body, pos, size) - an extra shape-only collider on a box
 
 
     def box(self, name, pos, size, mat, group=None, body=True, collision_layer=1):
         self.boxes.append((name, pos, size, mat, group, body, collision_layer))
+
+    def shape(self, name, body, pos, size):
+        """An extra collider on a body `box()` already declared, with no mesh of its own.
+
+        For art hung above a body's own box (a coping on a pier): the collider is as wide
+        as the hung art, so a sight line that crosses the art also crosses a collider of
+        the same camera_occluder body and the fader fades it. `pos` is body-local."""
+        self.shapes.append((name, body, pos, size))
 
     def ramp(self, name, pos, size, rotation, collision_layer=1):
         self.ramps.append((name, pos, size, rotation, collision_layer))
@@ -225,6 +234,11 @@ class Scene:
             sub_ids.append((shape_id, mesh_id))
         for index, (name, pos, size, rotation, collision_layer) in enumerate(self.ramps):
             subs.append((f'RampShape_{index}', 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
+        shape_subs = []
+        for index, (_, _, _, size) in enumerate(self.shapes):
+            sid = f'ExtraShape_{index}'
+            shape_subs.append(sid)
+            subs.append((sid, 'BoxShape3D', 'size = Vector3(%s, %s, %s)' % tuple(size)))
 
         lines.append('[gd_scene load_steps=%d format=3]\n' % (len(ext) + len(subs) + 2))
         for kind, path, rid in ext:
@@ -269,6 +283,10 @@ class Scene:
         lines.append('directional_shadow_max_distance = 90.0')
         lines.append('')
 
+        shapes_of_body = {}
+        for index, (name, body, pos, size) in enumerate(self.shapes):
+            shapes_of_body.setdefault(body, []).append((name, pos, shape_subs[index]))
+
         for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
             shape_id, mesh_id = sub_ids[index]
             group_text = f' groups=[{", ".join(chr(34) + g + chr(34) for g in group)}]' if group else ''
@@ -281,6 +299,11 @@ class Scene:
                 lines.append(f'[node name="CollisionShape3D" type="CollisionShape3D" parent="{name}"]')
                 lines.append(f'shape = SubResource("{shape_id}")')
                 lines.append('')
+                for shape_name, shape_pos, shape_sid in shapes_of_body.get(name, []):
+                    lines.append(f'[node name="{shape_name}" type="CollisionShape3D" parent="{name}"]')
+                    lines.append('position = %s' % v3(shape_pos))
+                    lines.append(f'shape = SubResource("{shape_sid}")')
+                    lines.append('')
                 lines.append(f'[node name="MeshInstance3D" type="MeshInstance3D" parent="{name}"]')
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
@@ -586,6 +609,13 @@ def _school_wall(s, x, span, face):
     # coping crosses the collider too.
     s.box("SideDoorLintel", (x, h + 0.05, (d0 + d1) / 2), (0.5, 0.5, d1 - d0 + 0.04), "wall", occ, True,
           FADE_ONLY_LAYER)
+    # The stage pass caps each pier with a coping a lip wider than the pier's own box
+    # (build_stage_art.py). A sight line through such a cap meets no collider of the pier
+    # body, so the fader left the cap opaque while it covered the player. Each body gets a
+    # second, mesh-less collider as wide as its coping, so the cap fades with the body the
+    # same way a sight line through the lintel crosses the lintel's collider above.
+    for pier, depth in (("GatePierNorth", p), ("GatePierSouth", d0 - g1), ("SideDoorPier", p)):
+        s.shape("CopingShape", pier, (0, h / 2 + 0.21, 0), (p + 0.12, 0.12, depth + 0.12))
 
 
 def _teaching_front(s):

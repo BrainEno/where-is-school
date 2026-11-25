@@ -1,4 +1,4 @@
-[gd_scene load_steps=272 format=3]
+[gd_scene load_steps=275 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="StandardMaterial3D" path="res://assets/materials/glass_pane.tres" id="8_glass"]
@@ -539,6 +539,15 @@ size = Vector3(4.0, 0.1, 2.4)
 [sub_resource type="BoxShape3D" id="RampShape_3"]
 size = Vector3(3.8, 0.1, 4.4)
 
+[sub_resource type="BoxShape3D" id="ExtraShape_0"]
+size = Vector3(0.72, 0.12, 0.72)
+
+[sub_resource type="BoxShape3D" id="ExtraShape_1"]
+size = Vector3(0.72, 0.12, 0.7199999999999996)
+
+[sub_resource type="BoxShape3D" id="ExtraShape_2"]
+size = Vector3(0.72, 0.12, 0.72)
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_art1"]
 size = Vector2(200, 200)
 
@@ -794,6 +803,10 @@ position = Vector3(-11.15, 1.45, 8.2)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GatePierNorth"]
 shape = SubResource("BoxShape3D_6")
 
+[node name="CopingShape" type="CollisionShape3D" parent="GatePierNorth"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_0")
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GatePierNorth"]
 mesh = SubResource("BoxMesh_6")
 material_override = ExtResource("art_school_wall")
@@ -815,6 +828,10 @@ position = Vector3(-11.15, 1.45, 14.95)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GatePierSouth"]
 shape = SubResource("BoxShape3D_8")
 
+[node name="CopingShape" type="CollisionShape3D" parent="GatePierSouth"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_1")
+
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GatePierSouth"]
 mesh = SubResource("BoxMesh_8")
 material_override = ExtResource("art_school_wall")
@@ -835,6 +852,10 @@ position = Vector3(-11.15, 1.45, 16.650000000000002)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SideDoorPier"]
 shape = SubResource("BoxShape3D_10")
+
+[node name="CopingShape" type="CollisionShape3D" parent="SideDoorPier"]
+position = Vector3(0, 1.51, 0)
+shape = SubResource("ExtraShape_2")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="SideDoorPier"]
 mesh = SubResource("BoxMesh_10")
@@ -2041,6 +2062,63 @@ mesh = ExtResource("stagemesh_dead_tree_a_bark")
 material_override = ExtResource("art_tree_bark")
 
 [node name="Twig" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree3"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_a_twig")
+material_override = ExtResource("art_tree_twig")
+
+[node name="Tree7" type="Node3D" parent="StageArt/OverTheWall"]
+position = Vector3(-24.35, 0, -17.9)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="Trunk" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree7"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_b_trunk")
+material_override = ExtResource("art_tree_trunk")
+
+[node name="Bark" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree7"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_b_bark")
+material_override = ExtResource("art_tree_bark")
+
+[node name="Twig" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree7"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_b_twig")
+material_override = ExtResource("art_tree_twig")
+
+[node name="Tree8" type="Node3D" parent="StageArt/OverTheWall"]
+position = Vector3(-26.95, 0, -19.5)
+rotation_degrees = Vector3(0, 270, 0)
+
+[node name="Trunk" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree8"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_c_trunk")
+material_override = ExtResource("art_tree_trunk")
+
+[node name="Bark" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree8"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_c_bark")
+material_override = ExtResource("art_tree_bark")
+
+[node name="Twig" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree8"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_c_twig")
+material_override = ExtResource("art_tree_twig")
+
+[node name="Tree9" type="Node3D" parent="StageArt/OverTheWall"]
+position = Vector3(-29.65, 0, -17.9)
+rotation_degrees = Vector3(0, 0, 0)
+
+[node name="Trunk" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree9"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_a_trunk")
+material_override = ExtResource("art_tree_trunk")
+
+[node name="Bark" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree9"]
+position = Vector3(0, 0, 0)
+mesh = ExtResource("stagemesh_dead_tree_a_bark")
+material_override = ExtResource("art_tree_bark")
+
+[node name="Twig" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree9"]
 position = Vector3(0, 0, 0)
 mesh = ExtResource("stagemesh_dead_tree_a_twig")
 material_override = ExtResource("art_tree_twig")
