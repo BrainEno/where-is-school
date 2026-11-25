@@ -259,29 +259,39 @@
       "issue": 346,
       "reason": "Round 16 front yard (前操场): the card reader, the retractable gate and a dead tree are inspectable; the owner writes their lines. Round 27 adds the equipment room look with the same TODO placeholder.",
       "files": {
-  "data/inspections/zh-CN/front_yard.json": {
-   "/front_yard_card_reader/text": "ae282dfa2219364e469c324ce3b834e0f1534db68e68d8df8af80ba144e90530",
-   "/front_yard_gate/text": "787357e37784ee4e87078b75801fe58e723f4aa12c71fe4e54885a49b378d43e",
-   "/front_yard_dead_tree/text": "131c7a1dd920a49a48493b46bd15b87920c334a2aba32b07f5e1d2aa6b4fc4b5",
-   "/front_yard_equipment_room/text": "996ce12282d160d2ffc13dc3a4ff0c0f0e1455935215066bc8f3fc16bce8d4ca"
-  },
-  "data/inspections/en/front_yard.json": {
-   "/front_yard_card_reader/text": "281b93435192635ac9c751cb7acf9075c5f629ef16a37174e758d421a0f9fd15",
-   "/front_yard_gate/text": "949fb660d354c5f9f073105ce94ff00ca39303bf9923f78549cc8b87fb209424",
-   "/front_yard_dead_tree/text": "333bbf9f8f53bfcaa90f51632a5ccf24dfc801649cc0fd122dc7fd94fdf09055",
-   "/front_yard_equipment_room/text": "d7702deef2072ee0e1b20de30bacbf469d460edd17dea30ebd83bd6e2af56130"
-  }
+        "data/inspections/zh-CN/front_yard.json": {
+          "/front_yard_card_reader/text": "ae282dfa2219364e469c324ce3b834e0f1534db68e68d8df8af80ba144e90530",
+          "/front_yard_gate/text": "787357e37784ee4e87078b75801fe58e723f4aa12c71fe4e54885a49b378d43e",
+          "/front_yard_dead_tree/text": "131c7a1dd920a49a48493b46bd15b87920c334a2aba32b07f5e1d2aa6b4fc4b5",
+          "/front_yard_equipment_room/text": "996ce12282d160d2ffc13dc3a4ff0c0f0e1455935215066bc8f3fc16bce8d4ca"
+        },
+        "data/inspections/en/front_yard.json": {
+          "/front_yard_card_reader/text": "281b93435192635ac9c751cb7acf9075c5f629ef16a37174e758d421a0f9fd15",
+          "/front_yard_gate/text": "949fb660d354c5f9f073105ce94ff00ca39303bf9923f78549cc8b87fb209424",
+          "/front_yard_dead_tree/text": "333bbf9f8f53bfcaa90f51632a5ccf24dfc801649cc0fd122dc7fd94fdf09055",
+          "/front_yard_equipment_room/text": "d7702deef2072ee0e1b20de30bacbf469d460edd17dea30ebd83bd6e2af56130"
+        }
       }
     },
     {
       "issue": 412,
-      "reason": "Round 26: the north grove's tree look ships with the round's TODO placeholder; the owner writes the strip's texts (like the front yard's, issue #345).",
+      "reason": "Round 26: the north grove's tree look ships with the round's TODO placeholder; the owner writes the strip's texts (like the front yard's, issue #345). Round 28 adds the gym's looks (the scoreboard, the mats, the ball cage) with the same TODO placeholder.",
       "files": {
         "data/inspections/en/north_grove.json": {
           "/north_grove_tree/text": "1ba4b91ca4033572344536ca21b1d34510d76f24234f05756444ad48ab37fb44"
         },
         "data/inspections/zh-CN/north_grove.json": {
           "/north_grove_tree/text": "b7b7f0018495a4d68587cb8c3c300f7908cb0489fd8f68b4f80c821ecb14ce10"
+        },
+        "data/inspections/zh-CN/gym.json": {
+          "/gym_scoreboard/text": "c280808b1b64197b014b6fb9a736e93cc9c005e0c5d681a31ea972937ae423ee",
+          "/gym_mat_stack/text": "565f9efb99a766a7b75c81cfceb34d025760ee267e82227b018f5df82120a8e5",
+          "/gym_ball_cage/text": "fcc5101f568b74b503381e5e597b1254e61a6af7a7bb20498094d049a2fc2d1b"
+        },
+        "data/inspections/en/gym.json": {
+          "/gym_scoreboard/text": "47efc7cb14e20890706252e88e609020b6c4e690cbb07e2a3c374aafeddc7789",
+          "/gym_mat_stack/text": "7f4eef30e183097cd9350bc50be7d78339332dc81ef359c4515f447bcd8df9bd",
+          "/gym_ball_cage/text": "98e6aee74e10ae9277e3f65b9b2b06a24a51f1bfa33aab0559cb4049d90709a0"
         }
       }
     }

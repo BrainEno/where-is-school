@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "en",
+  "gym_scoreboard": {
+    "title": "The scoreboard",
+    "prompt": "Look at the scoreboard",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the scoreboard hangs off the east wall, its face dark"
+  },
+  "gym_mat_stack": {
+    "title": "The stacked mats",
+    "prompt": "Look at the stacked mats",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · gym mats stacked against the stage's end, straps loose"
+  },
+  "gym_ball_cage": {
+    "title": "The ball cage",
+    "prompt": "Look at the ball cage",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the wire ball cage by the east wall, a few balls at the bottom"
+  }
+}

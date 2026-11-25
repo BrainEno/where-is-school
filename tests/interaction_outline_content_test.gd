@@ -28,6 +28,7 @@ const LOCATIONS := [
 	"res://scenes/locations/corridor/corridor.tscn",
 	"res://scenes/locations/front_yard/front_yard.tscn",
 	"res://scenes/locations/north_grove/north_grove.tscn",
+	"res://scenes/locations/gym/gym.tscn",
 	"res://scenes/locations/street/street.tscn",
 	"res://scenes/locations/residential/residential.tscn",
 	"res://scenes/locations/alley/alley.tscn",

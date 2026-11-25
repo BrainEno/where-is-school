@@ -1,0 +1,25 @@
+{
+  "format_version": 1,
+  "locale": "zh-CN",
+  "gym_scoreboard": {
+    "title": "记分牌",
+    "prompt": "看看记分牌",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · 记分牌挂在东墙上，牌面黑着"
+  },
+  "gym_mat_stack": {
+    "title": "堆着的垫子",
+    "prompt": "看看堆着的垫子",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · 体操垫堆在舞台一头，捆带松着"
+  },
+  "gym_ball_cage": {
+    "title": "球架",
+    "prompt": "看看球架",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · 铁丝球架靠在东墙，底下剩几个球"
+  }
+}
