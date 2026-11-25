@@ -608,7 +608,7 @@ func _check_rear_stair_and_laboratory(corridor: LocationRoot) -> void:
 
 
 func _check_yard_view(corridor: LocationRoot) -> void:
-	var bay := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_5")
+	var bay := corridor.get_node(^"TeachingBlock/LowerFloor/EastGlazing/Bay0_4")
 	var pane := bay.get_node(^"ClearGlass") as MeshInstance3D
 	var mat := pane.material_override as BaseMaterial3D
 	_check.expect(mat != null and mat.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA and mat.albedo_color.a < 0.25,
@@ -634,7 +634,7 @@ func _check_yard_view(corridor: LocationRoot) -> void:
 
 
 func _check_glass_collision(corridor: LocationRoot) -> void:
-	for path: NodePath in [^"TeachingBlock/LowerFloor/EastGlazing/Bay0_3", ^"TeachingBlock/UpperFloor/EastGlazing/Bay0_6"]:
+	for path: NodePath in [^"TeachingBlock/LowerFloor/EastGlazing/Bay0_2", ^"TeachingBlock/UpperFloor/EastGlazing/Bay0_6"]:
 		var bay := corridor.get_node(path) as StaticBody3D
 		var glass := bay.get_node(^"GlassSafety") as StaticBody3D
 		var opening := (glass.get_node(^"Pane") as CollisionShape3D).shape as BoxShape3D

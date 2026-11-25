@@ -1,4 +1,4 @@
-[gd_scene load_steps=828 format=3]
+[gd_scene load_steps=829 format=3]
 
 [ext_resource type="Texture2D" path="res://scenes/environment/props/stage_art/textures/corridor_floor_far.png" id="ruled_floor_tile"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_plaster.tres" id="art_walk_plaster"]
@@ -9,6 +9,7 @@
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/exit_steel.tres" id="art_exit_steel"]
 [ext_resource type="Script" path="res://scenes/locations/corridor/high_window_peek.gd" id="peek"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="interactable"]
+[ext_resource type="PackedScene" path="res://scenes/environment/props/teaching_block_north_door.tscn" id="north_door"]
 [ext_resource type="PackedScene" path="res://scenes/environment/props/staff_office_door.tscn" id="office_door"]
 [ext_resource type="Material" path="res://scenes/environment/props/playground_art/materials/fire_door.tres" id="yard_fire_door"]
 [ext_resource type="Material" path="res://scenes/environment/props/stage_art/materials/walk_step.tres" id="art_walk_step"]
@@ -1029,70 +1030,70 @@ size = Vector3(1.25, 1.05, 0.2)
 size = Vector3(1.25, 2.1, 0.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art178"]
-size = Vector3(4.0563, 1.06, 0.26)
+size = Vector3(1.8438, 3.15, 0.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art179"]
-size = Vector3(4.0563, 1.06, 0.26)
+size = Vector3(1.8438, 0.94, 0.22)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art180"]
-size = Vector3(4.0563, 0.8, 0.26)
+[sub_resource type="BoxMesh" id="BoxMesh_art180"]
+size = Vector3(1.8438, 2.02, 0.22)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art181"]
-size = Vector3(4.0563, 0.8, 0.26)
+size = Vector3(1.8438, 0.19, 0.24)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art182"]
-size = Vector3(1.1181, 1.29, 0.26)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art183"]
-size = Vector3(1.1181, 1.29, 0.26)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_art184"]
-size = Vector3(1.82, 1.29, 0.084)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art185"]
-size = Vector3(1.98, 0.082, 0.347)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art186"]
-size = Vector3(0.05, 1.29, 0.124)
-
-[sub_resource type="QuadMesh" id="QuadMesh_art187"]
-size = Vector2(1.82, 1.29)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art188"]
-size = Vector3(4.0483, 0.032, 0.018)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art189"]
-size = Vector3(4.0483, 0.14, 0.03)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_art190"]
-size = Vector3(1.8437, 3.15, 0.22)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art191"]
-size = Vector3(1.8437, 0.94, 0.22)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art192"]
-size = Vector3(1.8437, 2.02, 0.22)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art193"]
-size = Vector3(1.8437, 0.19, 0.24)
-
-[sub_resource type="BoxMesh" id="BoxMesh_art194"]
+[sub_resource type="BoxMesh" id="BoxMesh_art182"]
 size = Vector3(1.8317, 0.32, 0.016)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_art195"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_art183"]
 size = Vector3(0.3725, 3.15, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art196"]
+[sub_resource type="BoxMesh" id="BoxMesh_art184"]
 size = Vector3(0.3725, 0.94, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art197"]
+[sub_resource type="BoxMesh" id="BoxMesh_art185"]
 size = Vector3(0.3725, 2.02, 0.22)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art198"]
+[sub_resource type="BoxMesh" id="BoxMesh_art186"]
 size = Vector3(0.3725, 0.19, 0.24)
 
-[sub_resource type="BoxMesh" id="BoxMesh_art199"]
+[sub_resource type="BoxMesh" id="BoxMesh_art187"]
 size = Vector3(0.3605, 0.32, 0.016)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art188"]
+size = Vector3(4.0563, 1.06, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art189"]
+size = Vector3(4.0563, 1.06, 0.26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art190"]
+size = Vector3(4.0563, 0.8, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art191"]
+size = Vector3(4.0563, 0.8, 0.26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art192"]
+size = Vector3(1.1181, 1.29, 0.26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art193"]
+size = Vector3(1.1181, 1.29, 0.26)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_art194"]
+size = Vector3(1.82, 1.29, 0.084)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art195"]
+size = Vector3(1.98, 0.082, 0.347)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art196"]
+size = Vector3(0.05, 1.29, 0.124)
+
+[sub_resource type="QuadMesh" id="QuadMesh_art197"]
+size = Vector2(1.82, 1.29)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art198"]
+size = Vector3(4.0483, 0.032, 0.018)
+
+[sub_resource type="BoxMesh" id="BoxMesh_art199"]
+size = Vector3(4.0483, 0.14, 0.03)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_art200"]
 size = Vector3(3.9333, 1.06, 0.26)
@@ -7984,214 +7985,214 @@ cast_shadow = 0
 
 [node name="EastGlazing" type="Node3D" parent="LowerFloor"]
 
-[node name="Bay0_0" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, -23.4719)
-rotation_degrees = Vector3(0, -90, 0)
-collision_layer = 1
-collision_mask = 0
-
-[node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
-
-[node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
-material_override = SubResource("Mat_office_sage")
-
-[node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
-
-[node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
-
-[node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
-
-[node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 0, 0)
-rotation_degrees = Vector3(0, 0, 0)
-collision_layer = 4
-collision_mask = 0
-
-[node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_0/GlassSafety"]
-position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
-
-[node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
-material_override = SubResource("Mat_clear_glass")
-cast_shadow = 0
-
-[node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_0"]
-position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
-material_override = SubResource("Mat_office_sage")
-cast_shadow = 0
-
-[node name="Boarded0_1_0" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
+[node name="Boarded0_0_0" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
 position = Vector3(2.1, 0, -20.5219)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
-[node name="Solid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Boarded0_1_0"]
+[node name="Solid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Boarded0_0_0"]
 position = Vector3(0, 1.575, 0)
-shape = SubResource("BoxShape3D_art190")
+shape = SubResource("BoxShape3D_art178")
 
-[node name="Dado" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_0"]
+[node name="Dado" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_0"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art191")
+mesh = SubResource("BoxMesh_art179")
 material_override = SubResource("Mat_office_ochre")
 cast_shadow = 0
 
-[node name="Plaster" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_0"]
+[node name="Plaster" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_0"]
 position = Vector3(0, 1.95, 0)
-mesh = SubResource("BoxMesh_art192")
+mesh = SubResource("BoxMesh_art180")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Frieze" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_0"]
+[node name="Frieze" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_0"]
 position = Vector3(0, 3.055, 0)
-mesh = SubResource("BoxMesh_art193")
+mesh = SubResource("BoxMesh_art181")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
-[node name="PaintOver" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_0"]
+[node name="PaintOver" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_0"]
 position = Vector3(0, 0.94, 0.117)
-mesh = SubResource("BoxMesh_art194")
+mesh = SubResource("BoxMesh_art182")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Boarded0_1_1" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, -17.5737)
+[node name="Boarded0_0_1" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
+position = Vector3(2.1, 0, -17.5738)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
-[node name="Solid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Boarded0_1_1"]
+[node name="Solid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Boarded0_0_1"]
 position = Vector3(0, 1.575, 0)
-shape = SubResource("BoxShape3D_art195")
+shape = SubResource("BoxShape3D_art183")
 
-[node name="Dado" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_1"]
+[node name="Dado" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_1"]
 position = Vector3(0, 0.47, 0)
-mesh = SubResource("BoxMesh_art196")
+mesh = SubResource("BoxMesh_art184")
 material_override = SubResource("Mat_office_ochre")
 cast_shadow = 0
 
-[node name="Plaster" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_1"]
+[node name="Plaster" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_1"]
 position = Vector3(0, 1.95, 0)
-mesh = SubResource("BoxMesh_art197")
+mesh = SubResource("BoxMesh_art185")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Frieze" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_1"]
+[node name="Frieze" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_1"]
 position = Vector3(0, 3.055, 0)
-mesh = SubResource("BoxMesh_art198")
+mesh = SubResource("BoxMesh_art186")
 material_override = SubResource("Mat_arch_chalk")
 cast_shadow = 0
 
-[node name="PaintOver" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_1_1"]
+[node name="PaintOver" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Boarded0_0_1"]
 position = Vector3(0, 0.94, 0.117)
-mesh = SubResource("BoxMesh_art199")
+mesh = SubResource("BoxMesh_art187")
 material_override = SubResource("Mat_chalk_rose")
 cast_shadow = 0
 
-[node name="Bay0_2" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
+[node name="Bay0_1" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
 position = Vector3(2.1, 0, -15.3594)
+rotation_degrees = Vector3(0, -90, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 0.53, 0)
+shape = SubResource("BoxShape3D_art188")
+
+[node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 0.53, 0)
+mesh = SubResource("BoxMesh_art189")
+material_override = SubResource("Mat_office_sage")
+
+[node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 2.75, 0)
+shape = SubResource("BoxShape3D_art190")
+
+[node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 2.75, 0)
+mesh = SubResource("BoxMesh_art191")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(-1.4691, 1.705, 0)
+shape = SubResource("BoxShape3D_art192")
+
+[node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(-1.4691, 1.705, 0)
+mesh = SubResource("BoxMesh_art193")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(1.4691, 1.705, 0)
+shape = SubResource("BoxShape3D_art192")
+
+[node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(1.4691, 1.705, 0)
+mesh = SubResource("BoxMesh_art193")
+material_override = ExtResource("art_walk_plaster")
+
+[node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 0, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_1/GlassSafety"]
+position = Vector3(0, 1.705, 0)
+shape = SubResource("BoxShape3D_art194")
+
+[node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 1.06, 0.006)
+mesh = SubResource("BoxMesh_art195")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 2.35, 0.006)
+mesh = SubResource("BoxMesh_art195")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(-0.91, 1.705, 0)
+mesh = SubResource("BoxMesh_art196")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0.91, 1.705, 0)
+mesh = SubResource("BoxMesh_art196")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 1.705, 0)
+mesh = SubResource("BoxMesh_art196")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 1.705, 0)
+mesh = SubResource("QuadMesh_art197")
+material_override = SubResource("Mat_clear_glass")
+cast_shadow = 0
+
+[node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 0.87, 0.133)
+mesh = SubResource("BoxMesh_art198")
+material_override = SubResource("Mat_gallery_frame")
+cast_shadow = 0
+
+[node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_1"]
+position = Vector3(0, 0.11, 0.134)
+mesh = SubResource("BoxMesh_art199")
+material_override = SubResource("Mat_office_sage")
+cast_shadow = 0
+
+[node name="Bay0_2" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
+position = Vector3(2.1, 0, -11.3031)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
 [node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
+shape = SubResource("BoxShape3D_art188")
 
 [node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
+mesh = SubResource("BoxMesh_art189")
 material_override = SubResource("Mat_office_sage")
 
 [node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
+shape = SubResource("BoxShape3D_art190")
 
 [node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
+mesh = SubResource("BoxMesh_art191")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_2"]
@@ -8202,96 +8203,96 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_2/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
 [node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
+mesh = SubResource("BoxMesh_art198")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
+mesh = SubResource("BoxMesh_art199")
 material_override = SubResource("Mat_office_sage")
 cast_shadow = 0
 
 [node name="Bay0_3" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, -11.3031)
+position = Vector3(2.1, 0, -7.2469)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
 [node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
+shape = SubResource("BoxShape3D_art188")
 
 [node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
+mesh = SubResource("BoxMesh_art189")
 material_override = SubResource("Mat_office_sage")
 
 [node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
+shape = SubResource("BoxShape3D_art190")
 
 [node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
+mesh = SubResource("BoxMesh_art191")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_3"]
@@ -8302,96 +8303,96 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_3/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
 [node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
+mesh = SubResource("BoxMesh_art198")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
+mesh = SubResource("BoxMesh_art199")
 material_override = SubResource("Mat_office_sage")
 cast_shadow = 0
 
 [node name="Bay0_4" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, -7.2469)
+position = Vector3(2.1, 0, -3.1906)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
 [node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
+shape = SubResource("BoxShape3D_art188")
 
 [node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
+mesh = SubResource("BoxMesh_art189")
 material_override = SubResource("Mat_office_sage")
 
 [node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
+shape = SubResource("BoxShape3D_art190")
 
 [node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
+mesh = SubResource("BoxMesh_art191")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_4"]
@@ -8402,96 +8403,96 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_4/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
 [node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
+mesh = SubResource("BoxMesh_art198")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
+mesh = SubResource("BoxMesh_art199")
 material_override = SubResource("Mat_office_sage")
 cast_shadow = 0
 
 [node name="Bay0_5" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, -3.1906)
+position = Vector3(2.1, 0, 0.8656)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
 [node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
+shape = SubResource("BoxShape3D_art188")
 
 [node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
+mesh = SubResource("BoxMesh_art189")
 material_override = SubResource("Mat_office_sage")
 
 [node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
+shape = SubResource("BoxShape3D_art190")
 
 [node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
+mesh = SubResource("BoxMesh_art191")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_5"]
@@ -8502,96 +8503,96 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_5/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
 [node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
+mesh = SubResource("BoxMesh_art198")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
+mesh = SubResource("BoxMesh_art199")
 material_override = SubResource("Mat_office_sage")
 cast_shadow = 0
 
 [node name="Bay0_6" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, 0.8656)
+position = Vector3(2.1, 0, 4.9219)
 rotation_degrees = Vector3(0, -90, 0)
 collision_layer = 1
 collision_mask = 0
 
 [node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
+shape = SubResource("BoxShape3D_art188")
 
 [node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
+mesh = SubResource("BoxMesh_art189")
 material_override = SubResource("Mat_office_sage")
 
 [node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
+shape = SubResource("BoxShape3D_art190")
 
 [node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
+mesh = SubResource("BoxMesh_art191")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
+shape = SubResource("BoxShape3D_art192")
 
 [node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
+mesh = SubResource("BoxMesh_art193")
 material_override = ExtResource("art_walk_plaster")
 
 [node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_6"]
@@ -8602,155 +8603,59 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_6/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
 [node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
+mesh = SubResource("BoxMesh_art198")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
+mesh = SubResource("BoxMesh_art199")
 material_override = SubResource("Mat_office_sage")
 cast_shadow = 0
 
-[node name="Bay0_7" type="StaticBody3D" parent="LowerFloor/EastGlazing" groups=["camera_occluder"]]
-position = Vector3(2.1, 0, 4.9219)
+[node name="BlockNorthDoor" parent="LowerFloor" instance=ExtResource("north_door")]
+position = Vector3(2.1, 0, -23.4719)
 rotation_degrees = Vector3(0, -90, 0)
-collision_layer = 1
-collision_mask = 0
-
-[node name="SillWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 0.53, 0)
-shape = SubResource("BoxShape3D_art178")
-
-[node name="SillWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 0.53, 0)
-mesh = SubResource("BoxMesh_art179")
-material_override = SubResource("Mat_office_sage")
-
-[node name="LintelWallSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 2.75, 0)
-shape = SubResource("BoxShape3D_art180")
-
-[node name="LintelWall" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 2.75, 0)
-mesh = SubResource("BoxMesh_art181")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="LeftPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(-1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
-
-[node name="LeftPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(-1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="RightPierSolid" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(1.4691, 1.705, 0)
-shape = SubResource("BoxShape3D_art182")
-
-[node name="RightPier" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(1.4691, 1.705, 0)
-mesh = SubResource("BoxMesh_art183")
-material_override = ExtResource("art_walk_plaster")
-
-[node name="GlassSafety" type="StaticBody3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 0, 0)
-rotation_degrees = Vector3(0, 0, 0)
-collision_layer = 4
-collision_mask = 0
-
-[node name="Pane" type="CollisionShape3D" parent="LowerFloor/EastGlazing/Bay0_7/GlassSafety"]
-position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
-
-[node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashRight" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
-material_override = SubResource("Mat_clear_glass")
-cast_shadow = 0
-
-[node name="DadoLine" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 0.87, 0.133)
-mesh = SubResource("BoxMesh_art188")
-material_override = SubResource("Mat_gallery_frame")
-cast_shadow = 0
-
-[node name="FootRail" type="MeshInstance3D" parent="LowerFloor/EastGlazing/Bay0_7"]
-position = Vector3(0, 0.11, 0.134)
-mesh = SubResource("BoxMesh_art189")
-material_override = SubResource("Mat_office_sage")
-cast_shadow = 0
 
 [node name="SouthGlazing" type="Node3D" parent="LowerFloor"]
 
@@ -8804,41 +8709,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay0_0/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -8904,41 +8809,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay0_1/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9004,41 +8909,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay0_2/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9104,41 +9009,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay1_0/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9204,41 +9109,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay1_1/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9304,41 +9209,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="LowerFloor/SouthGlazing/Bay1_2/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="LowerFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9562,41 +9467,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_0/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9662,41 +9567,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_1/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9762,41 +9667,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_2/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9862,41 +9767,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_3/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_3"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -9962,41 +9867,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_4/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_4"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10062,41 +9967,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_5/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_5"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10162,41 +10067,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/EastGlazing/Bay0_6/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/EastGlazing/Bay0_6"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10292,41 +10197,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/SouthGlazing/Bay0_0/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10392,41 +10297,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/SouthGlazing/Bay0_1/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10492,41 +10397,41 @@ collision_mask = 0
 
 [node name="Pane" type="CollisionShape3D" parent="UpperFloor/SouthGlazing/Bay0_2/GlassSafety"]
 position = Vector3(0, 1.705, 0)
-shape = SubResource("BoxShape3D_art184")
+shape = SubResource("BoxShape3D_art194")
 
 [node name="WindowSill" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.06, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="WindowHead" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 2.35, 0.006)
-mesh = SubResource("BoxMesh_art185")
+mesh = SubResource("BoxMesh_art195")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(-0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0.91, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="ClearGlass" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay0_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("QuadMesh_art187")
+mesh = SubResource("QuadMesh_art197")
 material_override = SubResource("Mat_clear_glass")
 cast_shadow = 0
 
@@ -10608,19 +10513,19 @@ cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_0"]
 position = Vector3(-0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_0"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
@@ -10708,19 +10613,19 @@ cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_1"]
 position = Vector3(-0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_1"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
@@ -10808,19 +10713,19 @@ cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_2"]
 position = Vector3(-0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_2"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
@@ -10908,19 +10813,19 @@ cast_shadow = 0
 
 [node name="SashLeft" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_3"]
 position = Vector3(-0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashRight" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_3"]
 position = Vector3(0.8967, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 
 [node name="SashCentre" type="MeshInstance3D" parent="UpperFloor/SouthGlazing/Bay1_3"]
 position = Vector3(0, 1.705, 0)
-mesh = SubResource("BoxMesh_art186")
+mesh = SubResource("BoxMesh_art196")
 material_override = SubResource("Mat_gallery_frame")
 cast_shadow = 0
 

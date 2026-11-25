@@ -176,7 +176,8 @@ jobs:
               detail=(school-details review_width=440)
               width=1600
               expect=2
-              if [ "$LOCATION" = corridor ] || [ "$LOCATION" = laboratory ]; then expect=4; fi
+              if [ "$LOCATION" = corridor ]; then expect=5; fi
+              if [ "$LOCATION" = laboratory ]; then expect=4; fi
               if [ "$LOCATION" != corridor ] && [ "$SIDE" != before ]; then
                 detail+=(school-focus)
                 expect=5
@@ -233,15 +234,16 @@ jobs:
               expect=15
               ;;
             front_yard)
-              # The front yard (前操场): six follow-camera stances (the side door, the
+              # The front yard (前操场): seven follow-camera stances (the side door, the
               # trodden path, the porch, the dead trees, the grove's mouth, and since
-              # round 27 the equipment room), eight fixed views (overhead, the gate from
-              # inside, the card reader, the trees, the glass entrance, the porch steps,
-              # the north wall, and since round 27 the gym across the wall), plus the
-              # same gate from the street (two views: the gate, and over the wall).
+              # round 27 the equipment room and the block's north door), nine fixed
+              # views (overhead, the gate from inside, the card reader, the trees, the
+              # glass entrance, the porch steps, the north wall, and since round 27 the
+              # gym across the wall and the north door's corner), plus the same gate
+              # from the street (two views: the gate, and over the wall).
               detail=(front-yard review_width=380)
               width=1280
-              expect=16
+              expect=18
               ;;
             north_grove)
               # Round 26: the north grove (北面枯树小道) between the yards: one follow-camera

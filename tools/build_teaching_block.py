@@ -77,6 +77,11 @@ WEST_STAIR_Z = -8.45
 WEST_STAIR_WIDTH = 3.2
 BEND_STAIR_WIDTH = 2.8
 BEND_STAIR_X = 4.5
+# Round 27, phase 3: the north door (北门) replaces the lower east glazing's first bay,
+# at the inner corner where the east wing turns north. Carving exactly one bay's width
+# keeps every later bay boundary (and the boarded vacant-office bay) where it was.
+NORTH_DOOR_BAY = (TURN_Z[1], TURN_Z[1] + (6.95 - TURN_Z[1]) / 8)
+NORTH_DOOR_Z = sum(NORTH_DOOR_BAY) / 2
 
 # (centre along the run, width, room plate, depth, floor bias). The repeated plates and
 # the shifted floors/landings are architecture; routes do not secretly teleport.
@@ -140,6 +145,7 @@ SCENES = {
     "restroom_door": f"{PROPS}/restroom_door.tscn",
     "lab_door": f"{PROPS}/laboratory_entry_door.tscn",
     "teaching_entrance": f"{PROPS}/teaching_block_entrance.tscn",
+    "north_door": f"{PROPS}/teaching_block_north_door.tscn",
     "wall_graffiti": f"{PROPS}/wall_graffiti.tscn",
     **{r.id: f"{PROPS}/{r.id}_door.tscn" for r in THRESHOLDS},
 }
@@ -633,6 +639,66 @@ def teaching_entrance():
         sign(b, top, side+"Plate", (direction*1.98, 3.75, direction*0.29), "01 / 01", 1.19, yaw, "directory_black")
         b.box(side+"LightStrip", top, (-direction*0.77, 3.72, direction*0.296),
               (3.0, 0.042, 0.045), "entry_ribbon")
+    return b
+
+
+def north_door():
+    """The block's north door (北门), the same assembly inside and out.
+
+    Round 27, phase 3: a two-leaf glass door in the lower walk's east glazing, at the
+    inner corner where the east wing turns north - out here it stands in the front
+    yard's block face at its north-east corner, opening north onto the dirt toward the
+    gym. Smaller than the 01 entrance and blind at the sides: the bay it replaces is
+    one glazing bay wide, so the piers are masonry, not sidelights. The clear opening
+    is 3.0 m (two shut leaves like the entrance), the frame steel, the panes the same
+    translucent green. Local -z is the outside face; the corridor turns the assembly
+    east (yaw -90, as the glazing bays face) and the front yard keeps it north (yaw 0).
+    """
+    b = Build("TeachingBlockNorthDoor")
+    b.mat("pane_mat", transparency=1, cull_mode=2, albedo_color="Color(0.52, 0.77, 0.72, 0.32)")
+    b.mat("ribbon_mat", shading_mode=0, albedo_color="Color(0.67, 0.81, 0.73, 1)")
+    bay_half, clear_half, jamb = 2.028, 1.5, 0.16
+    for tag, direction in (("Left", -1), ("Right", 1)):
+        edge = b.shell(tag, ".", groups=("camera_occluder",))
+        # The jamb band between the clear opening and the blind masonry pier.
+        b.shape("JambBody", edge, (direction * (clear_half + jamb / 2), WALL_HEIGHT / 2, 0),
+                (jamb, WALL_HEIGHT, 0.26))
+        b.box("Jamb", edge, (direction * (clear_half + jamb / 2), WALL_HEIGHT / 2, 0),
+              (jamb, WALL_HEIGHT, 0.26), "entry_glaze", shadow=True)
+        # The leaf, hinged on the outer stile and meeting its twin on the centre line.
+        leaf_x = direction * (clear_half / 2 + 0.045)
+        b.shape("LeafBody", edge, (leaf_x, 1.25, 0), (1.39, 2.5, 0.07))
+        for part, x, width in (("LeafHinge", clear_half - 0.03, 0.06), ("LeafMeet", 0.045, 0.09)):
+            b.box(part, edge, (direction * x, 1.25, 0), (width, 2.5, 0.07), "entry_glaze", shadow=True)
+        b.box("LeafTop", edge, (leaf_x, 2.46, 0), (1.27, 0.08, 0.07), "entry_glaze")
+        b.box("LeafKick", edge, (leaf_x, 0.14, 0), (1.27, 0.28, 0.07), "exit_frame")
+        b.flat("LeafPane", edge, quad(b, 1.2, 2.1), "pane_mat", (leaf_x, 1.32, 0))
+        b.box("LeafBand", edge, (leaf_x, 1.3, -0.004), (1.2, 0.037, 0.043), "ribbon_mat")
+        # A tall brass pull each side of each leaf, beside the meeting stiles.
+        for face, z in (("Outside", -0.155), ("Inside", 0.14)):
+            b.box(face + "Pull", edge, (direction * 0.24, 1.03, z), (0.052, 0.62, 0.066), "brass_rule")
+            for i, y in enumerate((0.77, 1.29)):
+                y += 0.011 if face == "Inside" else 0
+                b.box(f"{face}Mount{i}", edge, (direction * 0.24, y, z * 0.5),
+                      (0.056 if face == "Inside" else 0.061, 0.058, abs(z) + 0.015), "brass_rule")
+        # The pane takes part in the bake without joining the click rays (entrance recipe).
+        safety = b.shell("GlassSafety", edge, layer=PLAYER_ONLY_LAYER | BAKE_ONLY_LAYER)
+        b.shape("Pane", safety, (leaf_x, 1.25, 0), (1.39, 2.5, 0.10))
+    header = b.shell("Header", ".", groups=("camera_occluder",))
+    b.shape("Lintel", header, (0, 2.585, 0), (clear_half * 2 + jamb * 2, 0.17, 0.24))
+    b.box("Shoe", header, (0, 2.585, 0), (clear_half * 2 + jamb * 2, 0.17, 0.24), "entry_glaze", shadow=True)
+    # The spandrel closes the bay above the door, matching the glazing's lintel course.
+    b.shape("Spandrel", header, (0, (2.5 + WALL_HEIGHT) / 2, 0), (bay_half * 2, WALL_HEIGHT - 2.5, 0.26))
+    b.box("SpandrelWall", header, (0, (2.5 + WALL_HEIGHT) / 2, 0),
+          (bay_half * 2, WALL_HEIGHT - 2.5, 0.26), "walk_plaster", shadow=True)
+    b.box("SpandrelBase", header, (0, 2.535, 0), (bay_half * 2, 0.07, 0.30), "gallery_frame")
+    # The blind masonry piers each side, sill course to the spandrel.
+    for side, direction in (("West", -1), ("East", 1)):
+        pier = b.shell(f"Pier{side}", header, (direction * (clear_half + jamb + 0.184), 1.25, 0),
+                       groups=("camera_occluder",))
+        b.shape("Body", pier, (0, 0, 0), (0.368, 2.5, 0.26))
+        b.box("Sill", pier, (0, 0.53, 0), (0.368, 1.06, 0.26), "office_sage")
+        b.box("Field", pier, (0, (1.06 + 2.5) / 2, 0), (0.368, 1.44, 0.26), "walk_plaster", shadow=True)
     return b
 
 
@@ -1490,7 +1556,12 @@ def teaching_block():
     classroom_run(b, u, True, -14.25, RISE, UPPER_Z, UPPER_WEST)
     classroom_run(b, u, False, -45, RISE, (-14.25, UPPER_END), UPPER_NORTH,
                   ((OFFICE_X-ROOM_PORTAL_WIDTH/2, OFFICE_X+ROOM_PORTAL_WIDTH/2), threshold_gap(PRINCIPAL)))
-    glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95, insert=threshold_gap(VACANT, True))
+    glass_run(b, l, "EastGlazing", True, 2.1, 0, -25.5, 6.95, (NORTH_DOOR_BAY,),
+              insert=threshold_gap(VACANT, True))
+    # Round 27, phase 3: the north door in the carved first bay, facing the dirt the way
+    # the glazing does; the front yard keeps the same assembly facing north at the block's
+    # north-east corner (build_outdoor_locations.build_front_yard).
+    b.instance("BlockNorthDoor", l, "north_door", (2.1, 0, NORTH_DOOR_Z), rot=(0, -90, 0))
     glass_run(b, l, "SouthGlazing", False, TURN_Z[1], 0, MAIN_X[1], EAST_END-.11, (yard_gap,))
     wing_end(b, WASH_02, TURN_Z)
     wing_end(b, WASH_03, UPPER_TURN)
@@ -1688,7 +1759,8 @@ def main():
     scenes = ((LOC / "teaching_block.tscn", teaching_block()),
               (LOC / "dream_annex.tscn", annex()),
               (LOC / "courtyard_view.tscn", courtyard_view()),
-              (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()))
+              (ROOT / "scenes/environment/props/teaching_block_entrance.tscn", teaching_entrance()),
+              (ROOT / "scenes/environment/props/teaching_block_north_door.tscn", north_door()))
     outputs = [(path, generated.emit()) for path, generated in scenes]
     for path, text in outputs:
         if twice := duplicate_nodes(text):
@@ -1714,7 +1786,7 @@ def main():
             path.write_text(text, encoding="utf-8", newline="\n")
     if stale:
         sys.exit("Teaching block needs regeneration: " + ", ".join(stale))
-    print("Teaching block, dream annex, glass entrance and yard view " + ("match the generator." if args.check else "generated."))
+    print("Teaching block, dream annex, glass entrances and yard view " + ("match the generator." if args.check else "generated."))
 
 
 if __name__ == "__main__":
