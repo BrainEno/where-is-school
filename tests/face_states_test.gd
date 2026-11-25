@@ -373,7 +373,7 @@ func _check_conversation() -> void:
 	var gaze := _q_actor.get_gaze()
 	if not (gaze != null and _q_actor.is_watching() and gaze.get_weight() > 0.5):
 		var director := world.get_node_or_null(^"CharacterFaceDirector")
-		var camera := director.call("_camera") if director != null else null
+		var camera = director.call("_camera") if director != null else null
 		_checks.fail("Q's insert gaze did not engage. (gaze=%s watching=%s weight=%.2f glance=%s camera=%s)"
 			% [str(gaze != null), str(_q_actor.is_watching()),
 				gaze.get_weight() if gaze != null else -1.0,
