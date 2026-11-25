@@ -92,6 +92,9 @@ func _run() -> void:
 			or _room.location_id != &"classroom":
 		Harness.finish(self, ["The production classroom did not boot."], "")
 		return
+	# autostart is off, so no beat ever runs: hand the room over the supported way
+	# (the same call every capture makes) or activation is a silent no-op.
+	_sequence.allow_player_control()
 	_q_actor = _room.find_actor(&"q")
 	_talk = _room.find_interactable(&"q_talk")
 	if _q_actor == null or _talk == null:
