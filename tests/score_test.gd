@@ -55,6 +55,15 @@ func _run() -> void:
 		room.location_id = id
 		host.location_entered.emit(room, &"")
 		_expect_track(music, String(Score.ROOM_TRACKS[id]))
+	# Residential: base track until the animal has been seen, then the heavy alternative.
+	room.location_id = &"residential"
+	state.set_flag(StoryFlags.ANIMAL_SEEN, false)
+	host.location_entered.emit(room, &"")
+	_expect_track(music, "05_residential_fuzz.mp3")
+	state.set_flag(StoryFlags.ANIMAL_SEEN, true)
+	_expect_track(music, "05b_residential_heavy.mp3")
+	state.set_flag(StoryFlags.ANIMAL_SEEN, false)
+	_expect_track(music, "05_residential_fuzz.mp3")
 	room.location_id = &"corridor"
 	player.position = Vector3(-35, -3.4, 13.4)
 	score.refresh()
