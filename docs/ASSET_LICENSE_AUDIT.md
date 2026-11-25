@@ -161,7 +161,7 @@ PR #125 的供图记录使用 2026-11-12；这是**供图记录日期，不是�
 
 | 分发面 | 当前事实 / 本轮处置 | 剩余风险 |
 |---|---|---|
-| Windows / Linux 游戏 ZIP 及嵌入 PCK | 两个 preset 仍排除开发目录；验证器补强；最终实际包检查单独见 PR 验证节 | 路径/已知名检查不是识别任意改名/内嵌动作的版权扫描；源码审查与实际包清单都要保留 |
+| Windows / Linux 游戏 ZIP 及嵌入 PCK | 两个发布 preset（`Windows Desktop`、`Linux`）仍排除开发目录；验证器补强；最终实际包检查单独见 PR 验证节 | 路径/已知名检查不是识别任意改名/内嵌动作的版权扫描；源码审查与实际包清单都要保留 |
 | 当前 Git 树、源码 ZIP 与历史克隆 | 原始 UAL 和 baked `.res` 仍 tracked；没有删除/改二进制 | 排除导出不等于停止源码再分发；普通删除仅影响未来树，不清已有历史/克隆 |
 | `Bake the retargeted animation` workflow 的 artifact | dispatch-only，能上传独立 `protagonist_ual.res`；本轮未运行、未新增下载或分享该 artifact | 不是游戏发行包，但属于独立资源分发面；仍需许可澄清/Owner 决定；本 PR 不擅改工作流或历史 artifact |
 | 角色预览与 retarget-ready GLB、`.blend` | `art/character_rigging/` 有 `.gdignore`；开发场景位于 `scenes/dev/` | 旧角色来源记录与上游动画来源是两条链；retarget 不会把动画变成自主授权 |
@@ -174,18 +174,28 @@ PR #125 的供图记录使用 2026-11-12；这是**供图记录日期，不是�
 
 ## 6. 发行检查、真实漏洞与修复证据
 
-### 6.1 两个平台的配置与检查链
+### 6.1 发布预设的配置与检查链
 
-两个 preset 均为 `export_filter="all_resources"`、空 `include_filter`、`embed_pck=true`、不加密 PCK。
-排除集合一致，保持原样：
+`export_presets.cfg` 现有 5 个 preset，均为 `export_filter="all_resources"`、`embed_pck=true`、不加密 PCK。
+它们共享同一个基础排除集合（以 `export_presets.cfg` 为准）：
 
 ```text
-tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*
+tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*,
+assets/models/classmates/*, assets/models/classroom/classroom_student_chair.glb,
+assets/models/classroom/classroom_window_curtains.glb, assets/models/classroom/classroom_biology_chart.glb
 ```
 
-`release.yml` 先执行 preset 预检，Godot 4.7.2 standard 导入、分别导出 Windows/Linux，再显式复制 executable、
-运行说明、Linux launcher/icon 与版权/OFL 文件到 ZIP；不是递归复制整个仓库。随后对**成品 ZIP 内的 executable/PCK**
-运行 `verify_build.py --package ... --list`。tag-only publish job 下载后再次验证；PR CI 的通过不是发布或合并授权。
+差异只有两处：
+
+| preset | 用途 | `include_filter` | 额外排除 `scripts/story_editor/*` |
+|---|---|---|---|
+| `Windows Desktop` | 玩家 ZIP（发布） | 空 | 是 |
+| `Linux` | 玩家 ZIP（发布） | 空 | 是 |
+| `Android` | 移动端 | `data/*.json` | 是 |
+| `iOS` | 移动端，携带剧情编辑运行时（默认关闭，见 ARCHITECTURE「玩家副本」） | `data/*.json` | 否，设计如此 |
+| `Windows Dev` | 开发运行的打包形式 | 空 | 否，设计如此 |
+
+因此审计时不能把五个 preset 当作相同：只有 `Windows Desktop` 与 `Linux` 是桌面玩家发布包，移动端的打包内容由 `include_filter` 决定，两者不能按桌面结论推断。
 
 ### 6.2 已复现而非猜测的验证器缺口
 
