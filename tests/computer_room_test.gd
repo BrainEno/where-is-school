@@ -198,10 +198,15 @@ func _try_station() -> void:
 		if _check.expect(exit != null and _interaction.is_in_reach(exit), "The corridor exit is no longer reachable."):
 			var panel_id := panel.get_instance_id()
 			_interaction.request_activation(exit)
+			# The wait spans a whole transition: two fades, the corridor's load (the biggest
+			# scene in the project), the bookkeeping. On a loaded runner that has been seen
+			# to outgrow twelve seconds, while the same tree passes on a rerun - CI runs 2026-11-25,
+			# two failures then a pass on one commit. The margin buys the runner time, not a
+			# hang: a transition that never starts still never returns, at twenty or at twelve.
 			_check.expect(await Harness.wait_until(func() -> bool:
 				return not is_instance_id_valid(panel_id) and not _director.is_beat_active() \
 					and _host.get_current().location_id == &"corridor" and _host.get_current_spawn() == &"FromComputerRoom",
-				12.0), "Leaving did not free the terminal and return to the same hallway threshold.")
+				20.0), "Leaving did not free the terminal and return to the same hallway threshold.")
 
 
 func _play(panel: View) -> void:

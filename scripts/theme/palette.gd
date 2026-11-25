@@ -43,6 +43,9 @@ const ACCENT := Color(0.776, 0.733, 0.643, 1.0)
 const EMBER := Color(0.851, 0.396, 0.255, 1.0)
 ## A caution colour: the check overlay's title, and a "warn" line.
 const WARN := Color(0.82, 0.553, 0.349, 1.0)
+## The green of the look ring and the talk bubble: the mark the pointer draws on a thing or a
+## person to look at or talk to. Read by name by `HoverCue` and `TalkBubble`.
+const LOOK_GREEN := Color(0.55, 0.92, 0.5, 1.0)
 
 ## Entry text on a page, and the brighter, warmer white it turns when selected.
 const PAGE_TEXT := Color(0.86, 0.835, 0.776, 0.94)

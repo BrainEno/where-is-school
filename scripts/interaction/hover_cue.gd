@@ -9,10 +9,10 @@ extends Node3D
 ##   size (`assets/shaders/interaction/look_marker.gdshader`) and follows the object if it
 ##   moves. The owner asked for it in round 24: the outline on every prop and every window
 ##   made the whole hall light up under a wandering cursor.
-## * **Talk** (a person to talk to, `Interactable.uses_talk_cue`): the same marker, pen and
-##   size, drawn as a small green speech bubble with three dots above the person's head
-##   (`Interactable.get_talk_marker_position`) - Disco Elysium's talk mark. It follows the
-##   person as they walk to their talk spot.
+## * **Talk** (a person to talk to, `Interactable.uses_talk_cue`): a small green speech bubble
+##   drawn on the screen beside the pointer, not on the person (`TalkBubble`). While the pointer
+##   is on the person its tail touches the pointer; otherwise it sits above the person's head.
+##   No ring is drawn for a person.
 ## * **Outline** (ways out: doors, gates, stairs): the object's own silhouette gets a thin
 ##   warm line, a dark rim and a faint wash, and nothing is added to the floor. The cue
 ##   before that was a dashed ring on the ground with a halo and a floating diamond; the
@@ -46,7 +46,7 @@ const MARKER_SHADER := preload("res://assets/shaders/interaction/look_marker.gds
 ## The ring's diameter in pixels at a 900-pixel-high window (the shader scales it with the
 ## window). Small on purpose: a mark on the thing, not a target painted over it.
 const MARKER_PIXEL_SIZE := 24.0
-const MARKER_COLOR := Color(0.55, 0.92, 0.5, 1.0)
+const MARKER_COLOR := Palette.LOOK_GREEN
 const MARKER_PULSE_SECONDS := 1.8
 
 var _source: Interactable = null
@@ -60,6 +60,7 @@ var _marker: MeshInstance3D = null
 var _marker_material: ShaderMaterial = null
 var _marking: bool = false
 var _talking: bool = false
+var _bubble: TalkBubble = null
 var _time: float = 0.0
 
 
@@ -98,6 +99,11 @@ func is_talking() -> bool:
 	return _talking
 
 
+## The screen bubble this cue claimed, or null while it is not the talk target.
+func get_bubble() -> TalkBubble:
+	return _bubble
+
+
 ## The ring, or null when this cue has never marked anything. Public for tests.
 func get_marker() -> MeshInstance3D:
 	return _marker
@@ -123,13 +129,17 @@ func reveal() -> void:
 		_meshes = _source.get_outline_meshes()
 	_marking = _source != null and _source.uses_marker_cue()
 	_talking = _marking and _source.uses_talk_cue()
+	if _talking:
+		_bubble = TalkBubble.for_node(self)
+		_update_bubble()
+	else:
+		_release_bubble()
 	if _marking:
 		# A previous outline reveal of this same object may still own the overlay.
 		if _overlay != null and is_instance_valid(_overlay):
 			_overlay.release(self)
 		_overlay = null
 		_ensure_marker()
-		_marker_material.set_shader_parameter(&"glyph", 1 if _talking else 0)
 		_place_marker()
 	else:
 		_overlay = OutlineOverlay.for_node(self) if not _meshes.is_empty() else null
@@ -141,7 +151,8 @@ func reveal() -> void:
 	if _shard != null:
 		_shard.visible = not _marking and _overlay == null
 	if _marker != null:
-		_marker.visible = _marking
+		# A person to talk to is marked by the bubble, not by the ring.
+		_marker.visible = _marking and not _talking
 	visible = true
 	set_process(true)
 	_fade_to(1.0, REVEAL_SECONDS)
@@ -160,6 +171,8 @@ func conceal(immediate: bool = false) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if _talking:
+		_update_bubble()
 	if _marking and _marker != null:
 		_place_marker()
 		_marker_material.set_shader_parameter(
@@ -200,6 +213,7 @@ func _finish() -> void:
 	if _overlay != null and is_instance_valid(_overlay):
 		_overlay.release(self)
 	_overlay = null
+	_release_bubble()
 	visible = false
 	set_process(false)
 
@@ -247,8 +261,7 @@ func _ensure_marker() -> void:
 func _place_marker() -> void:
 	if _marker == null or _source == null or not _marker.is_inside_tree():
 		return
-	var at := _source.get_talk_marker_position() if _talking else _source.get_marker_position()
-	_marker.global_transform = Transform3D(Basis.IDENTITY, at)
+	_marker.global_transform = Transform3D(Basis.IDENTITY, _source.get_marker_position())
 
 
 func _kill_tween() -> void:
@@ -264,3 +277,58 @@ func _exit_tree() -> void:
 	if _overlay != null and is_instance_valid(_overlay):
 		_overlay.release(self)
 	_overlay = null
+	_release_bubble()
+
+
+## Places the talk bubble for the current frame and fade: beside the pointer while the pointer is
+## on the person's screen box, otherwise above their head. Quietly does nothing when the person
+## cannot be projected (behind the camera, or no camera yet); the bubble keeps its last place.
+func _update_bubble() -> void:
+	if _source == null or not is_inside_tree():
+		return
+	# A cue that is fading out keeps the bubble only while it still owns it, and never
+	# re-sets it: while the mark fades, `_talking` is still true and this runs each frame,
+	# so an unconditional claim here would steal the bubble back from the cue that took
+	# over the target - the two would fight over the one shared node until the fade ended.
+	if not _revealed:
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var head_world := _source.get_talk_marker_position()
+	if camera.is_position_behind(head_world):
+		return
+	if _bubble == null or not is_instance_valid(_bubble):
+		_bubble = TalkBubble.for_node(self)
+		if _bubble == null:
+			return
+	var person_box := _screen_box(camera, _source.get_traced_bounds())
+	var above_head := camera.unproject_position(head_world)
+	var pointer := get_viewport().get_mouse_position()
+	_bubble.set_bubble(self, TalkBubble.choose_anchor(pointer, person_box, above_head), _opacity)
+
+
+## The screen rectangle the person's traced box covers. Empty when the box is empty or behind the
+## camera, which `TalkBubble.choose_anchor` reads as "no pointer on the person".
+func _screen_box(camera: Camera3D, bounds: AABB) -> Rect2:
+	var box := Rect2()
+	var first := true
+	for index in 8:
+		var corner := bounds.get_endpoint(index)
+		if camera.is_position_behind(corner):
+			continue
+		var on_screen := camera.unproject_position(corner)
+		if first:
+			box = Rect2(on_screen, Vector2.ZERO)
+			first = false
+		else:
+			box = box.expand(on_screen)
+	if bounds.size == Vector3.ZERO:
+		return Rect2()
+	return box
+
+
+func _release_bubble() -> void:
+	if _bubble != null and is_instance_valid(_bubble):
+		_bubble.release(self)
+	_bubble = null
