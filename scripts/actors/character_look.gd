@@ -22,6 +22,13 @@ extends Resource
 @export var detail_maps: Dictionary = {}
 ## Blend shape → weight the face rests at (the protagonist's model ships nine shapes).
 @export var expression: Dictionary = {}
+## Directed face states (`listening`, `attention`, `friendly`, ...): state name → the blend
+## shapes it sets, as absolute weights. A shape a state does not name stays at its resting
+## value, so a state only touches what it declares. Empty for characters without face
+## morphs (N, the seated student) - they honestly report that they have no states rather
+## than borrowing another character's. `CharacterLookApplier` composes these between the
+## resting expression and the blink; see its `set_face_state()`.
+@export var face_states: Dictionary = {}
 ## Blend shapes a blink drives to 1 and back. Empty: the character does not blink.
 @export var blink_shapes: PackedStringArray = PackedStringArray()
 ## Seconds between blinks, a random value in [x, y].

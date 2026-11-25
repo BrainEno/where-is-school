@@ -354,6 +354,11 @@ expression = {
 "Blink_L": 0.1,
 "Blink_R": 0.15
 }
+face_states = {
+"listening": {"BrowRaise": 0.16, "BrowCompress": 0.34, "JawOpen": 0.03},
+"attention": {"BrowRaise": 0.24, "BrowCompress": 0.3, "Frown": 0.1},
+"friendly": {"BrowCompress": 0.26, "Frown": 0.05, "LipTension": 0.2, "JawOpen": 0.04}
+}
 blink_shapes = PackedStringArray("Blink_L", "Blink_R")
 blink_interval = Vector2(1.8, 4.2)
 blink_duration = 0.15

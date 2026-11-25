@@ -243,6 +243,16 @@ PROTAGONIST = {
         "Blink_L": 0.1,
         "Blink_R": 0.15,
     },
+    # Directed face states (#387): absolute weights for the shapes each state names;
+    # everything else stays at the resting expression above. Kept deliberately small and
+    # below the model's own Face_Test extremes - a close-up should read as listening or
+    # an easy reply, not as a performance. Q's tables must not name `Smile` or
+    # `Mouth_Open`: the textbook pose owns those two while a book is up.
+    "face_states": {
+        "listening": {"BrowRaise": 0.16, "BrowCompress": 0.34, "JawOpen": 0.03},
+        "attention": {"BrowRaise": 0.24, "BrowCompress": 0.30, "Frown": 0.10},
+        "friendly": {"BrowCompress": 0.26, "Frown": 0.05, "LipTension": 0.20, "JawOpen": 0.04},
+    },
     "blink_shapes": ["Blink_L", "Blink_R"],
     "blink_interval": (1.8, 4.2),
     "blink_duration": 0.15,
@@ -343,6 +353,15 @@ Q = {
         "q_mat_sole": {"albedo": "#B4A585", "pigment_mix": 0.0, "pigment_value": 0.06, "outline": False},
     },
     "expression": {},
+    # Q's directed face states (#387), absolute weights on the shapes they name. `Smile`
+    # and `Mouth_Open` are deliberately absent: `q_textbook_pose` writes those two while
+    # a book is up, and two writers on one shape is the bug this channel exists to avoid.
+    # `Smirk` stays out too - Q is a chatty classmate, not a smirk.
+    "face_states": {
+        "listening": {"Brow_Raise": 0.14, "Mouth_Close": 0.08},
+        "attention": {"Brow_Raise": 0.22, "Brow_Compress": 0.05},
+        "friendly": {"Brow_Raise": 0.08, "Jaw_Open": 0.05, "Mouth_Close": 0.03},
+    },
     "blink_shapes": ["Eye_Blink_L", "Eye_Blink_R"],
     "blink_interval": (2.5, 5.0),
     "blink_duration": 0.16,
@@ -776,6 +795,15 @@ def render(look: dict) -> str:
         lines.append("detail_maps = {\n" + map_entries + "\n}")
     expression = ",\n".join(f'"{shape}": {weight:g}' for shape, weight in look["expression"].items())
     lines.append("expression = {\n" + expression + "\n}" if expression else "expression = {}")
+    states = look.get("face_states", {})
+    if states:
+        state_lines = []
+        for state, shapes in states.items():
+            shapes_text = ", ".join(f'"{shape}": {weight:g}' for shape, weight in shapes.items())
+            state_lines.append(f'"{state}": {{{shapes_text}}}')
+        lines.append("face_states = {\n" + ",\n".join(state_lines) + "\n}")
+    else:
+        lines.append("face_states = {}")
     shapes = ", ".join(f'"{shape}"' for shape in look["blink_shapes"])
     lines.append(f"blink_shapes = PackedStringArray({shapes})")
     lines.append("blink_interval = Vector2({:g}, {:g})".format(*look["blink_interval"]))

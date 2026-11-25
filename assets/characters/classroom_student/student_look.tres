@@ -664,6 +664,7 @@ materials = {
 "wis_protagonist_sole": SubResource("m_wis_protagonist_sole")
 }
 expression = {}
+face_states = {}
 blink_shapes = PackedStringArray()
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16

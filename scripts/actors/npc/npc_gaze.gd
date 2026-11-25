@@ -18,6 +18,13 @@ extends SkeletonModifier3D
 ## Nothing here writes a transform outside the skeleton's pose: the actor's position, its
 ## rotation, its route and any collider are untouched, and letting go eases the pose back
 ## to exactly what the animation plays.
+##
+## **Eyeballs.** When the skeleton has `Eye_L`/`Eye_R` (both shipped heads do; N's
+## 16-bone rig does not, and simply has none), the eyes keep their own faster idea of
+## the turn and add the difference on top of the head's - so they arrive before the head
+## on a new target and centre before it when letting go, clamped to `eye_lead_degrees`
+## so the eyeball can never roll into its socket. The lead is written exactly like the
+## chain: a turn about the skeleton's vertical, on top of whatever the animation played.
 
 ## Bones that share the turn, trunk first, and the share each takes. Bones a rig does not
 ## have are skipped and the remaining shares are scaled up, so the head still reaches.
@@ -29,6 +36,14 @@ const CHAIN: Array = [["Spine", 0.2], ["Neck", 0.35], ["Head", 0.45]]
 @export_range(0.01, 2.0, 0.01) var blend_seconds: float = 0.25
 ## How fast the turn follows a target that moves, in degrees per second.
 @export_range(30.0, 1080.0, 1.0) var follow_speed_degrees: float = 360.0
+## Eyeball bones that lead the head's turn, when the rig has them (skipped per bone).
+@export var eye_bone_names: Array[StringName] = [&"Eye_L", &"Eye_R"]
+## How far the eyes may lead the head, in degrees about the vertical either way. Small
+## on purpose: a glance ahead of the turn, not a roll - the socket keeps the sclera in.
+@export_range(0.0, 45.0, 1.0) var eye_lead_degrees: float = 14.0
+## How fast the eyes follow a target that moves, in degrees per second. Double the
+## head's `follow_speed_degrees`, which is what makes them arrive first.
+@export_range(30.0, 2160.0, 1.0) var eye_follow_speed_degrees: float = 720.0
 
 var _actor: Node3D = null
 var _target: Node3D = null
@@ -38,12 +53,17 @@ var _weight := 0.0
 ## The turn being followed (before the blend weight), and the one actually applied.
 var _yaw := 0.0
 var _applied := 0.0
+## The eyes' own turn (faster than the head's) and the clamped difference actually
+## written on the eyeballs last frame.
+var _eye_yaw := 0.0
+var _eye_applied := 0.0
 ## The head's turn as the skeleton reported it, before and after this modifier, for
 ## tests and diagnostics: proof that bones moved, not only that a number was computed.
 var _measured := 0.0
 var _resolved_for: Skeleton3D = null
 var _bones := PackedInt32Array()
 var _shares := PackedFloat32Array()
+var _eyes := PackedInt32Array()
 
 
 ## The node whose `-Z` is "straight ahead" for this gaze: the actor, not the visual (a
@@ -78,6 +98,17 @@ func get_applied_yaw_degrees() -> float:
 	return _applied
 
 
+## The eyes' own turn in the last frame, before the lead clamp, in degrees.
+func get_eye_yaw_degrees() -> float:
+	return _eye_yaw
+
+
+## The extra turn actually written on the eyeballs last frame, in degrees: the lead over
+## the head, clamped to `eye_lead_degrees`, 0 while the gaze rests.
+func get_applied_eye_degrees() -> float:
+	return _eye_applied
+
+
 ## The head's turn the skeleton itself reported for the last processed frame.
 func get_measured_head_turn_degrees() -> float:
 	return _measured
@@ -89,6 +120,8 @@ func get_bone_names() -> PackedStringArray:
 	if _resolved_for == null:
 		return names
 	for index in _bones:
+		names.append(_resolved_for.get_bone_name(index))
+	for index in _eyes:
 		names.append(_resolved_for.get_bone_name(index))
 	return names
 
@@ -119,20 +152,40 @@ func _process_modification_with_delta(delta: float) -> void:
 		var desired := clampf(get_desired_yaw_degrees(), -reach_degrees, reach_degrees)
 		_yaw = move_toward(_yaw, desired, follow_speed_degrees * delta)
 	_applied = _yaw * _weight
+	# The eyes keep their own, faster idea of the turn (same clamped target, twice the
+	# speed), so on a new target they are ahead of the head and on release they are
+	# already centring while the head is still coming back. What they add is that
+	# difference, clamped so the eyeball never rolls into its socket.
+	var eye_target := 0.0
+	if looking and not _eyes.is_empty():
+		eye_target = clampf(get_desired_yaw_degrees(), -reach_degrees, reach_degrees)
+	_eye_yaw = move_toward(_eye_yaw, eye_target, eye_follow_speed_degrees * delta)
+	_eye_applied = clampf(_eye_yaw - _applied, -eye_lead_degrees, eye_lead_degrees) \
+		if not _eyes.is_empty() and eye_lead_degrees > 0.0 else 0.0
 	_measured = 0.0
-	if is_zero_approx(_applied) or _bones.is_empty():
+	if is_zero_approx(_applied) and is_zero_approx(_eye_applied):
 		return
 	# The vertical in the skeleton's own space: a turn about it there is a turn about the
 	# world's vertical on screen, whatever the actor and the visual are rotated by.
 	var up := (skeleton.global_basis.inverse() * Vector3.UP).normalized()
-	var head := _bones[_bones.size() - 1]
-	var before := skeleton.get_bone_global_pose(head).basis
-	for index in _bones.size():
-		var bone := _bones[index]
-		var pose := skeleton.get_bone_global_pose(bone)
-		pose.basis = Basis(up, deg_to_rad(_applied * _shares[index])) * pose.basis
-		skeleton.set_bone_global_pose(bone, pose)
-	_measured = _turn_about(up, before, skeleton.get_bone_global_pose(head).basis)
+	if not _bones.is_empty() and not is_zero_approx(_applied):
+		var head := _bones[_bones.size() - 1]
+		var before := skeleton.get_bone_global_pose(head).basis
+		for index in _bones.size():
+			var bone := _bones[index]
+			var pose := skeleton.get_bone_global_pose(bone)
+			pose.basis = Basis(up, deg_to_rad(_applied * _shares[index])) * pose.basis
+			skeleton.set_bone_global_pose(bone, pose)
+		_measured = _turn_about(up, before, skeleton.get_bone_global_pose(head).basis)
+	# Eyeballs: the same turn about the same vertical, on top of the head's pose (the
+	# modifier's writes are rolled back after the skin is built, so a frame that stops
+	# writing leaves the animation's own eye pose exactly as it was). The loop walks
+	# the bone indices themselves - indexing the packed array by its own values would
+	# ask for element 50 of a two-element array.
+	for eye in _eyes:
+		var pose := skeleton.get_bone_global_pose(eye)
+		pose.basis = Basis(up, deg_to_rad(_eye_applied)) * pose.basis
+		skeleton.set_bone_global_pose(eye, pose)
 
 
 func _resolve(skeleton: Skeleton3D) -> void:
@@ -150,6 +203,12 @@ func _resolve(skeleton: Skeleton3D) -> void:
 	if total > 0.0:
 		for index in _shares.size():
 			_shares[index] = _shares[index] / total
+	# Eyeballs are optional: a rig without them (N's) just has no lead to give.
+	_eyes = PackedInt32Array()
+	for bone_name: StringName in eye_bone_names:
+		var eye := skeleton.find_bone(bone_name)
+		if eye >= 0:
+			_eyes.append(eye)
 	if _bones.is_empty():
 		push_warning("NpcGaze: skeleton '%s' has none of the bones %s." % [skeleton.name, str(CHAIN)])
 
