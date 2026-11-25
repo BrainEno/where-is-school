@@ -1,0 +1,171 @@
+name: Face close-up capture
+
+# Evidence for #387: a 15-30 s recording of a real q_wake conversation on the game's
+# own cameras - the wide talk shot, Q's face insert, the directed face states entering
+# and settling, the close-up gaze with its staged attention shift, the authored grin,
+# and the release back to the gameplay framing. `tests/capture_face_closeup.gd` takes
+# the recording and asserts as it goes; see its header for the frame plan.
+#
+# Same recording pipeline as `laboratory-capture.yml`'s walkthrough: the movie maker
+# renders a PNG sequence at a fixed step (so every run is frame for frame), ffmpeg
+# encodes it afterwards (an .avi the movie maker writes is only readable once its
+# index is patched at exit, so a process that ends badly leaves a file nothing can
+# open), and the frames themselves are the proof the recording happened.
+
+on:
+  pull_request:
+    paths:
+      - "scripts/actors/**"
+      - "scenes/main/main.tscn"
+      - "scenes/environment/characters/**"
+      - "assets/characters/**"
+      - "assets/camera/**"
+      - "data/dialogue/zh-CN/prologue.json"
+      - "tests/capture_face_closeup.gd"
+      - "tests/face_states_test.gd"
+      - "tools/ci_import_godot.sh"
+      - ".github/workflows/face-closeup-capture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    name: record (close-up video)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: ./.github/actions/setup-godot
+
+      - name: Import
+        shell: bash
+        run: bash tools/ci_import_godot.sh "${RUNNER_TEMP}"
+
+      - name: Transcoding tools
+        shell: bash
+        run: |
+          # The ubuntu-latest image no longer carries ffmpeg (same reason as
+          # laboratory-capture.yml): install it, and say so loudly if it is not there,
+          # so the encoding step knows which of its two jobs it is doing.
+          if command -v ffmpeg > /dev/null 2>&1; then
+            ffmpeg -version | head -n 1
+            exit 0
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg > /dev/null
+          if ! command -v ffmpeg > /dev/null 2>&1; then
+            echo "::warning title=face close-up::ffmpeg is not available; the recording will be uploaded as the movie maker wrote it"
+          fi
+          ffmpeg -version | head -n 1 || true
+
+      - name: Record
+        shell: bash
+        run: |
+          # A PNG sequence at a fixed step: either the frames are there or they are
+          # not, and the script's own PASS/FAIL decides the run before anything is
+          # encoded. The window (360-720 frames at 24 fps) is the issue's 15-30 s.
+          set +e -uo pipefail
+          mkdir -p build/face_closeup
+          xvfb-run -a --server-args="-screen 0 1280x720x24" \
+            godot --path . --resolution 1280x720 --rendering-driver opengl3 --audio-driver Dummy \
+            --write-movie build/face_closeup/frame.png --fixed-fps 24 \
+            --script res://tests/capture_face_closeup.gd \
+            > "${RUNNER_TEMP}/record.log" 2>&1
+          code=$?
+          grep -E "FACE_CLOSEUP:|PASS|FAIL|SCRIPT ERROR|Movie" "${RUNNER_TEMP}/record.log" | head -n 40
+          frames=$(find build/face_closeup -name '*.png' | wc -l)
+          echo "recording: exit ${code}, ${frames} frames"
+          if [ "${code}" -ne 0 ] || [ "${frames}" -lt 360 ] || [ "${frames}" -gt 720 ] || \
+              grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' "${RUNNER_TEMP}/record.log" || \
+              ! grep -q '^PASS:' "${RUNNER_TEMP}/record.log"; then
+            echo "::error title=face close-up::${frames} frames were written (exit ${code}); PASS=$(grep -c '^PASS:' "${RUNNER_TEMP}/record.log" || true) SCRIPT_ERROR=$(grep -c 'SCRIPT ERROR' "${RUNNER_TEMP}/record.log" || true) TEST_FAILURE=$(grep -c 'TEST FAILURE' "${RUNNER_TEMP}/record.log" || true) FAIL=$(grep -c '^FAIL:' "${RUNNER_TEMP}/record.log" || true)"
+            # Ten annotations is the step's cap, so the verdict lines come first and
+            # FACE_CLOSEUP beats stay out of them: the failure itself is what matters.
+            grep -E '^ERROR:|SCRIPT ERROR|TEST FAILURE|^FAIL:|^PASS:' \
+              "${RUNNER_TEMP}/record.log" | cut -c1-400 | sort -u | head -n 8 | while IFS= read -r msg; do
+                printf '::error title=record verdict::%s\n' "$msg"
+              done
+            exit 1
+          fi
+          echo "::notice title=face close-up::recorded ${frames} frames at 24 fps (exit ${code})"
+          # The run's own annotations: which states and gaze each beat held, and where
+          # the staged mark was placed, readable without downloading anything.
+          grep -E '^FACE_CLOSEUP: ' "${RUNNER_TEMP}/record.log" | head -n 40 | while IFS= read -r line; do
+            printf '::notice title=face close-up beat::%s\n' "${line#FACE_CLOSEUP: }"
+          done
+
+      - name: Encode
+        shell: bash
+        run: |
+          # Three encoders, in order, then a GIF: libx264 is not guaranteed even when
+          # ffmpeg is present, and the frames are the evidence either way (the same
+          # ladder laboratory-capture.yml stands on).
+          encoded=""
+          : > "${RUNNER_TEMP}/ffmpeg.log"
+          for spec in "libx264:mp4:-preset slow -crf 24" "libvpx-vp9:webm:-b:v 0 -crf 34 -row-mt 1" "mpeg4:mp4:-q:v 4"; do
+            codec=${spec%%:*}
+            rest=${spec#*:}
+            container=${rest%%:*}
+            options=${rest#*:}
+            out="build/face_closeup_video.${container}"
+            mux=()
+            if [ "$container" = mp4 ]; then mux=(-movflags +faststart); fi
+            echo "--- trying ${codec} -> ${out}" >> "${RUNNER_TEMP}/ffmpeg.log"
+            # shellcheck disable=SC2086
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/face_closeup/*.png' \
+              -c:v "${codec}" ${options} -pix_fmt yuv420p "${mux[@]}" \
+              "${out}" >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ $? -eq 0 ] && [ -s "${out}" ]; then
+              encoded="${out}"
+              echo "::notice title=face close-up::encoded with ${codec} ($(stat -c%s "${out}") bytes)"
+              break
+            fi
+            rm -f "${out}"
+          done
+          if [ -z "${encoded}" ]; then
+            ffmpeg -y -framerate 24 -pattern_type glob -i 'build/face_closeup/*.png' \
+              -vf "scale=640:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse" \
+              build/face_closeup_video.gif >> "${RUNNER_TEMP}/ffmpeg.log" 2>&1
+            if [ -s build/face_closeup_video.gif ]; then
+              encoded="build/face_closeup_video.gif"
+              echo "::warning title=face close-up::no video encoder accepted the frames; the recording is a GIF"
+            fi
+          fi
+          echo "::notice title=face close-up::$(grep -vE '^\s*$' "${RUNNER_TEMP}/ffmpeg.log" | tail -n 3 | tr '\n' '|' | cut -c1-450)"
+          if [ -z "${encoded}" ]; then
+            echo "::error title=face close-up::no encoder accepted the recording"
+            exit 1
+          fi
+          # Two frames kept as stills: the insert and the settle are evidence on their
+          # own, not only inside the video.
+          cp "$(find build/face_closeup -name '*.png' | sort | sed -n '1p')" build/face_closeup_start.png
+          cp "$(find build/face_closeup -name '*.png' | sort | tail -n 1)" build/face_closeup_end.png
+          rm -rf build/face_closeup
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 \
+            "${encoded}" || true
+
+      - name: Upload recording
+        if: always()
+        run: |
+          # build/ is gitignored, and the artifact action skips ignored files - the
+          # laboratory walkthrough's artifact is really just its verbose log for the
+          # same reason. Stage the evidence in an unignored directory instead.
+          mkdir -p evidence/face_closeup
+          cp build/face_closeup_video.mp4 evidence/face_closeup/ 2>/dev/null || true
+          cp build/face_closeup_start.png evidence/face_closeup/ 2>/dev/null || true
+          cp build/face_closeup_end.png evidence/face_closeup/ 2>/dev/null || true
+          cp "$RUNNER_TEMP/record.log" evidence/face_closeup/record.log 2>/dev/null || true
+          cp "$RUNNER_TEMP/ffmpeg.log" evidence/face_closeup/ffmpeg.log 2>/dev/null || true
+          ls -la evidence/face_closeup/ > evidence/face_closeup/filelist.txt 2>&1 || true
+          echo "::notice title=face close-up files::$(tr '\n' ';' < evidence/face_closeup/filelist.txt | cut -c1-600)"
+      - name: Upload recording
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: face-closeup-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/evidence/face_closeup/
+          if-no-files-found: warn
+          compression-level: 0

@@ -159,6 +159,15 @@ jobs:
           # sidecar, a sidecar left behind by a move, and a duplicated model name.
           python3 tests/model_library_test.py
 
+      - name: Check the face morph single-writer contract
+        shell: bash
+        run: |
+          # #387: every layer of a shipped character's face composes in
+          # CharacterLookApplier, so no second script can start writing the same mesh
+          # behind its back. The allowed writers are frozen as a file list; anything
+          # else reaching for set_blend_shape_value fails here.
+          python3 tests/morph_writer_contract_test.py
+
       - name: Check the Godot UID declarations
         shell: bash
         run: |
@@ -378,6 +387,10 @@ jobs:
           # Play both languages through the prop/choice gates, roll call and continued save.
           run_check prologue_dialogue_paths 180 godot --headless --path . --script res://tests/prologue_dialogue_paths_test.gd || status=1
           run_check dialogue_closeups 150 godot --headless --path . --script res://tests/dialogue_closeups_test.gd || status=1
+          # #387: face states compose in one writer, the eyeballs lead the head inside
+          # NpcGaze, and CharacterFaceDirector drives a real QTalk conversation -
+          # insert attention, gaze release, the authored grin, and the settle.
+          run_check face_states 420 godot --headless --path . --script res://tests/face_states_test.gd || status=1
           # The prologue is a list of flag-gated steps, so it can be started from the
           # middle. This feeds it four snapshots and refuses a replay of a beat that is
           # already behind it.

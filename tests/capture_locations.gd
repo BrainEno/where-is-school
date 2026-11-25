@@ -263,6 +263,8 @@ const FRONT_YARD_STANCES := [
 	["equipment_room", Vector3(10.5, 0.0, -2.2)],
 	# Round 27: the block's north door (北门) and its fenced threshold, from the dirt.
 	["block_north", Vector3(-10.6, 0.0, -7.3)],
+	# Round 28: the school wall's door to the gym (体育馆的门), over the north rail.
+	["gym_door", Vector3(5.0, 0.0, -7.6)],
 ]
 const FRONT_YARD_VIEWS := [
 	["overview", Vector3(30.0, 22.0, 36.0), Vector3(2.0, 0.0, 10.0)],
@@ -276,14 +278,36 @@ const FRONT_YARD_VIEWS := [
 	["gym", Vector3(6.5, 4.0, -6.0), Vector3(6.5, 3.2, -28.0)],
 	# Round 27: the block's north door in the face's north-east corner, from the dirt.
 	["north_door", Vector3(-6.4, 3.8, -4.6), Vector3(-13.05, 1.0, -9.2)],
+	# Round 28: the wall's door to the gym (体育馆的门), over the north rail.
+	["gym_door", Vector3(5.0, 2.6, -7.2), Vector3(1.8, 1.2, -20.7)],
 ]
 ## Round 26: the north grove (北面枯树小道) from its own ground: one stance part-way up
 ## the east leg, and one high view down the whole L towards the court's opening.
 const NORTH_GROVE_STANCES := [
 	["east_leg", Vector3(1.7, 0.0, -7.6)],
+	# Round 28: at the wall's door to the gym (体育馆的门), where the east leg ends.
+	["gym_door", Vector3(1.8, 0.0, -19.0)],
 ]
 const NORTH_GROVE_VIEWS := [
 	["grove_overview", Vector3(7.0, 10.0, 0.0), Vector3(-14.0, 0.0, -18.6)],
+	# Round 28: the wall's door to the gym, and the shell's face over the wall.
+	["gym_door", Vector3(1.8, 2.0, -17.6), Vector3(1.8, 1.3, -20.7)],
+	["gym_over_wall", Vector3(7.5, 3.2, -13.0), Vector3(6.5, 2.6, -26.0)],
+]
+## Round 28: inside the gym (体育馆) - the court's mid line, the east corner, and the
+## stage's front, then five fixed views (the hall from above, the steel doors, the
+## bleacher run, the stage, the scoreboard).
+const GYM_STANCES := [
+	["court_mid", Vector3(6.5, 1.2, -25.6)],
+	["east_end", Vector3(9.8, 1.2, -25.6)],
+	["stage_front", Vector3(4.0, 1.2, -25.5)],
+]
+const GYM_VIEWS := [
+	["hall_overview", Vector3(13.0, 6.6, -23.6), Vector3(2.0, 1.2, -30.5)],
+	["steel_doors", Vector3(6.5, 2.4, -26.2), Vector3(6.5, 1.9, -23.7)],
+	["bleachers", Vector3(10.2, 2.8, -25.6), Vector3(5.5, 1.6, -31.2)],
+	["stage", Vector3(6.8, 2.4, -25.4), Vector3(1.0, 1.9, -28.2)],
+	["scoreboard", Vector3(8.6, 3.0, -27.4), Vector3(13.0, 4.6, -28.2)],
 ]
 const STREET_GATE_VIEWS := [
 	["street_gate", Vector3(-2.0, 2.4, 18.6), Vector3(-11.0, 1.3, 12.0)],
@@ -373,6 +397,7 @@ var _container_yard := false
 var _port := false
 var _front_yard := false
 var _north_grove := false
+var _gym := false
 var _annex_thresholds := false
 var _stable_yard := false
 var _teaching_stairs := false
@@ -425,6 +450,8 @@ func _initialize() -> void:
 			_front_yard = true
 		elif arg == "north-grove":
 			_north_grove = true
+		elif arg == "gym":
+			_gym = true
 		elif arg == "stable-yard":
 			_stable_yard = true
 		elif arg == "teaching-stairs":
@@ -516,6 +543,8 @@ func _run() -> void:
 	elif _north_grove:
 		await _capture_views(out_dir, "north_grove", ^"GroveWallEast", NORTH_GROVE_STANCES, NORTH_GROVE_VIEWS,
 			"north_grove")
+	elif _gym:
+		await _capture_views(out_dir, "gym", ^"GymWallNorth", GYM_STANCES, GYM_VIEWS, "gym")
 	elif _teaching_stairs:
 		await _capture_views(out_dir, "corridor", ^"TeachingBlock/GroundFloor/Porch", TEACHING_STAIR_STANCES,
 			TEACHING_STAIR_VIEWS, "teaching_stairs")

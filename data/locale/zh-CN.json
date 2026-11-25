@@ -57,6 +57,8 @@
     "prompt.to_grove": "沿墙根走进枯树小道",
     "prompt.court_to_grove": "到墙尽头的小道去",
     "prompt.grove_to_yard": "回到校门旁",
+    "prompt.to_gym": "进体育馆",
+    "prompt.gym_to_grove": "回到枯树小道",
     "prompt.grove_to_court": "走向球场",
     "prompt.back_to_school": "回学校",
     "check.detail": "{value} + {dice} {die}{modifier}　对　{difficulty}",

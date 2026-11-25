@@ -371,6 +371,11 @@ materials = {
 "q_body/q_mat_skinbody": SubResource("m_q_body__q_mat_skinbody")
 }
 expression = {}
+face_states = {
+"listening": {"Brow_Raise": 0.14, "Mouth_Close": 0.08},
+"attention": {"Brow_Raise": 0.22, "Brow_Compress": 0.05},
+"friendly": {"Brow_Raise": 0.08, "Jaw_Open": 0.05, "Mouth_Close": 0.03}
+}
 blink_shapes = PackedStringArray("Eye_Blink_L", "Eye_Blink_R")
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16
