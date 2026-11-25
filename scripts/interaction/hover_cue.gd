@@ -286,9 +286,11 @@ func _exit_tree() -> void:
 func _update_bubble() -> void:
 	if _source == null or not is_inside_tree():
 		return
-	# A cue that is fading out keeps the bubble only while it still owns it; the cue that took over
-	# the target claims it, so the two never fight over it frame by frame.
-	if not _revealed and not (_bubble != null and is_instance_valid(_bubble) and _bubble.is_showing_for(self)):
+	# A cue that is fading out keeps the bubble only while it still owns it, and never
+	# re-sets it: while the mark fades, `_talking` is still true and this runs each frame,
+	# so an unconditional claim here would steal the bubble back from the cue that took
+	# over the target - the two would fight over the one shared node until the fade ended.
+	if not _revealed:
 		return
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
