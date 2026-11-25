@@ -467,6 +467,7 @@ materials = {
 "m_st_button": SubResource("m_m_st_button")
 }
 expression = {}
+face_states = {}
 blink_shapes = PackedStringArray()
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16

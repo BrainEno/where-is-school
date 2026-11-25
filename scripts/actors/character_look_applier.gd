@@ -1,7 +1,15 @@
 class_name CharacterLookApplier
 extends Node
 ## Puts a `CharacterLook` on the model next to it: painted materials per surface, the ink
-## line on the parts that carry one, the face's resting expression, and a blink.
+## line on the parts that carry one, the face's resting expression, a directed face state
+## (`set_face_state()`, from `CharacterLook.face_states`), and a blink.
+##
+## **One writer.** Every morph weight on a shipped character is written here (the
+## classroom Q's textbook pose excepted - it owns `Smile`/`Mouth_Open`, which no face
+## state names). The layers compose in `_composed_weight()`: resting expression under,
+## directed state in the middle, blink on top, so a blink and a state can never erase
+## each other. Nothing outside this file should call `set_blend_shape_value()` on a
+## character mesh.
 ##
 ## Sits in the character wrapper (`protagonist.tscn`, `q.tscn`, `teacher_n.tscn`, and the
 ## seated `classroom_student.tscn`) beside `Model`. It changes what the surfaces are drawn
@@ -66,6 +74,18 @@ var _report: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _blink_wait := 0.0
 var _blink_time := -1.0
+## The blink channel's current value (0 open, 1 shut), composed *under* nothing - the
+## blink is the top layer of `_composed_weight()`.
+var _blink_closed := 0.0
+## The directed face state currently requested (`""` while settling out), the blend
+## shapes it sets, and how far the blend has travelled toward it (0 none, 1 held).
+var _state_name: StringName = &""
+var _state_target: Dictionary = {}
+var _state_weight := 0.0
+var _state_blend := 0.3
+## A state arrived since the last frame (its target must be written even if the blend
+## weight has not moved).
+var _state_dirty := false
 
 
 func _ready() -> void:
@@ -82,27 +102,63 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if treatment != Treatment.PAINTED or look == null or not blinking or look.blink_shapes.is_empty():
+	if treatment != Treatment.PAINTED or look == null:
+		return
+	# The directed face layer eases toward its state (or back to rest when clearing).
+	# It writes only while the blend is moving or a new state just arrived: a held state
+	# or a settled face costs nothing per frame, the same bargain the blink already makes.
+	var wanted := 1.0 if not _state_name.is_empty() else 0.0
+	if _state_dirty or not is_equal_approx(_state_weight, wanted):
+		if _state_blend <= 0.0:
+			_state_weight = wanted
+		else:
+			_state_weight = move_toward(_state_weight, wanted, delta / _state_blend)
+		if _state_weight <= 0.0 and wanted == 0.0:
+			_state_weight = 0.0
+		# Write with the target still in place: at weight 0 the composition is rest,
+		# so the meshes are left exactly at rest, and only then is the target dropped.
+		# Clearing it before the write would strand the meshes at the last value they
+		# were given.
+		_write_state_shapes()
+		_state_dirty = false
+		if _state_weight <= 0.0 and wanted == 0.0:
+			_state_target = {}
+	if not blinking or look.blink_shapes.is_empty():
 		return
 	if _blink_time >= 0.0:
-		_blink_time += delta
-		var duration := maxf(look.blink_duration, 0.02)
-		var closed := 1.0 - absf(_blink_time / duration * 2.0 - 1.0)
-		if _blink_time >= duration:
-			_blink_time = -1.0
-			closed = 0.0
-			_blink_wait = _next_blink_wait()
-		_set_blink(clampf(closed, 0.0, 1.0))
+		_blink_step(delta)
 		return
 	_blink_wait -= delta
 	if _blink_wait <= 0.0:
 		_blink_time = 0.0
 
 
+## One step of an open blink: updates the blink channel and writes the composed value
+## of every blink shape (rest, then the face state, then the lid on top).
+func _blink_step(delta: float) -> void:
+	_blink_time += delta
+	var duration := maxf(look.blink_duration, 0.02)
+	var closed := 1.0 - absf(_blink_time / duration * 2.0 - 1.0)
+	if _blink_time >= duration:
+		_blink_time = -1.0
+		closed = 0.0
+		_blink_wait = _next_blink_wait()
+	_set_blink(clampf(closed, 0.0, 1.0))
+
+
 ## Switches the model to `which` and returns the report (see `get_report()`).
+##
+## A treatment switch is also a settle: the directed face state returns to rest and the
+## blink channel to open, so a rebind (a capture changing looks, a fresh session) can
+## never inherit a half-applied face from before it.
 func apply_treatment(which: Treatment) -> Dictionary:
 	treatment = which
 	_blink_time = -1.0
+	_blink_closed = 0.0
+	_state_name = &""
+	_state_target = {}
+	_state_weight = 0.0
+	_state_dirty = false
 	var report := {
 		"treatment": Treatment.keys()[which],
 		"look": look.label if look != null else "",
@@ -283,14 +339,122 @@ func _apply_expression(mesh_instance: MeshInstance3D, painted: bool) -> Dictiona
 		var shape := String(mesh.get_blend_shape_name(index))
 		var weight := 0.0
 		if painted and look != null:
-			weight = float(look.expression.get(shape, 0.0))
+			weight = _composed_weight(shape)
 		mesh_instance.set_blend_shape_value(index, weight)
 		if weight != 0.0:
 			applied[shape] = weight
 	return applied
 
 
+## Holds `state` (a key of `CharacterLook.face_states`) as this face's directed layer,
+## blending from wherever the face currently is over `blend_seconds`. Returns false when
+## the look has no such state: N and the seated student honestly have no face states of
+## their own instead of borrowing another character's.
+func set_face_state(state: StringName, blend_seconds := 0.3) -> bool:
+	if look == null:
+		return false
+	var shapes: Variant = look.face_states.get(String(state))
+	if not (shapes is Dictionary) or (shapes as Dictionary).is_empty():
+		return false
+	_state_name = state
+	_state_target = (shapes as Dictionary).duplicate()
+	_state_blend = maxf(blend_seconds, 0.0)
+	_state_dirty = true
+	if _state_blend <= 0.0:
+		_state_weight = 1.0
+		if treatment == Treatment.PAINTED:
+			_write_state_shapes()
+			_state_dirty = false
+	return true
+
+
+## Lets the face settle back to its resting expression over `blend_seconds`: the
+## "expression settles" half of a conversation ending, a look being released, or a
+## load dropping the session that asked for the state.
+func clear_face_state(blend_seconds := 0.3) -> void:
+	if _state_name.is_empty() and _state_weight <= 0.0:
+		return
+	_state_name = &""
+	_state_blend = maxf(blend_seconds, 0.0)
+	if _state_blend > 0.0 and treatment == Treatment.PAINTED:
+		# The target stays until the blend arrives, so the fade is out of the state the
+		# face was actually holding.
+		_state_dirty = true
+		return
+	_state_weight = 0.0
+	_state_dirty = false
+	# Write at weight 0 with the target still in place (composition = rest), then
+	# drop it: the meshes end exactly at rest instead of at the state's last value.
+	if treatment == Treatment.PAINTED:
+		_write_state_shapes()
+	_state_target = {}
+
+
+## The directed state currently requested (empty while the face is settling out).
+func get_face_state() -> StringName:
+	return _state_name
+
+
+## How far the face has blended into the requested state: 0 is rest, 1 is held.
+func get_face_state_weight() -> float:
+	return _state_weight
+
+
+## Every blend shape's weight as this applier composes it - resting expression, moved
+## toward the active state, blink lid on top. The mesh is written from the same
+## function, so tests compare against what is actually drawn.
+func get_composed_face() -> Dictionary:
+	var composed := {}
+	if look == null:
+		return composed
+	for mesh_instance in _meshes():
+		var mesh := mesh_instance.mesh
+		if mesh == null:
+			continue
+		for index in mesh.get_blend_shape_count():
+			var shape := String(mesh.get_blend_shape_name(index))
+			composed[shape] = _composed_weight(shape)
+	return composed
+
+
+## The weight one shape should currently hold. The whole priority order of the face in
+## one function: the resting expression, moved toward the active state's target for the
+## shapes the state names, with the blink lid on top of that. Nothing else writes morphs
+## on a shipped character (`q_textbook_pose` excepted - it owns `Smile`/`Mouth_Open`,
+## which no state here names).
+func _composed_weight(shape: String) -> float:
+	var weight := float(look.expression.get(shape, 0.0))
+	if _state_weight > 0.0 and _state_target.has(shape):
+		weight = lerpf(weight, float(_state_target[shape]), _state_weight)
+	if look.blink_shapes.has(shape):
+		weight = lerpf(weight, 1.0, _blink_closed)
+	return weight
+
+
+## Writes the composed weight of every shape the active state names, on every mesh that
+## has it.
+func _write_state_shapes() -> void:
+	if look == null or _state_target.is_empty():
+		return
+	for mesh_instance in _meshes():
+		var mesh := mesh_instance.mesh
+		if mesh == null:
+			continue
+		for shape: String in _state_target:
+			var index := mesh_instance.find_blend_shape_by_name(StringName(shape))
+			if index < 0:
+				continue
+			mesh_instance.set_blend_shape_value(index, _composed_weight(shape))
+
+
+## Moves the blink channel to `closed` and writes the composed value of each blink
+## shape. The blink never looks at the state to decide its own value and the state
+## never writes a blink shape, so the two cannot overwrite each other - they meet only
+## in `_composed_weight()`.
 func _set_blink(closed: float) -> void:
+	_blink_closed = closed
+	if look == null:
+		return
 	for mesh_instance in _meshes():
 		var mesh := mesh_instance.mesh
 		if mesh == null:
@@ -299,8 +463,7 @@ func _set_blink(closed: float) -> void:
 			var index := mesh_instance.find_blend_shape_by_name(StringName(shape))
 			if index < 0:
 				continue
-			var resting := float(look.expression.get(shape, 0.0))
-			mesh_instance.set_blend_shape_value(index, lerpf(resting, 1.0, closed))
+			mesh_instance.set_blend_shape_value(index, _composed_weight(shape))
 
 
 func _next_blink_wait() -> float:

@@ -465,6 +465,7 @@ expression = {
 "Frown": 0.28,
 "Mouth_Close": 0.34
 }
+face_states = {}
 blink_shapes = PackedStringArray("Eye_Blink_L", "Eye_Blink_R")
 blink_interval = Vector2(2.5, 5)
 blink_duration = 0.16
