@@ -1401,7 +1401,7 @@ metadata/entry_walk = 2.6
 
 [node name="FromGym" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(1.8, 0, -19.0)
-rotation_degrees = Vector3(0, 0, 0)
+rotation_degrees = Vector3(0, 180, 0)
 metadata/entry_facing = true
 metadata/entry_walk = 2.6
 

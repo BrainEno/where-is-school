@@ -1299,33 +1299,33 @@ shape = SubResource("BoxShape3D_64")
 mesh = SubResource("BoxMesh_64")
 material_override = ExtResource("art_metal_ink")
 
-[node name="BenchSeat" type="StaticBody3D" parent="."]
+[node name="ShopBenchSeat" type="StaticBody3D" parent="."]
 position = Vector3(10.5, 0.48, -20.2)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BenchSeat"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShopBenchSeat"]
 shape = SubResource("BoxShape3D_65")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BenchSeat"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ShopBenchSeat"]
 mesh = SubResource("BoxMesh_65")
 material_override = ExtResource("12_wood")
 
-[node name="BenchLegNorth" type="StaticBody3D" parent="."]
+[node name="ShopBenchLegNorth" type="StaticBody3D" parent="."]
 position = Vector3(10.5, 0.225, -20.9)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BenchLegNorth"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShopBenchLegNorth"]
 shape = SubResource("BoxShape3D_66")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BenchLegNorth"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ShopBenchLegNorth"]
 mesh = SubResource("BoxMesh_66")
 material_override = ExtResource("art_metal_ink")
 
-[node name="BenchLegSouth" type="StaticBody3D" parent="."]
+[node name="ShopBenchLegSouth" type="StaticBody3D" parent="."]
 position = Vector3(10.5, 0.225, -19.5)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BenchLegSouth"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ShopBenchLegSouth"]
 shape = SubResource("BoxShape3D_67")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="BenchLegSouth"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ShopBenchLegSouth"]
 mesh = SubResource("BoxMesh_67")
 material_override = ExtResource("art_metal_ink")
 

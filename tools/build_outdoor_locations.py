@@ -483,9 +483,9 @@ def build_street():
     s.box("Manhole", (1.0, 0.03, -4.0), (1.1, 0.06, 0.9), "metal", None, False)
     for i, z in enumerate((-19.5, -18.0, -16.5)):
         s.box(f"Bollard{i}", (8.55, 0.375, z), (0.16, 0.75, 0.16), "metal")
-    s.box("BenchSeat", (10.5, 0.48, -20.2), (0.45, 0.07, 1.8), "wood")
-    s.box("BenchLegNorth", (10.5, 0.225, -20.9), (0.4, 0.45, 0.08), "metal")
-    s.box("BenchLegSouth", (10.5, 0.225, -19.5), (0.4, 0.45, 0.08), "metal")
+    s.box("ShopBenchSeat", (10.5, 0.48, -20.2), (0.45, 0.07, 1.8), "wood")
+    s.box("ShopBenchLegNorth", (10.5, 0.225, -20.9), (0.4, 0.45, 0.08), "metal")
+    s.box("ShopBenchLegSouth", (10.5, 0.225, -19.5), (0.4, 0.45, 0.08), "metal")
     s.box("ShopAwning", (9.5, 2.9, -24.0), (0.85, 0.08, 6.0), "trim")
     s.box("ShopSign", (9.82, 3.5, -24.0), (0.08, 0.7, 4.6), "paper")
     s.box("ShopPoster", (9.83, 1.6, -21.0), (0.04, 0.8, 0.55), "paper", None, False)
