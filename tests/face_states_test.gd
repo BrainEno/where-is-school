@@ -371,8 +371,13 @@ func _check_conversation() -> void:
 	_checks.expect(_focus.get_glance() == _room.find_interactable(&"q_talk"),
 		"The insert glance is not held on QTalk.")
 	var gaze := _q_actor.get_gaze()
-	_checks.expect(gaze != null and _q_actor.is_watching() and gaze.get_weight() > 0.5,
-		"Q's insert gaze did not engage.")
+	if not (gaze != null and _q_actor.is_watching() and gaze.get_weight() > 0.5):
+		var director := world.get_node_or_null(^"CharacterFaceDirector")
+		var camera := director.call("_camera") if director != null else null
+		_checks.fail("Q's insert gaze did not engage. (gaze=%s watching=%s weight=%.2f glance=%s camera=%s)"
+			% [str(gaze != null), str(_q_actor.is_watching()),
+				gaze.get_weight() if gaze != null else -1.0,
+				str(_focus.get_glance()), str(camera)])
 	if gaze != null:
 		_checks.expect(absf(gaze.get_applied_eye_degrees()) <= gaze.eye_lead_degrees + 0.01,
 			"The eye lead broke its clamp during the insert.")
@@ -401,7 +406,10 @@ func _check_conversation() -> void:
 	# states never took the shape it owns.
 	_checks.expect(await Harness.wait_until(_grin_visible, 6.0),
 		"The authored grin on q_end_grin did not play through the face channels.")
+	# The terminal stage line still needs its click, exactly like a player gives it.
 	if not await Harness.wait_until(func() -> bool:
+			if _dialogue.is_busy():
+				_dialogue.advance_presentation()
 			return not _dialogue.is_busy(), 15.0):
 		_checks.fail("q_end_grin did not end the conversation.")
 		return

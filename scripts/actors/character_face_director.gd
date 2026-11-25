@@ -116,6 +116,8 @@ func _sync_gaze(glance_actor: NpcActor) -> void:
 		return
 	var camera := _camera()
 	if camera == null:
+		push_warning("CharacterFaceDirector: insert gaze on '%s' found no camera to look into."
+			% String(wanted.npc_id))
 		return
 	wanted.watch(camera, 0.0)
 	_gaze_actor = wanted
@@ -137,8 +139,11 @@ func _actor_of(subject: Interactable) -> NpcActor:
 
 
 ## The game camera - a dialogue insert's point of view, and therefore where the
-## player's eyes are from inside the shot.
+## player's eyes are from inside the shot. The rig is the normal answer; a viewport
+## lookup covers a rig that has not bound yet, and is still the camera on screen.
 func _camera() -> Camera3D:
-	if _player == null or _player.camera_rig == null:
-		return null
-	return _player.camera_rig.camera
+	if _player != null and _player.camera_rig != null and _player.camera_rig.camera != null:
+		return _player.camera_rig.camera
+	if is_inside_tree():
+		return get_viewport().get_camera_3d()
+	return null
