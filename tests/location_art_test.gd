@@ -108,9 +108,10 @@ const LOCATIONS := {
 		# on its outlined leaves, as on the 01 entrance) (23). Round 28: the north run
 		# carries the gym's door (the run splits in two and the leaf fills the gap: 2) -
 		# dressing here, the exit lives on the strip's side (the yard's ground ends at
-		# the NorthRail).
-		"shapes": 125,
-		"interactables": 8,
+		# the NorthRail). Round 29: the changing room (更衣室) south of the equipment
+		# room - room, plinth, door, lintel (4), and its look's sphere and pick box (2).
+		"shapes": 131,
+		"interactables": 9,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove", "FromBlockNorth"],
 		"exits": {
 			"front_yard_back_inside": "corridor/FromTeachingEntrance",

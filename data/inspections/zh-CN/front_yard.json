@@ -28,5 +28,12 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "待做·操场的器材收在墙根下，器材室的铁门关着"
+  },
+  "front_yard_changing_room": {
+    "title": "更衣室",
+    "prompt": "看看更衣室",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · 更衣室关着的铁门，就在器材室旁边"
   }
 }

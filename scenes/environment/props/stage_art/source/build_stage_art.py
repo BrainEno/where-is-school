@@ -183,6 +183,7 @@ MATERIALS: dict[str, dict] = {
     # dead trees, dead grass, a low railing to the sports ground beyond.
     "yard_dirt": {"texture": stex("yard_dirt"), "triplanar": "world", "scale": (0.25, 0.25, 0.25)},
     "yard_path": {"texture": stex("yard_path"), "cut": 0.5, "scale": (1.0, YARD_PATH_LEN / 6.0, 1.0)},
+    "track_paint": {"texture": stex("track_oval"), "cut": 0.5},
     "tree_trunk": {"color": (92, 82, 78), "outline": True},
     "tree_bark": {"color": (98, 88, 82), "outline": True},
     "tree_twig": {"color": (112, 100, 94)},
@@ -466,6 +467,11 @@ def front_yard_nodes() -> Builder:
     south = SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]
     b.flat("StageWindows", "SchoolBlockSouth", yard.quad(b, south, 11.4), "yard_school_windows_south",
            (5.006, 0.5, 0.0), (0, 90, 0))
+    # Round 29: the dirt oval's running track (操场跑道), the sketch's chalk ring east
+    # of the block: three concentric lanes as one flat decal on the dirt, a clear of the
+    # side door's path and the retractable gate, and of the fence's tree at x 10.2. Paint
+    # on the ground - no collider, the ground's own body answers every sight line.
+    b.flat("StageTrack", A, yard.plane(b, 9.0, 15.0), "track_paint", (7.0, 0.02, 12.0))
     school_wall_art(b, street=False)
     # Round 27: the gym (体育馆) beyond the school wall's north-east corner - a high window
     # band and its shut double doors on the south face, as children of the graybox body so
@@ -478,6 +484,11 @@ def front_yard_nodes() -> Builder:
         b.flat(f"StageDoorJamb{side}", "EquipmentRoom", box(b, (0.08, 2.3, 0.26)), "metal_ink",
                (side * 0.69, 0.45, 1.74), shadow=True)
     b.flat("StageDoorHead", "EquipmentRoom", box(b, (1.6, 0.12, 0.26)), "metal_ink", (0, 1.75, 1.74), shadow=True)
+    # Round 29: the changing room's (更衣室) door frame, the equipment room's twin.
+    for side in (-1, 1):
+        b.flat(f"StageDoorJamb{side}", "ChangingRoom", box(b, (0.08, 2.3, 0.26)), "metal_ink",
+               (side * 0.69, 0.45, 1.74), shadow=True)
+    b.flat("StageDoorHead", "ChangingRoom", box(b, (1.6, 0.12, 0.26)), "metal_ink", (0, 1.75, 1.74), shadow=True)
     return b
 
 

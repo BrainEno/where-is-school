@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[4]
@@ -370,6 +370,23 @@ def save(img: Image.Image, name: str) -> None:
 
 # Distance floors: (plane size, plane centre x/z, playable rectangle x0, x1, z0, z1).
 # Kept in step with `build_stage_art.py`, which places the planes.
+def track_oval() -> Image.Image:
+    """The running track's chalk oval on the dirt (the sketch's 操场跑道).
+
+    Three concentric ellipse outlines drawn on transparency: the quad that carries this
+    maps it onto a 9 x 15 m patch, so a full-bleed circle in the texture comes out a
+    9 x 15 m ellipse in the world and the lanes stay true to the sketch's ring.
+    """
+    px = 512
+    img = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    chalk = (226, 222, 212, 255)
+    cx = cy = px / 2.0
+    for r in (240, 198, 156):
+        draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=chalk, width=6)
+    return img
+
+
 DISTANCE = {
     "corridor": (320.0, (40.0, -60.0), (-2.2, 2.2, -9.2, 7.6)),
     "street": (200.0, (0.0, -10.0), (-21.0, 22.0, -42.0, 20.0)),
@@ -398,7 +415,10 @@ TEXTURES = {
     "distance_front_yard.png": lambda: distance_floor(*DISTANCE["front_yard"], seed=3145, glow=(112, 94, 80), belt=(94, 84, 92)),
     "distance_north_grove.png": lambda: distance_floor(*DISTANCE["north_grove"], seed=3146, glow=(112, 94, 80), belt=(94, 84, 92)),
     "distance_gym.png": lambda: distance_floor(*DISTANCE["gym"], seed=3147, glow=(112, 94, 80), belt=(94, 84, 92)),
+    "track_oval.png": track_oval,
 }
+
+
 
 
 def main() -> None:

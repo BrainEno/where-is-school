@@ -28,5 +28,12 @@
     "speaker": "protagonist",
     "source": "observed",
     "text": "TODO · the yard's sports gear stored at the wall's foot, the room's iron door shut"
+  },
+  "front_yard_changing_room": {
+    "title": "The changing room",
+    "prompt": "Look at the changing room",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · the changing room's shut iron door, beside the equipment room's"
   }
 }

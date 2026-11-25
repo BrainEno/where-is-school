@@ -257,19 +257,21 @@
     },
     {
       "issue": 346,
-      "reason": "Round 16 front yard (前操场): the card reader, the retractable gate and a dead tree are inspectable; the owner writes their lines. Round 27 adds the equipment room look with the same TODO placeholder.",
+      "reason": "Round 16 front yard (前操场): the card reader, the retractable gate and a dead tree are inspectable; the owner writes their lines. Round 27 adds the equipment room look with the same TODO placeholder. Round 29 adds the changing room look with the same TODO placeholder.",
       "files": {
         "data/inspections/zh-CN/front_yard.json": {
           "/front_yard_card_reader/text": "ae282dfa2219364e469c324ce3b834e0f1534db68e68d8df8af80ba144e90530",
           "/front_yard_gate/text": "787357e37784ee4e87078b75801fe58e723f4aa12c71fe4e54885a49b378d43e",
           "/front_yard_dead_tree/text": "131c7a1dd920a49a48493b46bd15b87920c334a2aba32b07f5e1d2aa6b4fc4b5",
-          "/front_yard_equipment_room/text": "996ce12282d160d2ffc13dc3a4ff0c0f0e1455935215066bc8f3fc16bce8d4ca"
+          "/front_yard_equipment_room/text": "996ce12282d160d2ffc13dc3a4ff0c0f0e1455935215066bc8f3fc16bce8d4ca",
+          "/front_yard_changing_room/text": "e47a4940f2641adedccf1f5725376355807e2bd039d16d9d12767ee18332de3d"
         },
         "data/inspections/en/front_yard.json": {
           "/front_yard_card_reader/text": "281b93435192635ac9c751cb7acf9075c5f629ef16a37174e758d421a0f9fd15",
           "/front_yard_gate/text": "949fb660d354c5f9f073105ce94ff00ca39303bf9923f78549cc8b87fb209424",
           "/front_yard_dead_tree/text": "333bbf9f8f53bfcaa90f51632a5ccf24dfc801649cc0fd122dc7fd94fdf09055",
-          "/front_yard_equipment_room/text": "d7702deef2072ee0e1b20de30bacbf469d460edd17dea30ebd83bd6e2af56130"
+          "/front_yard_equipment_room/text": "d7702deef2072ee0e1b20de30bacbf469d460edd17dea30ebd83bd6e2af56130",
+          "/front_yard_changing_room/text": "32fd9e1d3c3876805f777191529ce716b3a2c80a57e3f3d6e0bb33833e1efe4f"
         }
       }
     },

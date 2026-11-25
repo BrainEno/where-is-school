@@ -766,6 +766,14 @@ def build_front_yard():
     s.box("EquipmentRoomPlinth", (10.5, 0.6, -5.9), (4.4, 1.2, 3.6), "concrete", occ)
     s.box("EquipmentRoomDoor", (10.5, 2.35, -4.16), (1.3, 2.3, 0.08), "metal")
     s.box("EquipmentRoomLintel", (10.5, 3.65, -4.14), (1.6, 0.3, 0.14), "concrete")
+    # Round 29: the sketch's changing room (更衣室) directly south of it, the same shell:
+    # teal room on an ivory plinth, a shut iron door on the south face under a lintel, the
+    # stage pass framing the door (build_stage_art.py). Nothing walkable - the room's own
+    # text is the owner's to write (data/inspections/*/front_yard.json).
+    s.box("ChangingRoom", (10.5, 1.9, -2.5), (4.2, 3.8, 3.4), "wall", occ)
+    s.box("ChangingRoomPlinth", (10.5, 0.6, -2.5), (4.4, 1.2, 3.6), "concrete", occ)
+    s.box("ChangingRoomDoor", (10.5, 2.35, -0.76), (1.3, 2.3, 0.08), "metal")
+    s.box("ChangingRoomLintel", (10.5, 3.65, -0.74), (1.6, 0.3, 0.14), "concrete")
     s.box("HoopBoard0", (8.15, 0.08, -5.3), (1.8, 0.16, 1.1), "concrete")
     s.box("HoopBoard1", (8.15, 0.24, -5.3), (1.8, 0.16, 1.1), "concrete")
     s.box("HoopPole0", (9.6, 0.06, -5.55), (3.2, 0.12, 0.12), "metal")
@@ -804,6 +812,11 @@ def build_front_yard():
         {"name": "DeadTreeLook", "pos": (tx + 0.45, 1.2, FRONT_YARD_TREES[0][1] + 0.45), "id": "front_yard_dead_tree",
          "inspection": "front_yard_dead_tree", "radius": 1.3,
          "support": ("../../DeadTree0Trunk",), "outline": ("DeadTree0/StageTree/Trunk",)},
+        # Round 29: the changing room's shut door (更衣室), south of the equipment room.
+        {"name": "ChangingRoomLook", "pos": (10.5, 1.1, 0.2), "id": "front_yard_changing_room",
+         "inspection": "front_yard_changing_room", "radius": 1.3,
+         "support": ("../../ChangingRoomDoor",),
+         "outline": ("ChangingRoomDoor/MeshInstance3D",)},
         # Round 27: the equipment room's shut door (器材室), with the stored gear beside it.
         {"name": "EquipmentRoomLook", "pos": (10.5, 1.1, -3.3), "id": "front_yard_equipment_room",
          "inspection": "front_yard_equipment_room", "radius": 1.3,
