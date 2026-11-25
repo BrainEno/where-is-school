@@ -134,6 +134,91 @@ def main() -> int:
         blocked[check_line] = blocked[check_line].replace("检定：臆想 ", f"检定：{label} ", 1)
         refused(blocked, names, "主观会话只能带「臆想」检定", f"{label} check inside a fantasy")
 
+    # A failed write never leaves a document half updated (issue #371). Each case runs on a
+    # scratch copy of two files, so the real data is never touched.
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as scratch:
+        first, second = Path(scratch) / "zh-CN.json", Path(scratch) / "en.json"
+        first.write_text("OLD-ZH", encoding="utf-8")
+        second.write_text("OLD-EN", encoding="utf-8")
+        writes = [(first, "NEW-ZH\n"), (second, "NEW-EN\n")]
+
+        def contents() -> tuple[str, str]:
+            return first.read_text(encoding="utf-8"), second.read_text(encoding="utf-8")
+
+        def leftovers() -> list[str]:
+            return sorted(p.name for p in Path(scratch).iterdir() if p.name not in ("zh-CN.json", "en.json"))
+
+        # Full disk while staging the second file: nothing changes.
+        real_write = Path.write_text
+        def enospc_on_en(self, data, *args, **kwargs):
+            if self.name.startswith("en.json"):
+                raise OSError(28, "No space left on device")
+            return real_write(self, data, *args, **kwargs)
+        with mock.patch.object(Path, "write_text", enospc_on_en):
+            try:
+                sd.commit_files(writes)
+                FAILURES.append("ENOSPC on the mirror was not reported")
+            except sd.DocError as error:
+                expect("没有任何文件被改动" in str(error), f"ENOSPC message not in Chinese recovery form: {error}")
+        expect(contents() == ("OLD-ZH", "OLD-EN"), f"ENOSPC on the mirror changed a file: {contents()}")
+        expect(leftovers() == [], f"ENOSPC left files behind: {leftovers()}")
+
+        # Truncated write of the second file: the read-back check stops it before any replacement.
+        def truncate_en(self, data, *args, **kwargs):
+            if self.name.startswith("en.json"):
+                data = data[:3]
+            return real_write(self, data, *args, **kwargs)
+        with mock.patch.object(Path, "write_text", truncate_en):
+            try:
+                sd.commit_files(writes)
+                FAILURES.append("a truncated write was not caught by the read-back check")
+            except sd.DocError as error:
+                expect("读回" in str(error) or "没有任何文件" in str(error), f"truncation message: {error}")
+        expect(contents() == ("OLD-ZH", "OLD-EN"), f"truncation changed a file: {contents()}")
+        expect(leftovers() == [], f"truncation left files behind: {leftovers()}")
+
+        # Replacement of the second file fails: the first file is restored from its backup.
+        real_replace = sd.os.replace
+        calls = {"n": 0}
+        def replace_second_fails(src, dst, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 2:
+                raise OSError(5, "rename failed")
+            return real_replace(src, dst, *args, **kwargs)
+        with mock.patch.object(sd.os, "replace", replace_second_fails):
+            try:
+                sd.commit_files(writes)
+                FAILURES.append("a failed rename was not reported")
+            except sd.DocError as error:
+                expect("已恢复" in str(error), f"rename failure did not say it was restored: {error}")
+        expect(contents() == ("OLD-ZH", "OLD-EN"), f"rename failure left a half update: {contents()}")
+        expect(leftovers() == [], f"rename failure left backups behind: {leftovers()}")
+
+        # Restore fails too: the backups stay on disk and the error names the files.
+        calls = {"n": 0}
+        def replace_then_restore_fails(src, dst, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] in (2, 3):
+                raise OSError(5, "rename failed")
+            return real_replace(src, dst, *args, **kwargs)
+        with mock.patch.object(sd.os, "replace", replace_then_restore_fails):
+            try:
+                sd.commit_files(writes)
+                FAILURES.append("a failed restore was not reported")
+            except sd.DocError as error:
+                expect("zh-CN.json" in str(error) and ".bak-import" in str(error),
+                       f"failed restore does not name the files and backups: {error}")
+        expect((Path(scratch) / "zh-CN.json.bak-import").exists(), "the original was not kept after a failed restore")
+
+        # Happy path: both files change and no temporary or backup files are left.
+        Path(scratch, "zh-CN.json.bak-import").unlink(missing_ok=True)
+        first.write_text("OLD-ZH", encoding="utf-8")
+        second.write_text("OLD-EN", encoding="utf-8")
+        sd.commit_files(writes)
+        expect(contents() == ("NEW-ZH\n", "NEW-EN\n"), "successful commit did not write both files")
+        expect(leftovers() == [], f"successful commit left files behind: {leftovers()}")
+
     # Every script survives the .docx layer unchanged.
     with tempfile.TemporaryDirectory() as scratch:
         for name, lines in sd.build_all(names).items():

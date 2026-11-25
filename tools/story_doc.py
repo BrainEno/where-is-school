@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -73,6 +74,66 @@ class DocError(Exception):
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def commit_files(writes: list[tuple[Path, str]]) -> None:
+    """Write every file or none of them.
+
+    Each new text is written to a sibling temp file and read back before anything is
+    replaced, so a short write or a full disk stops the import with no file changed. The
+    replacements then run one by one; each original is kept as ``<name>.bak-import``
+    first. If a replacement fails, the files already replaced are restored from those
+    copies. If a restore fails too, the ``.bak-import`` files are left in place and the
+    error names them, so nothing is lost silently.
+    """
+    staged: list[tuple[Path, Path, str]] = []
+    try:
+        for path, text in writes:
+            tmp = path.with_name(path.name + ".tmp-import")
+            tmp.write_text(text, encoding="utf-8")
+            staged.append((path, tmp, text))
+            if tmp.read_text(encoding="utf-8") != text:
+                raise DocError(f"写入校验失败：{path.name} 读回内容与准备写入的不一致；没有任何文件被改动")
+    except (OSError, DocError) as error:
+        for _path, tmp, _text in staged:
+            tmp.unlink(missing_ok=True)
+        if isinstance(error, DocError):
+            raise
+        raise DocError(f"写入临时文件失败（{error}）；没有任何文件被改动") from error
+
+    backups: list[tuple[Path, Path | None]] = []
+    replaced: list[tuple[Path, Path | None]] = []
+    try:
+        for path, tmp, _text in staged:
+            backup = None
+            if path.exists():
+                backup = path.with_name(path.name + ".bak-import")
+                backup.write_bytes(path.read_bytes())
+            backups.append((path, backup))
+            os.replace(tmp, path)
+            replaced.append((path, backup))
+    except OSError as error:
+        for _path, tmp, _text in staged:
+            tmp.unlink(missing_ok=True)
+        left: list[str] = []
+        for path, backup in reversed(replaced):
+            try:
+                if backup is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    os.replace(backup, path)
+            except OSError:
+                left.append(path.name)
+        if left:
+            raise DocError(f"写入失败（{error}），且恢复也失败：{'、'.join(left)} 可能未还原；"
+                           f"原件保留在同名 .bak-import 文件中，请手工核对后恢复") from error
+        for _path, backup in backups:
+            if backup is not None:
+                backup.unlink(missing_ok=True)
+        raise DocError(f"写入失败（{error}）；已恢复之前改动的文件，没有任何文件被改动") from error
+    for _path, backup in backups:
+        if backup is not None:
+            backup.unlink(missing_ok=True)
 
 
 def dump_json(data: dict) -> str:
@@ -844,6 +905,7 @@ def apply_document(lines: list[str], names: Names, write: bool) -> dict:
     """Imports one returned document. Returns a summary with the files it changed."""
     kind, chapter, payload = parse_document(lines, names)
     changed, pending = [], []
+    writes: list[tuple[Path, str]] = []
     targets: list[tuple[Path, dict, Path, dict, dict]] = []
     structure: list[str] = []
     if kind == "对话":
@@ -870,8 +932,9 @@ def apply_document(lines: list[str], names: Names, write: bool) -> dict:
             text = dump_json(data)
             if not path.exists() or path.read_text(encoding="utf-8") != text:
                 changed.append(str(path.relative_to(ROOT)))
-                if write:
-                    path.write_text(text, encoding="utf-8")
+                writes.append((path, text))
+    if write and writes:
+        commit_files(writes)
     return {"kind": kind, "chapter": chapter, "changed": changed, "pending_en": pending,
             "structure": structure}
 
@@ -896,7 +959,7 @@ def apply_ui(strings: dict, write: bool) -> dict:
     if pending:
         changed.append(str(master_path.relative_to(ROOT)))
         if write:
-            master_path.write_text(dump_json(master), encoding="utf-8")
+            commit_files([(master_path, dump_json(master))])
     return {"kind": "界面文字", "chapter": "", "changed": changed, "pending_en": pending, "structure": []}
 
 
@@ -1069,7 +1132,7 @@ def cmd_import(args) -> int:
         path = Path(raw)
         try:
             summary = apply_document(read_lines(path), names, write=not args.dry_run)
-        except DocError as exc:
+        except (DocError, OSError) as exc:
             print(f"{path.name}: {exc}", file=sys.stderr)
             failed = True
             continue
@@ -1079,8 +1142,14 @@ def cmd_import(args) -> int:
         for note in summary["structure"]:
             print(f"  结构：{note}")
     if args.pending and not args.dry_run:
+        # Written even when a file failed: each applied document's pending list is for the
+        # content that really changed, and a failed document changed nothing.
         Path(args.pending).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.pending).write_text(json.dumps(pending, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        try:
+            commit_files([(Path(args.pending), json.dumps(pending, ensure_ascii=False, indent=2) + "\n")])
+        except DocError as exc:
+            print(f"翻译待办未写入：{exc}", file=sys.stderr)
+            return 1
         print(f"{len(pending)} English text(s) to translate → {args.pending}")
     return 1 if failed else 0
 
