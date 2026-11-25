@@ -478,45 +478,6 @@ volume_db = -20.0
 script = ExtResource("11_ambience_player")
 target_db = -27.0
 
-[node name="DeckTop" type="MeshInstance3D" parent="Deck"]
-position = Vector3(0, 0.48, 0)
-mesh = SubResource("PlaneMesh_art10")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
-[node name="DeckFace" type="MeshInstance3D" parent="Deck"]
-position = Vector3(1.26, 0, 0)
-rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art11")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
-[node name="DeckTop" type="MeshInstance3D" parent="Deck"]
-position = Vector3(0, 0.48, 0)
-mesh = SubResource("PlaneMesh_art10")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
-[node name="DeckFace" type="MeshInstance3D" parent="Deck"]
-position = Vector3(1.26, 0, 0)
-rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art11")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
-[node name="DeckTop" type="MeshInstance3D" parent="Deck"]
-position = Vector3(0, 0.48, 0)
-mesh = SubResource("PlaneMesh_art10")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
-[node name="DeckFace" type="MeshInstance3D" parent="Deck"]
-position = Vector3(1.26, 0, 0)
-rotation_degrees = Vector3(0, 90, 0)
-mesh = SubResource("QuadMesh_art11")
-material_override = ExtResource("art_stage_wood")
-cast_shadow = 0
-
 [node name="StageArt" type="Node3D" parent="."]
 
 [node name="Distance" type="Node3D" parent="StageArt"]

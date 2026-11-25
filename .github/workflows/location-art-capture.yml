@@ -253,11 +253,11 @@ jobs:
             north_grove)
               # Round 26: the north grove (北面枯树小道) between the yards: one follow-camera
               # stance up the east leg and one high view down the whole L to the court's
-              # gap. Round 28: at the wall's door to the gym, a close view of it, and the
-              # shell's face over the wall.
+              # gap. Round 28: at the wall's door to the gym (a second stance), a close
+              # view of it, and the shell's face over the wall (two more views).
               detail=(north-grove review_width=380)
               width=1280
-              expect=4
+              expect=5
               ;;
             gym)
               # Round 28: inside the gym (体育馆): three follow-camera stances (the court's
@@ -313,10 +313,10 @@ jobs:
           shopt -s nullglob
           frames=("$out/""${LOCATION}"_*.jpg)
           views=("$out/review/""${LOCATION}"_*_detail_*.jpg)
-          # Engine exit accounting (RID allocations, buffers and resources leaked at
-          # exit) prints ERROR lines after the PASS and is not a content failure; the
-          # other ERROR lines stay fatal.
-          noise='^(ERROR|WARNING): ([0-9]+ (RID allocations|resources still in use)|Buffer with GL ID|.*leaked)'
+          # Engine exit accounting (RID allocations, buffers, shaders and resources
+          # leaked or never freed at exit) prints ERROR lines after the PASS and is not
+          # a content failure; the other ERROR lines stay fatal.
+          noise='^(ERROR|WARNING):.*(leaked|never freed|still in use at exit|RID allocations|Buffer with GL ID)'
           if [ "$code" -ne 0 ] || [ "${#frames[@]}" -lt 2 ] || [ "${#views[@]}" -ne "$expect" ] || \
               grep -Ev "$noise" "${RUNNER_TEMP}/capture.log" | grep -Eq 'SCRIPT ERROR|TEST FAILURE|^FAIL:|^ERROR:' || \
               ! grep -q '^PASS:' "${RUNNER_TEMP}/capture.log"; then
