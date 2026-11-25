@@ -466,6 +466,12 @@ together:
   next to the object (below); this one is on the thing and much smaller. With the marker came
   the narrower pointer rule for marked objects (section 5e) and fewer jump-to-look windows
   in the corridor ([CORRIDOR_ART.md](CORRIDOR_ART.md), round 24).
+  A person to talk to (`Interactable.uses_talk_cue`: `CueStyle.TALK`, or `AUTO` on an
+  interactable that names a `speaker_id`) gets the same marker in the same pen and size, drawn
+  as a small green speech bubble with three dots (`look_marker.gdshader`, `glyph` 1) above the
+  top of the person (`Interactable.get_talk_marker_position`), Disco Elysium's talk mark. A
+  look target or a control keeps the ring. The pointer rule is unchanged: a bubble is found
+  on the person's outline meshes, never on the whole proximity sphere.
 - **The object is outlined, not circled.** The owner asked for the usable object to be
   shown the way Disco Elysium shows it: its own contour, traced. `HoverCue` asks the
   interactable for `get_outline_meshes()` (the nodes named in `outline_paths`, plus any mesh

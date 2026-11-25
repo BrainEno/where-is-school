@@ -36,7 +36,7 @@ const CAMERA_SEE_THROUGH_LIMIT := 6
 const CAMERA_DEPTH_TOLERANCE := 0.01
 ## Bound overlapping hotspots while still looking beyond their anchor spheres.
 const POINTER_CANDIDATE_LIMIT := 64
-## A marked object (`Interactable.CueStyle.MARKER`: things to look at, people) is found by
+## A marked object (`Interactable.CueStyle.MARKER` or `TALK`: things to look at, people) is found by
 ## the pointer on the object - its pick boxes - and otherwise only this close to its anchor.
 ## Its proximity sphere (a metre or more) is no pointer target: that halo is what turned a
 ## click on the floor beside a window into a hop at the window (round 24).

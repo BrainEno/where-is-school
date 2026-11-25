@@ -36,9 +36,15 @@ const FLOOR_PAINT_BELOW_ANCHOR := 0.25
 ##   proximity sphere.
 ## * `OUTLINE` - the full traced silhouette (`OutlineOverlay`). Kept for ways out of a room -
 ##   doors, gates and stairs - which the owner wants to read as a whole.
-## * `AUTO` - `OUTLINE` for a `LocationExit`, `MARKER` for everything else: things to look
-##   at, people to talk to, controls to press.
-enum CueStyle { AUTO, OUTLINE, MARKER }
+## * `TALK` - the same marker, drawn as a small green speech bubble above the person instead of
+##   a ring (`hover_cue.gd`). The pointer treats it exactly like `MARKER`.
+## * `AUTO` - `OUTLINE` for a `LocationExit`, `TALK` for an interactable that names a speaker
+##   (`speaker_id`: a person to talk to), `MARKER` for everything else: things to look at,
+##   controls to press.
+enum CueStyle { AUTO, OUTLINE, MARKER, TALK }
+
+## Clearance between the top of a person and the talk bubble above them, in metres.
+const TALK_BUBBLE_CLEARANCE := 0.14
 
 ## Stable id used by tests and routing tables.
 @export var interact_id: StringName = &""
@@ -209,14 +215,24 @@ func gets_pick_box(mesh: GeometryInstance3D) -> bool:
 	return not (flat and below_anchor)
 
 
-## Whether this object is marked with the small ring rather than outlined (see `CueStyle`).
+## Whether this object is marked with the small marker rather than outlined (see `CueStyle`).
+## A talk bubble is a marker too; `uses_talk_cue()` says which glyph it is.
 func uses_marker_cue() -> bool:
 	match cue_style:
 		CueStyle.OUTLINE:
 			return false
-		CueStyle.MARKER:
+		CueStyle.MARKER, CueStyle.TALK:
 			return true
 	return _marks_by_default()
+
+
+## Whether the marker is the speech bubble of a person to talk to, rather than the ring.
+func uses_talk_cue() -> bool:
+	if not uses_marker_cue():
+		return false
+	if cue_style == CueStyle.TALK:
+		return true
+	return cue_style == CueStyle.AUTO and _talks_by_default()
 
 
 ## `AUTO`'s answer. `LocationExit` overrides it: a way out keeps the outline.
@@ -224,17 +240,40 @@ func _marks_by_default() -> bool:
 	return true
 
 
+## `AUTO`'s answer for the glyph: a named speaker is a person, and a person gets the bubble.
+func _talks_by_default() -> bool:
+	return not String(speaker_id).is_empty()
+
+
 ## Where the ring sits: the middle of what the outline would trace, so it lands on the
 ## sheet, the person's chest, the window pane - not on the anchor, which for a door or a
 ## notice is a point in the air in front of it. The anchor when there is nothing to trace.
 func get_marker_position() -> Vector3:
+	var bounds := _traced_bounds()
+	if bounds.size == Vector3.ZERO:
+		return global_position
+	return bounds.get_center()
+
+
+## Where the talk bubble sits: centred over the top of what the outline would trace, a little
+## above the head, so the bubble reads as a line of speech and covers neither face nor body.
+## The anchor when there is nothing to trace.
+func get_talk_marker_position() -> Vector3:
+	var bounds := _traced_bounds()
+	if bounds.size == Vector3.ZERO:
+		return global_position
+	return Vector3(bounds.get_center().x, bounds.end.y + TALK_BUBBLE_CLEARANCE, bounds.get_center().z)
+
+
+## The world-space box around the outline meshes, or an empty box when there are none.
+func _traced_bounds() -> AABB:
 	var meshes := get_outline_meshes()
 	if meshes.is_empty():
-		return global_position
+		return AABB()
 	var bounds := meshes[0].global_transform * meshes[0].get_aabb()
 	for index in range(1, meshes.size()):
 		bounds = bounds.merge(meshes[index].global_transform * meshes[index].get_aabb())
-	return bounds.get_center()
+	return bounds
 
 
 ## The boxes the pointer can find this object by, besides its anchor sphere. Public for
