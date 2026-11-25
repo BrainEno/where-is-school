@@ -257,11 +257,60 @@ not send the player straight back in.
   (`StagedActorMotion.walk_down_to`, which lets gravity bring the feet down each tread).
   `return_route_test` goes back down once and checks where the walk ends.
 
+## Round 25: two big glass doors, a porch, a side door to the lane
+
+The owner found the way out to the front yard (前操场) confusing: the 01 glass entrance led
+onto a small walled forecourt with gateposts, and 02 had its own three steps "towards the
+gate". What they wanted: down the blue stair to 01, a big two-leaf glass door facing east,
+a click on it, and the protagonist standing outside on a flight of steps above the dirt
+yard, walking down onto it by themselves. This round is phase 1 of three agreed with the
+owner (phase 2: the school wall and the narrow, iron-railed grove of dead trees that links
+the dirt yard to the court; phase 3: the sports equipment moved south, a gym and the
+distant buildings); see [MAP_PLAN.md](MAP_PLAN.md).
+
+- **The doors.** `teaching_entrance()` hangs two shut leaves in the opening: each a 1.30 m
+  wide, 2.64 m tall collider (`Left/LeafBody`, `Right/LeafBody`, on the leaf's body, so the
+  capsule, the navigation bake and a click ray all stop there), drawn as a hinge stile, a
+  meeting stile, a top rail, a kick plate (`LeafHinge`, `LeafMeet`, `LeafTop`, `LeafKick`),
+  a pane and a frosted band; the pulls sit at the meeting stiles. The `EntranceToStreet` exit
+  (`teaching_entrance_to_street`, "Go out to the front yard") now stands just inside them at
+  (-17.65, -2.5, 14.3) and outlines the eight leaf meshes; the 01 arrival
+  `FromTeachingEntrance` is inside too, at (-17.65, -3.4, 12.6), facing into the block.
+- **Gone:** the walk-out forecourt, its steps, gateposts, railing, twister and lamp
+  (`FORECOURT_*`, `WALKOUT_*`, `walkout()`, `yard_railing()`); the apron outside the doors
+  is only drawn now, closed by two low rails (`ApronRailWest/East`) and a step at its
+  foot (`porch()`). On 02 the three gate steps and their frame (`Step0..2`,
+  `ExitFrame*`, `SchoolGateExit`, `school_gate`) are gone, and `GateEnd` is a full wall.
+- **The porch outside (front yard).** `_front_porch()` in `tools/build_outdoor_locations.py`
+  (hand-ported into the art-passed `front_yard.tscn`): a 0.6 m high concrete landing (x
+  -11 to -8.65, z 12.5 to 19.1) in front of the glass doors, three 0.15 m steps of 0.35 m
+  run east down to the dirt at x -7.6 (`PorchStep_0..2`, with pale nosings and one
+  `PorchRamp` under them for the capsule), and iron rails along both sides of the landing
+  (`PorchRailNorth/South`, camera occluders). The door, the mat and the entrance's end
+  return stand on the landing. `FromCorridor` is on the landing at (-9.8, 0.6, 15.8),
+  facing east, with `entry_walk = 3.0`: after the fade-in the protagonist walks down the
+  steps to 0.8 m past their foot. `BackInside` (`front_yard_back_inside`) is clicked on the
+  same leaves from the landing.
+- **The side door to the stable lane.** With the glass doors only a click, the stink stable
+  and the graffiti were left without a walk; the owner chose a plain door. `lane_door()`
+  opens the gallery's south wall at x -22.65 to -20.95 (1.7 m wide so the 0.5 m navigation agent fits through, 2.2 m high, an iron-green leaf swung
+  flat against the gallery wall, a steel threshold over `LaneDoorSill`), straight into the
+  lane. The sprayed wall (`EntranceWallWest`) faces the lane, so the graffiti is looked at
+  from there. The lane's barrier and the stable yard are unchanged.
+
+`corridor_art_test` now goes down the blue stair to the doors and out, climbs the porch,
+comes back in, checks that the leaves are shut to the capsule and that nothing bakes
+outside them, and leaves again by clicking the doors; `dream_annex_test` routes to the lane
+door instead of the forecourt; `wall_graffiti_test` stands in the lane; `opening_flow`,
+`n_presence` and the playthrough capture leave by the glass doors; `location_art_test`
+counts 35 corridor interactables and 70 front-yard shapes. The `teaching_stairs` and
+`front_yard` capture legs add the doors, the lane door and the porch.
+
 ## Build and check
 
 - Edit `tools/build_teaching_block.py` (or `tools/build_dream_annex.py`), then run `python3 tools/build_teaching_block.py`. It writes `teaching_block.tscn`, `dream_annex.tscn` (with the stink stable's meshes in `stable_meshes/`), `courtyard_view.tscn` and `scenes/environment/props/teaching_block_entrance.tscn`. Use `--check` to detect stale output. `corridor.tscn` owns the environment, props, exits and spawn/interaction IDs.
 - Reuse `build_outdoor_locations.build_playground()` for the view's measurements and `build_playground_art.court_landmarks()` for its painted lines and rims. Rebuild the playground graybox and art pass first if changing those shared features. The old stage generator no longer rewrites `corridor.tscn`; its material/texture definitions keep the painted kit reproducible.
-- `godot --headless --resolution 1600x900 --path . --script res://tests/corridor_art_test.gd` checks the floor plan, window/yard alignment, input on the stairs and both ways of peeking, a player-capsule sweep and clear/blocked rays through the sash/pier, a real click through one 03 window, the paired biology thresholds and a click on the locked rear door, and the existing location round trips. It also enters by the new glass door on foot, clicks across the opening, reads the directory, and takes the forecourt exit. `corridor_props_test.gd` covers the original placements and routes. `location_art_test.gd` checks the visual-only exterior against the stage rules.
+- `godot --headless --resolution 1600x900 --path . --script res://tests/corridor_art_test.gd` checks the floor plan, window/yard alignment, input on the stairs and both ways of peeking, a player-capsule sweep and clear/blocked rays through the sash/pier, a real click through one 03 window, the paired biology thresholds and a click on the locked rear door, and the existing location round trips. It also comes in from the front yard's porch, checks the shut glass doors, reads the directory, and leaves by clicking the doors. `corridor_props_test.gd` covers the original placements and routes. `location_art_test.gd` checks the visual-only exterior against the stage rules.
 
 - `python3 tools/build_school_rooms.py --check` covers the staff office, the three restrooms, their shared fittings and all fitted leaves. `godot --headless --resolution 1600x900 --path . --script res://tests/school_rooms_test.gd` walks from 02 up to the office and down to the restroom, uses both input paths, checks the six inspections and restores in each room before taking the matching door back. See the [wing's art notes](../art/teaching_block/README.md) for matched captures.
 - `python3 tools/build_school_annexes.py --check` covers six interiors, the shared CRT cabinet and the exits/returns generated into `corridor.tscn`. `tests/school_expansion_test.gd` exercises the public washrooms, local prerequisites, deterministic success and failure, manual correction, journal notes, re-entry and Continue. Its `-- --room-tour` leg starts at the actual 01 glass door, walks to the recess, uses the open doors and checks that they leave no alignment or save. No experiment under `scenes/dev` is required by a production room.

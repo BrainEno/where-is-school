@@ -1,4 +1,4 @@
-[gd_scene load_steps=208 format=3]
+[gd_scene load_steps=223 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/location_root.gd" id="1_location_root"]
 [ext_resource type="PackedScene" path="res://scenes/interaction/interactable.tscn" id="6_interactable"]
@@ -83,10 +83,55 @@ size = Vector3(1.4, 0.15, 40.599999999999994)
 size = Vector3(1.4, 0.15, 40.599999999999994)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2"]
-size = Vector3(1.0, 0.15, 7.3)
+size = Vector3(1.0, 0.6, 7.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_2"]
-size = Vector3(1.0, 0.15, 7.3)
+size = Vector3(1.0, 0.6, 7.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_landing"]
+size = Vector3(2.35, 0.6, 6.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_porch_step0"]
+size = Vector3(0.35, 0.15, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_step0"]
+size = Vector3(0.35, 0.15, 5.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_porch_step1"]
+size = Vector3(0.35, 0.3, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_step1"]
+size = Vector3(0.35, 0.3, 5.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_porch_step2"]
+size = Vector3(0.35, 0.45, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_step2"]
+size = Vector3(0.35, 0.45, 5.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_edge"]
+size = Vector3(0.06, 0.012, 5.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_porch_rail"]
+size = Vector3(2.05, 0.9, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_rail"]
+size = Vector3(2.05, 0.9, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_rail_bar"]
+size = Vector3(2.05, 0.045, 0.045)
+
+[sub_resource type="BoxMesh" id="BoxMesh_porch_rail_post"]
+size = Vector3(0.05, 0.9, 0.05)
+
+[sub_resource type="BoxShape3D" id="RampShape_porch_surface"]
+size = Vector3(2.05, 0.05, 6.6)
+
+[sub_resource type="BoxShape3D" id="RampShape_porch_tread"]
+size = Vector3(2.35, 0.1, 6.6)
+
+[sub_resource type="BoxShape3D" id="RampShape_porch_ramp"]
+size = Vector3(1.5232, 0.1, 5.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3"]
 size = Vector3(10, 13, 21.0)
@@ -566,8 +611,13 @@ shape = SubResource("BoxShape3D_1")
 mesh = SubResource("BoxMesh_1")
 material_override = ExtResource("art_pavement")
 
+[node name="PorchLanding" type="MeshInstance3D" parent="."]
+position = Vector3(-9.825, 0.3, 15.8)
+mesh = SubResource("BoxMesh_porch_landing")
+material_override = ExtResource("art_pavement")
+
 [node name="PavementSchoolEntry" type="StaticBody3D" parent="."]
-position = Vector3(-11.5, 0.075, 16.35)
+position = Vector3(-11.5, 0.3, 16.35)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PavementSchoolEntry"]
 shape = SubResource("BoxShape3D_2")
@@ -575,6 +625,126 @@ shape = SubResource("BoxShape3D_2")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="PavementSchoolEntry"]
 mesh = SubResource("BoxMesh_2")
 material_override = ExtResource("art_pavement")
+
+[node name="PorchStep_0" type="StaticBody3D" parent="."]
+position = Vector3(-7.775, 0.075, 15.8)
+collision_layer = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchStep_0"]
+shape = SubResource("BoxShape3D_porch_step0")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PorchStep_0"]
+mesh = SubResource("BoxMesh_porch_step0")
+material_override = ExtResource("art_pavement")
+
+[node name="PorchStepEdge_0" type="MeshInstance3D" parent="."]
+position = Vector3(-7.63, 0.156, 15.8)
+mesh = SubResource("BoxMesh_porch_edge")
+material_override = ExtResource("art_plinth_ivory")
+
+[node name="PorchStep_1" type="StaticBody3D" parent="."]
+position = Vector3(-8.125, 0.15, 15.8)
+collision_layer = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchStep_1"]
+shape = SubResource("BoxShape3D_porch_step1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PorchStep_1"]
+mesh = SubResource("BoxMesh_porch_step1")
+material_override = ExtResource("art_pavement")
+
+[node name="PorchStepEdge_1" type="MeshInstance3D" parent="."]
+position = Vector3(-7.98, 0.306, 15.8)
+mesh = SubResource("BoxMesh_porch_edge")
+material_override = ExtResource("art_plinth_ivory")
+
+[node name="PorchStep_2" type="StaticBody3D" parent="."]
+position = Vector3(-8.475, 0.225, 15.8)
+collision_layer = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchStep_2"]
+shape = SubResource("BoxShape3D_porch_step2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PorchStep_2"]
+mesh = SubResource("BoxMesh_porch_step2")
+material_override = ExtResource("art_pavement")
+
+[node name="PorchStepEdge_2" type="MeshInstance3D" parent="."]
+position = Vector3(-8.33, 0.456, 15.8)
+mesh = SubResource("BoxMesh_porch_edge")
+material_override = ExtResource("art_plinth_ivory")
+
+[node name="PorchRailNorth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-9.675, 1.05, 12.54)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchRailNorth"]
+shape = SubResource("BoxShape3D_porch_rail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PorchRailNorth"]
+mesh = SubResource("BoxMesh_porch_rail")
+material_override = ExtResource("art_metal_ink")
+visible = false
+
+[node name="StageTopRail" type="MeshInstance3D" parent="PorchRailNorth"]
+position = Vector3(0, 0.425, 0)
+mesh = SubResource("BoxMesh_porch_rail_bar")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StageMidRail" type="MeshInstance3D" parent="PorchRailNorth"]
+position = Vector3(0, -0.05, 0)
+mesh = SubResource("BoxMesh_porch_rail_bar")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost0" type="MeshInstance3D" parent="PorchRailNorth"]
+position = Vector3(-1.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost1" type="MeshInstance3D" parent="PorchRailNorth"]
+position = Vector3(0.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost2" type="MeshInstance3D" parent="PorchRailNorth"]
+position = Vector3(1.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
+
+[node name="PorchRailSouth" type="StaticBody3D" parent="." groups=["camera_occluder"]]
+position = Vector3(-9.675, 1.05, 19.06)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchRailSouth"]
+shape = SubResource("BoxShape3D_porch_rail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PorchRailSouth"]
+mesh = SubResource("BoxMesh_porch_rail")
+material_override = ExtResource("art_metal_ink")
+visible = false
+
+[node name="StageTopRail" type="MeshInstance3D" parent="PorchRailSouth"]
+position = Vector3(0, 0.425, 0)
+mesh = SubResource("BoxMesh_porch_rail_bar")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StageMidRail" type="MeshInstance3D" parent="PorchRailSouth"]
+position = Vector3(0, -0.05, 0)
+mesh = SubResource("BoxMesh_porch_rail_bar")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost0" type="MeshInstance3D" parent="PorchRailSouth"]
+position = Vector3(-1.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost1" type="MeshInstance3D" parent="PorchRailSouth"]
+position = Vector3(0.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
+
+[node name="StagePost2" type="MeshInstance3D" parent="PorchRailSouth"]
+position = Vector3(1.0, 0, 0)
+mesh = SubResource("BoxMesh_porch_rail_post")
+material_override = ExtResource("art_yard_rail")
 
 [node name="SchoolBlock" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(-16, 6.5, 2.1999999999999993)
@@ -627,7 +797,7 @@ mesh = SubResource("BoxMesh_7")
 material_override = ExtResource("art_school_teal")
 
 [node name="SchoolEntryEnd" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-11.45, 1.49, 19.22)
+position = Vector3(-11.45, 1.94, 19.22)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="SchoolEntryEnd"]
 shape = SubResource("BoxShape3D_8")
@@ -637,7 +807,7 @@ mesh = SubResource("BoxMesh_8")
 material_override = ExtResource("art_school_teal")
 
 [node name="SchoolEntryMat" type="MeshInstance3D" parent="."]
-position = Vector3(-10.79, 0.15, 15.8)
+position = Vector3(-10.79, 0.6, 15.8)
 mesh = SubResource("BoxMesh_9")
 material_override = ExtResource("art_metal_ink")
 
@@ -907,8 +1077,31 @@ mesh = SubResource("BoxMesh_33")
 material_override = ExtResource("art_yard_dirt")
 visible = false
 
+[node name="PorchLandingSurface" type="StaticBody3D" parent="."]
+position = Vector3(-9.975, 0.575, 15.8)
+rotation = Vector3(0, 0, 0)
+collision_layer = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchLandingSurface"]
+shape = SubResource("RampShape_porch_surface")
+
+[node name="PorchLandingTread" type="StaticBody3D" parent="."]
+position = Vector3(-9.825, 0.55, 15.8)
+rotation = Vector3(0, 0, 0)
+collision_layer = 16
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchLandingTread"]
+shape = SubResource("RampShape_porch_tread")
+
+[node name="PorchRamp" type="StaticBody3D" parent="."]
+position = Vector3(-7.9697, 0.254, 15.8)
+rotation = Vector3(0, 0, -0.404892)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PorchRamp"]
+shape = SubResource("RampShape_porch_ramp")
+
 [node name="SchoolGlassEntrance" parent="." instance=ExtResource("12_prop")]
-position = Vector3(-10.62, 0.15, 15.8)
+position = Vector3(-10.62, 0.6, 15.8)
 rotation = Vector3(0, 1.570796, 0)
 
 [node name="Interactables" type="Node3D" parent="."]
@@ -938,12 +1131,12 @@ support_paths = PackedStringArray("../../DeadTree0Trunk")
 outline_paths = PackedStringArray("../../DeadTree0/StageTree/Trunk")
 
 [node name="BackInside" parent="Interactables" instance=ExtResource("7_location_exit")]
-position = Vector3(-9.6, 0.9, 15.8)
+position = Vector3(-9.6, 1.35, 15.8)
 interact_id = &"front_yard_back_inside"
 prompt_key = "prompt.back_inside"
 radius = 1.25
 support_paths = PackedStringArray("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right", "../../SchoolGlassEntrance/Header")
-outline_paths = PackedStringArray("../../SchoolGlassEntrance/Left/Stile", "../../SchoolGlassEntrance/Right/Stile", "../../SchoolGlassEntrance/Header/Shoe")
+outline_paths = PackedStringArray("../../SchoolGlassEntrance/Left/LeafMeet", "../../SchoolGlassEntrance/Left/LeafHinge", "../../SchoolGlassEntrance/Left/LeafTop", "../../SchoolGlassEntrance/Left/LeafKick", "../../SchoolGlassEntrance/Right/LeafMeet", "../../SchoolGlassEntrance/Right/LeafHinge", "../../SchoolGlassEntrance/Right/LeafTop", "../../SchoolGlassEntrance/Right/LeafKick")
 destination_scene = "res://scenes/locations/corridor/corridor.tscn"
 destination_spawn = &"FromTeachingEntrance"
 destination_id = &"corridor"
@@ -962,10 +1155,10 @@ destination_id = &"street"
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
-position = Vector3(-5.5, 0, 13.5)
+position = Vector3(-9.8, 0.6, 15.8)
 rotation_degrees = Vector3(0, -90, 0)
 metadata/entry_facing = true
-metadata/entry_walk = 2.5
+metadata/entry_walk = 3.0
 
 [node name="FromStreet" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(12.0, 0, 15.8)

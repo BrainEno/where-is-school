@@ -55,6 +55,13 @@ DOOR_HEIGHT = 2.2
 # (east), with a low railing north and south and more sports ground past it. The glass entrance is the
 # street's old one, where it was, so the corridor's door still lands in the same recess.
 FRONT_YARD_Z = (-8.3, 32.3)
+# Round 25: the landing outside the glass doors and its three steps down to the dirt.
+FRONT_PORCH_TOP = 0.6
+FRONT_PORCH_STEPS = 3
+FRONT_PORCH_RUN = 0.35
+FRONT_PORCH_LANDING_X = (-11.0, -8.65)
+FRONT_PORCH_LANDING_Z = (12.5, 19.1)
+FRONT_PORCH_STEP_Z = (13.0, 18.6)
 # Dead trees: (x, z, variant, yaw degrees; multiples of 90 keep the crown in its fader box).
 FRONT_YARD_TREES = (
     (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
@@ -547,13 +554,42 @@ def _teaching_front(s):
     south = SCHOOL_SOUTH_Z[1] - SCHOOL_SOUTH_Z[0]
     s.box("SchoolBlockSouth", (-16, 6.5, z_south), (10, 13, south), "wall", occ)
     s.box("SchoolPlinthSouth", (-16, 0.6, z_south), (10.2, 1.2, south), "concrete")
-    # Keep a shallow, walkable recess behind the shared glass entrance instead
-    # of putting a doorway over the side of the solid school block.
+    # Keep a shallow recess behind the shared glass entrance instead of putting a doorway
+    # over the side of the solid school block. Round 25: the doors stand on the porch
+    # landing (_front_porch), so the recess floor, its end wall and the mat rise with it.
+    top = FRONT_PORCH_TOP
     s.box("SchoolEntryReturn", (-15.9, 5.4, 16.35), (7.8, 10.8, 7.3), "wall", occ)
-    s.box("SchoolEntryEnd", (-11.45, 1.49, 19.22), (1.66, 2.68, 0.20), "wall", occ)
-    s.box("SchoolEntryMat", (-10.79, 0.15, 15.8), (1.46, 0.025, 3.04), "metal", None, False)
+    s.box("SchoolEntryEnd", (-11.45, top + 1.34, 19.22), (1.66, 2.68, 0.20), "wall", occ)
+    s.box("SchoolEntryMat", (-10.79, top, 15.8), (1.46, 0.025, 3.04), "metal", None, False)
     s.props.append(("SchoolGlassEntrance", "res://scenes/environment/props/teaching_block_entrance.tscn",
-                    (-10.62, 0.15, 15.8), 90))
+                    (-10.62, top, 15.8), 90))
+
+
+def _front_porch(s):
+    """Round 25: the landing and steps outside the glass doors (双开玻璃大门).
+
+    You come out of the doors (a click inside, corridor EntranceToStreet) onto a landing
+    two metres deep in front of them, 60 cm up, and the arrival walks you down three steps
+    onto the dirt (`entry_walk` on FromCorridor). Solid steps on the navigation layer, a
+    thin ramp through their nosings for the body (`_ramp`), a thin top on the landing.
+    """
+    top, run = FRONT_PORCH_TOP, FRONT_PORCH_RUN
+    rise = top / (FRONT_PORCH_STEPS + 1)
+    x_land, z_land = FRONT_PORCH_LANDING_X, FRONT_PORCH_LANDING_Z
+    foot = x_land[1] + FRONT_PORCH_STEPS * run
+    s.box("PorchLanding", (sum(x_land) / 2, top / 2, sum(z_land) / 2),
+          (x_land[1] - x_land[0], top, z_land[1] - z_land[0]), "concrete", body=False)
+    _landing_surface(s, "PorchLandingSurface", (x_land[0], x_land[1] - 0.3), z_land, top)
+    _tread(s, "PorchLandingTread", x_land, z_land, top)
+    # The recess floor behind the doors, level with the landing.
+    s.box("PavementSchoolEntry", (-11.5, top / 2, 16.35), (1.0, top, 7.3), "concrete")
+    steps = _stair(s, "PorchStep", FRONT_PORCH_STEPS, rise, run, None, FRONT_PORCH_STEP_Z, "x", -1, foot, 0.0)
+    _ramp(s, "PorchRamp", FRONT_PORCH_STEPS, rise, run, None, FRONT_PORCH_STEP_Z, "x", -1, foot, 0.0)
+    # Low steel rails along the landing's open sides; the steps' front is the way down.
+    for name, z in (("PorchRailNorth", z_land[0] + 0.04), ("PorchRailSouth", z_land[1] - 0.04)):
+        s.box(name, (sum(x_land) / 2 + 0.15, top + 0.45, z), (x_land[1] - x_land[0] - 0.3, 0.9, 0.06),
+              "metal", ["camera_occluder"])
+    return steps
 
 
 def build_front_yard():
@@ -581,7 +617,7 @@ def build_front_yard():
     # the dirt, and a concrete apron along the block's foot and into the entrance's recess
     s.box("YardGround", ((x0 + x1) / 2, -0.1, (z0 + z1) / 2), (x1 - x0, 0.2, z1 - z0), "soil")
     s.box("SchoolApron", (-10.3, 0.075, (z0 + z1) / 2), (1.4, 0.15, z1 - z0), "concrete")
-    s.box("PavementSchoolEntry", (-11.5, 0.075, 16.35), (1.0, 0.15, 7.3), "concrete")
+    _front_porch(s)
     _teaching_front(s)
     # North and south, a low railing (栏杆): the sports ground goes on past it, dirt and dead
     # trees into the haze, so the block has playground on both sides. East, the school wall
@@ -611,12 +647,12 @@ def build_front_yard():
          "support": ("../../DeadTree0Trunk",), "outline": ("DeadTree0/StageTree/Trunk",)},
     ]
     s.exits = [
-        {"name": "BackInside", "pos": (-9.6, 0.9, 15.8), "id": "front_yard_back_inside",
+        {"name": "BackInside", "pos": (-9.6, FRONT_PORCH_TOP + 0.75, 15.8), "id": "front_yard_back_inside",
          "prompt_key": "prompt.back_inside", "radius": 1.25,
          "support": ("../../SchoolGlassEntrance/Left", "../../SchoolGlassEntrance/Right",
                      "../../SchoolGlassEntrance/Header"),
-         "outline": ("SchoolGlassEntrance/Left/Stile", "SchoolGlassEntrance/Right/Stile",
-                     "SchoolGlassEntrance/Header/Shoe"),
+         "outline": tuple(f"SchoolGlassEntrance/{side}/{part}" for side in ("Left", "Right")
+                          for part in ("LeafMeet", "LeafHinge", "LeafTop", "LeafKick")),
          "scene": "res://scenes/locations/corridor/corridor.tscn", "spawn": "FromTeachingEntrance",
          "id_dest": "corridor"},
         # Out through the side door; nobody has to swipe (the reader is only to look at).
@@ -628,11 +664,11 @@ def build_front_yard():
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
          "id_dest": "street"},
     ]
-    # Shared by the glass entrance and the gate steps (both leave the block). Faces east, toward
-    # the school gate. Split per exit in a later phase; see docs/CORRIDOR_ART.md. Round 24: the
-    # arrival walks 2.5 m on toward the gate, so the glass door (the way back in) is well behind.
-    s.spawns = [("FromCorridor", (-5.5, 0, 13.5),
-                 {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.5}),
+    # Round 25: out of the glass doors onto the porch landing, facing east toward the school
+    # gate, and the arrival walks down the three steps onto the dirt (3 m, ending 0.45 m past
+    # the foot of the ramp), so the doors (the way back in) are well behind.
+    s.spawns = [("FromCorridor", (-9.8, FRONT_PORCH_TOP, 15.8),
+                 {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 3.0}),
                 ("FromStreet", (12.0, 0, d_mid))]
     return s
 

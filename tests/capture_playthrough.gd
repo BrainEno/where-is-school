@@ -333,16 +333,19 @@ func _run() -> void:
 
 	var corridor := _host.get_current()
 	if corridor != null and String(corridor.location_id) == "corridor":
-		var gate := corridor.find_interactable(&"school_gate")
+		# Round 25: out through the 01 glass doors; the arrival walks down the porch steps.
+		var gate := corridor.find_interactable(&"teaching_entrance_to_street")
 		if gate != null:
 			await _wait_for_free(60.0)
-			_teleport(Vector3(0, 0, 5.4), 0.0)
-			await _wait_for_target(&"school_gate", 30.0)
+			_teleport(Vector3(-17.65, -3.4, 13.3), 180.0)
+			await _wait(0.6)
+			await _shot("13b_glass_doors", "The 01 glass doors from inside: a closed pair, the way out to the front yard.")
+			await _wait_for_target(&"teaching_entrance_to_street", 30.0)
 			await _press(KEY_E)
 			# Out of the teaching block into the front yard, then out of the gate's side door.
 			if await _wait_for_location("front_yard", 40.0):
 				await _wait(1.2)
-				await _shot("14a_front_yard", "The front yard outside the teaching block: dirt, dead trees, the school wall.")
+				await _shot("14a_front_yard", "The front yard outside the teaching block: down the porch steps onto the dirt.")
 				await _wait_for_free(60.0)
 				_teleport(Vector3(13.3, 0, 15.8), -90.0)
 				if not await _wait_for_target(&"front_yard_to_street", 30.0):

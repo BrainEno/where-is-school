@@ -226,17 +226,18 @@ func _run() -> void:
 	else:
 		if corridor.get_interactables().size() < 4:
 			_failures.append("The walkway has too few interactables.")
-		var gate := corridor.find_interactable(&"school_gate")
+		# Round 25: the way out is the 01 glass doors, down the blue stair (the 02 gate steps are gone).
+		var gate := corridor.find_interactable(&"teaching_entrance_to_street")
 		if gate == null:
-			_failures.append("The walkway has no exit towards the street.")
+			_failures.append("The walkway has no exit towards the front yard.")
 		else:
 			await _settle(30.0, "the walkway to settle")
-			# Stand on the near side of the gate and face it, so the prompt has to be
-			# the gate's and not whatever else is inside the interaction radius.
-			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(0.0, 0, 5.0)))
+			# Stand just inside the glass doors and face them, so the prompt has to be
+			# the doors' and not whatever else is inside the interaction radius.
+			_player.teleport(Transform3D(Basis(Vector3.UP, deg_to_rad(180.0)), Vector3(-17.65, -3.4, 13.3)))
 			await physics_frame
 			await physics_frame
-			await _check_prompt(&"school_gate", "gate prompt")
+			await _check_prompt(&"teaching_entrance_to_street", "glass door prompt")
 			# The keyboard's own path: a real E press, not the activation API.
 			await _press_key_e(gate)
 			# Out of the teaching block is the front yard, still inside the school wall; the

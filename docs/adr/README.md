@@ -3,7 +3,7 @@
 Record significant technical decisions here. Each record should include status, date, context, decision, consequences, and conditions for revisiting it. Do not use ADRs for ordinary implementation details.
 
 > **状态：** 目录/索引
-> **最后核对：** 2026-11-17（索引、状态与相对链接）
+> **最后核对：** 2026-11-24（索引、状态与相对链接）
 > **负责人：** 文档 Agent
 > **取代者：** [docs/README.md](../README.md) 是全部文档的集中索引
 
@@ -18,7 +18,7 @@ Record significant technical decisions here. Each record should include status, 
 | [0004 — Art direction, spatial logic, and camera](0004-art-direction.md) | 待所有者 | 2026-11-17 | 相机投影、环境路线或角色着色由所有者决定时 |
 | [0005 — Save Format, Versioning and Restore Policy](0005-saves.md) | 已接受 | 2026-11-17 | 菜单、存档槽或恢复策略改变时 |
 | [0006 — Painterly Rendering Prototype](0006-painterly-rendering.md) | 提案 | 2026-11-17 | Windows 视觉复核与所有者采纳决定完成时 |
-| [0007 — Large binaries and repository size](0007-large-binaries-and-repository-size.md) | 提案 | 2026-11-17 | 历史重写获得所有者授权或运行时音乐结论改变时 |
+| [0007 — Large binaries and repository size](0007-large-binaries-and-repository-size.md) | 提案 | 2026-11-24 | 历史重写获得所有者授权或运行时音乐结论改变时 |
 <!-- adr-index:end -->
 
 ## 新增 ADR

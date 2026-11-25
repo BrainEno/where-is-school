@@ -194,6 +194,9 @@ PROTAGONIST = {
             "pigment_value": 0.0,
             "shadow_fill": 0.6,
             "outline": False,
+            # The iris paints its limbal ring from the model's own vertex colour
+            # (issue #383): the ring lives in COLOR_0, so this material reads it.
+            "use_vertex_paint": True,
         },
         "protagonist_mat_pupil": {
             "albedo": "#0F0C0B",
@@ -206,6 +209,28 @@ PROTAGONIST = {
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
             "outline": False,
+        },
+    },
+    # The head's local UV textures (issue #383): the skin material samples them
+    # through CharacterDetailMaps instead of the dropped vertex paint. Emitted
+    # into the .tres by render() below -- the generator owns every byte of it.
+    "detail_maps": {
+        "ext": [
+            ("4_albedo", "Texture2D",
+             "res://assets/characters/protagonist/textures/head_albedo.png"),
+            ("5_normal", "Texture2D",
+             "res://assets/characters/protagonist/textures/head_normal.png"),
+            ("6_maps", "Script", "res://scripts/actors/character_detail_maps.gd"),
+        ],
+        "maps": {
+            "protagonist_mat_skin": {
+                "id": "maps_skin",
+                "script": "6_maps",
+                "albedo": "4_albedo",
+                "albedo_mix": 1.0,
+                "normal": "5_normal",
+                "normal_strength": 1.0,
+            },
         },
     },
     # The model's own shapes, at the uneasy setting the owner's Protagonist_Face_Test
@@ -695,7 +720,11 @@ def render(look: dict) -> str:
     shaped = {name for name, part in parts.items() if part.get("outline") and shape_keys(part)}
     lines: list[str] = []
     two_sided = any(part.get("two_sided") for part in parts.values())
-    load_steps = 3 + int(two_sided) + 1 + len(parts) + len(shaped) + 1
+    detail = look.get("detail_maps") or {}
+    exts = detail.get("ext", ())
+    maps = detail.get("maps", {})
+    ext_ids = {ext_id for ext_id, _type, _path in exts}
+    load_steps = 3 + int(two_sided) + 1 + len(parts) + len(shaped) + 1 + len(exts) + len(maps)
     lines.append(
         f'[gd_resource type="Resource" script_class="CharacterLook" load_steps={load_steps} format=3]'
     )
@@ -705,6 +734,8 @@ def render(look: dict) -> str:
     lines.append(f'[ext_resource type="Shader" path="{OUTLINE_SHADER}" id="3_outline"]')
     if two_sided:
         lines.append(f'[ext_resource type="Shader" path="{TWO_SIDED_SHADER}" id="4_paint_two_sided"]')
+    for ext_id, ext_type, ext_path in exts:
+        lines.append(f'[ext_resource type="{ext_type}" path="{ext_path}" id="{ext_id}"]')
     lines.append("")
     lines.extend(outline_block("outline", look, {}))
     for name in parts:
@@ -724,10 +755,25 @@ def render(look: dict) -> str:
         for key in sorted(settings):
             lines.append(f"shader_parameter/{key} = {parameter(settings[key])}")
         lines.append("")
+    for spec in maps.values():
+        lines.append(f'[sub_resource type="Resource" id="{spec["id"]}"]')
+        for key, value in spec.items():
+            if key == "id":
+                continue
+            if isinstance(value, str) and value in ext_ids:
+                lines.append(f'{key} = ExtResource("{value}")')
+            else:
+                lines.append(f"{key} = {parameter(value)}")
+        lines.append("")
     lines.append("[resource]")
     lines.append('script = ExtResource("1_look")')
     entries = ",\n".join(f'"{name}": SubResource("{sub_id(name)}")' for name in parts)
     lines.append("materials = {\n" + entries + "\n}")
+    if maps:
+        map_entries = ",\n".join(
+            f'"{name}": SubResource("{spec["id"]}")' for name, spec in maps.items()
+        )
+        lines.append("detail_maps = {\n" + map_entries + "\n}")
     expression = ",\n".join(f'"{shape}": {weight:g}' for shape, weight in look["expression"].items())
     lines.append("expression = {\n" + expression + "\n}" if expression else "expression = {}")
     shapes = ", ".join(f'"{shape}"' for shape in look["blink_shapes"])

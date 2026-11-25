@@ -16,6 +16,10 @@ extends Resource
 ## model uses on two parts that need different treatment (the protagonist's hair material
 ## is also his eyebrows, which must not get the hair's ink line).
 @export var materials: Dictionary = {}
+## Material name → the local maps that material draws (`CharacterDetailMaps`). Only a part
+## that carries UVs can use them, so the applier sets them per surface and leaves a surface
+## without UVs on the flat material. Empty for every look whose model has no UVs.
+@export var detail_maps: Dictionary = {}
 ## Blend shape → weight the face rests at (the protagonist's model ships nine shapes).
 @export var expression: Dictionary = {}
 ## Blend shapes a blink drives to 1 and back. Empty: the character does not blink.
@@ -34,3 +38,13 @@ func material_for(mesh_name: String, material_name: String) -> Material:
 	if materials.has(specific):
 		return materials[specific] as Material
 	return materials.get(material_name.to_lower(), null) as Material
+
+
+## The local maps `material_name` draws on the mesh node `mesh_name`, or null if that part
+## has none. Resolved the same way as `material_for()`, so a material shared by two parts
+## can carry maps on one of them.
+func detail_maps_for(mesh_name: String, material_name: String) -> CharacterDetailMaps:
+	var specific := "%s/%s" % [mesh_name.to_lower(), material_name.to_lower()]
+	if detail_maps.has(specific):
+		return detail_maps[specific] as CharacterDetailMaps
+	return detail_maps.get(material_name.to_lower(), null) as CharacterDetailMaps
