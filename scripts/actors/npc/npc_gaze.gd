@@ -179,11 +179,13 @@ func _process_modification_with_delta(delta: float) -> void:
 		_measured = _turn_about(up, before, skeleton.get_bone_global_pose(head).basis)
 	# Eyeballs: the same turn about the same vertical, on top of the head's pose (the
 	# modifier's writes are rolled back after the skin is built, so a frame that stops
-	# writing leaves the animation's own eye pose exactly as it was).
-	for index in _eyes:
-		var pose := skeleton.get_bone_global_pose(_eyes[index])
+	# writing leaves the animation's own eye pose exactly as it was). The loop walks
+	# the bone indices themselves - indexing the packed array by its own values would
+	# ask for element 50 of a two-element array.
+	for eye in _eyes:
+		var pose := skeleton.get_bone_global_pose(eye)
 		pose.basis = Basis(up, deg_to_rad(_eye_applied)) * pose.basis
-		skeleton.set_bone_global_pose(_eyes[index], pose)
+		skeleton.set_bone_global_pose(eye, pose)
 
 
 func _resolve(skeleton: Skeleton3D) -> void:
