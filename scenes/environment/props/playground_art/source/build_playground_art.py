@@ -322,7 +322,6 @@ HIDE = re.compile(
     r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
     r"|SchoolPlinth/MeshInstance3D|TapPost/MeshInstance3D"
     r"|(RazorWire(West|East)|SiteEdgeWest|AlleyThreshold)/MeshInstance3D"
-    r"|TreeCrown"
 )
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
@@ -531,14 +530,15 @@ def razor_fences(b: Builder) -> None:
 def climbing_frame(b: Builder, A: str) -> None:
     """Round 32: the yellow bars grow the parts a climbing frame is recognised by.
 
-    A round rail sleeved over the square bar, four braces leaning from the bar's ends to
-    the ground, two rope-hung rings to grab, and a foot plate under every post. All on
-    the art layer: the frame's bodies and their colliders are the graybox's own.
+    Four braces leaning from the bar's ends to the ground, two rope-hung rings to grab,
+    and a foot plate under every post. All on the art layer, and all thin in x and z:
+    the follow camera hangs a fixed offset up and north-east of the player, so anything
+    wider falls inside some standing spot's sight line (the sleeved rail that was tried
+    first failed the slice's camera sweep). The frame's bodies and colliders are the
+    graybox's own.
     """
     F = f"{A}/Frame"
     b.node("Frame", A)
-    rail = b.mesh("CylinderMesh", top_radius=0.08, bottom_radius=0.08, height=4.24, radial_segments=12, rings=1)
-    b.flat("Rail", F, rail, "frame_yellow", (18.0, 2.85, 9.0), (90, 0, 0), shadow=True)
     brace = b.mesh("CylinderMesh", top_radius=0.035, bottom_radius=0.035, height=2.84, radial_segments=8, rings=1)
     # Two braces at each end of the rail, both sides of the posts: top of the bar to the
     # ground, leaning 0.7 m along z. The pitch is atan2(0.7, 2.77) from the vertical.
@@ -557,47 +557,16 @@ def climbing_frame(b: Builder, A: str) -> None:
         b.flat(f"FootPlate_{i}", F, plate, "metal_ink", (18.0, 0.03, z))
 
 
-def yard_tree(b: Builder, A: str) -> None:
-    """Round 32: the yard's one live tree stops being a box on a stick.
-
-    Five squashed spheres jittered around the crown, each a slightly different size and
-    yaw, over a trunk that tapers into the ground. The graybox crown stays behind them
-    and keeps the painted material, so the far teaching-wing view loses nothing.
-    """
-    T = f"{A}/Tree"
-    b.node("Tree", A)
-    trunk = b.mesh("CylinderMesh", top_radius=0.16, bottom_radius=0.30, height=4.3, radial_segments=10, rings=1)
-    b.flat("Trunk", T, trunk, "trunk", (20.0, 2.0, 15.0), shadow=True)
-    for i, (x, y, z, r, h, yaw) in enumerate((
-            (19.4, 5.15, 14.6, 1.15, 1.65, 12.0),
-            (20.7, 5.0, 15.4, 1.0, 1.5, -30.0),
-            (19.8, 4.45, 15.5, 0.95, 1.4, 66.0),
-            (20.4, 5.55, 14.2, 0.85, 1.3, -72.0),
-            (19.15, 4.75, 15.9, 0.8, 1.25, 40.0),
-    )):
-        ball = b.mesh("SphereMesh", radius=r, height=h * 2.0, radial_segments=14, rings=7)
-        b.flat(f"Crown_{i}", T, ball, "crown", (x, y, z), (0, yaw, 0), shadow=True)
-
-
 def estate_faces(b: Builder, A: str) -> None:
-    """Round 32: the estate walls facing the yard stop being flat mauve planes.
+    """Round 32: the east block's drainpipe, the one fitting thin enough for the camera.
 
-    Window rows with sills on both blocks' yard faces, two air-conditioners and a
-    drainpipe with brackets and a shoe on the east block's west face. All art-layer
-    meshes: the walls' own bodies and colliders are the graybox's, and the razored
-    edge stays between the player and all of it.
+    The follow camera hangs a fixed offset up and north-east of the player, so any wide
+    mesh on these walls sits inside some standing spot's sight line - the window rows and
+    air-conditioners that were tried first all failed the slice's camera sweep. The pipe
+    and its brackets are narrow in x and z, so the sweep grazes them without blocking.
     """
     E = f"{A}/Estate"
     b.node("Estate", A)
-    window = b.mesh("BoxMesh", size=vec3((0.08, 1.5, 1.3)))
-    sill = b.mesh("BoxMesh", size=vec3((0.24, 0.12, 1.52)))
-    for j, y in enumerate((3.6, 6.6)):
-        for i, z in enumerate((-16.0, -10.0, -4.0, 2.0, 8.0, 14.0)):
-            b.flat(f"Window_{j}_{i}", E, window, "glass", (19.94, y, z))
-            b.flat(f"Sill_{j}_{i}", E, sill, "plinth", (19.88, y - 0.85, z), shadow=True)
-    ac = b.mesh("BoxMesh", size=vec3((0.55, 0.5, 0.65)))
-    for i, (y, z) in enumerate(((2.85, -10.0), (5.85, 8.0))):
-        b.flat(f"AirCon_{i}", E, ac, "metal_ink", (19.8, y, z), (0, 0, 6), shadow=True)
     pipe = b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.09, height=11.8, radial_segments=10, rings=1)
     b.flat("DrainPipe", E, pipe, "metal_ink", (19.9, 6.0, 17.6), shadow=True)
     b.flat("DrainPipeShoe", E, b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.13, height=0.4, radial_segments=10, rings=1),
@@ -605,12 +574,6 @@ def estate_faces(b: Builder, A: str) -> None:
     bracket = b.mesh("BoxMesh", size=vec3((0.16, 0.06, 0.06)))
     for i, y in enumerate((2.4, 6.0, 9.6)):
         b.flat(f"PipeBracket_{i}", E, bracket, "metal_ink", (19.98, y, 17.6))
-    window_z = b.mesh("BoxMesh", size=vec3((1.5, 1.5, 0.08)))
-    sill_z = b.mesh("BoxMesh", size=vec3((1.72, 0.12, 0.24)))
-    for j, y in enumerate((3.8, 6.2)):
-        for i, x in enumerate((-16.0, -8.0, 8.0, 14.0)):
-            b.flat(f"SouthWindow_{j}_{i}", E, window_z, "glass", (x, y, 21.94))
-            b.flat(f"SouthSill_{j}_{i}", E, sill_z, "plinth", (x, y - 0.85, 21.88), shadow=True)
 
 
 def build_nodes() -> Builder:
@@ -667,7 +630,6 @@ def build_nodes() -> Builder:
     court_landmarks(b, A)
     # Round 32: the climbing frame's parts, the yard tree's crown, and the estate faces.
     climbing_frame(b, A)
-    yard_tree(b, A)
     estate_faces(b, A)
     # Sculpted truck tyres with their worn yellow wheels: four stacked, one lying flat.
     for i, (dx, dz) in enumerate(((0.0, 0.0), (0.05, -0.02), (-0.03, -0.05), (0.04, 0.01))):

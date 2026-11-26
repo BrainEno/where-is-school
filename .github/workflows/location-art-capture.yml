@@ -312,8 +312,8 @@ jobs:
               # The street adds the ditch by the drain cover to its two return-route details.
               if [ "$LOCATION" = street ]; then expect=3; fi
               # The playground: the shed, the court, the tap, the cactus plot (r20), and the
-              # climbing frame and yard tree (r32).
-              if [ "$LOCATION" = playground ]; then expect=6; fi
+              # climbing frame's rings and braces (r32).
+              if [ "$LOCATION" = playground ]; then expect=5; fi
               ;;
           esac
           xvfb-run -a --server-args="-screen 0 1600x900x24" \

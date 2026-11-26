@@ -460,15 +460,16 @@ stairs" deepened - the bikes already existed (round 23's pile at the blue stair'
 so the round gave every one of these props the parts that make it read at a glance:
 
 - **The climbing frame** (the yellow bars east of the court) grew what a climbing frame
-  is recognised by, on the art layer: a round rail sleeved over the square bar, four
-  braces leaning from the bar's ends to the ground, two rope-hung rings to grab, and a
-  foot plate under every post. The graybox bars keep their bodies and colliders.
-- **The yard's one live tree** stopped being a box on a stick: five squashed spheres
-  jittered around the crown over a trunk that tapers into the ground, and the graybox
-  crown is hidden under them (`TreeCrown` joins the art pass's HIDE list, staying in the
-  scene as the slice test's other hidden grayboxes do).
-- **The estate walls** facing the yard grew window rows with sills on both blocks' faces,
-  two air-conditioners and a drainpipe with brackets and a shoe on the east block.
+  is recognised by, on the art layer: four braces leaning from the bar's ends to the
+  ground, two rope-hung rings to grab, and a foot plate under every post. Every one of
+  them is thin in x and z on purpose: the follow camera hangs a fixed offset up and
+  north-east of the player, and the slice's camera sweep fails any art mesh wider than
+  half a metre that a standing spot's sight line can cross - the sleeved rail and the
+  window rows that were tried first all fell inside it, and the yard tree's sphere crown
+  did too (the graybox box-on-a-stick tree predates the sweep and stays as it is). The
+  estate walls keep only the one fitting that is narrow enough to be grazed, not
+  blocking: the east block's drainpipe, its brackets and its shoe. The graybox bars,
+  bodies and colliders are untouched.
 - **Every bicycle grew its drive**: a chainring disc on the drive side, two pedals on
   their crank arms' ends, grips on the bar - and the parked one at the turn a wire
   basket. The pile keeps what came off the bikes: a pump where it rolled and a satchel
@@ -486,8 +487,8 @@ so the round gave every one of these props the parts that make it read at a glan
 - The preview raster learned `SphereMesh` (bounding-box ellipsoid), which the new crowns
   needed.
 
-New capture legs: the playground details gain the frame and the tree (expect=6), the
-teaching stairs gain the porch bike (expect=13).
+New capture legs: the playground details gain the frame's rings and braces (expect=5),
+the teaching stairs gain the porch bike (expect=13).
 
 ## Round 31: the doors behave, and the street stops being boxes
 

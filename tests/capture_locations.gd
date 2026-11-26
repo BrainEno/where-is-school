@@ -390,9 +390,8 @@ const RETURN_SPOTS := {
 		["detail_cactus_plot", Vector3(-13.4, 0, -1.4)],
 		["detail_concrete_court", Vector3(0.8, 0, 2.0)],
 		["detail_yard_tap", Vector3(-4.67, 0, 14.42)],
-		# Round 32: the climbing frame's rings and braces, and the yard tree's crown.
+		# Round 32: the climbing frame's rings and braces by the east fence.
 		["detail_climbing_frame", Vector3(14.6, 0, 7.6)],
-		["detail_yard_tree", Vector3(15.6, 0, 12.4)],
 	],
 }
 const MIN_SPACING := 4.5
