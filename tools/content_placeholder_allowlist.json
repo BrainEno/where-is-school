@@ -296,6 +296,22 @@
           "/gym_ball_cage/text": "98e6aee74e10ae9277e3f65b9b2b06a24a51f1bfa33aab0559cb4049d90709a0"
         }
       }
+    },
+    {
+      "issue": 431,
+      "reason": "Round 34: the street's north-end furniture (the container, the truck tyres, the pull-up bars) ships with the round's TODO placeholder; the owner writes the street's texts (like the front yard's, issue #345, and the grove's, issue #412).",
+      "files": {
+        "data/inspections/en/street.json": {
+          "/street_container/text": "8803540a189b3f5f3c2756d9633d1c9a9c022dcb8c4acc17181be704ba65190d",
+          "/street_tyres/text": "f7d9b15d20aa7674718d4dedffeabe60c64ed5dd9b69ca4163c13a57c39a6f99",
+          "/street_pullup_bars/text": "c1b3a0f3ef7d5c814520f02d44e23412e15797591e8915a2f42febca40491fdb"
+        },
+        "data/inspections/zh-CN/street.json": {
+          "/street_container/text": "2e5df8205db7234c595a3cdb04ba1e2f973f6048a5d5a1675d77ca9455864ae0",
+          "/street_tyres/text": "51e4f1d0facf0d390e21712f8cb662ce77ba3b278bb59604db4bb080a89f7b25",
+          "/street_pullup_bars/text": "154e9e32ac3ca0e488cc8eea7719848a85120e16b959252e82925bb79760a904"
+        }
+      }
     }
   ]
 }

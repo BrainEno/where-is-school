@@ -69,8 +69,10 @@ FRONT_YARD_TREES = (
     (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
     (-6.6, 26.4, "c", 0), (3.4, 22.8, "b", 270), (11.0, 27.6, "a", 90),
     # the last three stand in the strip behind the north railing, near the grove's
-    # trees 9, 11 and 12 (a tenth of a metre off the strict mapping is invisible)
-    (1.95, -17.9, "b", 180), (-0.65, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
+    # trees 9, 11 and 12 (a tenth of a metre off the strict mapping is invisible);
+    # the middle one stands 1.4 m west of its strict mapping, out of the lane's
+    # walk - the bake's 0.5 m agent radius needs the whole lane width clear
+    (1.95, -17.9, "b", 180), (-2.05, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
 )
 # The box each crown grows in (front_yard_meshes.TREE_BOUNDS), as the fader's collider.
 FRONT_YARD_TREE_BOX = (5.4, 7.3)
@@ -85,6 +87,10 @@ FRONT_YARD_TREE_BOX = (5.4, 7.3)
 # The strip's north wall sits at z -20.7 (its inner face z -20.55), the same line the front
 # yard's own north wall is drawn on; the court's back wall and the strip's floor carry on
 # at the same heights, so both yards' edges read as the same grounds.
+# Round 34: the lane's mouth in the NorthRail (小树林窄通道的口), x range of the gap the
+# north rail splits around - the fenced walk behind the teaching block runs north from
+# here to the wall's lane door at x -0.6.
+FRONT_LANE_MOUTH = (-1.6, 0.4)
 GROVE_WALL_H = 2.6
 GROVE_STRIP_W = 3.4             # railing line to wall face
 GROVE_CORNER_Z = -20.55         # the north wall's inner face
@@ -592,15 +598,45 @@ def build_street():
     s.box("DoorwayLintel", (10.5, 4.5, -36.96), (4.2, 0.2, 0.1), "concrete", None, False)
     s.box("DoorwayJambWest", (8.5, 3.0, -36.96), (0.2, 2.8, 0.1), "concrete", None, False)
     s.box("DoorwayJambEast", (12.5, 3.0, -36.96), (0.2, 2.8, 0.1), "concrete", None, False)
-    # the passage through the block: walkable, roofed, and lit at the far end
+    # the passage through the block: roofed scenery, lit at the far end. Its floor is
+    # deliberately NOT a nav tread (round 33): baking it walkable let a click on the lit
+    # doorway send the character in past the exit anchor, where the un-occluded ceiling
+    # filled the camera - a black screen with no way out, the round-33 stuck report. The
+    # exit is the doorway itself; the passage behind it stays scenery, its walls, ceiling
+    # and back are camera occluders like the flats' front, and a click into it snaps back
+    # to the landing's nav mesh.
     s.box("PassageFloor", (10.5, 0.8, -39.3), (3.8, 1.6, 4.2), "concrete")
-    # the threshold under the doorway and the passage floor, as one walking surface
-    _tread(s, "PassageTread", (8.6, 12.4), (-41.4, -37.0), 1.6)
-    s.box("PassageWallWest", (8.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
-    s.box("PassageWallEast", (12.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick")
-    s.box("PassageCeiling", (10.5, 4.5, -39.3), (4.2, 0.2, 4.2), "concrete", None, False)
-    s.box("PassageBack", (10.5, 3.0, -41.5), (4.2, 2.8, 0.2), "metal")
+    s.box("PassageWallWest", (8.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick", ["camera_occluder"])
+    s.box("PassageWallEast", (12.5, 3.0, -39.3), (0.2, 2.8, 4.2), "brick", ["camera_occluder"])
+    s.box("PassageCeiling", (10.5, 4.5, -39.3), (4.2, 0.2, 4.2), "concrete", ["camera_occluder"], False)
+    s.box("PassageBack", (10.5, 3.0, -41.5), (4.2, 2.8, 0.2), "metal", ["camera_occluder"])
     s.box("PassageLight", (10.5, 2.7, -41.38), (1.4, 2.2, 0.04), "dusk", None, False)
+    # Round 34: the flats' mass behind their front (居民楼) - the front wall stood alone
+    # in the haze north of the stair; now the wings return north at both ends and the
+    # back closes the block, so the street's north end reads as a building. The school
+    # grounds' back wall carries on north from the street run to the flats' west face,
+    # and the ground under it all catches a fall (the road ends at the stair).
+    s.box("FlatsSideWest", (2.75, 3.8, -39.95), (2.5, 7.6, 5.1), "brick", ["camera_occluder"])
+    s.box("FlatsSideEast", (18.25, 3.8, -39.95), (2.5, 7.6, 5.1), "brick", ["camera_occluder"])
+    s.box("FlatsBack", (10.5, 3.8, -42.7), (18.0, 7.6, 0.4), "brick", ["camera_occluder"])
+    s.box("SchoolWallNorth", (-4.75, 1.3, -39.45), (12.5, 2.6, 6.9), "wall", ["camera_occluder"])
+    s.box("NorthGround", (4.25, 0.1, -39.45), (30.5, 0.2, 6.9), "concrete")
+    # the sliver of ground between the front's foot and the pavements' north end, flush
+    # with the pavement top so the fall catch reads as one surface
+    s.box("FlatsFrontBand", (15.25, 0.075, -36.5), (8.5, 0.15, 1.0), "concrete")
+    # Round 34: the street furniture the owner asked for north of the school gate - a
+    # rusting shipping container on the east pavement (its two leaves shut, lock rods
+    # and all), a stack of three truck tyres beside it, and pull-up bars on the west
+    # pavement against the school wall.
+    s.box("Container", (15.5, 1.45, -33.2), (2.4, 2.6, 5.6), "metal", ["camera_occluder"])
+    s.box("ContainerDoorL", (14.27, 1.45, -32.9), (0.06, 2.1, 1.0), "metal")
+    s.box("ContainerDoorR", (14.27, 1.45, -31.9), (0.06, 2.1, 1.0), "metal")
+    s.box("TyreStack0", (13.5, 0.46, -32.0), (1.1, 0.62, 1.1), "metal")
+    s.box("TyreStack1", (13.5, 1.08, -32.0), (1.1, 0.62, 1.1), "metal")
+    s.box("TyreStack2", (13.5, 1.7, -32.0), (1.1, 0.62, 1.1), "metal")
+    s.box("PullUpPostNorth", (-10.3, 0.9, -26.0), (0.12, 1.5, 0.12), "metal")
+    s.box("PullUpPostSouth", (-10.3, 0.9, -27.6), (0.12, 1.5, 0.12), "metal")
+    s.box("PullUpBar", (-10.3, 1.6, -26.8), (0.12, 0.12, 1.8), "metal")
 
     s.interactables = [
         {"name": "SchoolWallLook", "pos": (-9.5, 1.2, 7.4), "id": "street_school_wall",
@@ -624,6 +660,19 @@ def build_street():
         {"name": "ReceiptSlotLook", "pos": (-10.37, 1.02, -24.7), "id": "street_receipt_slot",
          "inspection": "street_receipt_slot", "radius": 1.3,
          "outline": ("SchoolWallDado/StageReceiptSlot/Housing",)},
+        # Round 34: the north end's new furniture - texts are placeholders until the
+        # owner writes them (data/inspections/*/street.json).
+        {"name": "ContainerLook", "pos": (14.6, 1.1, -32.4), "id": "street_container",
+         "inspection": "street_container", "radius": 1.3,
+         "support": ("../../Container",),
+         "outline": ("ContainerDoorL/MeshInstance3D", "ContainerDoorR/MeshInstance3D")},
+        {"name": "TyresLook", "pos": (13.5, 0.7, -32.0), "id": "street_tyres",
+         "inspection": "street_tyres", "radius": 1.2,
+         "support": ("../../TyreStack0", "../../TyreStack1", "../../TyreStack2"),
+         "outline": ("TyreStack2/MeshInstance3D",)},
+        {"name": "PullUpBarsLook", "pos": (-10.3, 1.0, -26.8), "id": "street_pullup_bars",
+         "inspection": "street_pullup_bars", "radius": 1.2,
+         "outline": ("PullUpBar/MeshInstance3D",)},
     ]
     s.exits = [
         # Back in through the side door, to the front yard. Same id as when this was the
@@ -642,7 +691,7 @@ def build_street():
              "../../StairRamp", "../../StairLanding", "../../StairLandingSurface",
          ),
          "outline": tuple(street_steps) + ("StairLanding", "DoorwayLintel", "DoorwayJambWest",
-                                           "DoorwayJambEast", "PassageLight"),
+                                           "DoorwayJambEast"),
          "scene": "res://scenes/locations/residential/residential.tscn", "spawn": "FromStreet",
          "id_dest": "residential"},
     ]
@@ -793,7 +842,10 @@ def build_front_yard():
     # with the gate in it. Round 27: the north rail starts past the block's north door
     # (北门) - the door's fenced threshold pocket stands against the block's north face,
     # and the rail leaves the pocket's mouth open onto the dirt.
-    s.box("NorthRail", ((-8.8 + x1) / 2, 0.6, z0 + 0.15), (x1 + 8.8, 1.2, 0.1), "metal", occ)
+    s.box("NorthRailWest", ((-8.8 + FRONT_LANE_MOUTH[0]) / 2, 0.6, z0 + 0.15),
+          (FRONT_LANE_MOUTH[0] + 8.8, 1.2, 0.1), "metal", occ)
+    s.box("NorthRailEast", ((FRONT_LANE_MOUTH[1] + x1) / 2, 0.6, z0 + 0.15),
+          (x1 - FRONT_LANE_MOUTH[1], 1.2, 0.1), "metal", occ)
     s.box("SouthRail", ((x0 + x1) / 2, 0.6, z1 - 0.15), (x1 - x0, 1.2, 0.1), "metal", occ)
     _school_wall(s, YARD_WALL_X, (z0 + 0.3, z1 - 0.3), -1)
     # Round 26: the school wall's north run (校墙) so the teaching block stands inside the
@@ -807,9 +859,38 @@ def build_front_yard():
     # leg ends against it, and the leaf fills its gap full height. The yard's ground ends
     # at the NorthRail, so the door is dressing here (the exit lives on the strip's side,
     # in the grove); the stage pass frames it on both faces (build_stage_art.py).
-    s.box("SchoolWallNorthWest", (-5.0, SCHOOL_WALL_H / 2, -20.7), (12.0, SCHOOL_WALL_H, 0.3), "wall", occ)
+    # Round 34: the north run splits around the lane door (小树林窄通道的门) - a shut
+    # metal door in the wall at x -0.6, the far end of the fenced lane below; the grove
+    # scene carries the twin door on its side of the wall. The stub keeps the run's line
+    # east of the door, on to the east run and the gym's door.
+    s.box("SchoolWallNorthWest", (-6.3, SCHOOL_WALL_H / 2, -20.7), (9.4, SCHOOL_WALL_H, 0.3), "wall", occ)
+    s.box("SchoolWallNorthStub", (0.7, SCHOOL_WALL_H / 2, -20.7), (0.6, SCHOOL_WALL_H, 0.3), "wall", occ)
     s.box("SchoolWallNorthEast", (8.95, SCHOOL_WALL_H / 2, -20.7), (12.7, SCHOOL_WALL_H, 0.3), "wall", occ)
     s.box("SchoolWallNorthDoor", (1.8, GROVE_WALL_H / 2, -20.7), (1.6, GROVE_WALL_H, 0.12), "metal", occ)
+    s.box("SchoolWallNorthLaneDoor", (-0.6, 1.05, -20.7), (2.0, 2.1, 0.12), "metal", occ)
+    s.box("SchoolWallNorthLaneDoorHeader", (-0.6, 2.35, -20.7), (2.0, 0.5, 0.12), "wall", occ)
+    # Round 34: the lane (小树林的窄通道) - the narrow way the owner asked for between
+    # the teaching block's north face and the strip: north over the rail gap under the
+    # beam gate, one person wide between the rails, to the wall's lane door. The floors
+    # are the walk (the yard's ground ends at the NorthRail); the strip tree at
+    # (-0.65, -19.5) stands in the last stretch, so the walk threads it on the east.
+    s.box("GroveLaneFloor", (-0.55, 0.1, -12.4), (2.3, 0.2, 8.2), "concrete")
+    s.box("GroveLaneFloorNorth", (-0.25, 0.1, -18.59), (2.5, 0.2, 4.18), "concrete")
+    s.box("GroveLaneRailWest", (-1.55, 0.6, -12.425), (0.12, 1.2, 8.25), "metal", occ)
+    s.box("GroveLaneRailEast", (0.45, 0.6, -12.425), (0.12, 1.2, 8.25), "metal", occ)
+    for lane_x, lane_z in ((-1.55, -8.5), (0.45, -8.5)):
+        s.box(f"GroveLaneRailPost{'W' if lane_x < 0 else 'E'}8",
+              (lane_x, 0.65, lane_z), (0.16, 1.3, 0.16), "metal", occ)
+    # the beam gate stands on two full-height posts just outside the rail lines, so the
+    # gate reads as a real portal over the walk. The bake quantizes headroom to 0.25 m
+    # voxel rows measured from the scene's lowest source vertex - here the yard ground's
+    # -0.2 bottom - so the lane floor's 0.2 top and a beam foot 2.25 m up were only seven
+    # rows apart, one short of the agent's 2.0 m height, and the bake sealed the lane
+    # behind the gate (round 34's four unreachable spawns). The foot now sits 2.70 m up:
+    # nine rows over the floor top, one row of spare change whatever the scene's phase.
+    for lane_x, name in ((-1.65, "GroveLaneArchPostWest"), (0.55, "GroveLaneArchPostEast")):
+        s.box(name, (lane_x, 1.35, -16.55), (0.18, 2.7, 0.18), "metal", occ)
+    s.box("GroveLaneBeam", (-0.55, 2.95, -16.55), (2.5, 0.5, 0.45), "wall", occ)
     # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):
@@ -910,11 +991,12 @@ def build_front_yard():
          "outline": ("SideDoor/StageDoor/Frame", "SideDoor/StageDoor/Bars"),
          "scene": "res://scenes/locations/street/street.tscn", "spawn": "FromCorridor",
          "id_dest": "street"},
-        # Round 26: into the north grove, past the gate's north pier (the strip runs north
-        # from here along the wall - docs/MAP_PLAN.md §5, phase 2).
-        {"name": "ToNorthGrove", "pos": (13.45, 0.9, 8.6), "id": "front_yard_to_grove",
-         "prompt_key": "prompt.to_grove", "radius": 1.25,
-         "outline": ("GroveHintTree/StageTree/Trunk",),
+        # Round 34: into the north grove through the lane's door behind the teaching
+        # block - the narrow way the owner asked for. The mouth by the gate's north
+        # pier stays as dressing (the equipment room keeps its story beat beside it).
+        {"name": "ToNorthGrove", "pos": (-0.1, 0.9, -19.9), "id": "front_yard_to_grove",
+         "prompt_key": "prompt.to_grove", "radius": 0.9,
+         "outline": ("SchoolWallNorthLaneDoor/MeshInstance3D",),
          "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromFrontYard",
          "id_dest": "north_grove"},
         # Round 27, phase 3: back inside through the block's north door (北门), from its
@@ -937,10 +1019,12 @@ def build_front_yard():
                 # walking clear of the wall - the arrival stood still, facing north along it.
                 ("FromStreet", (12.0, 0, d_mid),
                  {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
-                # Round 26: back from the grove, beside the gate's north pier, facing west
-                # onto the dirt; the arrival walks 2.4 m clear of the tree and the exit.
-                ("FromGrove", (13.45, 0, 8.6),
-                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
+                # Round 34: back from the grove through the lane door, standing in the
+                # lane's pocket just south of it, facing south onto the walk - the arrival
+                # is an arm's reach from the exit that leads back, not the old gym-door
+                # corner 31 m away (the transition pairing limit is 6 m).
+                ("FromGrove", (-0.6, 0.21, -19.5),
+                 {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 2.4}),
                 # Round 27: out of the block's north door (北门) into its fenced threshold
                 # pocket, facing south-east onto the dirt; the arrival walks 2.6 m through
                 # the pocket's opening and clear of the rails.
@@ -1571,8 +1655,21 @@ def build_north_grove():
           (0.4, GROVE_WALL_H, m0 - corner + 0.3), "wall", occ)
     s.box("GroveWallSouth", (3.6, GROVE_WALL_H / 2, (m1 + GROVE_SOUTH_Z + 0.4) / 2),
           (0.4, GROVE_WALL_H, GROVE_SOUTH_Z - m1 + 0.4), "wall", occ)
-    s.box("GroveWallNorthWest", (-11.55, GROVE_WALL_H / 2, corner - 0.15), (25.1, GROVE_WALL_H, 0.3), "wall", occ)
+    # Round 34: the north run splits around the lane door - the twin of the front yard's
+    # lane door at x -0.6, the narrow way in from behind the teaching block (the owner's
+    # lane between the block and the grove). The stub keeps the line east of the door, on
+    # to the gym's door and the east run; the posts and beam gate the walk side.
+    s.box("GroveWallNorthWest", (-12.85, GROVE_WALL_H / 2, corner - 0.15), (22.5, GROVE_WALL_H, 0.3), "wall", occ)
+    s.box("GroveWallNorthStub", (0.7, GROVE_WALL_H / 2, corner - 0.15), (0.6, GROVE_WALL_H, 0.3), "wall", occ)
     s.box("GroveWallNorthEast", (3.0, GROVE_WALL_H / 2, corner - 0.15), (0.8, GROVE_WALL_H, 0.3), "wall", occ)
+    s.box("GroveLaneDoors", (-0.6, 1.05, corner - 0.15), (2.0, 2.1, 0.14), "metal", occ)
+    s.box("GroveLaneDoorsHeader", (-0.6, 2.35, corner - 0.15), (2.0, 0.5, 0.14), "wall", occ)
+    s.box("GroveLanePostWest", (-1.75, 1.35, -20.0), (0.5, 2.7, 0.5), "wall", occ)
+    s.box("GroveLanePostEast", (0.55, 1.35, -20.0), (0.5, 2.7, 0.5), "wall", occ)
+    # the same portal pair as the front yard's lane gate, and the same foot: 2.70 m over
+    # the strip's ground. 2.25 left exactly the eight rows the agent needs - a pass with
+    # nothing in hand, one new scene vertex away from sealing the lane's walk again.
+    s.box("GroveLaneBeam", (-0.6, 2.95, -20.0), (2.9, 0.5, 0.5), "wall", occ)
     # Round 28: the gym's door (体育馆的门) in the north wall, where the east leg's walk
     # ends against it; through it the porch runs to the gym's south face (the stage pass
     # frames the leaf and draws the porch and the shell beyond, both scenes see them).
@@ -1617,9 +1714,12 @@ def build_north_grove():
     s.exits = [
         # Back out to the front yard, standing in the mouth: the wall's south stub and the
         # railing's last post frame the opening, and the mouth's dark inset outlines it.
-        {"name": "ToFrontYard", "pos": (1.7, 0.9, 0.7), "id": "north_grove_to_front_yard",
-         "prompt_key": "prompt.grove_to_yard", "radius": 1.25,
-         "outline": ("StageArt/Mouth",),
+        # Round 34: back through the lane door - the narrow way out to the yard behind
+        # the teaching block. The mouth by the gate pier stays dressing; the yard's
+        # equipment room keeps its story beat beside it.
+        {"name": "ToFrontYard", "pos": (-0.6, 0.9, -19.6), "id": "north_grove_to_front_yard",
+         "prompt_key": "prompt.grove_to_yard", "radius": 0.8,
+         "outline": ("GroveLaneDoors/MeshInstance3D",),
          "scene": "res://scenes/locations/front_yard/front_yard.tscn", "spawn": "FromGrove",
          "id_dest": "front_yard"},
         # Out to the court, at the strip's west end: the wall stops here (the one gap) and
@@ -1641,8 +1741,10 @@ def build_north_grove():
     s.spawns = [
         # Round 26 arrivals: each walks straight up its leg, away from the exit it came in by,
         # so the way back is behind the player and not under the cursor (round 24b's pattern).
-        ("FromFrontYard", (2.8, 0, -0.5),
-         {"rotation": (0, 0, 0), "entry_facing": True, "entry_walk": 2.6}),
+        # Round 34: in through the lane door, walking south out of the lane onto the
+        # strip's walk, away from the door it came through (the round-26 pattern).
+        ("FromFrontYard", (-0.6, 0, -19.2),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 1.6}),
         ("FromPlayground", (-23.8, 0, -18.85),
          {"rotation": (0, -90, 0), "entry_facing": True, "entry_walk": 2.6}),
         # Round 28, corrected in round 30: back out of the gym's door, walking SOUTH down

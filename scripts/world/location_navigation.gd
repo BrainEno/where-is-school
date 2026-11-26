@@ -48,6 +48,14 @@ signal navigation_baked(success: bool)
 ##   agent_max_climb 0.25    1                 0.25   (the body's step)
 ##
 ## `tests/step_up_test.gd` measures what the bake used, not what was asked.
+##
+## The rows are also anchored to the scene: the heightfield starts at the source
+## geometry's exact bounds, so the row a ceiling lands in depends on the location's
+## lowest baked vertex, not on world zero. A beam foot 2.25 m over a 0.2 m floor top
+## sits seven rows above the floor when the scene's grid starts at -0.2 and eight when
+## it starts at 0 - round 34's lane gate sealed the front yard's lane at the former and
+## the grove's at the latter. Give a ceiling one row beyond the agent's height over its
+## own floor, and run the row math against the scene's lowest baked bottom.
 @export var agent_radius: float = 0.5
 ## The player's height plus a margin, so low clearance is not marked walkable.
 @export var agent_height: float = 2.0

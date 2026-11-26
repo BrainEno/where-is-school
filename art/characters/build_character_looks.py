@@ -212,8 +212,12 @@ PROTAGONIST = {
         },
     },
     # The head's local UV textures (issue #383): the skin material samples them
-    # through CharacterDetailMaps instead of the dropped vertex paint. Emitted
-    # into the .tres by render() below -- the generator owns every byte of it.
+    # through CharacterDetailMaps instead of the dropped vertex paint. Issue #386
+    # adds the hair's own pair under the hair material's name: the maps ride the
+    # same UV gate as the skin maps -- the hair mesh now carries the atlas
+    # (`head_v2.hair_uv`), while the eyebrows, which share the material on the
+    # head mesh without UVs, keep drawing exactly as before. Emitted into the
+    # .tres by render() below -- the generator owns every byte of it.
     "detail_maps": {
         "ext": [
             ("4_albedo", "Texture2D",
@@ -221,6 +225,10 @@ PROTAGONIST = {
             ("5_normal", "Texture2D",
              "res://assets/characters/protagonist/textures/head_normal.png"),
             ("6_maps", "Script", "res://scripts/actors/character_detail_maps.gd"),
+            ("7_hair_albedo", "Texture2D",
+             "res://assets/characters/protagonist/textures/hair_albedo.png"),
+            ("8_hair_normal", "Texture2D",
+             "res://assets/characters/protagonist/textures/hair_normal.png"),
         ],
         "maps": {
             "protagonist_mat_skin": {
@@ -229,6 +237,14 @@ PROTAGONIST = {
                 "albedo": "4_albedo",
                 "albedo_mix": 1.0,
                 "normal": "5_normal",
+                "normal_strength": 1.0,
+            },
+            "protagonist_mat_hair": {
+                "id": "maps_hair",
+                "script": "6_maps",
+                "albedo": "7_hair_albedo",
+                "albedo_mix": 0.75,
+                "normal": "8_hair_normal",
                 "normal_strength": 1.0,
             },
         },

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CharacterLook" load_steps=22 format=3]
+[gd_resource type="Resource" script_class="CharacterLook" load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/actors/character_look.gd" id="1_look"]
 [ext_resource type="Shader" path="res://assets/shaders/characters/character_paint.gdshader" id="2_paint"]
@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/head_albedo.png" id="4_albedo"]
 [ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/head_normal.png" id="5_normal"]
 [ext_resource type="Script" path="res://scripts/actors/character_detail_maps.gd" id="6_maps"]
+[ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/hair_albedo.png" id="7_hair_albedo"]
+[ext_resource type="Texture2D" path="res://assets/characters/protagonist/textures/hair_normal.png" id="8_hair_normal"]
 
 [sub_resource type="ShaderMaterial" id="outline"]
 resource_name = "character_ink_outline"
@@ -327,6 +329,13 @@ albedo_mix = 1
 normal = ExtResource("5_normal")
 normal_strength = 1
 
+[sub_resource type="Resource" id="maps_hair"]
+script = ExtResource("6_maps")
+albedo = ExtResource("7_hair_albedo")
+albedo_mix = 0.75
+normal = ExtResource("8_hair_normal")
+normal_strength = 1
+
 [resource]
 script = ExtResource("1_look")
 materials = {
@@ -345,7 +354,8 @@ materials = {
 "protagonist_mat_mouthinner": SubResource("m_protagonist_mat_mouthinner")
 }
 detail_maps = {
-"protagonist_mat_skin": SubResource("maps_skin")
+"protagonist_mat_skin": SubResource("maps_skin"),
+"protagonist_mat_hair": SubResource("maps_hair")
 }
 expression = {
 "BrowCompress": 0.45,

@@ -205,7 +205,7 @@ python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.gl
 | 头 | 11 332 顶点、22 064 三角、9 个 morph target、图集在 [0, 1] 内、无三角跨越背缝（最大 U 跨度 0.49999）、4 个眼睑壳、眼裂 13.4 mm |
 | 头发 | 5 199 顶点、9 200 三角、96 束 + 盖帽、包围盒与 V1 相同 |
 | 眼 | 眼睛网格 0 个 morph target |
-| 预算 | 已安装 GLB 1 409 780 B，低于 1 536 KiB 模型预算 |
+| 预算 | 已安装 GLB 1 199 412 B，低于 1 536 KiB 模型预算 |
 
 证据帧可用 `tools/head_preview.py` 复现（灰模 = 不带 `--look`，接通 = 出货 look，`--views front,quarter,side,close`，`--no-detail-maps` 做 A/B）。在本 head 上，离线 check、离线渲染与 Python 测试（`verify_build_test`、`model_library_test`、`character_geometry_capture_test`、`agent_docs_test`）均在本地运行；§7 的引擎测试在 CI 运行；Owner 的灰模与贴图验收记录在 issue #383。
 
@@ -214,3 +214,48 @@ python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.gl
 - §4.1 的脸部颜料对头部仍在对象空间采样（静止坐标重建不携带 blend shape），所以点头时那些色块移几毫米；新贴图在 UV 空间，不移动。
 - 头发的弯与收是静止姿势几何，不是模拟。
 - `tools/head_v2.py extract` 只从 V2 之前的运行时重建 V1 源；`build` 读的是提交在库里的 V1 文件，不是某次 extract。
+
+## 10. V3 头发（issue #386）
+
+### 10.1 构建是什么
+
+同一条确定性管线（`tools/head_v2.py`），仍只从钉住的 V1 源构建、仍被 `check` 逐字节比对——只是在 V2 的环细分与写盘之间多了一道头发 pass。issue 规定的工作顺序就是 pass 的执行顺序：
+
+1. **发旋与发际线。** 帽壳内部沿头顶取螺旋浮雕，并向后脑引出同心弧（`whorl_cap`，至多 1.3 mm，沿各顶点自身外向，距帽壳边界 18 mm 内淡出到零）。帽壳边界就是 Owner 的发际线，逐顶点钉死——剪裁线不动。
+2. **剪影被钳制。** V2 头发包围盒作为常量钉住；V3 的每次位移都钳在盒内，`check` 把成品的包围盒对回钉值。已批准的外剪影——束尖、模型高度、测试量到的宽度——不会漂移。
+3. **大组走向，从根部开始。** 每束的根环沿自身轴回潜 8 mm，受头骨钳制：雕刻后皮肤的极坐标半径场（4° × 4 mm 分箱，外扩一箱）把每个位移后的顶点推到离头至少 1.2 mm，所以埋根进入体积却永不刺穿皮肤。根环在自身平面加宽 1.28–1.56 倍（环 1 跟随 45%），直到相邻根部相接——刘海束之间的三角缺口从下面合拢，而不是挪动束尖。随后每根轴受重力弯 5–11 mm——逐束偏航、根尖为零——并带轻微 S 摆，向上的束倾斜、侧面的束垂落，如同一副头发。宽于 22 mm 的板束在环 2–3 之间取一道内凹刻痕，把板拆成束组。
+4. **束的节奏。** V2 实测断面 (1.0, 1.14, 1.04, 0.88, 0.55)——中段鼓起，这正是每束读作"尖锥带掐尖"的原因。V3 把环重映射为干净的收势 (1.0, 0.94, 0.82, 0.66, 0.55)，每束取自己的宽度（0.86–1.12 倍，哈希得出——无随机，每次构建相同）、沿轴 ±16% 的宽薄调制、至多 0.15 rad 的断面扭转。相邻两束不再共享同一组"宽度-相位-弯"，克隆阵列的读感就此打破。
+
+无透明、无 groom、无新几何：顶点数、三角数与拓扑都是 V2 的（5 199 顶点、9 200 三角、96 束 + 盖帽），皮肤权重不动，帽壳边界与每根束尖都留在 V2 放置的位置。
+
+### 10.2 头发的贴图
+
+头发网格现在携带 UV 图集（`hair_uv`）：帽壳按方位角与高度映射进 3 × 3 块，96 束各占一格——U 绕环走、V 从根到尖，无岛回绕、无顶点复制，网格保持精确的 V2 顶点数与拓扑。look 通过与头部相同的 `detail_maps` 通道（§9.2）向图集里画两张新图：
+
+- `hair_normal.png`（1024²）：每束格两道闪烁的束沟——被噪声打断的暗线，读作分开的发丝而不是挤出的条纹——加上网格浮雕用的同一发旋场（按纹素分辨率采样）与一缕发丝颗粒。
+- `hair_albedo.png`（512²）：两道偏亮的束釉放在束沟旁边（颜色与浮雕并排，绝不叠在上面）、更暗的发根、一层冷色噪声，以 `albedo_mix` 0.75 作为 look 发色的乘法层。
+
+贴图走与头部相同的 UV 门槛：applier 只把贴图绑到真正带 UV 的面上，眉毛——在头部网格上共享发色材质但没有 UV——保持原样绘制。`detail_maps_enabled` 是头部与头发贴图共同的 A/B 开关，预览加 `--no-detail-maps` 做对比：
+
+```bash
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --out build/head_v2/look
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --no-detail-maps \
+    --out build/head_v2/look_nodetail
+```
+
+### 10.3 `check` 新增的断言
+
+| | |
+|---|---|
+| 头发 UV | 头发 primitive 携带 `TEXCOORD_0` |
+| 包络 | 成品头发的包围盒与钉住的 V2 包络一致（0.1 mm 内） |
+| 数量 | 5 199 顶点、9 200 三角、96 束 + 盖帽——与 V2 相同 |
+| 预算 | 已安装 GLB 1 199 412 B，低于 1 536 KiB 模型预算 |
+
+### 10.4 限制
+
+- 发旋、重力弯与扭转都是静止姿势几何，同 §9.4——不是模拟。
+- 束沟画在每束自己的图集格里，跟着它所属的那束走；头发不带 morph target，没有任何东西会移动它们。
+- 包络钳制是绝对的：V3 重塑的是根与尖之间的体积，永远不碰剪影的极值。
