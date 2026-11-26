@@ -1,5 +1,6 @@
 extends SceneTree
-## A real street edge, a save taken while falling, and a legacy below-world save.
+## A real edge in the street - the container's roof - a save taken while falling,
+## and a legacy below-world save.
 
 const Harness = preload("res://tests/test_harness.gd")
 const MAIN := preload("res://scenes/main/main.tscn")
@@ -91,18 +92,19 @@ func _street_edge() -> void:
 
 
 func _recover_on_foot() -> void:
-	Harness.stage = "the open north edge of the asphalt"
+	Harness.stage = "the container roof's east edge"
 	var street := _host.get_current()
 	var before := _state.get_snapshot() as Dictionary
 	var before_entries := _entries
-	# Only the click target is a fixture: the street edge, the fall, and the route
-	# use the game collision, pointer and navigation. A small target on the asphalt
-	# gives the falling camera something genuinely pickable to ask to walk towards.
-	# Round 34 filled the street's north end (the school's back-lot block and the
-	# flats' wings), so the real edge the fixture drops off is now the asphalt's open
-	# west rim below the old pavement, past the pavement's south end.
+	# Only the click target is a fixture: the edge, the fall, and the route use the
+	# game collision, pointer and navigation. Round 34 walled the street's own deck
+	# in (the school wall west, the back-lot block north, the shops east), so the
+	# honest cliff left on the map is the container's roof: 2.6 m of free fall off
+	# its east face, standing on the same walkable top the container-yard arrival
+	# has used since round 30. A small target above the roof gives the falling
+	# camera something genuinely pickable to ask to walk towards.
 	var hotspot := HOTSPOT.instantiate() as Interactable
-	hotspot.position = Vector3(-10.6, 0.65, -30.85)
+	hotspot.position = Vector3(16.3, 3.4, -32.0)
 	hotspot.radius = 0.64
 	hotspot.interact_id = &"recover_click_fixture"
 	hotspot.inspection_id = &"street_gutter"
@@ -110,19 +112,20 @@ func _recover_on_foot() -> void:
 	var pointer := _player.get_node(^"PointerNavigator") as PointerNavigator
 	var hud := (_world.get_node(^"GameUI") as GameUI).hud
 	var rig := _player.camera_rig
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-9.0, 0.05, -30.5)))
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(15.5, 2.8, -32.0)))
 	if not _check.expect(await Harness.wait_until(func() -> bool:
-		return _host.get_safe_checkpoint().origin.x < -8.9, 2.0), "The last safe stance was not sampled."):
+		return _host.get_safe_checkpoint().origin.y > 2.7, 2.0), "The last safe stance was not sampled."):
 		return
-	# No test hook takes the floor away. Walk off the actual last metre of asphalt:
-	# forward+left is the input pair that maps to pure west (the same mapping that
-	# walks the south phase pure south on back+left), out past the road's rim.
-	Input.action_press(&"move_forward")
-	Input.action_press(&"move_left")
-	var dropped := await Harness.wait_until(func() -> bool: return _player.global_position.y < -0.42, 4.0)
-	Input.action_release(&"move_forward")
-	Input.action_release(&"move_left")
-	if not _check.expect(dropped and not _player.is_on_floor(), "The north-edge reproduction never fell."):
+	var stance_y := _host.get_safe_checkpoint().origin.y
+	# No test hook takes the floor away. Walk off the actual edge: back+right is
+	# the input pair that maps to pure east (the camera hangs to the south-east,
+	# so its pairs walk the cardinal axes), out past the roof's east face.
+	Input.action_press(&"move_back")
+	Input.action_press(&"move_right")
+	var dropped := await Harness.wait_until(func() -> bool: return _player.global_position.y < stance_y - 0.45, 4.0)
+	Input.action_release(&"move_back")
+	Input.action_release(&"move_right")
+	if not _check.expect(dropped and not _player.is_on_floor(), "The roof-edge reproduction never fell."):
 		return
 	var safe_pose := _host.get_safe_checkpoint()
 	var safe := safe_pose.origin
@@ -175,7 +178,7 @@ func _recover_on_foot() -> void:
 	Input.action_release(&"move_back")
 	Input.action_release(&"move_left")
 	_check.expect(walked and _recoveries == 1, "The player could not walk back after recovering.")
-	print("fall test: live north-edge drop recovered near %s without reloading %s" % [safe, street.location_id])
+	print("fall test: live container-roof drop recovered near %s without reloading %s" % [safe, street.location_id])
 
 
 func _new_location_and_continue() -> void:
