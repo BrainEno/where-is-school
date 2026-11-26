@@ -214,8 +214,10 @@ func _check_entry_headings() -> void:
 		[CORRIDOR, &"FromSchoolyard", Vector3.FORWARD],
 		[FRONT_YARD, &"FromCorridor", Vector3.RIGHT],
 		[PLAYGROUND, &"FromCorridor", Vector3.BACK],
-		# Round 26: the grove's arrivals walk straight up their legs (north, then west).
-		[NORTH_GROVE, &"FromFrontYard", Vector3.FORWARD],
+		# Round 26 had the yard's arrival walk straight up the grove's legs; round 34 moved
+		# the way in to the lane door in the north wall, so the arrival now walks south out
+		# of that door onto the strip's walk, away from the door it came through.
+		[NORTH_GROVE, &"FromFrontYard", Vector3.BACK],
 		[NORTH_GROVE, &"FromPlayground", Vector3.RIGHT],
 	]
 	for case in cases:

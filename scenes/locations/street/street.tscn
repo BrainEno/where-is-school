@@ -3139,6 +3139,7 @@ position = Vector3(13.5, 0.7, -32.0)
 interact_id = &"street_tyres"
 inspection_id = &"street_tyres"
 radius = 1.2
+support_paths = PackedStringArray("../../TyreStack0", "../../TyreStack1", "../../TyreStack2")
 outline_paths = PackedStringArray("../../TyreStack2/MeshInstance3D")
 
 [node name="PullUpBarsLook" parent="Interactables" instance=ExtResource("14_interactable")]

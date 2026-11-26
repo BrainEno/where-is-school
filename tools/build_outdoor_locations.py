@@ -668,6 +668,7 @@ def build_street():
          "outline": ("ContainerDoorL/MeshInstance3D", "ContainerDoorR/MeshInstance3D")},
         {"name": "TyresLook", "pos": (13.5, 0.7, -32.0), "id": "street_tyres",
          "inspection": "street_tyres", "radius": 1.2,
+         "support": ("../../TyreStack0", "../../TyreStack1", "../../TyreStack2"),
          "outline": ("TyreStack2/MeshInstance3D",)},
         {"name": "PullUpBarsLook", "pos": (-10.3, 1.0, -26.8), "id": "street_pullup_bars",
          "inspection": "street_pullup_bars", "radius": 1.2,
@@ -1018,10 +1019,12 @@ def build_front_yard():
                 # walking clear of the wall - the arrival stood still, facing north along it.
                 ("FromStreet", (12.0, 0, d_mid),
                  {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
-                # Round 26: back from the grove, beside the gate's north pier, facing west
-                # onto the dirt; the arrival walks 2.4 m clear of the tree and the exit.
-                ("FromGrove", (13.45, 0, 8.6),
-                 {"rotation": (0, 90, 0), "entry_facing": True, "entry_walk": 2.4}),
+                # Round 34: back from the grove through the lane door, standing in the
+                # lane's pocket just south of it, facing south onto the walk - the arrival
+                # is an arm's reach from the exit that leads back, not the old gym-door
+                # corner 31 m away (the transition pairing limit is 6 m).
+                ("FromGrove", (-0.6, 0.21, -19.5),
+                 {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 2.4}),
                 # Round 27: out of the block's north door (北门) into its fenced threshold
                 # pocket, facing south-east onto the dirt; the arrival walks 2.6 m through
                 # the pocket's opening and clear of the rails.

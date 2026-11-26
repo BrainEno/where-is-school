@@ -98,8 +98,11 @@ func _recover_on_foot() -> void:
 	# Only the click target is a fixture: the street edge, the fall, and the route
 	# use the game collision, pointer and navigation. A small target on the asphalt
 	# gives the falling camera something genuinely pickable to ask to walk towards.
+	# Round 34 filled the street's north end (the school's back-lot block and the
+	# flats' wings), so the real edge the fixture drops off is now the asphalt's open
+	# west rim below the old pavement, past the pavement's south end.
 	var hotspot := HOTSPOT.instantiate() as Interactable
-	hotspot.position = Vector3(-0.35, 0.65, -33.2)
+	hotspot.position = Vector3(-10.6, 0.65, -31.5)
 	hotspot.radius = 0.64
 	hotspot.interact_id = &"recover_click_fixture"
 	hotspot.inspection_id = &"street_gutter"
@@ -107,16 +110,16 @@ func _recover_on_foot() -> void:
 	var pointer := _player.get_node(^"PointerNavigator") as PointerNavigator
 	var hud := (_world.get_node(^"GameUI") as GameUI).hud
 	var rig := _player.camera_rig
-	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(0, 0.05, -34.8)))
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-9.0, 0.05, -30.5)))
 	if not _check.expect(await Harness.wait_until(func() -> bool:
-		return _host.get_safe_checkpoint().origin.z < -34.7, 2.0), "The last safe stance was not sampled."):
+		return _host.get_safe_checkpoint().origin.x < -8.9, 2.0), "The last safe stance was not sampled."):
 		return
-	# No test hook takes the floor away. Walk past the actual last metre of asphalt.
-	Input.action_press(&"move_forward")
-	Input.action_press(&"move_right")
+	# No test hook takes the floor away. Walk off the actual last metre of asphalt.
+	Input.action_press(&"move_back")
+	Input.action_press(&"move_left")
 	var dropped := await Harness.wait_until(func() -> bool: return _player.global_position.y < -0.42, 4.0)
-	Input.action_release(&"move_forward")
-	Input.action_release(&"move_right")
+	Input.action_release(&"move_back")
+	Input.action_release(&"move_left")
 	if not _check.expect(dropped and not _player.is_on_floor(), "The north-edge reproduction never fell."):
 		return
 	var safe_pose := _host.get_safe_checkpoint()
@@ -162,11 +165,13 @@ func _recover_on_foot() -> void:
 	_check.expect(await _ready_to_walk() and _player.global_position.distance_to(safe) < .18,
 		"Recovery did not put the body on its recent support: %s (expected %s)." % [_player.global_position, safe])
 	var restored_feet := _player.global_position
+	# Back and right: south and east, away from the west rim this fixture falls off -
+	# back and left would walk straight off it a second time.
 	Input.action_press(&"move_back")
-	Input.action_press(&"move_left")
+	Input.action_press(&"move_right")
 	var walked := await Harness.wait_until(func() -> bool: return _player.global_position.z > restored_feet.z + .75, 2.0)
 	Input.action_release(&"move_back")
-	Input.action_release(&"move_left")
+	Input.action_release(&"move_right")
 	_check.expect(walked and _recoveries == 1, "The player could not walk back after recovering.")
 	print("fall test: live north-edge drop recovered near %s without reloading %s" % [safe, street.location_id])
 

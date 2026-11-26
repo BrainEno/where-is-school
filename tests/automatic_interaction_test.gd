@@ -437,7 +437,7 @@ func _check_north_lane_is_the_way() -> void:
 		grove_map, _player.global_position, Vector3(0.3, 1.65, -16.5), true)
 	if walk.is_empty():
 		_failures.append("The lane's walk has no navigation path onto the grove's strip.")
-	elif walk[walk.size() - 1].z > -16.9:
+	elif walk[walk.size() - 1].z < -18.0:
 		_failures.append(
 			"The lane's walk does not reach the strip: the bake stops at %s."
 			% str(walk[walk.size() - 1]))

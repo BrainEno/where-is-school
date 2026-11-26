@@ -46,7 +46,9 @@ const OUTDOOR_STAIR_CONTRACTS: Array[Dictionary] = [
 		"step_sets": [{"prefix": "Step", "count": 12}],
 		"ramps": ["StairRamp"],
 		"landing_surfaces": [{"name": "StairLandingSurface", "top": 1.6}],
-		"treads": ["StairLandingTread", "PassageTread"],
+		# Round 33 removed the PassageTread: the passage behind the flats' doorway is
+		# scenery now, and its bake-only tread left with it.
+		"treads": ["StairLandingTread"],
 	},
 	{
 		"scene": RESIDENTIAL,
