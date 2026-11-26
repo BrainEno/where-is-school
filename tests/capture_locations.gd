@@ -355,6 +355,8 @@ const TEACHING_STAIR_STANCES := [
 	["lane_door_outside", Vector3(-21.8, -3.4, 15.6)],
 	["stairwell_door", Vector3(-11.0, -3.4, 12.6)],
 	["bikes_at_turn", Vector3(-3.6, -1.7, 12.6)],
+	# Round 32: the bike chained to the lane-door pier, from the glass doors' side.
+	["porch_bike", Vector3(-19.7, -3.4, 13.0)],
 	["railless_landing", Vector3(-11.5, 1.8, 5.2)],
 	["dogleg_landing", Vector3(2.2, 1.8, -35.7)],
 	["flooded_stair", Vector3(15.6, -1.5, -22.5)],
@@ -388,6 +390,8 @@ const RETURN_SPOTS := {
 		["detail_cactus_plot", Vector3(-13.4, 0, -1.4)],
 		["detail_concrete_court", Vector3(0.8, 0, 2.0)],
 		["detail_yard_tap", Vector3(-4.67, 0, 14.42)],
+		# Round 32: the climbing frame's rings and braces by the east fence.
+		["detail_climbing_frame", Vector3(14.6, 0, 7.6)],
 	],
 }
 const MIN_SPACING := 4.5

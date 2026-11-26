@@ -453,6 +453,43 @@ and the sketch carries no library).
 changing room's four bodies, the look's sphere and pick box). The `front_yard` capture
 leg adds the changing-room stance and the track view (expect=22).
 
+## Round 32: the props get their parts
+
+The owner asked for the playground, the corridor, and "bikes on the teaching block's
+stairs" deepened - the bikes already existed (round 23's pile at the blue stair's turn),
+so the round gave every one of these props the parts that make it read at a glance:
+
+- **The climbing frame** (the yellow bars east of the court) grew what a climbing frame
+  is recognised by, on the art layer: four braces leaning from the bar's ends to the
+  ground, two rope-hung rings to grab, and a foot plate under every post. Every one of
+  them is thin in x and z on purpose: the follow camera hangs a fixed offset up and
+  north-east of the player, and the slice's camera sweep fails any art mesh wider than
+  half a metre that a standing spot's sight line can cross - the sleeved rail and the
+  window rows that were tried first all fell inside it, and the yard tree's sphere crown
+  did too (the graybox box-on-a-stick tree predates the sweep and stays as it is). The
+  estate walls keep only the one fitting that is narrow enough to be grazed, not
+  blocking: the east block's drainpipe, its brackets and its shoe. The graybox bars,
+  bodies and colliders are untouched.
+- **Every bicycle grew its drive**: a chainring disc on the drive side, two pedals on
+  their crank arms' ends, grips on the bar - and the parked one at the turn a wire
+  basket. The pile keeps what came off the bikes: a pump where it rolled and a satchel
+  slumped against the pile's edge.
+- **A blue bike chained to the lane-door pier** beside the glass entrance, its chain a
+  run of links to a ring bolted to the pier - the thing the player walks past every
+  morning.
+- **Two extinguishers** in the teaching block's primitive language (plate, red body,
+  brass valve, hose): one on the ground floor beside the north iron door, one on the
+  stairwell wall above the bike pile. No text on their plates, so no font subset grows.
+- **The r26 grove-mouth stubs finally got their paint**: `GroveStubTree/Rail` had been in
+  the playground's graybox since round 26 with no art material, which had silently
+  blocked every later rerun of the art pass ("graybox meshes without an art material").
+  They are trunk and ink now, and the pass runs again.
+- The preview raster learned `SphereMesh` (bounding-box ellipsoid), which the new crowns
+  needed.
+
+New capture legs: the playground details gain the frame's rings and braces (expect=5),
+the teaching stairs gain the porch bike (expect=13).
+
 ## Round 31: the doors behave, and the street stops being boxes
 
 Two threads:

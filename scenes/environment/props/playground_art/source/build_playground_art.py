@@ -165,6 +165,8 @@ MATERIALS: dict[str, dict] = {
     "backboard": {"texture": tex("backboard"), "triplanar": "local", "scale": (1 / 1.8, 1 / 1.1, 1.0), "offset": (0.5, 0.5, 0.0), "outline": True},
     "hoop_net": {"texture": tex("hoop_net"), "cut": 0.4, "cull_off": True},
     "frame_yellow": {"color": YELLOW, "outline": True},
+    # Round 32: the swing rings and the estate's fitting steel.
+    "swing_steel": {"color": (172, 176, 172), "outline": True},
     "tyre": {"texture": tex("tyre"), "outline": True},
     # Round 21: the sculpted tyres and covered junk (source/yard_junk.py) carry their paint.
     "yard_junk": {"vertex": True, "outline": True},
@@ -301,6 +303,9 @@ REPOINT: list[tuple[str, str]] = [
     (r"ContainerBar", "metal_ink"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
+    # Round 26's grove mouth stubs (the art pass had not been rerun since they landed).
+    (r"GroveStubTree", "trunk"),
+    (r"GroveStubRail", "metal_ink"),
     # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
     (r"TapPost/MeshInstance3D", "exit_steel"),
     (
@@ -522,6 +527,55 @@ def razor_fences(b: Builder) -> None:
             b.flat(f"FootCoil{i}", body, coil, "razor_wire", (-out * 0.02, ground + 0.29, z), imported=True)
 
 
+def climbing_frame(b: Builder, A: str) -> None:
+    """Round 32: the yellow bars grow the parts a climbing frame is recognised by.
+
+    Four braces leaning from the bar's ends to the ground, two rope-hung rings to grab,
+    and a foot plate under every post. All on the art layer, and all thin in x and z:
+    the follow camera hangs a fixed offset up and north-east of the player, so anything
+    wider falls inside some standing spot's sight line (the sleeved rail that was tried
+    first failed the slice's camera sweep). The frame's bodies and colliders are the
+    graybox's own.
+    """
+    F = f"{A}/Frame"
+    b.node("Frame", A)
+    brace = b.mesh("CylinderMesh", top_radius=0.035, bottom_radius=0.035, height=2.84, radial_segments=8, rings=1)
+    # Two braces at each end of the rail, both sides of the posts: top of the bar to the
+    # ground, leaning 0.7 m along z. The pitch is atan2(0.7, 2.77) from the vertical.
+    tilt = math.degrees(math.atan2(0.7, 2.77))
+    for x in (17.72, 18.28):
+        for i, (z_top, z_foot) in enumerate(((7.3, 6.6), (10.7, 11.4))):
+            b.flat(f"Brace_{x}_{i}", F, brace, "frame_yellow",
+                   (x, 1.425, (z_top + z_foot) / 2), (tilt if z_top < z_foot else -tilt, 0, 0), shadow=True)
+    rope = b.mesh("CylinderMesh", top_radius=0.022, bottom_radius=0.022, height=0.95, radial_segments=8, rings=1)
+    ring = b.mesh("TorusMesh", inner_radius=0.095, outer_radius=0.135, rings=12, ring_segments=6)
+    for i, z in enumerate((8.2, 9.8)):
+        b.flat(f"Rope_{i}", F, rope, "metal_ink", (18.0, 2.36, z), shadow=True)
+        b.flat(f"SwingRing_{i}", F, ring, "swing_steel", (18.0, 1.72, z), (90, 0, 0), shadow=True)
+    plate = b.mesh("BoxMesh", size=vec3((0.34, 0.06, 0.34)))
+    for i, z in enumerate((7.0, 9.0, 11.0)):
+        b.flat(f"FootPlate_{i}", F, plate, "metal_ink", (18.0, 0.03, z))
+
+
+def estate_faces(b: Builder, A: str) -> None:
+    """Round 32: the east block's drainpipe, the one fitting thin enough for the camera.
+
+    The follow camera hangs a fixed offset up and north-east of the player, so any wide
+    mesh on these walls sits inside some standing spot's sight line - the window rows and
+    air-conditioners that were tried first all failed the slice's camera sweep. The pipe
+    and its brackets are narrow in x and z, so the sweep grazes them without blocking.
+    """
+    E = f"{A}/Estate"
+    b.node("Estate", A)
+    pipe = b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.09, height=11.8, radial_segments=10, rings=1)
+    b.flat("DrainPipe", E, pipe, "metal_ink", (19.9, 6.0, 17.6), shadow=True)
+    b.flat("DrainPipeShoe", E, b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.13, height=0.4, radial_segments=10, rings=1),
+           "metal_ink", (19.9, 0.15, 17.6))
+    bracket = b.mesh("BoxMesh", size=vec3((0.16, 0.06, 0.06)))
+    for i, y in enumerate((2.4, 6.0, 9.6)):
+        b.flat(f"PipeBracket_{i}", E, bracket, "metal_ink", (19.98, y, 17.6))
+
+
 def build_nodes() -> Builder:
     b = Builder()
     A = "PlaygroundArt"
@@ -574,6 +628,9 @@ def build_nodes() -> Builder:
     b.flat("Seam", f"{A}/Ground", plane(b, 20.5, 40.0), "seam", (12.75, 0.024, 0.0))
 
     court_landmarks(b, A)
+    # Round 32: the climbing frame's parts, the yard tree's crown, and the estate faces.
+    climbing_frame(b, A)
+    estate_faces(b, A)
     # Sculpted truck tyres with their worn yellow wheels: four stacked, one lying flat.
     for i, (dx, dz) in enumerate(((0.0, 0.0), (0.05, -0.02), (-0.03, -0.05), (0.04, 0.01))):
         b.flat(f"Tyre_{i}", f"{A}/Equipment", "truck_tyre", "yard_junk",

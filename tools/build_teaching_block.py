@@ -814,6 +814,8 @@ def rear_stair_and_ground_wing(b):
     wet_carpet(b, child_path(s, "DownLowerFlight"), down_half_x[0]-ground_x[1], down_half_y-GROUND_Y,
                low_track[1]-low_track[0])
     bikes_at_the_turn(b, s, down_half_y)
+    # Round 32: an extinguisher on the stairwell wall above the pile, plate to the landing.
+    extinguisher(b, s, "TurnExtinguisher", (-4.94, down_half_y + 1.35, 14.25), 90, "cement")
 
     # 01: municipal terrazzo and an over-scaled entrance, across from the
     # folded room directory. The lobby itself is a passage, not a teleport plane.
@@ -864,6 +866,9 @@ def rear_stair_and_ground_wing(b):
         solid_wall(b, g, name, (sum(ends)/2, GROUND_Y, ground_z[1]), ends[1]-ends[0],
                    base="entry_glaze", field=field, height=2.83)
     lane_door(b, g, ground_z[1])
+    # Round 32: the bike chained by the doors, and an extinguisher beside the north iron door.
+    porch_bike(b, g)
+    extinguisher(b, g, "EntryExtinguisher", (-8.95, GROUND_Y + 1.25, 6.68), 0, "night_blue")
     # Paint shares the plaster's XY centre so its baked pores line up with the coat.
     # Exterior face on the stable-lane side: paint sits 4 mm above the 0.11 m plaster face.
     # Parent it to the wall so the usual occluder fade treats both as one surface.
@@ -1262,7 +1267,7 @@ def tyre_stack(b, parent, name, pos, count, yaw=0):
     return p
 
 
-def bicycle(b, parent, name, pos, rot, frame):
+def bicycle(b, parent, name, pos, rot, frame, basket=False):
     b.node(name, parent, position=vec3(pos), rotation_degrees=vec3(rot))
     p = child_path(parent, name)
     wheel = b.mesh("TorusMesh", inner_radius=0.29, outer_radius=0.33, rings=20, ring_segments=6)
@@ -1275,6 +1280,19 @@ def bicycle(b, parent, name, pos, rot, frame):
         bar(b, p, f"Tube{i}", a, c, frame)
     b.box("Saddle", p, (-0.22, 0.9, 0), (0.24, 0.05, 0.1), "tyre_rubber")
     b.box("Bars", p, (0.34, 0.95, 0), (0.05, 0.04, 0.52), "shutter_steel")
+    # Round 32: the parts that make it a bicycle someone rides - the chainring disc on the
+    # drive side, two pedals on their crank arms' ends, grips on the bar, and, when the
+    # bike is the one someone parks, a wire basket ahead of the bars.
+    disc = b.mesh("CylinderMesh", top_radius=0.095, bottom_radius=0.095, height=0.02, radial_segments=14, rings=1)
+    b.flat("ChainRing", p, disc, "shutter_steel", (crank[0], crank[1], -0.052), (90, 0, 0))
+    for i, (px, py, pz) in enumerate(((-0.17, 0.22, 0.11), (0.05, 0.38, -0.11))):
+        b.box(f"Pedal{i}", p, (px, py, pz), (0.1, 0.024, 0.07), "tyre_rubber")
+    grip = b.mesh("CylinderMesh", top_radius=0.021, bottom_radius=0.021, height=0.09, radial_segments=8, rings=1)
+    for i, gz in enumerate((-0.3, 0.3)):
+        b.flat(f"Grip{i}", p, grip, "tyre_rubber", (0.34, 0.95, gz), (90, 0, 0))
+    if basket:
+        b.box("Basket", p, (0.62, 0.78, 0), (0.2, 0.18, 0.26), "shutter_steel")
+        b.box("BasketRim", p, (0.62, 0.88, 0), (0.22, 0.03, 0.28), "iron_rust")
     return p
 
 
@@ -1486,11 +1504,58 @@ def bikes_at_the_turn(b, s, landing_y):
     b.node("TurnPile", s)
     p = child_path(s, "TurnPile")
     bicycle(b, p, "LyingBike", (-3.3, landing_y+0.27, 13.5), (90, 90, 0), "bike_blue")
-    bicycle(b, p, "LeaningBike", (-4.2, landing_y, 14.12), (8, 0, 0), "bike_red")
+    bicycle(b, p, "LeaningBike", (-4.2, landing_y, 14.12), (8, 0, 0), "bike_red", basket=True)
     skateboard(b, p, "Skateboard0", (-2.75, landing_y, 12.25), (0, 32, 0), "skate_yellow")
     skateboard(b, p, "Skateboard1", (-2.62, landing_y+0.1, 12.0), (0, -18, 0), "skate_mint")
     for i, (x, z, yaw) in enumerate(((-2.55, 11.55, 20), (-2.75, 11.35, 160))):
         roller_skate(b, p, f"RollerSkate{i}", (x, landing_y, z), yaw, "skate_mint" if i else "bike_red")
+    # Round 32: the things that came off the bikes - a pump lying where it rolled, and a
+    # satchel slumped against the pile's edge.
+    pump = b.mesh("CylinderMesh", top_radius=0.026, bottom_radius=0.026, height=0.4, radial_segments=10, rings=1)
+    b.flat("Pump", p, pump, "shutter_steel", (-3.05, landing_y+0.035, 12.9), (0, 0, 90), shadow=True)
+    b.box("PumpHandle", p, (-2.88, landing_y+0.07, 12.9), (0.04, 0.09, 0.11), "tyre_rubber")
+    b.box("Satchel", p, (-2.35, landing_y+0.13, 12.05), (0.34, 0.26, 0.18), "garbage_bag", (0, 24, 0))
+
+
+def extinguisher(b, parent, name, pos, yaw, wall_mat):
+    """A wall-mounted extinguisher beside a door: bracket, red body, valve, lever, hose.
+
+    Its plate is a pictogram - a white square with a red band - and carries no text, so
+    no font subset has to grow for it. All meshes; the wall behind is the graybox's."""
+    b.node(name, parent, position=vec3(pos), rotation_degrees=vec3((0, yaw, 0)))
+    p = child_path(parent, name)
+    b.box("Backplate", p, (0, 0, 0.012), (0.16, 0.42, 0.024), "cement_dark")
+    body = b.mesh("CylinderMesh", top_radius=0.072, bottom_radius=0.078, height=0.44, radial_segments=12, rings=1)
+    b.flat("Body", p, body, "bucket_red", (0, -0.05, 0.075), shadow=True)
+    dome = b.mesh("SphereMesh", radius=0.072, height=0.072, radial_segments=12, rings=6)
+    b.flat("Shoulder", p, dome, "bucket_red", (0, 0.17, 0.075))
+    valve = b.mesh("CylinderMesh", top_radius=0.03, bottom_radius=0.034, height=0.075, radial_segments=10, rings=1)
+    b.flat("Valve", p, valve, "brass_rule", (0, 0.235, 0.075))
+    b.box("Lever", p, (0.02, 0.28, 0.075), (0.11, 0.018, 0.03), "exit_steel")
+    hose = b.mesh("CylinderMesh", top_radius=0.014, bottom_radius=0.014, height=0.3, radial_segments=8, rings=1)
+    b.flat("Hose", p, hose, "directory_black", (-0.1, 0.06, 0.075), (0, 0, -26))
+    b.box("Horn", p, (-0.16, -0.08, 0.075), (0.045, 0.06, 0.045), "directory_black")
+    b.box("Plate", p, (0, 0.42, 0.02), (0.17, 0.21, 0.014), "signal_ivory")
+    b.box("PlateBand", p, (0, 0.46, 0.024), (0.17, 0.05, 0.016), "bucket_red")
+
+
+def porch_bike(b, g):
+    """Round 32: a blue bike chained to the pier beside the glass entrance.
+
+    It leans on the lane door pier's east face, its chain a run of small torus links to
+    a ring bolted to the pier. The player walks past it every morning; the raster sees it
+    from the doors' stance. All meshes (the pier is the graybox's)."""
+    y = GROUND_Y
+    b.node("PorchBike", g, position=vec3((-20.42, y, 13.35)), rotation_degrees=vec3((0, 90, -7)))
+    p = child_path(g, "PorchBike")
+    bicycle(b, p, "Frame", (0, 0, 0), (0, 0, 0), "bike_blue")
+    # The bike leans east face onto the lane door's pier (its face is ~0.55 m west of the
+    # bike's origin at this yaw), so the ring bolt sits on that face and the chain runs
+    # from the frame down tube to it along local -z.
+    ring = b.mesh("TorusMesh", inner_radius=0.038, outer_radius=0.05, rings=10, ring_segments=6)
+    b.flat("WallRing", p, ring, "shutter_steel", (0, 0.42, -0.55), (0, 0, 90))
+    for i, (yy, zz) in enumerate(((0.30, -0.12), (0.34, -0.28), (0.40, -0.44))):
+        b.flat(f"Chain{i}", p, ring, "tyre_rubber", (0, yy, zz), (0, 0, 90))
 
 
 def iron_door(b, parent, name, pos, yaw, key, plate):

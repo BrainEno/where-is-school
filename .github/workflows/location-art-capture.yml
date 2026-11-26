@@ -295,10 +295,11 @@ jobs:
               # bikes at the blue stair's turn, the railless red landing, the dogleg's iron
               # balusters, the flooded yard stair), the lane barrier and the iron doors from
               # the gameplay camera, then the entrance looking out and the gallery looking at
-              # the stairwell. Round 25: the shut glass doors and the lane door from both sides.
+              # the stairwell. Round 25: the shut glass doors and the lane door from both
+              # sides. Round 32: the bike chained to the lane-door pier.
               detail=(teaching-stairs review_width=360)
               width=1280
-              expect=12
+              expect=13
               ;;
             restroom_02|restroom_03)
               detail=(school-details review_width=380)
@@ -310,8 +311,9 @@ jobs:
               expect=2
               # The street adds the ditch by the drain cover to its two return-route details.
               if [ "$LOCATION" = street ]; then expect=3; fi
-              # The playground: the shed, the court, the tap and (round 20) the cactus plot.
-              if [ "$LOCATION" = playground ]; then expect=4; fi
+              # The playground: the shed, the court, the tap, the cactus plot (r20), and the
+              # climbing frame's rings and braces (r32).
+              if [ "$LOCATION" = playground ]; then expect=5; fi
               ;;
           esac
           xvfb-run -a --server-args="-screen 0 1600x900x24" \
