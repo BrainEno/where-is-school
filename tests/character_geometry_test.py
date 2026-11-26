@@ -195,7 +195,10 @@ class RefinedCharacterTests(unittest.TestCase):
             names = (mesh.get("extras") or {}).get("targetNames") or []
             self.assertEqual(names, ["Brow_Compress", "Frown"], f"{name} kept shapes")
             for target_name, target in zip(names, mesh["primitives"][0]["targets"]):
-                delta = np.asarray(teacher.read_accessor(doc, blob, target["POSITION"]), float)
+                # The runtime stores morph deltas sparsely; glb_io's reader is the
+                # one that expands them (teacher.read_accessor refuses sparse on
+                # purpose, so nothing silently reads a half-written target).
+                delta = np.asarray(accessor(doc, blob, target["POSITION"]), float)
                 peaks[target_name, name] = float(np.linalg.norm(delta, axis=1).max()) * 1000
             self.assertLessEqual(max(peaks.values()), 4.0, f"{name} delta magnitude (mm)")
         for target_name in ("Brow_Compress", "Frown"):
