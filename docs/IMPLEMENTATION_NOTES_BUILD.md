@@ -185,9 +185,10 @@ read-only-capture / publish-only-on-main arrangement.
   `tools/stamp_release_version.py`; both are checked before an export.
 - **Unsigned.** SmartScreen warns; some managed machines quarantine. Only a certificate
   fixes this, and that is a purchasing decision, not a task.
-- ~~**Windows only.**~~ **Two platforms now**: `Windows Desktop` and `Linux` are exported and
-  packaged by `.github/workflows/release.yml` (see `docs/RELEASE.md`). macOS is still not
-  built: an `.app` needs notarisation, which needs a certificate.
+- ~~**Windows only.**~~ **Three platforms now**: `Windows Desktop`, `Linux` and `macOS` are
+  exported and packaged by `.github/workflows/release.yml` (see `docs/RELEASE.md`). The
+  macOS bundle is ad-hoc signed (the one signer a Linux host has), which Apple silicon
+  runs; **notarisation** still needs a certificate.
 - ~~**No save/load, no settings screen, no pause menu.**~~ **All three exist now** (ADR 0005,
   `scripts/autoload/settings_manager.gd`, `scripts/ui/pause_menu.gd`). This limit is kept
   only as a record of what the first build did not have.

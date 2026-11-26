@@ -32,11 +32,14 @@ log behind it and the names over the people in the room.
 There is a real build now, not only a project to open in the editor.
 
 **A build someone can run.** The release workflow (`.github/workflows/release.yml`)
-exports **two** archives from one tag and attaches both to the run — and to a GitHub
-release when a `v*` tag is pushed: a Windows executable and a Linux binary. Unzip, run
-`where-is-school.exe` on Windows or `./where-is-school` on Linux. Both are unsigned, so
-Windows will warn about an unknown publisher (Linux shows no warning but offers no
-signature either); `packaging/HOW-TO-RUN.txt` ships in both archives with the controls and
+exports **three** archives from one tag and attaches them to the run — and to a GitHub
+release when a `v*` tag is pushed: a Windows executable, a Linux binary and a macOS
+bundle. Unzip, run `where-is-school.exe` on Windows, `./where-is-school` on Linux, or
+open `where-is-school.app` on macOS (right-click it the first time; see
+`packaging/HOW-TO-RUN.txt`). Windows is unsigned, so it warns about an unknown publisher;
+Linux shows no warning but offers no signature either; macOS is ad-hoc signed, so Apple
+silicon runs it but Gatekeeper asks for a right-click Open the first time.
+`packaging/HOW-TO-RUN.txt` ships in all three archives with the controls and
 the known cosmetic gaps, and `packaging/linux/README.txt` adds the Linux and Steam Deck
 notes. What a release contains, and what is checked before it is published, is
 [docs/RELEASE.md](docs/RELEASE.md) — that document is the single source of truth for the
@@ -59,7 +62,10 @@ subset of the characters the game can actually draw, rebuilt by `tools/subset_fo
 whenever text changes (its `--check` prints the current size; the prose does not keep one). The Windows executable carries the project
 icon (`tools/build_app_icon.py`) and a version resource stamped from `packaging/version.txt`
 (`tools/stamp_release_version.py`); the Linux archive carries the desktop entry and the icon
-that entry names. What neither has is a signature, and there is no macOS build.
+that entry names; the macOS archive carries an ad-hoc-signed universal `where-is-school.app`
+with an `.icns` icon and its pack in the bundle. None of the three is signed with a real
+certificate — SmartScreen and Gatekeeper both warn, and `packaging/HOW-TO-RUN.txt` says
+what a player does about it.
 `docs/IMPLEMENTATION_NOTES_BUILD.md` records why each of those decisions was made.
 
 **From the editor.** Install the engine version named in `.godot-version` (4.7.2, standard,

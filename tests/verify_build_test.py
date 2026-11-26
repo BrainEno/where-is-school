@@ -80,6 +80,11 @@ def test_classify() -> None:
         "res://.godot/exported/abc/wall.png-cc22dd.ctex": "texture",
         "res://scenes/locations/street/street.tscn": "scene",
         "res://assets/ui/app_theme.tres": "scene",
+        # A sculpted mesh resource beside its scene is a model; the scene budget is
+        # about .tscn bloat, and these ship with their own name and size to defend.
+        "res://scenes/environment/fauna/green_animal_meshes/animal_body.tres": "model",
+        "res://scenes/environment/characters/roof_collector_meshes/collector_head.tres": "model",
+        "res://scenes/locations/port/meshes/ship_cargo.tres": "model",
         "res://data/dialogue/zh-CN/street.json": "text",
         "res://data/inspections/en/classroom.json": "text",
         "res://project.binary": "other",
@@ -548,6 +553,69 @@ def linux_files() -> dict[str, bytes]:
     }
 
 
+def make_macho(universal: bool = True, thin_cpu: int = 0x01000007) -> bytes:
+    """A minimal Mach-O: a universal fat wrapper by default, else one thin slice.
+
+    The verifier reads the fat table's cputypes and a thin header's cputype, so the
+    slices themselves only need the magic and the machine type the table points at.
+    """
+    thin = struct.pack("<II", 0xFEEDFACF, thin_cpu)
+    if not universal:
+        return thin
+    x86 = struct.pack("<II", 0xFEEDFACF, 0x01000007)
+    arm = struct.pack("<II", 0xFEEDFACF, 0x0100000C)
+    header = struct.pack(">II", 0xCAFEBABE, 2)
+    offset = 40
+    for cpu, slice_bytes in ((0x01000007, x86), (0x0100000C, arm)):
+        header += struct.pack(">iiIII", cpu, 0, offset, len(slice_bytes), 12)
+        offset += len(slice_bytes)
+    return header.ljust(40, b"\0") + x86 + arm
+
+
+def make_plist(version: str = "0.1.0") -> bytes:
+    import plistlib
+
+    return plistlib.dumps(
+        {
+            "CFBundleIdentifier": "io.github.braineno.whereisschool",
+            "CFBundleExecutable": "where-is-school",
+            "CFBundleShortVersionString": version,
+            "CFBundleVersion": version,
+            "LSMinimumSystemVersion": "11.00",
+        }
+    )
+
+
+def make_icns(chunk: bytes = b"ic08") -> bytes:
+    """An ICNS with one PNG chunk; `chunk` names the pixel size the verifier reads."""
+    payload = chunk + struct.pack(">I", len(PNG_256) + 8) + PNG_256
+    return b"icns" + struct.pack(">I", len(payload) + 8) + payload
+
+
+MACOS_NOTES = b"""where-is-school
+
+macOS: unzip and open where-is-school.app (right-click it the first time).
+
+Licences
+--------
+licences/COPYRIGHT.md          the project's notice
+licences/NotoSansSC-OFL.txt    Noto Sans SC (SIL Open Font License)
+licences/NotoSerifSC-OFL.txt   Noto Serif SC (SIL Open Font License)
+"""
+
+
+def macos_files() -> dict[str, bytes]:
+    return {
+        "where-is-school.app/Contents/Info.plist": make_plist(),
+        "where-is-school.app/Contents/MacOS/where-is-school": make_macho(),
+        "where-is-school.app/Contents/Resources/where-is-school.pck": pack_files(
+            [("res://data/story/notebook_comparisons.json", b"{}")]
+        ),
+        "where-is-school.app/Contents/Resources/icon.icns": make_icns(),
+        "HOW-TO-RUN.txt": MACOS_NOTES,
+    }
+
+
 def test_windows_metadata_accepts_a_complete_executable() -> None:
     problems, notes = vb.verify_windows_metadata(make_pe(complete_resources()), "0.1.0")
     check(problems == [], f"a complete executable was rejected: {problems}")
@@ -662,6 +730,112 @@ def test_package_accepts_a_linux_zip() -> None:
         check(package.problems == [], f"a good Linux package was rejected: {package.problems}")
         check(package.platform == "linux", "the platform was not detected")
         check(package.version == "0.1.0-rc.1", f"the version was read as {package.version!r}")
+
+
+def test_package_accepts_a_macos_zip() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        path = make_package(
+            Path(directory),
+            "where-is-school-0.1.0-macos",
+            files,
+            modes={"where-is-school.app/Contents/MacOS/where-is-school": 0o755},
+        )
+        package = vb.inspect_package(path, "0.1.0")
+        check(package.problems == [], f"a good macOS package was rejected: {package.problems}")
+        check(package.platform == "macos", "the platform was not detected")
+        check(package.version == "0.1.0", f"the version was read as {package.version!r}")
+        check(package.blob_is_pack, "the pack was not handed to the caller as the build to read")
+        check(
+            package.blob == files["where-is-school.app/Contents/Resources/where-is-school.pck"],
+            "the pack read out of the bundle is not the pack that shipped",
+        )
+        check(any("universal" in note for note in package.notes), f"the binary was not described: {package.notes}")
+
+
+def test_package_catches_a_thin_macos_binary() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        files["where-is-school.app/Contents/MacOS/where-is-school"] = make_macho(universal=False)
+        path = make_package(
+            Path(directory),
+            "where-is-school-0.1.0-macos",
+            files,
+            modes={"where-is-school.app/Contents/MacOS/where-is-school": 0o755},
+        )
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(
+            package.problems,
+            "thin Mach-O",
+            "an Intel-only binary passed the universal promise",
+        )
+
+
+def test_package_catches_a_macos_plist_version_mismatch() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        files["where-is-school.app/Contents/Info.plist"] = make_plist("0.2.0")
+        path = make_package(Path(directory), "where-is-school-0.1.0-macos", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(
+            package.problems,
+            "CFBundleShortVersionString",
+            "a bundle claiming another version passed",
+        )
+
+
+def test_package_catches_a_missing_macos_pack() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        del files["where-is-school.app/Contents/Resources/where-is-school.pck"]
+        path = make_package(Path(directory), "where-is-school-0.1.0-macos", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(package.problems, "missing where-is-school.app/Contents/Resources/where-is-school.pck", "a bundle without the pack passed")
+
+
+def test_package_catches_a_small_macos_icon() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        files["where-is-school.app/Contents/Resources/icon.icns"] = make_icns(b"icp5")
+        path = make_package(Path(directory), "where-is-school-0.1.0-macos", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(
+            package.problems,
+            "largest .icns image is 32 px",
+            "a Dock icon too small to read passed",
+        )
+
+
+def test_package_catches_a_macos_binary_without_the_executable_bit() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        path = make_package(Path(directory), "where-is-school-0.1.0-macos", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(
+            package.problems,
+            "without the executable bit",
+            "a bundle whose game cannot be launched passed",
+        )
+
+
+def test_package_catches_a_macos_bundle_carrying_a_stray_pck() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        files = macos_files()
+        files.update(LICENCES)
+        files["where-is-school.pck"] = b"GDPC a leftover pack next to the app"
+        path = make_package(Path(directory), "where-is-school-0.1.0-macos", files)
+        package = vb.inspect_package(path, "0.1.0")
+        expect_problem(
+            package.problems,
+            "build output or a log",
+            "a stray .pck beside the bundle passed",
+        )
 
 
 def test_package_catches_a_missing_launcher() -> None:
@@ -816,19 +990,48 @@ def test_preset_checks() -> None:
             'export_path="build/linux/where-is-school.x86_64"\n\n'
             "[preset.1.options]\n\n"
             'binary_format/embed_pck="true"\n'
-            'binary_format/architecture="x86_64"\n'
+            'binary_format/architecture="x86_64"\n\n'
+            "[preset.2]\n\nname=\"macOS\"\nplatform=\"macOS\"\n"
+            'exclude_filter="tests/*, tools/*, docs/*, art/*, scenes/dev/*, scripts/dev/*, .github/*, addons/*, scripts/story_editor/*"\n'
+            'export_path="build/macos/where-is-school.zip"\n\n'
+            "[preset.2.options]\n\n"
+            'binary_format/architecture="universal"\n'
+            'codesign/codesign=1\n'
+            'application/bundle_identifier="io.github.braineno.whereisschool"\n'
+            'application/short_version="0.1.0"\n'
+            'application/version="0.1.0"\n'
+            'application/copyright="Copyright (c) 2026 BrainEno."\n'
+            'application/icon="res://assets/icon/app_icon.icns"\n'
         )
 
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         (root / "assets" / "icon").mkdir(parents=True)
         (root / "assets" / "icon" / "app_icon.ico").write_bytes(b"icon")
+        (root / "assets" / "icon" / "app_icon.icns").write_bytes(b"icns")
         config = root / "export_presets.cfg"
         config.write_text(preset_text())
 
         problems, notes = vb.verify_presets(config, "0.1.0")
         check(problems == [], f"a good preset file was rejected: {problems}")
         check(any("metadata on" in note for note in notes), f"the Windows preset was not described: {notes}")
+        check(any("macOS" in note for note in notes), f"the macOS preset was not described: {notes}")
+
+        config.write_text(preset_text().replace('binary_format/architecture="universal"', 'binary_format/architecture="x86_64"'))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        expect_problem(problems, "not universal", "an Intel-only macOS preset passed")
+
+        config.write_text(preset_text().replace("codesign/codesign=1", "codesign/codesign=0"))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        expect_problem(problems, "ad-hoc signer", "a macOS preset without the built-in signer passed")
+
+        config.write_text(preset_text().replace("app_icon.icns", "app_icon.ico"))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        expect_problem(problems, "not an .icns", "a macOS preset pointing at the Windows icon passed")
+
+        config.write_text(preset_text().replace(".zip", ".dmg"))
+        problems, _ = vb.verify_presets(config, "0.1.0")
+        expect_problem(problems, "needs macOS tools", "a DMG-producing preset passed")
 
         config.write_text(preset_text(modify_resources="false"))
         problems, _ = vb.verify_presets(config, "0.1.0")
@@ -857,13 +1060,18 @@ def test_preset_checks() -> None:
         # Only a whole, rooted directory wildcard proves this boundary. A substring,
         # another directory's name or a .tscn-only filter must not pass. Break just one
         # platform at a time: a correct Windows preset cannot conceal a broken Linux one.
-        for index, preset_name in enumerate(("Windows Desktop", "Linux")):
+        import re
+
+        for preset_index, preset_name in enumerate(("Windows Desktop", "Linux", "macOS")):
             for where in ("tests/", "tools/", "docs/", "art/", "scenes/dev/", "scripts/dev/", ".github/", "addons/",
                           "scripts/story_editor/"):
                 for replacement in ("", where + "*.tscn", "unrelated/" + where + "*"):
-                    sections = preset_text().split("[preset.1]")
-                    sections[index] = sections[index].replace(where + "*", replacement, 1)
-                    config.write_text("[preset.1]".join(sections))
+                    sections = re.split(r"(?=\[preset\.\d+\])", preset_text())
+                    # The split leaves a leading empty chunk: chunk i+1 is preset i.
+                    sections[preset_index + 1] = sections[preset_index + 1].replace(
+                        where + "*", replacement, 1
+                    )
+                    config.write_text("".join(sections))
                     problems, _ = vb.verify_presets(config, "0.1.0")
                     expect_problem(
                         problems, f"the {preset_name} preset does not exclude {where}",

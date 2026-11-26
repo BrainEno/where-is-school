@@ -275,6 +275,12 @@ def classify(path: str) -> Category:
         if any(stored.endswith(suffix) for suffix in _TEXT_SUFFIXES):
             return BY_NAME["text"]
     if any(stored.endswith(suffix) for suffix in _SCENE_SUFFIXES):
+        # A sculpted mesh resource is a model, not a location scene: the painted animals
+        # and props each live in their own .tres under a *_meshes/ directory beside the
+        # scene that instances them. The scene budget exists for .tscn bloat - embedded
+        # resources in a hand-authored scene - not for a mesh file doing its own job.
+        if "/meshes/" in lowered or "_meshes/" in lowered:
+            return BY_NAME["model"]
         return BY_NAME["scene"]
     if any(stored.endswith(suffix) for suffix in _TEXT_SUFFIXES):
         return BY_NAME["text"]
@@ -735,6 +741,153 @@ def verify_linux_executable(blob: bytes) -> tuple[list[str], list[str]]:
     return problems, notes
 
 
+# Mach-O constants for the macOS half. A universal binary is a fat wrapper
+# (FAT_MAGIC 0xcafebabe, big-endian) whose architecture entries point at thin slices;
+# a thin 64-bit Mach-O starts with MH_MAGIC_64 0xfeedfacf. The cputypes the release
+# promises are x86-64 (0x01000007) and arm64 (0x0100000C).
+MACHO_THIN_MAGIC = b"\xcf\xfa\xed\xfe"
+MACHO_FAT_MAGIC = b"\xca\xfe\xba\xbe"
+MACHO_CPU_X86_64 = 0x01000007
+MACHO_CPU_ARM64 = 0x0100000C
+
+
+def verify_macos_executable(blob: bytes) -> tuple[list[str], list[str]]:
+    """The macOS half: a Mach-O the preset's universal promise is honest about.
+
+    Apple silicon refuses to run an unsigned or Intel-only binary, and the preset builds
+    universal, so the wrapper must carry both slices. The ad-hoc signature the exporter
+    applies is not parsed here - what is checked is the architecture surface a player's
+    Mac will need.
+    """
+    problems: list[str] = []
+    notes: list[str] = []
+    if blob[:4] == MACHO_FAT_MAGIC:
+        (count,) = struct.unpack_from(">I", blob, 4)
+        if count == 0 or count > 8:
+            return [f"the universal wrapper claims {count} architecture(s)"], notes
+        cputypes = []
+        for index in range(count):
+            (cputype,) = struct.unpack_from(">I", blob, 8 + 20 * index)
+            cputypes.append(cputype)
+        names = {MACHO_CPU_X86_64: "x86_64", MACHO_CPU_ARM64: "arm64"}
+        seen = [names.get(cpu, f"0x{cpu:08x}") for cpu in cputypes]
+        notes.append(f"Mach-O universal: {', '.join(seen)}")
+        for required, label in ((MACHO_CPU_X86_64, "x86_64"), (MACHO_CPU_ARM64, "arm64")):
+            if required not in cputypes:
+                problems.append(
+                    f"the universal binary has no {label} slice; the preset promises both"
+                )
+        return problems, notes
+    if blob[:4] == MACHO_THIN_MAGIC:
+        (cputype,) = struct.unpack_from("<I", blob, 4)
+        names = {MACHO_CPU_X86_64: "x86_64", MACHO_CPU_ARM64: "arm64"}
+        notes.append(f"Mach-O thin: {names.get(cputype, hex(cputype))}")
+        problems.append(
+            "the executable is a thin Mach-O, not the universal binary the preset promises"
+        )
+        return problems, notes
+    return ["the file players run is not a Mach-O binary"], notes
+
+
+def _core_version_of(version: str | None) -> str | None:
+    """The MAJOR.MINOR.PATCH a package label carries ('0.1.0-dev-1a2b3c4' -> '0.1.0')."""
+    if not version:
+        return None
+    try:
+        _resource, core = resource_version_of(version)
+        return core
+    except ValueError:
+        return version.split("-")[0]
+
+
+def verify_macos_plist(blob: bytes, expect_version: str | None) -> tuple[list[str], list[str]]:
+    """Info.plist: the identity and version a Finder 'Get Info' and Gatekeeper read."""
+    import plistlib
+
+    problems: list[str] = []
+    notes: list[str] = []
+    try:
+        info = plistlib.loads(blob)
+    except (plistlib.InvalidFileException, ValueError) as error:
+        return [f"Info.plist cannot be read: {error}"], notes
+    if not isinstance(info, dict):
+        return ["Info.plist is not a dictionary"], notes
+
+    identifier = info.get("CFBundleIdentifier", "")
+    if not identifier:
+        problems.append("Info.plist has no CFBundleIdentifier")
+    else:
+        notes.append(f"identifier {identifier}")
+
+    executable = info.get("CFBundleExecutable", "")
+    if executable != "where-is-school":
+        problems.append(
+            f"Info.plist runs CFBundleExecutable {executable!r}, not the game the bundle carries"
+        )
+
+    short_version = str(info.get("CFBundleShortVersionString", ""))
+    bundle_version = str(info.get("CFBundleVersion", ""))
+    if not short_version or not bundle_version:
+        problems.append(
+            "Info.plist leaves CFBundleShortVersionString or CFBundleVersion empty; "
+            "Finder would show no version"
+        )
+    else:
+        notes.append(f"version {short_version} (bundle {bundle_version})")
+    expected_core = _core_version_of(expect_version)
+    if expected_core and short_version != expected_core:
+        problems.append(
+            f"Info.plist says CFBundleShortVersionString {short_version!r}, "
+            f"the build is {expected_core!r}"
+        )
+    if expected_core and bundle_version != expected_core:
+        problems.append(
+            f"Info.plist says CFBundleVersion {bundle_version!r}, the build is {expected_core!r}"
+        )
+    if not info.get("LSMinimumSystemVersion"):
+        problems.append("Info.plist has no LSMinimumSystemVersion; a player learns the OS requirement only when the game fails to open")
+    return problems, notes
+
+
+# The ICNS chunk types that name real sizes; the export embeds the file the preset
+# points at, and a Dock icon smaller than 128 px looks broken next to every modern app.
+ICNS_CHUNK_SIZES = {
+    "icp4": 16, "icp5": 32, "ic07": 128, "ic08": 256, "ic09": 512,
+    "ic10": 1024, "ic11": 32, "ic12": 64, "ic13": 256, "ic14": 512,
+}
+
+
+def verify_macos_icon(blob: bytes) -> tuple[list[str], list[str]]:
+    """The .icns the bundle embeds: an icns file with a Dock-worthy size inside."""
+    problems: list[str] = []
+    notes: list[str] = []
+    if blob[:4] != b"icns" or len(blob) < 12:
+        return ["the bundle's icon is not an .icns file"], notes
+    (total,) = struct.unpack_from(">I", blob, 4)
+    if total != len(blob):
+        problems.append(f"the .icns header claims {total} bytes, the file holds {len(blob)}")
+    sizes: list[int] = []
+    cursor = 8
+    while cursor + 8 <= len(blob):
+        kind = blob[cursor : cursor + 4].decode("ascii", "replace")
+        (length,) = struct.unpack_from(">I", blob, cursor + 4)
+        if length < 8 or cursor + length > len(blob):
+            problems.append(f"the .icns chunk {kind!r} at offset {cursor} is truncated")
+            break
+        if kind in ICNS_CHUNK_SIZES:
+            sizes.append(ICNS_CHUNK_SIZES[kind])
+        cursor += length
+    if not sizes:
+        problems.append("the .icns carries no sized image chunks")
+    else:
+        notes.append(f"icon {', '.join(str(size) for size in sorted(sizes))} px")
+        if max(sizes) < 128:
+            problems.append(
+                f"the largest .icns image is {max(sizes)} px; a Dock icon needs at least 128"
+            )
+    return problems, notes
+
+
 # ---------------------------------------------------------------------------------------
 # The package: what a player receives
 # ---------------------------------------------------------------------------------------
@@ -781,14 +934,32 @@ PACKAGE_REQUIRED = {
         "licences/NotoSansSC-OFL.txt",
         "licences/NotoSerifSC-OFL.txt",
     ),
+    # The macOS export zips a .app bundle whose name comes from
+    # `application/config/name` in project.godot ("where-is-school"); the pack rides in
+    # Contents/Resources instead of inside the executable, so the required list names it.
+    "macos": (
+        "where-is-school.app/Contents/Info.plist",
+        "where-is-school.app/Contents/MacOS/where-is-school",
+        "where-is-school.app/Contents/Resources/where-is-school.pck",
+        "where-is-school.app/Contents/Resources/icon.icns",
+        "HOW-TO-RUN.txt",
+        "licences/COPYRIGHT.md",
+        "licences/NotoSansSC-OFL.txt",
+        "licences/NotoSerifSC-OFL.txt",
+    ),
 }
-PACKAGE_EXECUTABLE = {"windows": "where-is-school.exe", "linux": "where-is-school"}
-PACKAGE_SUFFIX = {"windows": "-windows", "linux": "-linux"}
-# The notes a player actually opens. Both platforms ship HOW-TO-RUN.txt; Linux ships its
-# own README.txt as well, and the release keeps the two in agreement on purpose.
+PACKAGE_EXECUTABLE = {
+    "windows": "where-is-school.exe",
+    "linux": "where-is-school",
+    "macos": "where-is-school.app/Contents/MacOS/where-is-school",
+}
+PACKAGE_SUFFIX = {"windows": "-windows", "linux": "-linux", "macos": "-macos"}
+# The notes a player actually opens. All three platforms ship HOW-TO-RUN.txt; Linux ships
+# its own README.txt as well, and the release keeps the three in agreement on purpose.
 PACKAGE_RUN_NOTES = {
     "windows": ("HOW-TO-RUN.txt",),
     "linux": ("HOW-TO-RUN.txt", "README.txt"),
+    "macos": ("HOW-TO-RUN.txt",),
 }
 
 
@@ -802,6 +973,9 @@ class Package:
     version: str
     executable: str | None = None
     blob: bytes = b""
+    # True when `blob` is the pack itself (macOS keeps it out of the executable), so the
+    # caller reads it as a standalone PCK instead of searching the binary for an embedded one.
+    blob_is_pack: bool = False
     problems: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
@@ -882,6 +1056,9 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
                 package.problems.append(f"{path.name} carries {name}, a development-only asset that must not ship")
             elif portable.rsplit("/", 1)[-1] in {item.casefold() for item in PACKAGE_FORBIDDEN_NAMES}:
                 package.problems.append(f"{path.name} carries {name}, a leftover from a working tree")
+            elif portable.endswith(".pck") and portable.startswith("where-is-school.app/contents/resources/"):
+                # The macOS bundle's pack is a required member, not a stray build output.
+                continue
             elif portable.endswith(PACKAGE_FORBIDDEN_SUFFIXES):
                 package.problems.append(f"{path.name} carries {name}, which is build output or a log")
 
@@ -896,6 +1073,36 @@ def inspect_package(path: Path, expect_version: str | None) -> Package:
             problems, notes = verify_windows_metadata(package.blob, expect_version or version or None)
             package.problems.extend(problems)
             package.notes.extend(notes)
+        elif platform == "macos":
+            problems, notes = verify_macos_executable(package.blob)
+            package.problems.extend(problems)
+            package.notes.extend(notes)
+            info = infos[f"{folder}/{executable}"]
+            mode = (info.external_attr >> 16) & 0o777
+            if not mode & 0o111:
+                package.problems.append(
+                    f"{executable} is stored with mode {mode:o} in the zip; without the "
+                    "executable bit macOS will not launch the game"
+                )
+            plist_name = "where-is-school.app/Contents/Info.plist"
+            if plist_name in present:
+                problems, notes = verify_macos_plist(
+                    archive.read(f"{folder}/{plist_name}"), expect_version or version or None
+                )
+                package.problems.extend(problems)
+                package.notes.extend(notes)
+            icon_name = "where-is-school.app/Contents/Resources/icon.icns"
+            if icon_name in present:
+                problems, notes = verify_macos_icon(archive.read(f"{folder}/{icon_name}"))
+                package.problems.extend(problems)
+                package.notes.extend(notes)
+            # On macOS the pack rides in the bundle's Resources, not inside the
+            # executable; hand the pack itself to the caller's content check.
+            pck_name = "where-is-school.app/Contents/Resources/where-is-school.pck"
+            if pck_name in present:
+                package.blob = archive.read(f"{folder}/{pck_name}")
+                package.blob_is_pack = True
+                package.notes.append(f"{pck_name}: {_human(len(package.blob))}")
         else:
             problems, notes = verify_linux_executable(package.blob)
             package.problems.extend(problems)
@@ -943,6 +1150,8 @@ def _check_run_notes(
             )
         if platform == "linux" and "./where-is-school" not in text:
             problems.append(f"{name} has no Linux launch command (./where-is-school)")
+        if platform == "macos" and "where-is-school.app" not in text:
+            problems.append(f"{name} has no macOS launch instruction (where-is-school.app)")
         missing = [filenames for filenames in shipped if filenames not in text]
         if missing:
             problems.append(
@@ -1074,7 +1283,59 @@ def verify_presets(path: Path, expect_version: str | None) -> tuple[list[str], l
         else:
             notes.append(f"Linux: {linux.export_path}, {architecture}, pack embedded")
 
-    for preset in (windows, linux):
+    macos = presets.get("macOS")
+    if not macos:
+        problems.append("export_presets.cfg has no 'macOS' preset, so there is no macOS build to publish")
+    else:
+        if not macos.export_path:
+            problems.append("the macOS preset has no export_path")
+        elif not macos.export_path.endswith(".zip"):
+            problems.append(
+                f"the macOS preset exports to {macos.export_path!r}; a bundle zip is the only "
+                "format a Linux or Windows host can produce - a DMG needs macOS tools"
+            )
+        architecture = macos.options.get("binary_format/architecture", "")
+        if architecture != "universal":
+            problems.append(
+                f"the macOS preset builds for {architecture!r}, not universal - an Intel-only "
+                "or ARM-only pack leaves half of the Macs that download it out"
+            )
+        if macos.options.get("codesign/codesign") != "1":
+            problems.append(
+                "the macOS preset does not use the built-in ad-hoc signer (codesign/codesign=1), "
+                "so a non-macOS host would export a binary Apple silicon refuses to run"
+            )
+        icon = macos.options.get("application/icon", "")
+        if not icon:
+            problems.append("the macOS preset has no application/icon")
+        else:
+            relative = icon[len("res://") :] if icon.startswith("res://") else icon
+            if not (path.parent / relative).is_file():
+                problems.append(f"the macOS preset's icon {icon} does not exist")
+            elif not relative.lower().endswith(".icns"):
+                problems.append(f"the macOS preset's icon {icon} is not an .icns a bundle can embed")
+            else:
+                notes.append(f"icon {relative}")
+        if not macos.options.get("application/bundle_identifier", "").strip():
+            problems.append("the macOS preset leaves application/bundle_identifier empty")
+        for key in ("application/short_version", "application/version"):
+            value = macos.options.get(key, "")
+            if not value:
+                problems.append(f"the macOS preset leaves {key} empty")
+            elif expect_version:
+                try:
+                    _resource, core = resource_version_of(expect_version)
+                except ValueError as error:
+                    problems.append(str(error))
+                    break
+                if value != core:
+                    problems.append(f"the macOS preset says {key}={value!r}, the build is {core!r}")
+        if not macos.options.get("application/copyright", "").strip():
+            problems.append("the macOS preset leaves application/copyright empty")
+        if macos.options.get("application/bundle_identifier") and not problems:
+            notes.append(f"macOS: {macos.export_path}, {architecture}, ad-hoc signed")
+
+    for preset in (windows, linux, macos):
         if not preset:
             continue
         excluded = {
@@ -1125,6 +1386,9 @@ def main(argv: list[str]) -> int:
     metadata_problems: list[str] = []
     metadata_notes: list[str] = []
     blob = b""
+    # True when the blob to read is the pack itself (the macOS bundle keeps it out of the
+    # executable), so the pack is opened as a standalone file, not an embedded one.
+    blob_is_pack = False
 
     if arguments.package is not None:
         if not arguments.package.is_file():
@@ -1145,6 +1409,7 @@ def main(argv: list[str]) -> int:
         if package.problems:
             return 1
         blob = package.blob
+        blob_is_pack = package.blob_is_pack
         path = arguments.package
         # `inspect_package` has already checked this executable's icon, version or ELF
         # header; the notes it printed above are the record of that.
@@ -1159,7 +1424,7 @@ def main(argv: list[str]) -> int:
         label = str(path)
 
     try:
-        entries, header = load_blob(blob, embedded=arguments.pck is None)
+        entries, header = load_blob(blob, embedded=arguments.pck is None and not blob_is_pack)
     except PackError as error:
         print(f"FAIL: {path}: {error}", file=sys.stderr)
         annotate("error", "build unreadable", f"{path.name}: {error}")
@@ -1187,7 +1452,7 @@ def main(argv: list[str]) -> int:
     total = sum(size for _, size in entries)
     print(f"{label}: {len(entries)} file(s), {total / 1048576:.2f} MiB packed")
     print(f"pack format {header['version']}, written by Godot {header['engine']}")
-    if arguments.pck is None:
+    if arguments.pck is None and not blob_is_pack:
         exe_size = len(blob) / 1048576
         print(f"executable: {exe_size:.1f} MiB (pack included)")
         if not 10 <= exe_size <= 150:

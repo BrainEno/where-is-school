@@ -275,6 +275,44 @@ def read_ico_entries(blob: bytes) -> dict[int, bytes]:
     return entries
 
 
+# The .icns entries the macOS preset points at. An ICNS chunk is a four-byte type, a
+# four-byte big-endian length and one PNG payload; the types name the pixel size, and
+# every one of these holds PNG data, which macOS has accepted since 10.7. `icp4`/`icp5`
+# are the 16/32 px legacy names; `ic07`-`ic09` cover 128-512.
+ICNS_TYPES = {16: b"icp4", 32: b"icp5", 128: b"ic07", 256: b"ic08", 512: b"ic09"}
+
+
+def write_icns(images: dict[int, bytes]) -> bytes:
+    """An ICNS whose entries hold PNG data, the format the macOS export embeds."""
+    payload = b""
+    for size in sorted(ICNS_TYPES):
+        payload += ICNS_TYPES[size] + struct.pack(">I", len(images[size]) + 8) + images[size]
+    return b"icns" + struct.pack(">I", len(payload) + 8) + payload
+
+
+def read_icns_entries(blob: bytes) -> dict[int, bytes]:
+    """Split an ICNS back into `{size: png bytes}`."""
+    if blob[:4] != b"icns":
+        raise ValueError("not an icns file (magic=%r)" % blob[:4])
+    total = struct.unpack_from(">I", blob, 4)[0]
+    if total != len(blob):
+        raise ValueError("icns length %d does not match the file's %d" % (total, len(blob)))
+    entries = {}
+    by_type = {kind: size for size, kind in ICNS_TYPES.items()}
+    cursor = 8
+    while cursor < len(blob):
+        kind = blob[cursor : cursor + 4]
+        length = struct.unpack_from(">I", blob, cursor + 4)[0]
+        if length < 8 or cursor + length > len(blob):
+            raise ValueError("icns chunk %r has length %d at offset %d" % (kind, length, cursor))
+        if kind not in by_type:
+            raise ValueError("icns chunk %r is not one the shape table writes" % kind)
+        entries[by_type[kind]] = blob[cursor + 8 : cursor + length]
+        cursor += length
+    return entries
+
+
+
 def _svg() -> str:
     """The same shape table as SVG, for whoever edits the mark next."""
     def colour(value) -> str:
@@ -302,6 +340,9 @@ def build() -> dict[str, bytes]:
     return {
         "icon.svg": _svg().encode("utf-8"),
         "app_icon.ico": write_ico({size: images[size] for size in SIZES}),
+        "app_icon.icns": write_icns(
+            {size: images[size] for size in (16, 32, 128, 256, 512)}
+        ),
         "app_icon_256.png": images[256],
         "app_icon_512.png": images[512],
     }
@@ -325,12 +366,15 @@ def check() -> int:
                     % path.relative_to(ROOT)
                 )
             continue
-        sizes = SIZES if name.endswith(".ico") else (int(name.split("_")[-1].split(".")[0]),)
         try:
             if name.endswith(".ico"):
                 have = {size: read_png_pixels(blob) for size, blob in read_ico_entries(committed).items()}
                 want = {size: read_png_pixels(blob) for size, blob in read_ico_entries(expected).items()}
+            elif name.endswith(".icns"):
+                have = {size: read_png_pixels(blob) for size, blob in read_icns_entries(committed).items()}
+                want = {size: read_png_pixels(blob) for size, blob in read_icns_entries(expected).items()}
             else:
+                sizes = (int(name.split("_")[-1].split(".")[0]),)
                 have = {sizes[0]: read_png_pixels(committed)}
                 want = {sizes[0]: read_png_pixels(expected)}
         except ValueError as error:

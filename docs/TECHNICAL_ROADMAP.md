@@ -95,8 +95,8 @@ Official engine reference: [Godot 4.7.2 stable release](https://godotengine.org/
   the project icon and a version resource (`tools/build_app_icon.py`,
   `tools/stamp_release_version.py`), and `export_presets.cfg` has a `Linux` preset that
   `release.yml` exports and packages (`docs/RELEASE.md`). Still planned: **a code-signed
-  installer** (needs a certificate, a purchasing decision) and **a macOS preset** (needs
-  notarisation).
+  installer** (needs a certificate, a purchasing decision) and **notarised macOS builds**
+  (needs the same certificate; the unsigned, ad-hoc-signed preset already ships).
 - Populating the yard with people, events and further checks, now that the space
   and its interaction anchors exist.
 - Navigation features that click-to-move deliberately does **not** have yet: agent
@@ -481,9 +481,10 @@ versioned slot: see ADR 0005.)
   `docs/IMPLEMENTATION_NOTES_BUILD.md` records the decisions and the limits.
 - **What has changed since this phase was written** (a later round, so the paragraph above
   is history rather than a description of the build): the export has an icon and a version
-  resource, it builds **two** platforms, and save/load, settings and the pause menu all
-  exist. `docs/RELEASE.md` is the current account; the limits that remain are the missing
-  signature and macOS.
+  resource, it builds **three** platforms (Windows, Linux and an ad-hoc-signed macOS
+  bundle), and save/load, settings and the pause menu all
+  exist. `docs/RELEASE.md` is the current account; the limit that remains is the missing
+  real signature.
 
 ### Phase 6a — Multi-voice foundation (delivered in this round)
 - The inner-voice plumbing now holds any number of voices instead of one, and the
