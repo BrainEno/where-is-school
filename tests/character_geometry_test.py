@@ -17,6 +17,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
+import brow_seat
 import character_geometry as geometry
 import character_hair as hair
 import prepare_classroom_student as student
@@ -159,6 +160,40 @@ class RefinedCharacterTests(unittest.TestCase):
         self.assertEqual(len(moving(after, binary)), 8)
         self.assertEqual(len(after["animations"]), 4)
         self.assertFalse(self.outputs[0][0].get("animations"))
+
+    def test_teacher_brows_keep_the_hand_built_pair(self) -> None:
+        # Issue #385, teacher seat: N's brows are hand-built and sit within a
+        # millimetre of their mirror (2.1 mm at the inner caps), both tubes ride
+        # the brow ridge, and the two authored morph deltas keep their own small
+        # lopsidedness. The pair is the author's; this contract pins it so a
+        # rebuild cannot quietly tilt or flatten it.
+        doc, blob, meshes = self.outputs[1]
+        sides = [item for (name, _material), item in meshes.items() if name.startswith("ST_Eyebrow_")]
+        self.assertEqual(len(sides), 2)
+        left = next(item for item in sides if float(np.mean(item["POSITION"][:, 0])) < 0)
+        right = next(item for item in sides if float(np.mean(item["POSITION"][:, 0])) > 0)
+        residual = brow_seat.field_residuals(left["POSITION"].astype(float), right["POSITION"].astype(float)) * 1000
+        self.assertLessEqual(residual.mean(), 1.3, "brow mirror mean (mm)")
+        self.assertLessEqual(residual.max(), 2.5, "brow mirror max (mm)")
+        brow = np.concatenate([left["POSITION"], right["POSITION"]]).astype(float)
+        arch = brow_seat.arch_profile(brow)
+        for band in ("inner", "mid", "outer"):
+            self.assertLessEqual(abs(arch[("L", band)] - arch[("R", band)]) * 1000, 2.5,
+                                 f"arch {band} L-R height gap (mm)")
+        face = next(item for (name, _material), item in meshes.items() if name == "ST_Head_Skin")
+        gap = brow_seat.surface_gap(face["POSITION"].astype(float), face["triangles"], brow) * 1000
+        self.assertLessEqual(gap.mean(), 1.5, "brow-to-skin gap mean (mm)")
+        self.assertLessEqual(gap.max(), 3.0, "brow-to-skin gap max (mm)")
+        source, source_bin = teacher.load_glb(self.teacher_source)
+        for name in ("ST_Eyebrow_L", "ST_Eyebrow_R"):
+            built = next(m for m in doc["meshes"] if m["name"] == name)["primitives"][0]["targets"]
+            before = next(m for m in source["meshes"] if m["name"] == name)["primitives"][0]["targets"]
+            self.assertEqual(len(built), len(before))
+            for after, original in zip(built, before):
+                self.assertTrue(np.array_equal(
+                    np.asarray(teacher.read_accessor(doc, blob, after["POSITION"])),
+                    np.asarray(teacher.read_accessor(source, source_bin, original["POSITION"])),
+                ), f"{name} morph delta changed")
 
     def test_geometry_is_finite_normalized_and_bound(self) -> None:
         for _document, _binary, surfaces in self.outputs:

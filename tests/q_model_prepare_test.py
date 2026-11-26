@@ -8,7 +8,10 @@ import sys
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+import brow_seat
 import prepare_q as q
 
 
@@ -26,6 +29,36 @@ class QPreparationTest(unittest.TestCase):
         self.assertEqual(q.prepare(self.source_bytes), self.runtime_bytes)
         with self.assertRaisesRegex(ValueError, "approved Q source changed"):
             q.prepare(self.source_bytes[:-1] + bytes([self.source_bytes[-1] ^ 1]))
+
+    def test_brows_keep_the_authored_asymmetry(self) -> None:
+        # Issue #385, measured and left for the owner: Q's rest brows are a
+        # deliberately lopsided pair - the right brow rides 4.3-7.2 mm lower at the
+        # arch, the raise deltas themselves are 4.2 mm lopsided, and the mesh
+        # carries a Brow_Asymmetric morph. Symmetrizing the rest pose is the
+        # one-key flattening #385 forbids, so this contract pins the authored
+        # numbers instead: the tubes stay seated on the ridge and the author's
+        # asymmetry morph stays bit for bit. Revisit only with the owner.
+        head = next(m for m in self.runtime["meshes"] if m["name"] == "Q_Head")
+        brow = np.asarray(q.accessor(self.runtime, self.runtime_bin,
+                                     head["primitives"][1]["attributes"]["POSITION"]), float)
+        skin = np.asarray(q.accessor(self.runtime, self.runtime_bin,
+                                     head["primitives"][0]["attributes"]["POSITION"]), float)
+        triangles = np.asarray(q.accessor(self.runtime, self.runtime_bin,
+                                          head["primitives"][0]["indices"]), np.int64).reshape(-1, 3)
+        gap = brow_seat.surface_gap(skin, triangles, brow) * 1000
+        self.assertLessEqual(gap.mean(), 1.5, "brow-to-skin gap mean (mm)")
+        self.assertLessEqual(gap.max(), 3.5, "brow-to-skin gap max (mm)")
+        arch = brow_seat.arch_profile(brow)
+        for band in ("inner", "mid", "outer"):
+            self.assertLessEqual(abs(arch[("L", band)] - arch[("R", band)]) * 1000, 8.0,
+                                 f"arch {band} authored L-R height gap (mm)")
+        index = head["extras"]["targetNames"].index("Brow_Asymmetric")
+        delta = np.asarray(q.accessor(self.runtime, self.runtime_bin,
+                                      head["primitives"][1]["targets"][index]["POSITION"]), float)
+        source_head = next(m for m in self.source["meshes"] if m["name"] == "Q_Head")
+        before = np.asarray(q.accessor(self.source, self.source_bin,
+                                       source_head["primitives"][1]["targets"][index]["POSITION"]), float)
+        self.assertTrue(np.array_equal(delta, before), "Brow_Asymmetric delta changed")
 
     def test_only_the_debug_display_node_mesh_and_material_are_removed(self) -> None:
         self.assertEqual(self.source["nodes"][:-1], self.runtime["nodes"])
