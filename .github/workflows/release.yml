@@ -190,7 +190,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ci-logs build/windows build/linux
+          # The export target directories exist before the exporter runs: Godot's export
+          # CLI does not create missing parent directories, and a missing one fails the
+          # export itself rather than the check that guards it.
+          mkdir -p ci-logs build/windows build/linux build/macos
           timeout 420 godot --headless --path . --import > ci-logs/import.log 2>&1 || true
           tail -n 5 ci-logs/import.log
 
@@ -204,7 +207,7 @@ jobs:
           python3 tools/verify_build.py --preset export_presets.cfg \
             --expect-version "${{ steps.version.outputs.label }}"
 
-      - name: Export Windows and Linux
+      - name: Export Windows, Linux and macOS
         shell: bash
         run: |
           set -euo pipefail
