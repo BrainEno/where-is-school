@@ -494,6 +494,59 @@ def build_street():
     s.box("NoticeSheet", (9.32, 2.0, 2.0), (0.04, 0.6, 0.42), "paper", None, False)
     s.box("BinsA", (10.9, 0.55, -2), (0.7, 1.1, 0.7), "shutter")
     s.box("BinsB", (11.8, 0.55, -2), (0.7, 1.1, 0.7), "metal")
+    # Round 31, the rough models refined: the two flat blocks stop being brick boxes with
+    # glass stuck on them - every window gets a frame (two jambs, a head, a proud sill), the
+    # west face grows air-conditioners, a drainpipe with brackets and a shoe, a parapet at
+    # the roofline, and block B a water tank on legs and a vent - and the shopfront grows a
+    # glazed door in its own frame with a threshold, guide rails for the shutter, a sign
+    # that projects on two arms, a stack of crates, a lamp over the door and a valance under
+    # the awning. The wall gains its coping and a lamp at the crossing. All mesh-only except
+    # the two crates the player could walk into, which is the round's whole shape delta.
+    for i, z in enumerate((12.5, 9.5, 6.5, 3.5, 0.5)):
+        for j, y in enumerate((4.2, 7.4)):
+            for side, dz in (("JamN", -1.0), ("JamS", 1.0)):
+                s.box(f"WinFrameA_{i}_{j}_{side}", (11.85, y, z + dz * 0.77), (0.3, 1.9, 0.14), "concrete", None, False)
+            s.box(f"WinFrameA_{i}_{j}_Head", (11.85, y + 0.88, z), (0.3, 0.16, 1.82), "concrete", None, False)
+            s.box(f"WinFrameA_{i}_{j}_Sill", (11.78, y - 0.87, z), (0.36, 0.14, 1.9), "concrete", None, False)
+    for i, z in enumerate((-7.0, -10.0, -13.0, -16.0)):
+        for j, y in enumerate((3.6, 6.8, 10.0)):
+            for side, dz in (("JamN", -1.0), ("JamS", 1.0)):
+                s.box(f"WinFrameB_{i}_{j}_{side}", (11.85, y, z + dz * 0.72), (0.3, 1.8, 0.14), "concrete", None, False)
+            s.box(f"WinFrameB_{i}_{j}_Head", (11.85, y + 0.83, z), (0.3, 0.16, 1.72), "concrete", None, False)
+            s.box(f"WinFrameB_{i}_{j}_Sill", (11.78, y - 0.82, z), (0.36, 0.14, 1.8), "concrete", None, False)
+    for i, z in enumerate((6.5, 9.5)):
+        s.box(f"AirConA_{i}", (11.72, 2.95, z), (0.5, 0.45, 0.6), "metal", None, False)
+    s.box("DrainPipe", (11.87, 5.5, 13.7), (0.16, 10.8, 0.16), "metal", None, False)
+    for y in (2.6, 6.6, 10.4):
+        s.box(f"DrainPipeBracket_{y}", (11.96, y, 13.7), (0.2, 0.06, 0.06), "metal", None, False)
+    s.box("DrainPipeShoe", (11.87, 0.32, 13.7), (0.2, 0.35, 0.24), "metal", None, False)
+    s.box("FlatParapetA", (12.05, 11.15, 6.0), (0.25, 0.3, 16.0), "concrete", None, False)
+    s.box("FlatParapetB", (12.05, 14.15, -12.0), (0.25, 0.3, 14.0), "concrete", None, False)
+    for dx, dz in ((-0.55, -0.55), (0.55, -0.55), (-0.55, 0.55), (0.55, 0.55)):
+        s.box(f"WaterTankLeg_{dx}_{dz}", (16.4 + dx, 14.25, -14.8 + dz), (0.12, 0.5, 0.12), "metal", None, False)
+    s.box("WaterTank", (16.4, 15.15, -14.8), (1.7, 1.3, 1.7), "metal", None, False)
+    s.box("RoofVent", (18.2, 14.25, -8.0), (0.7, 0.5, 0.7), "metal", None, False)
+    s.box("ShopDoor", (9.96, 1.15, -20.0), (0.1, 2.3, 1.0), "glass", None, False)
+    s.box("ShopDoorJambN", (9.87, 1.21, -20.57), (0.26, 2.42, 0.14), "concrete", None, False)
+    s.box("ShopDoorJambS", (9.87, 1.21, -19.43), (0.26, 2.42, 0.14), "concrete", None, False)
+    s.box("ShopDoorHead", (9.87, 2.44, -20.0), (0.26, 0.14, 1.28), "concrete", None, False)
+    s.box("ShopDoorThreshold", (9.79, 0.045, -20.0), (0.5, 0.09, 1.2), "concrete", None, False)
+    s.box("ShutterRailN", (9.9, 1.65, -26.9), (0.12, 3.3, 0.12), "metal", None, False)
+    s.box("ShutterRailS", (9.9, 1.65, -21.1), (0.12, 3.3, 0.12), "metal", None, False)
+    s.box("ShopSignArmN", (9.72, 3.18, -20.9), (0.5, 0.05, 0.05), "metal", None, False)
+    s.box("ShopSignArmS", (9.72, 3.18, -20.6), (0.5, 0.05, 0.05), "metal", None, False)
+    s.box("ShopHangingSign", (9.45, 2.86, -20.75), (0.55, 0.75, 0.06), "paper", None, False)
+    s.box("ShopCrateA", (10.15, 0.425, -22.7), (0.55, 0.55, 0.55), "wood")
+    s.box("ShopCrateB", (10.2, 0.4, -23.35), (0.5, 0.5, 0.5), "wood")
+    s.box("ShopCrateTop", (10.15, 0.925, -22.7), (0.45, 0.45, 0.45), "wood", None, False)
+    s.box("ShopDoorLamp", (9.93, 2.62, -20.0), (0.3, 0.1, 0.18), "metal", None, False)
+    s.box("ShopDoorLampGlow", (9.9, 2.55, -20.0), (0.22, 0.05, 0.12), "lamp", None, False)
+    s.box("ShopAwningValance", (9.5, 2.74, -24.0), (0.87, 0.24, 6.0), "trim", None, False)
+    s.box("WallCopingNorth", (-11.15, 2.65, -14.05), (0.46, 0.1, 43.9), "concrete", None, False)
+    s.box("WallCopingSouth", (-11.15, 2.65, 18.275), (0.46, 0.1, 2.65), "concrete", None, False)
+    s.box("WallLampArm", (-10.82, 2.55, -28.5), (0.18, 0.05, 0.05), "metal", None, False)
+    s.box("WallLamp", (-10.72, 2.5, -28.5), (0.34, 0.12, 0.2), "metal", None, False)
+    s.box("WallLampGlow", (-10.72, 2.44, -28.5), (0.26, 0.05, 0.14), "lamp", None, False)
     # The gutter is an open ditch along the west kerb, 0.625 m wide (the kerb's face to
     # x -9.1), its water 0.38 m down. Its lining, the bank and the slabs over it are the stage
     # pass's (build_stage_art.py); the Road collider is left whole, so the walk is unchanged.

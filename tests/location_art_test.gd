@@ -171,7 +171,9 @@ const LOCATIONS := {
 		# its stage-pass coping, so the copings fade with the wall (3). Round 30: a second
 		# lamp, three bollards on the kerb line, the bench by the shop and the shopfront's
 		# awning and sign add nine bodies; the zebra, the manhole and the posters are paint.
-		"shapes": 100,
+		# Round 31: the refined frontage adds two solid crates by the shutter - the door's
+		# frame, the rails, the projecting sign, the lamp and the rest are meshes only.
+		"shapes": 102,
 		"interactables": 10,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

@@ -453,6 +453,27 @@ and the sketch carries no library).
 changing room's four bodies, the look's sphere and pick box). The `front_yard` capture
 leg adds the changing-room stance and the track view (expect=22).
 
+## Round 31: the doors behave, and the street stops being boxes
+
+Two threads:
+
+- **The doors' people audit.** Every exit that refuses the player was read against its
+  text and its cast: the classroom door is the only one whose blocked text says someone
+  is watching, and it is the only one with a watcher - Q, through the framing, following
+  and release machinery of `ExitWatch` (#174). The corridor's six plates are a physics
+  puzzle whose text promises nobody, and nobody stands there; the porch and the site are
+  TODO texts with no people promised. The cast that does exist - Q and N's classroom
+  seats and entry choreography, B's stage gate, the roof collector's search route - all
+  behave. Nothing to fix.
+- **The street's rough models refined.** The two flat blocks were brick boxes with glass
+  stuck on: every window now has a frame - two jambs, a head, a proud sill - and the west
+  face grows air-conditioners, a drainpipe with brackets and a shoe, parapets on both
+  blocks, and block B a water tank on legs and a roof vent. The shopfront grew a glazed
+  door in its own frame with a threshold, guide rails for the shutter, a sign that
+  projects on two arms, a lamp over the door, a valance under the awning and a stack of
+  crates by the shutter; the wall gained its coping and a lamp at the crossing. All mesh
+  -only except the two crates the player could walk into: the street is at 102 shapes.
+
 ## Round 30: the bubble follows the pointer, the walk-through audit, and the street's details
 
 Three threads in one round:
