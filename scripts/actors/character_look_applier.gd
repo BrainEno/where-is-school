@@ -295,12 +295,15 @@ static func _with_detail_maps(replacement: Material, maps: CharacterDetailMaps,
 	if arrays.size() > Mesh.ARRAY_TEX_UV and arrays[Mesh.ARRAY_TEX_UV] is PackedVector2Array:
 		uvs = arrays[Mesh.ARRAY_TEX_UV]
 	if uvs.is_empty():
+		# No UVs: the surface cannot sample the maps, but it is already wearing its
+		# painted material -- issue #386's eyebrows share the hair material without
+		# carrying UVs, and they must keep that flat paint, not fall back to the GLB.
 		(report["detail_maps_skipped"] as Array).append(key)
-		return null
+		return replacement
 	var painted := replacement.duplicate() as ShaderMaterial
 	if painted == null:
 		(report["detail_maps_skipped"] as Array).append(key)
-		return null
+		return replacement
 	if maps.albedo != null:
 		painted.set_shader_parameter("has_detail_albedo", true)
 		painted.set_shader_parameter("detail_albedo", maps.albedo)
