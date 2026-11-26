@@ -343,10 +343,10 @@ size = Vector3(0.18, 2.3, 0.18)
 size = Vector3(0.18, 2.3, 0.18)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_47"]
-size = Vector3(2.3, 0.5, 0.45)
+size = Vector3(2.5, 0.5, 0.45)
 
 [sub_resource type="BoxMesh" id="BoxMesh_47"]
-size = Vector3(2.3, 0.5, 0.45)
+size = Vector3(2.5, 0.5, 0.45)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_48"]
 size = Vector3(5.4, 7.3, 5.4)
@@ -1403,7 +1403,7 @@ mesh = SubResource("BoxMesh_44")
 material_override = ExtResource("art_metal_ink")
 
 [node name="GroveLaneArchPostWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-1.55, 1.15, -16.55)
+position = Vector3(-1.65, 1.15, -16.55)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneArchPostWest"]
 shape = SubResource("BoxShape3D_45")
@@ -1413,7 +1413,7 @@ mesh = SubResource("BoxMesh_45")
 material_override = ExtResource("art_metal_ink")
 
 [node name="GroveLaneArchPostEast" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(0.45, 1.15, -16.55)
+position = Vector3(0.55, 1.15, -16.55)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneArchPostEast"]
 shape = SubResource("BoxShape3D_46")
@@ -1423,7 +1423,7 @@ mesh = SubResource("BoxMesh_46")
 material_override = ExtResource("art_metal_ink")
 
 [node name="GroveLaneBeam" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-0.55, 2.35, -16.55)
+position = Vector3(-0.55, 2.5, -16.55)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneBeam"]
 shape = SubResource("BoxShape3D_47")
@@ -1617,7 +1617,7 @@ material_override = ExtResource("art_yard_dirt")
 visible = false
 
 [node name="DeadTree8" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-0.65, 3.55, -19.5)
+position = Vector3(-2.05, 3.55, -19.5)
 collision_layer = 128
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DeadTree8"]
@@ -1629,7 +1629,7 @@ material_override = ExtResource("art_yard_dirt")
 visible = false
 
 [node name="DeadTree8Trunk" type="StaticBody3D" parent="."]
-position = Vector3(-0.65, 1.0, -19.5)
+position = Vector3(-2.05, 1.0, -19.5)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DeadTree8Trunk"]
 shape = SubResource("BoxShape3D_65")
@@ -3505,7 +3505,7 @@ material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Tuft52" type="Node3D" parent="StageArt/Ground"]
-position = Vector3(-0.1, 0, -19.8)
+position = Vector3(-1.5, 0, -19.8)
 rotation_degrees = Vector3(0, 104, 0)
 
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft52"]
@@ -3523,7 +3523,7 @@ material_override = ExtResource("art_dry_grass")
 cast_shadow = 0
 
 [node name="Tuft53" type="Node3D" parent="StageArt/Ground"]
-position = Vector3(-1.05, 0, -19)
+position = Vector3(-2.45, 0, -19)
 rotation_degrees = Vector3(0, 151, 0)
 
 [node name="Card0" type="MeshInstance3D" parent="StageArt/Ground/Tuft53"]

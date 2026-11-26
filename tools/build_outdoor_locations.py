@@ -69,8 +69,10 @@ FRONT_YARD_TREES = (
     (-6.4, 4.2, "a", 0), (-6.8, -4.0, "b", 90), (6.2, -3.6, "c", 180), (10.2, 3.6, "a", 270),
     (-6.6, 26.4, "c", 0), (3.4, 22.8, "b", 270), (11.0, 27.6, "a", 90),
     # the last three stand in the strip behind the north railing, near the grove's
-    # trees 9, 11 and 12 (a tenth of a metre off the strict mapping is invisible)
-    (1.95, -17.9, "b", 180), (-0.65, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
+    # trees 9, 11 and 12 (a tenth of a metre off the strict mapping is invisible);
+    # the middle one stands 1.4 m west of its strict mapping, out of the lane's
+    # walk - the bake's 0.5 m agent radius needs the whole lane width clear
+    (1.95, -17.9, "b", 180), (-2.05, -19.5, "c", 270), (-3.35, -17.9, "a", 0),
 )
 # The box each crown grows in (front_yard_meshes.TREE_BOUNDS), as the fader's collider.
 FRONT_YARD_TREE_BOX = (5.4, 7.3)
@@ -878,11 +880,12 @@ def build_front_yard():
     for lane_x, lane_z in ((-1.55, -8.5), (0.45, -8.5)):
         s.box(f"GroveLaneRailPost{'W' if lane_x < 0 else 'E'}8",
               (lane_x, 0.65, lane_z), (0.16, 1.3, 0.16), "metal", occ)
-    # the beam gate stands on two full-height posts at the rail ends' line, so the gate
-    # reads as a real portal over the walk (beam foot 2.1 m, clear of the head)
-    for lane_x, name in ((-1.55, "GroveLaneArchPostWest"), (0.45, "GroveLaneArchPostEast")):
+    # the beam gate stands on two full-height posts just outside the rail lines, so the
+    # gate reads as a real portal over the walk; its foot clears 2.0 m over the floor -
+    # the nav bake carves walks with less headroom than the agent's height
+    for lane_x, name in ((-1.65, "GroveLaneArchPostWest"), (0.55, "GroveLaneArchPostEast")):
         s.box(name, (lane_x, 1.15, -16.55), (0.18, 2.3, 0.18), "metal", occ)
-    s.box("GroveLaneBeam", (-0.55, 2.35, -16.55), (2.3, 0.5, 0.45), "wall", occ)
+    s.box("GroveLaneBeam", (-0.55, 2.5, -16.55), (2.5, 0.5, 0.45), "wall", occ)
     # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):

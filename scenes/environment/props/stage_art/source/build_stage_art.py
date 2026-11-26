@@ -736,10 +736,13 @@ def street_nodes() -> Builder:
         ("RowPylon", "row_pylon", (-22.0, -46.0), 45, 1.0),
         ("RowChimney", "row_chimney", (-30.0, 30.0), 60, 1.2),
     ], -1.6)
-    # One sign past the end of the road, on a pole that stands in the sky. Nothing on it.
+    # One sign past the end of the road, on a pole that stands in the sky - east of the
+    # flats since round 34 closed the north end in (the old spot is inside the grounds'
+    # back wall now, on ground a player can reach, and the board hid them from the
+    # camera). Nothing on it.
     b.node("Landmark", A)
-    b.flat("SignPole", f"{A}/Landmark", box(b, (0.12, 6.6, 0.12)), "metal_ink", (-3.0, 1.7, -40.0), shadow=True)
-    b.flat("SignBoard", f"{A}/Landmark", box(b, (1.6, 1.0, 0.06)), "pale", (-3.0, 4.6, -39.95), (0, 18, 0), shadow=True)
+    b.flat("SignPole", f"{A}/Landmark", box(b, (0.12, 6.6, 0.12)), "metal_ink", (21.4, 1.7, -40.5), shadow=True)
+    b.flat("SignBoard", f"{A}/Landmark", box(b, (1.6, 1.0, 0.06)), "pale", (21.4, 4.6, -40.45), (0, 18, 0), shadow=True)
     street_ditch(b, A)
     # Paint on the road.
     b.node("Road", A)

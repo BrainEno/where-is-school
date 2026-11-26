@@ -3228,12 +3228,12 @@ cast_shadow = 0
 [node name="Landmark" type="Node3D" parent="StageArt"]
 
 [node name="SignPole" type="MeshInstance3D" parent="StageArt/Landmark"]
-position = Vector3(-3, 1.7, -40)
+position = Vector3(21.4, 1.7, -40.5)
 mesh = SubResource("BoxMesh_art6")
 material_override = ExtResource("art_metal_ink")
 
 [node name="SignBoard" type="MeshInstance3D" parent="StageArt/Landmark"]
-position = Vector3(-3, 4.6, -39.95)
+position = Vector3(21.4, 4.6, -40.45)
 rotation_degrees = Vector3(0, 18, 0)
 mesh = SubResource("BoxMesh_art7")
 material_override = ExtResource("art_pale")
@@ -3627,7 +3627,7 @@ mesh = ExtResource("stagemesh_dead_tree_b_twig")
 material_override = ExtResource("art_tree_twig")
 
 [node name="Tree8" type="Node3D" parent="StageArt/OverTheWall"]
-position = Vector3(-26.95, 0, -19.5)
+position = Vector3(-28.35, 0, -19.5)
 rotation_degrees = Vector3(0, 270, 0)
 
 [node name="Trunk" type="MeshInstance3D" parent="StageArt/OverTheWall/Tree8"]
