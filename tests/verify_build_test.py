@@ -998,6 +998,8 @@ def test_preset_checks() -> None:
             'binary_format/architecture="universal"\n'
             'codesign/codesign=1\n'
             'application/bundle_identifier="io.github.braineno.whereisschool"\n'
+            'application/min_macos_version_x86_64="11.00"\n'
+            'application/min_macos_version_arm64="13.00"\n'
             'application/short_version="0.1.0"\n'
             'application/version="0.1.0"\n'
             'application/copyright="Copyright (c) 2026 BrainEno."\n'

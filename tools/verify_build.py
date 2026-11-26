@@ -844,8 +844,13 @@ def verify_macos_plist(blob: bytes, expect_version: str | None) -> tuple[list[st
         problems.append(
             f"Info.plist says CFBundleVersion {bundle_version!r}, the build is {expected_core!r}"
         )
-    if not info.get("LSMinimumSystemVersion"):
-        problems.append("Info.plist has no LSMinimumSystemVersion; a player learns the OS requirement only when the game fails to open")
+    # The OS floor is not this plist's job to state: the export template substitutes
+    # `application/min_macos_version_*` into the binary's own deployment target, which is
+    # what macOS actually enforces at load time. LSMinimumSystemVersion is what a Finder
+    # "Get Info" shows, when the template carries it at all - so it is recorded when
+    # present and never demanded.
+    if info.get("LSMinimumSystemVersion"):
+        notes.append(f"minimum macOS {info['LSMinimumSystemVersion']}")
     return problems, notes
 
 
@@ -1318,6 +1323,18 @@ def verify_presets(path: Path, expect_version: str | None) -> tuple[list[str], l
                 notes.append(f"icon {relative}")
         if not macos.options.get("application/bundle_identifier", "").strip():
             problems.append("the macOS preset leaves application/bundle_identifier empty")
+        # The OS floor each architecture's binary is built with. The player notes state
+        # "requires macOS 11+ on Intel and macOS 13+ on Apple silicon"; these two options
+        # are what make that claim true, so the check ties the words to the build.
+        for key, floor in (("application/min_macos_version_x86_64", "11"), ("application/min_macos_version_arm64", "13")):
+            value = macos.options.get(key, "")
+            if not value.strip():
+                problems.append(f"the macOS preset leaves {key} empty")
+            elif not value.startswith(floor):
+                problems.append(
+                    f"the macOS preset builds for macOS {value!r} on {key.rsplit('_', 1)[-1]!r}, "
+                    f"but the run notes promise {floor}+"
+                )
         for key in ("application/short_version", "application/version"):
             value = macos.options.get(key, "")
             if not value:
