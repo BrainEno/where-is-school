@@ -165,6 +165,8 @@ MATERIALS: dict[str, dict] = {
     "backboard": {"texture": tex("backboard"), "triplanar": "local", "scale": (1 / 1.8, 1 / 1.1, 1.0), "offset": (0.5, 0.5, 0.0), "outline": True},
     "hoop_net": {"texture": tex("hoop_net"), "cut": 0.4, "cull_off": True},
     "frame_yellow": {"color": YELLOW, "outline": True},
+    # Round 32: the swing rings and the estate's fitting steel.
+    "swing_steel": {"color": (172, 176, 172), "outline": True},
     "tyre": {"texture": tex("tyre"), "outline": True},
     # Round 21: the sculpted tyres and covered junk (source/yard_junk.py) carry their paint.
     "yard_junk": {"vertex": True, "outline": True},
@@ -301,6 +303,9 @@ REPOINT: list[tuple[str, str]] = [
     (r"ContainerBar", "metal_ink"),
     (r"TreeTrunk/MeshInstance3D", "trunk"),
     (r"TreeCrown", "crown"),
+    # Round 26's grove mouth stubs (the art pass had not been rerun since they landed).
+    (r"GroveStubTree", "trunk"),
+    (r"GroveStubRail", "metal_ink"),
     # The tap sits in the south fence's shadow. The pale fitting separates it from the ground.
     (r"TapPost/MeshInstance3D", "exit_steel"),
     (
@@ -317,6 +322,7 @@ HIDE = re.compile(
     r"CourtLine(South|North|West|East)|CourtCentre|Key(Near|Far)|TyreStack_\d|TyreLoose"
     r"|SchoolPlinth/MeshInstance3D|TapPost/MeshInstance3D"
     r"|(RazorWire(West|East)|SiteEdgeWest|AlleyThreshold)/MeshInstance3D"
+    r"|TreeCrown"
 )
 
 ENVIRONMENT = """[sub_resource type="Environment" id="Environment_1"]
@@ -522,6 +528,91 @@ def razor_fences(b: Builder) -> None:
             b.flat(f"FootCoil{i}", body, coil, "razor_wire", (-out * 0.02, ground + 0.29, z), imported=True)
 
 
+def climbing_frame(b: Builder, A: str) -> None:
+    """Round 32: the yellow bars grow the parts a climbing frame is recognised by.
+
+    A round rail sleeved over the square bar, four braces leaning from the bar's ends to
+    the ground, two rope-hung rings to grab, and a foot plate under every post. All on
+    the art layer: the frame's bodies and their colliders are the graybox's own.
+    """
+    F = f"{A}/Frame"
+    b.node("Frame", A)
+    rail = b.mesh("CylinderMesh", top_radius=0.08, bottom_radius=0.08, height=4.24, radial_segments=12, rings=1)
+    b.flat("Rail", F, rail, "frame_yellow", (18.0, 2.85, 9.0), (90, 0, 0), shadow=True)
+    brace = b.mesh("CylinderMesh", top_radius=0.035, bottom_radius=0.035, height=2.84, radial_segments=8, rings=1)
+    # Two braces at each end of the rail, both sides of the posts: top of the bar to the
+    # ground, leaning 0.7 m along z. The pitch is atan2(0.7, 2.77) from the vertical.
+    tilt = math.degrees(math.atan2(0.7, 2.77))
+    for x in (17.72, 18.28):
+        for i, (z_top, z_foot) in enumerate(((7.3, 6.6), (10.7, 11.4))):
+            b.flat(f"Brace_{x}_{i}", F, brace, "frame_yellow",
+                   (x, 1.425, (z_top + z_foot) / 2), (tilt if z_top < z_foot else -tilt, 0, 0), shadow=True)
+    rope = b.mesh("CylinderMesh", top_radius=0.022, bottom_radius=0.022, height=0.95, radial_segments=8, rings=1)
+    ring = b.mesh("TorusMesh", inner_radius=0.095, outer_radius=0.135, rings=12, ring_segments=6)
+    for i, z in enumerate((8.2, 9.8)):
+        b.flat(f"Rope_{i}", F, rope, "metal_ink", (18.0, 2.36, z), shadow=True)
+        b.flat(f"SwingRing_{i}", F, ring, "swing_steel", (18.0, 1.72, z), (90, 0, 0), shadow=True)
+    plate = b.mesh("BoxMesh", size=vec3((0.34, 0.06, 0.34)))
+    for i, z in enumerate((7.0, 9.0, 11.0)):
+        b.flat(f"FootPlate_{i}", F, plate, "metal_ink", (18.0, 0.03, z))
+
+
+def yard_tree(b: Builder, A: str) -> None:
+    """Round 32: the yard's one live tree stops being a box on a stick.
+
+    Five squashed spheres jittered around the crown, each a slightly different size and
+    yaw, over a trunk that tapers into the ground. The graybox crown stays behind them
+    and keeps the painted material, so the far teaching-wing view loses nothing.
+    """
+    T = f"{A}/Tree"
+    b.node("Tree", A)
+    trunk = b.mesh("CylinderMesh", top_radius=0.16, bottom_radius=0.30, height=4.3, radial_segments=10, rings=1)
+    b.flat("Trunk", T, trunk, "trunk", (20.0, 2.0, 15.0), shadow=True)
+    for i, (x, y, z, r, h, yaw) in enumerate((
+            (19.4, 5.15, 14.6, 1.15, 1.65, 12.0),
+            (20.7, 5.0, 15.4, 1.0, 1.5, -30.0),
+            (19.8, 4.45, 15.5, 0.95, 1.4, 66.0),
+            (20.4, 5.55, 14.2, 0.85, 1.3, -72.0),
+            (19.15, 4.75, 15.9, 0.8, 1.25, 40.0),
+    )):
+        ball = b.mesh("SphereMesh", radius=r, height=h * 2.0, radial_segments=14, rings=7)
+        b.flat(f"Crown_{i}", T, ball, "crown", (x, y, z), (0, yaw, 0), shadow=True)
+
+
+def estate_faces(b: Builder, A: str) -> None:
+    """Round 32: the estate walls facing the yard stop being flat mauve planes.
+
+    Window rows with sills on both blocks' yard faces, two air-conditioners and a
+    drainpipe with brackets and a shoe on the east block's west face. All art-layer
+    meshes: the walls' own bodies and colliders are the graybox's, and the razored
+    edge stays between the player and all of it.
+    """
+    E = f"{A}/Estate"
+    b.node("Estate", A)
+    window = b.mesh("BoxMesh", size=vec3((0.08, 1.5, 1.3)))
+    sill = b.mesh("BoxMesh", size=vec3((0.24, 0.12, 1.52)))
+    for j, y in enumerate((3.6, 6.6)):
+        for i, z in enumerate((-16.0, -10.0, -4.0, 2.0, 8.0, 14.0)):
+            b.flat(f"Window_{j}_{i}", E, window, "glass", (19.94, y, z))
+            b.flat(f"Sill_{j}_{i}", E, sill, "plinth", (19.88, y - 0.85, z), shadow=True)
+    ac = b.mesh("BoxMesh", size=vec3((0.55, 0.5, 0.65)))
+    for i, (y, z) in enumerate(((2.85, -10.0), (5.85, 8.0))):
+        b.flat(f"AirCon_{i}", E, ac, "metal_ink", (19.8, y, z), (0, 0, 6), shadow=True)
+    pipe = b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.09, height=11.8, radial_segments=10, rings=1)
+    b.flat("DrainPipe", E, pipe, "metal_ink", (19.9, 6.0, 17.6), shadow=True)
+    b.flat("DrainPipeShoe", E, b.mesh("CylinderMesh", top_radius=0.09, bottom_radius=0.13, height=0.4, radial_segments=10, rings=1),
+           "metal_ink", (19.9, 0.15, 17.6))
+    bracket = b.mesh("BoxMesh", size=vec3((0.16, 0.06, 0.06)))
+    for i, y in enumerate((2.4, 6.0, 9.6)):
+        b.flat(f"PipeBracket_{i}", E, bracket, "metal_ink", (19.98, y, 17.6))
+    window_z = b.mesh("BoxMesh", size=vec3((1.5, 1.5, 0.08)))
+    sill_z = b.mesh("BoxMesh", size=vec3((1.72, 0.12, 0.24)))
+    for j, y in enumerate((3.8, 6.2)):
+        for i, x in enumerate((-16.0, -8.0, 8.0, 14.0)):
+            b.flat(f"SouthWindow_{j}_{i}", E, window_z, "glass", (x, y, 21.94))
+            b.flat(f"SouthSill_{j}_{i}", E, sill_z, "plinth", (x, y - 0.85, 21.88), shadow=True)
+
+
 def build_nodes() -> Builder:
     b = Builder()
     A = "PlaygroundArt"
@@ -574,6 +665,10 @@ def build_nodes() -> Builder:
     b.flat("Seam", f"{A}/Ground", plane(b, 20.5, 40.0), "seam", (12.75, 0.024, 0.0))
 
     court_landmarks(b, A)
+    # Round 32: the climbing frame's parts, the yard tree's crown, and the estate faces.
+    climbing_frame(b, A)
+    yard_tree(b, A)
+    estate_faces(b, A)
     # Sculpted truck tyres with their worn yellow wheels: four stacked, one lying flat.
     for i, (dx, dz) in enumerate(((0.0, 0.0), (0.05, -0.02), (-0.03, -0.05), (0.04, 0.01))):
         b.flat(f"Tyre_{i}", f"{A}/Equipment", "truck_tyre", "yard_junk",
