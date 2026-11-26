@@ -63,5 +63,29 @@
     "source": "observed",
     "text": "The slot is just wide enough for a folded slip. Below it is a wooden stop, polished where a thumb would rest.",
     "repeat_text": "The slit is dark; the wood beneath it has been rubbed smooth."
+  },
+  "street_container": {
+    "title": "The container",
+    "prompt": "Look at the container",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · A rusting shipping container parked on the pavement, its two leaves shut with the lock rods still on.",
+    "repeat_text": "The same shut container, the same rods."
+  },
+  "street_tyres": {
+    "title": "The truck tyres",
+    "prompt": "Look at the truck tyres",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · Three truck tyres stacked by the container, tall enough to climb if a person were the climbing kind.",
+    "repeat_text": "The same three tyres, still stacked."
+  },
+  "street_pullup_bars": {
+    "title": "The pull-up bars",
+    "prompt": "Look at the pull-up bars",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "TODO · Pull-up bars bolted against the school wall, out here where the street can use them.",
+    "repeat_text": "The same bars, nobody on them."
   }
 }

@@ -63,5 +63,29 @@
     "source": "observed",
     "text": "窄缝刚好塞得下一张叠过的回条。下面有块木挡片，手指按纸的地方已经被磨亮了。",
     "repeat_text": "缝里黑着，下面那片木头倒是很光滑。"
+  },
+  "street_container": {
+    "title": "集装箱",
+    "prompt": "看看集装箱",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·人行道上停着的锈集装箱，两扇门关着，锁杆还没开过",
+    "repeat_text": "同一只关着的集装箱，同样的锁杆。"
+  },
+  "street_tyres": {
+    "title": "卡车轮胎",
+    "prompt": "看看卡车轮胎",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·集装箱旁摞着的三个卡车轮胎，摞得够高，想爬也能爬",
+    "repeat_text": "还是那三个轮胎，还是那样摞着。"
+  },
+  "street_pullup_bars": {
+    "title": "健身杠",
+    "prompt": "看看健身杠",
+    "speaker": "protagonist",
+    "source": "observed",
+    "text": "待做·焊在校墙外的健身单杠，街坊也能用",
+    "repeat_text": "还是那副杠，没人用。"
   }
 }

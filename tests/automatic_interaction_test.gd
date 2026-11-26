@@ -26,6 +26,8 @@ const Harness = preload("res://tests/test_harness.gd")
 
 const CLASSROOM := "res://scenes/locations/classroom/classroom.tscn"
 const STREET := "res://scenes/locations/street/street.tscn"
+const FRONT_YARD := "res://scenes/locations/front_yard/front_yard.tscn"
+const NORTH_GROVE := "res://scenes/locations/north_grove/north_grove.tscn"
 const PROBE_SCENE := "res://scenes/interaction/interactable.tscn"
 ## Collided with by the player (mask 5), read by neither the navigation bake (25), the
 ## interaction occluders (9) nor the click ground ray (1). See `navigation_test.gd`.
@@ -108,6 +110,9 @@ func _run() -> void:
 	await _check_click_inspectable()
 	await _check_click_exit_transitions()
 	await _check_click_real_street_stair_exit()
+	await _check_street_passage_is_scenery()
+	await _check_north_lane_is_the_way()
+	await _check_street_north_end_filled()
 	await _check_disabled_target_is_not_activated()
 	await _check_freed_target_is_not_activated()
 	await _check_e_still_works()
@@ -361,6 +366,100 @@ func _check_click_real_street_stair_exit() -> void:
 		_failures.append("The stair transition dropped the character through the floor.")
 	if not await _wait_for_transition_idle(&"residential", 30.0):
 		_failures.append("The street stair transition did not return control in residential.")
+
+
+## The passage behind the flats' doorway is scenery (round 33's stuck report): the bake
+## must not route into it, and its walls, ceiling and back must be camera occluders, so
+## a click on the lit far end walks the character no further than the doorway plane and
+## nothing inside the passage can fill the screen with an unfaded wall.
+func _check_street_passage_is_scenery() -> void:
+	var location := await _enter(STREET, &"FromCorridor")
+	if location == null:
+		return
+	for piece in ["PassageWallWest", "PassageWallEast", "PassageCeiling", "PassageBack"]:
+		var node := location.get_node_or_null(NodePath(piece))
+		if node == null:
+			_failures.append("The street passage piece '%s' is missing." % piece)
+		elif not node.is_in_group("camera_occluder"):
+			_failures.append("The street passage piece '%s' is not a camera occluder." % piece)
+	var map := _player.navigation_agent.get_navigation_map()
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(10.5, 1.65, -35.4)))
+	await _physics_frames(4)
+	var path := NavigationServer3D.map_get_path(
+		map, _player.global_position, Vector3(10.5, 1.65, -39.3), true)
+	if path.is_empty():
+		_failures.append("The stair landing has no navigation path at all (bake lost the stair).")
+	elif path[path.size() - 1].z < -37.0:
+		_failures.append(
+			"The passage behind the flats' doorway is walkable: the bake routes to %s."
+			% str(path[path.size() - 1]))
+
+
+## Round 34: the lane behind the teaching block (小树林的窄通道) is the way into the
+## grove - the north rail splits around its mouth, the wall's lane door and its twin in
+## the grove are camera occluders, and the bake routes the walk from the yard through
+## the gap and the strip's tree weave to the door (and out of the lane onto the strip's
+## walk on the grove's side).
+func _check_north_lane_is_the_way() -> void:
+	var location := await _enter(FRONT_YARD, &"FromCorridor")
+	if location == null:
+		return
+	for piece in ["NorthRailWest", "NorthRailEast", "SchoolWallNorthLaneDoor"]:
+		var node := location.get_node_or_null(NodePath(piece))
+		if node == null:
+			_failures.append("The lane's piece '%s' is missing." % piece)
+		elif not node.is_in_group("camera_occluder"):
+			_failures.append("The lane's piece '%s' is not a camera occluder." % piece)
+	var map := _player.navigation_agent.get_navigation_map()
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-0.6, 1.65, -6.0)))
+	await _physics_frames(4)
+	var path := NavigationServer3D.map_get_path(
+		map, _player.global_position, Vector3(-0.6, 1.65, -19.7), true)
+	if path.is_empty():
+		_failures.append("The lane has no navigation path from the yard to its door.")
+	elif path[path.size() - 1].z > -19.0:
+		_failures.append(
+			"The lane's walk does not reach the wall's lane door: the bake stops at %s."
+			% str(path[path.size() - 1]))
+	var grove := await _enter(NORTH_GROVE, &"FromFrontYard")
+	if grove == null:
+		return
+	var doors := grove.get_node_or_null(^"GroveLaneDoors")
+	if doors == null:
+		_failures.append("The grove's lane door is missing.")
+	elif not doors.is_in_group("camera_occluder"):
+		_failures.append("The grove's lane door is not a camera occluder.")
+	var grove_map := _player.navigation_agent.get_navigation_map()
+	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-0.6, 1.65, -19.2)))
+	await _physics_frames(4)
+	var walk := NavigationServer3D.map_get_path(
+		grove_map, _player.global_position, Vector3(0.3, 1.65, -16.5), true)
+	if walk.is_empty():
+		_failures.append("The lane's walk has no navigation path onto the grove's strip.")
+	elif walk[walk.size() - 1].z > -16.9:
+		_failures.append(
+			"The lane's walk does not reach the strip: the bake stops at %s."
+			% str(walk[walk.size() - 1]))
+
+
+## Round 34: the street's north end fills in - the flats' wings and back close the block
+## behind its front, the school grounds' back wall carries on north to meet them, the
+## ground under it all catches a fall, and the new furniture (the container with its two
+## shut leaves, the tyre stack, the pull-up bars) stands where the haze was.
+func _check_street_north_end_filled() -> void:
+	var location := await _enter(STREET, &"FromCorridor")
+	if location == null:
+		return
+	for piece in ["FlatsSideWest", "FlatsSideEast", "FlatsBack", "SchoolWallNorth"]:
+		var node := location.get_node_or_null(NodePath(piece))
+		if node == null:
+			_failures.append("The street's north-end piece '%s' is missing." % piece)
+		elif not node.is_in_group("camera_occluder"):
+			_failures.append("The street's north-end piece '%s' is not a camera occluder." % piece)
+	for piece in ["NorthGround", "Container", "ContainerDoorL", "ContainerDoorR",
+			"TyreStack0", "TyreStack1", "TyreStack2", "PullUpBar"]:
+		if location.get_node_or_null(NodePath(piece)) == null:
+			_failures.append("The street's north-end furniture '%s' is missing." % piece)
 
 
 func _check_disabled_target_is_not_activated() -> void:

@@ -110,7 +110,12 @@ const LOCATIONS := {
 		# dressing here, the exit lives on the strip's side (the yard's ground ends at
 		# the NorthRail). Round 29: the changing room (更衣室) south of the equipment
 		# room - room, plinth, door, lintel (4), and its look's sphere and pick box (2).
-		"shapes": 131,
+		# Round 34: the lane behind the block (小树林的窄通道) - the north rail splits
+		# around the lane's mouth (two runs), the north wall splits around the lane door
+		# (run, stub, door leaf, header: 4), and the lane adds the two floors, two rails,
+		# four posts and the beam gate (9); the exit keeps its sphere, and now outlines
+		# the lane door's one mesh.
+		"shapes": 144,
 		"interactables": 9,
 		"spawns": ["FromCorridor", "FromStreet", "FromGrove", "FromBlockNorth"],
 		"exits": {
@@ -134,8 +139,10 @@ const LOCATIONS := {
 		# leaf fills the gap: 2), the gym's shell, plinth and terrace stand in the painted
 		# distance beyond the wall (3), and the way in adds a sphere and four pick boxes -
 		# a pick box per MeshInstance3D under the outlined leaf (the leaf and the stage
-		# frame's three pieces) (5).
-		"shapes": 72,
+		# frame's three pieces) (5). Round 34: the lane door in the west run - the run
+		# splits again (run, stub, door leaf, header: 4) and the walk side gains the two
+		# gate posts and the beam (3); the exit's outline picks the door's one mesh.
+		"shapes": 78,
 		"interactables": 4,
 		"spawns": ["FromFrontYard", "FromPlayground", "FromGym"],
 		"exits": {
@@ -173,8 +180,14 @@ const LOCATIONS := {
 		# awning and sign add nine bodies; the zebra, the manhole and the posters are paint.
 		# Round 31: the refined frontage adds two solid crates by the shutter - the door's
 		# frame, the rails, the projecting sign, the lamp and the rest are meshes only.
-		"shapes": 102,
-		"interactables": 10,
+		# Round 34: the north end fills in - the flats' two side wings and back close the
+		# block behind their front (4), the school grounds' back wall carries on north to
+		# meet them (1), the ground under it all catches a fall plus the sliver at the
+		# front's foot (2), and the new furniture adds the container, its two door leaves,
+		# three tyres and the pull-up bars with their two posts (8); the three looks add a
+		# sphere each and four pick boxes (7).
+		"shapes": 125,
+		"interactables": 13,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {
 			"street_back_to_school": "front_yard/FromStreet",

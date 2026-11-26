@@ -52,8 +52,8 @@ from paint_stage_textures import DISTANCE  # noqa: E402
 sys.path.insert(0, str(ROOT / "tools"))
 from build_outdoor_locations import (  # noqa: E402
     BLEACHER_C_X, BLEACHER_RISE, BLEACHER_RUN, BLEACHER_TIERS, BLEACHER_WIDTH, DOOR_HEIGHT,
-    FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER, GROVE_RAIL_H_LEN,
-    GROVE_FAR_TREES, GROVE_RAIL_V_LEN, GROVE_RAIL_Z, GROVE_TREES, SCHOOL_SOUTH_Z,
+    FRONT_LANE_MOUTH, FRONT_YARD_TREE_BOX, FRONT_YARD_TREES, FRONT_YARD_Z, GATE_HEIGHT, GATE_PIER,
+    GROVE_RAIL_H_LEN, GROVE_FAR_TREES, GROVE_RAIL_V_LEN, GROVE_RAIL_Z, GROVE_TREES, SCHOOL_SOUTH_Z,
     SCHOOL_WALL_H, SCHOOL_WALL_X, STREET_DOOR_Z, STREET_GATE_Z, STREET_SCHOOL_Z, YARD_WALL_X,
 )
 
@@ -289,7 +289,7 @@ def return_plate(b: Builder, parent: str, name: str, pos, *, yaw=90, reverse=Fal
 
 # The front yard's x minus this is the street's: the same wall, seen from either side.
 YARD_TO_STREET = YARD_WALL_X - SCHOOL_WALL_X
-WALL_PATHS = (r"(SchoolWallNorthExt|SchoolWallNorthWest|SchoolWallNorthEast|SchoolWallNorthDoor|SchoolWallNorth|"
+WALL_PATHS = (r"(SchoolWallNorthExt|SchoolWallNorthWest|SchoolWallNorthStub|SchoolWallNorthEast|SchoolWallNorthDoor|SchoolWallNorth|"
               r"SchoolWall|SchoolWallSouth|GatePierNorth|"
               r"GatePierSouth|SideDoorPier|SideDoorLintel)/MeshInstance3D")
 
@@ -429,17 +429,24 @@ def front_yard_nodes() -> Builder:
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (_x, _z, variant, yaw_) in enumerate(FRONT_YARD_TREES):
         dead_tree(b, f"DeadTree{i}", "StageTree", (0, -(bh / 2 - 0.1), 0), variant, yaw_)
-    # the railings (their graybox hidden); the trodden line from the entrance to the side door
+    # the railings (their graybox hidden); the trodden line from the entrance to the side
+    # door. Round 34: the north rail is two runs now - the lane's mouth splits it - each
+    # with its own cut of the railing mesh.
     rail_len = YARD_WALL_X + 0.15 + 11.0
-    for rail in ("NorthRail", "SouthRail"):
-        imported(b, "StageRail", rail, f"yard_railing_{int(round(rail_len * 100))}", "yard_rail", (-rail_len / 2, -0.6, 0))
+    lane_west, lane_east = FRONT_LANE_MOUTH
+    for rail, run_len in (("NorthRailWest", lane_west + 8.8), ("NorthRailEast", rail_len - 11.0 - lane_east),
+                          ("SouthRail", rail_len)):
+        imported(b, "StageRail", rail, f"yard_railing_{int(round(run_len * 100))}", "yard_rail",
+                 (-run_len / 2, -0.6, 0))
     # Round 26: coping on the wall's new north run, and the grove's mouth tree (its crown
     # box is on the grove's fade layer, so the stage tree fades with it like the yard's).
     b.flat("StageCoping", "SchoolWallNorthExt", box(b, (0.42, 0.1, 4.8)), "wall_coping",
            (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
     # Round 28: the north run carries the gym's door - coping on its two runs and a cap
     # over the leaf (the leaf's frame is the grove's business, on its side of the wall).
-    b.flat("StageCoping", "SchoolWallNorthWest", box(b, (12.0, 0.1, 0.42)), "wall_coping",
+    b.flat("StageCoping", "SchoolWallNorthWest", box(b, (9.4, 0.1, 0.42)), "wall_coping",
+           (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "SchoolWallNorthStub", box(b, (0.6, 0.1, 0.42)), "wall_coping",
            (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
     b.flat("StageCoping", "SchoolWallNorthEast", box(b, (12.7, 0.1, 0.42)), "wall_coping",
            (0, SCHOOL_WALL_H / 2 + 0.05, 0), shadow=True)
@@ -506,7 +513,7 @@ FRONT_YARD = {
         r"SchoolPlinth(South)?/MeshInstance3D": "plinth_ivory",
         WALL_PATHS: "school_wall",
     },
-    "hidden": [r"(RetractableGate|SideDoor|NorthRail|SouthRail)/MeshInstance3D", r"DeadTree\d+(Trunk)?/MeshInstance3D",
+    "hidden": [r"(RetractableGate|SideDoor|NorthRailWest|NorthRailEast|SouthRail)/MeshInstance3D", r"DeadTree\d+(Trunk)?/MeshInstance3D",
                r"GroveHintTree(Trunk)?/MeshInstance3D"],
     "nodes": front_yard_nodes,
 }
@@ -551,7 +558,8 @@ def north_grove_nodes() -> Builder:
     b.flat("StageCoping", "GroveWallSouth", box(b, (0.52, 0.1, 2.4)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
     # Round 28: the north run carries the gym's door - coping on its two runs and a cap
     # over the leaf, then the leaf's own frame and dark inset (the exit outlines it).
-    b.flat("StageCoping", "GroveWallNorthWest", box(b, (25.1, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "GroveWallNorthWest", box(b, (22.5, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
+    b.flat("StageCoping", "GroveWallNorthStub", box(b, (0.6, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
     b.flat("StageCoping", "GroveWallNorthEast", box(b, (0.8, 0.1, 0.52)), "wall_coping", (0, h / 2 + 0.05, 0), shadow=True)
     b.flat("StageCoping", "GroveWallDoor", box(b, (1.72, 0.1, 0.52)), "wall_coping", (0, 1.35, 0), shadow=True)
     b.flat("StageCoping", "GroveBlockFacade", box(b, (10.4, 0.1, 0.6)), "wall_coping", (0, 6.55, 0), shadow=True)
@@ -1017,7 +1025,9 @@ def main() -> None:
         (MAT_DIR / f"{name}.tres").write_text(material_tres(name, spec))
     print(f"wrote {len(MATERIALS)} materials to {MAT_DIR.relative_to(ROOT)}")
     meshes = yard_meshes.write_all([STREET_GATE_Z[1] - STREET_GATE_Z[0] - GATE_HEAD],
-                                   [YARD_WALL_X + 0.15 + 11.0, GROVE_RAIL_V_LEN, GROVE_RAIL_H_LEN])
+                                   [YARD_WALL_X + 0.15 + 11.0, GROVE_RAIL_V_LEN, GROVE_RAIL_H_LEN,
+                                    FRONT_LANE_MOUTH[0] + 8.8,
+                                    YARD_WALL_X + 0.15 + 11.0 - 11.0 - FRONT_LANE_MOUTH[1]])
     print(f"wrote {len(meshes)} meshes to {yard_meshes.MESH_DIR.relative_to(ROOT)}")
     for name in names:
         cfg = SCENES[name]
