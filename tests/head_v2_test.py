@@ -19,6 +19,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
+import brow_seat
 import head_v2
 from glb_io import accessor, decode
 
@@ -163,6 +164,43 @@ class V2Export(unittest.TestCase):
             for _, n, _, p in primitives(doc) if n == "Protagonist_Head"
         )
         self.assertGreater(tris(self.rt_doc, self.rt_bin), 3 * tris(self.v1_doc, self.v1_bin))
+
+    def test_brows_read_as_one_arch(self):
+        # Issue #385: at close range the brows are the first thing the eye reads,
+        # and "one brow lower" was the last visible residue of V1's floating brow -
+        # an inner-end fan vertex the re-seating pass left at V1's position, 3.9 mm
+        # below its ring. The contract here is the owner's ask in numbers: the two
+        # brows read as one arch (heights within a millimetre at every third), no
+        # vertex has drooped off the tube, the tubes ride the ridge, and the
+        # brow-moving morph targets stay mirrored so an expression cannot re-tilt
+        # them. The remaining ~2.7 mm mirror residual is V1's own end construction
+        # (the two sides cap their inner ends differently, at stations 0.2 mm
+        # apart), and each side now seats on its own local skin - levelling it
+        # would be the mirror-flattening issue #385 forbids.
+        brow = np.asarray(accessor(self.rt_doc, self.rt_bin,
+                                   self.rt_doc["meshes"][head_v2.HEAD_MESH]["primitives"][1]["attributes"]["POSITION"])).astype(float)
+        skin = np.asarray(accessor(self.rt_doc, self.rt_bin,
+                                   self.rt_doc["meshes"][head_v2.HEAD_MESH]["primitives"][0]["attributes"]["POSITION"])).astype(float)
+        tris = np.asarray(accessor(self.rt_doc, self.rt_bin,
+                                   self.rt_doc["meshes"][head_v2.HEAD_MESH]["primitives"][0]["indices"]), np.int64).reshape(-1, 3)
+        residual = brow_seat.mirror_residuals(brow) * 1000
+        self.assertLessEqual(residual.mean(), 0.8, "brow mirror mean (mm)")
+        self.assertLessEqual(residual.max(), 3.0, "brow mirror max (mm)")
+        arch = brow_seat.arch_profile(brow)
+        for band in ("inner", "mid", "outer"):
+            self.assertLessEqual(abs(arch[("L", band)] - arch[("R", band)]) * 1000, 0.8,
+                                 f"arch {band} L-R height gap (mm)")
+        gap = brow_seat.surface_gap(skin, tris, brow) * 1000
+        self.assertLessEqual(gap.mean(), 1.5, "brow-to-skin gap mean (mm)")
+        self.assertLessEqual(gap.max(), 3.5, "brow-to-skin gap max (mm)")
+        names = self.rt_doc["meshes"][head_v2.HEAD_MESH].get("extras", {}).get("targetNames", ())
+        for target in ("BrowRaise", "BrowCompress", "Frown"):
+            index = names.index(target)
+            delta = np.asarray(accessor(self.rt_doc, self.rt_bin,
+                                        self.rt_doc["meshes"][head_v2.HEAD_MESH]["primitives"][1]["targets"][index]["POSITION"])).astype(float)
+            self.assertLessEqual(brow_seat.field_residuals(
+                delta[brow[:, 0] < 0], delta[brow[:, 0] > 0]).max() * 1000, 1.0,
+                f"{target} delta mirror max (mm)")
 
 
 if __name__ == "__main__":

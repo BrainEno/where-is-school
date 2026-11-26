@@ -403,7 +403,62 @@ def wrap_lids(positions: np.ndarray, triangles: np.ndarray) -> np.ndarray:
     return out
 
 
-def reshape_brow(brow: np.ndarray, head: np.ndarray) -> np.ndarray:
+def surface_z(x: float, y: float, head: np.ndarray, triangles: np.ndarray) -> float | None:
+    """Height of the skin sheet directly over (x, y), from the triangle soup.
+
+    The brow rides the face's front sheet, so when the head's back sheet shares the
+    same (x, y) footprint the front (larger-z) sheet wins. Outside the footprint the
+    nearest projected edge answers, which is what the brow tail needs as it runs off
+    the temple.
+    """
+    v0, v1, v2 = head[triangles[:, 0]], head[triangles[:, 1]], head[triangles[:, 2]]
+    point = np.array([x, y])
+
+    def closer(best: tuple, distance: np.ndarray, z: np.ndarray) -> tuple:
+        order = np.lexsort((-z, distance))
+        candidate = (float(distance[order[0]]), float(z[order[0]]))
+        if candidate[0] < best[0] - 1e-12 or (candidate[0] <= best[0] + 1e-12
+                                              and candidate[1] > (best[1] if best[1] is not None else -np.inf)):
+            return candidate
+        return best
+
+    best = (np.inf, None)
+    for a, b in ((v0, v1), (v1, v2), (v2, v0)):
+        edge = (b - a)[:, :2]
+        t = np.clip(((point - a[:, :2]) * edge).sum(axis=1)
+                    / np.maximum((edge * edge).sum(axis=1), 1e-18), 0.0, 1.0)
+        closest = a[:, :2] + t[:, None] * edge
+        best = closer(best, np.linalg.norm(closest - point, axis=1), a[:, 2] + t * (b[:, 2] - a[:, 2]))
+
+    # A triangle whose xy projection contains the point is an exact answer; among
+    # stacked sheets (face and skull back) the front one is the skin to ride.
+    top = -np.inf
+    for a, b, c in ((v0, v1, v2),):
+        signs = np.stack([
+            (point[0] - a[:, 0]) * (b[:, 1] - a[:, 1]) - (point[1] - a[:, 1]) * (b[:, 0] - a[:, 0]),
+            (point[0] - b[:, 0]) * (c[:, 1] - b[:, 1]) - (point[1] - b[:, 1]) * (c[:, 0] - b[:, 0]),
+            (point[0] - c[:, 0]) * (a[:, 1] - c[:, 1]) - (point[1] - c[:, 1]) * (a[:, 0] - c[:, 0]),
+        ])
+        inside = (signs >= -1e-12).all(axis=0) | (signs <= 1e-12).all(axis=0)
+        for index in np.nonzero(inside)[0]:
+            xa, ya = a[index, :2]
+            xb, yb = b[index, :2]
+            xc, yc = c[index, :2]
+            det = (yb - yc) * (xa - xc) + (xc - xb) * (ya - yc)
+            if abs(det) < 1e-15:
+                continue
+            wa = ((yb - yc) * (x - xc) + (xc - xb) * (y - yc)) / det
+            wb = ((yc - ya) * (x - xc) + (xa - xc) * (y - yc)) / det
+            wc = 1.0 - wa - wb
+            if min(wa, wb, wc) >= -1e-9:
+                top = max(top, wa * a[index, 2] + wb * b[index, 2] + wc * c[index, 2])
+    if top > -np.inf:
+        return float(top)
+    return best[1]
+
+
+def reshape_brow(brow: np.ndarray, head: np.ndarray,
+                 triangles: np.ndarray | None = None) -> np.ndarray:
     """Seat V1's floating eyebrow on the brow ridge, and taper it.
 
     The brow is a swept tube: four vertices to a ring, seven rings from the nose to the
@@ -430,12 +485,16 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray) -> np.ndarray:
             half_height = float(np.interp(along, [0.0, 0.18, 0.5, 0.8, 1.0],
                                           [0.0008, 0.0022, 0.0024, 0.0016, 0.0006]))
             half_depth = half_height * 0.85
-            near = (np.abs(head[:, 0] - station) < 0.007) & \
-                   (np.abs(head[:, 1] - centre_y) < 0.007)
-            if not near.any():
-                near = (np.abs(head[:, 0] - station) < 0.014) & \
-                       (np.abs(head[:, 1] - centre_y) < 0.014)
-            skin = float(head[near, 2].max()) if near.any() else float(ring[:, 2].max())
+            skin = surface_z(station, centre_y, head, triangles) if triangles is not None else None
+            if skin is None:
+                # No triangle soup (direct callers in tests): fall back to the
+                # nearest skin vertices around the station.
+                near = (np.abs(head[:, 0] - station) < 0.007) & \
+                       (np.abs(head[:, 1] - centre_y) < 0.007)
+                if not near.any():
+                    near = (np.abs(head[:, 0] - station) < 0.014) & \
+                           (np.abs(head[:, 1] - centre_y) < 0.014)
+                skin = float(head[near, 2].max()) if near.any() else float(ring[:, 2].max())
             centre_z = skin + 0.0005
             section = ring[:, [1, 2]] - ring[:, [1, 2]].mean(axis=0)
             cap = -1
@@ -461,6 +520,17 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray) -> np.ndarray:
                 inward = 1.0 if station < (low + high) * 0.5 else -1.0
                 points[ring_index[cap]] = (side * (station + inward * 0.0022), centre_y,
                                            centre_z)
+            # Ring stations can carry more vertices than the four slots plus the cap
+            # (a fan whose end shares a station with the last full ring). Any vertex
+            # the slots did not place keeps V1's floating position - at the inner end
+            # of one brow that was a 3.9 mm droop off the tube, the last residue of
+            # V1's 7-10 mm float, and the reason one brow read lower than the other.
+            # Pull such stragglers into the tube's centre: their station, its profile
+            # height and its skin seating, no offset.
+            placed = set(slots.values()) | ({cap} if cap >= 0 else set())
+            for local in range(len(ring)):
+                if local not in placed:
+                    points[ring_index[local]] = (ring[local, 0], centre_y, centre_z)
         out[index] = points
     return out
 
@@ -582,7 +652,8 @@ def iris_vertex_colour(positions: np.ndarray) -> np.ndarray:
 
 
 def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
-                     displacement: np.ndarray) -> dict:
+                     displacement: np.ndarray,
+                     skin_triangles: np.ndarray | None = None) -> dict:
     """The eyes, the eyebrows and the mouth's interior, on the sculpted head.
 
     The eyes are levelled (V1's right eye sits 2.5 mm above the left) and their flat iris and
@@ -623,7 +694,7 @@ def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
         positions = arrays['POSITION'].astype(np.float64)
         positions = positions + nearest_displacement(positions, skin, displacement)
         if reshape:
-            positions = reshape_brow(positions, skin)
+            positions = reshape_brow(positions, skin, skin_triangles)
         triangles = arrays['indices'].reshape(-1, 3).astype(np.int64)
         normals = vertex_normals(positions, triangles)
         deltas = dense_targets(document, binary, primitive, len(positions))
@@ -1327,7 +1398,7 @@ def build() -> dict:
     hair_normals = welded_normals(hair_positions, hair_triangles)
 
     # 7. The eyes, the eyebrows and the mouth's interior, on the sculpted head.
-    face_parts = build_face_parts(document, binary, positions, displacement)
+    face_parts = build_face_parts(document, binary, positions, displacement, triangles)
 
     # 8. Attributes. The head is rigidly bound to the Head joint (49, weight 1).
     count = len(positions)
