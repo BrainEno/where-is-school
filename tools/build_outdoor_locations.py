@@ -881,11 +881,15 @@ def build_front_yard():
         s.box(f"GroveLaneRailPost{'W' if lane_x < 0 else 'E'}8",
               (lane_x, 0.65, lane_z), (0.16, 1.3, 0.16), "metal", occ)
     # the beam gate stands on two full-height posts just outside the rail lines, so the
-    # gate reads as a real portal over the walk; its foot clears 2.0 m over the floor -
-    # the nav bake carves walks with less headroom than the agent's height
+    # gate reads as a real portal over the walk. The bake quantizes headroom to 0.25 m
+    # voxel rows measured from the scene's lowest source vertex - here the yard ground's
+    # -0.2 bottom - so the lane floor's 0.2 top and a beam foot 2.25 m up were only seven
+    # rows apart, one short of the agent's 2.0 m height, and the bake sealed the lane
+    # behind the gate (round 34's four unreachable spawns). The foot now sits 2.70 m up:
+    # nine rows over the floor top, one row of spare change whatever the scene's phase.
     for lane_x, name in ((-1.65, "GroveLaneArchPostWest"), (0.55, "GroveLaneArchPostEast")):
-        s.box(name, (lane_x, 1.15, -16.55), (0.18, 2.3, 0.18), "metal", occ)
-    s.box("GroveLaneBeam", (-0.55, 2.5, -16.55), (2.5, 0.5, 0.45), "wall", occ)
+        s.box(name, (lane_x, 1.35, -16.55), (0.18, 2.7, 0.18), "metal", occ)
+    s.box("GroveLaneBeam", (-0.55, 2.95, -16.55), (2.5, 0.5, 0.45), "wall", occ)
     # the dead trees: a trunk to walk round, and a fader box round the crown (layer 8 only)
     bw, bh = FRONT_YARD_TREE_BOX
     for i, (x, z, _variant, _yaw) in enumerate(FRONT_YARD_TREES):
@@ -1657,9 +1661,12 @@ def build_north_grove():
     s.box("GroveWallNorthEast", (3.0, GROVE_WALL_H / 2, corner - 0.15), (0.8, GROVE_WALL_H, 0.3), "wall", occ)
     s.box("GroveLaneDoors", (-0.6, 1.05, corner - 0.15), (2.0, 2.1, 0.14), "metal", occ)
     s.box("GroveLaneDoorsHeader", (-0.6, 2.35, corner - 0.15), (2.0, 0.5, 0.14), "wall", occ)
-    s.box("GroveLanePostWest", (-1.75, 1.15, -20.0), (0.5, 2.3, 0.5), "wall", occ)
-    s.box("GroveLanePostEast", (0.55, 1.15, -20.0), (0.5, 2.3, 0.5), "wall", occ)
-    s.box("GroveLaneBeam", (-0.6, 2.5, -20.0), (2.9, 0.5, 0.5), "wall", occ)
+    s.box("GroveLanePostWest", (-1.75, 1.35, -20.0), (0.5, 2.7, 0.5), "wall", occ)
+    s.box("GroveLanePostEast", (0.55, 1.35, -20.0), (0.5, 2.7, 0.5), "wall", occ)
+    # the same portal pair as the front yard's lane gate, and the same foot: 2.70 m over
+    # the strip's ground. 2.25 left exactly the eight rows the agent needs - a pass with
+    # nothing in hand, one new scene vertex away from sealing the lane's walk again.
+    s.box("GroveLaneBeam", (-0.6, 2.95, -20.0), (2.9, 0.5, 0.5), "wall", occ)
     # Round 28: the gym's door (体育馆的门) in the north wall, where the east leg's walk
     # ends against it; through it the porch runs to the gym's south face (the stage pass
     # frames the leaf and draws the porch and the shell beyond, both scenes see them).

@@ -384,7 +384,8 @@ func _check_street_passage_is_scenery() -> void:
 			_failures.append("The street passage piece '%s' is not a camera occluder." % piece)
 	var map := _player.navigation_agent.get_navigation_map()
 	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(10.5, 1.65, -35.4)))
-	await _physics_frames(4)
+	# The teleport lands this frame and the bake forced the map current at load, so the
+	# query runs at once; a fixed-frame settle here would only race the clock (issue #207).
 	var path := NavigationServer3D.map_get_path(
 		map, _player.global_position, Vector3(10.5, 1.65, -39.3), true)
 	if path.is_empty():
@@ -412,7 +413,7 @@ func _check_north_lane_is_the_way() -> void:
 			_failures.append("The lane's piece '%s' is not a camera occluder." % piece)
 	var map := _player.navigation_agent.get_navigation_map()
 	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-0.6, 1.65, -6.0)))
-	await _physics_frames(4)
+	# Same-frame query as above: the teleport is synchronous and the map is current.
 	var path := NavigationServer3D.map_get_path(
 		map, _player.global_position, Vector3(-0.1, 1.65, -19.9), true)
 	if path.is_empty():
@@ -431,7 +432,7 @@ func _check_north_lane_is_the_way() -> void:
 		_failures.append("The grove's lane door is not a camera occluder.")
 	var grove_map := _player.navigation_agent.get_navigation_map()
 	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-0.6, 1.65, -19.2)))
-	await _physics_frames(4)
+	# Same-frame query as above: the teleport is synchronous and the map is current.
 	var walk := NavigationServer3D.map_get_path(
 		grove_map, _player.global_position, Vector3(0.3, 1.65, -16.5), true)
 	if walk.is_empty():
