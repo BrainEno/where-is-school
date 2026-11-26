@@ -384,7 +384,7 @@ python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.gl
 | Head | 11 332 vertices, 22 064 triangles, 9 morph targets, atlas inside [0, 1], no triangle spanning the back seam (max U span 0.49999), 4 lid shells, aperture 13.4 mm |
 | Hair | 5 199 vertices, 9 200 triangles, 96 locks + the cap, bounding box identical to V1 |
 | Eyes | 0 morph targets on the eye mesh |
-| Budget | installed GLB 1 409 780 B, under the 1 536 KiB model budget |
+| Budget | installed GLB 1 199 412 B, under the 1 536 KiB model budget |
 
 Evidence frames are reproducible with `tools/head_preview.py` (clay = no `--look`, wired =
 the shipped look, `--views front,quarter,side,close`, `--no-detail-maps` for the A/B).
@@ -401,3 +401,89 @@ and textured acceptance is recorded on issue #383.
 - The hair's bend and taper are rest-pose geometry, not simulation.
 - `tools/head_v2.py extract` re-creates the V1 source from the pre-V2 runtime only; the
   committed V1 file, not an extract, is what `build` reads.
+
+## 10. The V3 hair (issue #386)
+
+### 10.1 What the build is
+
+The same deterministic pipeline (`tools/head_v2.py`), still built only from the pinned V1
+source and still byte-compared by `check` — with one more pass over the hair between the
+V2 ring refinement and the write. The issue asks for the work in a fixed order, and the
+pass runs in that order:
+
+1. **Whorl and hairline.** The scalp cap's interior takes a spiral relief around the
+   crown plus concentric arcs running from the whorl towards the nape (`whorl_cap`, at
+   most 1.3 mm along each vertex's own outward direction, faded to nothing within 18 mm
+   of the cap's edge). The cap's boundary is the owner's hairline and is pinned vertex
+   for vertex — the cut never moves.
+2. **The silhouette is clamped.** The V2 hair envelope (the model's measured bounding
+   box) is pinned as constants; every V3 displacement is clamped inside it, and `check`
+   asserts the built hair's bounding box back against the pins. The approved outer
+   silhouette — the tips, the model height, the width the tests measure — cannot drift.
+3. **The fall, root first.** Each lock's root ring dives 8 mm back along its own axis,
+   under a skull clamp: a polar radius field of the *sculpted* skin (4° × 4 mm bins,
+   dilated one bin) pushes every displaced vertex at least 1.2 mm off the head, so the
+   burial enters the mass without ever piercing the skin. The root ring widens
+   1.28–1.56× in its own plane (ring 1 follows at 45 %) until neighbouring roots touch —
+   the triangular gaps between fringe locks close from underneath, not by pushing tips
+   about. Each shaft then bows 5–11 mm under gravity — yawed per lock, zero at root and
+   tip — with a gentle S wobble, so the upward locks lean and the side locks drop as one
+   hair. Locks wider than 22 mm (the plate bunches) take one inward crease down rings
+   2–3, splitting the plate into strands.
+4. **The strand rhythm.** The V2 profile measured (1.0, 1.14, 1.04, 0.88, 0.55) — a
+   mid-shaft bulge that is why every lock read as a cone with a pinched tip. V3 remaps
+   the rings onto a clean fall (1.0, 0.94, 0.82, 0.66, 0.55), and each lock takes its own
+   width (0.86–1.12×, hashed — no randomness, every build identical), a ±16 % wide-thin
+   modulation along the shaft, and a cross-section twist of at most 0.15 rad. No two
+   neighbouring locks share a width-phase-bend combination, which is what breaks the
+   clone-array read.
+
+No transparency, no groom, no new geometry: vertex and triangle counts and the topology
+are V2's (5 199 vertices, 9 200 triangles, 96 locks + the cap), the skin weights are
+untouched, and the cap edge and every tip stay where V2 put them.
+
+### 10.2 The hair's maps
+
+The hair mesh now carries a UV atlas (`hair_uv`): the cap maps azimuth and height into a
+3 × 3 block, and each of the 96 locks owns one cell of the remaining grid — U runs around
+the ring, V runs root to tip, no island wraps, and no vertex is duplicated, so the mesh
+keeps its exact V2 vertex count and topology. The look draws two new maps into that
+atlas through the same `detail_maps` channel as the head's (§9.2):
+
+- `hair_normal.png` (1024²): two flickered strand grooves per lock cell — dark lines,
+  broken by noise so they read as separate hairs rather than extruded stripes — the same
+  whorl field the mesh relief uses, sampled at texel resolution, and a strand grain.
+- `hair_albedo.png` (512²): two lighter strand glazes offset beside the grooves (colour
+  beside relief, never on top of it), darker roots, and a cool tone noise, drawn as a
+  multiplier over the look's hair colour at `albedo_mix` 0.75.
+
+The maps ride the same UV gate as the head's: the applier binds them only to surfaces
+that really carry UVs, and the eyebrows — which share the hair material on the head mesh
+without UVs — keep drawing exactly as before. `detail_maps_enabled` is the A/B for both
+the head's and the hair's maps, and the preview takes `--no-detail-maps` for the
+comparison:
+
+```bash
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --out build/head_v2/look
+python3 tools/head_preview.py assets/models/protagonist/Protagonist_Character.glb \
+    --look assets/characters/protagonist/protagonist_look.tres --no-detail-maps \
+    --out build/head_v2/look_nodetail
+```
+
+### 10.3 What `check` adds
+
+| | |
+|---|---|
+| Hair UV | the hair primitive carries `TEXCOORD_0` |
+| Envelope | the built hair's bounding box matches the pinned V2 envelope within 0.1 mm |
+| Counts | 5 199 vertices, 9 200 triangles, 96 locks + the cap — unchanged from V2 |
+| Budget | installed GLB 1 199 412 B, under the 1 536 KiB model budget |
+
+### 10.4 Limits
+
+- The whorl, the bow and the twist are rest-pose geometry, as in §9.4 — not simulation.
+- The strand grooves are painted in each lock's own atlas cell, so they follow the lock
+  it belongs to; the hair carries no morph targets, so nothing shifts them.
+- The envelope clamp is absolute: V3 re-shapes the volume between root and tip, never the
+  silhouette's extremes.

@@ -11,6 +11,14 @@ nasolabial and mental creases, lip lines and the upper-lid crease. The albedo
 map stays close to the look's skin colour and adds only the bruise, lip and
 stubble glazes the shader's patches already suggest.
 
+Issue #386 adds the hair's own pair, drawn into the atlas `head_v2.hair_uv`
+assigns: `hair_normal.png` (1024²; two flickered strand grooves per lock cell,
+the crown whorl and the back arcs sampled from the same `whorl_relief` field the
+mesh relief uses, and a strand grain) and `hair_albedo.png` (512²; lighter
+strand glazes beside the grooves, darker roots, a cool tone noise). The look
+binds them to the hair mesh's own surface, so the eyebrows - which share the
+hair material but not the hair mesh - keep drawing exactly as before.
+
 The height field is in metres; the normal map is converted with the local
 texel-to-metre ratio measured from the UV atlas, so the relief keeps its scale
 at 1K and would not need retuning at 2K.
@@ -28,12 +36,16 @@ from PIL import Image
 
 import glb_numpy as glb
 
+import head_v2
+
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'build/head_v2'
 RUNTIME = ROOT / 'assets/models/protagonist/Protagonist_Character.glb'
 OUT = ROOT / 'assets/characters/protagonist/textures'
 HEAD_MESH = 6
 SKIN_PRIM = 0
+HAIR_MESH = head_v2.HAIR_MESH
+HAIR_PRIM = head_v2.HAIR_PRIM
 SIZE = 1024
 ALBEDO_SIZE = 1024
 
@@ -303,7 +315,8 @@ def _blur(field: np.ndarray, radius: int) -> np.ndarray:
     return field
 
 
-def height_to_normal(height: np.ndarray, pos: np.ndarray, mask: np.ndarray, size: int):
+def height_to_normal(height: np.ndarray, pos: np.ndarray, mask: np.ndarray, size: int,
+                     strength: float = 0.9):
     """Tangent-space normal from the height field, in OpenGL (+Y) convention."""
     # Metres per texel, measured locally from the surface position map.
     dx = np.gradient(pos[:, :, 0], axis=1)
@@ -314,7 +327,6 @@ def height_to_normal(height: np.ndarray, pos: np.ndarray, mask: np.ndarray, size
     metric2 = np.sqrt(dx * dx + dy * dy + dt * dt)
     pixel = np.sqrt(np.maximum(metric * metric2, 1e-12))
     pixel = np.median(pixel[mask]) if mask.any() else 0.0003
-    strength = 0.9
     gx = np.gradient(height, axis=1) / max(pixel, 1e-9) * strength
     gy = np.gradient(height, axis=0) / max(pixel, 1e-9) * strength
     # Image rows run down while V runs up: the bitangent gradient is -d/drow.
@@ -376,6 +388,89 @@ def build_albedo(pos: np.ndarray, mask: np.ndarray, size: int,
     return np.clip(_blur(colour, 1), 0.0, 1.0)
 
 
+# --------------------------------------------------------------------------------------
+# The hair maps (issue #386)
+# --------------------------------------------------------------------------------------
+
+HAIR_NORMAL_SIZE = 1024
+HAIR_ALBEDO_SIZE = 512
+HAIR_BASE = (0.5412, 0.4784, 0.5098)
+
+
+def hair_cell_rect(index: int) -> tuple[float, float]:
+    """Atlas origin (u0, v0) of lock `index`, mirroring `head_v2.hair_cell`."""
+    col, row = head_v2.hair_cell(index)
+    return col / head_v2.UV_COLS, row / head_v2.UV_ROWS
+
+
+def build_hair_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, uvs: np.ndarray,
+                      size: int, crown: np.ndarray) -> np.ndarray:
+    """The hair's relief: a few dark lines per lock, the whorl, the grain.
+
+    Each lock's atlas cell takes two longitudinal strands - dark grooves with a flickered,
+    broken run so they read as separate hairs rather than extruded stripes - which is what
+    turns the plate locks into strand groups without touching the mesh. The cap's 3 x 3
+    block samples the same `whorl_relief` field the mesh does, so the crown spiral and the
+    back arcs continue into the map at the resolution the 9 200 triangles cannot hold.
+    """
+    height = np.zeros((size, size), dtype=np.float64)
+    yy, xx = np.mgrid[0:size, 0:size]
+    cell_w, cell_h = 1.0 / head_v2.UV_COLS, 1.0 / head_v2.UV_ROWS
+    block_w = head_v2.UV_CAP_CELLS * cell_w
+    # Strand grooves, per lock cell. Two grooves, each a flickered run of small stamps.
+    for index in range(96):
+        u0, v0 = hair_cell_rect(index)
+        for slot, frac in ((0, 0.34), (1, 0.66)):
+            centre_u = u0 + frac * cell_w
+            vline = (xx / size) - centre_u
+            run = ((yy / size) - v0) / cell_h
+            wobble = (fbm(xx, yy, 0.06, 2, 60 + index * 2 + slot) - 0.5) * 0.003
+            line = np.exp(-((vline + wobble) / (cell_w * 0.055)) ** 2)
+            flicker = fbm(xx, yy * 4.0, 0.10, 3, 90 + index * 2 + slot)
+            alive = (flicker > 0.30) & (run > 0.04) & (run < 0.97)
+            height -= line * alive * 0.00048
+    # The whorl, wherever the cap's block is covered.
+    is_cap = mask & ((xx / size) < block_w)
+    if is_cap.any():
+        pts = np.stack([pos[:, :, 0], pos[:, :, 1], pos[:, :, 2]], axis=2)
+        relief = np.array([head_v2.whorl_relief(p, crown) for p in pts[is_cap]])
+        height[is_cap] += relief
+    # A little strand grain everywhere.
+    height += (fbm(xx, yy, 0.16, 3, 7) - 0.5) * 0.00012
+    height = np.where(mask, height, 0.0)
+    return _blur(height, 1)
+
+
+def build_hair_albedo(pos: np.ndarray, mask: np.ndarray, size: int) -> np.ndarray:
+    """The hair's colour map, as a multiplier around 1.0 over the look's hair colour.
+
+    A few lighter strand glazes (the same two runs per cell as the grooves, offset half a
+    groove so highlight sits beside shadow - colour beside relief, never on top of it),
+    darker roots, and a cool noise so the near-black hair keeps some tone in shadow.
+    """
+    yy, xx = np.mgrid[0:size, 0:size]
+    cell_w, cell_h = 1.0 / head_v2.UV_COLS, 1.0 / head_v2.UV_ROWS
+    colour = np.ones((size, size, 3))
+    tone = (fbm(xx, yy, 0.09, 3, 13) - 0.5) * 0.10
+    cool = (fbm(xx, yy, 0.22, 2, 19) - 0.5) * 0.05
+    colour *= (1.0 + tone)[:, :, None]
+    colour[:, :, 2] *= (1.0 + cool)
+    for index in range(96):
+        u0, v0 = hair_cell_rect(index)
+        run = ((yy / size) - v0) / cell_h
+        for frac in (0.46, 0.78):
+            centre_u = u0 + frac * cell_w
+            vline = (xx / size) - centre_u
+            wobble = (fbm(xx, yy, 0.06, 2, 130 + index * 2) - 0.5) * 0.003
+            line = np.exp(-((vline + wobble) / (cell_w * 0.075)) ** 2)
+            alive = (run > 0.06) & (run < 0.95)
+            colour *= (1.0 - 0.22 * line * alive)[:, :, None]
+        roots = np.clip((0.30 - run) / 0.30, 0.0, 1.0)
+        colour *= (1.0 - 0.16 * roots)[:, :, None]
+    colour[~mask] = 1.0
+    return np.clip(_blur(colour, 1), 0.0, 1.0)
+
+
 def save_png(array: np.ndarray, path: Path) -> None:
     image = Image.fromarray((np.clip(array, 0.0, 1.0) * 255.0 + 0.5).astype(np.uint8), 'RGB')
     image.save(path, optimize=True)
@@ -397,6 +492,33 @@ def build() -> dict:
     OUT.mkdir(parents=True, exist_ok=True)
     save_png(normal_map, OUT / 'head_normal.png')
     save_png(albedo, OUT / 'head_albedo.png')
+
+    # The hair (issue #386): the built hair primitive now carries the atlas head_v2
+    # assigns, and the maps draw the strand lines and the whorl into it.
+    hair_primitive = document['meshes'][HAIR_MESH]['primitives'][HAIR_PRIM]
+    hair_arrays = glb.primitive_arrays(document, binary, hair_primitive)
+    h_pos, h_nor, h_mask = rasterise(hair_arrays['POSITION'], hair_arrays['NORMAL'],
+                                     hair_arrays['TEXCOORD_0'],
+                                     hair_arrays['indices'].reshape(-1, 3).astype(np.int64),
+                                     HAIR_NORMAL_SIZE)
+    labels = head_v2.components(hair_arrays['POSITION'],
+                                hair_arrays['indices'].reshape(-1, 3).astype(np.int64))
+    counts = np.bincount(labels)
+    cap_label = int(np.argmax(counts == 303)) if (counts == 303).any() else -1
+    cap_verts = np.nonzero(labels == cap_label)[0]
+    cap_points = hair_arrays['POSITION'][cap_verts]
+    crown = cap_points[np.argmax(cap_points[:, 1] - 0.45 * cap_points[:, 2])]
+    h_height = build_hair_height(h_pos, h_nor, h_mask, hair_arrays['TEXCOORD_0'],
+                                 HAIR_NORMAL_SIZE, crown)
+    h_normal = height_to_normal(h_height, h_pos, h_mask, HAIR_NORMAL_SIZE, strength=1.0)
+    h_pos2, h_nor2, h_mask2 = rasterise(hair_arrays['POSITION'], hair_arrays['NORMAL'],
+                                        hair_arrays['TEXCOORD_0'],
+                                        hair_arrays['indices'].reshape(-1, 3).astype(np.int64),
+                                        HAIR_ALBEDO_SIZE)
+    h_albedo = build_hair_albedo(h_pos2, h_mask2, HAIR_ALBEDO_SIZE)
+    save_png(h_normal, OUT / 'hair_normal.png')
+    save_png(h_albedo, OUT / 'hair_albedo.png')
+
     manifest = {
         'source_sha256': hashlib.sha256((BUILD / 'Protagonist_Character.glb').read_bytes()).hexdigest(),
         'normal_sha256': hashlib.sha256((OUT / 'head_normal.png').read_bytes()).hexdigest(),
@@ -406,6 +528,14 @@ def build() -> dict:
         'covered_texels': int(mask.sum()),
         'normal_bytes': (OUT / 'head_normal.png').stat().st_size,
         'albedo_bytes': (OUT / 'head_albedo.png').stat().st_size,
+        'hair_normal_sha256': hashlib.sha256((OUT / 'hair_normal.png').read_bytes()).hexdigest(),
+        'hair_albedo_sha256': hashlib.sha256((OUT / 'hair_albedo.png').read_bytes()).hexdigest(),
+        'hair_normal_size': HAIR_NORMAL_SIZE,
+        'hair_albedo_size': HAIR_ALBEDO_SIZE,
+        'hair_covered_texels': int(h_mask.sum()),
+        'hair_normal_bytes': (OUT / 'hair_normal.png').stat().st_size,
+        'hair_albedo_bytes': (OUT / 'hair_albedo.png').stat().st_size,
+        'hair_crown': [float(v) for v in crown],
     }
     (OUT / 'head_textures.json').write_text(json.dumps(manifest, indent=2) + '\n')
     return manifest

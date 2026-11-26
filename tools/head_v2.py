@@ -24,6 +24,12 @@ What changes, and what deliberately does not:
     (5 -> 10 columns, 45 -> 90 triangles), the new columns are thinned to 0.82 of their
     radius about the strand's own axis, and each strand takes one gentle outward bend of
     at most 2 mm, so the V1 plates read as coarse, weighted strands up close;
+  * issue #386 then re-shapes the hair between root and tip (`reshape_locks`): roots dive
+    back under the mass and widen until neighbours touch, the cone-with-pinched-tip profile
+    falls cleanly, each lock takes its own width rhythm, gravity-consistent bow, S wobble
+    and cross-section twist, the plate-wide locks take one crease, the cap's interior takes
+    the crown whorl (`whorl_cap`, boundary pinned), and the whole pass is clamped to the
+    pinned V2 envelope — the approved silhouette does not move;
   * the eyes are levelled (V1's right eye sits 2.5 mm above the left), their flat iris and
     pupil discs are domed and the iris is given a limbal ring through its own vertex colour;
   * the eyebrows are re-hung on the brow ridge as tapered tubes, and the ears are given a
@@ -754,6 +760,387 @@ def refine_locks(positions: np.ndarray, triangles: np.ndarray) -> tuple[np.ndarr
 
 
 # --------------------------------------------------------------------------------------
+# V3 hair (issue #386): roots into the mass, strand rhythm, the fall, the crown whorl
+# --------------------------------------------------------------------------------------
+
+# The V2 hair envelope, pinned. Every V3 displacement is clamped inside it, so the
+# approved silhouette - the tips, the cap edge, the model height the tests measure -
+# cannot drift even where the reshaping bends a shaft.
+HAIR_BBOX_MIN = np.array([-0.1085, 1.5175, -0.1198])
+HAIR_BBOX_MAX = np.array([0.1575, 1.7669, 0.1817])
+SCALP = np.array([0.0, 1.565, 0.040])
+# Root burial: how far a root ring dives back along its own lock axis (the skull clamp
+# keeps every vertex 1.2 mm off the skin, so the burial never pierces the head).
+BURIAL = 0.008
+SKIN_MARGIN = 0.0012
+# The taper envelope, normalised to the root ring. V2 measured (1.0, 1.14, 1.04, 0.88,
+# 0.55) - a mid-shaft bulge that reads as a cone with a pinched tip. V3 falls cleanly
+# from the buried root to the untouched tip.
+TAPER = (1.0, 0.94, 0.82, 0.66, 0.55)
+# The hair atlas: 11 x 12 cells. The cap owns the 3 x 3 block at columns 0..2; the 96
+# locks fill columns 3..10 of all 12 rows, exactly 96 cells. A lock's root sits at the
+# cell's low-V edge and its tip at the high-V edge.
+UV_COLS, UV_ROWS, UV_CAP_CELLS = 11, 12, 3
+
+
+def hair_cell(index: int) -> tuple[int, int]:
+    """The atlas cell of lock `index`: columns 3..10, all 12 rows."""
+    col = UV_CAP_CELLS + (index % (UV_COLS - UV_CAP_CELLS))
+    row = index // (UV_COLS - UV_CAP_CELLS)
+    if row >= UV_ROWS:
+        raise SystemExit(f'lock cell {index} does not fit the {UV_COLS}x{UV_ROWS} atlas')
+    return col, row
+
+
+def _hash_units(label: int, salt: int, count: int) -> list[float]:
+    """Deterministic 0..1 units per lock - the de-clone parameters. No randomness: the
+    same lock reshapes the same way on every build."""
+    h = 0xcbf29ce484222325
+    for x in (label, salt, 0x386):
+        h ^= x & 0xFFFFFFFFFFFFFFFF
+        h = (h * 1099511628211) & 0xFFFFFFFFFFFFFFFF
+    out = []
+    for _ in range(count):
+        h ^= h >> 33
+        h = (h * 0xff51afd7ed558ccd) & 0xFFFFFFFFFFFFFFFF
+        h ^= h >> 33
+        h = (h * 0xc4ceb9fe1a85ec53) & 0xFFFFFFFFFFFFFFFF
+        h ^= h >> 33
+        out.append((h >> 11) / float(1 << 53))
+    return out
+
+
+def _fade(value: float) -> float:
+    value = min(max(value, 0.0), 1.0)
+    return value * value * (3.0 - 2.0 * value)
+
+
+def _hair_components(positions: np.ndarray, triangles: np.ndarray):
+    """Ring levels of every 51-vertex lock, plus the cap's label and open boundary.
+
+    A refined lock's only open boundary is its root ring (ten vertices on single-face
+    edges); breadth-first distance from that ring walks the five rings and the tip. The
+    cap is the one 303-vertex component; its boundary is the hairline. The lock entries
+    carry their own edge list so the UV pass can walk each ring in order.
+    """
+    labels = components(positions, triangles)
+    unique, sizes = np.unique(labels, return_counts=True)
+    locks = []
+    cap_label = None
+    cap_boundary = None
+    for label, size in zip(unique, sizes):
+        verts = np.nonzero(labels == label)[0]
+        faces = triangles[labels[triangles[:, 0]] == label]
+        edges = np.sort(np.vstack((faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]])), axis=1)
+        uniq_edges, counts = np.unique(edges, axis=0, return_counts=True)
+        boundary = np.unique(uniq_edges[counts == 1])
+        if size == 303:
+            if cap_label is not None:
+                raise SystemExit('hair has more than one cap-sized component')
+            cap_label = int(label)
+            cap_boundary = boundary
+            continue
+        if size != 51:
+            raise SystemExit(f'hair component of {size} vertices is not a refined lock')
+        adj: dict[int, list[int]] = {}
+        for a, b in uniq_edges:
+            adj.setdefault(int(a), []).append(int(b))
+            adj.setdefault(int(b), []).append(int(a))
+        level = {int(v): -1 for v in verts}
+        for v in boundary:
+            level[int(v)] = 0
+        frontier = [int(v) for v in boundary]
+        depth = 0
+        while frontier:
+            nxt = []
+            for v in frontier:
+                for w in adj[v]:
+                    if level[w] < 0:
+                        level[w] = depth + 1
+                        nxt.append(w)
+            frontier = nxt
+            depth += 1
+        levels = []
+        for k in range(6):
+            ring = np.array([v for v in verts if level[int(v)] == k])
+            expected = 1 if k == 5 else 10
+            if len(ring) != expected:
+                raise SystemExit(f'lock {label}: level {k} holds {len(ring)} vertices, not {expected}')
+            levels.append(ring)
+        locks.append({'label': int(label), 'levels': levels,
+                      'tip': int(levels[5][0]), 'edges': uniq_edges})
+    if len(locks) != 96 or cap_label is None:
+        raise SystemExit(f'hair is {len(locks)} locks, not 96 (cap {cap_label})')
+    return locks, cap_label, cap_boundary, labels
+
+
+def _skull_field(skin: np.ndarray) -> np.ndarray:
+    """Outermost skin radius per (angle, height) bin, dilated one bin - the burial
+    clamp's "how far out is the head here". The bins (4 deg, 4 mm) are finer than the
+    hair's own spacing, as in `character_hair`."""
+    grid = np.zeros((90, 90))
+    pts = skin[skin[:, 1] > 1.50]
+    if len(pts):
+        radius = np.hypot(pts[:, 0], pts[:, 2] - SCALP[2])
+        ai = np.clip(((np.degrees(np.arctan2(pts[:, 0], -(pts[:, 2] - SCALP[2]))) + 180.0)
+                      / 4.0).astype(int), 0, 89)
+        yi = np.clip(((pts[:, 1] - 1.50) / 0.004).astype(int), 0, 89)
+        np.maximum.at(grid, (ai, yi), radius)
+        dilated = grid.copy()
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                dilated = np.maximum(dilated, np.roll(np.roll(grid, dy, 0), dx, 1))
+        return dilated
+    return grid
+
+
+def _skull_radius(field: np.ndarray, x: float, y: float, z: float) -> float:
+    angle = np.degrees(np.arctan2(x, -(z - SCALP[2])))
+    ai = int(np.clip((angle + 180.0) / 4.0, 0, 89))
+    yi = int(np.clip((y - 1.50) / 0.004, 0, 89))
+    return float(field[ai, yi])
+
+
+def _lock_frame(root: np.ndarray, axis: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """A stable perpendicular frame for a lock: e1 from the scalp direction, e2 = axis
+    cross e1. Twists, creases and the UV azimuth all read against this frame."""
+    away = root - SCALP
+    e1 = away - axis * float(away @ axis)
+    if np.linalg.norm(e1) < 1e-6:
+        e1 = np.cross(axis, np.array([0.0, -1.0, 0.0]))
+        if np.linalg.norm(e1) < 1e-6:
+            e1 = np.cross(axis, np.array([1.0, 0.0, 0.0]))
+    e1 = e1 / np.linalg.norm(e1)
+    return e1, np.cross(axis, e1)
+
+
+def reshape_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray) -> np.ndarray:
+    """The issue #386 pass over the refined locks: roots, rhythm, fall, twist, creases.
+
+    Tips are pinned and everything is clamped to the pinned envelope, so the approved
+    silhouette does not move; everything between root and tip is re-shaped:
+
+    1. **Roots enter the mass.** The root ring dives back along its own axis (8 mm, then
+       the skull clamp) and widens - 1.28-1.56x along the fall of the hairline - until
+       neighbouring roots touch; ring 1 follows at 45 % of both, so the shaft emerges
+       from the cap's volume instead of being planted on its edge.
+    2. **No more cone clones.** The measured profile (1.0, 1.14, 1.04, 0.88, 0.55) is
+       remapped onto a clean fall; each lock takes its own width (0.86-1.12x), a
+       wide-thin rhythm along the shaft, a gravity-consistent bow (5-11 mm, yawed per
+       lock, zero at tip and root) with a gentle S wobble, and a cross-section twist of
+       at most 0.15 rad.
+    3. **A few creases, not grooves everywhere.** Locks wider than 22 mm (the plates)
+       take one inward crease down rings 2-3, splitting the plate into strands.
+
+    Pure function of the mesh plus the sculpted skin; vertex count and topology do not
+    change, so the skin weights stay valid and the V2 contract's counts hold.
+    """
+    locks, _cap, _cap_boundary, _labels = _hair_components(positions, triangles)
+    field = _skull_field(skin)
+    out = positions.copy()
+    gravity = np.array([0.0, -1.0, 0.0])
+    taper_t = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    for entry in locks:
+        label = entry['label']
+        levels = entry['levels']
+        verts = np.concatenate(levels + [np.array([entry['tip']])])
+        rows = np.arange(len(verts))
+        level_of = np.minimum(rows // 10, 5)
+        root = positions[levels[0]].mean(axis=0)
+        tip = positions[entry['tip']]
+        axis = tip - root
+        length = float(np.linalg.norm(axis))
+        if length < 1e-9:
+            raise SystemExit(f'lock {label}: zero length')
+        axis = axis / length
+        rel = positions[verts] - root
+        along = rel @ axis
+        t = np.clip(along / length, 0.0, 1.0)
+        radial = rel - np.outer(along, axis)
+        radius = np.linalg.norm(radial, axis=1)
+        ring_r = np.array([float(np.median(radius[rows[(rows // 10) == k]]))
+                           for k in range(5)])
+        ring_r = ring_r / max(ring_r[0], 1e-9)
+        rmax = float(radius.max())
+
+        u = _hash_units(label, 0, 8)
+        width = 0.86 + 0.26 * u[0]
+        widen = 1.28 + 0.28 * u[1]
+        bend_amp = (0.005 + 0.006 * u[2]) * min(1.0, length / 0.10)
+        yaw = (u[3] - 0.5) * 1.2
+        twist = (u[4] - 0.5) * 0.30
+        phase = u[5] * math.tau
+        s_amp = (u[6] - 0.5) * 0.0044
+        crease_at = u[7] * math.tau
+        e1, e2 = _lock_frame(root, axis)
+        g_perp = gravity - axis * float(gravity @ axis)
+        if np.linalg.norm(g_perp) < 0.25:
+            g_perp = e1
+        g_perp = g_perp / np.linalg.norm(g_perp)
+        side = np.cross(axis, g_perp)
+        bend_dir = g_perp * math.cos(yaw) + side * math.sin(yaw)
+
+        moved = positions[verts].copy()
+        for i in rows:
+            ring = int(level_of[i])
+            if ring == 5:
+                continue  # the tip is pinned: the silhouette's extremes do not move
+            ti = float(t[i])
+            rad = radial[i]
+            r = float(radius[i])
+            phi = math.atan2(float(rad @ e2), float(rad @ e1)) if r > 1e-9 else 0.0
+            if ring == 0:
+                # widen the root ring in its own plane, then dive back along the axis
+                r *= widen
+            else:
+                ratio = float(np.interp(ti, taper_t, [1.0] + [TAPER[k] / max(ring_r[k], 1e-6)
+                                                              for k in (1, 2, 3, 4)] + [1.0]))
+                rhythm = 1.0 + 0.16 * math.sin(math.tau * (ti * 0.85 + phase))
+                r *= ratio * width * rhythm
+                if ring == 1:
+                    r *= 1.0 + (widen - 1.0) * 0.45
+                if rmax > 0.022 and ring in (2, 3) and r > 0.5 * rmax:
+                    delta = abs((phi - crease_at + math.pi) % math.tau - math.pi)
+                    if delta < 0.42:
+                        r *= 0.72  # one crease: the plate reads as two strands
+                if r > 1e-9:
+                    phi += twist * math.sin(math.pi * ti)
+                moved[i] = root + axis * float(along[i]) \
+                    + (math.cos(phi) * e1 + math.sin(phi) * e2) * r
+                moved[i] += bend_dir * (bend_amp * math.sin(math.pi * ti)) \
+                    + side * (s_amp * math.sin(math.tau * ti))
+                if ring == 1:
+                    moved[i] -= axis * (BURIAL * 0.35)
+                continue
+            moved[i] = root + axis * float(along[i]) \
+                + (math.cos(phi) * e1 + math.sin(phi) * e2) * r
+            moved[i] -= axis * BURIAL
+        for i in rows:
+            if level_of[i] == 5:
+                continue
+            p = moved[i]
+            r_head = math.hypot(float(p[0]), float(p[2] - SCALP[2]))
+            r_min = _skull_radius(field, float(p[0]), float(p[1]), float(p[2])) + SKIN_MARGIN
+            if r_head < r_min and r_head > 1e-9:
+                scale = r_min / r_head
+                p = np.array([p[0] * scale, p[1], SCALP[2] + (p[2] - SCALP[2]) * scale])
+            moved[i] = np.clip(p, HAIR_BBOX_MIN, HAIR_BBOX_MAX)
+        out[verts] = moved
+    return out
+
+
+def whorl_relief(point: np.ndarray, crown: np.ndarray) -> float:
+    """The crown whorl and the back flow, as a signed relief in metres.
+
+    Shared by the mesh pass (`whorl_cap`) and the normal-map painter, so the geometry
+    and the map draw the same flow: a spiral of about 1.5 turns around the crown and,
+    behind it, concentric arcs running from the whorl down towards the nape.
+    """
+    d = point - crown
+    rho = float(np.linalg.norm(d))
+    axis_c = crown - SCALP
+    axis_c = axis_c / max(float(np.linalg.norm(axis_c)), 1e-9)
+    e1 = np.array([0.0, 0.0, 1.0])
+    e1 = e1 - axis_c * float(e1 @ axis_c)
+    if float(np.linalg.norm(e1)) < 1e-6:
+        e1 = np.array([1.0, 0.0, 0.0])
+    e1 = e1 / np.linalg.norm(e1)
+    e2 = np.cross(axis_c, e1)
+    phi = math.atan2(float(d @ e2), float(d @ e1))
+    spiral = math.sin(1.5 * phi + rho * 230.0)
+    arcs = math.sin(rho * 300.0)
+    back_w = min(max((0.012 - float(point[2])) / 0.050, 0.0), 1.0)
+    spiral_f = 1.0 - min(max((rho - 0.045) / 0.030, 0.0), 1.0)
+    arcs_f = 1.0 - min(max((rho - 0.060) / 0.045, 0.0), 1.0)
+    return 0.0013 * spiral * max(1.0 - back_w, 0.35) * spiral_f \
+        + 0.0010 * arcs * back_w * arcs_f
+
+
+def whorl_cap(positions: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """Relief the crown whorl and the back flow into the scalp cap.
+
+    The cap's boundary - the hairline the owner authored - is pinned vertex for vertex;
+    its interior takes the shared `whorl_relief` field along the vertex's own outward
+    direction, faded to nothing within 18 mm of the boundary so no ridge reaches the
+    edge. At most 1.3 mm, well inside the envelope.
+    """
+    locks, cap_label, cap_boundary, labels = _hair_components(positions, triangles)
+    del locks
+    verts = np.nonzero(labels == cap_label)[0]
+    crown_index = int(verts[np.argmax(positions[verts, 1] - 0.45 * positions[verts, 2])])
+    crown = positions[crown_index]
+    interior = np.array([v for v in verts if v not in set(cap_boundary)])
+    outward = positions[interior] - SCALP
+    outward = outward / np.maximum(np.linalg.norm(outward, axis=1, keepdims=True), 1e-9)
+    relief = np.array([whorl_relief(p, crown) for p in positions[interior]])
+    distance = np.linalg.norm(positions[interior][:, None, :]
+                              - positions[cap_boundary][None, :, :], axis=2).min(axis=1)
+    edge = np.clip(distance / 0.018, 0.0, 1.0)
+    edge = edge * edge * (3.0 - 2.0 * edge)
+    moved = positions[interior] + outward * (relief * edge)[:, None]
+    out = positions.copy()
+    out[interior] = np.clip(moved, HAIR_BBOX_MIN, HAIR_BBOX_MAX)
+    return out
+
+
+def _ring_order(ring: np.ndarray, edges: np.ndarray) -> list[int]:
+    """Walk a ring's cycle in edge order, from its lowest vertex id."""
+    members = set(int(v) for v in ring)
+    adj: dict[int, list[int]] = {int(v): [] for v in ring}
+    for a, b in edges:
+        a, b = int(a), int(b)
+        if a in members and b in members:
+            adj[a].append(b)
+            adj[b].append(a)
+    order = [min(members)]
+    seen = {order[0]}
+    while True:
+        nxt = [w for w in sorted(adj[order[-1]]) if w not in seen]
+        if not nxt:
+            break
+        order.append(nxt[0])
+        seen.add(nxt[0])
+    if len(order) != len(members):
+        raise SystemExit(f'a ring walked as {len(order)} of {len(members)} vertices')
+    return order
+
+
+def hair_uv(positions: np.ndarray, triangles: np.ndarray) -> np.ndarray:
+    """The hair's UV atlas, for the maps the look draws on it.
+
+    Each lock owns one atlas cell (`hair_cell`): U runs around the ring - offset half a
+    column so no vertex sits on a seam and nothing wraps - and V runs root to tip. The
+    cap maps azimuth (clipped to +/-115 deg, 0 = front) and height into its 3 x 3
+    block; neither wraps, so no seam needs a duplicated vertex and the mesh keeps its
+    exact V2 vertex count and topology.
+    """
+    locks, cap_label, _cap_boundary, labels = _hair_components(positions, triangles)
+    uv = np.zeros((len(positions), 2))
+    cell_w, cell_h = 1.0 / UV_COLS, 1.0 / UV_ROWS
+    block_w, block_h = UV_CAP_CELLS * cell_w, UV_CAP_CELLS * cell_h
+    cap_verts = np.nonzero(labels == cap_label)[0]
+    d = positions[cap_verts] - SCALP
+    az = np.degrees(np.arctan2(d[:, 0], -(d[:, 2])))
+    ys = positions[cap_verts][:, 1]
+    u = 0.02 + (np.clip(az, -115.0, 115.0) + 115.0) / 230.0 * (block_w - 0.04)
+    v = 0.02 + (np.clip(ys, 1.515, 1.71) - 1.515) / 0.195 * (block_h - 0.04)
+    uv[cap_verts] = np.stack([u, v], axis=1)
+    used: set[tuple[int, int]] = set()
+    for index, entry in enumerate(locks):
+        col, row = hair_cell(index)
+        if (col, row) in used:
+            raise SystemExit(f'atlas cell {(col, row)} used twice')
+        used.add((col, row))
+        u0, v0 = col * cell_w, row * cell_h
+        for k, ring in enumerate(entry['levels'][:5]):
+            order = _ring_order(ring, entry['edges'])
+            for slot, vid in enumerate(order):
+                uv[vid] = (u0 + (slot + 0.5) / 10.0 * cell_w, v0 + k * 0.2 * cell_h)
+        uv[entry['tip']] = (u0 + 0.5 * cell_w, v0 + 0.985 * cell_h)
+    return uv
+
+
+# --------------------------------------------------------------------------------------
 # UV, tangents
 # --------------------------------------------------------------------------------------
 
@@ -932,6 +1319,11 @@ def build() -> dict:
     hair_positions = hair_arrays['POSITION']
     hair_triangles = hair_arrays['indices'].reshape(-1, 3).astype(np.int64)
     hair_positions, hair_triangles = refine_locks(hair_positions, hair_triangles)
+    # 6b. Issue #386: roots into the mass, strand rhythm and fall, the crown whorl -
+    # then the hair's own atlas, for the maps the look draws on it.
+    hair_positions = reshape_locks(hair_positions, hair_triangles, positions)
+    hair_positions = whorl_cap(hair_positions, hair_triangles)
+    hair_uv_atlas = hair_uv(hair_positions, hair_triangles)
     hair_normals = welded_normals(hair_positions, hair_triangles)
 
     # 7. The eyes, the eyebrows and the mouth's interior, on the sculpted head.
@@ -968,6 +1360,7 @@ def build() -> dict:
         'attributes': {
             'POSITION': (hair_positions.astype(np.float32), 5126, 'VEC3'),
             'NORMAL': (np.round(hair_normals * 32767).astype(np.int16), 5122, 'VEC3', True),
+            'TEXCOORD_0': (np.round(hair_uv_atlas * 65535).astype(np.uint16), 5123, 'VEC2', True),
             'JOINTS_0': (hair_joints, 5121, 'VEC4'),
             'WEIGHTS_0': (hair_weights, 5121, 'VEC4', True),
         },
@@ -1042,6 +1435,7 @@ def contract() -> dict:
     hair_arrays = glb.primitive_arrays(
         document, binary, document['meshes'][HAIR_MESH]['primitives'][HAIR_PRIM])
     hair_labels = components(hair_arrays['POSITION'], hair_arrays['indices'].reshape(-1, 3))
+    hair_bounds = (hair_arrays['POSITION'].min(axis=0), hair_arrays['POSITION'].max(axis=0))
     return {
         'v1_sha256': hashlib.sha256(V1.read_bytes()).hexdigest(),
         'runtime_bytes': RUNTIME.stat().st_size,
@@ -1058,6 +1452,9 @@ def contract() -> dict:
         'hair_vertices': int(len(hair_arrays['POSITION'])),
         'hair_triangles': int(len(hair_arrays['indices']) // 3),
         'hair_locks': int(len(np.unique(hair_labels))) - 1,  # less the scalp cap
+        'hair_has_uv': 'TEXCOORD_0' in document['meshes'][HAIR_MESH]['primitives'][HAIR_PRIM]['attributes'],
+        'hair_bbox_min': [float(v) for v in hair_bounds[0]],
+        'hair_bbox_max': [float(v) for v in hair_bounds[1]],
         'eye_targets': len(document['meshes'][EYE_MESH]['primitives'][0]['targets']),
     }
 
@@ -1078,11 +1475,16 @@ def check() -> dict:
         'head_targets': 9,
         'lid_shells': 4,
         'hair_locks': 96,
+        'hair_has_uv': True,
     }
     failed = []
     for name, expected in expectations.items():
         if measured[name] != expected:
             failed.append(f'{name} is {measured[name]}, expected {expected}')
+    for name, pinned in (('hair_bbox_min', HAIR_BBOX_MIN), ('hair_bbox_max', HAIR_BBOX_MAX)):
+        drift = float(np.abs(np.asarray(measured[name]) - pinned).max())
+        if drift > 1e-4:
+            failed.append(f'{name} drifted {drift * 1000:.2f} mm off the pinned V2 envelope')
     if not (0.0 <= measured['head_uv_u_min'] and measured['head_uv_u_max'] <= 1.0):
         failed.append('the head atlas leaves [0, 1]')
     if measured['head_uv_u_span_max'] > 0.5:
