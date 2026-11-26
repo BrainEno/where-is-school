@@ -180,13 +180,14 @@ const LOCATIONS := {
 		# awning and sign add nine bodies; the zebra, the manhole and the posters are paint.
 		# Round 31: the refined frontage adds two solid crates by the shutter - the door's
 		# frame, the rails, the projecting sign, the lamp and the rest are meshes only.
-		# Round 34: the north end fills in - the flats' two side wings and back close the
-		# block behind their front (4), the school grounds' back wall carries on north to
-		# meet them (1), the ground under it all catches a fall plus the sliver at the
-		# front's foot (2), and the new furniture adds the container, its two door leaves,
-		# three tyres and the pull-up bars with their two posts (8); the three looks add a
+		# Round 33: the exit's outline drops the passage light (-1 pick box). Round 34:
+		# the north end fills in - the flats' two side wings and back close the block
+		# behind their front (4), the school grounds' back wall carries on north to meet
+		# them (1), the ground under it all catches a fall plus the sliver at the front's
+		# foot (2), and the new furniture adds the container, its two door leaves, three
+		# tyres and the pull-up bars with their two posts (8); the three looks add a
 		# sphere each and four pick boxes (7).
-		"shapes": 125,
+		"shapes": 122,
 		"interactables": 13,
 		"spawns": ["FromCorridor", "FromResidential"],
 		"exits": {

@@ -804,7 +804,7 @@ mesh = SubResource("BoxMesh_8")
 material_override = ExtResource("art_school_teal")
 
 [node name="GroveLanePostWest" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-1.75, 1.15, -18.2)
+position = Vector3(-1.75, 1.15, -20.0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLanePostWest"]
 shape = SubResource("BoxShape3D_9")
@@ -814,7 +814,7 @@ mesh = SubResource("BoxMesh_9")
 material_override = ExtResource("art_school_teal")
 
 [node name="GroveLanePostEast" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(0.55, 1.15, -18.2)
+position = Vector3(0.55, 1.15, -20.0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLanePostEast"]
 shape = SubResource("BoxShape3D_10")
@@ -824,7 +824,7 @@ mesh = SubResource("BoxMesh_10")
 material_override = ExtResource("art_school_teal")
 
 [node name="GroveLaneBeam" type="StaticBody3D" parent="." groups=["camera_occluder"]]
-position = Vector3(-0.6, 2.5, -18.2)
+position = Vector3(-0.6, 2.5, -20.0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneBeam"]
 shape = SubResource("BoxShape3D_11")

@@ -414,7 +414,7 @@ func _check_north_lane_is_the_way() -> void:
 	_player.teleport(Transform3D(Basis.IDENTITY, Vector3(-0.6, 1.65, -6.0)))
 	await _physics_frames(4)
 	var path := NavigationServer3D.map_get_path(
-		map, _player.global_position, Vector3(-0.6, 1.65, -19.7), true)
+		map, _player.global_position, Vector3(-0.1, 1.65, -19.9), true)
 	if path.is_empty():
 		_failures.append("The lane has no navigation path from the yard to its door.")
 	elif path[path.size() - 1].z > -19.0:

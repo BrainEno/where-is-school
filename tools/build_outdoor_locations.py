@@ -871,8 +871,8 @@ def build_front_yard():
     # beam gate, one person wide between the rails, to the wall's lane door. The floors
     # are the walk (the yard's ground ends at the NorthRail); the strip tree at
     # (-0.65, -19.5) stands in the last stretch, so the walk threads it on the east.
-    s.box("GroveLaneFloor", (-0.55, 0.1, -12.3), (2.3, 0.2, 8.4), "concrete")
-    s.box("GroveLaneFloorNorth", (-0.4, 0.1, -18.59), (2.2, 0.2, 4.18), "concrete")
+    s.box("GroveLaneFloor", (-0.55, 0.1, -12.4), (2.3, 0.2, 8.2), "concrete")
+    s.box("GroveLaneFloorNorth", (-0.25, 0.1, -18.59), (2.5, 0.2, 4.18), "concrete")
     s.box("GroveLaneRailWest", (-1.55, 0.6, -12.425), (0.12, 1.2, 8.25), "metal", occ)
     s.box("GroveLaneRailEast", (0.45, 0.6, -12.425), (0.12, 1.2, 8.25), "metal", occ)
     for lane_x, lane_z in ((-1.55, -8.5), (0.45, -8.5)):
@@ -986,7 +986,7 @@ def build_front_yard():
         # Round 34: into the north grove through the lane's door behind the teaching
         # block - the narrow way the owner asked for. The mouth by the gate's north
         # pier stays as dressing (the equipment room keeps its story beat beside it).
-        {"name": "ToNorthGrove", "pos": (-0.6, 0.9, -19.7), "id": "front_yard_to_grove",
+        {"name": "ToNorthGrove", "pos": (-0.1, 0.9, -19.9), "id": "front_yard_to_grove",
          "prompt_key": "prompt.to_grove", "radius": 0.9,
          "outline": ("SchoolWallNorthLaneDoor/MeshInstance3D",),
          "scene": "res://scenes/locations/north_grove/north_grove.tscn", "spawn": "FromFrontYard",
@@ -1654,9 +1654,9 @@ def build_north_grove():
     s.box("GroveWallNorthEast", (3.0, GROVE_WALL_H / 2, corner - 0.15), (0.8, GROVE_WALL_H, 0.3), "wall", occ)
     s.box("GroveLaneDoors", (-0.6, 1.05, corner - 0.15), (2.0, 2.1, 0.14), "metal", occ)
     s.box("GroveLaneDoorsHeader", (-0.6, 2.35, corner - 0.15), (2.0, 0.5, 0.14), "wall", occ)
-    s.box("GroveLanePostWest", (-1.75, 1.15, -18.2), (0.5, 2.3, 0.5), "wall", occ)
-    s.box("GroveLanePostEast", (0.55, 1.15, -18.2), (0.5, 2.3, 0.5), "wall", occ)
-    s.box("GroveLaneBeam", (-0.6, 2.5, -18.2), (2.9, 0.5, 0.5), "wall", occ)
+    s.box("GroveLanePostWest", (-1.75, 1.15, -20.0), (0.5, 2.3, 0.5), "wall", occ)
+    s.box("GroveLanePostEast", (0.55, 1.15, -20.0), (0.5, 2.3, 0.5), "wall", occ)
+    s.box("GroveLaneBeam", (-0.6, 2.5, -20.0), (2.9, 0.5, 0.5), "wall", occ)
     # Round 28: the gym's door (体育馆的门) in the north wall, where the east leg's walk
     # ends against it; through it the porch runs to the gym's south face (the stage pass
     # frames the leaf and draws the porch and the shell beyond, both scenes see them).

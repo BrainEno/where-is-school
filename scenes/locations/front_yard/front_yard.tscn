@@ -295,16 +295,16 @@ size = Vector3(2.0, 0.5, 0.12)
 size = Vector3(2.0, 0.5, 0.12)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_39"]
-size = Vector3(2.3, 0.2, 8.4)
+size = Vector3(2.3, 0.2, 8.2)
 
 [sub_resource type="BoxMesh" id="BoxMesh_39"]
-size = Vector3(2.3, 0.2, 8.4)
+size = Vector3(2.3, 0.2, 8.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_40"]
-size = Vector3(2.2, 0.2, 4.18)
+size = Vector3(2.5, 0.2, 4.18)
 
 [sub_resource type="BoxMesh" id="BoxMesh_40"]
-size = Vector3(2.2, 0.2, 4.18)
+size = Vector3(2.5, 0.2, 4.18)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_41"]
 size = Vector3(0.12, 1.2, 8.25)
@@ -1343,7 +1343,7 @@ mesh = SubResource("BoxMesh_38")
 material_override = ExtResource("art_school_teal")
 
 [node name="GroveLaneFloor" type="StaticBody3D" parent="."]
-position = Vector3(-0.55, 0.1, -12.3)
+position = Vector3(-0.55, 0.1, -12.4)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneFloor"]
 shape = SubResource("BoxShape3D_39")
@@ -1353,7 +1353,7 @@ mesh = SubResource("BoxMesh_39")
 material_override = ExtResource("art_pavement")
 
 [node name="GroveLaneFloorNorth" type="StaticBody3D" parent="."]
-position = Vector3(-0.4, 0.1, -18.59)
+position = Vector3(-0.25, 0.1, -18.59)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GroveLaneFloorNorth"]
 shape = SubResource("BoxShape3D_40")
@@ -1969,7 +1969,7 @@ destination_spawn = &"FromCorridor"
 destination_id = &"street"
 
 [node name="ToNorthGrove" parent="Interactables" instance=ExtResource("8_location_exit")]
-position = Vector3(-0.6, 0.9, -19.7)
+position = Vector3(-0.1, 0.9, -19.9)
 interact_id = &"front_yard_to_grove"
 prompt_key = "prompt.to_grove"
 radius = 0.9
