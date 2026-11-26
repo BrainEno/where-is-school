@@ -52,6 +52,14 @@ WINDOWS_PRESET = "Windows Desktop"
 # set in the preset itself and only checked here, since they do not change per build.
 STAMPED = ("application/file_version", "application/product_version")
 
+# The macOS bundle carries its version in Info.plist (`CFBundleShortVersionString` and
+# `CFBundleVersion`), which the export fills from `application/short_version` and
+# `application/version`. Both accept the dotted core version as-is; the prerelease tail
+# stays out of the bundle for the same reason it stays out of the Windows resource - it is
+# the package name's job.
+MACOS_PRESET = "macOS"
+MACOS_STAMPED = ("application/short_version", "application/version")
+
 _VERSION = re.compile(r"^(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(?:-(?P<tail>[0-9A-Za-z][0-9A-Za-z.-]*))?$")
 
 
@@ -101,6 +109,13 @@ def stamp(text: str, resource_version: str, preset: str = WINDOWS_PRESET) -> str
     return text
 
 
+def stamp_macos(text: str, core_version: str) -> str:
+    """Return the preset text with the macOS bundle's version fields set."""
+    for key in MACOS_STAMPED:
+        text = export_presets.set_option(text, MACOS_PRESET, key, core_version)
+    return text
+
+
 def check(text: str, expected: dict[str, str], preset: str = WINDOWS_PRESET) -> list[str]:
     """What the committed preset says instead of the version it is supposed to carry."""
     presets = export_presets.parse(text)
@@ -113,6 +128,22 @@ def check(text: str, expected: dict[str, str], preset: str = WINDOWS_PRESET) -> 
             problems.append(
                 f'{preset} {key} is {actual!r}, {expected["full"]} needs '
                 f'{expected["resource"]!r}: run tools/stamp_release_version.py'
+            )
+    return problems
+
+
+def check_macos(text: str, expected: dict[str, str]) -> list[str]:
+    """The macOS half of the same honesty check, on the bundle version fields."""
+    presets = export_presets.parse(text)
+    if MACOS_PRESET not in presets:
+        return [f"export_presets.cfg has no preset named {MACOS_PRESET!r}"]
+    problems = []
+    for key in MACOS_STAMPED:
+        actual = presets[MACOS_PRESET].options.get(key)
+        if actual != expected["core"]:
+            problems.append(
+                f'{MACOS_PRESET} {key} is {actual!r}, {expected["full"]} needs '
+                f'{expected["core"]!r}: run tools/stamp_release_version.py'
             )
     return problems
 
@@ -153,6 +184,7 @@ def main(argv: list[str]) -> int:
     if arguments.check:
         try:
             problems = check(text, version)
+            problems.extend(check_macos(text, version))
             if project != stamped_project:
                 problems.append(f"project.godot must carry {version['full']}: run tools/stamp_release_version.py")
         except VersionError as error:
@@ -164,18 +196,20 @@ def main(argv: list[str]) -> int:
             return 1
         print(
             f"RELEASE_VERSION_OK: project.godot carries {version['full']}; {WINDOWS_PRESET} "
-            f"carries file and product version {version['resource']}."
+            f"carries file and product version {version['resource']}; {MACOS_PRESET} carries "
+            f"bundle version {version['core']}."
         )
         return 0
 
     try:
         updated = stamp(text, version["resource"])
+        updated = stamp_macos(updated, version["core"])
     except export_presets.PresetError as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
     if updated != text:
         arguments.presets.write_text(updated, encoding="utf-8")
-        print(f"stamped {arguments.presets.name}: file and product version {version['resource']}")
+        print(f"stamped {arguments.presets.name}: file and product version {version['resource']}, bundle version {version['core']}")
     else:
         print(f"{arguments.presets.name} already carried {version['resource']}")
     if stamped_project != project:
@@ -183,7 +217,8 @@ def main(argv: list[str]) -> int:
         print(f"stamped {arguments.project.name}: runtime version {version['full']}")
     print(
         f"RELEASE_VERSION_STAMPED: {version['full']} -> {version['resource']} in the "
-        f"{WINDOWS_PRESET} preset; the package will be named {version['full']}."
+        f"{WINDOWS_PRESET} preset and {version['core']} in the {MACOS_PRESET} bundle; "
+        f"the package will be named {version['full']}."
     )
     return 0
 

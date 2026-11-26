@@ -1,8 +1,8 @@
 # Releasing
 
-What a release of this project is, how the two platforms are built, what is verified before
+What a release of this project is, how the three platforms are built, what is verified before
 anything is published, and — the part a player asks about first — why the Windows executable
-says "unknown publisher".
+says "unknown publisher" and why the macOS bundle needs a right-click Open.
 
 This document describes the state after issue #66. It replaces nothing: it is the first
 written record of the release process, because until now there was one platform, no icon, no
@@ -244,10 +244,10 @@ The owner does this; the workflow does not create tags and no agent creates one.
    ```
    The dash is what makes it a prerelease. Nothing else needs setting.
 4. **Watch the run.** The tag triggers the same build; this time the `publish` job downloads
-   the two artifacts, verifies them again, and creates the release with both archives, marked
+   the three artifacts, verifies them again, and creates the release with all three archives, marked
    prerelease, with notes naming the platforms, how to run each, the signing status and a link
    to the run that made it.
-5. **Check the release page.** Both assets present, "Pre-release" badge, notes correct. If a
+5. **Check the release page.** All assets present, "Pre-release" badge, notes correct. If a
    build is wrong, delete the tag and the release
    (`gh release delete v0.1.0-rc.1 --yes`, `git push --delete origin v0.1.0-rc.1`) and start
    again from step 2 — a broken tag must never be re-pointed at a different commit, because a
@@ -268,7 +268,7 @@ Recorded so the next person does not rediscover them:
 - **`packaging/HOW-TO-RUN.txt` still says "the executable carries the default engine icon"**
   in its known-gaps list. That is no longer true, and the file belongs to the UI workstream;
   the line should be dropped there rather than edited here.
-- **No macOS, no AppImage, no Flatpak, no auto-update.** Linux ships as a folder with a
+- **No AppImage, no Flatpak, no auto-update.** Linux ships as a folder with a
   desktop entry, which runs anywhere with glibc and a GL/Vulkan driver and needs no
   installation; that is deliberate for a slice, not a final answer for a game.
 - **The Linux binary is built on `ubuntu-latest`**, so it needs the glibc of that image or

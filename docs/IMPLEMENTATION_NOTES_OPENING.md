@@ -339,8 +339,11 @@ shows half a sentence.
   in the repository (SIL OFL 1.1, license text shipped next to it). Font size is
   fixed; there is no typography pass for either language.
 - Every environment is a graybox: flat placeholder colours, no textures, no
-  animation. The green animal is three primitives and reads as "something green"
-  rather than as a creature; its design is deliberately undecided.
+  animation. ~~The green animal is three primitives and reads as "something green"
+  rather than as a creature; its design is deliberately undecided.~~ **The animal is
+  sculpted now** (`tools/build_green_animal.py`): smooth-blended volumes with a painted
+  vertex-colour coat, still no imported textures, and its design remains deliberately
+  undecided - a smooth bill, pricked ears, four quiet feet.
 - Outdoor lighting is only tuned to be readable: strong flat shadows and a fog
   layer stand in for real dusk lighting. The courtyard's arrival framing is
   sparse (the historical frame `docs/screenshots/17_residential.png`; current frames are the

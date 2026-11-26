@@ -1,10 +1,12 @@
 extends Node3D
-## The green animal: a neutral blockout that behaves like a small animal.
+## The green animal: a sculpted, painted creature that behaves like a small animal.
 ##
 ## It breathes, sways its head, and does not approach or threaten the player. The
-## scene is deliberately built from primitives with a flat colour, so nothing in
-## the model claims what species it is. Nothing here decides what the animal
-## means: the dialogue does the noticing, and it keeps its conclusions open.
+## geometry is sculpted by `tools/build_green_animal.py` (smooth-blended volumes,
+## one painted surface per piece) and carries no imported textures; the coat is
+## vertex colour. Nothing in the model claims what species it is. Nothing here
+## decides what the animal means: the dialogue does the noticing, and it keeps its
+## conclusions open.
 
 ## Vertical breathing amplitude in metres.
 @export var bob_height: float = 0.015

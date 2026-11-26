@@ -1,24 +1,26 @@
 name: Release build
 
-# Produces the actual builds a player can run: a Windows executable they double-click, and a
-# Linux binary they run from a terminal or a menu entry.
+# Produces the actual builds a player can run: a Windows executable they double-click, a
+# Linux binary they run from a terminal or a menu entry, and a macOS bundle they open from
+# Finder (ad-hoc signed, so Apple silicon runs it; not notarized, so Gatekeeper asks for a
+# right-click Open the first time - packaging/HOW-TO-RUN.txt walks through it).
 #
 # Why this workflow exists at all: every milestone PR since the first vertical slice says
 # "Windows hands-on checks are listed in the pull request and are not yet performed",
 # because there was no build to perform them on — `export_presets.cfg` was gitignored and
 # nothing in the repository had ever been exported. The evidence pipeline (`godot-ci.yml`
 # and `playthrough-capture.yml`) proves the game runs *under the editor's runtime*; this
-# proves it packs, on two platforms, into something with the right icon and the right
+# proves it packs, on three platforms, into something with the right icon and the right
 # version on it.
 #
 # Three triggers, three purposes:
 # - `pull_request` on anything that can change what gets packed: the build is a check, and
-#   a green run means the pull request did not break either export. Both zips are attached
+#   a green run means the pull request did not break any export. All three zips are attached
 #   to the run so the change can be played before review.
-# - `workflow_dispatch` on a branch: build both platforms on demand for "does it still
-#   export" and for handing an artifact to someone. Two artifacts, one per platform, and no
+# - `workflow_dispatch` on a branch: build every platform on demand for "does it still
+#   export" and for handing an artifact to someone. One artifact per platform, and no
 #   release is created — only a tag can publish.
-# - tags `v*`: the same two builds plus one GitHub release carrying both. A tag with a dash
+# - tags `v*`: the same three builds plus one GitHub release carrying all of them. A tag with a dash
 #   in it (`v0.1.0-rc.1`) is published as a prerelease, because GitHub's "prerelease" mark is
 #   what a test build needs and what `latest` must not point at.
 #
@@ -26,7 +28,8 @@ name: Release build
 # export presets. `--preset` runs before the export and fails in a second if the presets
 # cannot produce the build this workflow describes; `--package` runs afterwards and reads
 # the zip a player would download — its layout, the executable's icon and version resources
-# on Windows, the ELF header and launcher on Linux, and the pack inside either, so "the game
+# on Windows, the ELF header and launcher on Linux, the Info.plist, Mach-O slices and
+# pack-in-Resources of the macOS bundle, and the pack inside either, so "the game
 # is in it and the repository is not" is a fact about the artifact and not about the preset.
 #
 # Every action is pinned to a commit, with the tag it was resolved from in a comment, because
@@ -81,7 +84,7 @@ concurrency:
 
 jobs:
   build:
-    name: Export, verify, package both platforms
+    name: Export, verify, package every platform
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
@@ -187,7 +190,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p ci-logs build/windows build/linux
+          # The export target directories exist before the exporter runs: Godot's export
+          # CLI does not create missing parent directories, and a missing one fails the
+          # export itself rather than the check that guards it.
+          mkdir -p ci-logs build/windows build/linux build/macos
           timeout 420 godot --headless --path . --import > ci-logs/import.log 2>&1 || true
           tail -n 5 ci-logs/import.log
 
@@ -201,7 +207,7 @@ jobs:
           python3 tools/verify_build.py --preset export_presets.cfg \
             --expect-version "${{ steps.version.outputs.label }}"
 
-      - name: Export Windows and Linux
+      - name: Export Windows, Linux and macOS
         shell: bash
         run: |
           set -euo pipefail
@@ -210,7 +216,7 @@ jobs:
           # alone. The output path is given on the command line even though the preset has
           # one: the CLI is what decides where the binary lands, and saying it twice is
           # cheaper than discovering the two disagreed.
-          for pair in "Windows Desktop:build/windows/where-is-school.exe" "Linux:build/linux/where-is-school.x86_64"; do
+          for pair in "Windows Desktop:build/windows/where-is-school.exe" "Linux:build/linux/where-is-school.x86_64" "macOS:build/macos/where-is-school.zip"; do
             preset="${pair%%:*}"
             output="${pair#*:}"
             log="ci-logs/export-$(basename "${output}").log"
@@ -224,23 +230,25 @@ jobs:
             tail -n 20 "${log}"
             echo "::endgroup::"
           done
-          ls -l build/windows build/linux
-          # The export is only worth verifying if it actually produced both files.
+          ls -l build/windows build/linux build/macos
+          # The export is only worth verifying if it actually produced all three files.
           test -s build/windows/where-is-school.exe
           test -s build/linux/where-is-school.x86_64
+          test -s build/macos/where-is-school.zip
 
-      # Both platforms are packed by one step rather than by a matrix job, because the two
+      # Every platform is packed by one step rather than by a matrix job, because the
       # archives have to agree: same version in the name, same licences, same run notes.
-      # A matrix would duplicate that agreement four times over.
-      - name: Package both platforms with the licences a player needs
+      # A matrix would duplicate that agreement six times over.
+      - name: Package every platform with the licences a player needs
         shell: bash
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.label }}"
           windows="dist/where-is-school-${version}-windows"
           linux="dist/where-is-school-${version}-linux"
+          macos="dist/where-is-school-${version}-macos"
 
-          mkdir -p "${windows}/licences" "${linux}/licences"
+          mkdir -p "${windows}/licences" "${linux}/licences" "${macos}/licences"
           cp build/windows/where-is-school.exe "${windows}/"
           cp packaging/HOW-TO-RUN.txt "${windows}/"
           cp assets/fonts/OFL.txt "${windows}/licences/NotoSansSC-OFL.txt"
@@ -260,11 +268,26 @@ jobs:
           cp assets/fonts/NotoSerifSC-OFL.txt "${linux}/licences/NotoSerifSC-OFL.txt"
           cp COPYRIGHT.md "${linux}/licences/"
 
+          # The macOS folder carries the bundle the export produced, unzipped from the
+          # export's own zip so the folder layout matches the other two platforms, with
+          # the same run notes and licences next to it. The bundle's executable keeps the
+          # execute bit Godot's zip stored (re-checked with chmod, since the verifier
+          # fails the build without it - Apple silicon also refuses to launch it).
+          unzip -q build/macos/where-is-school.zip -d "${macos}"
+          test -d "${macos}/where-is-school.app"
+          chmod -R u+rwX,go+rX "${macos}/where-is-school.app"
+          chmod 755 "${macos}/where-is-school.app/Contents/MacOS/where-is-school"
+          cp packaging/HOW-TO-RUN.txt "${macos}/"
+          cp assets/fonts/OFL.txt "${macos}/licences/NotoSansSC-OFL.txt"
+          cp assets/fonts/NotoSerifSC-OFL.txt "${macos}/licences/NotoSerifSC-OFL.txt"
+          cp COPYRIGHT.md "${macos}/licences/"
+
           # `zip` keeps the permission bits of what it is given, which is how the Linux
           # executable arrives with its execute bit; the verifier fails the build if it does
           # not, so this is checked rather than assumed.
           ( cd dist && zip -q -r "where-is-school-${version}-windows.zip" "where-is-school-${version}-windows" )
           ( cd dist && zip -q -r "where-is-school-${version}-linux.zip" "where-is-school-${version}-linux" )
+          ( cd dist && zip -q -r "where-is-school-${version}-macos.zip" "where-is-school-${version}-macos" )
           for archive in dist/*.zip; do
             echo "::group::${archive}"
             unzip -l "${archive}"
@@ -277,12 +300,12 @@ jobs:
       # the icon next to it, and the pack inside the executable. `--list` writes every packed
       # path to the step log, which is where a failure is read in the web UI, and every
       # verdict is also emitted as an annotation, which is readable through the API.
-      - name: Verify both packages
+      - name: Verify every package
         shell: bash
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.label }}"
-          for platform in windows linux; do
+          for platform in windows linux macos; do
             echo "::group::verify ${platform}"
             python3 tools/verify_build.py \
               --package "dist/where-is-school-${version}-${platform}.zip" \
@@ -306,6 +329,14 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Upload the macOS build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: where-is-school-macos
+          path: dist/*-macos.zip
+          if-no-files-found: error
+          retention-days: 14
+
   # Publishing is its own job with its own permissions, the same split the capture
   # workflow uses: the build job runs on every pull request and can only read, and the only
   # step in the repository that can write a release runs for a tag and nothing else. A
@@ -321,7 +352,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Download both builds
+      - name: Download every build
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: where-is-school-*
@@ -336,7 +367,7 @@ jobs:
           set -euo pipefail
           version="${{ needs.build.outputs.version }}"
           ls -l dist
-          for platform in windows linux; do
+          for platform in windows linux macos; do
             python3 tools/verify_build.py \
               --package "dist/where-is-school-${version}-${platform}.zip" \
               --expect-version "${version}"
@@ -355,9 +386,9 @@ jobs:
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
-          run="$(printf '\n\n### How this was built\n\nExported by the [release build](%s) from `%s`, Godot %s, on two platforms. `tools/verify_build.py` read both archives back: the pack inside each executable, the icon and version resources of the Windows one, the ELF header and launcher of the Linux one, and confirmed that no tests, tools, docs or art are in either.' "${RUN_URL}" "${GITHUB_SHA::7}" "${GODOT_VERSION}")"
-          preamble="$(printf 'where-is-school %s, for Windows x86_64 and Linux x86_64.\n\n- **Windows:** download `where-is-school-%s-windows.zip`, unzip it, run `where-is-school.exe`.\n- **Linux:** download `where-is-school-%s-linux.zip`, unzip it, run `./where-is-school` (or `where-is-school.desktop` for a menu entry).' "${VERSION}" "${VERSION}" "${VERSION}")"
-          signing="$(printf '\n\n### Signing\n\nThese builds are **unsigned**. Windows SmartScreen will show "Windows protected your PC" the first time: choose "More info", then "Run anyway". Linux shows no warning but also gives you no signature to check. The Windows executable carries version %s in its version resource and an icon of 16 to 256 px; neither is a claim about who built it. `docs/RELEASE.md` in the source repository records why there is no certificate and what would change that.' "${RESOURCE_VERSION}")"
+          run="$(printf '\n\n### How this was built\n\nExported by the [release build](%s) from `%s`, Godot %s, on three platforms. `tools/verify_build.py` read all three archives back: the pack inside each executable, the icon and version resources of the Windows one, the ELF header and launcher of the Linux one, the Info.plist, universal Mach-O slices and pack-in-Resources of the macOS bundle, and confirmed that no tests, tools, docs or art are in any of them.' "${RUN_URL}" "${GITHUB_SHA::7}" "${GODOT_VERSION}")"
+          preamble="$(printf 'where-is-school %s, for Windows x86_64, Linux x86_64, and macOS (Intel and Apple silicon).\n\n- **Windows:** download `where-is-school-%s-windows.zip`, unzip it, run `where-is-school.exe`.\n- **Linux:** download `where-is-school-%s-linux.zip`, unzip it, run `./where-is-school` (or `where-is-school.desktop` for a menu entry).\n- **macOS:** download `where-is-school-%s-macos.zip`, unzip it, open `where-is-school.app` - right-click it and choose Open the first time, or clear the quarantine with `xattr -dr com.apple.quarantine where-is-school.app`.' "${VERSION}" "${VERSION}" "${VERSION}" "${VERSION}")"
+          signing="$(printf '\n\n### Signing\n\nThese builds are **unsigned or ad-hoc signed only**. Windows SmartScreen will show "Windows protected your PC" the first time: choose "More info", then "Run anyway". Linux shows no warning but also gives you no signature to check. The macOS bundle is **ad-hoc signed** - a real code signature, which is what lets it run on Apple silicon - but it is not notarized and identifies nobody, so Gatekeeper asks you to right-click the app and choose Open the first time (or run `xattr -dr com.apple.quarantine where-is-school.app`); `docs/RELEASE.md` records why there is no Apple Developer certificate. The Windows executable carries version %s in its version resource and an icon of 16 to 256 px; neither is a claim about who built it. `docs/RELEASE.md` in the source repository records why there is no certificate and what would change that.' "${RESOURCE_VERSION}")"
           notes="${preamble}${run}${signing}"
 
           flags=(--title "${tag}" --notes "${notes}")

@@ -13,10 +13,14 @@ import zipfile
 import zlib
 
 # These are parser safety limits, not replacements for verify_build's stricter
-# per-resource PCK budgets. The executable already has a 150 MiB release ceiling.
+# per-resource PCK budgets. The Windows and Linux executables each have a 150 MiB
+# release ceiling; the macOS bundle's Mach-O is bigger by design, because the
+# universal binary carries both the x86_64 and the arm64 slice of the same game
+# (about 163 MiB today), so the member cap has room for one fat binary and the
+# total cap for that bundle plus its pack and the licences beside it.
 MAX_MEMBERS = 2048
-MAX_MEMBER_BYTES = 150 * 1024 * 1024
-MAX_TOTAL_BYTES = 256 * 1024 * 1024
+MAX_MEMBER_BYTES = 192 * 1024 * 1024
+MAX_TOTAL_BYTES = 320 * 1024 * 1024
 READ_CHUNK = 64 * 1024
 SUPPORTED_COMPRESSION = (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
 READ_ERRORS = (OSError, EOFError, UnicodeError, RuntimeError, NotImplementedError, zipfile.BadZipFile, zlib.error)
