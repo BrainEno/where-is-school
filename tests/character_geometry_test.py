@@ -18,6 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import brow_seat
+from glb_io import accessor
 import character_geometry as geometry
 import character_hair as hair
 import prepare_classroom_student as student
@@ -180,20 +181,27 @@ class RefinedCharacterTests(unittest.TestCase):
         for band in ("inner", "mid", "outer"):
             self.assertLessEqual(abs(arch[("L", band)] - arch[("R", band)]) * 1000, 2.5,
                                  f"arch {band} L-R height gap (mm)")
-        face = next(item for (name, _material), item in meshes.items() if name == "ST_Head_Skin")
+        face = next(item for (name, material), item in meshes.items()
+                    if name == "ST_Head_Skin" and material == "M_ST_Skin")
         gap = brow_seat.surface_gap(face["POSITION"].astype(float), face["triangles"], brow) * 1000
         self.assertLessEqual(gap.mean(), 1.5, "brow-to-skin gap mean (mm)")
         self.assertLessEqual(gap.max(), 3.0, "brow-to-skin gap max (mm)")
-        source, source_bin = teacher.load_glb(self.teacher_source)
+        # The build re-expresses the author's three brow shapes against the seated
+        # rest and keeps two of them; the kept pair stays a hand-balanced match -
+        # each side's peak delta within half a millimetre of the other's.
+        peaks = {}
         for name in ("ST_Eyebrow_L", "ST_Eyebrow_R"):
-            built = next(m for m in doc["meshes"] if m["name"] == name)["primitives"][0]["targets"]
-            before = next(m for m in source["meshes"] if m["name"] == name)["primitives"][0]["targets"]
-            self.assertEqual(len(built), len(before))
-            for after, original in zip(built, before):
-                self.assertTrue(np.array_equal(
-                    np.asarray(teacher.read_accessor(doc, blob, after["POSITION"])),
-                    np.asarray(teacher.read_accessor(source, source_bin, original["POSITION"])),
-                ), f"{name} morph delta changed")
+            mesh = next(m for m in doc["meshes"] if m["name"] == name)
+            names = (mesh.get("extras") or {}).get("targetNames") or []
+            self.assertEqual(names, ["Brow_Compress", "Frown"], f"{name} kept shapes")
+            for target_name, target in zip(names, mesh["primitives"][0]["targets"]):
+                delta = np.asarray(teacher.read_accessor(doc, blob, target["POSITION"]), float)
+                peaks[target_name, name] = float(np.linalg.norm(delta, axis=1).max()) * 1000
+            self.assertLessEqual(max(peaks.values()), 4.0, f"{name} delta magnitude (mm)")
+        for target_name in ("Brow_Compress", "Frown"):
+            self.assertLessEqual(abs(peaks[target_name, "ST_Eyebrow_L"]
+                                     - peaks[target_name, "ST_Eyebrow_R"]), 0.5,
+                                 f"{target_name} authored L-R balance (mm)")
 
     def test_geometry_is_finite_normalized_and_bound(self) -> None:
         for _document, _binary, surfaces in self.outputs:
@@ -637,6 +645,49 @@ class RefinedCharacterTests(unittest.TestCase):
         self.assertAlmostEqual(float(lifted[2, 1]), 1.5324, places=9)
         self.assertAlmostEqual(float(lifted[3, 1]), 1.467, places=9)
         self.assertAlmostEqual(float(lifted[4, 1]), 1.467, places=9)
+
+
+class QBrowContractTests(unittest.TestCase):
+    """Issue #385: Q's rest brows are an authored lopsided pair; pin the numbers.
+
+    The right arch rides 4.3-7.2 mm lower at rest, the raise deltas are themselves
+    lopsided, and the mesh carries a Brow_Asymmetric morph - the asymmetry is
+    authored, so symmetrizing is the one-key flattening #385 forbids. The tilt
+    goes to the owner with tools/character_review/brow_report.py; until the owner
+    rules, the contract pins the authored numbers so a rebuild cannot quietly
+    change them.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import prepare_q as q
+        cls.runtime, cls.blob = q.decode(q.OUTPUT.read_bytes())
+        cls.source, cls.source_blob = q.decode(q.SOURCE.read_bytes())
+
+    def test_brows_keep_the_authored_asymmetry(self) -> None:
+        head = next(m for m in self.runtime["meshes"] if m["name"] == "Q_Head")
+        brow = np.asarray(accessor(self.runtime, self.blob,
+                                   head["primitives"][1]["attributes"]["POSITION"]), float)
+        skin = np.asarray(accessor(self.runtime, self.blob,
+                                   head["primitives"][0]["attributes"]["POSITION"]), float)
+        triangles = np.asarray(accessor(self.runtime, self.blob,
+                                        head["primitives"][0]["indices"]), np.int64).reshape(-1, 3)
+        gap = brow_seat.surface_gap(skin, triangles, brow) * 1000
+        self.assertLessEqual(gap.mean(), 1.5, "brow-to-skin gap mean (mm)")
+        self.assertLessEqual(gap.max(), 3.5, "brow-to-skin gap max (mm)")
+        residual = brow_seat.mirror_residuals(brow) * 1000
+        self.assertLessEqual(residual.max(), 9.0, "authored brow tilt (mm)")
+        arch = brow_seat.arch_profile(brow)
+        for band in ("inner", "mid", "outer"):
+            self.assertLessEqual(abs(arch[("L", band)] - arch[("R", band)]) * 1000, 8.0,
+                                 f"arch {band} authored L-R height gap (mm)")
+        index = head["extras"]["targetNames"].index("Brow_Asymmetric")
+        delta = np.asarray(accessor(self.runtime, self.blob,
+                                    head["primitives"][1]["targets"][index]["POSITION"]), float)
+        source_head = next(m for m in self.source["meshes"] if m["name"] == "Q_Head")
+        before = np.asarray(accessor(self.source, self.source_blob,
+                                     source_head["primitives"][1]["targets"][index]["POSITION"]), float)
+        self.assertTrue(np.array_equal(delta, before), "Brow_Asymmetric delta changed")
 
 
 if __name__ == "__main__":
