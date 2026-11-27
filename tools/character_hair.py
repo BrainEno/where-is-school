@@ -35,15 +35,16 @@ CROWN_Y = 1.6450
 # |angle| from the face, in degrees -> height of the cut edge in metres. Front 1.592 is
 # 29 mm above the brows (1.549-1.563); the sides clear the top of the ear at 1.564; the nape
 # sits at 1.515, well above the collar at 1.32.
-# The cut: a women's short bob (owner's r37 note -- the previous crop read male). Two
-# rounds of review frames settled where the femininity lives: a full fringe that hangs
-# to 1.568-1.571 over the brows (1.553-1.558), with the temple pieces framing the face,
-# while the sides and nape stay at the approved tight crop's heights -- draping the
-# sides past the ears left the pre-auricular slope bare and read worse than the crop
-# it replaced. The wide strand waves and the softer volume carry the rest of the read.
+# The cut: a women's short bob (owner's r37 note -- the previous crop read male). Three
+# rounds of review frames settled the shape: a full fringe over the brows (1.568-1.571,
+# brows at 1.553-1.558) whose hairline hugs the temple down past the cheekbone -- a hem
+# that dives early leaves the pre-auricular slope bare -- then sweeps down in front of
+# the ear and past the lobe (1.500; a hem that stops mid-ear lets the shell and the ear
+# interpenetrate and the ear reads through), finishing in the rounded low nape that
+# carries the bob. The wide strand waves and the softer volume carry the rest of the read.
 HEM_ANGLE = np.array([0.0, 24.0, 46.0, 66.0, 84.0, 100.0, 118.0, 136.0, 154.0, 180.0])
-HEM_Y = np.array([1.5680, 1.5710, 1.5700, 1.5530, 1.5460,
-                  1.5300, 1.5180, 1.5160, 1.5150, 1.5140])
+HEM_Y = np.array([1.5680, 1.5710, 1.5700, 1.5660, 1.5450,
+                  1.5000, 1.4900, 1.4880, 1.4870, 1.4860])
 # The skull field: 4 degrees by 4 mm is finer than the hair's own spacing.
 FIELD_STEP_DEG = 4.0
 FIELD_STEP_Y = .004

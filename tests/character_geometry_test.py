@@ -623,12 +623,12 @@ class RefinedCharacterTests(unittest.TestCase):
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
         for (doc, _binary, surfaces), limit, revision in zip(
-                self.outputs, [64604, 62340], [2, 8]):
+                self.outputs, [64604, 62340], [2, 9]):
             # Revision 3 is the teacher's resting face, expression shapes and crop;
-            # revisions 6-8 re-cut the hair into the owner's short bob -- 8 keeps the
-            # approved tight crop's sides and hangs a feminine full fringe, and every
-            # one of them digs the buried card slivers back out. The seated student is
-            # unchanged at revision 2.
+            # revisions 6-9 re-cut the hair into the owner's short bob -- 9 hugs the
+            # temple hairline, sweeps past the lobes and finishes in a low nape, and
+            # every one of them digs the buried card slivers back out. The seated
+            # student is unchanged at revision 2.
             self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)
             self.assertLess(sum(len(part["triangles"]) for part in surfaces.values()), limit)
 
