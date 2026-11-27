@@ -7,6 +7,13 @@ name: Character brow review capture
 # that evidence commit is reverted once the owner has the files.
 
 on:
+  pull_request:
+    paths:
+      - "tests/capture_brow_review.gd"
+      - ".github/workflows/character-brow-capture.yml"
+      - "assets/models/protagonist/**"
+      - "assets/models/q/**"
+      - "assets/models/teacher-n/**"
   workflow_dispatch:
 
 permissions:
