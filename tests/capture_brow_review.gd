@@ -75,6 +75,9 @@ func _run() -> void:
 	var room := host.get_current()
 	main.get_node("OpeningSequence").allow_player_control()
 	(main.get_node("GameUI") as GameUI).fade.set_clear()
+	# The objective line, the "[E] ..." prompt and the language hint are interface,
+	# not character art; the review stills carry none of them.
+	(main.get_node("GameUI/HUD") as Control).visible = false
 	_note(
 		(
 			"engine=%s renderer=%s adapter=%s viewport=%s"
@@ -124,9 +127,15 @@ func _stage(room: LocationRoot, main: Node3D) -> Array[Dictionary]:
 	teacher.face_towards(teacher.global_position + Vector3.BACK)
 	var staged: Array[Dictionary] = [
 		{"label": "protagonist", "node": player, "facing": AISLE_FACING},
-		{"label": "q", "node": room.find_actor(&"q"), "facing": Vector3.FORWARD},
-		{"label": "n", "node": teacher, "facing": Vector3.BACK},
+		{"label": "n", "node": teacher, "facing": teacher.get_facing_direction()},
 	]
+	var q_actor := room.find_actor(&"q")
+	if q_actor == null:
+		_failures.append("The classroom holds no Q actor to photograph.")
+	else:
+		# Q keeps its desk seat and its scene-authored orientation; the orbit reads
+		# the facing from the game's own helper, so "front" is Q's front.
+		staged.insert(1, {"label": "q", "node": q_actor, "facing": q_actor.get_facing_direction()})
 	for entry in staged:
 		var node := entry["node"] as Node3D
 		if node == null:
