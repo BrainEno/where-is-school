@@ -91,8 +91,15 @@ jobs:
           path: docs/screenshots/character_brow
           if-no-files-found: error
 
-      # The frames are handed to the owner through the review folder on Drive, not by
-      # pushing them here: a pushed evidence commit turns the merge-ref checks red
-      # (undeclared screenshot directory, unlisted commit subject), and reverting it
-      # by force-push retriggers this very workflow, which pushes another one. The
-      # artifact above is the durable record of record for a run.
+      # TEMPORARY (r37 review round): the frames also land on the branch so the
+      # review can fetch them through plain git; removed again with the evidence
+      # commit once the owner has the files.
+      - name: Push the review JPEGs to this branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "evidence-bot"
+          git config user.email "evidence-bot@users.noreply.github.com"
+          git add docs/screenshots/character_brow
+          git commit -m "evidence(character): brow review stills for the owner (temporary) [skip ci]"
+          git push origin HEAD:refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}
