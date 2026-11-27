@@ -70,31 +70,40 @@ PART_DEFAULTS = {
 }
 
 # --- the protagonist ------------------------------------------------------------------
-# Cool and held in: a pale, grey-green skin that has not slept, bruised under-eyes that
-# make the eyes the first thing read in the face, a slate-black gakuran (the portrait's),
-# warm charcoal trousers so jacket and legs separate, near-black hair.
+# Cool and held in: a pale, grey-green skin that has not slept, a tired trace under the
+# eyes that keeps them the first thing read in the face, a slate-black gakuran (the
+# portrait's), warm charcoal trousers so jacket and legs separate, near-black hair.
+#
+# The owner's r38 note: the face still read as a skull -- hard green-grey blocks, violet
+# smears across the lower lids, and the slate shadow pockets in the sockets. The r37
+# softening (shallower steps, finer blocks) did not go far enough, and the contract still
+# scopes pigment_blend/patch_feather to the fine-detail roles, so the calibration moves
+# onto the values Q's shipped oil face uses (the clean reference under the same light):
+# warmer and lighter shade tint, a broader half-tone band that lifts the mid zone off the
+# skull value, more of the face in full light, and half the block depth at a finer scale.
 PROTAGONIST_SKIN = {
     "albedo": "#B4A58C",
-    "pigment_a": "#98A088",
+    "pigment_a": "#A2A18F",
     "pigment_b": "#C2A68E",
-    # The owner's r37 note: the face read as blotches under hard bands. The shipped
-    # path here is the stepped pigment, not the blend glaze (imported_assets scopes
-    # pigment_blend and patch_feather to the fine-detail roles), so the softening
-    # lives in a much shallower value depth, finer blocks and softened bands.
-    "pigment_mix": 0.30,
-    "pigment_value": 0.07,
-    "pigment_scale": 24.0,
+    # The stepped pigment stays (no glaze on this look); the blocks read as skin mottling
+    # only when they are fine and shallow: 24 -> 30 blocks per metre, half the value depth.
+    "pigment_mix": 0.24,
+    "pigment_value": 0.035,
+    "pigment_scale": 30.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
-    "shade_tint": "#A6ABBE",
+    "shade_tint": "#B7B8C1",
     "light_tint": "#F4EADC",
-    "shadow_fill": 0.46,
-    # A darker half-tone so the cheekbone, nose and brow ridge keep their planes.
-    "half_tone": 0.57,
-    "edge_softness": 0.12,
-    "edge_break": 0.10,
-    # Less of the face in the full light: the tired face is mostly half-tone.
-    "light_edge": 0.55,
-    "light_strength": 0.7,
+    "shadow_fill": 0.54,
+    # A lighter half-tone so the cheekbone, nose and brow ridge keep their planes without
+    # the cave-dark mid zone the 0.57 value painted.
+    "half_tone": 0.63,
+    "edge_softness": 0.15,
+    # The blocks no longer push the terminator: at 0.10 the mottling visibly warped the
+    # shadow edges into ragged bands (the owner's r37 "blotches under hard bands").
+    "edge_break": 0.06,
+    # More of the face in the full light; 0.55 held the whole front in the grey mid zone.
+    "light_edge": 0.44,
+    "light_strength": 0.72,
 }
 PROTAGONIST = {
     "label": "protagonist: painted (option C)",
@@ -102,19 +111,21 @@ PROTAGONIST = {
     "parts": {
         "protagonist_mat_skin": dict(
             PROTAGONIST_SKIN,
-            # Under the eyes: a violet-grey bruise of tiredness (the portrait's).
-            # The owner read the unfeathered 0.75 stamp as a black hole on the
-            # shadow side; it stays hard-edged but a third as strong and two
-            # steps lighter, so it reads as shading, not a hole.
-            patch_center=(0.034, 1.565, 0.104),
-            patch_radius=(0.03, 0.02, 0.034),
-            patch_color="#74657E",
-            patch_strength=0.30,
-            # The hollow under the cheekbone, greened.
-            patch2_center=(0.052, 1.528, 0.088),
-            patch2_radius=(0.022, 0.03, 0.04),
-            patch2_color="#98997F",
-            patch2_strength=0.22,
+            # Under the eyes: a violet-grey trace of tiredness (the portrait's). The eyes
+            # sit at y 1.572-1.597 (measured on the GLB), and the r37 stamp centred at
+            # 1.565 with a 2 cm y-radius painted straight across the lower lids -- the
+            # owner read it as black sockets. It now sits fully below the eye line as a
+            # thin glaze (9 mm), a third as strong.
+            patch_center=(0.037, 1.560, 0.105),
+            patch_radius=(0.028, 0.009, 0.026),
+            patch_color="#7D6E82",
+            patch_strength=0.14,
+            # The hollow under the cheekbone: half the strength, warmed off the sickly
+            # green, and tightened so it reads as a plane accent, not a bruise.
+            patch2_center=(0.052, 1.520, 0.092),
+            patch2_radius=(0.02, 0.024, 0.034),
+            patch2_color="#A2957C",
+            patch2_strength=0.10,
             outline=True,
         ),
         "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#A99A83", outline=True),
@@ -187,15 +198,20 @@ PROTAGONIST = {
         # The eyes stay light and keep more of their light in shadow: the bruise around them
         # is what makes them prominent, not a bigger eyeball.
         "protagonist_mat_sclera": {
-            "albedo": "#D9D0BA",
+            # The stare: a near-white sclera at half_tone 0.8 held the whole eye at the
+            # brightest band under every light. N's refined face (the clean reference)
+            # wears a warm, darker off-white at half_tone 0.62; this matches it.
+            "albedo": "#CBBFAB",
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
-            "shadow_fill": 0.6,
-            "half_tone": 0.8,
+            "shadow_fill": 0.56,
+            "half_tone": 0.66,
             "outline": False,
         },
         "protagonist_mat_iris": {
-            "albedo": "#3B2B23",
+            # Two steps lighter than the near-black 0.32 brown: the iris reads as an
+            # eye, not a punched hole (N's refined iris is #543F31).
+            "albedo": "#4A382C",
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
             "shadow_fill": 0.6,
@@ -205,7 +221,7 @@ PROTAGONIST = {
             "use_vertex_paint": True,
         },
         "protagonist_mat_pupil": {
-            "albedo": "#0F0C0B",
+            "albedo": "#1A1514",
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
             "outline": False,
