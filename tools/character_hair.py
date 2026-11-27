@@ -547,8 +547,14 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
 
 
 def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.ndarray,
-                         hem: np.ndarray, skin: tuple) -> np.ndarray:
+                         hem: np.ndarray, skin: tuple,
+                         record: dict | None = None) -> np.ndarray:
     """Re-lay the thin side's band so the shell covers the corridor over its ear.
+
+    When `record` is given, the re-laid vertex ids are written to it under
+    "relayed": the normals pass needs to know which vertices moved, because the
+    triangles tying them to the unmoved sheet stop being shading faces (they
+    become the wall's occluders) -- see `shell_normals`.
 
     The source bob is asymmetric by design -- a side part. At ear heights the shell's
     surface is dense on the full side (about 150 triangles) and nearly absent on the
@@ -671,11 +677,18 @@ def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.nd
                 pts[b, 0] = rb * np.sin(rad_b)
                 pts[b, 2] = AXIS_Z - rb * np.cos(rad_b)
                 out[moved_idx[b]] = pts[b]
+    if record is not None:
+        record["relayed"] = moved_idx
     return out
 
 
-def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.ndarray:
-    """The main shell: pinned cut edge, skull-following volume, strand ridges."""
+def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray,
+                 record: dict | None = None) -> np.ndarray:
+    """The main shell: pinned cut edge, skull-following volume, strand ridges.
+
+    When `record` is given it receives the thin-side re-lay's moved vertex ids (see
+    `shell_normals`, which turns them into the wall's outward shading normals).
+    """
     p = np.asarray(points, np.float64)
     _, _, angle = polar(p)
     target_hem = hem_height(angle)
@@ -698,8 +711,60 @@ def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.n
     # before clamping left 13 ear vertices reading through the clamp-lifted surface).
     clamped = out.copy()
     clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
-    relayed = _relay_the_thin_side(clamped, triangles, shell, target_hem, skin)
+    relayed = _relay_the_thin_side(clamped, triangles, shell, target_hem, skin, record)
     return surface_guard(ear_drape(relayed, skin, triangles), skin, target_hem)
+
+
+def shell_normals(points: np.ndarray, triangles: np.ndarray,
+                  relayed: np.ndarray) -> np.ndarray:
+    """Smooth normals for the cropped shell, with the re-lay's stretched faces excluded.
+
+    The wall's vertices move across the corridor -- up to ~9 cm -- and the triangles
+    that tie them to the unmoved sheet span that gap. Area-weighted, those faces drag
+    their corners' smooth normals inward, and the wall renders as dark slats from the
+    side cameras. Winding is pinned by the refinement contract, so the fix is the
+    normal attribute: no face that touches a re-laid vertex contributes to the smooth
+    normals (the untouched sheet's are then exactly the source's), and every re-laid
+    vertex -- plus any vertex left with no clean face -- shades along the outward
+    radial, the direction a wall on the side of the skull actually faces. Weld groups
+    are patched whole: coincident export-seam twins share one welded normal, and
+    patching a single member would draw a shading seam down the wall.
+    """
+    points = np.asarray(points, np.float64)
+    relayed = np.unique(np.asarray(relayed, np.int64))
+    faces = triangles
+    if len(relayed):
+        faces = triangles[~np.isin(triangles, relayed).any(1)]
+    # The same accumulation as geometry.normals (coincident seams welded for shading
+    # only, area-weighted), minus its all-or-nothing demand that every vertex keep a
+    # face: the wall's corners have none, and they take the radial instead.
+    unique, weld = np.unique(np.round(points, 7), axis=0, return_inverse=True)
+    result = np.zeros((len(unique), 3), np.float64)
+    if len(faces):
+        face = np.cross(points[faces[:, 1]] - points[faces[:, 0]],
+                        points[faces[:, 2]] - points[faces[:, 0]])
+        for corner in range(3):
+            np.add.at(result, weld[faces[:, corner]], face)
+    lengths = np.linalg.norm(result, axis=1, keepdims=True)
+    unit = np.divide(result, lengths, out=np.zeros_like(result), where=lengths > 1e-12)
+    unit[np.abs(unit) < 1e-12] = 0.0
+    # A weld group goes radial if any of its members was re-laid, or was left with no
+    # clean face, or its clean-face accumulation cancelled out.
+    radial = np.zeros(len(unique), bool)
+    if len(relayed):
+        radial[weld[relayed]] = True
+    present = np.zeros(len(points), bool)
+    present[np.unique(faces)] = True
+    radial[weld[~present]] = True
+    radial[lengths[:, 0] <= 1e-12] = True
+    _, outward, _ = polar(points)
+    normals = unit[weld]
+    for index in np.flatnonzero(radial[weld]):
+        direction = outward[index]
+        norm = float(np.linalg.norm(direction))
+        normals[index] = direction / norm if norm > 1e-9 else np.array([0.0, 1.0, 0.0])
+    normals[np.abs(normals) < 1e-12] = 0.0
+    return normals.astype(np.float32)
 
 
 def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarray:

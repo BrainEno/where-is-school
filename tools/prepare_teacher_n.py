@@ -672,6 +672,14 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             raise PrepareError("%s uses %s" % (material["name"], sorted(unknown)))
         if material["name"] in ("M_ST_Sclera", "M_ST_Iris", "M_ST_Pupil"):
             copy["doubleSided"] = False
+        if material["name"] == "M_ST_Hair":
+            # The thin side's wall is re-laid from the source's sparse band, and its
+            # stretched triangles keep the source's winding -- from some cameras the
+            # wall shows its inner face. The refinement contract pins every original
+            # face's winding, so the wall cannot be re-wound; the material renders
+            # both faces instead, and Godot flips the normal on the backface, so the
+            # wall shades as hair from either side.
+            copy["doubleSided"] = True
         pbr = copy.setdefault("pbrMetallicRoughness", {})
         if material["name"] in ROUGHNESS:
             pbr["roughnessFactor"] = ROUGHNESS[material["name"]]
@@ -965,21 +973,32 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
             base = arrays.read(attributes["POSITION"]).astype(np.float64)
             normals = arrays.read(attributes["NORMAL"]).astype(np.float64)
             shape = arrays.read(primitive["indices"]).reshape(-1, 3)
-
-            def fit(points, _skin=skin, _shape=shape, _callback=callback):
-                return _callback(points, _skin, _shape)
+            material_name = document["materials"][primitive["material"]]["name"]
+            record: dict = {}
+            if callback is hair.teacher_crop:
+                def fit(points, _skin=skin, _shape=shape, _callback=callback, _record=record):
+                    return _callback(points, _skin, _shape, _record)
+            else:
+                def fit(points, _skin=skin, _shape=shape, _callback=callback):
+                    return _callback(points, _skin, _shape)
 
             positions = fit(base)
             # The hair is re-shaped wholesale, so its normals are recomputed from the new
             # surface instead of being carried through the map's Jacobian: pinning the cut
             # edge is a step in that map, and a step cannot be differentiated. It also
             # replaces the source's split strip normals, which the new form invalidates.
+            # The shell's re-laid wall is the exception: its stretched tie faces must not
+            # contribute to the smooth normals at all, so the shell takes the normals
+            # `shell_normals` computes once the relay has reported its moved vertices.
             del normals
             positions = geometry.teacher_crown_part(positions)
-            normals_out = geometry.normals(geometry.Geometry(positions, shape))
+            if material_name == "M_ST_Hair":
+                normals_out = hair.shell_normals(positions, shape, record.get("relayed", ()))
+            else:
+                normals_out = geometry.normals(geometry.Geometry(positions, shape))
             arrays.write(attributes["POSITION"], positions)
             arrays.write(attributes["NORMAL"], normals_out)
-            name = "%s/%s" % (mesh["name"], document["materials"][primitive["material"]]["name"])
+            name = "%s/%s" % (mesh["name"], material_name)
             moved[name] = float(np.abs(positions - base).max())
 
     report["resting_channel_m"] = {name: round(value, 6) for name, value in moved.items()}
