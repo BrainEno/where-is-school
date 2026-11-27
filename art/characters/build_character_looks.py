@@ -120,9 +120,9 @@ PROTAGONIST = {
             # they fell into the shadow band and read as a dirty seam. N's refined
             # face ships a warm lip value; this patch restores it as a lit colour.
             patch_center=(0.0, 1.4975, 0.118),
-            patch_radius=(0.011, 0.0045, 0.007),
-            patch_color="#B9836F",
-            patch_strength=0.34,
+            patch_radius=(0.012, 0.0055, 0.008),
+            patch_color="#C68D72",
+            patch_strength=0.5,
             # Under the eyes: a violet-grey trace of tiredness (the portrait's). The
             # eyes sit at y 1.572-1.597 (measured on the GLB), and the r37 stamp
             # centred at 1.565 with a 2 cm y-radius painted straight across the lower
