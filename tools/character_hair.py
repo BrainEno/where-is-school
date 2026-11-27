@@ -521,7 +521,7 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
     # ~50 mm apart vertically, and the span between two pushed rows sags back under
     # the 45-degree sight-lines. Three passes close it.
     check = np.concatenate([skin[0], ears])
-    for _pass in range(3):
+    for _pass in range(5):
         closest, distance = _closest_on_triangles(check, out, triangles)
         axis = np.stack([np.zeros(len(check)), check[:, 1], np.zeros(len(check))], axis=1)
         direction = closest - axis
@@ -540,9 +540,172 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
         lift_d2 = ((out[:, None, :] - check[failing][None, :, :]) ** 2).sum(-1)
         nearest = np.argmin(lift_d2, axis=1)
         reach = np.sqrt(lift_d2[np.arange(len(out)), nearest])
-        lift = depth[nearest] * (1.0 - smoothstep(0.004, 0.009, reach))
+        lift = depth[nearest] * (1.0 - smoothstep(0.004, 0.012, reach))
         _, lift_outward, _ = polar(out)
-        out = out + lift_outward * (lift * (reach < 0.009))[:, None]
+        out = out + lift_outward * (lift * (reach < 0.012))[:, None]
+    return out
+
+
+def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.ndarray,
+                         hem: np.ndarray, skin: tuple) -> np.ndarray:
+    """Re-lay the thin side's band so the shell covers the corridor over its ear.
+
+    The source bob is asymmetric by design -- a side part. At ear heights the shell's
+    surface is dense on the full side (about 150 triangles) and nearly absent on the
+    thin side (about 10): the thin side's band hangs BEHIND the ear instead of over
+    it, and every symmetric re-cut exposes that hole -- the frames show the ear bare
+    on one side no matter where the hem sits. No radial push can close it, because
+    the hole is angular: the vertices that could cover the corridor sit 25 degrees
+    behind it. So the thin side's band is re-laid: its vertices move forward to
+    spread across the corridor the way the full side's do, at their own heights,
+    clamped to the cut. The drape sets their radii next; the silhouette behind the
+    ear is carried by the rest of the sheet.
+    """
+    out = np.asarray(points, np.float64).copy()
+    tri_is_shell = shell[triangles].all(1)
+    centers = out[triangles[tri_is_shell]].mean(1)
+    _, _, centre_angle = polar(centers)
+    centre_y = centers[:, 1]
+    right = int(((centre_angle > 92) & (centre_angle < 118)
+                 & (centre_y > 1.506) & (centre_y < 1.564)).sum())
+    left = int(((-centre_angle > 92) & (-centre_angle < 118)
+                & (centre_y > 1.506) & (centre_y < 1.564)).sum())
+    if right < left * .5:
+        thin = 1.0
+    elif left < right * .5:
+        thin = -1.0
+    else:
+        return out
+    radius, _, angle = polar(out)
+    band = (shell & (angle * thin > 100.0) & (angle * thin < 128.0)
+            & (out[:, 1] > 1.486) & (out[:, 1] < 1.578) & (radius > 0.030))
+    band1 = band.copy()
+    if not band.any():
+        return out
+    laid = out[band]
+    _, _, band_angle = polar(laid)
+    # The re-lay turns the thin side's band into a grid wall over the corridor: the
+    # rows (10 mm bands of height, split where the source sheet's rows have gaps)
+    # are spread EVENLY over 86-118 degrees, and the rows themselves are placed at
+    # even heights over the ear's span (1.508-1.560). Both spreads matter: a linear
+    # remap of the old angles keeps the thin side's original sparsity, and keeping
+    # the source rows' own heights leaves a vertical gap between them that the
+    # sight-lines sail straight through (measured: a ray from the ear's rim runs
+    # outward to r 87-95 while its angle slides 105 -> 88, and it passed under the
+    # re-laid wall's bottom row until the rows were spaced evenly too).
+    new_abs = np.abs(band_angle)
+    ys = laid[:, 1]
+    order = np.argsort(ys * 1000 + new_abs)
+    rows = []
+    row_start = 0
+    for k in range(len(order) + 1):
+        if k == len(order) or ys[order[k]] - ys[order[k - 1]] > 0.010:
+            rows.append(order[row_start:k])
+            row_start = k
+    rows = [row for row in rows if len(row) >= 2]
+    if not rows:
+        return out
+    row_ys = np.linspace(1.508, 1.566, len(rows))
+    for k, row in enumerate(rows):
+        seq = np.argsort(new_abs[row])
+        new_abs[row[seq]] = np.linspace(86.0, 118.0, len(row))
+        ys[row] = row_ys[k]
+        laid[row, 1] = row_ys[k]
+    new_angle = thin * new_abs
+    # The radius mirrors the FULL side at the re-laid position: the full side's sheet
+    # stands 82-97 mm out at these heights -- outside the ear's rim -- and that is
+    # what shades the slope from the sight-lines, which cross the corridor at up to
+    # ~95 mm. The thin side's own radii (66-93, mostly deep) would leave every
+    # sight-line passing outside the re-laid band.
+    full_shell = shell & ((out[:, 1] > 1.480) & (out[:, 1] < 1.600))
+    fr, _, fa = polar(out[full_shell])
+    fa = np.abs(fa) * -thin
+    fy = out[full_shell][:, 1]
+    laid_radius = radius[band]
+    field = scalp_field(skin[0])
+    for i in range(len(laid)):
+        near = ((np.abs(fa - new_angle[i]) < 7.0)
+                & (np.abs(fy - laid[i, 1]) < 0.014))
+        if near.any():
+            laid_radius[i] = max(laid_radius[i], float(fr[near].max()))
+        # The wall must clear the sight-lines wherever they cross: a ray from the
+        # ear's rim travels outward to r 87-95 while its angle slides 105 -> 88, so
+        # the corridor wall's floor is the local skin radius plus 24 mm of body at
+        # every re-laid position.
+        local = scalp_radius(np.array([new_angle[i]]),
+                             np.array([laid[i, 1]]), field)[0]
+        laid_radius[i] = max(laid_radius[i], float(local) + 0.024)
+    rad = np.radians(new_angle)
+    laid[:, 0] = laid_radius * np.sin(rad)
+    laid[:, 2] = AXIS_Z - laid_radius * np.cos(rad)
+    # The cut is measured at the vertex's NEW angle after the re-lay: a vert re-laid
+    # from 120 degrees (hem 1.486) to 96 degrees (hem 1.500) that kept its old y
+    # would hang under the cut's new line.
+    laid[:, 1] = np.maximum(laid[:, 1],
+                            hem_height(np.abs(new_angle)))
+    out[band] = laid
+    # The wall's front edge still leaks: a 45-degree sight-line to the ear's rim
+    # crosses the corridor's forward half at radii the wall only reaches past 86
+    # degrees, so rays slide under the wall's front edge and escape to the camera
+    # (measured: 126 ear vertices visible from the 45-degree camera with the wall
+    # alone). A second band, taken from behind the wall (118-140 degrees) and laid
+    # over 74-92 degrees at the same body, closes that window; its triangles stretch
+    # from the forward positions back to the unmoved sheet behind, and a stretched
+    # triangle still renders solid.
+    band2 = (shell & (angle * thin > 118.0) & (angle * thin < 140.0)
+             & (out[:, 1] > 1.498) & (out[:, 1] < 1.570) & (radius > 0.030)
+             & ~band1)
+    if band2.any():
+        laid2 = out[band2]
+        _, _, band2_angle = polar(laid2)
+        abs2 = np.abs(band2_angle)
+        ys2 = laid2[:, 1]
+        order2 = np.argsort(ys2 * 1000 + abs2)
+        rows2 = []
+        row_start = 0
+        for k in range(len(order2) + 1):
+            if k == len(order2) or ys2[order2[k]] - ys2[order2[k - 1]] > 0.008:
+                rows2.append(order2[row_start:k])
+                row_start = k
+        rows2 = [row for row in rows2 if len(row) >= 2]
+        if rows2:
+            row_ys2 = np.linspace(1.504, 1.566, len(rows2))
+            for k, row in enumerate(rows2):
+                seq = np.argsort(abs2[row])
+                # 74-85.5, not 74-92: the first band's spread starts at 86, and two
+                # bands sharing a spread value put two vertices on the same spot --
+                # a zero-area triangle the refinement contract rejects.
+                abs2[row[seq]] = np.linspace(74.0, 85.5, len(row))
+                laid2[row, 1] = row_ys2[k]
+            ang2 = thin * abs2
+            rad2 = np.radians(ang2)
+            for i in range(len(laid2)):
+                local2 = scalp_radius(np.array([ang2[i]]),
+                                      np.array([laid2[i, 1]]), field)[0]
+                r2 = max(float(local2) + 0.024, 0.084)
+                laid2[i, 0] = r2 * np.sin(rad2[i])
+                laid2[i, 2] = AXIS_Z - r2 * np.cos(rad2[i])
+                laid2[i, 1] = max(laid2[i, 1],
+                                  hem_height(np.abs(ang2[i])))
+            out[band2] = laid2
+    # Two re-laid vertices can land on the same spot (same row value from adjacent
+    # bands' spreads), which turns their shared triangles into zero-area ones the
+    # refinement contract rejects. Nudge any later vertex that sits less than half a
+    # millimetre from an earlier one, along its own angle, by a step unique to its
+    # index -- the strands' look does not read a sub-millimetre scatter.
+    moved_idx = np.where(band1 | band2)[0]
+    pts = out[moved_idx]
+    for a in range(len(moved_idx)):
+        for b in range(a + 1, len(moved_idx)):
+            if np.linalg.norm(pts[b] - pts[a]) < 0.0005:
+                _, _, ang_b = polar(pts[b][None])
+                step = 0.8 + 0.13 * b
+                new_ang = ang_b[0] + step
+                rad_b = np.radians(new_ang)
+                rb = float(np.linalg.norm([pts[b, 0], pts[b, 2] - AXIS_Z]))
+                pts[b, 0] = rb * np.sin(rad_b)
+                pts[b, 2] = AXIS_Z - rb * np.cos(rad_b)
+                out[moved_idx[b]] = pts[b]
     return out
 
 
@@ -570,7 +733,8 @@ def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.n
     # before clamping left 13 ear vertices reading through the clamp-lifted surface).
     clamped = out.copy()
     clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
-    return surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)
+    relayed = _relay_the_thin_side(clamped, triangles, shell, target_hem, skin)
+    return surface_guard(ear_drape(relayed, skin, triangles), skin, target_hem)
 
 
 def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarray:
