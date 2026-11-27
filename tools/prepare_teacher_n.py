@@ -685,7 +685,7 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 9},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 10},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],
@@ -810,8 +810,13 @@ class _Arrays:
         return bytes(out)
 
 
-def _head_geometry(document: dict, arrays: "_Arrays") -> tuple[np.ndarray, np.ndarray]:
-    """The head's skin surface as the hair has to sit on it: after the resting pass."""
+def _head_geometry(document: dict, arrays: "_Arrays") -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The head's skin surface as the hair has to sit on it: after the resting pass.
+
+    The ears ride along as the third element (their fitted positions): the hair is
+    draped over them, so the fit has to know where they are.
+    """
+    skin = None
     for mesh in document["meshes"]:
         if mesh["name"] != "ST_Head_Skin":
             continue
@@ -819,9 +824,19 @@ def _head_geometry(document: dict, arrays: "_Arrays") -> tuple[np.ndarray, np.nd
             material = document["materials"][primitive["material"]]["name"]
             if material != "M_ST_Skin":
                 continue
-            return (arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64),
+            skin = (arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64),
                     arrays.read(primitive["attributes"]["NORMAL"]).astype(np.float64))
-    raise PrepareError("ST_Head_Skin/M_ST_Skin is missing, so the hair cannot be fitted")
+    if skin is None:
+        raise PrepareError("ST_Head_Skin/M_ST_Skin is missing, so the hair cannot be fitted")
+    ears = []
+    for mesh in document["meshes"]:
+        if mesh["name"] not in ("ST_Ear_L", "ST_Ear_R"):
+            continue
+        for primitive in mesh["primitives"]:
+            ears.append(arrays.read(primitive["attributes"]["POSITION"]).astype(np.float64))
+    if not ears:
+        raise PrepareError("the ears are missing, so the hair cannot drape over them")
+    return (*skin, np.concatenate(ears))
 
 
 def _smooth_the_mouth_rim(document: dict, arrays: "_Arrays", moved: dict) -> None:

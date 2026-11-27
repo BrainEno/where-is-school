@@ -388,6 +388,120 @@ def _fit_card(p: np.ndarray, angle: np.ndarray, target_hem: np.ndarray,
     return p + (target - centroid)
 
 
+def _closest_on_triangles(points: np.ndarray, vertices: np.ndarray,
+                          triangles: np.ndarray, chunk: int = 256):
+    """The closest point of each point onto the triangle soup, and the distance.
+
+    The branchless Ericson construction: the three vertex candidates, the three edge
+    projections and the clamped interior barycentric point, whichever is nearest. The
+    clamped interior keeps sliver triangles (the strand ridges have a few) from
+    dividing by their vanishing area. Build-time only; the game never runs this.
+    """
+    T = vertices[triangles]
+    best = np.full(len(points), np.inf)
+    out = np.zeros((len(points), 3))
+    rows = np.arange(len(points))
+    for s in range(0, len(T), chunk):
+        A, B, C = T[s:s + chunk, 0], T[s:s + chunk, 1], T[s:s + chunk, 2]
+        ab, ac = B - A, C - A
+        AP = points[:, None, :] - A[None]
+        d1 = (AP * ab).sum(-1); d2 = (AP * ac).sum(-1)
+        BP = points[:, None, :] - B[None]
+        d3 = (BP * ab).sum(-1); d4 = (BP * ac).sum(-1)
+        CP = points[:, None, :] - C[None]
+        d5 = (CP * ab).sum(-1); d6 = (CP * ac).sum(-1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            safe = lambda num, den: np.where(den != 0, num / np.where(den != 0, den, 1), 0)
+            t_ab = np.clip(safe(d1, d1 - d3), 0, 1)
+            t_ac = np.clip(safe(d2, d2 - d6), 0, 1)
+            t_bc = np.clip(safe(d4 - d3, (d4 - d3) + (d5 - d6)), 0, 1)
+            den = d3 * d6 - d5 * d4 + d5 * d2 - d1 * d6 + d1 * d4 - d3 * d2
+            v_i = np.clip(safe(d5 * d2 - d1 * d6, den), 0, 1)
+            w_i = np.clip(safe(d1 * d4 - d3 * d2, den), 0, 1)
+        total = v_i + w_i
+        over = total > 1
+        v_i = np.where(over, v_i / np.maximum(total, 1e-14), v_i)
+        w_i = np.where(over, w_i / np.maximum(total, 1e-14), w_i)
+        n, k = len(points), len(A)
+        cands = [np.broadcast_to(A[None], (n, k, 3)), np.broadcast_to(B[None], (n, k, 3)),
+                 np.broadcast_to(C[None], (n, k, 3)),
+                 A[None] + ab[None] * t_ab[..., None],
+                 A[None] + ac[None] * t_ac[..., None],
+                 B[None] + (C - B)[None] * t_bc[..., None],
+                 A[None] + ab[None] * v_i[..., None] + ac[None] * w_i[..., None]]
+        squared = np.stack([((points[:, None, :] - c) ** 2).sum(-1) for c in cands])  # (7, n, k)
+        best_local = squared.min(0)                               # (n, k)
+        pick = best_local.argmin(1)                               # triangle per point
+        which = squared[:, rows, pick].argmin(0)                  # candidate per point
+        cands_all = np.stack(cands)                               # (7, n, k, 3)
+        closest = cands_all[which, rows, pick]                    # (n, 3)
+        distance = np.sqrt(squared[:, rows, pick].min(0))         # (n,)
+        update = distance < best
+        out[update] = closest[update]
+        best[update] = distance[update]
+    return out, best
+
+
+def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> np.ndarray:
+    """Drape the hair over the ears instead of clipping through them.
+
+    A shell that hugs the skull sits inside the ear's own surface, and the ear reads
+    through the side hair as an outline -- the review frames showed it in every cut so
+    far, because the hem's height alone never covers an ear that bursts through the
+    hair surface. Two moves wrap the ear the way real hair does:
+
+    1. The envelope: every hair vertex is pushed out along its own radial to 3.5 mm
+       outside the outermost ear surface near it -- near in *footprint* (angle and
+       height), not in 3D, because a vertex buried 19 mm under the ear is still AT the
+       ear's place on the head, and a 3D reach would measure the radial gap and leave
+       it there. The push feathers out over 10-18 mm of footprint, so the drape starts
+       slightly in front of the ear and dies out behind and below it, no step.
+    2. The verification: the draped surface is then measured the way the render draws
+       it -- every ear vertex against the hair's triangles -- and any vertex that still
+       reads through lifts the hair vertices around it by its own depth plus 2 mm.
+       Three passes of that close the chord sag the envelope's vertex push leaves.
+
+    Build-time only; the game never runs this.
+    """
+    ears = skin[2] if len(skin) > 2 else None
+    if ears is None or not len(ears):
+        return points
+    ear_radius, _, ear_angle = polar(ears)
+    out = np.asarray(points, np.float64).copy()
+    radius, outward, angle = polar(out)
+    # Footprint distance: arc millimetres of angle (at a nominal 70 mm radius) plus
+    # height. A vertex's radial gap to the ear says nothing about whether hair at its
+    # place on the head has to clear the ear -- its angle and height say everything.
+    arc = np.radians(np.abs(angle)[:, None] - np.abs(ear_angle)[None, :]) * 0.070
+    footprint = np.sqrt(arc ** 2 + (out[:, 1][:, None] - ears[None, :, 1]) ** 2)
+    nearest_footprint = footprint.min(axis=1)
+    envelope = np.where(footprint < 0.018, ear_radius[None, :], -np.inf).max(axis=1)
+    target = np.where(np.isfinite(envelope), envelope + 0.0035, radius)
+    weight = 1.0 - smoothstep(0.010, 0.018, nearest_footprint)
+    grow = weight * np.clip(target - radius, 0.0, 0.03)
+    out = out + outward * grow[:, None]
+    if triangles is None:
+        return out
+    for _pass in range(3):
+        closest, distance = _closest_on_triangles(ears, out, triangles)
+        axis = np.stack([np.zeros(len(ears)), ears[:, 1], np.zeros(len(ears))], axis=1)
+        direction = closest - axis
+        direction[:, 1] = 0
+        direction /= np.maximum(np.linalg.norm(direction, axis=1, keepdims=True), 1e-12)
+        outward_side = ((ears - closest) * direction).sum(1) > 0
+        failing = outward_side & (distance > 0.0005)
+        if not failing.any():
+            break
+        depth = distance[failing] + 0.002
+        lift_d2 = ((out[:, None, :] - ears[failing][None, :, :]) ** 2).sum(-1)
+        nearest = np.argmin(lift_d2, axis=1)
+        reach = np.sqrt(lift_d2[np.arange(len(out)), nearest])
+        lift = depth[nearest] * (1.0 - smoothstep(0.004, 0.009, reach))
+        _, lift_outward, _ = polar(out)
+        out = out + lift_outward * (lift * (reach < 0.009))[:, None]
+    return out
+
+
 def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.ndarray:
     """The main shell: pinned cut edge, skull-following volume, strand ridges."""
     p = np.asarray(points, np.float64)
@@ -406,7 +520,13 @@ def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.n
     # as hair lying on the cheek. The shell's fit and the cards' translation both aim for
     # it, but a vertex can still land a few tenths of a millimetre under; this is the
     # guarantee, expressed once, after both.
-    return surface_guard(out, skin, target_hem)
+    # The hem clamp runs BEFORE the drape: the drape has to decide its radii at the
+    # heights the cut leaves, or the guard's vertical clamp lifts the draped vertices
+    # afterwards and lands them back inside the ear above them (measured: draping
+    # before clamping left 13 ear vertices reading through the clamp-lifted surface).
+    clamped = out.copy()
+    clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
+    return surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)
 
 
 def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarray:
@@ -479,4 +599,6 @@ def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) ->
     for part in parts:
         index = np.asarray(part, np.int64)
         out[index] = _fit_card(p[index], angle[index], target_hem, spans[index], skin[0])
-    return surface_guard(out, skin, target_hem)
+    clamped = out.copy()
+    clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
+    return surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)
