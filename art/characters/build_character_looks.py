@@ -83,7 +83,7 @@ PART_DEFAULTS = {
 # skull value, more of the face in full light, and half the block depth at a finer scale.
 PROTAGONIST_SKIN = {
     "albedo": "#B4A58C",
-    "pigment_a": "#A2A18F",
+    "pigment_a": "#A9A691",
     "pigment_b": "#C2A68E",
     # The stepped pigment stays (no glaze on this look); the blocks read as skin mottling
     # only when they are fine and shallow: 24 -> 30 blocks per metre, half the value depth.
@@ -91,18 +91,22 @@ PROTAGONIST_SKIN = {
     "pigment_value": 0.035,
     "pigment_scale": 30.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
-    "shade_tint": "#B7B8C1",
-    "light_tint": "#F4EADC",
-    "shadow_fill": 0.54,
+    # The r38 second round: the lavender-grey shade still read as corpse light on the
+    # pale skin. Q's clean face runs a warm grey shadow under the same key; this is
+    # that temperature, held a step cooler than Q's.
+    "shade_tint": "#C0B7A9",
+    "light_tint": "#F6E9D6",
+    "shadow_fill": 0.58,
     # A lighter half-tone so the cheekbone, nose and brow ridge keep their planes without
     # the cave-dark mid zone the 0.57 value painted.
     "half_tone": 0.63,
-    "edge_softness": 0.15,
+    "edge_softness": 0.18,
     # The blocks no longer push the terminator: at 0.10 the mottling visibly warped the
     # shadow edges into ragged bands (the owner's r37 "blotches under hard bands").
     "edge_break": 0.06,
-    # More of the face in the full light; 0.55 held the whole front in the grey mid zone.
-    "light_edge": 0.44,
+    # A slightly wider half-tone band than the first round: the socket and nose-side
+    # pools lighten with it, which is where the skull reading came from.
+    "light_edge": 0.40,
     "light_strength": 0.72,
 }
 PROTAGONIST = {
@@ -199,13 +203,13 @@ PROTAGONIST = {
         # is what makes them prominent, not a bigger eyeball.
         "protagonist_mat_sclera": {
             # The stare: a near-white sclera at half_tone 0.8 held the whole eye at the
-            # brightest band under every light. N's refined face (the clean reference)
-            # wears a warm, darker off-white at half_tone 0.62; this matches it.
-            "albedo": "#CBBFAB",
+            # brightest band under every light. This is exactly N's refined eye value,
+            # the eye the owner has approved: a warm off-white at half_tone 0.62.
+            "albedo": "#C7B9A8",
             "pigment_mix": 0.0,
             "pigment_value": 0.0,
             "shadow_fill": 0.56,
-            "half_tone": 0.66,
+            "half_tone": 0.62,
             "outline": False,
         },
         "protagonist_mat_iris": {
