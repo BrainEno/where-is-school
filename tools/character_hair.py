@@ -35,16 +35,15 @@ CROWN_Y = 1.6450
 # |angle| from the face, in degrees -> height of the cut edge in metres. Front 1.592 is
 # 29 mm above the brows (1.549-1.563); the sides clear the top of the ear at 1.564; the nape
 # sits at 1.515, well above the collar at 1.32.
-# The cut: a women's short bob (owner's r37 note -- the previous crop read male). The
-# first cut of this table hung its sides at 1.546-1.521, under the ear top (1.5645),
-# and the review frames showed bare scalp over the whole ear -- a headband, not a bob.
-# This cut drapes the sides to the ear lobe and below (1.504 at the ear's crown angle,
-# 1.492 past it), keeps the full fringe at 1.568 (8-13 mm above the brows at
-# 1.553-1.558), and finishes in a tidy low nape at 1.484 -- the sides cover the ears
-# completely and the silhouette carries hair from the fringe down to the nape.
+# The cut: a women's short bob (owner's r37 note -- the previous crop read male). Two
+# rounds of review frames settled where the femininity lives: a full fringe that hangs
+# to 1.568-1.571 over the brows (1.553-1.558), with the temple pieces framing the face,
+# while the sides and nape stay at the approved tight crop's heights -- draping the
+# sides past the ears left the pre-auricular slope bare and read worse than the crop
+# it replaced. The wide strand waves and the softer volume carry the rest of the read.
 HEM_ANGLE = np.array([0.0, 24.0, 46.0, 66.0, 84.0, 100.0, 118.0, 136.0, 154.0, 180.0])
-HEM_Y = np.array([1.5680, 1.5710, 1.5640, 1.5360, 1.5040,
-                  1.4920, 1.4880, 1.4860, 1.4850, 1.4840])
+HEM_Y = np.array([1.5680, 1.5710, 1.5700, 1.5530, 1.5460,
+                  1.5300, 1.5180, 1.5160, 1.5150, 1.5140])
 # The skull field: 4 degrees by 4 mm is finer than the hair's own spacing.
 FIELD_STEP_DEG = 4.0
 FIELD_STEP_Y = .004
@@ -441,13 +440,22 @@ def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarra
         for index in np.where(buried)[0]:
             distance = ((surface - out[index]) ** 2).sum(1)
             nearest = int(np.argmin(distance))
+            direction = out[index] - surface[nearest]
+            reach = float(np.linalg.norm(direction))
+            if reach < 1e-9:
+                direction = normals[nearest]
+                reach = float(np.linalg.norm(direction))
+                if reach < 1e-9:
+                    continue
             normal = normals[nearest]
-            length = float(np.linalg.norm(normal))
-            if length < 1e-9:
-                continue
-            # Outward if the vertex sits on the normal's side of its skin point.
-            if ((out[index] - surface[nearest]) @ normal) < 0.002:
-                out[index] = surface[nearest] + normal / length * 0.002
+            # Outward if the vertex sits on the normal's side of its skin point, and
+            # already proud enough if it is 2 mm out along it.
+            if float(direction @ normal) < 0.002:
+                # Placed along the vertex's own approach direction, not the shared
+                # skin normal: two buried vertices of one card then land on different
+                # points of the 2 mm shell instead of collapsing into a zero-area
+                # triangle.
+                out[index] = surface[nearest] + direction / reach * 0.002
         out[:, 1] = np.maximum(out[:, 1], hem)
     return out
 
