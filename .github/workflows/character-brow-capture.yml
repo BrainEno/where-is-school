@@ -1,0 +1,105 @@
+name: Character brow review capture
+
+# Owner-review stills for the brow work (#385, PR #433): the three characters'
+# brow region from the engine, in the classroom's own light, at 1920x1080. The
+# PNGs upload as the artifact of record; a quality-92 JPEG beside each is also
+# committed to this branch so the review can fetch it through plain git, and
+# that evidence commit is reverted once the owner has the files.
+
+on:
+  pull_request:
+    paths:
+      - "tests/capture_brow_review.gd"
+      - ".github/workflows/character-brow-capture.yml"
+      - "assets/models/protagonist/**"
+      - "assets/models/q/**"
+      - "assets/models/teacher-n/**"
+      # The painted looks change the render as surely as the geometry does;
+      # without these a look-only fix would re-cut the review from stale frames.
+      - "assets/characters/protagonist/**"
+      - "assets/characters/q/**"
+      - "assets/characters/teacher_n/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    name: Brow review stills (1920x1080)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      # On a pull_request run, check out the PR's own head commit, not GitHub's
+      # merge ref: the run pushes its evidence JPEGs back to this branch, and a
+      # merge-ref HEAD would push a synthetic merge commit onto it.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - uses: ./.github/actions/setup-godot
+
+      - name: Import project
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Blocking import first (it waits for the queue to drain), then an editor pass
+          # whose log is the one that must be free of script errors. Same as the other
+          # capture workflows.
+          godot --headless --path . --import > import-1.log 2>&1 || true
+          godot --headless --editor --path . --quit > import-2.log 2>&1
+          code=$?
+          if [ "${code}" -ne 0 ] || grep -qE "SCRIPT ERROR|Parse Error" import-2.log; then
+            summary=$(grep -E "SCRIPT ERROR|Parse Error|ERROR:" import-2.log | head -n 10 | tr '\n' '|' | cut -c1-1500)
+            echo "::error title=import failed (exit ${code})::${summary:-no summary}"
+            exit 1
+          fi
+
+      - name: Capture
+        shell: bash
+        run: |
+          set +e -uo pipefail
+          mkdir -p docs/screenshots/character_brow
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" \
+            godot --path . --resolution 1920x1080 --rendering-driver opengl3 \
+            --script res://tests/capture_brow_review.gd > capture.log 2>&1
+          code=$?
+          grep -E "^ARTNOTE: |SCRIPT ERROR|ERROR:" capture.log | cut -c1-400 | tail -n 60 || true
+          notes=$(grep -E "^ARTNOTE: " capture.log | sed 's/^ARTNOTE: \[[^]]*\] //' \
+            | grep -v "^shot=" | tr '\n' '|')
+          echo "::notice title=brow review conditions::${notes:0:3800}"
+          if grep -qE "RESULT: FAILURE" capture.log; then
+            echo "::error title=brow review capture failed::see the ARTNOTE lines above"
+            exit 1
+          fi
+          if ! grep -qE "RESULT: SUCCESS" capture.log; then
+            tail_lines=$(grep -E "SCRIPT ERROR|ERROR:" capture.log | head -n 8 | tr '\n' '|' | cut -c1-1200)
+            echo "::error title=brow review ended without a result (exit ${code})::${tail_lines:-no error lines}"
+            exit 1
+          fi
+          if [ "${code}" -ne 0 ]; then
+            echo "::error title=brow review engine exit::the script printed SUCCESS but exited ${code}"
+            exit 1
+          fi
+
+      - name: Upload the evidence of record
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: character-brow-review
+          path: docs/screenshots/character_brow
+          if-no-files-found: error
+
+      # TEMPORARY (r37 review round): the frames also land on the branch so the
+      # review can fetch them through plain git; removed again with the evidence
+      # commit once the owner has the files.
+      - name: Push the review JPEGs to this branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "evidence-bot"
+          git config user.email "evidence-bot@users.noreply.github.com"
+          git add docs/screenshots/character_brow
+          git commit -m "evidence(character): brow review stills for the owner (temporary) [skip ci]"
+          git push origin HEAD:refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}

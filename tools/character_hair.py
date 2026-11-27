@@ -35,9 +35,17 @@ CROWN_Y = 1.6450
 # |angle| from the face, in degrees -> height of the cut edge in metres. Front 1.592 is
 # 29 mm above the brows (1.549-1.563); the sides clear the top of the ear at 1.564; the nape
 # sits at 1.515, well above the collar at 1.32.
+# The cut: a women's short bob (owner's r37 note -- the previous crop read male). The
+# sides drape low -- to 1.504 at the ear's front, past the lobes, down to a tidy nape
+# at 1.484 -- because every attempt to hug the hairline higher left the pre-auricular
+# slope bare at the 45-degree review angle. What made the low sides fail before was the
+# shell clipping through the ear, and that is the ear drape's job now, not the hem's:
+# with the shell wrapped 3.5 mm clear of the ear surface, the low drape reads as hair
+# over the ear instead of an ear poking through hair. The full fringe stays at
+# 1.568-1.571 over the brows (1.553-1.558).
 HEM_ANGLE = np.array([0.0, 24.0, 46.0, 66.0, 84.0, 100.0, 118.0, 136.0, 154.0, 180.0])
-HEM_Y = np.array([1.5925, 1.5920, 1.5895, 1.5830, 1.5715,
-                  1.5590, 1.5365, 1.5215, 1.5160, 1.5150])
+HEM_Y = np.array([1.5680, 1.5710, 1.5640, 1.5360, 1.5040,
+                  1.4920, 1.4880, 1.4860, 1.4850, 1.4840])
 # The skull field: 4 degrees by 4 mm is finer than the hair's own spacing.
 FIELD_STEP_DEG = 4.0
 FIELD_STEP_Y = .004
@@ -88,21 +96,29 @@ def hem_height(angle_deg: np.ndarray) -> np.ndarray:
 
 
 def thickness(angle_deg: np.ndarray, hem: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Stand-off from the scalp, from 2 mm at the hairline to 15 mm at the crown."""
+    """Stand-off from the scalp, from 3 mm at the hairline to 17 mm at the crown.
+
+    The bob carries a little more body than the crop it replaced, so the fringe and
+    the side pieces read as hair with weight rather than a scalp decal.
+    """
     side = smoothstep(40.0, 96.0, np.abs(angle_deg))
-    at_edge = .0024 + .0012 * side
+    at_edge = .0030 + .0012 * side
     crown = (1.0 - smoothstep(hem, CROWN_Y, y)) ** .75
-    return at_edge + (.0150 - at_edge) * crown
+    return at_edge + (.0168 - at_edge) * crown
 
 
 def strands(angle_deg: np.ndarray, y: np.ndarray, hem: np.ndarray) -> np.ndarray:
-    """Ridges that run down the fall of the hair, strongest just above the cut."""
+    """Broad, soft ridges down the fall of the hair, strongest just above the cut.
+
+    The previous ridging counted 21 lobes round the head, which read as a tight
+    perm; the bob falls in fewer, wider waves.
+    """
     a = np.radians(angle_deg)
-    phase = 21.0 * a + .8 * (y - 1.52) / .01
+    phase = 13.0 * a + .8 * (y - 1.52) / .01
     ripple = (np.cos(phase) + .45 * np.cos(2.3 * phase + 1.7)
               + .25 * np.cos(.7 * phase + 1.4))
     near_edge = 1.0 - smoothstep(hem, hem + .032, y)
-    return .0016 * ripple * (.45 + .55 * near_edge)
+    return .0013 * ripple * (.45 + .55 * near_edge)
 
 
 def boundary_loop(triangles: np.ndarray) -> np.ndarray:
@@ -249,7 +265,15 @@ def _spans(points: np.ndarray, angle: np.ndarray, target_hem: np.ndarray,
 
 
 def _field_of(skin: np.ndarray):
-    return scalp_field_cached(np.ascontiguousarray(skin, dtype=np.float64).tobytes())
+    """The skull field for the shell's fit, built from the head's surface alone.
+
+    prepare hands the fit a (positions, normals) pair. Flattened as one point cloud the
+    normals read as a one-metre sphere of "skull", and wherever the real skin leaves a
+    gap along the height the interpolated fill bridges it from that anchor, throwing
+    queries below the skin's reach tens of millimetres off the head.
+    """
+    surface = skin[0] if isinstance(skin, tuple) else skin
+    return scalp_field_cached(np.ascontiguousarray(surface, dtype=np.float64).tobytes())
 
 
 def _place(points: np.ndarray, y: np.ndarray, offset: np.ndarray, skin: np.ndarray,
@@ -365,8 +389,306 @@ def _fit_card(p: np.ndarray, angle: np.ndarray, target_hem: np.ndarray,
     return p + (target - centroid)
 
 
-def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.ndarray:
-    """The main shell: pinned cut edge, skull-following volume, strand ridges."""
+def _closest_on_triangles(points: np.ndarray, vertices: np.ndarray,
+                          triangles: np.ndarray, chunk: int = 256):
+    """The closest point of each point onto the triangle soup, and the distance.
+
+    The branchless Ericson construction: the three vertex candidates, the three edge
+    projections and the clamped interior barycentric point, whichever is nearest. The
+    clamped interior keeps sliver triangles (the strand ridges have a few) from
+    dividing by their vanishing area. Build-time only; the game never runs this.
+    """
+    T = vertices[triangles]
+    best = np.full(len(points), np.inf)
+    out = np.zeros((len(points), 3))
+    rows = np.arange(len(points))
+    for s in range(0, len(T), chunk):
+        A, B, C = T[s:s + chunk, 0], T[s:s + chunk, 1], T[s:s + chunk, 2]
+        ab, ac = B - A, C - A
+        AP = points[:, None, :] - A[None]
+        d1 = (AP * ab).sum(-1); d2 = (AP * ac).sum(-1)
+        BP = points[:, None, :] - B[None]
+        d3 = (BP * ab).sum(-1); d4 = (BP * ac).sum(-1)
+        CP = points[:, None, :] - C[None]
+        d5 = (CP * ab).sum(-1); d6 = (CP * ac).sum(-1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            safe = lambda num, den: np.where(den != 0, num / np.where(den != 0, den, 1), 0)
+            t_ab = np.clip(safe(d1, d1 - d3), 0, 1)
+            t_ac = np.clip(safe(d2, d2 - d6), 0, 1)
+            t_bc = np.clip(safe(d4 - d3, (d4 - d3) + (d5 - d6)), 0, 1)
+            den = d3 * d6 - d5 * d4 + d5 * d2 - d1 * d6 + d1 * d4 - d3 * d2
+            v_i = np.clip(safe(d5 * d2 - d1 * d6, den), 0, 1)
+            w_i = np.clip(safe(d1 * d4 - d3 * d2, den), 0, 1)
+        total = v_i + w_i
+        over = total > 1
+        v_i = np.where(over, v_i / np.maximum(total, 1e-14), v_i)
+        w_i = np.where(over, w_i / np.maximum(total, 1e-14), w_i)
+        n, k = len(points), len(A)
+        cands = [np.broadcast_to(A[None], (n, k, 3)), np.broadcast_to(B[None], (n, k, 3)),
+                 np.broadcast_to(C[None], (n, k, 3)),
+                 A[None] + ab[None] * t_ab[..., None],
+                 A[None] + ac[None] * t_ac[..., None],
+                 B[None] + (C - B)[None] * t_bc[..., None],
+                 A[None] + ab[None] * v_i[..., None] + ac[None] * w_i[..., None]]
+        squared = np.stack([((points[:, None, :] - c) ** 2).sum(-1) for c in cands])  # (7, n, k)
+        best_local = squared.min(0)                               # (n, k)
+        pick = best_local.argmin(1)                               # triangle per point
+        which = squared[:, rows, pick].argmin(0)                  # candidate per point
+        cands_all = np.stack(cands)                               # (7, n, k, 3)
+        closest = cands_all[which, rows, pick]                    # (n, 3)
+        distance = np.sqrt(squared[:, rows, pick].min(0))         # (n,)
+        update = distance < best
+        out[update] = closest[update]
+        best[update] = distance[update]
+    return out, best
+
+
+def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> np.ndarray:
+    """Drape the hair over the ears instead of clipping through them.
+
+    A shell that hugs the skull sits inside the ear's own surface, and the ear reads
+    through the side hair as an outline -- the review frames showed it in every cut so
+    far, because the hem's height alone never covers an ear that bursts through the
+    hair surface. Two moves wrap the ear the way real hair does:
+
+    1. The envelope: every hair vertex is pushed out along its own radial to 3.5 mm
+       outside the outermost ear surface near it -- near in *footprint* (angle and
+       height), not in 3D, because a vertex buried 19 mm under the ear is still AT the
+       ear's place on the head, and a 3D reach would measure the radial gap and leave
+       it there -- or to 10 mm proud of the skull over the cheek corridor (40-100
+       degrees), whichever is farther. The cheek half is the curtain that makes the
+       bob read: a shell that hugs the skull there puts its hem ring across the
+       pre-auricular slope, and skin shows between the hem and the ear in every
+       review frame; real side hair hangs OUTSIDE the slope and shades it, so the
+       shell is held away from the head over the cheek and feathers back to the
+       skull behind the ear (100-112 degrees).
+    2. The verification: the draped surface is then measured the way the render draws
+       it -- every ear vertex against the hair's triangles -- and any vertex that still
+       reads through lifts the hair vertices around it by its own depth plus 2 mm.
+       Three passes of that close the chord sag the envelope's vertex push leaves.
+
+    Build-time only; the game never runs this.
+    """
+    ears = skin[2] if len(skin) > 2 else None
+    if ears is None or not len(ears):
+        return points
+    ear_radius, _, ear_angle = polar(ears)
+    out = np.asarray(points, np.float64).copy()
+    radius, outward, angle = polar(out)
+    # Footprint distance: arc millimetres of angle (at a nominal 70 mm radius) plus
+    # height. A vertex's radial gap to the ear says nothing about whether hair at its
+    # place on the head has to clear the ear -- its angle and height say everything.
+    arc = np.radians(np.abs(angle)[:, None] - np.abs(ear_angle)[None, :]) * 0.070
+    footprint = np.sqrt(arc ** 2 + (out[:, 1][:, None] - ears[None, :, 1]) ** 2)
+    nearest_footprint = footprint.min(axis=1)
+    envelope = np.where(footprint < 0.018, ear_radius[None, :], -np.inf).max(axis=1)
+    field = scalp_field(skin[0])
+    skull = scalp_radius(angle, out[:, 1], field)
+    # The curtain's floor is the ear's own outer rim, not the skull: a view from the
+    # front-side diagon crosses the corridor at radii up to the rim's reach, and hair
+    # that only clears the skull lets those rays pass outside it -- the skin above and
+    # in front of the ear shows through (measured: 30 skin vertices above their hem
+    # line visible from the 45-degree camera until the floor moved to the rim).
+    # polar() returns degrees, so every threshold here is degrees too -- mixing in
+    # radians silently zeroes the whole curtain (smoothstep(1.745, ..., 76 degrees)
+    # is 1, and the corridor multiplied itself out of existence).
+    curtain = smoothstep(30.0, 42.0, np.abs(angle)) \
+        * (1.0 - smoothstep(100.0, 112.0, np.abs(angle))) \
+        * (1.0 - smoothstep(1.585, 1.615, out[:, 1]))
+    # 10 mm proud of the skull, measured to block the 45-degree sight-lines: from a
+    # front-side camera the sight-line to the skin just above the ear crosses the
+    # ear-top strip at r 76-84, and a wall at skull+10 (~79-84 there) cuts it. A
+    # deeper wall backfires twice over -- pushed past the crossing radius it opens a
+    # view corridor between the skull and the wall, and the strip shows through worse
+    # (measured: 22 mm raised the visible count from 30 to 47, and an ear-rim floor
+    # of 87.5 mm did the same at the ear-top strip). Wrapping the ear itself is the
+    # verification loop's job, not a floor on the whole corridor.
+    target = np.maximum(envelope + 0.0035, skull + 0.010)
+    weight = np.maximum(1.0 - smoothstep(0.010, 0.018, nearest_footprint), curtain)
+    # The clip has to cover the move the deepest shell vertex needs to reach the
+    # curtain: an interior vertex sits ~36 mm under the temple's curtain target, and a
+    # tighter clip would tilt the slab instead of moving it whole.
+    grow = weight * np.clip(target - radius, 0.0, 0.045)
+    out = out + outward * grow[:, None]
+    if triangles is None:
+        return out
+    # The verification loop measures the draped surface the way the render draws it,
+    # against everything the hair is supposed to hide: the ears AND the head skin
+    # above the hem line (skin below the hem is the cheek the cut deliberately
+    # reveals). Vertices that still read through lift the hair around them by their
+    # own depth plus 2 mm -- this is what closes the sag between the shell's sparse
+    # rows, which a vertex-level push alone cannot fix: the shell's side rows sit
+    # ~50 mm apart vertically, and the span between two pushed rows sags back under
+    # the 45-degree sight-lines. Three passes close it.
+    check = np.concatenate([skin[0], ears])
+    for _pass in range(5):
+        closest, distance = _closest_on_triangles(check, out, triangles)
+        axis = np.stack([np.zeros(len(check)), check[:, 1], np.zeros(len(check))], axis=1)
+        direction = closest - axis
+        direction[:, 1] = 0
+        direction /= np.maximum(np.linalg.norm(direction, axis=1, keepdims=True), 1e-12)
+        outward_side = ((check - closest) * direction).sum(1) > 0
+        hem_line = hem_height(np.abs(polar(check)[2]))
+        # Skin a hair's depth above its hem line must be covered; below it, the cut
+        # is doing its job. The ear vertices ride on the skin's rule (they sit above
+        # the nape hem wherever hair is supposed to cover them).
+        covered = check[:, 1] > hem_line + 0.002
+        failing = outward_side & (distance > 0.0005) & covered
+        if not failing.any():
+            break
+        depth = distance[failing] + 0.002
+        lift_d2 = ((out[:, None, :] - check[failing][None, :, :]) ** 2).sum(-1)
+        nearest = np.argmin(lift_d2, axis=1)
+        reach = np.sqrt(lift_d2[np.arange(len(out)), nearest])
+        lift = depth[nearest] * (1.0 - smoothstep(0.004, 0.012, reach))
+        _, lift_outward, _ = polar(out)
+        out = out + lift_outward * (lift * (reach < 0.012))[:, None]
+    return out
+
+
+def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.ndarray,
+                         hem: np.ndarray, skin: tuple,
+                         record: dict | None = None) -> np.ndarray:
+    """Re-lay the thin side's band so the shell covers the corridor over its ear.
+
+    When `record` is given, the re-laid vertex ids are written to it under
+    "relayed": the normals pass needs to know which vertices moved, because the
+    triangles tying them to the unmoved sheet stop being shading faces (they
+    become the wall's occluders) -- see `shell_normals`.
+
+    The source bob is asymmetric by design -- a side part. At ear heights the shell's
+    surface is dense on the full side (about 150 triangles) and nearly absent on the
+    thin side (about 10): the thin side's band hangs BEHIND the ear instead of over
+    it, and every symmetric re-cut exposes that hole -- the frames show the ear bare
+    on one side no matter where the hem sits. No radial push can close it, because
+    the hole is angular: the vertices that could cover the corridor sit 25 degrees
+    behind it. So the thin side's band is re-laid: its vertices move forward to
+    spread across the corridor the way the full side's do, at their own heights,
+    clamped to the cut. The drape sets their radii next; the silhouette behind the
+    ear is carried by the rest of the sheet.
+    """
+    out = np.asarray(points, np.float64).copy()
+    tri_is_shell = shell[triangles].all(1)
+    centers = out[triangles[tri_is_shell]].mean(1)
+    _, _, centre_angle = polar(centers)
+    centre_y = centers[:, 1]
+    right = int(((centre_angle > 92) & (centre_angle < 118)
+                 & (centre_y > 1.506) & (centre_y < 1.564)).sum())
+    left = int(((-centre_angle > 92) & (-centre_angle < 118)
+                & (centre_y > 1.506) & (centre_y < 1.564)).sum())
+    if right < left * .5:
+        thin = 1.0
+    elif left < right * .5:
+        thin = -1.0
+    else:
+        return out
+    radius, _, angle = polar(out)
+    band = (shell & (angle * thin > 100.0) & (angle * thin < 128.0)
+            & (out[:, 1] > 1.486) & (out[:, 1] < 1.578) & (radius > 0.030))
+    band1 = band.copy()
+    if not band.any():
+        return out
+    laid = out[band]
+    _, _, band_angle = polar(laid)
+    # The re-lay turns the thin side's band into a grid wall over the corridor: the
+    # rows (10 mm bands of height, split where the source sheet's rows have gaps)
+    # are spread EVENLY over 86-118 degrees, and the rows themselves are placed at
+    # even heights over the ear's span (1.508-1.560). Both spreads matter: a linear
+    # remap of the old angles keeps the thin side's original sparsity, and keeping
+    # the source rows' own heights leaves a vertical gap between them that the
+    # sight-lines sail straight through (measured: a ray from the ear's rim runs
+    # outward to r 87-95 while its angle slides 105 -> 88, and it passed under the
+    # re-laid wall's bottom row until the rows were spaced evenly too).
+    new_abs = np.abs(band_angle)
+    ys = laid[:, 1]
+    order = np.argsort(ys * 1000 + new_abs)
+    rows = []
+    row_start = 0
+    for k in range(len(order) + 1):
+        if k == len(order) or ys[order[k]] - ys[order[k - 1]] > 0.010:
+            rows.append(order[row_start:k])
+            row_start = k
+    rows = [row for row in rows if len(row) >= 2]
+    if not rows:
+        return out
+    # 1.500 at the bottom (the ear's lobe sits at 1.506: a bottom row above it left
+    # a 2 mm strip of ear showing under the wall) and 1.578 at the top, where the
+    # crown shell above 128 degrees begins -- a wall that stops at 1.566 leaves a
+    # horizontal slit between its top edge and the crown sheet, and the stretched
+    # triangles' inner faces show through it as dark slats from the side camera.
+    row_ys = np.linspace(1.500, 1.578, len(rows))
+    for k, row in enumerate(rows):
+        seq = np.argsort(new_abs[row])
+        # 74-128: the wall spans the corridor, its forward window (the 45-degree
+        # sight-lines slide under an 86-degree front edge -- measured: 126 ear
+        # vertices visible from the 45-degree camera) and its own source span, so
+        # the hole the re-lay leaves in the sheet sits wholly behind the wall.
+        new_abs[row[seq]] = np.linspace(74.0, 128.0, len(row))
+        ys[row] = row_ys[k]
+        laid[row, 1] = row_ys[k]
+    new_angle = thin * new_abs
+    # The radius mirrors the FULL side at the re-laid position: the full side's sheet
+    # stands 82-97 mm out at these heights -- outside the ear's rim -- and that is
+    # what shades the slope from the sight-lines, which cross the corridor at up to
+    # ~95 mm. The thin side's own radii (66-93, mostly deep) would leave every
+    # sight-line passing outside the re-laid band.
+    full_shell = shell & ((out[:, 1] > 1.480) & (out[:, 1] < 1.600))
+    fr, _, fa = polar(out[full_shell])
+    fa = np.abs(fa) * -thin
+    fy = out[full_shell][:, 1]
+    laid_radius = radius[band]
+    field = scalp_field(skin[0])
+    for i in range(len(laid)):
+        near = ((np.abs(fa - new_angle[i]) < 7.0)
+                & (np.abs(fy - laid[i, 1]) < 0.014))
+        if near.any():
+            laid_radius[i] = max(laid_radius[i], float(fr[near].max()))
+        # The wall must clear the sight-lines wherever they cross: a ray from the
+        # ear's rim travels outward to r 87-95 while its angle slides 105 -> 88, so
+        # the corridor wall's floor is the local skin radius plus 24 mm of body at
+        # every re-laid position.
+        local = scalp_radius(np.array([new_angle[i]]),
+                             np.array([laid[i, 1]]), field)[0]
+        laid_radius[i] = max(laid_radius[i], float(local) + 0.024)
+    rad = np.radians(new_angle)
+    laid[:, 0] = laid_radius * np.sin(rad)
+    laid[:, 2] = AXIS_Z - laid_radius * np.cos(rad)
+    # The cut is measured at the vertex's NEW angle after the re-lay: a vert re-laid
+    # from 120 degrees (hem 1.486) to 96 degrees (hem 1.500) that kept its old y
+    # would hang under the cut's new line.
+    laid[:, 1] = np.maximum(laid[:, 1],
+                            hem_height(np.abs(new_angle)))
+    out[band] = laid
+    # Two re-laid vertices can land on the same spot (same row value from adjacent
+    # bands' spreads), which turns their shared triangles into zero-area ones the
+    # refinement contract rejects. Nudge any later vertex that sits less than half a
+    # millimetre from an earlier one, along its own angle, by a step unique to its
+    # index -- the strands' look does not read a sub-millimetre scatter.
+    moved_idx = np.where(band1)[0]
+    pts = out[moved_idx]
+    for a in range(len(moved_idx)):
+        for b in range(a + 1, len(moved_idx)):
+            if np.linalg.norm(pts[b] - pts[a]) < 0.0005:
+                _, _, ang_b = polar(pts[b][None])
+                step = 0.8 + 0.13 * b
+                new_ang = ang_b[0] + step
+                rad_b = np.radians(new_ang)
+                rb = float(np.linalg.norm([pts[b, 0], pts[b, 2] - AXIS_Z]))
+                pts[b, 0] = rb * np.sin(rad_b)
+                pts[b, 2] = AXIS_Z - rb * np.cos(rad_b)
+                out[moved_idx[b]] = pts[b]
+    if record is not None:
+        record["relayed"] = moved_idx
+    return out
+
+
+def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray,
+                 record: dict | None = None) -> np.ndarray:
+    """The main shell: pinned cut edge, skull-following volume, strand ridges.
+
+    When `record` is given it receives the thin-side re-lay's moved vertex ids (see
+    `shell_normals`, which turns them into the wall's outward shading normals).
+    """
     p = np.asarray(points, np.float64)
     _, _, angle = polar(p)
     target_hem = hem_height(angle)
@@ -383,7 +705,117 @@ def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.n
     # as hair lying on the cheek. The shell's fit and the cards' translation both aim for
     # it, but a vertex can still land a few tenths of a millimetre under; this is the
     # guarantee, expressed once, after both.
-    out[:, 1] = np.maximum(out[:, 1], target_hem)
+    # The hem clamp runs BEFORE the drape: the drape has to decide its radii at the
+    # heights the cut leaves, or the guard's vertical clamp lifts the draped vertices
+    # afterwards and lands them back inside the ear above them (measured: draping
+    # before clamping left 13 ear vertices reading through the clamp-lifted surface).
+    clamped = out.copy()
+    clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
+    relayed = _relay_the_thin_side(clamped, triangles, shell, target_hem, skin, record)
+    return surface_guard(ear_drape(relayed, skin, triangles), skin, target_hem)
+
+
+def shell_normals(points: np.ndarray, triangles: np.ndarray,
+                  relayed: np.ndarray) -> np.ndarray:
+    """Smooth normals for the cropped shell, with the re-lay's stretched faces excluded.
+
+    The wall's vertices move across the corridor -- up to ~9 cm -- and the triangles
+    that tie them to the unmoved sheet span that gap. Area-weighted, those faces drag
+    their corners' smooth normals inward, and the wall renders as dark slats from the
+    side cameras. Winding is pinned by the refinement contract, so the fix is the
+    normal attribute: no face that touches a re-laid vertex contributes to the smooth
+    normals (the untouched sheet's are then exactly the source's), and every re-laid
+    vertex -- plus any vertex left with no clean face -- shades along the outward
+    radial, the direction a wall on the side of the skull actually faces. Weld groups
+    are patched whole: coincident export-seam twins share one welded normal, and
+    patching a single member would draw a shading seam down the wall.
+    """
+    points = np.asarray(points, np.float64)
+    relayed = np.unique(np.asarray(relayed, np.int64))
+    faces = triangles
+    if len(relayed):
+        faces = triangles[~np.isin(triangles, relayed).any(1)]
+    # The same accumulation as geometry.normals (coincident seams welded for shading
+    # only, area-weighted), minus its all-or-nothing demand that every vertex keep a
+    # face: the wall's corners have none, and they take the radial instead.
+    unique, weld = np.unique(np.round(points, 7), axis=0, return_inverse=True)
+    result = np.zeros((len(unique), 3), np.float64)
+    if len(faces):
+        face = np.cross(points[faces[:, 1]] - points[faces[:, 0]],
+                        points[faces[:, 2]] - points[faces[:, 0]])
+        for corner in range(3):
+            np.add.at(result, weld[faces[:, corner]], face)
+    lengths = np.linalg.norm(result, axis=1, keepdims=True)
+    unit = np.divide(result, lengths, out=np.zeros_like(result), where=lengths > 1e-12)
+    unit[np.abs(unit) < 1e-12] = 0.0
+    # A weld group goes radial if any of its members was re-laid, or was left with no
+    # clean face, or its clean-face accumulation cancelled out.
+    radial = np.zeros(len(unique), bool)
+    if len(relayed):
+        radial[weld[relayed]] = True
+    present = np.zeros(len(points), bool)
+    present[np.unique(faces)] = True
+    radial[weld[~present]] = True
+    radial[lengths[:, 0] <= 1e-12] = True
+    _, outward, _ = polar(points)
+    normals = unit[weld]
+    for index in np.flatnonzero(radial[weld]):
+        direction = outward[index]
+        norm = float(np.linalg.norm(direction))
+        normals[index] = direction / norm if norm > 1e-9 else np.array([0.0, 1.0, 0.0])
+    normals[np.abs(normals) < 1e-12] = 0.0
+    return normals.astype(np.float32)
+
+
+def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarray:
+    """Nothing the fit placed may end up buried in the head.
+
+    A card the fit translates whole can land tens of millimetres inside the skin (its
+    interior vertices keep their offset from a centre that was placed on the surface),
+    and where the shell's edge row has moved, such a sliver shows as a black jag on the
+    temple. Two passes dig them out: any non-cap vertex more than 3 mm under the skull
+    field is pushed back out along its own radial to 2.5 mm proud; where the field
+    under-measures the skin (the pre-auricular hollow reads the neck's radius, not the
+    face's), the vertex is snapped to 2 mm outside the nearest skin point instead.
+    """
+    radius, outward, angle = polar(points)
+    out = points.copy()
+    # The cut is a hard rule first: the hem clamp can lift an edge vertex tens of
+    # millimetres straight up, and lifted at its old radius it lands inside the cheek.
+    # So clamp, then measure against the skull at the *clamped* height.
+    out[:, 1] = np.maximum(out[:, 1], hem)
+    cap = (1.0 - smoothstep(.026, .055, radius)) > 0.0
+    skull = scalp_radius(angle, out[:, 1], _field_of(skin))
+    buried = (~cap) & (radius < skull - 0.003)
+    if buried.any():
+        push = (skull[buried] + 0.0025 - radius[buried])[:, None]
+        out[buried] += outward[buried] * push
+        # Where the field under-measures the skin (the pre-auricular hollow reads the
+        # neck's radius, not the face's), the radial push above still leaves the vertex
+        # inside. Measure those against the skin itself and snap each one onto 2 mm of
+        # its nearest skin point's own normal -- buried becomes a card sitting on the
+        # surface, which is what it was supposed to be.
+        surface, normals = skin[0], skin[1]
+        for index in np.where(buried)[0]:
+            distance = ((surface - out[index]) ** 2).sum(1)
+            nearest = int(np.argmin(distance))
+            direction = out[index] - surface[nearest]
+            reach = float(np.linalg.norm(direction))
+            if reach < 1e-9:
+                direction = normals[nearest]
+                reach = float(np.linalg.norm(direction))
+                if reach < 1e-9:
+                    continue
+            normal = normals[nearest]
+            # Outward if the vertex sits on the normal's side of its skin point, and
+            # already proud enough if it is 2 mm out along it.
+            if float(direction @ normal) < 0.002:
+                # Placed along the vertex's own approach direction, not the shared
+                # skin normal: two buried vertices of one card then land on different
+                # points of the 2 mm shell instead of collapsing into a zero-area
+                # triangle.
+                out[index] = surface[nearest] + direction / reach * 0.002
+        out[:, 1] = np.maximum(out[:, 1], hem)
     return out
 
 
@@ -405,4 +837,6 @@ def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) ->
     for part in parts:
         index = np.asarray(part, np.int64)
         out[index] = _fit_card(p[index], angle[index], target_hem, spans[index], skin[0])
-    return out
+    clamped = out.copy()
+    clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
+    return surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)

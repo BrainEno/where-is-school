@@ -358,7 +358,12 @@ class RefinedCharacterTests(unittest.TestCase):
             # is a real short cut rather than a lift.
             shipped = new["POSITION"]
             self.assertEqual(len(shipped), len(kept))
-            below = lambda points: int((points[:, 1] < 1.500).sum())
+            # The owner's r37 note re-cut the sides to drape over the ears and past the
+            # lobes (revision 7), so the old 1.500 length line -- the earlier crop's
+            # over-the-ear hem -- no longer measures the cut. Below 1.460 no hair is
+            # authorised at all: the source bob's kept tail has hundreds of vertices
+            # under it, the shipped cut has none.
+            below = lambda points: int((points[:, 1] < 1.460).sum())
             self.assertLess(below(shipped), below(old["POSITION"][kept]) * .10,
                             "the crop did not take length off the bob")
             # Nothing hangs below the ear lobe, which is what made it a bob.
@@ -618,9 +623,13 @@ class RefinedCharacterTests(unittest.TestCase):
         for model in [self.teacher_bytes, self.student_bytes]:
             self.assertLessEqual(len(model), 1536 * 1024)
         for (doc, _binary, surfaces), limit, revision in zip(
-                self.outputs, [64604, 62340], [2, 5]):
-            # Revision 3 is the teacher's resting face, expression shapes and crop; the
-            # seated student is unchanged at revision 2.
+                self.outputs, [64604, 62340], [2, 11]):
+            # Revision 3 is the teacher's resting face, expression shapes and crop;
+            # revisions 6-11 re-cut the hair into the owner's short bob -- 11 drapes
+            # the sides low over the ears (the ear drape keeps the shell clear of the
+            # ear surface the low hem used to clip through) and every one of them digs
+            # the buried card slivers back out. The seated student is unchanged at
+            # revision 2.
             self.assertEqual(doc["asset"]["extras"]["geometry_revision"], revision)
             self.assertLess(sum(len(part["triangles"]) for part in surfaces.values()), limit)
 
