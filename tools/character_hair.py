@@ -455,8 +455,13 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
        outside the outermost ear surface near it -- near in *footprint* (angle and
        height), not in 3D, because a vertex buried 19 mm under the ear is still AT the
        ear's place on the head, and a 3D reach would measure the radial gap and leave
-       it there. The push feathers out over 10-18 mm of footprint, so the drape starts
-       slightly in front of the ear and dies out behind and below it, no step.
+       it there -- or to 10 mm proud of the skull over the cheek corridor (40-100
+       degrees), whichever is farther. The cheek half is the curtain that makes the
+       bob read: a shell that hugs the skull there puts its hem ring across the
+       pre-auricular slope, and skin shows between the hem and the ear in every
+       review frame; real side hair hangs OUTSIDE the slope and shades it, so the
+       shell is held away from the head over the cheek and feathers back to the
+       skull behind the ear (100-112 degrees).
     2. The verification: the draped surface is then measured the way the render draws
        it -- every ear vertex against the hair's triangles -- and any vertex that still
        reads through lifts the hair vertices around it by its own depth plus 2 mm.
@@ -477,8 +482,12 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
     footprint = np.sqrt(arc ** 2 + (out[:, 1][:, None] - ears[None, :, 1]) ** 2)
     nearest_footprint = footprint.min(axis=1)
     envelope = np.where(footprint < 0.018, ear_radius[None, :], -np.inf).max(axis=1)
-    target = np.where(np.isfinite(envelope), envelope + 0.0035, radius)
-    weight = 1.0 - smoothstep(0.010, 0.018, nearest_footprint)
+    field = scalp_field(skin[0])
+    skull = scalp_radius(angle, out[:, 1], field)
+    curtain = smoothstep(np.radians(30.0), np.radians(42.0), np.abs(angle)) \
+        * (1.0 - smoothstep(np.radians(100.0), np.radians(112.0), np.abs(angle)))
+    target = np.maximum(envelope + 0.0035, skull + curtain * 0.010)
+    weight = np.maximum(1.0 - smoothstep(0.010, 0.018, nearest_footprint), curtain)
     grow = weight * np.clip(target - radius, 0.0, 0.03)
     out = out + outward * grow[:, None]
     if triangles is None:
