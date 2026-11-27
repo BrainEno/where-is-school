@@ -98,16 +98,20 @@ PROTAGONIST_SKIN = {
     "light_tint": "#F6E9D6",
     "shadow_fill": 0.60,
     # A lighter half-tone so the cheekbone, nose and brow ridge keep their planes without
-    # the cave-dark mid zone the 0.57 value painted.
-    "half_tone": 0.63,
+    # the cave-dark mid zone the 0.57 value painted. The final r38 step: the mouth's
+    # N·L sits near 0.2 under the front key, so the half-tone band IS the mouth's
+    # brightness -- at 0.63 it read as a dirty seam under the lit upper face (a 1.6x
+    # value step across the subnasal zone); 0.68 with the light band entered at 0.34
+    # holds the whole mid face within one value of the lit planes.
+    "half_tone": 0.68,
     "edge_softness": 0.18,
     # The blocks no longer push the terminator: at 0.10 the mottling visibly warped the
     # shadow edges into ragged bands (the owner's r37 "blotches under hard bands").
     "edge_break": 0.06,
     # A slightly wider half-tone band than the first round: the socket and nose-side
     # pools lighten with it, which is where the skull reading came from.
-    "light_edge": 0.40,
-    "light_strength": 0.72,
+    "light_edge": 0.34,
+    "light_strength": 0.76,
 }
 PROTAGONIST = {
     "label": "protagonist: painted (option C)",
