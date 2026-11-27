@@ -605,10 +605,17 @@ def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.nd
     rows = [row for row in rows if len(row) >= 2]
     if not rows:
         return out
-    row_ys = np.linspace(1.508, 1.566, len(rows))
+    # 1.500 at the bottom: the ear's lobe sits at 1.506, and a bottom row above it
+    # leaves a 2 mm strip of ear showing under the wall from the side camera
+    # (measured: 4 ear vertices at y 1506-1507 visible from the 90-degree camera).
+    row_ys = np.linspace(1.500, 1.566, len(rows))
     for k, row in enumerate(rows):
         seq = np.argsort(new_abs[row])
-        new_abs[row[seq]] = np.linspace(86.0, 118.0, len(row))
+        # 74-128: the wall spans the corridor, its forward window (the 45-degree
+        # sight-lines slide under an 86-degree front edge -- measured: 126 ear
+        # vertices visible from the 45-degree camera) and its own source span, so
+        # the hole the re-lay leaves in the sheet sits wholly behind the wall.
+        new_abs[row[seq]] = np.linspace(74.0, 128.0, len(row))
         ys[row] = row_ys[k]
         laid[row, 1] = row_ys[k]
     new_angle = thin * new_abs
@@ -644,56 +651,12 @@ def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.nd
     laid[:, 1] = np.maximum(laid[:, 1],
                             hem_height(np.abs(new_angle)))
     out[band] = laid
-    # The wall's front edge still leaks: a 45-degree sight-line to the ear's rim
-    # crosses the corridor's forward half at radii the wall only reaches past 86
-    # degrees, so rays slide under the wall's front edge and escape to the camera
-    # (measured: 126 ear vertices visible from the 45-degree camera with the wall
-    # alone). A second band, taken from behind the wall (118-140 degrees) and laid
-    # over 74-92 degrees at the same body, closes that window; its triangles stretch
-    # from the forward positions back to the unmoved sheet behind, and a stretched
-    # triangle still renders solid.
-    band2 = (shell & (angle * thin > 118.0) & (angle * thin < 140.0)
-             & (out[:, 1] > 1.498) & (out[:, 1] < 1.570) & (radius > 0.030)
-             & ~band1)
-    if band2.any():
-        laid2 = out[band2]
-        _, _, band2_angle = polar(laid2)
-        abs2 = np.abs(band2_angle)
-        ys2 = laid2[:, 1]
-        order2 = np.argsort(ys2 * 1000 + abs2)
-        rows2 = []
-        row_start = 0
-        for k in range(len(order2) + 1):
-            if k == len(order2) or ys2[order2[k]] - ys2[order2[k - 1]] > 0.008:
-                rows2.append(order2[row_start:k])
-                row_start = k
-        rows2 = [row for row in rows2 if len(row) >= 2]
-        if rows2:
-            row_ys2 = np.linspace(1.504, 1.566, len(rows2))
-            for k, row in enumerate(rows2):
-                seq = np.argsort(abs2[row])
-                # 74-85.5, not 74-92: the first band's spread starts at 86, and two
-                # bands sharing a spread value put two vertices on the same spot --
-                # a zero-area triangle the refinement contract rejects.
-                abs2[row[seq]] = np.linspace(74.0, 85.5, len(row))
-                laid2[row, 1] = row_ys2[k]
-            ang2 = thin * abs2
-            rad2 = np.radians(ang2)
-            for i in range(len(laid2)):
-                local2 = scalp_radius(np.array([ang2[i]]),
-                                      np.array([laid2[i, 1]]), field)[0]
-                r2 = max(float(local2) + 0.024, 0.084)
-                laid2[i, 0] = r2 * np.sin(rad2[i])
-                laid2[i, 2] = AXIS_Z - r2 * np.cos(rad2[i])
-                laid2[i, 1] = max(laid2[i, 1],
-                                  hem_height(np.abs(ang2[i])))
-            out[band2] = laid2
     # Two re-laid vertices can land on the same spot (same row value from adjacent
     # bands' spreads), which turns their shared triangles into zero-area ones the
     # refinement contract rejects. Nudge any later vertex that sits less than half a
     # millimetre from an earlier one, along its own angle, by a step unique to its
     # index -- the strands' look does not read a sub-millimetre scatter.
-    moved_idx = np.where(band1 | band2)[0]
+    moved_idx = np.where(band1)[0]
     pts = out[moved_idx]
     for a in range(len(moved_idx)):
         for b in range(a + 1, len(moved_idx)):
