@@ -35,9 +35,15 @@ CROWN_Y = 1.6450
 # |angle| from the face, in degrees -> height of the cut edge in metres. Front 1.592 is
 # 29 mm above the brows (1.549-1.563); the sides clear the top of the ear at 1.564; the nape
 # sits at 1.515, well above the collar at 1.32.
+# The cut: a women's short bob (owner's r37 note -- the previous crop read male).
+# A full fringe hangs to 1.568 (8-13 mm above the brow line at 1.553-1.558), the
+# temple pieces frame the face, the sides drape over the ear tops (the ears reach
+# 1.5645 and the skull field carries their radius, so the shell rides outside them),
+# and the nape tapers to 1.506 -- short of the collar, longer in the neck than the
+# ears are tall, which is the shape that reads female at this stylisation.
 HEM_ANGLE = np.array([0.0, 24.0, 46.0, 66.0, 84.0, 100.0, 118.0, 136.0, 154.0, 180.0])
-HEM_Y = np.array([1.5925, 1.5920, 1.5895, 1.5830, 1.5715,
-                  1.5590, 1.5365, 1.5215, 1.5160, 1.5150])
+HEM_Y = np.array([1.5680, 1.5710, 1.5700, 1.5620, 1.5460,
+                  1.5300, 1.5160, 1.5100, 1.5070, 1.5060])
 # The skull field: 4 degrees by 4 mm is finer than the hair's own spacing.
 FIELD_STEP_DEG = 4.0
 FIELD_STEP_Y = .004
@@ -88,21 +94,29 @@ def hem_height(angle_deg: np.ndarray) -> np.ndarray:
 
 
 def thickness(angle_deg: np.ndarray, hem: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Stand-off from the scalp, from 2 mm at the hairline to 15 mm at the crown."""
+    """Stand-off from the scalp, from 3 mm at the hairline to 17 mm at the crown.
+
+    The bob carries a little more body than the crop it replaced, so the fringe and
+    the side pieces read as hair with weight rather than a scalp decal.
+    """
     side = smoothstep(40.0, 96.0, np.abs(angle_deg))
-    at_edge = .0024 + .0012 * side
+    at_edge = .0030 + .0012 * side
     crown = (1.0 - smoothstep(hem, CROWN_Y, y)) ** .75
-    return at_edge + (.0150 - at_edge) * crown
+    return at_edge + (.0168 - at_edge) * crown
 
 
 def strands(angle_deg: np.ndarray, y: np.ndarray, hem: np.ndarray) -> np.ndarray:
-    """Ridges that run down the fall of the hair, strongest just above the cut."""
+    """Broad, soft ridges down the fall of the hair, strongest just above the cut.
+
+    The previous ridging counted 21 lobes round the head, which read as a tight
+    perm; the bob falls in fewer, wider waves.
+    """
     a = np.radians(angle_deg)
-    phase = 21.0 * a + .8 * (y - 1.52) / .01
+    phase = 13.0 * a + .8 * (y - 1.52) / .01
     ripple = (np.cos(phase) + .45 * np.cos(2.3 * phase + 1.7)
               + .25 * np.cos(.7 * phase + 1.4))
     near_edge = 1.0 - smoothstep(hem, hem + .032, y)
-    return .0016 * ripple * (.45 + .55 * near_edge)
+    return .0013 * ripple * (.45 + .55 * near_edge)
 
 
 def boundary_loop(triangles: np.ndarray) -> np.ndarray:
@@ -249,7 +263,15 @@ def _spans(points: np.ndarray, angle: np.ndarray, target_hem: np.ndarray,
 
 
 def _field_of(skin: np.ndarray):
-    return scalp_field_cached(np.ascontiguousarray(skin, dtype=np.float64).tobytes())
+    """The skull field for the shell's fit, built from the head's surface alone.
+
+    prepare hands the fit a (positions, normals) pair. Flattened as one point cloud the
+    normals read as a one-metre sphere of "skull", and wherever the real skin leaves a
+    gap along the height the interpolated fill bridges it from that anchor, throwing
+    queries below the skin's reach tens of millimetres off the head.
+    """
+    surface = skin[0] if isinstance(skin, tuple) else skin
+    return scalp_field_cached(np.ascontiguousarray(surface, dtype=np.float64).tobytes())
 
 
 def _place(points: np.ndarray, y: np.ndarray, offset: np.ndarray, skin: np.ndarray,

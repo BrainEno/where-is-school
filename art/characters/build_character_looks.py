@@ -77,18 +77,21 @@ PROTAGONIST_SKIN = {
     "albedo": "#B4A58C",
     "pigment_a": "#98A088",
     "pigment_b": "#C2A68E",
-    # Coarse enough to be seen as blocks at the gameplay camera's distance; at 24 the face
-    # read as smooth.
-    "pigment_mix": 0.46,
-    "pigment_value": 0.14,
+    # The owner's r37 note: the face read as blotches under hard bands. The value
+    # steps glaze together (N's recipe) and the band edges soften, so the planes
+    # still read without the patchwork.
+    "pigment_blend": 0.78,
+    "pigment_mix": 0.30,
+    "pigment_value": 0.07,
     "pigment_scale": 15.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
-    "shade_tint": "#9AA6C6",
+    "shade_tint": "#A6ABBE",
     "light_tint": "#F4EADC",
-    "shadow_fill": 0.32,
+    "shadow_fill": 0.46,
     # A darker half-tone so the cheekbone, nose and brow ridge keep their planes.
-    "half_tone": 0.5,
-    "edge_break": 0.24,
+    "half_tone": 0.57,
+    "edge_softness": 0.12,
+    "edge_break": 0.10,
     # Less of the face in the full light: the tired face is mostly half-tone.
     "light_edge": 0.55,
     "light_strength": 0.7,
@@ -100,15 +103,18 @@ PROTAGONIST = {
         "protagonist_mat_skin": dict(
             PROTAGONIST_SKIN,
             # Under the eyes: a violet-grey bruise of tiredness (the portrait's).
+            # The owner read the unfeathered 0.75 stamp as a black hole on the
+            # shadow side; it stays, as a feathered glaze of the same hue.
             patch_center=(0.034, 1.565, 0.104),
             patch_radius=(0.03, 0.02, 0.034),
-            patch_color="#665570",
-            patch_strength=0.75,
+            patch_color="#74657E",
+            patch_strength=0.42,
+            patch_feather=0.9,
             # The hollow under the cheekbone, greened.
             patch2_center=(0.052, 1.528, 0.088),
             patch2_radius=(0.022, 0.03, 0.04),
             patch2_color="#98997F",
-            patch2_strength=0.4,
+            patch2_strength=0.3,
             outline=True,
         ),
         "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#A99A83", outline=True),
