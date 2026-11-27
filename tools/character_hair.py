@@ -484,26 +484,60 @@ def ear_drape(points: np.ndarray, skin: tuple, triangles: np.ndarray = None) -> 
     envelope = np.where(footprint < 0.018, ear_radius[None, :], -np.inf).max(axis=1)
     field = scalp_field(skin[0])
     skull = scalp_radius(angle, out[:, 1], field)
-    curtain = smoothstep(np.radians(30.0), np.radians(42.0), np.abs(angle)) \
-        * (1.0 - smoothstep(np.radians(100.0), np.radians(112.0), np.abs(angle)))
-    target = np.maximum(envelope + 0.0035, skull + curtain * 0.010)
+    # The curtain's floor is the ear's own outer rim, not the skull: a view from the
+    # front-side diagon crosses the corridor at radii up to the rim's reach, and hair
+    # that only clears the skull lets those rays pass outside it -- the skin above and
+    # in front of the ear shows through (measured: 30 skin vertices above their hem
+    # line visible from the 45-degree camera until the floor moved to the rim).
+    # polar() returns degrees, so every threshold here is degrees too -- mixing in
+    # radians silently zeroes the whole curtain (smoothstep(1.745, ..., 76 degrees)
+    # is 1, and the corridor multiplied itself out of existence).
+    curtain = smoothstep(30.0, 42.0, np.abs(angle)) \
+        * (1.0 - smoothstep(100.0, 112.0, np.abs(angle))) \
+        * (1.0 - smoothstep(1.585, 1.615, out[:, 1]))
+    # 10 mm proud of the skull, measured to block the 45-degree sight-lines: from a
+    # front-side camera the sight-line to the skin just above the ear crosses the
+    # ear-top strip at r 76-84, and a wall at skull+10 (~79-84 there) cuts it. A
+    # deeper wall backfires twice over -- pushed past the crossing radius it opens a
+    # view corridor between the skull and the wall, and the strip shows through worse
+    # (measured: 22 mm raised the visible count from 30 to 47, and an ear-rim floor
+    # of 87.5 mm did the same at the ear-top strip). Wrapping the ear itself is the
+    # verification loop's job, not a floor on the whole corridor.
+    target = np.maximum(envelope + 0.0035, skull + 0.010)
     weight = np.maximum(1.0 - smoothstep(0.010, 0.018, nearest_footprint), curtain)
-    grow = weight * np.clip(target - radius, 0.0, 0.03)
+    # The clip has to cover the move the deepest shell vertex needs to reach the
+    # curtain: an interior vertex sits ~36 mm under the temple's curtain target, and a
+    # tighter clip would tilt the slab instead of moving it whole.
+    grow = weight * np.clip(target - radius, 0.0, 0.045)
     out = out + outward * grow[:, None]
     if triangles is None:
         return out
+    # The verification loop measures the draped surface the way the render draws it,
+    # against everything the hair is supposed to hide: the ears AND the head skin
+    # above the hem line (skin below the hem is the cheek the cut deliberately
+    # reveals). Vertices that still read through lift the hair around them by their
+    # own depth plus 2 mm -- this is what closes the sag between the shell's sparse
+    # rows, which a vertex-level push alone cannot fix: the shell's side rows sit
+    # ~50 mm apart vertically, and the span between two pushed rows sags back under
+    # the 45-degree sight-lines. Three passes close it.
+    check = np.concatenate([skin[0], ears])
     for _pass in range(3):
-        closest, distance = _closest_on_triangles(ears, out, triangles)
-        axis = np.stack([np.zeros(len(ears)), ears[:, 1], np.zeros(len(ears))], axis=1)
+        closest, distance = _closest_on_triangles(check, out, triangles)
+        axis = np.stack([np.zeros(len(check)), check[:, 1], np.zeros(len(check))], axis=1)
         direction = closest - axis
         direction[:, 1] = 0
         direction /= np.maximum(np.linalg.norm(direction, axis=1, keepdims=True), 1e-12)
-        outward_side = ((ears - closest) * direction).sum(1) > 0
-        failing = outward_side & (distance > 0.0005)
+        outward_side = ((check - closest) * direction).sum(1) > 0
+        hem_line = hem_height(np.abs(polar(check)[2]))
+        # Skin a hair's depth above its hem line must be covered; below it, the cut
+        # is doing its job. The ear vertices ride on the skin's rule (they sit above
+        # the nape hem wherever hair is supposed to cover them).
+        covered = check[:, 1] > hem_line + 0.002
+        failing = outward_side & (distance > 0.0005) & covered
         if not failing.any():
             break
         depth = distance[failing] + 0.002
-        lift_d2 = ((out[:, None, :] - ears[failing][None, :, :]) ** 2).sum(-1)
+        lift_d2 = ((out[:, None, :] - check[failing][None, :, :]) ** 2).sum(-1)
         nearest = np.argmin(lift_d2, axis=1)
         reach = np.sqrt(lift_d2[np.arange(len(out)), nearest])
         lift = depth[nearest] * (1.0 - smoothstep(0.004, 0.009, reach))
