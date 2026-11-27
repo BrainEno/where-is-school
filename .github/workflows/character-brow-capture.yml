@@ -14,6 +14,11 @@ on:
       - "assets/models/protagonist/**"
       - "assets/models/q/**"
       - "assets/models/teacher-n/**"
+      # The painted looks change the render as surely as the geometry does;
+      # without these a look-only fix would re-cut the review from stale frames.
+      - "assets/characters/protagonist/**"
+      - "assets/characters/q/**"
+      - "assets/characters/teacher_n/**"
   workflow_dispatch:
 
 permissions:

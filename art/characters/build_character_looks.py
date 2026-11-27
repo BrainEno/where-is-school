@@ -77,13 +77,13 @@ PROTAGONIST_SKIN = {
     "albedo": "#B4A58C",
     "pigment_a": "#98A088",
     "pigment_b": "#C2A68E",
-    # The owner's r37 note: the face read as blotches under hard bands. The value
-    # steps glaze together (N's recipe) and the band edges soften, so the planes
-    # still read without the patchwork.
-    "pigment_blend": 0.78,
+    # The owner's r37 note: the face read as blotches under hard bands. The shipped
+    # path here is the stepped pigment, not the blend glaze (imported_assets scopes
+    # pigment_blend and patch_feather to the fine-detail roles), so the softening
+    # lives in a much shallower value depth, finer blocks and softened bands.
     "pigment_mix": 0.30,
     "pigment_value": 0.07,
-    "pigment_scale": 15.0,
+    "pigment_scale": 24.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
     "shade_tint": "#A6ABBE",
     "light_tint": "#F4EADC",
@@ -104,17 +104,17 @@ PROTAGONIST = {
             PROTAGONIST_SKIN,
             # Under the eyes: a violet-grey bruise of tiredness (the portrait's).
             # The owner read the unfeathered 0.75 stamp as a black hole on the
-            # shadow side; it stays, as a feathered glaze of the same hue.
+            # shadow side; it stays hard-edged but a third as strong and two
+            # steps lighter, so it reads as shading, not a hole.
             patch_center=(0.034, 1.565, 0.104),
             patch_radius=(0.03, 0.02, 0.034),
             patch_color="#74657E",
-            patch_strength=0.42,
-            patch_feather=0.9,
+            patch_strength=0.36,
             # The hollow under the cheekbone, greened.
             patch2_center=(0.052, 1.528, 0.088),
             patch2_radius=(0.022, 0.03, 0.04),
             patch2_color="#98997F",
-            patch2_strength=0.3,
+            patch2_strength=0.26,
             outline=True,
         ),
         "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#A99A83", outline=True),

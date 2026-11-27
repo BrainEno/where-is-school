@@ -172,17 +172,18 @@ def q_oil(base: dict) -> dict:
     look["outline"] = {"wobble": 0.35, "wobble_scale": 12.0}
     parts = look["parts"]
     # The owner's r37 note: Q's face read as uneven colour -- the oil scheme's
-    # coarse value blocks and hard bands patched the cheeks. The flush and the
-    # eye sockets stay (they are the character), as feathered glazes; the blocks
-    # glaze together and the bands soften on N's refined recipe.
+    # coarse value blocks and hard bands patched the cheeks. The shipped path is
+    # the stepped pigment (imported_assets scopes pigment_blend and patch_feather
+    # to the fine-detail roles), so the value depth drops hard, the blocks get
+    # finer and the bands soften; the flush and the eye sockets stay (they are
+    # the character) but a third as strong.
     skin = {
         "albedo": "#CC9670",
         "pigment_a": "#D88565",
         "pigment_b": "#A9935E",
-        "pigment_blend": 0.8,
         "pigment_mix": 0.26,
         "pigment_value": 0.06,
-        "pigment_scale": 18.0,
+        "pigment_scale": 24.0,
         "pigment_stretch": (1.0, 1.8, 0.6),
         "shade_tint": "#C0BBA0",
         "light_tint": "#FFEBD0",
@@ -198,12 +199,11 @@ def q_oil(base: dict) -> dict:
         patch_center=(0.044, 1.628, 0.105),
         patch_radius=(0.032, 0.026, 0.045),
         patch_color="#C25E48",
-        patch_strength=0.26,
-        patch_feather=0.88,
+        patch_strength=0.22,
         patch2_center=Q_EYE_SOCKET["center"],
         patch2_radius=Q_EYE_SOCKET["radius"],
         patch2_color="#7E5642",
-        patch2_strength=0.26,
+        patch2_strength=0.22,
         mirror_center_x=0.0,
         outline=True,
     )
