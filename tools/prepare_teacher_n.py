@@ -962,6 +962,7 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
 
     # The hair is fitted to the skull, so it can only run once the head has been rewritten.
     skin = _head_geometry(document, arrays)
+    shell_fit = None
     for mesh in document["meshes"]:
         if mesh["name"] != "ST_Hair":
             continue
@@ -979,8 +980,9 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
                 def fit(points, _skin=skin, _shape=shape, _callback=callback, _record=record):
                     return _callback(points, _skin, _shape, _record)
             else:
-                def fit(points, _skin=skin, _shape=shape, _callback=callback):
-                    return _callback(points, _skin, _shape)
+                def fit(points, _skin=skin, _shape=shape, _callback=callback,
+                        _shell=shell_fit):
+                    return _callback(points, _skin, _shape, _shell)
 
             positions = fit(base)
             # The hair is re-shaped wholesale, so its normals are recomputed from the new
@@ -994,6 +996,9 @@ def _resting_channel(document: dict, binary: bytes, report: dict) -> bytes:
             positions = geometry.teacher_crown_part(positions)
             if material_name == "M_ST_Hair":
                 normals_out = hair.shell_normals(positions, shape, record.get("relayed", ()))
+                # The highlight prim follows the shell prim in the mesh: the corridor
+                # shield needs the fitted sheet's radius field to quilt over the wall.
+                shell_fit = positions
             else:
                 normals_out = geometry.normals(geometry.Geometry(positions, shape))
             arrays.write(attributes["POSITION"], positions)

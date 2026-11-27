@@ -583,88 +583,239 @@ def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.nd
     else:
         return out
     radius, _, angle = polar(out)
-    band = (shell & (angle * thin > 100.0) & (angle * thin < 128.0)
+    # The band spans the wedge AND the pre-auricular sheet below it (86, not 100):
+    # the wedge alone is a diagonal sash with a pinched waist -- five consecutive
+    # cross-sections of ONE vertex -- and a wall built from it alone grows a
+    # full-height hole at the waist (measured: an empty channel at 91-100 degrees
+    # with 180 of 253 right-ear sight-lines leaking past 96-degree columns). The
+    # lower sheet (26 vertices at 86-100 degrees under y 1.506) is graph-connected
+    # to the waist and fattens its cross-sections; the crown's bottom edge (y at or
+    # above 1.578) stays out of the band so the wall's top row still meets it.
+    band = (shell & (angle * thin > 86.0) & (angle * thin < 128.0)
             & (out[:, 1] > 1.486) & (out[:, 1] < 1.578) & (radius > 0.030))
-    band1 = band.copy()
     if not band.any():
+        if record is not None:
+            record["relayed"] = np.zeros(0, np.int64)
         return out
-    laid = out[band]
-    _, _, band_angle = polar(laid)
-    # The re-lay turns the thin side's band into a grid wall over the corridor: the
-    # rows (10 mm bands of height, split where the source sheet's rows have gaps)
-    # are spread EVENLY over 86-118 degrees, and the rows themselves are placed at
-    # even heights over the ear's span (1.508-1.560). Both spreads matter: a linear
-    # remap of the old angles keeps the thin side's original sparsity, and keeping
-    # the source rows' own heights leaves a vertical gap between them that the
-    # sight-lines sail straight through (measured: a ray from the ear's rim runs
-    # outward to r 87-95 while its angle slides 105 -> 88, and it passed under the
-    # re-laid wall's bottom row until the rows were spaced evenly too).
-    new_abs = np.abs(band_angle)
-    ys = laid[:, 1]
-    order = np.argsort(ys * 1000 + new_abs)
-    rows = []
-    row_start = 0
-    for k in range(len(order) + 1):
-        if k == len(order) or ys[order[k]] - ys[order[k - 1]] > 0.010:
-            rows.append(order[row_start:k])
-            row_start = k
-    rows = [row for row in rows if len(row) >= 2]
-    if not rows:
-        return out
-    # 1.500 at the bottom (the ear's lobe sits at 1.506: a bottom row above it left
-    # a 2 mm strip of ear showing under the wall) and 1.578 at the top, where the
-    # crown shell above 128 degrees begins -- a wall that stops at 1.566 leaves a
-    # horizontal slit between its top edge and the crown sheet, and the stretched
-    # triangles' inner faces show through it as dark slats from the side camera.
-    row_ys = np.linspace(1.500, 1.578, len(rows))
-    for k, row in enumerate(rows):
-        seq = np.argsort(new_abs[row])
-        # 74-128: the wall spans the corridor, its forward window (the 45-degree
-        # sight-lines slide under an 86-degree front edge -- measured: 126 ear
-        # vertices visible from the 45-degree camera) and its own source span, so
-        # the hole the re-lay leaves in the sheet sits wholly behind the wall.
-        new_abs[row[seq]] = np.linspace(74.0, 128.0, len(row))
-        ys[row] = row_ys[k]
-        laid[row, 1] = row_ys[k]
-    new_angle = thin * new_abs
-    # The radius mirrors the FULL side at the re-laid position: the full side's sheet
-    # stands 82-97 mm out at these heights -- outside the ear's rim -- and that is
-    # what shades the slope from the sight-lines, which cross the corridor at up to
-    # ~95 mm. The thin side's own radii (66-93, mostly deep) would leave every
-    # sight-line passing outside the re-laid band.
-    full_shell = shell & ((out[:, 1] > 1.480) & (out[:, 1] < 1.600))
-    fr, _, fa = polar(out[full_shell])
-    fa = np.abs(fa) * -thin
-    fy = out[full_shell][:, 1]
-    laid_radius = radius[band]
+    bidx = np.where(band)[0]
+    bset = set(int(v) for v in bidx)
+    # The thin side's band is not a wall waiting to be spread: measured on the source
+    # graph, it is one connected WEDGE -- a diagonal sash hugging the behind-ear
+    # region, wide (about 15 vertices across) at its upper end near 100 degrees and
+    # pinching to 2-3 vertices at its lower tip near 128 degrees. Spreading it by
+    # horizontal rows (the previous re-lay) ignores that shape: each row slices
+    # across the wedge's diagonal, ranks unrelated graph neighbours by angle, and
+    # the triangles between rows are left spanning arbitrary corners -- 30% of the
+    # wall's quads faced inward and the tie fans to the unmoved sheet tore open, so
+    # the frames showed skin and deeper layers through the gaps (the dense ray probe
+    # found 13-109 leaking slots per camera). The wall has to be UNROLLED from the
+    # wedge along its own graph: s, the position along its length, and t, the
+    # lateral depth off its spine, both as smooth geodesic coordinates. Monotone in
+    # both, the unroll carries graph neighbours to neighbouring slots -- no torn
+    # fans -- and fills the corridor rectangle corner to corner.
+    import heapq
+    adj = {v: {} for v in bidx}
+    edge_total: dict = {}
+    for tri in triangles:
+        corners = [int(tri[0]), int(tri[1]), int(tri[2])]
+        inb = [c in bset for c in corners]
+        for i in range(3):
+            u, v = corners[i], corners[(i + 1) % 3]
+            if inb[i] and inb[(i + 1) % 3]:
+                weight = float(np.linalg.norm(out[v] - out[u]))
+                key = (min(u, v), max(u, v))
+                edge_total[key] = edge_total.get(key, 0) + 1
+                if v not in adj[u] or weight < adj[u][v]:
+                    adj[u][v] = weight
+                    adj[v][u] = weight
+
+    def dijkstra(sources):
+        dist = {}
+        heap = [(0.0, s) for s in sources]
+        heapq.heapify(heap)
+        while heap:
+            d, u = heapq.heappop(heap)
+            if u in dist:
+                continue
+            dist[u] = d
+            for v, w in adj[u].items():
+                if v not in dist:
+                    heapq.heappush(heap, (d + w, v))
+        return dist
+
+    components = []
+    seen = set()
+    for v in adj:
+        if v in seen:
+            continue
+        stack, comp = [v], []
+        seen.add(v)
+        while stack:
+            u = stack.pop()
+            comp.append(u)
+            for n in adj[u]:
+                if n not in seen:
+                    seen.add(n)
+                    stack.append(n)
+        components.append(sorted(comp))
+
+    placed_ids = []
     field = scalp_field(skin[0])
-    for i in range(len(laid)):
-        near = ((np.abs(fa - new_angle[i]) < 7.0)
-                & (np.abs(fy - laid[i, 1]) < 0.014))
-        if near.any():
-            laid_radius[i] = max(laid_radius[i], float(fr[near].max()))
-        # The wall must clear the sight-lines wherever they cross: a ray from the
-        # ear's rim travels outward to r 87-95 while its angle slides 105 -> 88, so
-        # the corridor wall's floor is the local skin radius plus 24 mm of body at
-        # every re-laid position.
-        local = scalp_radius(np.array([new_angle[i]]),
-                             np.array([laid[i, 1]]), field)[0]
-        laid_radius[i] = max(laid_radius[i], float(local) + 0.024)
-    rad = np.radians(new_angle)
-    laid[:, 0] = laid_radius * np.sin(rad)
-    laid[:, 2] = AXIS_Z - laid_radius * np.cos(rad)
-    # The cut is measured at the vertex's NEW angle after the re-lay: a vert re-laid
-    # from 120 degrees (hem 1.486) to 96 degrees (hem 1.500) that kept its old y
-    # would hang under the cut's new line.
-    laid[:, 1] = np.maximum(laid[:, 1],
-                            hem_height(np.abs(new_angle)))
-    out[band] = laid
-    # Two re-laid vertices can land on the same spot (same row value from adjacent
-    # bands' spreads), which turns their shared triangles into zero-area ones the
+    full_shell = shell & ((out[:, 1] > 1.480) & (out[:, 1] < 1.600))
+    fr, _, fa_full = polar(out[full_shell])
+    fa_full = np.abs(fa_full) * thin
+    fy = out[full_shell][:, 1]
+    for comp in components:
+        if len(comp) < 3:
+            continue  # a stray vertex cannot tile anything; the dedupe settles it
+        cids = np.array(comp, np.int64)
+        d1 = dijkstra([comp[0]])
+        end1 = max(d1, key=d1.get)
+        d2 = dijkstra([end1])
+        end2 = max(d2, key=d2.get)
+        d1 = dijkstra([end1])
+        d2 = dijkstra([end2])
+        length = d1[end2]
+        salong = np.array([(d1[int(v)] - d2[int(v)]) * .5 for v in comp]) + length * .5
+        tdepth = np.array([(d1[int(v)] + d2[int(v)] - length) * .5 for v in comp])
+        # The unroll lays the wedge out four ways (either end forward, the lateral
+        # order kept or flipped); exactly two preserve the authored winding. The one
+        # that leaves the wedge's own quads facing outward is chosen -- ties to the
+        # refinement contract's winding clause cannot be unwound, so the placement
+        # has to respect it.
+        best = None
+        for flip_s, flip_t in ((0, 0), (0, 1), (1, 0), (1, 1)):
+            sa = -salong if flip_s else salong
+            ta = -tdepth if flip_t else tdepth
+            s_order = np.argsort(sa)
+            nbins = max(8, min(len(cids), int(np.ceil((sa.max() - sa.min()) / 0.004))))
+            edges_bin = np.linspace(sa.min() - 1e-9, sa.max() + 1e-9, nbins + 1)
+            bin_of = np.clip(np.digitize(sa, edges_bin) - 1, 0, nbins - 1)
+            new_abs = np.empty(len(cids), np.float64)
+            new_ys = np.empty(len(cids), np.float64)
+            # Angular slots go to the NON-empty cross-sections by rank, so a sparse
+            # stretch of the wedge cannot leave a hole in the wall: the occupied
+            # cross-sections spread evenly over 74-128 -- the corridor, its forward
+            # window (the 45-degree sight-lines slide under an 86-degree front
+            # edge -- measured: 126 ear vertices visible from the 45-degree camera)
+            # and its own source span -- and 1.500 at the bottom (the ear's lobe
+            # sits at 1.506: a bottom row above it left a 2 mm strip of ear showing
+            # under the wall) up to 1.578 at the top, where the crown shell above
+            # 128 degrees begins -- a wall that stops at 1.566 leaves a horizontal
+            # slit between its top edge and the crown sheet.
+            nonempty = [b for b in range(nbins) if (bin_of == b).any()]
+            # Column positions are weighted by MEMBER COUNTS, not spread evenly: the
+            # wedge's cross-sections vary from 18 members to 1 (the waist), and even
+            # slots stretch the dense sections across the same angle as the sparse
+            # ones, tearing the ladder triangles into 1-2 mm seams the sight-lines
+            # thread through (measured: 252 of 253 right-ear sight-lines grazing past
+            # a wall that maps as solid). Weighting by members packs the waist's
+            # singletons into a narrow cluster -- the source's long bridge triangles
+            # there span the cluster and keep it covered -- while every dense
+            # cross-section keeps roughly its own width. The map stays near-isometric
+            # where the sheet is dense, so its faces tile instead of tearing.
+            counts = np.array([float((bin_of == b).sum()) for b in nonempty])
+            cum = np.concatenate([[0.0], np.cumsum(counts)])
+            theta = 74.0 + 54.0 * (cum[:-1] + counts * 0.5) / counts.sum()
+            theta_of = {b: theta[k] for k, b in enumerate(nonempty)}
+            slot = {b: k for k, b in enumerate(nonempty)}
+            centre = np.full(nbins, np.nan)
+            for b in nonempty:
+                members = np.where(bin_of == b)[0]
+                if len(members) > 1:
+                    t_rank = np.empty(len(members), np.int64)
+                    t_rank[np.argsort(ta[members], kind="stable")] = np.arange(len(members))
+                    new_ys[members] = 1.500 + 0.078 * (t_rank / (len(members) - 1))
+                    centre[b] = float(new_ys[members].mean())
+            known = [b for b in nonempty if not np.isnan(centre[b])]
+            for b in nonempty:
+                members = np.where(bin_of == b)[0]
+                if not len(members) or not np.isnan(centre[b]):
+                    continue
+                new_abs[members] = theta_of[b]
+                if len(members) == 1:
+                    left = max([k for k in known if k < b], default=None)
+                    right = min([k for k in known if k > b], default=None)
+                    if left is None and right is None:
+                        new_ys[members] = 1.539
+                    elif left is None:
+                        new_ys[members] = centre[right]
+                    elif right is None:
+                        new_ys[members] = centre[left]
+                    else:
+                        w = (slot[b] - slot[left]) / max(slot[right] - slot[left], 1)
+                        new_ys[members] = centre[left] * (1 - w) + centre[right] * w
+                    centre[b] = float(new_ys[members].mean())
+            for b in nonempty:
+                members = np.where(bin_of == b)[0]
+                if len(members):
+                    new_abs[members] = theta_of[b]
+            trial = out.copy()
+            tl = trial[cids]
+            trial_angle = thin * new_abs
+            tl_radius = radius[cids]
+            for i in range(len(cids)):
+                near = ((np.abs(fa_full - trial_angle[i]) < 7.0)
+                        & (np.abs(fy - new_ys[i]) < 0.014))
+                if near.any():
+                    tl_radius[i] = max(tl_radius[i], float(fr[near].max()))
+                # The wall must clear the sight-lines wherever they cross: a ray from
+                # the ear's rim travels outward to r 87-95 while its angle slides
+                # 105 -> 88, so the corridor wall's floor is the local skin radius
+                # plus 24 mm of body at every re-laid position.
+                local = scalp_radius(np.array([trial_angle[i]]),
+                                     np.array([new_ys[i]]), field)[0]
+                tl_radius[i] = max(tl_radius[i], float(local) + 0.024)
+            rad_t = np.radians(trial_angle)
+            tl[:, 0] = tl_radius * np.sin(rad_t)
+            tl[:, 2] = AXIS_Z - tl_radius * np.cos(rad_t)
+            # The cut is measured at the vertex's NEW angle after the re-lay: a vert
+            # re-laid from 120 degrees (hem 1.486) to 96 degrees (hem 1.500) that
+            # kept its old y would hang under the cut's new line.
+            tl[:, 1] = np.maximum(new_ys, hem_height(np.abs(trial_angle)))
+            trial[cids] = tl
+            faces = triangles[np.isin(triangles, cids).all(1)]
+            tfa = np.cross(trial[faces[:, 1]] - trial[faces[:, 0]],
+                           trial[faces[:, 2]] - trial[faces[:, 0]])
+            tcen = trial[faces].mean(1)
+            trad = tcen * np.array([1.0, 0.0, 1.0])
+            trad /= np.linalg.norm(trad, axis=1, keepdims=True) + 1e-12
+            inverted = int(((tfa * trad).sum(1) < 0).sum())
+            score = (inverted, flip_s, flip_t)
+            if best is None or score < best[0]:
+                best = (score, tl.copy(), trial_angle, new_ys)
+            if inverted == 0:
+                break
+        _, tl, trial_angle, new_ys = best
+        laid_ids = np.array(comp, np.int64)
+        out[laid_ids] = tl
+        placed_ids.extend(comp)
+    # Two re-laid vertices can land on the same spot (same rank slot from adjacent
+    # cross-sections), which turns their shared triangles into zero-area ones the
     # refinement contract rejects. Nudge any later vertex that sits less than half a
     # millimetre from an earlier one, along its own angle, by a step unique to its
     # index -- the strands' look does not read a sub-millimetre scatter.
-    moved_idx = np.where(band1)[0]
+    moved_idx = np.asarray(sorted(placed_ids), np.int64)
+    # The placement can ripple radially: adjacent ladder triangles fold where the
+    # placed radii jitter, and the sight-lines thread the folds -- a wall whose
+    # (angle, height) map is solid still leaks through 1-2 mm gaps (measured: 252
+    # of 253 right-ear sight-lines grazing past stretched fans, none blocked).
+    # Smooth the re-laid vertices' radius over the band's own graph (median of the
+    # one-ring, three passes): the wall's radial profile turns locally flat, its
+    # faces tile instead of folding. The skin floor is re-applied so the smoothing
+    # cannot pull the wall into the sight-lines' corridor or into the head.
+    field = scalp_field(skin[0])
+    for _ in range(3):
+        rs = {int(v): float(np.hypot(out[v, 0], out[v, 2] - AXIS_Z)) for v in moved_idx}
+        new_rs = {int(v): float(np.median([rs[int(v)]] + [rs[int(n)] for n in adj[int(v)]]))
+                  for v in moved_idx}
+        for v in moved_idx:
+            ang_v = np.degrees(np.arctan2(out[v, 0], -(out[v, 2] - AXIS_Z)))
+            floor = float(scalp_radius(np.array([ang_v]), np.array([out[v, 1]]), field)[0]) + 0.024
+            r_new = max(new_rs[int(v)], floor)
+            rad = np.radians(ang_v)
+            out[v, 0] = r_new * np.sin(rad)
+            out[v, 2] = AXIS_Z - r_new * np.cos(rad)
     pts = out[moved_idx]
     for a in range(len(moved_idx)):
         for b in range(a + 1, len(moved_idx)):
@@ -764,6 +915,27 @@ def shell_normals(points: np.ndarray, triangles: np.ndarray,
         norm = float(np.linalg.norm(direction))
         normals[index] = direction / norm if norm > 1e-9 else np.array([0.0, 1.0, 0.0])
     normals[np.abs(normals) < 1e-12] = 0.0
+    # The wedge carries a fold from the source: some of its quads are wound inward
+    # and no placement can change that (the contract pins the winding). They shade
+    # dark from the outside unless their corners' normals point inward -- the
+    # renderer flips the normal on a back face, so an inward normal on an
+    # inward-wound quad reads as hair. Verts whose attached wall faces are mostly
+    # inward-wound take the negated radial; outward-wound quads keep the outward one.
+    if len(relayed):
+        faces = triangles[np.isin(triangles, relayed).any(1)]
+        face_vec = np.cross(points[faces[:, 1]] - points[faces[:, 0]],
+                            points[faces[:, 2]] - points[faces[:, 0]])
+        face_cen = points[faces].mean(1)
+        face_rad = face_cen * np.array([1.0, 0.0, 1.0])
+        face_rad /= np.linalg.norm(face_rad, axis=1, keepdims=True) + 1e-12
+        inward = (face_vec * face_rad).sum(1) < 0
+        inv_count = np.zeros(len(points), np.int64)
+        out_count = np.zeros(len(points), np.int64)
+        for k in range(3):
+            np.add.at(inv_count, faces[:, k], inward.astype(np.int64))
+            np.add.at(out_count, faces[:, k], (~inward).astype(np.int64))
+        flip = relayed[inv_count[relayed] > out_count[relayed]]
+        normals[flip] = -normals[flip]
     return normals.astype(np.float32)
 
 
@@ -819,7 +991,8 @@ def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarra
     return out
 
 
-def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.ndarray:
+def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray,
+                      shell: np.ndarray | None = None) -> np.ndarray:
     """The lighter strands: the same fit, held above the cut and 2 mm off the surface.
 
     They are separate cards lying on the shell. Cropping the shell alone would leave them
@@ -827,6 +1000,9 @@ def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) ->
     through the nape in the previous revision. Every island here is card-sized (this sheet
     has no curtain of its own), so each vertex is placed by the same rule the curtain uses,
     then carried the way the dark sheet's cards are.
+
+    When `shell` is given (the fitted main sheet), the back-right cards are moved on top
+    of it afterwards -- see `_shield_the_corridor`.
     """
     p = np.asarray(points, np.float64)
     _, _, angle = polar(p)
@@ -839,4 +1015,166 @@ def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) ->
         out[index] = _fit_card(p[index], angle[index], target_hem, spans[index], skin[0])
     clamped = out.copy()
     clamped[:, 1] = np.maximum(clamped[:, 1], target_hem)
-    return surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)
+    draped = surface_guard(ear_drape(clamped, skin, triangles), skin, target_hem)
+    return _shield_the_corridor(draped, triangles, skin, shell, p)
+
+
+def _shield_the_corridor(points: np.ndarray, triangles: np.ndarray, skin: tuple,
+                         shell: np.ndarray | None, source: np.ndarray) -> np.ndarray:
+    """Move the back-right highlight cards over the thin side's missing sheet.
+
+    The thin side leaks because whole sheet regions the full side owns are missing
+    there: the crown-side sheet at 55-90 degrees over y 1.55-1.60, the temple-side
+    fringe line, and the strip behind the ear under the wall. The leak sight-lines
+    cross that corridor at radii 88-104 mm (measured per leaking vertex: every one
+    of the 62 crossing points at r 104 lands inside 48-125 degrees, y 1.51-1.60).
+    The highlight cards are separate islands -- moving one leaves the shell beneath
+    intact -- so the back-right ones (their mean angle sits at 116-139 degrees,
+    outside every review camera's frustum) become that sheet: an outer plate at
+    r 105 mm over the whole crossing footprint, a crown-side band that follows the
+    full side's own radius (sampled from the fitted shell), and a behind-the-ear
+    patch, all above the hemline. Ribbons (2 columns x N rows) are laid column-wise,
+    so each authored quad keeps its corner pattern and the winding contract holds.
+    """
+    p = np.asarray(points, np.float64).copy()
+    _, _, angle = polar(p)
+    thin = 1.0
+    parts = islands(len(p), triangles)
+    targets = [np.asarray(part, np.int64) for part in parts
+               if 115.0 < float(np.abs(angle[np.asarray(part, np.int64)]).mean()) < 140.0]
+    if not targets:
+        return p
+    shell_p = np.asarray(shell, np.float64) if shell is not None else None
+    if shell_p is not None:
+        sr, _, sa = polar(shell_p)
+        sy = shell_p[:, 1]
+    field = scalp_field(skin[0])
+
+    def band_radius(th: float, yy: float, pad: float, lo: float, hi: float) -> float:
+        # The full side's own radius at this (angle, height): the median shell vertex
+        # radius within 5 degrees / 10 mm on the left, so the band carries the same
+        # hair volume the full side shows. The thin side's own max in the window (if
+        # any) keeps the band proud of the local surface so nothing interpenetrates.
+        # Everything in metres.
+        r_m, r_loc = 0.091, 0.0
+        if shell_p is not None:
+            near_m = ((sa * -thin < 0.0) & (np.abs(-sa * thin - th) < 5.0)
+                      & (np.abs(sy - yy) < 0.010) & (sr > 0.060))
+            if near_m.any():
+                r_m = float(np.median(sr[near_m]))
+            near_l = ((sa * thin > 0.0) & (np.abs(sa * thin - th) < 5.0)
+                      & (np.abs(sy - yy) < 0.010) & (sr > 0.060))
+            if near_l.any():
+                r_loc = float(sr[near_l].max())
+        return float(np.clip(max(r_m + pad, r_loc + 0.004), lo, hi))
+
+    def place(idx: np.ndarray, cols: np.ndarray, rows: np.ndarray,
+              radii: np.ndarray) -> None:
+        # pairs = the ribbon's rows (two authored columns each), laid out column-wise:
+        # pair j -> (cols[j], rows[0]) and (cols[j], rows[1]).
+        order = np.argsort(source[idx, 1])
+        pairs = [(order[2 * i], order[2 * i + 1]) for i in range(len(idx) // 2)]
+        for j, (lo, hi) in enumerate(pairs):
+            th = float(cols[j])
+            rad = np.radians(thin * th)
+            for vi, yy in ((idx[lo], rows[0]), (idx[hi], rows[1])):
+                rr = radii[j]
+                p[vi, 0] = rr * np.sin(rad)
+                p[vi, 2] = AXIS_Z - rr * np.cos(rad)
+                p[vi, 1] = yy
+
+    big = [t for t in targets if len(t) == 16]
+    small = [t for t in targets if len(t) != 16]
+    # The outer plate: the sight-lines' whole crossing footprint at one radius just
+    # outside their measured maximum (104 mm). Its bottom edge follows the hemline on
+    # the front columns (a plate over the cheek would read as a fin); from 62 degrees
+    # back it holds 1.508 so the corridor's low crossings stay covered.
+    plate_rows = (1.508, 1.531, 1.554, 1.577, 1.600)
+    for k, idx in enumerate(big[:4]):
+        cols = np.linspace(48.0, 125.0, 8)
+        order = np.argsort(source[idx, 1])
+        pairs = [(order[2 * i], order[2 * i + 1]) for i in range(8)]
+        # Each band overlaps the next by 0.6 mm (the k offset): exact row coincidence
+        # would weld neighbouring bands' vertices in the normal pass, where their
+        # oppositely wound faces cancel to a zero normal and the refinement contract
+        # rejects the mesh.
+        drop = 0.0006 * k
+        for j, (lo, hi) in enumerate(pairs):
+            th = float(cols[j])
+            # the front columns follow the hemline (a plate over the cheek would read
+            # as a fin); from 62 degrees back the bottom holds 1.508 so the corridor's
+            # low crossings stay covered
+            y_bot = max(plate_rows[k],
+                        hem_height(np.array([thin * th]))[0] + 0.004) if th < 62.0 \
+                else plate_rows[k]
+            y_bot -= drop
+            y_top = max(plate_rows[k + 1], y_bot + 0.020) - drop
+            rad = np.radians(thin * th)
+            for vi, yy in ((idx[lo], y_bot), (idx[hi], y_top)):
+                p[vi, 0] = 0.105 * np.sin(rad)
+                p[vi, 2] = AXIS_Z - 0.105 * np.cos(rad)
+                p[vi, 1] = yy
+    # The crown-side band: 55-90 degrees over the wall's top row, at the full side's
+    # own volume -- this is the sheet region the side part leaves empty and the
+    # side-on camera sees the scalp through.
+    if len(big) >= 5:
+        idx = big[4]
+        cols = np.linspace(55.0, 90.0, 8)
+        radii = [band_radius(float(th), 1.577, 0.003, 0.086, 0.104)
+                 for th in cols]
+        place(idx, cols, (1.554, 1.600), radii)
+    # Behind the ear: the strip the re-lay emptied under the wall, above the hem.
+    for idx in small:
+        cols = np.array([115.0, 122.0])
+        rows_y = np.linspace(1.489, 1.508, 3)
+        order = np.argsort(source[idx, 1])
+        pairs = [(order[2 * i], order[2 * i + 1]) for i in range(len(idx) // 2)]
+        for i, (lo, hi) in enumerate(pairs):
+            rad_lo, rad_hi = np.radians(115.0), np.radians(122.0)
+            r_lo = band_radius(115.0, float(rows_y[i]), 0.002, 0.080, 0.092)
+            r_hi = band_radius(122.0, float(rows_y[i]), 0.002, 0.080, 0.092)
+            for vi, yy, rad, rr in ((idx[lo], rows_y[i], rad_lo, r_lo),
+                                    (idx[hi], rows_y[i], rad_hi, r_hi)):
+                p[vi, 0] = rr * np.sin(rad)
+                p[vi, 2] = AXIS_Z - rr * np.cos(rad)
+                p[vi, 1] = yy
+    return p
+    # The cards are vertical ribbons (two columns wide, N rows tall: 16 vertices /
+    # 14 triangles = 2x8, 6/4 = 2x3) laid FLAT over the corridor: each 16-vertex
+    # ribbon becomes one 8-column by 2-row band of the quilt, the two bands sharing
+    # their middle row so the quilt is closed over its whole rectangle, and the
+    # 6-vertex ribbon caps the outer angle. Every vertex stands on the r=105 mm
+    # slab -- outside the sight-lines' measured crossing band (88-103 mm), so any
+    # ray threading the wall's folds crosses the slab's radius inside the quilt's
+    # rectangle exactly once and is blocked. Ribbons mapped this way keep their
+    # triangle winding (the contract pins it) and their quad corners stay distinct,
+    # so the refinement's zero-area clause holds.
+    slab = 0.105
+    ordered = sorted(targets, key=lambda idx: float(np.abs(angle[idx]).mean()))
+    big = [idx for idx in ordered if len(idx) == 16]
+    small = [idx for idx in ordered if len(idx) != 16]
+    band_ys = (1.508, 1.537, 1.566)
+    for k, idx in enumerate(big[:2]):
+        # rows of the ribbon (8 y-ordered pairs) become columns of the band
+        order = np.argsort(source[idx, 1])
+        pairs = [(order[2 * i], order[2 * i + 1]) for i in range(8)]
+        y_top = band_ys[k]
+        y_bot = band_ys[k + 1]
+        for ci, (lo, hi) in enumerate(pairs):
+            th = 71.0 + 38.0 * ci / 7.0
+            rad = np.radians(th)
+            for vi, yy in ((idx[lo], y_bot), (idx[hi], y_top)):
+                p[vi, 0] = slab * np.sin(rad)
+                p[vi, 2] = AXIS_Z - slab * np.cos(rad)
+                p[vi, 1] = yy
+    for idx in small:
+        order = np.argsort(source[idx, 1])
+        rows = [(order[2 * i], order[2 * i + 1]) for i in range(len(idx) // 2)]
+        ys_small = np.linspace(band_ys[0], band_ys[-1], len(rows))
+        for ri, (lo, hi) in enumerate(rows):
+            for vi, th in ((idx[lo], 109.0), (idx[hi], 115.0)):
+                rad = np.radians(th)
+                p[vi, 0] = slab * np.sin(rad)
+                p[vi, 2] = AXIS_Z - slab * np.cos(rad)
+                p[vi, 1] = ys_small[ri]
+    return p
