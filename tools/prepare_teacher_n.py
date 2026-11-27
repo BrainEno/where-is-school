@@ -685,7 +685,7 @@ def prepare_base(source: bytes) -> tuple[bytes, dict]:
             "generator": "where-is-school tools/prepare_teacher_n.py from %s"
                          % document["asset"].get("generator", "an unknown exporter"),
             "version": "2.0",
-            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 10},
+            "extras": {"source": SOURCE, "source_sha256": SOURCE_SHA256, "geometry_revision": 11},
         },
         "scene": 0,
         "scenes": [{"name": document["scenes"][0].get("name", "Scene"), "nodes": scene_nodes}],
