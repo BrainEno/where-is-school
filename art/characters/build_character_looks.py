@@ -87,7 +87,7 @@ PROTAGONIST_SKIN = {
     "pigment_b": "#C2A68E",
     # The stepped pigment stays (no glaze on this look); the blocks read as skin mottling
     # only when they are fine and shallow: 24 -> 30 blocks per metre, half the value depth.
-    "pigment_mix": 0.24,
+    "pigment_mix": 0.20,
     "pigment_value": 0.035,
     "pigment_scale": 30.0,
     "pigment_stretch": (1.0, 1.5, 1.0),
@@ -96,7 +96,7 @@ PROTAGONIST_SKIN = {
     # that temperature, held a step cooler than Q's.
     "shade_tint": "#C0B7A9",
     "light_tint": "#F6E9D6",
-    "shadow_fill": 0.58,
+    "shadow_fill": 0.60,
     # A lighter half-tone so the cheekbone, nose and brow ridge keep their planes without
     # the cave-dark mid zone the 0.57 value painted.
     "half_tone": 0.63,
@@ -115,21 +115,23 @@ PROTAGONIST = {
     "parts": {
         "protagonist_mat_skin": dict(
             PROTAGONIST_SKIN,
-            # Under the eyes: a violet-grey trace of tiredness (the portrait's). The eyes
-            # sit at y 1.572-1.597 (measured on the GLB), and the r37 stamp centred at
-            # 1.565 with a 2 cm y-radius painted straight across the lower lids -- the
-            # owner read it as black sockets. It now sits fully below the eye line as a
-            # thin glaze (9 mm), a third as strong.
-            patch_center=(0.037, 1.560, 0.105),
-            patch_radius=(0.028, 0.009, 0.026),
-            patch_color="#7D6E82",
-            patch_strength=0.14,
-            # The hollow under the cheekbone: half the strength, warmed off the sickly
-            # green, and tightened so it reads as a plane accent, not a bruise.
-            patch2_center=(0.052, 1.520, 0.092),
-            patch2_radius=(0.02, 0.024, 0.034),
-            patch2_color="#A2957C",
-            patch2_strength=0.10,
+            # The lips have no material of their own (the paint lives in the head's
+            # albedo, lit by this one material); facing down and away from the key
+            # they fell into the shadow band and read as a dirty seam. N's refined
+            # face ships a warm lip value; this patch restores it as a lit colour.
+            patch_center=(0.0, 1.4975, 0.118),
+            patch_radius=(0.011, 0.0045, 0.007),
+            patch_color="#B9836F",
+            patch_strength=0.34,
+            # Under the eyes: a violet-grey trace of tiredness (the portrait's). The
+            # eyes sit at y 1.572-1.597 (measured on the GLB), and the r37 stamp
+            # centred at 1.565 with a 2 cm y-radius painted straight across the lower
+            # lids -- the owner read it as black sockets. It sits fully below the eye
+            # line as a thin glaze (9 mm) at a third the strength.
+            patch2_center=(0.037, 1.560, 0.105),
+            patch2_radius=(0.028, 0.009, 0.026),
+            patch2_color="#7D6E82",
+            patch2_strength=0.14,
             outline=True,
         ),
         "protagonist_mat_skinbody": dict(PROTAGONIST_SKIN, albedo="#A99A83", outline=True),
