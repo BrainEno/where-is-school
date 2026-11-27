@@ -605,10 +605,12 @@ def _relay_the_thin_side(points: np.ndarray, triangles: np.ndarray, shell: np.nd
     rows = [row for row in rows if len(row) >= 2]
     if not rows:
         return out
-    # 1.500 at the bottom: the ear's lobe sits at 1.506, and a bottom row above it
-    # leaves a 2 mm strip of ear showing under the wall from the side camera
-    # (measured: 4 ear vertices at y 1506-1507 visible from the 90-degree camera).
-    row_ys = np.linspace(1.500, 1.566, len(rows))
+    # 1.500 at the bottom (the ear's lobe sits at 1.506: a bottom row above it left
+    # a 2 mm strip of ear showing under the wall) and 1.578 at the top, where the
+    # crown shell above 128 degrees begins -- a wall that stops at 1.566 leaves a
+    # horizontal slit between its top edge and the crown sheet, and the stretched
+    # triangles' inner faces show through it as dark slats from the side camera.
+    row_ys = np.linspace(1.500, 1.578, len(rows))
     for k, row in enumerate(rows):
         seq = np.argsort(new_abs[row])
         # 74-128: the wall spans the corridor, its forward window (the 45-degree
