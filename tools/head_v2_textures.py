@@ -65,6 +65,15 @@ def _hash(ix: np.ndarray, iy: np.ndarray, seed: int) -> np.ndarray:
         return ((n ^ (n >> np.uint64(16))) & np.uint64(0xFFFFFFFF)).astype(np.float64) / 4294967295.0
 
 
+def smoothstep(edge_low: float, edge_high: float, value: np.ndarray) -> np.ndarray:
+    """1.0 below `edge_low`, 0.0 above `edge_high`, smooth between (either order)."""
+    low, high = min(edge_low, edge_high), max(edge_low, edge_high)
+    t = np.clip((value - low) / (high - low), 0.0, 1.0)
+    if edge_high < edge_low:
+        t = 1.0 - t
+    return t * t * (3.0 - 2.0 * t)
+
+
 def value_noise(x: np.ndarray, y: np.ndarray, scale: float, seed: int = 0) -> np.ndarray:
     x = x * scale
     y = y * scale
@@ -341,13 +350,19 @@ def height_to_normal(height: np.ndarray, pos: np.ndarray, mask: np.ndarray, size
 
 
 def build_albedo(pos: np.ndarray, mask: np.ndarray, size: int,
-                 base=(0.7059, 0.6471, 0.5490)) -> np.ndarray:
+                 base=(0.7059, 0.6471, 0.5490),
+                 hair_points: np.ndarray = None) -> np.ndarray:
     """The head's colour map, as a multiplier around 1.0.
 
     The look's own albedo stays the base skin colour and the shader multiplies the map over
     it (`detail_albedo_mix`), so every tint here is authored as *the multiplier that turns the
     base into the wanted colour* rather than as an absolute colour. A map that carried the
     skin colour itself would square it and paint the face dark.
+
+    The owner's r37 note: at the lighter skin the lip, under-eye and stubble glazes read as
+    stamps, and the scalp showing between the hair's spikes read as baldness -- so the
+    glazes come down to a whisper and the scalp under the hair shell is darkened into hair
+    roots, measured by each texel's distance to the hair mesh itself.
     """
     yy, xx = np.mgrid[0:size, 0:size]
     base = np.asarray(base, dtype=np.float64)
@@ -365,25 +380,47 @@ def build_albedo(pos: np.ndarray, mask: np.ndarray, size: int,
     # Lips: a desaturated rose over the vermilion, and the darker mouth line. The line the
     # sculpt already folds is not painted twice as hard: the fold catches the ink line.
     lip = np.exp(-((ax / 0.024) ** 2) ** 2 - ((y - 1.4955) / 0.0085) ** 2) * (z > 0.105)
-    glaze((0.54, 0.34, 0.33), 0.70 * lip)
+    glaze((0.64, 0.46, 0.44), 0.40 * lip)
     line = np.exp(-((y - 1.4952) / 0.0012) ** 2) * np.exp(-(ax / 0.024) ** 2) * (z > 0.11)
-    colour *= (1.0 - 0.34 * line)[:, :, None]
+    colour *= (1.0 - 0.16 * line)[:, :, None]
     # Eyelids: a little darker and redder.
     lid = np.exp(-((ax - 0.031) / 0.017) ** 2) * np.exp(-((y - 1.592) / 0.009) ** 2) * (z > 0.09)
-    glaze((0.56, 0.40, 0.38), 0.20 * lid)
+    glaze((0.60, 0.46, 0.44), 0.12 * lid)
     # The bruised under-eye. The look already paints a patch here, so this is the mottled
     # edge the patch cannot have, not a second bruise.
     bruise = np.exp(-((ax - 0.034) / 0.018) ** 2) * np.exp(-((y - 1.5685) / 0.0075) ** 2) * (z > 0.08)
-    glaze((0.40, 0.33, 0.44), 0.16 * bruise)
-    # Stubble: a cool grey-green tooth on the jaw, chin and upper lip.
+    glaze((0.50, 0.44, 0.55), 0.09 * bruise)
+    # Stubble: a cool grey-green tooth on the jaw and chin. The philtrum band this used to
+    # cross is gone -- at the lighter skin it read as dirt on the groove the owner named.
     stubble_region = (y < 1.487) & (ax < 0.062) & (z > 0.02)
-    stubble_region |= (y > 1.499) & (y < 1.507) & (ax < 0.022) & (z > 0.09)
     tooth = (fbm(xx, yy, 0.30, 2, 41) - 0.5)
-    stubble = np.where(stubble_region, np.clip(tooth * 2.2 + 0.15, 0.0, 1.0) * 0.16, 0.0)
-    glaze((0.36, 0.37, 0.33), stubble)
+    stubble = np.where(stubble_region, np.clip(tooth * 2.2 + 0.15, 0.0, 1.0) * 0.09, 0.0)
+    glaze((0.42, 0.43, 0.40), stubble)
     # A soft warm cheek glaze.
     cheek = np.exp(-((ax - 0.045) / 0.022) ** 2) * np.exp(-((y - 1.530) / 0.022) ** 2) * (z > 0.06)
-    glaze((0.66, 0.50, 0.44), 0.12 * cheek)
+    glaze((0.70, 0.55, 0.49), 0.10 * cheek)
+    # Hair roots: anywhere the hair shell passes close overhead, the "skin" is scalp the
+    # spikes' gaps expose, so it darkens into root colour instead of reading bald. The
+    # falloff is measured, not painted: full shade within 10 mm of a hair vertex, gone by
+    # 28 mm, which keeps the ears (the hair clears them by more than that) and the face
+    # below the fringe in skin.
+    if hair_points is not None and len(hair_points):
+        points = pos[mask].astype(np.float32)
+        hair = hair_points.astype(np.float32)
+        nearest2 = np.full(len(points), np.inf, dtype=np.float32)
+        # Blocked brute force in float32 on squared distances: the full texel set is a
+        # million rows and the hair five thousand, which a single broadcast cannot hold.
+        for point_start in range(0, len(points), 32768):
+            block = points[point_start:point_start + 32768]
+            for hair_start in range(0, len(hair), 256):
+                chunk = hair[hair_start:hair_start + 256]
+                difference = block[:, None, :] - chunk[None, :, :]
+                np.minimum(nearest2[point_start:point_start + len(block)],
+                           (difference * difference).sum(-1).min(1),
+                           out=nearest2[point_start:point_start + len(block)])
+        roots = np.zeros((size, size))
+        roots[mask] = smoothstep(0.028, 0.010, np.sqrt(nearest2.astype(np.float64)))
+        glaze((0.30, 0.27, 0.26), roots)
     colour[~mask] = 1.0
     return np.clip(_blur(colour, 1), 0.0, 1.0)
 
@@ -477,7 +514,11 @@ def save_png(array: np.ndarray, path: Path) -> None:
 
 
 def build() -> dict:
-    document, binary = glb.load(BUILD / 'Protagonist_Character.glb')
+    # The maps are built from the shipped runtime model: the build-tree glb (`build/head_v2`)
+    # this tool used to read is a local intermediate that a fresh clone does not have, and
+    # the runtime file carries the same atlas -- it is what `head_v2.py install` copied from
+    # it. Building from what actually ships can never drift from what actually ships.
+    document, binary = glb.load(RUNTIME)
     primitive = document['meshes'][HEAD_MESH]['primitives'][SKIN_PRIM]
     arrays = glb.primitive_arrays(document, binary, primitive)
     positions = arrays['POSITION']
@@ -488,15 +529,17 @@ def build() -> dict:
     grid, bounds = front_surface(positions, normals)
     height = build_height(pos, nor, mask, grid, bounds, SIZE)
     normal_map = height_to_normal(height, pos, mask, SIZE)
-    albedo = build_albedo(pos, mask, SIZE)
+    # The hair mesh's own vertices, for the scalp's root shading in the albedo.
+    hair_arrays = glb.primitive_arrays(
+        document, binary, document['meshes'][HAIR_MESH]['primitives'][HAIR_PRIM])
+    hair_points = hair_arrays['POSITION'].astype(np.float64)
+    albedo = build_albedo(pos, mask, SIZE, hair_points=hair_points)
     OUT.mkdir(parents=True, exist_ok=True)
     save_png(normal_map, OUT / 'head_normal.png')
     save_png(albedo, OUT / 'head_albedo.png')
 
     # The hair (issue #386): the built hair primitive now carries the atlas head_v2
     # assigns, and the maps draw the strand lines and the whorl into it.
-    hair_primitive = document['meshes'][HAIR_MESH]['primitives'][HAIR_PRIM]
-    hair_arrays = glb.primitive_arrays(document, binary, hair_primitive)
     h_pos, h_nor, h_mask = rasterise(hair_arrays['POSITION'], hair_arrays['NORMAL'],
                                      hair_arrays['TEXCOORD_0'],
                                      hair_arrays['indices'].reshape(-1, 3).astype(np.int64),
@@ -520,7 +563,7 @@ def build() -> dict:
     save_png(h_albedo, OUT / 'hair_albedo.png')
 
     manifest = {
-        'source_sha256': hashlib.sha256((BUILD / 'Protagonist_Character.glb').read_bytes()).hexdigest(),
+        'source_sha256': hashlib.sha256(RUNTIME.read_bytes()).hexdigest(),
         'normal_sha256': hashlib.sha256((OUT / 'head_normal.png').read_bytes()).hexdigest(),
         'albedo_sha256': hashlib.sha256((OUT / 'head_albedo.png').read_bytes()).hexdigest(),
         'normal_size': SIZE,

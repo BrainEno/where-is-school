@@ -35,15 +35,16 @@ CROWN_Y = 1.6450
 # |angle| from the face, in degrees -> height of the cut edge in metres. Front 1.592 is
 # 29 mm above the brows (1.549-1.563); the sides clear the top of the ear at 1.564; the nape
 # sits at 1.515, well above the collar at 1.32.
-# The cut: a women's short bob (owner's r37 note -- the previous crop read male).
-# A full fringe hangs to 1.568 (8-13 mm above the brow line at 1.553-1.558), the
-# temple pieces frame the face, the sides drape over the ear tops (the ears reach
-# 1.5645 and the skull field carries their radius, so the shell rides outside them),
-# and the nape tapers to 1.506 -- short of the collar, longer in the neck than the
-# ears are tall, which is the shape that reads female at this stylisation.
+# The cut: a women's short bob (owner's r37 note -- the previous crop read male). The
+# first cut of this table hung its sides at 1.546-1.521, under the ear top (1.5645),
+# and the review frames showed bare scalp over the whole ear -- a headband, not a bob.
+# This cut drapes the sides to the ear lobe and below (1.504 at the ear's crown angle,
+# 1.492 past it), keeps the full fringe at 1.568 (8-13 mm above the brows at
+# 1.553-1.558), and finishes in a tidy low nape at 1.484 -- the sides cover the ears
+# completely and the silhouette carries hair from the fringe down to the nape.
 HEM_ANGLE = np.array([0.0, 24.0, 46.0, 66.0, 84.0, 100.0, 118.0, 136.0, 154.0, 180.0])
-HEM_Y = np.array([1.5680, 1.5710, 1.5700, 1.5620, 1.5460,
-                  1.5300, 1.5160, 1.5100, 1.5070, 1.5060])
+HEM_Y = np.array([1.5680, 1.5710, 1.5640, 1.5360, 1.5040,
+                  1.4920, 1.4880, 1.4860, 1.4850, 1.4840])
 # The skull field: 4 degrees by 4 mm is finer than the hair's own spacing.
 FIELD_STEP_DEG = 4.0
 FIELD_STEP_Y = .004
@@ -405,7 +406,49 @@ def teacher_crop(points: np.ndarray, skin: tuple, triangles: np.ndarray) -> np.n
     # as hair lying on the cheek. The shell's fit and the cards' translation both aim for
     # it, but a vertex can still land a few tenths of a millimetre under; this is the
     # guarantee, expressed once, after both.
-    out[:, 1] = np.maximum(out[:, 1], target_hem)
+    return surface_guard(out, skin, target_hem)
+
+
+def surface_guard(points: np.ndarray, skin: tuple, hem: np.ndarray) -> np.ndarray:
+    """Nothing the fit placed may end up buried in the head.
+
+    A card the fit translates whole can land tens of millimetres inside the skin (its
+    interior vertices keep their offset from a centre that was placed on the surface),
+    and where the shell's edge row has moved, such a sliver shows as a black jag on the
+    temple. Two passes dig them out: any non-cap vertex more than 3 mm under the skull
+    field is pushed back out along its own radial to 2.5 mm proud; where the field
+    under-measures the skin (the pre-auricular hollow reads the neck's radius, not the
+    face's), the vertex is snapped to 2 mm outside the nearest skin point instead.
+    """
+    radius, outward, angle = polar(points)
+    out = points.copy()
+    # The cut is a hard rule first: the hem clamp can lift an edge vertex tens of
+    # millimetres straight up, and lifted at its old radius it lands inside the cheek.
+    # So clamp, then measure against the skull at the *clamped* height.
+    out[:, 1] = np.maximum(out[:, 1], hem)
+    cap = (1.0 - smoothstep(.026, .055, radius)) > 0.0
+    skull = scalp_radius(angle, out[:, 1], _field_of(skin))
+    buried = (~cap) & (radius < skull - 0.003)
+    if buried.any():
+        push = (skull[buried] + 0.0025 - radius[buried])[:, None]
+        out[buried] += outward[buried] * push
+        # Where the field under-measures the skin (the pre-auricular hollow reads the
+        # neck's radius, not the face's), the radial push above still leaves the vertex
+        # inside. Measure those against the skin itself and snap each one onto 2 mm of
+        # its nearest skin point's own normal -- buried becomes a card sitting on the
+        # surface, which is what it was supposed to be.
+        surface, normals = skin[0], skin[1]
+        for index in np.where(buried)[0]:
+            distance = ((surface - out[index]) ** 2).sum(1)
+            nearest = int(np.argmin(distance))
+            normal = normals[nearest]
+            length = float(np.linalg.norm(normal))
+            if length < 1e-9:
+                continue
+            # Outward if the vertex sits on the normal's side of its skin point.
+            if ((out[index] - surface[nearest]) @ normal) < 0.002:
+                out[index] = surface[nearest] + normal / length * 0.002
+        out[:, 1] = np.maximum(out[:, 1], hem)
     return out
 
 
@@ -427,4 +470,4 @@ def teacher_highlight(points: np.ndarray, skin: tuple, triangles: np.ndarray) ->
     for part in parts:
         index = np.asarray(part, np.int64)
         out[index] = _fit_card(p[index], angle[index], target_hem, spans[index], skin[0])
-    return out
+    return surface_guard(out, skin, target_hem)
