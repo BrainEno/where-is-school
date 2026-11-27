@@ -278,16 +278,18 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
         pts = curve([(side * 0.0155, 1.5985), (side * 0.0305, 1.6025),
                      (side * 0.0435, 1.5985)], grid, bounds)
         stamp(height, pts, 1.1, 0.00038, size)
-    # Nasolabial folds and marionette lines.
+    # Nasolabial folds and marionette lines. r38: at half depth these folds bent the
+    # normals into a dirty smear across the subnasal zone and the mouth corners; the
+    # sculpt's own fold keeps the structure, so the paint only whispers it.
     for side in (-1, 1):
         pts = curve([(side * 0.024, 1.501), (side * 0.028, 1.493),
                      (side * 0.031, 1.483), (side * 0.030, 1.474)], grid, bounds)
-        stamp(height, pts, 1.4, 0.00055, size)
+        stamp(height, pts, 1.4, 0.00026, size)
     # Lip lines.
     for x in np.linspace(-0.020, 0.020, 9):
         for y0, y1 in ((1.497, 1.5025), (1.4875, 1.4935)):
             pts = curve([(x, y0), (x * 0.92, (y0 + y1) * 0.5), (x * 0.8, y1)], grid, bounds)
-            stamp(height, pts, 0.65, 0.00020, size)
+            stamp(height, pts, 0.65, 0.00012, size)
     # Mental crease and neck lines.
     pts = curve([(-0.020, 1.4795), (0.0, 1.4775), (0.020, 1.4795)], grid, bounds)
     stamp(height, pts, 1.2, 0.00035, size)
@@ -298,7 +300,7 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
     for side in (-1, 1):
         pts = curve([(side * 0.0185, 1.506), (side * 0.0245, 1.501),
                      (side * 0.0235, 1.4965)], grid, bounds)
-        stamp(height, pts, 0.9, 0.00034, size)
+        stamp(height, pts, 0.9, 0.00018, size)
     height = np.where(mask, height, 0.0)
     return _blur(height, 1)
 
