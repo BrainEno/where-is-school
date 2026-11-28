@@ -263,18 +263,12 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
         pts = curve([(-0.046, y - 0.004), (-0.020, y + 0.001), (0.0, y + 0.002),
                      (0.020, y + 0.001), (0.046, y - 0.004)], grid, bounds)
         stamp(height, pts, width, depth, size)
-    # Glabella.
-    for x in (-0.0075, 0.0075):
-        pts = curve([(x, 1.594), (x * 0.8, 1.602), (x * 0.6, 1.611)], grid, bounds)
-        stamp(height, pts, 1.0, 0.00020, size)
-    # Crow's feet. r38b: at the lighter skin these read as the bug-like black
-    # dashes at the eye corners the owner named; the lids' own crease keeps the
-    # age, the paint stops drawing the dashes.
-    for side in (-1, 1):
-        for dy, length in ((0.0035, 0.014), (0.0, 0.017), (-0.0035, 0.013)):
-            pts = curve([(side * 0.045, 1.582 + dy), (side * 0.052, 1.582 + dy * 1.6),
-                         (side * 0.058, 1.582 + dy * 1.9)], grid, bounds)
-            stamp(height, pts, 0.9, 0.00012, size)
+    # Glabella. r38b second pass: even whispered, the narrow stamps alias into the
+    # bug-like black dashes the owner named under the raking key -- the narrow
+    # face lines stop being painted at all; the sculpt carries the structure.
+    # Crow's feet: removed for the same reason (the hooked dashes at the eye
+    # corners). The upper-lid crease stays: broad, above the aperture, it reads.
+
     # Upper-lid crease.
     for side in (-1, 1):
         pts = curve([(side * 0.0155, 1.5985), (side * 0.0305, 1.6025),
@@ -287,18 +281,15 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
         pts = curve([(side * 0.024, 1.501), (side * 0.028, 1.493),
                      (side * 0.031, 1.483), (side * 0.030, 1.474)], grid, bounds)
         stamp(height, pts, 1.4, 0.00026, size)
-    # Lip lines.
-    for x in np.linspace(-0.020, 0.020, 9):
-        for y0, y1 in ((1.497, 1.5025), (1.4875, 1.4935)):
-            pts = curve([(x, y0), (x * 0.92, (y0 + y1) * 0.5), (x * 0.8, y1)], grid, bounds)
-            stamp(height, pts, 0.65, 0.00012, size)
-    # Mental crease and neck lines. r38b: at the lighter mid face these drew as thin
-    # scar arcs across the chin; whisper them -- the sculpt carries the structure.
+    # Lip lines. r38b: removed -- the dotted dark arcs across the mouth were this
+    # stamp aliasing; the sculpt's own fold and the albedo's mouth line carry it.
+    # Mental crease and neck lines: broad and whispered, they keep the chin's
+    # structure without drawing as arcs.
     pts = curve([(-0.020, 1.4795), (0.0, 1.4775), (0.020, 1.4795)], grid, bounds)
-    stamp(height, pts, 1.2, 0.00016, size)
+    stamp(height, pts, 1.6, 0.00012, size)
     for y in (1.4525, 1.4435):
         pts = curve([(-0.036, y), (0.0, y - 0.001), (0.036, y)], grid, bounds)
-        stamp(height, pts, 1.3, 0.00014, size)
+        stamp(height, pts, 1.8, 0.00012, size)
     # Alar creases.
     for side in (-1, 1):
         pts = curve([(side * 0.0185, 1.506), (side * 0.0245, 1.501),

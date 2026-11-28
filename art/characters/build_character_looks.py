@@ -108,8 +108,12 @@ PROTAGONIST_SKIN = {
     # The blocks no longer push the terminator: at 0.10 the mottling visibly warped the
     # shadow edges into ragged bands (the owner's r37 "blotches under hard bands").
     "edge_break": 0.06,
-    # A slightly wider half-tone band than the first round: the socket and nose-side
-    # pools lighten with it, which is where the skull reading came from.
+    # The r38b last black: the whole turned-away half of the face sat at N·L below
+    # the shadow edge, so nose-to-chin read as one abnormal black mass under the
+    # front key. The shadow starts at -0.15 now: the cheek left of the nose lands
+    # in the half-tone band instead, and only the truly away-facing plane keeps
+    # the shadow -- the tiredness stays in the structure, not a value pit.
+    "shadow_edge": -0.15,
     "light_edge": 0.34,
     "light_strength": 0.76,
 }
