@@ -125,8 +125,11 @@ def protagonist_charcoal(base: dict) -> dict:
             # the strand rhythm lives in the locks and the normal map now.
             "pigment_value": 0.12,
             "pigment_scale": 18.0,
-            "shade_tint": "#7C7C9C",
-            "shadow_fill": 0.52,
+            # The gaps between strands show the neighbouring tubes' back-facing
+            # walls; a lighter shade keeps those walls dark-warm instead of near
+            # black (the hex-pit look).
+            "shade_tint": "#8D89A8",
+            "shadow_fill": 0.66,
             "light_strength": 0.85,
             # r40: no ink hull on the hair. Ninety-six tubes a shell-offset apart
             # make their hulls overlap into one blotchy ink blanket over the crown

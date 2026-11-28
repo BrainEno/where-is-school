@@ -1260,6 +1260,11 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             if k == 1:
                 # The roots-touch swell rides one station up, clear of the cap.
                 rr *= 1.45
+            if k == 2:
+                # The pelt: the third ring stays swollen too, so the wide part of
+                # each tube overlaps its neighbours' and the gaps between strands
+                # close before any back-facing wall can fill them with shade.
+                rr *= 1.30
             for j, vid in enumerate(np.asarray(ring)):
                 ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
                 jitter = 1.0 + (u[8] - 0.5) * 0.10 if k > 0 else 1.0
