@@ -896,8 +896,8 @@ HAIR_BBOX_MAX = np.array([0.1575, 1.7669, 0.1817])
 # The r40 mop envelope, pinned from the built mop: the re-barbered hair lives close
 # to the skull -- no strand reaches further than ~55 mm from the scalp centre -- so
 # the mop's own envelope is much tighter than the V1 plates' one above.
-MOP_BBOX_MIN = np.array([-0.1085, 1.5175, -0.0946])
-MOP_BBOX_MAX = np.array([0.1075, 1.7175, 0.1616])
+MOP_BBOX_MIN = np.array([-0.0972, 1.5175, -0.0797])
+MOP_BBOX_MAX = np.array([0.0970, 1.7175, 0.1616])
 SCALP = np.array([0.0, 1.565, 0.040])
 # Root burial: how far a root ring dives back along its own lock axis (the skull clamp
 # keeps every vertex 1.2 mm off the skin, so the burial never pierces the head).
@@ -1193,14 +1193,15 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         if kind == 'fringe':
             flow = d_hat * 0.85 + np.array([0.0, -0.30, 0.45])
         elif kind == 'top':
-            # r40: the top locks comb OUTWARD from the crown, like hair from a
-            # whorl -- vertical strands open wells between them that read as
-            # dark hexagonal cups from any raised camera (measured on two r40
-            # renders; r39's plates hid them by lying flat).
-            out_dir = np.array([d_hat[0], 0.0, d_hat[2]])
-            n = float(np.linalg.norm(out_dir))
-            out_dir = out_dir / n if n > 1e-6 else np.array([0.0, 0.0, 1.0])
-            flow = d_hat * 0.55 + out_dir * 0.55 + np.array([0.0, -0.30, 0.0])
+            # r40 final: the top hair combs BACK along the meridian, lying flat
+            # on the skull -- an unswept-back mop. Every combing that leaves the
+            # strands standing (radial, or the outward whorl) opens wells
+            # between them, and the wells read as dark hexagonal cups from any
+            # raised camera: five r40 renders measured it. Lying tubes tile the
+            # scalp like shingles; the fringe falls forward over the hairline.
+            meridian = np.array([math.cos(th) * math.sin(az), -math.sin(th),
+                                 math.cos(th) * math.cos(az)])
+            flow = meridian * 0.85 + d_hat * 0.30 + np.array([0.0, -0.25, 0.0])
         elif kind == 'side':
             flow = d_hat * 0.45 + np.array([0.0, -0.85, 0.0])
         else:
@@ -1214,10 +1215,14 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         centre = [root + flow * (length * t) + gravity * (droop * length * t * t)
                   for t in stations]
         if kind == 'top':
-            # Knit the pelt: the second ring sits at an absolute 8 mm so the
-            # swollen rings of neighbouring locks meet at the same height and
-            # close the gaps between the combed strands.
-            centre[1] = root + flow * 0.008
+            # The lying tubes follow the skull: every centre stays within 6 mm
+            # of the surface, so the shingles hug the head instead of bridging.
+            for ci in range(1, len(centre)):
+                p_c = centre[ci]
+                r_c = float(np.linalg.norm(p_c - SCALP))
+                r_s = surface_radius((p_c - SCALP) / max(r_c, 1e-9))
+                if r_c > r_s + 0.006:
+                    centre[ci] = SCALP + (p_c - SCALP) * ((r_s + 0.006) / r_c)
         floor = TIP_FLOOR[kind]
         if centre[-1][1] < floor:
             centre[-1][1] = floor
