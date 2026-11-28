@@ -34,7 +34,6 @@ shader_parameter/patch2_radius = Vector3(0.022, 0.03, 0.04)
 shader_parameter/patch2_strength = 0.26
 shader_parameter/patch_center = Vector3(0.03, 1.567, 0.102)
 shader_parameter/patch_color = Color(0.4549, 0.3961, 0.4941, 1)
-shader_parameter/patch_feather = 0.85
 shader_parameter/patch_radius = Vector3(0.03, 0.02, 0.034)
 shader_parameter/patch_strength = 0.34
 shader_parameter/pigment_a = Color(0.5961, 0.6275, 0.5333, 1)
