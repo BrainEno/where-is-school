@@ -1183,9 +1183,12 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         az = math.radians(azimuth)
         d_hat = np.array([math.sin(th) * math.sin(az), math.cos(th), math.sin(th) * math.cos(az)])
         r_skin = surface_radius(d_hat)
-        # The root clears the cap's own 1.5 mm pad -- at +1.5 mm the root rings
-        # sat exactly ON the padded cap and z-fought it into dark blotches.
-        root = SCALP + d_hat * (r_skin + 0.0030)
+        # The root sits just above the cap's own 1.5 mm pad, and the root ring is
+        # buried 3 mm back along the flow -- the clamp parks it at skin + 1.2 mm,
+        # *under* the pad, so the tube's open mouth is inside the cap's volume.
+        # Floating it (the first mop) left a see-through slit per lock, and the
+        # crown read as ninety-six dark cups.
+        root = SCALP + d_hat * (r_skin + 0.0025)
         # -- flow: outward-down on top, gravity-led at the sides and back -------
         if kind == 'fringe':
             flow = d_hat * 0.85 + np.array([0.0, -0.30, 0.45])
@@ -1239,7 +1242,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             rr = r_root * taper[k] * (1.0 + 0.07 * math.sin(math.tau * (t * 0.8 + u[7])))
             if k == 0:
                 rr *= 1.45
-                ring_centre = ring_centre - flow * 0.002
+                ring_centre = ring_centre - flow * 0.003
             for j, vid in enumerate(np.asarray(ring)):
                 ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
                 jitter = 1.0 + (u[8] - 0.5) * 0.10 if k > 0 else 1.0
