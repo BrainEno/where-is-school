@@ -19,17 +19,16 @@ What changes, and what deliberately does not:
     chin, brow ridge, neck — then given a local UV atlas, a back-seam split and a tangent
     basis, and its nine sparse morph targets are resampled through the explicit subdivision
     map;
-  * the hair keeps the owner's hairstyle — the same 96 roots, tips and silhouette — and each
-    lock is refined in place: every ring gains the midpoint of each of its five edges
-    (5 -> 10 columns, 45 -> 90 triangles), the new columns are thinned to 0.82 of their
-    radius about the strand's own axis, and each strand takes one gentle outward bend of
-    at most 2 mm, so the V1 plates read as coarse, weighted strands up close;
-  * issue #386 then re-shapes the hair between root and tip (`reshape_locks`): roots dive
-    back under the mass and widen until neighbours touch, the cone-with-pinched-tip profile
-    falls cleanly, each lock takes its own width rhythm, gravity-consistent bow, S wobble
-    and cross-section twist, the plate-wide locks take one crease, the cap's interior takes
-    the crown whorl (`whorl_cap`, boundary pinned), and the whole pass is clamped to the
-    pinned V2 envelope — the approved silhouette does not move;
+  * the hair keeps the owner's hairstyle — the same 96 locks and scalp cap, so every
+    count and contract holds — and each lock is refined in place: every ring gains the
+    midpoint of each of its five edges (5 -> 10 columns, 45 -> 90 triangles), the new
+    columns are thinned to 0.82 of their radius about the strand's own axis;
+  * the r40 mop then re-plants every lock (`barber_locks`): a dense, symmetric band
+    layout from crown to nape with the face window excluded, chunky 4.6-6.4 mm roots,
+    region-cut lengths (a fringe over the forehead that stops above the brows, 30-46 mm
+    on top, 18-28 mm at the nape), gravity-led flow, per-lock rhythm and twist, the
+    cap padded 1.2-3.0 mm for body — the whole mop clamped to the skull field and the
+    pinned envelope. The crown whorl relief (`whorl_cap`, boundary pinned) runs last;
   * the eyes are levelled (V1's right eye sits 2.5 mm above the left), their flat iris and
     pupil discs are domed and the iris is given a limbal ring through its own vertex colour;
   * the eyebrows are re-hung on the brow ridge as tapered tubes, and the ears are given a
@@ -472,7 +471,8 @@ def surface_z(x: float, y: float, head: np.ndarray, triangles: np.ndarray) -> fl
 
 
 def reshape_brow(brow: np.ndarray, head: np.ndarray,
-                 triangles: np.ndarray | None = None) -> np.ndarray:
+                 triangles: np.ndarray | None = None,
+                 brow_original: np.ndarray | None = None) -> np.ndarray:
     """Seat V1's floating eyebrow on the brow ridge, and taper it.
 
     The brow is a swept tube: four vertices to a ring, seven rings from the nose to the
@@ -483,15 +483,34 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray,
     ending in a blunt cut. The ring's four vertices keep their order around the tube, which is
     what stops the section from twisting from one ring to the next. Topology, vertex order and
     the nine morph targets are untouched.
+
+    `brow_original` is the same ring stack *before* the sculpt's displacement was carried
+    onto it. The slot assignment (which vertex rides top, front, back) reads that -- a
+    ring's own V1 section -- so a sculpt change cannot flip a ring's section and twist
+    the tube (measured on the r40 build: one mid ring swapped front/back, a 7 mm jump
+    and a 5 mm mirror residual).
     """
     out = brow.copy()
+    # The two sides' station grids are merged into one symmetric grid (V1's grids sit
+    # up to 0.2 mm apart, and with per-side grids the same ring on each side could be
+    # decomposed differently -- one side's vertices slot-reset, the other's kept --
+    # which showed up as a 5 mm mirror residual). Each merged station gathers the
+    # vertices of both sides within its tolerance; every vertex keeps its own x.
+    raw_stations = np.unique(np.round(np.abs(out[:, 0]), 5))
+    station_groups: list[list[float]] = []
+    for value in raw_stations:
+        if station_groups and value - station_groups[-1][-1] < 0.0008:
+            station_groups[-1].append(float(value))
+        else:
+            station_groups.append([float(value)])
+    stations_common = [float(np.mean(g)) for g in station_groups]
     for side in (1.0, -1.0):
         index = np.nonzero(np.sign(out[:, 0]) == side)[0]
         points = out[index]
         x = np.abs(points[:, 0])
         low, high = float(x.min()), float(x.max())
-        for station in np.unique(np.round(x, 5)):
-            ring_index = np.nonzero(np.isclose(x, station, atol=1e-4))[0]
+        for station in stations_common:
+            ring_index = np.nonzero(np.isclose(x, station, atol=9e-4))[0]
             ring = points[ring_index]
             along = float(np.clip((station - low) / max(high - low, 1e-9), 0.0, 1.0))
             centre_y = float(np.interp(along, [0.0, 0.25, 0.5, 0.75, 1.0],
@@ -503,7 +522,19 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray,
             half_height = float(np.interp(along, [0.0, 0.18, 0.5, 0.8, 1.0],
                                           [0.0016, 0.0032, 0.0036, 0.0028, 0.0016]))
             half_depth = half_height * 1.0
-            skin = surface_z(station, centre_y, head, triangles) if triangles is not None else None
+            # r40: seat on the ridge's own top, not on one row's answer. The r40
+            # sculpt widened the folds past the ink-hull offset, and a single-row
+            # height probe then landed on whichever triangle the row happened to
+            # win -- measurably different triangles on the two sides (7 mm apart in
+            # z at station 32 mm), which is a brow tilt the owner already rejected
+            # once (issue #385). Probing a small window across the ridge and taking
+            # the highest sheet seats both brows on the same, symmetric ridge top.
+            if triangles is not None:
+                samples = [surface_z(station, centre_y + dy, head, triangles)
+                           for dy in (-0.002, -0.001, 0.0, 0.001, 0.002)]
+                skin = max((s for s in samples if s is not None), default=None)
+            else:
+                skin = None
             if skin is None:
                 # No triangle soup (direct callers in tests): fall back to the
                 # nearest skin vertices around the station.
@@ -513,8 +544,12 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray,
                     near = (np.abs(head[:, 0] - station) < 0.014) & \
                            (np.abs(head[:, 1] - centre_y) < 0.014)
                 skin = float(head[near, 2].max()) if near.any() else float(ring[:, 2].max())
-            centre_z = skin + 0.0005
-            section = ring[:, [1, 2]] - ring[:, [1, 2]].mean(axis=0)
+            # r40: seated at 0.45 mm (was 0.5) -- the widened folds drop the skin a
+            # little under the tube, and the seat rides it back down.
+            centre_z = skin + 0.00045
+            reference = brow_original if brow_original is not None else brow
+            ref_ring = reference[ring_index]
+            section = ref_ring[:, [1, 2]] - ref_ring[:, [1, 2]].mean(axis=0)
             cap = -1
             if len(ring) > 4:
                 cap = int(np.argmin(np.linalg.norm(section, axis=1)))
@@ -709,10 +744,11 @@ def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
     for primitive_index, reshape in ((BROW_PRIM, True), (MOUTH_PRIM, False)):
         primitive = document['meshes'][HEAD_MESH]['primitives'][primitive_index]
         arrays = glb.primitive_arrays(document, binary, primitive)
-        positions = arrays['POSITION'].astype(np.float64)
-        positions = positions + nearest_displacement(positions, skin, displacement)
+        raw_positions = arrays['POSITION'].astype(np.float64)
+        positions = raw_positions + nearest_displacement(raw_positions, skin, displacement)
         if reshape:
-            positions = reshape_brow(positions, skin, skin_triangles)
+            positions = reshape_brow(positions, skin, skin_triangles,
+                                     brow_original=raw_positions)
         triangles = arrays['indices'].reshape(-1, 3).astype(np.int64)
         normals = vertex_normals(positions, triangles)
         deltas = dense_targets(document, binary, primitive, len(positions))
@@ -857,6 +893,11 @@ def refine_locks(positions: np.ndarray, triangles: np.ndarray) -> tuple[np.ndarr
 # cannot drift even where the reshaping bends a shaft.
 HAIR_BBOX_MIN = np.array([-0.1085, 1.5175, -0.1198])
 HAIR_BBOX_MAX = np.array([0.1575, 1.7669, 0.1817])
+# The r40 mop envelope, pinned from the built mop: the re-barbered hair lives close
+# to the skull -- no strand reaches further than ~55 mm from the scalp centre -- so
+# the mop's own envelope is much tighter than the V1 plates' one above.
+MOP_BBOX_MIN = np.array([-0.1085, 1.5175, -0.0946])
+MOP_BBOX_MAX = np.array([0.1075, 1.7390, 0.1616])
 SCALP = np.array([0.0, 1.565, 0.040])
 # Root burial: how far a root ring dives back along its own lock axis (the skull clamp
 # keeps every vertex 1.2 mm off the skin, so the burial never pierces the head).
@@ -1001,6 +1042,233 @@ def _lock_frame(root: np.ndarray, axis: np.ndarray) -> tuple[np.ndarray, np.ndar
             e1 = np.cross(axis, np.array([1.0, 0.0, 0.0]))
     e1 = e1 / np.linalg.norm(e1)
     return e1, np.cross(axis, e1)
+
+
+def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
+                 skin_triangles: np.ndarray | None = None) -> np.ndarray:
+    """The r40 redesign: re-barber the 96 locks into a designed mop.
+
+    The owner asked for the whole hairstyle to be re-thought, not the spikes
+    trimmed: the V1 plates' tips reached 140-180 mm from the scalp centre and
+    read as fragmented needles. The lock *topology* is the owner's and stays --
+    96 refined locks (ten-vertex rings) plus the scalp cap, so every count, the
+    atlas and the contracts hold -- but every lock is *re-planted*:
+
+    1. **A dense, symmetric layout.** Seven polar bands from the crown to the
+       nape (12-104 deg), azimuths spread uniformly with hashed jitter; the
+       face window (|azimuth| < 45-60 deg by band) is excluded, so roots tile
+       the skull the way a haircut does, not the way V1's plates happened to
+       sit.
+    2. **Chunky strands.** Root radii 4.6-6.4 mm (the old plates were ~2 mm
+       needles), a clean taper, per-lock rhythm and a 0.12 rad twist: the mop
+       reads as strands, not blades.
+    3. **Region-cut lengths.** A forward fringe over the forehead that stops
+       above the brows, 30-46 mm on top, 30-44 mm over the temples, 18-28 mm
+       at the nape and sideburns -- every tip asserted inside its region's
+       bound, so the cut works from the front, the sides and the back.
+    4. **The cap pads** 1.2-3.0 mm outward (hashed, faded at the hairline) so
+       the mop has body between the roots.
+
+    Everything is clamped to the skull field (+1.2 mm) and to the mop envelope,
+    and the whole pass is a pure function of the mesh plus the sculpted skin.
+    """
+
+
+    locks, cap_label, cap_boundary, labels = _hair_components(positions, triangles)
+    out = positions.copy()
+    field = _skull_field(skin)
+    if skin_triangles is None:
+        skin_triangles = triangles
+
+    # -- the layout ------------------------------------------------------------
+    # Bands: (theta_lo, theta_hi, count, front_window_deg). Azimuth 0 = front (+Z);
+    # a band with a window plants its locks on the two side/back arcs only.
+    bands = [
+        (12.0, 24.0, 8, 0.0),
+        (24.0, 38.0, 14, 0.0),
+        (38.0, 52.0, 18, 0.0),
+        (52.0, 64.0, 20, 0.0),
+        (64.0, 76.0, 14, 30.0),
+        (76.0, 92.0, 12, 25.0),
+        (92.0, 104.0, 10, 30.0),
+    ]
+    slots: list[tuple[float, float]] = []  # (theta, azimuth) degrees
+    for t_lo, _t_hi, count, window in bands:
+        if window > 0.0:
+            per_arc = count // 2
+            span = 180.0 - window
+            for k in range(per_arc):
+                a = window + span * (k + 0.5) / per_arc
+                slots.append((t_lo, a))
+                slots.append((t_lo, -a))
+            if count % 2:
+                slots.append((t_lo, 180.0))
+        else:
+            step = 360.0 / count
+            for k in range(count):
+                slots.append((t_lo, -180.0 + step * (k + 0.5)))
+    if len(slots) != 96:
+        raise SystemExit(f'the mop layout holds {len(slots)} slots, not 96')
+
+    # Order the locks by their own root's (theta, azimuth) and zip with the sorted
+    # slots, so each lock moves the shortest way and the layout stays symmetric.
+    roots = np.array([positions[entry['levels'][0]].mean(axis=0) for entry in locks])
+    rel = roots - SCALP
+    r_len = np.linalg.norm(rel, axis=1)
+    th0 = np.degrees(np.arccos(np.clip(rel[:, 1] / np.maximum(r_len, 1e-9), -1.0, 1.0)))
+    az0 = np.degrees(np.arctan2(rel[:, 0], rel[:, 2]))
+    order = np.lexsort((az0, th0))
+    slots.sort(key=lambda s: (s[0], s[1]))
+
+    skin_pts = skin[skin[:, 1] > 1.47]
+    tri_pts = skin_triangles
+
+    def surface_radius(direction: np.ndarray) -> float:
+        """Where the scalp ray leaves the skin: a real ray cast against the skin's
+        triangles, so a root sits on the surface whatever the point spacing does.
+        Falls back to the widest point within six degrees of the ray."""
+        v0 = tri_pts[skin_triangles[:, 0]]
+        v1 = tri_pts[skin_triangles[:, 1]]
+        v2 = tri_pts[skin_triangles[:, 2]]
+        e1 = v1 - v0
+        e2 = v2 - v0
+        pvec = np.cross(direction, e2)
+        det = np.einsum('ij,ij->i', e1, pvec)
+        ok = np.abs(det) > 1e-14
+        inv = np.zeros_like(det)
+        inv[ok] = 1.0 / det[ok]
+        tvec = SCALP - v0
+        u = np.einsum('ij,ij->i', tvec, pvec) * inv
+        qvec = np.cross(tvec, e1)
+        v = qvec @ direction * inv
+        t = np.einsum('ij,ij->i', e2, qvec) * inv
+        hit = ok & (u >= 0.0) & (v >= 0.0) & (u + v <= 1.0) & (t > 0.0) & (t < 0.30)
+        if hit.any():
+            return float(t[hit].min())
+        d = skin_pts - SCALP
+        r = np.linalg.norm(d, axis=1)
+        cos = (d @ direction) / np.maximum(r, 1e-9)
+        near = cos > math.cos(math.radians(6.0))
+        return float(r[near].max()) if near.any() else float(r.max())
+
+    # tip height bounds per region: the fringe stays above the brows (1.615), the
+    # sides above the ear line, the back above the nape hairline (1.5175).
+    TIP_FLOOR = {'fringe': 1.618, 'top': 1.560, 'side': 1.554, 'back': 1.520}
+
+    for slot, li in zip(slots, order):
+        entry = locks[int(li)]
+        theta, azimuth = slot
+        u = _hash_units(int(li), 0x40, 10)
+        # -- region rules ------------------------------------------------------
+        a = abs(azimuth)
+        if theta <= 52.0 and a < 50.0:
+            kind = 'fringe'
+        elif theta <= 52.0:
+            kind = 'top'
+        elif a > 125.0:
+            kind = 'back'
+        else:
+            kind = 'side'
+        length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
+                  'side': 0.030 + 0.014 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
+        droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.38, 'back': 0.26}[kind]
+        r_root = 0.0046 + 0.0018 * u[4]
+
+        th = math.radians(theta)
+        az = math.radians(azimuth)
+        d_hat = np.array([math.sin(th) * math.sin(az), math.cos(th), math.sin(th) * math.cos(az)])
+        r_skin = surface_radius(d_hat)
+        root = SCALP + d_hat * (r_skin + 0.0015)
+        # -- flow: outward-down on top, gravity-led at the sides and back -------
+        if kind == 'fringe':
+            flow = d_hat * 0.85 + np.array([0.0, -0.30, 0.45])
+        elif kind == 'top':
+            flow = d_hat * 0.90 + np.array([0.0, -0.35, 0.0])
+        elif kind == 'side':
+            flow = d_hat * 0.45 + np.array([0.0, -0.85, 0.0])
+        else:
+            flow = d_hat * 0.55 + np.array([0.0, -0.75, 0.0])
+        flow = flow / np.linalg.norm(flow)
+        gravity = np.array([0.0, -1.0, 0.0])
+
+        # -- the tube ----------------------------------------------------------
+        taper = [1.0, 0.88, 0.74, 0.60, 0.46]
+        stations = [0.0, 0.22, 0.44, 0.66, 0.86, 1.0]
+        centre = [root + flow * (length * t) + gravity * (droop * length * t * t)
+                  for t in stations]
+        floor = TIP_FLOOR[kind]
+        if centre[-1][1] < floor:
+            centre[-1][1] = floor
+        if centre[4][1] < floor + 0.003:
+            centre[4][1] = floor + 0.003
+        axis = centre[-1] - centre[0]
+        axis = axis / max(float(np.linalg.norm(axis)), 1e-9)
+        e1, e2 = _lock_frame(root, flow)
+        twist = (u[5] - 0.5) * 0.24
+        yaw = (u[6] - 0.5) * 0.5
+        e1 = e1 * math.cos(yaw) + np.cross(flow, e1) * math.sin(yaw)
+        e1 = e1 / max(float(np.linalg.norm(e1)), 1e-9)
+        e2 = np.cross(flow, e1)
+
+        # original ring angles, so each ring keeps its own cycle order (the atlas
+        # walks rings by edge order and the strands must not corkscrew)
+        old_root = positions[entry['levels'][0]].mean(axis=0)
+        old_axis = positions[entry['tip']] - old_root
+        old_axis = old_axis / max(float(np.linalg.norm(old_axis)), 1e-9)
+        oe1, oe2 = _lock_frame(old_root, old_axis)
+
+        verts = np.concatenate([np.asarray(r) for r in entry['levels'][:5]]
+                               + [np.array([entry['tip']])])
+        ring_angles = []
+        for ring in entry['levels'][:5]:
+            rel_r = positions[ring] - old_root
+            along = rel_r @ old_axis
+            radial = rel_r - np.outer(along, old_axis)
+            ring_angles.append([math.atan2(float(p @ oe2), float(p @ oe1)) for p in radial])
+
+        for k, ring in enumerate(entry['levels'][:5]):
+            t = stations[k]
+            ring_centre = centre[k]
+            rr = r_root * taper[k] * (1.0 + 0.07 * math.sin(math.tau * (t * 0.8 + u[7])))
+            if k == 0:
+                rr *= 1.30
+                ring_centre = ring_centre - flow * 0.002
+            for j, vid in enumerate(np.asarray(ring)):
+                ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
+                jitter = 1.0 + (u[8] - 0.5) * 0.10 if k > 0 else 1.0
+                out[vid] = ring_centre + (math.cos(ang) * e1 + math.sin(ang) * e2) * (rr * jitter)
+        out[entry['tip']] = centre[-1]
+
+        # clamp: outside the skull, inside the mop envelope; and no vertex hangs
+        # into the face column -- the space in front of the brow line, over the
+        # eyes and temples, where a drooping side strand would float (measured
+        # on the r40 build: four temple locks reached z 0.12 over the eye line)
+        for vid in verts:
+            p = out[vid]
+            if p[1] < 1.615 and p[2] > 0.105 and abs(float(p[0])) < 0.075:
+                p = np.array([p[0], p[1], 0.105])
+            r_head = math.hypot(float(p[0]), float(p[2] - SCALP[2]))
+            r_min = _skull_radius(field, float(p[0]), float(p[1]), float(p[2])) + SKIN_MARGIN
+            if r_head < r_min and r_head > 1e-9:
+                scale = r_min / r_head
+                p = np.array([p[0] * scale, p[1], SCALP[2] + (p[2] - SCALP[2]) * scale])
+            out[vid] = np.clip(p, MOP_BBOX_MIN, MOP_BBOX_MAX)
+
+    # -- the cap pads ----------------------------------------------------------
+    cap_verts = np.nonzero(labels == cap_label)[0]
+    boundary_set = set(int(v) for v in cap_boundary)
+    interior = np.array([v for v in cap_verts if int(v) not in boundary_set])
+    outward = positions[interior] - SCALP
+    outward = outward / np.maximum(np.linalg.norm(outward, axis=1, keepdims=True), 1e-9)
+    distance = np.linalg.norm(positions[interior][:, None, :] - positions[cap_boundary][None, :, :],
+                              axis=2).min(axis=1)
+    edge = np.clip(distance / 0.012, 0.0, 1.0)
+    edge = edge * edge * (3.0 - 2.0 * edge)
+    pad = np.array([0.0012 + 0.0018 * _hash_units(int(v), 0x77, 1)[0] for v in interior])
+    moved = positions[interior] + outward * (pad * edge)[:, None]
+    out[interior] = np.clip(moved, MOP_BBOX_MIN, MOP_BBOX_MAX)
+    return out
+
 
 
 def reshape_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray) -> np.ndarray:
@@ -1408,9 +1676,10 @@ def build() -> dict:
     hair_positions = hair_arrays['POSITION']
     hair_triangles = hair_arrays['indices'].reshape(-1, 3).astype(np.int64)
     hair_positions, hair_triangles = refine_locks(hair_positions, hair_triangles)
-    # 6b. Issue #386: roots into the mass, strand rhythm and fall, the crown whorl -
-    # then the hair's own atlas, for the maps the look draws on it.
-    hair_positions = reshape_locks(hair_positions, hair_triangles, positions)
+    # 6b. The r40 mop: every lock re-planted onto a dense layout -- a fringe over
+    # the forehead, chunky strands over the crown and temples, a short nape --
+    # then the crown whorl and the hair's own atlas, for the maps the look draws.
+    hair_positions = barber_locks(hair_positions, hair_triangles, positions, triangles)
     hair_positions = whorl_cap(hair_positions, hair_triangles)
     hair_uv_atlas = hair_uv(hair_positions, hair_triangles)
     hair_normals = welded_normals(hair_positions, hair_triangles)
@@ -1570,7 +1839,7 @@ def check() -> dict:
     for name, expected in expectations.items():
         if measured[name] != expected:
             failed.append(f'{name} is {measured[name]}, expected {expected}')
-    for name, pinned in (('hair_bbox_min', HAIR_BBOX_MIN), ('hair_bbox_max', HAIR_BBOX_MAX)):
+    for name, pinned in (('hair_bbox_min', MOP_BBOX_MIN), ('hair_bbox_max', MOP_BBOX_MAX)):
         drift = float(np.abs(np.asarray(measured[name]) - pinned).max())
         if drift > 1e-4:
             failed.append(f'{name} drifted {drift * 1000:.2f} mm off the pinned V2 envelope')
