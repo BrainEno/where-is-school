@@ -1241,8 +1241,13 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             ring_centre = centre[k]
             rr = r_root * taper[k] * (1.0 + 0.07 * math.sin(math.tau * (t * 0.8 + u[7])))
             if k == 0:
-                rr *= 1.45
+                # Slim and buried: a fat root ring on the skull spans past the
+                # neighbouring roots (12-18 mm spacing), and the clamped,
+                # interpenetrating rims tiled the crown with dark hexagonal cups.
                 ring_centre = ring_centre - flow * 0.003
+            if k == 1:
+                # The roots-touch swell rides one station up, clear of the cap.
+                rr *= 1.45
             for j, vid in enumerate(np.asarray(ring)):
                 ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
                 jitter = 1.0 + (u[8] - 0.5) * 0.10 if k > 0 else 1.0
