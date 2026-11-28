@@ -104,7 +104,11 @@ def protagonist_chin(skin, mouth_y):
     front_z = 0.85 * lip_z
     stop = mouth_y - 0.09
     for y0 in np.arange(mouth_y - 0.001, stop, -0.001):
-        window = mid[np.abs(mid[:, 1] - y0) < 0.0025]
+        # Front-surface points only: the closed skin shell carries interior strays
+        # near z = 0, and a window full of those is a hole in the midline, not the
+        # profile dying (the docstring's own rule; without the filter one stray pair
+        # 20 mm above the menton ended the walk early).
+        window = mid[(np.abs(mid[:, 1] - y0) < 0.0025) & (mid[:, 2] > 0.02)]
         if len(window) < 2:
             continue  # too sparse to judge: a hole in the midline, not the jawline
         if float(window[:, 2].max()) < front_z:
