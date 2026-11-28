@@ -1066,7 +1066,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
        above the brows, 30-46 mm on top, 30-44 mm over the temples, 18-28 mm
        at the nape and sideburns -- every tip asserted inside its region's
        bound, so the cut works from the front, the sides and the back.
-    4. **The cap pads** 1.2-3.0 mm outward (hashed, faded at the hairline) so
+    4. **The cap pads** a smooth 1.5 mm outward (faded at the hairline) so
        the mop has body between the roots.
 
     Everything is clamped to the skull field (+1.2 mm) and to the mop envelope,
@@ -1153,7 +1153,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
 
     # tip height bounds per region: the fringe stays above the brows (1.615), the
     # sides above the ear line, the back above the nape hairline (1.5175).
-    TIP_FLOOR = {'fringe': 1.618, 'top': 1.560, 'side': 1.554, 'back': 1.520}
+    TIP_FLOOR = {'fringe': 1.618, 'top': 1.560, 'side': 1.572, 'back': 1.520}
 
     for slot, li in zip(slots, order):
         entry = locks[int(li)]
@@ -1169,9 +1169,11 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             kind = 'back'
         else:
             kind = 'side'
+        # r40 second pass: the first mop's temple locks (30-44 mm, droop 0.38)
+        # hung to the cheek line and read as a burnt curtain over the ears.
         length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
-                  'side': 0.030 + 0.014 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
-        droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.38, 'back': 0.26}[kind]
+                  'side': 0.022 + 0.012 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
+        droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.30, 'back': 0.26}[kind]
         r_root = 0.0046 + 0.0018 * u[4]
 
         th = math.radians(theta)
@@ -1264,7 +1266,10 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
                               axis=2).min(axis=1)
     edge = np.clip(distance / 0.012, 0.0, 1.0)
     edge = edge * edge * (3.0 - 2.0 * edge)
-    pad = np.array([0.0012 + 0.0018 * _hash_units(int(v), 0x77, 1)[0] for v in interior])
+    # One smooth 1.5 mm pad with the hairline fade -- a per-vertex hashed pad made
+    # the cap a noise surface, and its chaotic normals shaded as blotches under the
+    # key (measured on the first r40 render). Body without bumps.
+    pad = np.full(len(interior), 0.0015)
     moved = positions[interior] + outward * (pad * edge)[:, None]
     out[interior] = np.clip(moved, MOP_BBOX_MIN, MOP_BBOX_MAX)
     return out

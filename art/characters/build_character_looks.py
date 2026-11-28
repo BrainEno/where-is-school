@@ -148,10 +148,14 @@ PROTAGONIST = {
             "pigment_a": "#2E2B3A",
             "pigment_b": "#3A2E27",
             "pigment_mix": 0.5,
-            "pigment_value": 0.25,
-            "pigment_scale": 14.0,
+            # r40: the first mop read blotchy -- the 0.25 value blocks at scale 14
+            # pooled as dark patches across the padded crown under the key. Smaller,
+            # quieter blocks and a lighter shade floor; the strand texture lives in
+            # the normal map now that the locks themselves carry the rhythm.
+            "pigment_value": 0.12,
+            "pigment_scale": 18.0,
             "shade_tint": "#7C7C9C",
-            "shadow_fill": 0.4,
+            "shadow_fill": 0.52,
             "outline": True,
         },
         # The same material is his eyebrows on the head mesh: no line, or they become blots.
