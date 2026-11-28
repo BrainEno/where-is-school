@@ -1764,7 +1764,7 @@ def courtyard_view():
     b.node("Yard", ".", position=vec3(YARD_OFFSET))
     prefixes = ("Hoop", "Shed", "Container", "Frame", "FencePostGap", "Bird", "Tree", "SouthGate")
     named = {"YardGround", "CourtSurface", "CourtFarHalf", "SouthFenceWest", "SouthFenceEast"}
-    for name, pos, size, _, _, body, _ in build_playground(for_courtyard_view=True).boxes:
+    for name, pos, size, _, _, body, _, rotation, _shadow in build_playground(for_courtyard_view=True).boxes:
         if not (name in named or name.startswith(prefixes)) or HIDE.fullmatch(name) or name == "ShedHedge":
             continue
         # The full-height estate blocks and the yard back wall are absent from this
@@ -1786,7 +1786,7 @@ def courtyard_view():
                            f'{pos[0]:g}, 0, {pos[2]:g})\n'
                            f'mesh = {mesh}\nmaterial_override = {b.surface("yard/yard_junk")}\n')
             continue
-        b.box(name, "Yard", pos, size, f"yard/{mat}")
+        b.box(name, "Yard", pos, size, f"yard/{mat}", rotation)
     b.bind("earth_yard", f"{YARD}/earth_yard.tscn", "PackedScene")
     b.nodes.append('[node name="EarthYard" parent="Yard" instance=ExtResource("earth_yard")]\n')
     # Round 20: the saguaro and the skipping girl in their square of soil, without the

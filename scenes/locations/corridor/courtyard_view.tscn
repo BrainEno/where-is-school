@@ -59,7 +59,7 @@ size = Vector3(0.2, 2.5, 0.2)
 size = Vector3(4.2, 0.12, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art9"]
-size = Vector3(3.6, 3.2, 0.1)
+size = Vector3(3.2, 2.8, 0.06)
 
 [sub_resource type="BoxMesh" id="BoxMesh_art10"]
 size = Vector3(0.18, 3.2, 0.18)
@@ -306,9 +306,10 @@ material_override = ExtResource("yard_metal_ink")
 cast_shadow = 0
 
 [node name="SouthGateLight" type="MeshInstance3D" parent="Yard"]
-position = Vector3(0, 1.6, 21.9)
+position = Vector3(0, 1.4, 21.2)
 mesh = SubResource("BoxMesh_art9")
 material_override = ExtResource("yard_lane_light")
+rotation_degrees = Vector3(0, 45, 0)
 cast_shadow = 0
 
 [node name="HoopNearPole" type="MeshInstance3D" parent="Yard"]
