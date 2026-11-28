@@ -1153,7 +1153,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
 
     # tip height bounds per region: the fringe stays above the brows (1.615), the
     # sides above the ear line, the back above the nape hairline (1.5175).
-    TIP_FLOOR = {'fringe': 1.618, 'top': 1.560, 'side': 1.572, 'back': 1.520}
+    TIP_FLOOR = {'fringe': 1.618, 'top': 1.560, 'side': 1.578, 'back': 1.520}
 
     for slot, li in zip(slots, order):
         entry = locks[int(li)]
@@ -1171,8 +1171,10 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             kind = 'side'
         # r40 second pass: the first mop's temple locks (30-44 mm, droop 0.38)
         # hung to the cheek line and read as a burnt curtain over the ears.
+        # r40 final trim: the first mop's sides hung to the jaw line; a mop
+        # stops at the ear. Side 16-26 mm, the rest as cut.
         length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
-                  'side': 0.022 + 0.012 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
+                  'side': 0.016 + 0.010 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
         droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.30, 'back': 0.26}[kind]
         # r40 final: PLATE scale, the r39-proven surface. The cap floor between
         # tubes is ink-dark, and tube crowns shade dark -- no strand-scale pelt
