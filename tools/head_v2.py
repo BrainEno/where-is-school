@@ -1174,13 +1174,18 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
                   'side': 0.022 + 0.012 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
         droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.30, 'back': 0.26}[kind]
-        r_root = 0.0046 + 0.0018 * u[4]
+        # r40 second pass: chunkier strands -- the first mop's 4.6-6.4 mm roots
+        # were the same size as the ink hull's offset, so the temple tubes read
+        # as ink slabs, not hair.
+        r_root = 0.0060 + 0.0024 * u[4]
 
         th = math.radians(theta)
         az = math.radians(azimuth)
         d_hat = np.array([math.sin(th) * math.sin(az), math.cos(th), math.sin(th) * math.cos(az)])
         r_skin = surface_radius(d_hat)
-        root = SCALP + d_hat * (r_skin + 0.0015)
+        # The root clears the cap's own 1.5 mm pad -- at +1.5 mm the root rings
+        # sat exactly ON the padded cap and z-fought it into dark blotches.
+        root = SCALP + d_hat * (r_skin + 0.0030)
         # -- flow: outward-down on top, gravity-led at the sides and back -------
         if kind == 'fringe':
             flow = d_hat * 0.85 + np.array([0.0, -0.30, 0.45])
@@ -1194,7 +1199,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         gravity = np.array([0.0, -1.0, 0.0])
 
         # -- the tube ----------------------------------------------------------
-        taper = [1.0, 0.88, 0.74, 0.60, 0.46]
+        taper = [1.0, 0.90, 0.78, 0.66, 0.54]
         stations = [0.0, 0.22, 0.44, 0.66, 0.86, 1.0]
         centre = [root + flow * (length * t) + gravity * (droop * length * t * t)
                   for t in stations]
@@ -1233,7 +1238,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
             ring_centre = centre[k]
             rr = r_root * taper[k] * (1.0 + 0.07 * math.sin(math.tau * (t * 0.8 + u[7])))
             if k == 0:
-                rr *= 1.30
+                rr *= 1.45
                 ring_centre = ring_centre - flow * 0.002
             for j, vid in enumerate(np.asarray(ring)):
                 ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
