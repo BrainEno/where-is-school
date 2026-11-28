@@ -32,7 +32,7 @@ shader_parameter/patch2_center = Vector3(0.052, 1.528, 0.088)
 shader_parameter/patch2_color = Color(0.5961, 0.6000, 0.4980, 1)
 shader_parameter/patch2_radius = Vector3(0.022, 0.03, 0.04)
 shader_parameter/patch2_strength = 0.26
-shader_parameter/patch_center = Vector3(0.030, 1.567, 0.102)
+shader_parameter/patch_center = Vector3(0.03, 1.567, 0.102)
 shader_parameter/patch_color = Color(0.4549, 0.3961, 0.4941, 1)
 shader_parameter/patch_feather = 0.85
 shader_parameter/patch_radius = Vector3(0.03, 0.02, 0.034)
@@ -76,7 +76,7 @@ next_pass = SubResource("outline")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.1647, 0.1451, 0.1882, 1)
 shader_parameter/edge_break = 0.18
-shader_parameter/edge_softness = 0.10
+shader_parameter/edge_softness = 0.1
 shader_parameter/half_tone = 0.55
 shader_parameter/light_edge = 0.42
 shader_parameter/light_strength = 0.85
@@ -98,7 +98,7 @@ shader_parameter/pigment_steps = 8
 shader_parameter/pigment_stretch = Vector3(1, 2.2, 1)
 shader_parameter/pigment_value = 0.22
 shader_parameter/shade_tint = Color(0.4902, 0.4784, 0.6353, 1)
-shader_parameter/shadow_edge = 0.0
+shader_parameter/shadow_edge = 0
 shader_parameter/shadow_fill = 0.55
 
 [sub_resource type="ShaderMaterial" id="m_protagonist_head__protagonist_mat_hair"]
