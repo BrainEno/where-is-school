@@ -61,8 +61,12 @@ def with_marks(part: dict, **marks: object) -> dict:
 def protagonist_charcoal(base: dict) -> dict:
     look = copy.deepcopy(base)
     look["label"] = "protagonist: charcoal (experiment)"
-    look["outline_width"] = 0.012
-    look["outline"] = {"wobble": 0.55, "wobble_scale": 11.0}
+    # r38b: at 12 mm and wobble 0.55 the ink hull emergences over the jaw/neck
+    # concavity covered the whole shadow-side lower face in near-ink (measured
+    # #1A131B -- the owner's "abnormal black from nose to chin"). N's approved
+    # hull is 5.5 mm at wobble 0.18; this sits just above it, still charcoal.
+    look["outline_width"] = 0.006
+    look["outline"] = {"wobble": 0.22, "wobble_scale": 11.0}
     parts = look["parts"]
     erased = {
         "strength": 0.55,

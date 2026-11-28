@@ -266,13 +266,15 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
     # Glabella.
     for x in (-0.0075, 0.0075):
         pts = curve([(x, 1.594), (x * 0.8, 1.602), (x * 0.6, 1.611)], grid, bounds)
-        stamp(height, pts, 1.0, 0.00030, size)
-    # Crow's feet.
+        stamp(height, pts, 1.0, 0.00020, size)
+    # Crow's feet. r38b: at the lighter skin these read as the bug-like black
+    # dashes at the eye corners the owner named; the lids' own crease keeps the
+    # age, the paint stops drawing the dashes.
     for side in (-1, 1):
         for dy, length in ((0.0035, 0.014), (0.0, 0.017), (-0.0035, 0.013)):
             pts = curve([(side * 0.045, 1.582 + dy), (side * 0.052, 1.582 + dy * 1.6),
                          (side * 0.058, 1.582 + dy * 1.9)], grid, bounds)
-            stamp(height, pts, 0.9, 0.00026, size)
+            stamp(height, pts, 0.9, 0.00012, size)
     # Upper-lid crease.
     for side in (-1, 1):
         pts = curve([(side * 0.0155, 1.5985), (side * 0.0305, 1.6025),
@@ -290,12 +292,13 @@ def build_height(pos: np.ndarray, nor: np.ndarray, mask: np.ndarray, grid, bound
         for y0, y1 in ((1.497, 1.5025), (1.4875, 1.4935)):
             pts = curve([(x, y0), (x * 0.92, (y0 + y1) * 0.5), (x * 0.8, y1)], grid, bounds)
             stamp(height, pts, 0.65, 0.00012, size)
-    # Mental crease and neck lines.
+    # Mental crease and neck lines. r38b: at the lighter mid face these drew as thin
+    # scar arcs across the chin; whisper them -- the sculpt carries the structure.
     pts = curve([(-0.020, 1.4795), (0.0, 1.4775), (0.020, 1.4795)], grid, bounds)
-    stamp(height, pts, 1.2, 0.00035, size)
+    stamp(height, pts, 1.2, 0.00016, size)
     for y in (1.4525, 1.4435):
         pts = curve([(-0.036, y), (0.0, y - 0.001), (0.036, y)], grid, bounds)
-        stamp(height, pts, 1.3, 0.00032, size)
+        stamp(height, pts, 1.3, 0.00014, size)
     # Alar creases.
     for side in (-1, 1):
         pts = curve([(side * 0.0185, 1.506), (side * 0.0245, 1.501),
@@ -381,10 +384,13 @@ def build_albedo(pos: np.ndarray, mask: np.ndarray, size: int,
 
     # Lips: a desaturated rose over the vermilion, and the darker mouth line. The line the
     # sculpt already folds is not painted twice as hard: the fold catches the ink line.
+    # r38b: the (0.64, 0.46, 0.44) multiplier read as a dark maroon block between the
+    # nose and the mouth (the owner's "abnormal black" band); N's approved lip value
+    # is a lit rose, and this glaze now matches it as a multiplier.
     lip = np.exp(-((ax / 0.024) ** 2) ** 2 - ((y - 1.4955) / 0.0085) ** 2) * (z > 0.105)
-    glaze((0.64, 0.46, 0.44), 0.40 * lip)
+    glaze((0.82, 0.64, 0.60), 0.35 * lip)
     line = np.exp(-((y - 1.4952) / 0.0012) ** 2) * np.exp(-(ax / 0.024) ** 2) * (z > 0.11)
-    colour *= (1.0 - 0.16 * line)[:, :, None]
+    colour *= (1.0 - 0.10 * line)[:, :, None]
     # Eyelids: a little darker and redder.
     lid = np.exp(-((ax - 0.031) / 0.017) ** 2) * np.exp(-((y - 1.592) / 0.009) ** 2) * (z > 0.09)
     glaze((0.60, 0.46, 0.44), 0.12 * lid)

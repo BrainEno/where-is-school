@@ -486,9 +486,13 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray,
             along = float(np.clip((station - low) / max(high - low, 1e-9), 0.0, 1.0))
             centre_y = float(np.interp(along, [0.0, 0.25, 0.5, 0.75, 1.0],
                                        [1.6056, 1.6070, 1.6074, 1.6066, 1.6049]))
+            # r38b: the 2.2-2.4 mm diamond read as a knife slash (the owner's "the
+            # brows are slivers"), and its 0.6 mm tail vanished under its own ink
+            # hull, leaving the dash-dot lines at the eye corners. The section is
+            # half again as tall, and the tail keeps body to the end.
             half_height = float(np.interp(along, [0.0, 0.18, 0.5, 0.8, 1.0],
-                                          [0.0008, 0.0022, 0.0024, 0.0016, 0.0006]))
-            half_depth = half_height * 0.85
+                                          [0.0016, 0.0032, 0.0036, 0.0028, 0.0016]))
+            half_depth = half_height * 1.0
             skin = surface_z(station, centre_y, head, triangles) if triangles is not None else None
             if skin is None:
                 # No triangle soup (direct callers in tests): fall back to the
