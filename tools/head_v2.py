@@ -1193,7 +1193,14 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         if kind == 'fringe':
             flow = d_hat * 0.85 + np.array([0.0, -0.30, 0.45])
         elif kind == 'top':
-            flow = d_hat * 0.90 + np.array([0.0, -0.35, 0.0])
+            # r40: the top locks comb OUTWARD from the crown, like hair from a
+            # whorl -- vertical strands open wells between them that read as
+            # dark hexagonal cups from any raised camera (measured on two r40
+            # renders; r39's plates hid them by lying flat).
+            out_dir = np.array([d_hat[0], 0.0, d_hat[2]])
+            n = float(np.linalg.norm(out_dir))
+            out_dir = out_dir / n if n > 1e-6 else np.array([0.0, 0.0, 1.0])
+            flow = d_hat * 0.55 + out_dir * 0.55 + np.array([0.0, -0.30, 0.0])
         elif kind == 'side':
             flow = d_hat * 0.45 + np.array([0.0, -0.85, 0.0])
         else:
@@ -1206,6 +1213,11 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         stations = [0.0, 0.22, 0.44, 0.66, 0.86, 1.0]
         centre = [root + flow * (length * t) + gravity * (droop * length * t * t)
                   for t in stations]
+        if kind == 'top':
+            # Knit the pelt: the second ring sits at an absolute 8 mm so the
+            # swollen rings of neighbouring locks meet at the same height and
+            # close the gaps between the combed strands.
+            centre[1] = root + flow * 0.008
         floor = TIP_FLOOR[kind]
         if centre[-1][1] < floor:
             centre[-1][1] = floor
