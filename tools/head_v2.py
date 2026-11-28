@@ -1161,7 +1161,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         u = _hash_units(int(li), 0x40, 10)
         # -- region rules ------------------------------------------------------
         a = abs(azimuth)
-        if theta <= 52.0 and a < 50.0:
+        if theta <= 52.0 and a < 30.0:
             kind = 'fringe'
         elif theta <= 52.0:
             kind = 'top'
@@ -1174,10 +1174,11 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
                   'side': 0.022 + 0.012 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
         droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.30, 'back': 0.26}[kind]
-        # r40 second pass: chunkier strands -- the first mop's 4.6-6.4 mm roots
-        # were the same size as the ink hull's offset, so the temple tubes read
-        # as ink slabs, not hair.
-        r_root = 0.0060 + 0.0024 * u[4]
+        # r40 final: plate-scale tubes. The cap floor between tubes is itself
+        # ink-dark, so any gap in the pelt reads as a dark cup -- the tubes must
+        # overlap and hide it (the r39 plates were 26-46 mm wide; 10-14 mm still
+        # reads as strands while covering).
+        r_root = 0.0100 + 0.0040 * u[4]
 
         th = math.radians(theta)
         az = math.radians(azimuth)
@@ -1282,8 +1283,8 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         # on the r40 build: four temple locks reached z 0.12 over the eye line)
         for vid in verts:
             p = out[vid]
-            if p[1] < 1.615 and p[2] > 0.105 and abs(float(p[0])) < 0.075:
-                p = np.array([p[0], p[1], 0.105])
+            if p[1] < 1.615 and p[2] > 0.100 and abs(float(p[0])) < 0.085:
+                p = np.array([p[0], p[1], 0.100])
             r_head = math.hypot(float(p[0]), float(p[2] - SCALP[2]))
             r_min = _skull_radius(field, float(p[0]), float(p[1]), float(p[2])) + SKIN_MARGIN
             if r_head < r_min and r_head > 1e-9:
