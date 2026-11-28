@@ -209,40 +209,50 @@ def sculpt_head(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarra
     #    r38: the bowl and the crease read as black pools under the classroom key
     #    (N·L crosses the shadow edge on the whole concavity), so the pits are a
     #    third shallower; the rolls and supports keep the lid planes.
+    #    r40: every crease also has to stay *broader* than the ink hull's offset
+    #    (3.3 mm at review distance) -- a fold tighter than the offset makes the
+    #    hull's far wall poke through the near one and the ink draws the fold as a
+    #    black dash (the owner's r39 "bug-like lines at the eye corners").
     for side in (-1, 1):
         add(gaussian(positions, (side * 0.0305, 1.585, 0.103), (0.024, 0.019, 0.028), -0.0024))
         add(gaussian(positions, (side * 0.0305, 1.592, 0.108), (0.018, 0.007, 0.015), 0.0025))
-        add(gaussian(positions, (side * 0.0305, 1.600, 0.101), (0.020, 0.004, 0.016), -0.0014))
+        add(gaussian(positions, (side * 0.0305, 1.600, 0.101), (0.020, 0.008, 0.016), -0.0010))
         add(gaussian(positions, (side * 0.0305, 1.576, 0.107), (0.016, 0.005, 0.013), 0.0015))
         # under-eye bag and tear trough
         add(gaussian(positions, (side * 0.032, 1.5725, 0.101), (0.015, 0.0055, 0.018), 0.0015))
-        add(gaussian(positions, (side * 0.034, 1.565, 0.098), (0.022, 0.009, 0.022), -0.0010))
+        add(gaussian(positions, (side * 0.034, 1.565, 0.098), (0.022, 0.013, 0.022), -0.0008))
         # outer corner support
         add(gaussian(positions, (side * 0.0455, 1.581, 0.099), (0.010, 0.008, 0.014), 0.0010))
 
     # 2. Nose: bridge planes, rounded tip, alar wings, columella and the underside.
+    #    r40: the side walls and the alar pit widened past the hull offset -- the
+    #    old 4.5-5 mm sigmas drew the nose sides and the nostril wings in ink.
     add(gaussian(positions, (0.0, 1.555, 0.128), (0.010, 0.028, 0.018), 0.0015))
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.0105, 1.545, 0.124), (0.005, 0.024, 0.015), -0.0012))
+        add(gaussian(positions, (side * 0.0105, 1.545, 0.124), (0.009, 0.024, 0.018), -0.0009))
         add(gaussian(positions, (side * 0.019, 1.5005, 0.127), (0.0075, 0.007, 0.011), 0.0030))
-        add(gaussian(positions, (side * 0.024, 1.5015, 0.120), (0.0045, 0.007, 0.010), -0.0013))
+        add(gaussian(positions, (side * 0.024, 1.5015, 0.120), (0.008, 0.009, 0.013), -0.0010))
     add(gaussian(positions, (0.0, 1.5075, 0.139), (0.0085, 0.008, 0.009), 0.0030))
     add(gaussian(positions, (0.0, 1.4965, 0.1315), (0.009, 0.0045, 0.009), 0.0015))
-    add(gaussian(positions, (0.0, 1.4935, 0.1285), (0.0055, 0.0035, 0.007), -0.0010))
+    add(gaussian(positions, (0.0, 1.4935, 0.1285), (0.009, 0.006, 0.010), -0.0007))
 
     # 3. Mouth: philtrum, cupid's bow, lip volumes, a cut mouth line, corners.
     #    r38: the cut line and the corners read as holes around the mouth; halved.
+    #    r40: the cut, the vermilion step and the corners were 1.8-4.5 mm knife
+    #    creases -- tighter than the hull offset, so the ink drew the whole mouth
+    #    zone black. They are now broader folds; the lip seam itself (the walls
+    #    genuinely meet) still catches a crisp ink line, which is the wanted one.
     for side in (-1, 1):
         add(gaussian(positions, (side * 0.0060, 1.5045, 0.1185), (0.0035, 0.0065, 0.009), 0.0009))
         add(gaussian(positions, (side * 0.0100, 1.4995, 0.1195), (0.0085, 0.0040, 0.009), 0.0024))
         add(gaussian(positions, (side * 0.0155, 1.4895, 0.1190), (0.012, 0.0055, 0.009), 0.0022))
-        add(gaussian(positions, (side * 0.0245, 1.4955, 0.1125), (0.0055, 0.0045, 0.007), -0.0008))
+        add(gaussian(positions, (side * 0.0245, 1.4955, 0.1125), (0.008, 0.007, 0.011), -0.0007))
         # vermilion border step
-        add(gaussian(positions, (side * 0.014, 1.4948, 0.1195), (0.011, 0.0015, 0.008), -0.0009))
+        add(gaussian(positions, (side * 0.014, 1.4948, 0.1195), (0.011, 0.004, 0.008), -0.0006))
     add(gaussian(positions, (0.0, 1.5005, 0.1200), (0.0045, 0.0030, 0.007), 0.0012))
     add(gaussian(positions, (0.0, 1.4885, 0.1200), (0.009, 0.0040, 0.007), 0.0018))
-    add(gaussian(positions, (0.0, 1.4952, 0.1185), (0.022, 0.0018, 0.009), -0.0013))
-    add(gaussian(positions, (0.0, 1.4785, 0.1045), (0.020, 0.0055, 0.013), -0.0012))
+    add(gaussian(positions, (0.0, 1.4952, 0.1185), (0.024, 0.005, 0.010), -0.0010))
+    add(gaussian(positions, (0.0, 1.4785, 0.1045), (0.022, 0.010, 0.015), -0.0009))
 
     # 4. Cheeks, jaw and chin.
     for side in (-1, 1):
