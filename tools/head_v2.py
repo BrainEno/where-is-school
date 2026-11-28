@@ -1174,11 +1174,13 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
         length = {'fringe': 0.024 + 0.012 * u[0], 'top': 0.030 + 0.016 * u[1],
                   'side': 0.022 + 0.012 * u[2], 'back': 0.018 + 0.010 * u[3]}[kind]
         droop = {'fringe': 0.20, 'top': 0.12, 'side': 0.30, 'back': 0.26}[kind]
-        # r40 final: plate-scale tubes. The cap floor between tubes is itself
-        # ink-dark, so any gap in the pelt reads as a dark cup -- the tubes must
-        # overlap and hide it (the r39 plates were 26-46 mm wide; 10-14 mm still
-        # reads as strands while covering).
-        r_root = 0.0100 + 0.0040 * u[4]
+        # r40 final: PLATE scale, the r39-proven surface. The cap floor between
+        # tubes is ink-dark, and tube crowns shade dark -- no strand-scale pelt
+        # can cover the crown without showing one or the other (seven r40
+        # renders measured it). The r39 plates (26-46 mm, lying on the skull)
+        # rendered clean; the mop keeps that surface and re-cuts it: region
+        # lengths 18-46 mm everywhere (the spikes die), a symmetric layout.
+        r_root = 0.0210 + 0.0090 * u[4]
 
         th = math.radians(theta)
         az = math.radians(azimuth)
@@ -1204,14 +1206,14 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
                                  math.cos(th) * math.cos(az)])
             flow = meridian * 0.85 + d_hat * 0.30 + np.array([0.0, -0.25, 0.0])
         elif kind == 'side':
-            flow = d_hat * 0.45 + np.array([0.0, -0.85, 0.0])
+            flow = d_hat * 0.30 + np.array([0.0, -0.90, 0.0])
         else:
-            flow = d_hat * 0.55 + np.array([0.0, -0.75, 0.0])
+            flow = d_hat * 0.40 + np.array([0.0, -0.80, 0.0])
         flow = flow / np.linalg.norm(flow)
         gravity = np.array([0.0, -1.0, 0.0])
 
         # -- the tube ----------------------------------------------------------
-        taper = [1.0, 0.90, 0.78, 0.66, 0.54]
+        taper = [1.0, 0.94, 0.82, 0.66, 0.55]
         stations = [0.0, 0.22, 0.44, 0.66, 0.86, 1.0]
         centre = [root + flow * (length * t) + gravity * (droop * length * t * t)
                   for t in stations]
@@ -1265,12 +1267,7 @@ def barber_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray,
                 ring_centre = ring_centre - flow * 0.003
             if k == 1:
                 # The roots-touch swell rides one station up, clear of the cap.
-                rr *= 1.45
-            if k == 2:
-                # The pelt: the third ring stays swollen too, so the wide part of
-                # each tube overlaps its neighbours' and the gaps between strands
-                # close before any back-facing wall can fill them with shade.
-                rr *= 1.30
+                rr *= 1.18
             for j, vid in enumerate(np.asarray(ring)):
                 ang = ring_angles[k][j] + twist * math.sin(math.pi * t)
                 jitter = 1.0 + (u[8] - 0.5) * 0.10 if k > 0 else 1.0
