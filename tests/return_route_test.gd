@@ -115,7 +115,7 @@ func _walk_return_route() -> void:
 	if await _inspect(&"alley_return_plate", &"alley_return_plate", Vector3(-2.10, 0, -18.55), true):
 		_expect_note(&"saw_alley_return_plate")
 		await _dismiss()
-	await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley")
+	await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley", Vector3.FORWARD)
 
 
 func _check_choices_and_notes() -> void:
@@ -156,9 +156,9 @@ func _check_choices_and_notes() -> void:
 			return
 	_check.expect(_rolls.size() == 2 and _state.get_flag(StoryFlags.PLAYGROUND_CHECKED, false),
 		"The original shed checks did not resolve and record their outcome.")
-	if not await _exit(&"pg_back_to_alley", Vector3(0.12, 0, 17.12), &"alley", &"FromPlayground"):
+	if not await _exit(&"pg_back_to_alley", Vector3(0.12, 0, 17.12), &"alley", &"FromPlayground", Vector3.BACK):
 		return
-	if await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley"):
+	if await _exit(&"alley_to_playground", Vector3(0.24, 0, -20.63), &"playground", &"FromAlley", Vector3.FORWARD):
 		await _exit(&"pg_to_corridor", Vector3(-3.0, 0, -18.07), &"corridor", &"FromSchoolyard")
 
 
@@ -219,13 +219,22 @@ func _inspect(id: StringName, inspection: StringName, stance: Vector3, via_point
 		"%s did not present inspection %s (got %s)." % [id, inspection, _last_line.get("inspection_id")])
 
 
-func _exit(id: StringName, stance: Vector3, location: StringName, spawn: StringName) -> bool:
+func _exit(id: StringName, stance: Vector3, location: StringName, spawn: StringName,
+		heading: Vector3 = Vector3.ZERO) -> bool:
 	if not await _use(id, stance):
 		return false
-	return _check.expect(await Harness.wait_until(func() -> bool:
+	var arrived := await Harness.wait_until(func() -> bool:
 		return (_host.get_current().location_id == location and _host.get_current_spawn() == spawn
-			and _player.is_control_enabled() and _player.is_on_floor()), 12.0),
-		"%s did not let the player through to %s/%s." % [id, location, spawn])
+			and _player.is_control_enabled() and _player.is_on_floor()), 12.0)
+	if not _check.expect(arrived, "%s did not let the player through to %s/%s." % [id, location, spawn]):
+		return false
+	# The doorway arrivals declare an entry heading (entry_facing). The body must end up
+	# facing the way the doorway needs, whatever heading the moment of pressing E left.
+	if heading != Vector3.ZERO:
+		var facing := _player.get_facing_direction()
+		return _check.expect(facing.dot(heading) > 0.9,
+			"%s left the player at %s/%s facing %s, not %s." % [id, location, spawn, facing, heading])
+	return true
 
 
 func _open_shed() -> bool:
