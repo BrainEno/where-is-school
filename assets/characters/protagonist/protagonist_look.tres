@@ -71,7 +71,6 @@ shader_parameter/shadow_fill = 0.6
 
 [sub_resource type="ShaderMaterial" id="m_protagonist_mat_hair"]
 resource_name = "protagonist_mat_hair (painted)"
-next_pass = SubResource("outline")
 shader = ExtResource("2_paint")
 shader_parameter/albedo = Color(0.1647, 0.1451, 0.1882, 1)
 shader_parameter/edge_break = 0.18

@@ -128,7 +128,12 @@ def protagonist_charcoal(base: dict) -> dict:
             "shade_tint": "#7C7C9C",
             "shadow_fill": 0.52,
             "light_strength": 0.85,
-            "outline": True,
+            # r40: no ink hull on the hair. Ninety-six tubes a shell-offset apart
+            # make their hulls overlap into one blotchy ink blanket over the crown
+            # (the mop's "dark blotches"), and every tube reads as an ink slab.
+            # Q's hair ships without the hull; the hair is ink-dark paint already,
+            # and the silhouette keeps the classroom's line through the face.
+            "outline": False,
         },
         # v1 (0.6 strength, 0.25 coverage) cluttered the face in close-up. v2 (#6A6474, 0.5,
         # contour 0.35) laid a pale grey veil along every spike: strands this fine fade to
