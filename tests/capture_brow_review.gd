@@ -27,7 +27,7 @@ const WIDE_FOV := 55.0
 const WIDE_DISTANCE := 1.55
 ## Orbit angles in degrees. Zero is the character's own facing; positive angles stand on
 ## the character's left. The close shots frame the brows, the wide ones frame the head.
-const CLOSE_YAWS := [0.0, 45.0, -45.0, 90.0, -90.0]
+const CLOSE_YAWS := [0.0, 45.0, -45.0, 90.0, -90.0, 180.0]
 const WIDE_YAWS := [0.0, 45.0]
 const YAW_LABELS := {
 	0.0: "front",
@@ -35,6 +35,7 @@ const YAW_LABELS := {
 	-45.0: "right45",
 	90.0: "left90",
 	-90.0: "right90",
+	180.0: "back",
 }
 ## Where each character stands for its own orbit. The player teleports to the centre
 ## aisle (the proven clear spot) facing the stage like a student; Q keeps its classroom
