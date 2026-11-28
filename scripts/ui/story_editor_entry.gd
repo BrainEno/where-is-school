@@ -86,6 +86,17 @@ static func development_override() -> bool:
 	)
 
 
+## Whether the running world may attach the live line editor beside the drawer (#395 follow-up).
+## The staged authoring app always may (`Entry.isolated_author()` is that app). An ordinary
+## development run of this project does too - the author works where the game is, not only in
+## a staged copy - but only under the same window as `development_default()`: desktop, not
+## headless, not CI's player view, not `--script` (the harness speaks as a player's copy), and
+## not a mobile pack, which is player-shaped even as a debug build. Player exports never load
+## this file without the scripts, so the first line already keeps them out.
+static func live_editing_allowed() -> bool:
+	return development_default()
+
+
 ## The author's key for the editor (#396). The row in the pause menu sits behind a preferences
 ## file a machine may refuse to write, and behind two menus, so `Session` watches for this key
 ## and calls `toggle()` from anywhere in the run. It is a raw key rather than an action in

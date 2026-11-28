@@ -1,6 +1,8 @@
 extends Node
 ## Attaches a local draft editor to a running world. The standalone author build stages
-## this as an autoload; the iPhone player build installs only the detached editor.
+## this as an autoload; a development run of this project installs it through the story
+## editor switch (drawer always, live line editor when `Entry.live_editing_allowed()`);
+## the iPhone player build installs only the detached editor.
 
 const Overlay := preload("res://scripts/story_editor/author_overlay.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
@@ -61,6 +63,16 @@ func open_editor() -> bool:
 
 
 func release_overlay() -> void:
+	# The live editor is a sibling under the world, not a child of this node: freeing the
+	# bootstrap alone would leave it on the tree after the switch goes off.
+	if is_instance_valid(_live) and not _live.is_queued_for_deletion():
+		if _live.is_editing():
+			_live.close_editor()
+		var live_parent := _live.get_parent()
+		_live.queue_free()
+		if live_parent != null:
+			live_parent.remove_child(_live)
+		_live = null
 	if not is_instance_valid(_overlay) or _overlay.is_queued_for_deletion():
 		return
 	# Disabling the mode releases the pause even if a final draft write fails.
@@ -78,7 +90,11 @@ func _attach() -> void:
 	if world == null or not world.has_node(^"DialogueController") or not world.has_node(^"GameUI") \
 			or world.has_node(^"AuthorOverlay"):
 		return
-	var live := Entry.isolated_author(get_tree().root) == self
+	# Live editing of the presented line: the staged author app, and a development run of
+	# this project on desktop (#395 follow-up). The drawer stays installed either way - it
+	# is what opens when no line is on screen - and `show_launcher` only hides the world
+	# button while live can answer for the pause entry.
+	var live := Entry.isolated_author(get_tree().root) == self or Entry.live_editing_allowed()
 	if _store == null:
 		_store = Store.new("", live)
 		_store.load_workspace()
