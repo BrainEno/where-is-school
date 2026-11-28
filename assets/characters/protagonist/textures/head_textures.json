@@ -1,22 +1,22 @@
 {
-  "source_sha256": "e2affffae8673f166ecf08d63bf75d8fbad7dcca9e5d54893c86100e36b936d6",
+  "source_sha256": "e1d69c5f6502705d54977aa5437468cf51586ea206ca74e2b4bef5356448035c",
   "normal_sha256": "8793eb2933b42ac8deae00ae768c7b2e59bf8ae80f0cd632b410381496a2e13e",
-  "albedo_sha256": "a9c2778ab1b401a9aba4d6fbc1a0d16db037033f010d03b470d94f194d1a636a",
+  "albedo_sha256": "c8150932c6c6829419683e4f95800bad64c3d617c115277ca25bfed026044a9c",
   "normal_size": 1024,
   "albedo_size": 1024,
   "covered_texels": 1036525,
   "normal_bytes": 269025,
-  "albedo_bytes": 239892,
-  "hair_normal_sha256": "2b030510aa38b580c794c33cdc27f56970af765ff20d9654893670cd7e4a7d80",
-  "hair_albedo_sha256": "e81a892ae883c93c874033bf5601d1afdb67b18506e920ee59a494f89d10dd68",
+  "albedo_bytes": 206061,
+  "hair_normal_sha256": "856827fa112a21cdafcb55f5b946fc97dbafcffa33da87fe5bd0bc29a1b6d919",
+  "hair_albedo_sha256": "7ca6c4e80047e813b5c9ac7129f06f1d436ea68deac81507a496c819706b5e0f",
   "hair_normal_size": 1024,
   "hair_albedo_size": 512,
-  "hair_covered_texels": 629708,
-  "hair_normal_bytes": 434136,
-  "hair_albedo_bytes": 66104,
+  "hair_covered_texels": 629475,
+  "hair_normal_bytes": 327442,
+  "hair_albedo_bytes": 66196,
   "hair_crown": [
-    5.661652591870224e-18,
-    1.6965076923370361,
-    -0.019015252590179443
+    5.635958707683102e-18,
+    1.695910930633545,
+    -0.018747428432106972
   ]
 }
