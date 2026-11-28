@@ -372,33 +372,70 @@ def build_albedo(pos: np.ndarray, mask: np.ndarray, size: int,
     x, y, z = pos[:, :, 0], pos[:, :, 1], pos[:, :, 2]
     ax = np.abs(x)
 
+    def _step(v, edge, width=0.006):
+        # Smooth sigmoid gate. Hard z-steps painted torn-paper polygon islands
+        # across the cheeks (texel-grid-aligned boundaries), so every zone gate
+        # runs through this helper instead of a boolean compare.
+        x = np.clip((v - edge) / width, -12.0, 12.0)
+        return 1.0 / (1.0 + np.exp(-x))
+
     def glaze(target, mask_layer: np.ndarray) -> None:
         multiplier = np.asarray(target, dtype=np.float64) / base
         blend = mask_layer[:, :, None]
         colour[:] = colour * (1.0 - blend) + multiplier[None, None, :] * blend
 
+    # V4 colour zones: the skin carries the painted face's temperature map - warm
+    # nose and ears, warm-grey cheeks, cool forehead, violet eye sockets, and the
+    # jaw-to-neck transition the form needs to read without extra lights. All glazes
+    # are multipliers over the look's base, measured against the V4 landmarks
+    # (mouth line 1.501, nose base 1.528, eye line 1.584, menton 1.454).
+    #
     # Lips: a desaturated rose over the vermilion, and the darker mouth line. The line the
     # sculpt already folds is not painted twice as hard: the fold catches the ink line.
-    lip = np.exp(-((ax / 0.024) ** 2) ** 2 - ((y - 1.4955) / 0.0085) ** 2) * (z > 0.105)
-    glaze((0.64, 0.46, 0.44), 0.40 * lip)
-    line = np.exp(-((y - 1.4952) / 0.0012) ** 2) * np.exp(-(ax / 0.024) ** 2) * (z > 0.11)
-    colour *= (1.0 - 0.16 * line)[:, :, None]
+    lip = np.exp(-((ax / 0.027) ** 2) ** 2 - ((y - 1.5005) / 0.0095) ** 2) * _step(z, 0.105)
+    glaze((0.62, 0.43, 0.42), 0.62 * lip)
+    line = np.exp(-((y - 1.4968) / 0.0013) ** 2) * np.exp(-(ax / 0.027) ** 2) * _step(z, 0.11)
+    colour *= (1.0 - 0.22 * line)[:, :, None]
+    # The nose: warmer than the cheeks (the classic red at the tip and wings), with the
+    # alar creases a shade cooler where they cut in.
+    nose = np.exp(-((ax / 0.023) ** 2) - ((y - 1.5165) / 0.026) ** 2) * _step(z, 0.112)
+    glaze((0.7059, 0.545, 0.455), 0.30 * nose)
+    alar = np.exp(-((ax - 0.0205) / 0.0075) ** 2) * np.exp(-((y - 1.5095) / 0.0075) ** 2) * _step(z, 0.105)
+    glaze((0.55, 0.44, 0.42), 0.16 * alar)
     # Eyelids: a little darker and redder.
-    lid = np.exp(-((ax - 0.031) / 0.017) ** 2) * np.exp(-((y - 1.592) / 0.009) ** 2) * (z > 0.09)
+    lid = np.exp(-((ax - 0.031) / 0.017) ** 2) * np.exp(-((y - 1.592) / 0.009) ** 2) * _step(z, 0.09)
     glaze((0.60, 0.46, 0.44), 0.12 * lid)
-    # The bruised under-eye. The look already paints a patch here, so this is the mottled
-    # edge the patch cannot have, not a second bruise.
-    bruise = np.exp(-((ax - 0.034) / 0.018) ** 2) * np.exp(-((y - 1.5685) / 0.0075) ** 2) * (z > 0.08)
-    glaze((0.50, 0.44, 0.55), 0.09 * bruise)
+    # The bruised under-eye and the socket's violet depth. The look already paints a
+    # patch here, so this is the mottled edge the patch cannot have, not a second bruise.
+    bruise = np.exp(-((ax - 0.032) / 0.019) ** 2) * np.exp(-((y - 1.5705) / 0.0085) ** 2) * _step(z, 0.08)
+    glaze((0.50, 0.44, 0.55), 0.18 * bruise)
+    socket = np.exp(-((ax - 0.029) / 0.020) ** 2) * np.exp(-((y - 1.5865) / 0.011) ** 2) * _step(z, 0.085)
+    glaze((0.52, 0.47, 0.58), 0.15 * socket)
+    # The brow band reads a shade deeper where the hair sits.
+    brow_band = np.exp(-((ax / 0.052) ** 2) ** 2 - ((y - 1.6105) / 0.010) ** 2) * _step(z, 0.09)
+    glaze((0.56, 0.50, 0.47), 0.13 * brow_band)
+    # The forehead cools a touch against the warm midface.
+    forehead = np.exp(-((ax / 0.050) ** 2) - ((y - 1.6425) / 0.020) ** 2) * _step(z, 0.085)
+    glaze((0.665, 0.655, 0.575), 0.13 * forehead)
     # Stubble: a cool grey-green tooth on the jaw and chin. The philtrum band this used to
     # cross is gone -- at the lighter skin it read as dirt on the groove the owner named.
-    stubble_region = (y < 1.487) & (ax < 0.062) & (z > 0.02)
+    stubble_region = _step(-y, -1.488, 0.010) * _step(-ax, -0.062, 0.012) * _step(z, 0.02, 0.012)
     tooth = (fbm(xx, yy, 0.30, 2, 41) - 0.5)
     stubble = np.where(stubble_region, np.clip(tooth * 2.2 + 0.15, 0.0, 1.0) * 0.09, 0.0)
     glaze((0.42, 0.43, 0.40), stubble)
-    # A soft warm cheek glaze.
-    cheek = np.exp(-((ax - 0.045) / 0.022) ** 2) * np.exp(-((y - 1.530) / 0.022) ** 2) * (z > 0.06)
-    glaze((0.70, 0.55, 0.49), 0.10 * cheek)
+    # A soft warm cheek glaze, over the cheekbone and into the hollow below it.
+    cheek = np.exp(-((ax - 0.046) / 0.023) ** 2) * np.exp(-((y - 1.5325) / 0.022) ** 2) * _step(z, 0.06)
+    glaze((0.70, 0.515, 0.460), 0.22 * cheek)
+    # The ears flush warmer than the face.
+    ears = np.exp(-((ax - 0.0685) / 0.011) ** 2) * np.exp(-((y - 1.5785) / 0.026) ** 2) * _step(z, 0.0, 0.012) * _step(-z, -0.060, 0.012)
+    glaze((0.7059, 0.555, 0.485), 0.22 * ears)
+    # The jaw-to-neck transition: the underside of the jaw and the throat fall into a
+    # cooler shade, so the head reads as sitting on a neck even under flat light.
+    jaw_shade = np.exp(-((ax / 0.055) ** 2) - ((y - 1.4465) / 0.017) ** 2) * _step(z, 0.02) * _step(-z, -0.095, 0.012)
+    glaze((0.525, 0.505, 0.530), 0.22 * jaw_shade)
+    # The chin's front plane catches a touch of warmth.
+    chin = np.exp(-((ax / 0.020) ** 2) - ((y - 1.4595) / 0.011) ** 2) * _step(z, 0.098)
+    glaze((0.7059, 0.615, 0.525), 0.10 * chin)
     # Hair roots: anywhere the hair shell passes close overhead, the "skin" is scalp the
     # spikes' gaps expose, so it darkens into root colour instead of reading bald. The
     # falloff is measured, not painted: full shade within 10 mm of a hair vertex, gone by

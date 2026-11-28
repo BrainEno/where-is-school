@@ -229,7 +229,7 @@ size = Vector3(0.2, 2.5, 0.2)
 size = Vector3(4.2, 0.12, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_40"]
-size = Vector3(3.6, 3.2, 0.1)
+size = Vector3(3.2, 2.8, 0.06)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_41"]
 size = Vector3(8, 12, 40)
@@ -907,9 +907,11 @@ mesh = SubResource("BoxMesh_39")
 material_override = ExtResource("art_metal_ink")
 
 [node name="SouthGateLight" type="MeshInstance3D" parent="."]
-position = Vector3(0.0, 1.6, 21.9)
+position = Vector3(0.0, 1.4, 21.2)
+rotation_degrees = Vector3(0, 45, 0)
 mesh = SubResource("BoxMesh_40")
 material_override = ExtResource("art_lane_light")
+cast_shadow = 0
 
 [node name="EstateBlockEast" type="StaticBody3D" parent="." groups=["camera_occluder"]]
 position = Vector3(24, 6.0, -2)
@@ -2026,7 +2028,7 @@ position = Vector3(0.0, 0.9, 18.2)
 interact_id = &"pg_back_to_alley"
 prompt_key = "prompt.alley_gate"
 radius = 1.8
-outline_paths = PackedStringArray("../../SouthGatePostWest", "../../SouthGatePostEast", "../../SouthGateLintel", "../../SouthGateLight")
+outline_paths = PackedStringArray("../../SouthGatePostWest", "../../SouthGatePostEast", "../../SouthGateLintel")
 destination_scene = "res://scenes/locations/alley/alley.tscn"
 destination_spawn = &"FromPlayground"
 destination_id = &"alley"
@@ -2097,6 +2099,8 @@ destination_id = &"north_grove"
 
 [node name="FromAlley" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0.0, 0, 16.0)
+metadata/entry_facing = true
+metadata/entry_walk = 2.0
 
 [node name="FromCorridor" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(-3.0, 0, -17.6)

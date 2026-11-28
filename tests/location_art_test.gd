@@ -198,7 +198,7 @@ const LOCATIONS := {
 	"residential": {
 		"scene": "res://scenes/locations/residential/residential.tscn",
 		"stage": true,
-		"shapes": 131,
+		"shapes": 125,
 		"interactables": 9,
 		"spawns": ["FromStreet", "FromStair", "FromAlley"],
 		"exits": {
@@ -232,7 +232,7 @@ const LOCATIONS := {
 		# a pick box to the tyre look.
 		# Round 26: the way to the north grove (a mesh-only trunk and rail stub outlined)
 		# adds a sphere and two pick boxes.
-		"shapes": 109,
+		"shapes": 108,
 		"interactables": 19, # The new paper read is separate from the view through the doorway.
 		"spawns": ["FromAlley", "FromCorridor", "FromSchool", "FromSite", "FromContainerYard", "FromGrove"],
 		"exits": {

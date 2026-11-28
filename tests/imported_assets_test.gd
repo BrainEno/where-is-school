@@ -130,7 +130,7 @@ const ASSETS: Array[Dictionary] = [
 		"file": "res://assets/models/protagonist/Protagonist_Character.glb",
 		"wrapper": "res://scenes/environment/characters/protagonist.tscn",
 		# 1.05 m wide because the arms rest in an A-pose (~35° out from the body).
-		"size": Vector3(1.0457, 1.7669, 0.3236),
+		"size": Vector3(1.0457, 1.7083, 0.3173),
 		"meshes": 9,
 		"surfaces": 15,
 		"model_base": 0.0,

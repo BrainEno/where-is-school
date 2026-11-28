@@ -649,11 +649,72 @@ def integrated(look: dict, label: str) -> dict:
     return result
 
 
+# --- the protagonist: the geometry rebuild's shipped tune --------------------------
+# The V4 geometry rebuild round hand-tuned the integrated charcoal look in the
+# shipped .tres: an 8-step pigment band on every part (4 steps posterised the
+# painted skin), softened band edges and a lifted half-tone on the skin, quieter
+# under-eye patches and hair marks, and a lifted shadow fill across the cloth.
+# Those values live here so the table reproduces the shipped look exactly; the
+# geometry rebuild and this tune ship together, and `--check` holds both.
+REBUILD_TUNE = {
+    "protagonist_mat_skin": {
+        # The rebuild's exact inspector float (it is not an 8-bit hex: the red lands
+        # on 177.2/255), so it is written as the resource text verbatim.
+        "albedo": "Color(0.6950, 0.6280, 0.5320, 1)",
+        "edge_break": 0.22,
+        "edge_softness": 0.36,
+        "half_tone": 0.52,
+        "light_strength": 0.74,
+		"patch_center": (0.030, 1.567, 0.102),
+		"patch_strength": 0.34,
+        "patch2_strength": 0.26,
+        "pigment_mix": 0.44,
+        "pigment_steps": 8.0,
+        "pigment_value": 0.12,
+        "shadow_edge": 0.02,
+        "shadow_fill": 0.52,
+    },
+    "protagonist_mat_skinbody": {
+        "edge_softness": 0.36,
+        "half_tone": 0.52,
+        "pigment_steps": 8.0,
+        "shadow_edge": 0.02,
+        "shadow_fill": 0.52,
+    },
+    "protagonist_mat_hair": {
+        "edge_softness": 0.10,
+        "half_tone": 0.55,
+        "mark_strength": 0.28,
+        "pigment_steps": 8.0,
+        "pigment_value": 0.22,
+        "shadow_edge": 0.0,
+        "shadow_fill": 0.55,
+    },
+    "protagonist_head/protagonist_mat_hair": {"pigment_steps": 8.0},
+    "protagonist_mat_jacket": {"pigment_steps": 8.0, "shadow_fill": 0.5},
+    "protagonist_mat_button": {"pigment_steps": 8.0},
+    "protagonist_mat_shirt": {"pigment_steps": 8.0, "shadow_fill": 0.42},
+    "protagonist_mat_trousers": {"pigment_steps": 8.0, "shadow_fill": 0.46},
+    "protagonist_mat_shoes": {"pigment_steps": 8.0, "shadow_fill": 0.42},
+    "protagonist_mat_sclera": {"pigment_steps": 8.0},
+    "protagonist_mat_iris": {"pigment_steps": 8.0},
+    "protagonist_mat_pupil": {"pigment_steps": 8.0, "shadow_fill": 0.42},
+    "protagonist_mat_mouthinner": {"pigment_steps": 8.0, "shadow_fill": 0.42},
+}
+
+
+def rebuild_tuned(look: dict) -> dict:
+    result = copy.deepcopy(look)
+    for name, values in REBUILD_TUNE.items():
+        result["parts"][name].update(values)
+    return result
+
+
 def shipped(protagonist: dict, q: dict) -> dict:
     """What the wrappers carry after the integration: the scheme that won for each."""
     return {
-        "assets/characters/protagonist/protagonist_look.tres": integrated(
-            protagonist_charcoal(protagonist), "protagonist: charcoal (integrated)"
+        "assets/characters/protagonist/protagonist_look.tres": rebuild_tuned(
+            integrated(protagonist_charcoal(protagonist), "protagonist: charcoal (integrated)")
         ),
         "assets/characters/q/q_look.tres": integrated(q_oil(q), "Q: oil (integrated)"),
         "assets/characters/teacher_n/teacher_n_look.tres": integrated(n_chalk(), "N: chalk (integrated)"),

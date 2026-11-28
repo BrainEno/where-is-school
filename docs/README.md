@@ -30,6 +30,7 @@
 | [CHARACTER_ART.md](CHARACTER_ART.md) | 角色外观与肖像方向 | 现行 | 仓库所有者 | 2026-11-23 | 动画说明见 [CHARACTER_ANIMATION.md](CHARACTER_ANIMATION.md)；§9 为主角 V2 头部合同（issue #383），中文阅读副本为 [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) |
 | [CHARACTER_ART.zh-CN.md](CHARACTER_ART.zh-CN.md) | 角色外观中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-23 | 与 [CHARACTER_ART.md](CHARACTER_ART.md) 全文同步（含 §9 V2 头部合同），不独立声称获批 |
 | [CHARACTER_MODEL_STANDARD.md](CHARACTER_MODEL_STANDARD.md) | 人物 3D 模型的行业标准与执行方案：业余感的五个来源、可测量的头部比例、N 的改造记录 | 现行 | 仓库所有者 | 2026-11-23 | 评审工具在 `tools/character_review/` |
+| [IMPLEMENTATION_NOTES_PROTAGONIST_REBUILD.zh-CN.md](IMPLEMENTATION_NOTES_PROTAGONIST_REBUILD.zh-CN.md) | 主角 V4 整体重建实施记录：面部/头发/服装/材质的完成与验证分账、验收渲染索引、未解决问题清单 | 证据/记录 | 实现 PR 作者 | 2026-11-28 | 头部合同见 [CHARACTER_ART.md](CHARACTER_ART.md) §9；渲染证据在 `art/protagonist_reconstruction_review/` |
 
 | [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) | 角色外观集成工程记录 | 现行 | 工程/美术 Agent | 2026-11-18 | 中文阅读副本为 [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md)；§§9–12 说明 N／学生几何、全员头部精修与主角步态，对照待所有者验收 |
 | [CHARACTER_INTEGRATION.zh-CN.md](CHARACTER_INTEGRATION.zh-CN.md) | 角色集成中文阅读副本 | 阅读副本 | 内容/美术 Agent | 2026-11-18 | 与 [CHARACTER_INTEGRATION.md](CHARACTER_INTEGRATION.md) §§9–12 几何修订同步，不独立声称获批 |

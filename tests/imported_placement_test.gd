@@ -65,7 +65,7 @@ const SEAT_GAP_MAX := 0.25
 ## The protagonist's authored height (`Protagonist_Character.glb`) and the distance between
 ## its origin and its sole: none, its feet stand on the origin. (The former protagonist,
 ## `protagonist.glb`, stood 1.7 cm above its origin; it is a seated student now.)
-const PROTAGONIST_HEIGHT := 1.7669
+const PROTAGONIST_HEIGHT := 1.7083
 const PROTAGONIST_SOLE_OFFSET := 0.0
 ## Where the wake beat expects the visual pivot to rest (it writes this value).
 const VISUAL_PIVOT_Y := 0.9

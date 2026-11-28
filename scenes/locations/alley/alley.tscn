@@ -618,6 +618,9 @@ position = Vector3(0.0, 0, 10.5)
 
 [node name="FromPlayground" type="Marker3D" parent="SpawnPoints" groups=["spawn_point"]]
 position = Vector3(0.0, 0, -20.0)
+rotation_degrees = Vector3(0, 180, 0)
+metadata/entry_facing = true
+metadata/entry_walk = 2.0
 
 [node name="Ambience" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("13_ambience")

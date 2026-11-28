@@ -19,25 +19,31 @@ What changes, and what deliberately does not:
     chin, brow ridge, neck — then given a local UV atlas, a back-seam split and a tangent
     basis, and its nine sparse morph targets are resampled through the explicit subdivision
     map;
-  * the hair keeps the owner's hairstyle — the same 96 roots, tips and silhouette — and each
-    lock is refined in place: every ring gains the midpoint of each of its five edges
-    (5 -> 10 columns, 45 -> 90 triangles), the new columns are thinned to 0.82 of their
-    radius about the strand's own axis, and each strand takes one gentle outward bend of
-    at most 2 mm, so the V1 plates read as coarse, weighted strands up close;
-  * issue #386 then re-shapes the hair between root and tip (`reshape_locks`): roots dive
-    back under the mass and widen until neighbours touch, the cone-with-pinched-tip profile
-    falls cleanly, each lock takes its own width rhythm, gravity-consistent bow, S wobble
-    and cross-section twist, the plate-wide locks take one crease, the cap's interior takes
-    the crown whorl (`whorl_cap`, boundary pinned), and the whole pass is clamped to the
-    pinned V2 envelope — the approved silhouette does not move;
+  * the hair keeps the same 96 roots and lock topology, and each lock is refined in
+    place: every ring gains the midpoint of each of its five edges (5 -> 10 columns,
+    45 -> 90 triangles), the new columns are thinned to 0.82 of their radius about the
+    strand's own axis, and each strand takes one gentle outward bend of at most 2 mm;
+  * V4 then redesigns the hairstyle between root and tip (`style_locks`): region flow
+    (a fringe swept across the brow towards his right, sides falling over the temples,
+    a back mass into the nape, the crown blended over all three), flattened tube
+    sections that overlap as hair masses instead of spikes, free tips inside a
+    redesigned envelope (the V1 spike silhouette the earlier passes pinned was the
+    very thing that read as black shards), and the whole pass clamped off the scalp;
+    the cap's interior keeps the crown whorl (`whorl_cap`, boundary pinned);
   * the eyes are levelled (V1's right eye sits 2.5 mm above the left), their flat iris and
     pupil discs are domed and the iris is given a limbal ring through its own vertex colour;
   * the eyebrows are re-hung on the brow ridge as tapered tubes, and the ears are given a
     bowl, a helix, a concha and a lobe;
   * the mouth's interior follows the lips, and every one of these parts keeps its own nine
     morph targets, re-expressed against its new rest pose;
-  * body, wardrobe, skeleton, weights, animations, materials, node names and every other
-    mesh are copied byte-for-byte.
+  * the wardrobe is rebuilt in place (`wardrobe`): the jacket and trousers take one
+    midpoint subdivision (joint weights interpolate along edges and faces, so rigid parts
+    stay rigid and the original rows keep their exact weights) and then analytic folds -
+    shoulder drape, placket channel and ridges, waist release, hem wave and flare, elbow
+    pull creases, knee creases - plus rolled open edges on collars, cuffs and hems. Only
+    positions and normals move; joints, weights and attribute sets are carried through;
+  * skeleton, weights, animations, materials, node names and the remaining body meshes
+    (arms under the sleeves, buttons, feet, hands) are copied byte-for-byte.
 
 The head's fine relief and its local colour live in maps beside the mesh
 (`tools/head_v2_textures.py`), not in more triangles: the albedo map carries the lips, the
@@ -190,9 +196,29 @@ def gaussian(p: np.ndarray, center, radius, amount: float) -> np.ndarray:
 def sculpt_head(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarray) -> np.ndarray:
     """Rest-space sculpt for the V2 skin, in metres, along the vertex normal.
 
-    The fields are deliberately broad and low-amplitude: they restore the planes a
-    face has (socket, lid roll, alar wing, lip volume, cheekbone, jaw) without
-    changing the owner-approved long face, narrow chin or eye placement.
+    V4 art pass (the protagonist art brief): the fields restore the planes a face
+    has - socket, lid roll, alar wing, lip volume, cheekbone, jaw - and now also
+    *compose* the face the art direction asks for. Rest-space landmarks, metres:
+
+    * the nose-mouth complex rides 5 mm up and the chin 3.5 mm down, because the
+      lower third measured 0.278 of the face height against the standard's
+      0.30-0.37: the midface read long and the chin short. The mouth follows the
+      nose by only 2 mm, so the philtrum shortens and the mouth keeps its
+      0.28-0.40 place in the lower third;
+    * the cheekbones widen ~2 mm a side at the eye band (face width/height was
+      0.543 against 0.55-0.70), with the hollow under the bone left soft;
+    * the nose bridge is a rounded pair of dorsum planes, not a ridge: the
+      side valleys are wide and shallow, the tip sits lower and softer, the alar
+      creases cut deeper;
+    * the lips are bigger, with a vermillion step, corner pockets and a
+      deliberate droop - his right corner (x < 0) 0.5 mm lower than his left;
+    * the brows' ridge carries a designed asymmetry (his right heavier), the
+      sockets are deeper, and the temples are tucked;
+    * the jaw-to-neck and chin transitions are shaped so the head does not read
+      as a mask planted on a cylinder.
+
+    The fields stay broad and low-amplitude: the owner's long face and narrow
+    chin are the identity being preserved.
     """
     x, y, z = positions.T
     ax = np.abs(x)
@@ -205,49 +231,88 @@ def sculpt_head(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarra
         else:
             displacement += np.asarray(direction)[None, :] * field[:, None]
 
-    # 1. Eye sockets: a bowl behind each lid, a rounded upper-lid roll and a crease.
+    # 0. Composition moves (V4): nose-mouth up 5 mm / 2 mm, chin down 3.5 mm.
+    add(gaussian(positions, (0.0, 1.5035, 0.122), (0.019, 0.021, 0.024), 0.0107),
+        direction=(0.0, 1.0, 0.10))
+    add(gaussian(positions, (0.0, 1.5125, 0.1335), (0.013, 0.013, 0.013), 0.0018),
+        direction=(0.0, 1.0, 0.15))
+    add(gaussian(positions, (0.0, 1.4955, 0.117), (0.026, 0.011, 0.015), 0.0032),
+        direction=(0.0, 1.0, 0.12))
+    add(gaussian(positions, (0.0, 1.4435, 0.0875), (0.021, 0.014, 0.017), 0.0035),
+        direction=(0.0, -1.0, 0.30))
+    # the chin body carries the profile from the lip fold down to the point: without
+    # this the menton reads 20 mm high and the lower third collapses (anthropometry's
+    # chin walk dies where the front profile dips under 85 % of the lip's depth). The
+    # coverage stops just above the point, so the walk finds the menton at the point
+    # and not on the throat behind it.
+    add(gaussian(positions, (0.0, 1.4588, 0.0925), (0.020, 0.0123, 0.014), 0.0075),
+        direction=(0.0, -0.25, 1.0))
+    # the menton's own plane: holds the profile out to the point, then drops - the
+    # flat-topped edge of the chin body, where the soft gaussian alone fades too early
+    add(gaussian(positions, (0.0, 1.4540, 0.0940), (0.014, 0.0050, 0.011), 0.0028),
+        direction=(0.0, -0.20, 1.0))
+    # the jawline below the new chin tip, so the move reads as bone, not a dent -
+    # kept clear of the UV sphere's degenerate axis (x = 0, z = 0.040)
+    add(gaussian(positions, (0.0, 1.4355, 0.0715), (0.026, 0.012, 0.016), 0.0012),
+        direction=(0.0, -0.45, 0.45))
+
+    # 1. Eye sockets: a bowl behind each lid (deeper than V3), an upper-lid roll
+    #    and a crease. Centers ride the eyes' new x = +/-28.5 mm.
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.0305, 1.585, 0.103), (0.024, 0.019, 0.028), -0.0035))
-        add(gaussian(positions, (side * 0.0305, 1.592, 0.108), (0.018, 0.007, 0.015), 0.0025))
-        add(gaussian(positions, (side * 0.0305, 1.600, 0.101), (0.020, 0.004, 0.016), -0.0020))
-        add(gaussian(positions, (side * 0.0305, 1.576, 0.107), (0.016, 0.005, 0.013), 0.0015))
+        add(gaussian(positions, (side * 0.0285, 1.585, 0.1025), (0.024, 0.019, 0.028), -0.0042))
+        add(gaussian(positions, (side * 0.0285, 1.592, 0.1075), (0.018, 0.007, 0.015), 0.0026))
+        add(gaussian(positions, (side * 0.0285, 1.600, 0.1005), (0.020, 0.004, 0.016), -0.0022))
+        add(gaussian(positions, (side * 0.0285, 1.576, 0.1065), (0.016, 0.005, 0.013), 0.0016))
         # under-eye bag and tear trough
-        add(gaussian(positions, (side * 0.032, 1.5725, 0.101), (0.015, 0.0055, 0.018), 0.0015))
-        add(gaussian(positions, (side * 0.034, 1.565, 0.098), (0.022, 0.009, 0.022), -0.0016))
+        add(gaussian(positions, (side * 0.030, 1.5725, 0.1005), (0.015, 0.0055, 0.018), 0.0016))
+        add(gaussian(positions, (side * 0.032, 1.565, 0.0975), (0.022, 0.009, 0.022), -0.0018))
         # outer corner support
-        add(gaussian(positions, (side * 0.0455, 1.581, 0.099), (0.010, 0.008, 0.014), 0.0010))
+        add(gaussian(positions, (side * 0.0435, 1.581, 0.0985), (0.010, 0.008, 0.014), 0.0011))
+    # his right socket (x < 0) a touch deeper and heavier than his left
+    add(gaussian(positions, (-0.0285, 1.5735, 0.1000), (0.014, 0.006, 0.015), -0.0007))
+    add(gaussian(positions, (-0.0285, 1.5945, 0.1065), (0.012, 0.005, 0.012), 0.0006))
 
-    # 2. Nose: bridge planes, rounded tip, alar wings, columella and the underside.
-    add(gaussian(positions, (0.0, 1.555, 0.128), (0.010, 0.028, 0.018), 0.0015))
+    # 2. Nose: a rounded pair of dorsum planes (wide, shallow valleys - no sharp
+    #    ridge), a soft tip sitting slightly low, alar wings with creases, and the
+    #    columella and underside. The whole complex rose 5 mm in step 0.
+    add(gaussian(positions, (0.0, 1.5555, 0.1275), (0.015, 0.028, 0.019), 0.0012))
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.0105, 1.545, 0.124), (0.005, 0.024, 0.015), -0.0016))
-        add(gaussian(positions, (side * 0.019, 1.5005, 0.127), (0.0075, 0.007, 0.011), 0.0030))
-        add(gaussian(positions, (side * 0.024, 1.5015, 0.120), (0.0045, 0.007, 0.010), -0.0020))
-    add(gaussian(positions, (0.0, 1.5075, 0.139), (0.0085, 0.008, 0.009), 0.0030))
-    add(gaussian(positions, (0.0, 1.4965, 0.1315), (0.009, 0.0045, 0.009), 0.0015))
-    add(gaussian(positions, (0.0, 1.4935, 0.1285), (0.0055, 0.0035, 0.007), -0.0010))
+        add(gaussian(positions, (side * 0.0115, 1.5455, 0.1235), (0.009, 0.024, 0.015), -0.0008))
+        add(gaussian(positions, (side * 0.0195, 1.5035, 0.1265), (0.0085, 0.008, 0.011), 0.0022))
+        add(gaussian(positions, (side * 0.0245, 1.5045, 0.1195), (0.0055, 0.008, 0.010), -0.0022))
+    add(gaussian(positions, (0.0, 1.5115, 0.1375), (0.0115, 0.009, 0.010), 0.0020))
+    add(gaussian(positions, (0.0, 1.5015, 0.1310), (0.010, 0.0050, 0.009), 0.0014))
+    add(gaussian(positions, (0.0, 1.4985, 0.1280), (0.0065, 0.0035, 0.007), -0.0010))
 
-    # 3. Mouth: philtrum, cupid's bow, lip volumes, a cut mouth line, corners.
+    # 3. Mouth: philtrum columns, cupid's bow, full lip volumes (V4: bigger), a
+    #    cut mouth line, corner pockets with a tired droop - his right (x < 0)
+    #    corner 0.5 mm lower than his left. The complex rose 2 mm in step 0.
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.0060, 1.5045, 0.1185), (0.0035, 0.0065, 0.009), 0.0009))
-        add(gaussian(positions, (side * 0.0100, 1.4995, 0.1195), (0.0085, 0.0040, 0.009), 0.0024))
-        add(gaussian(positions, (side * 0.0155, 1.4895, 0.1190), (0.012, 0.0055, 0.009), 0.0022))
-        add(gaussian(positions, (side * 0.0245, 1.4955, 0.1125), (0.0055, 0.0045, 0.007), -0.0012))
+        add(gaussian(positions, (side * 0.0062, 1.5065, 0.1185), (0.0038, 0.0070, 0.009), 0.0016))
+        add(gaussian(positions, (side * 0.0110, 1.5015, 0.1195), (0.0115, 0.0050, 0.010), 0.0034))
+        add(gaussian(positions, (side * 0.0175, 1.4905, 0.1190), (0.0150, 0.0070, 0.010), 0.0034))
+        droop = -0.0022 if side < 0 else -0.0015
+        add(gaussian(positions, (side * 0.0295, 1.4965, 0.1115), (0.0068, 0.0052, 0.007), droop))
+        # the crease that carries the mouth line out towards each corner
+        add(gaussian(positions, (side * 0.0335, 1.4995, 0.1055), (0.0050, 0.0032, 0.006), -0.0010))
         # vermilion border step
-        add(gaussian(positions, (side * 0.014, 1.4948, 0.1195), (0.011, 0.0015, 0.008), -0.0012))
-    add(gaussian(positions, (0.0, 1.5005, 0.1200), (0.0045, 0.0030, 0.007), 0.0012))
-    add(gaussian(positions, (0.0, 1.4885, 0.1200), (0.009, 0.0040, 0.007), 0.0018))
-    add(gaussian(positions, (0.0, 1.4952, 0.1185), (0.022, 0.0018, 0.009), -0.0018))
-    add(gaussian(positions, (0.0, 1.4785, 0.1045), (0.020, 0.0055, 0.013), -0.0016))
+        add(gaussian(positions, (side * 0.016, 1.4960, 0.1195), (0.0135, 0.0017, 0.008), -0.0017))
+    add(gaussian(positions, (0.0, 1.5028, 0.1200), (0.0050, 0.0034, 0.007), 0.0018))
+    add(gaussian(positions, (0.0, 1.4900, 0.1200), (0.011, 0.0048, 0.007), 0.0026))
+    add(gaussian(positions, (0.0, 1.4972, 0.1185), (0.0265, 0.0020, 0.009), -0.0022))
+    add(gaussian(positions, (0.0, 1.4805, 0.1045), (0.021, 0.0058, 0.013), -0.0017))
 
-    # 4. Cheeks, jaw and chin.
+    # 4. Cheeks, jaw and chin. The cheekbone band widens ~2 mm a side (the eye
+    #    band's cheek-to-cheek measure), the cheek under the bone stays filled,
+    #    and the temporal hollow is tucked.
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.050, 1.5345, 0.079), (0.020, 0.016, 0.024), 0.0025))
-        add(gaussian(positions, (side * 0.043, 1.5085, 0.071), (0.018, 0.016, 0.020), -0.0020))
+        add(gaussian(positions, (side * 0.0515, 1.5355, 0.0785), (0.023, 0.018, 0.026), 0.0032),
+            direction=(side, 0.15, 0.10))
+        add(gaussian(positions, (side * 0.0435, 1.5085, 0.071), (0.018, 0.016, 0.020), -0.0020))
         add(gaussian(positions, (side * 0.052, 1.4625, 0.045), (0.018, 0.010, 0.022), 0.0020))
-        add(gaussian(positions, (side * 0.061, 1.6065, 0.030), (0.012, 0.014, 0.020), -0.0015))
-    add(gaussian(positions, (0.0, 1.4435, 0.0920), (0.016, 0.010, 0.015), 0.0030))
-    add(gaussian(positions, (0.0, 1.4555, 0.0300), (0.030, 0.016, 0.020), 0.0012))
+        add(gaussian(positions, (side * 0.0615, 1.6065, 0.030), (0.012, 0.014, 0.020), -0.0015))
+    add(gaussian(positions, (0.0, 1.4465, 0.0925), (0.016, 0.010, 0.015), 0.0024))
+    add(gaussian(positions, (0.0, 1.4565, 0.0300), (0.030, 0.016, 0.020), 0.0012))
 
     # 5. The jaw and the chin. V1's face is 124 mm across the cheekbones but only 85 mm
     #    across the jaw, where a face this wide carries about 100 mm: that is what made the
@@ -264,13 +329,25 @@ def sculpt_head(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarra
     add(gaussian(positions, (0.0, 1.4385, 0.078), (0.014, 0.006, 0.014), 0.0022),
         direction=(0.0, -0.55, 0.55))
 
-    # 6. Brow ridge and glabella.
+    # 6. Brow ridge and glabella. His right ridge (x < 0) carries more weight -
+    #    the designed asymmetry the brow tube then rides.
     for side in (-1, 1):
-        add(gaussian(positions, (side * 0.030, 1.6075, 0.103), (0.018, 0.007, 0.015), 0.0018))
+        add(gaussian(positions, (side * 0.0285, 1.6075, 0.103), (0.018, 0.007, 0.015), 0.0022))
     add(gaussian(positions, (0.0, 1.6055, 0.108), (0.007, 0.013, 0.011), 0.0008))
+    add(gaussian(positions, (-0.0285, 1.6085, 0.1035), (0.013, 0.005, 0.011), 0.0008))
 
-    # 7. Neck: soften the column under the jaw.
+    # 7. Neck: soften the column under the jaw, and shape the jaw-neck join so
+    #    the head is not a mask planted on a cylinder (the throat hollow and the
+    #    sternocleidomastoid's forward edge are shading cues, not geometry noise).
+    #    The throat sits just forward of the UV sphere's degenerate axis (x = 0,
+    #    z = 0.040): this lift keeps its triangles clear of the seam line.
     add(gaussian(positions, (0.0, 1.455, 0.020), (0.038, 0.020, 0.038), 0.0012))
+    add(gaussian(positions, (0.0, 1.4385, 0.0375), (0.011, 0.013, 0.015), 0.0055),
+        direction=(0.0, 0.15, 1.0))
+    for side in (-1, 1):
+        add(gaussian(positions, (side * 0.030, 1.4255, 0.012), (0.011, 0.017, 0.020), 0.0014),
+            direction=(side * 0.55, -0.35, 0.30))
+    add(gaussian(positions, (0.0, 1.4345, 0.0465), (0.012, 0.010, 0.011), -0.0012))
 
     return displacement
 
@@ -283,16 +360,22 @@ def sculpt_head(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarra
 # (1.58532 against 1.58285). The mouth and the ears are level and the brow is 6 mm off, so
 # this is a modelling slip rather than a tilt of the head. V2 levels the eyes and the brow.
 EYE_RADIUS = 0.01087
-EYE_X = 0.03097
+# V4: the eyes move 2.6 mm inboard (the inner gap measured 1.48 eye-widths against the
+# standard's 0.85-1.15) and 1.5 mm deeper (the eyeball read as a bead pressed into the
+# face). The sclera caps widen 4 % in x so eye width keeps its 0.18-0.22 of the face.
+EYE_X = 0.02797
 EYE_Y = 1.58409
-EYE_Z = 0.10247
-# The aperture. Half its width is a little inside the lid shells' own extent, so the corners
-# close; the upper lid arches higher than the lower drops, and the outer corner rides a
-# little above the inner one — the heavy-lidded, uneasy set the look asks for.
-APERTURE_HALF_WIDTH = 0.0112
-APERTURE_UP = 0.0042
-APERTURE_DOWN = 0.0031
-APERTURE_TILT = 0.0015
+EYE_Z = 0.10097
+SCLERA_SCALE_X = 1.05
+# The aperture: a hooded, tired opening - the upper lid arches over the iris top, the
+# lower lid tucks, and the outer corner droops a fraction below the inner one. V2's
+# margins overshot their targets (the old placement scaled y by radius/distance, landing
+# the arch 2-3 mm high and low), which is what made the eye read as a wide white ring.
+# `wrap_lids` now lands the margin exactly on this arch, measured on the eyeball.
+APERTURE_HALF_WIDTH = 0.0102
+APERTURE_UP = 0.0050
+APERTURE_DOWN = 0.0046
+APERTURE_TILT = -0.0006
 
 
 def fit_sphere(points: np.ndarray) -> tuple[np.ndarray, float]:
@@ -335,7 +418,7 @@ def dome_iris(positions: np.ndarray, bulge: float, lift: float):
     an open aperture a flat disc reads as a painted circle, so the disc is domed about the
     eye's axis by `bulge` at its centre and lifted `lift` off the sclera's rim, which keeps
     the two surfaces from fighting over the same depth. Returns the new positions and the
-    normals of the domed surface.
+    normals of the domed surface. The falloff covers the V4 enlarged iris disc.
     """
     out = positions.copy()
     normals = np.zeros_like(positions)
@@ -344,10 +427,10 @@ def dome_iris(positions: np.ndarray, bulge: float, lift: float):
         points = out[selected]
         offset = points[:, [0, 1]] - np.array([side * EYE_X, EYE_Y])
         radial = np.linalg.norm(offset, axis=1)
-        falloff = np.clip(1.0 - (radial / 0.0068) ** 2, 0.0, 1.0)
+        falloff = np.clip(1.0 - (radial / DOME_RADIUS) ** 2, 0.0, 1.0)
         points[:, 2] += lift + bulge * falloff
         # The dome's own normal: dz/dr = -2 bulge r / R^2, so the surface tilts outwards.
-        slope = 2.0 * bulge / 0.0068 ** 2
+        slope = 2.0 * bulge / DOME_RADIUS ** 2
         normal = np.stack([slope * offset[:, 0], slope * offset[:, 1],
                            np.ones(len(points))], axis=1)
         normals[selected] = normal / np.linalg.norm(normal, axis=1, keepdims=True)
@@ -390,16 +473,33 @@ def wrap_lids(positions: np.ndarray, triangles: np.ndarray) -> np.ndarray:
         arch = np.maximum(1.0 - across * across, 0.0) ** 0.75
         target = (eye[1] + (APERTURE_UP if upper else -APERTURE_DOWN) * arch
                   + APERTURE_TILT * across)
-        y_new = points[:, 1] + (target - margin) * (1.0 - v) ** 2
+        # V4: pull each vertex towards its own arch target - at the margin (v = 0) it
+        # lands exactly on the arch, at the outer loop (v = 1) nothing moves. V2 shifted
+        # the whole band by (target - margin), which left the margin ring's arch-shaped
+        # neighbours 1-2 mm off the aperture line and made the eye open too wide.
+        y_new = points[:, 1] + (target - points[:, 1]) * (1.0 - v) ** 1.2
         radius = np.linalg.norm(points - eye, axis=1)
         radius_new = (EYE_RADIUS + 0.0004) * (1.0 - v) + radius * v
         # V1's bands dip inside the eyeball (their outer loops sit at 9.8 mm against a
         # 10.9 mm eye), so the eyeball showed through them. A lid wraps the eye; it is never
         # inside it.
         radius_new = np.maximum(radius_new, EYE_RADIUS + 0.0003)
-        direction = np.stack([points[:, 0], y_new, points[:, 2]], axis=1) - eye
-        direction /= np.maximum(np.linalg.norm(direction, axis=1, keepdims=True), 1e-12)
-        out[index] = eye + direction * radius_new[:, None]
+        # V4: land each vertex exactly on its sphere radius at height y_new. V2 scaled the
+        # vertex's own y by radius/distance and overshot the arch - the margins ended up
+        # 2-3 mm above and below their targets, and that accident became a 12.9 mm white
+        # ring around the iris. Here the vertex keeps its x, takes the arch height, and its
+        # z is solved on the sphere on V1's own side. At v = 1 the solve returns the V1
+        # position exactly, so the outer loop still sits where V1 put it.
+        y_rel = y_new - eye[1]
+        ring = np.sqrt(np.maximum(radius_new ** 2 - y_rel ** 2, 1e-12))
+        dx = points[:, 0] - eye[0]
+        dz = points[:, 2] - eye[2]
+        reach = np.hypot(dx, dz)
+        safe = reach > 1e-9
+        scale = np.where(safe, ring / np.maximum(reach, 1e-9), 0.0)
+        out_x = np.where(safe, eye[0] + dx * scale, eye[0])
+        out_z = np.where(safe, eye[2] + dz * scale, eye[2] + ring)
+        out[index] = np.stack([out_x, y_new, out_z], axis=1)
     return out
 
 
@@ -476,14 +576,23 @@ def reshape_brow(brow: np.ndarray, head: np.ndarray,
         points = out[index]
         x = np.abs(points[:, 0])
         low, high = float(x.min()), float(x.max())
+        # V4: the brow reads worried and tired - inner end riding up, outer tail
+        # falling - and carries a designed asymmetry: his right (x < 0) arches
+        # ~2.2 mm higher at its peak and sits heavier, his left tail hangs looser.
+        base = np.array([1.6070, 1.6077, 1.6076, 1.6060, 1.6038])
+        if side < 0:
+            lift = np.array([0.0010, 0.0018, 0.0022, 0.0018, 0.0008])
+            weight = 1.12
+        else:
+            lift = np.array([0.0000, 0.0002, 0.0000, -0.0004, -0.0010])
+            weight = 1.0
         for station in np.unique(np.round(x, 5)):
             ring_index = np.nonzero(np.isclose(x, station, atol=1e-4))[0]
             ring = points[ring_index]
             along = float(np.clip((station - low) / max(high - low, 1e-9), 0.0, 1.0))
-            centre_y = float(np.interp(along, [0.0, 0.25, 0.5, 0.75, 1.0],
-                                       [1.6056, 1.6070, 1.6074, 1.6066, 1.6049]))
-            half_height = float(np.interp(along, [0.0, 0.18, 0.5, 0.8, 1.0],
-                                          [0.0008, 0.0022, 0.0024, 0.0016, 0.0006]))
+            centre_y = float(np.interp(along, [0.0, 0.25, 0.5, 0.75, 1.0], base + lift))
+            half_height = weight * float(np.interp(along, [0.0, 0.18, 0.5, 0.8, 1.0],
+                                                   [0.0011, 0.0024, 0.0025, 0.0015, 0.0005]))
             half_depth = half_height * 0.85
             skin = surface_z(station, centre_y, head, triangles) if triangles is not None else None
             if skin is None:
@@ -576,9 +685,14 @@ def relief_ears(positions: np.ndarray, triangles: np.ndarray) -> np.ndarray:
         # The lobe: a soft pad at the bottom.
         relief += 0.0013 * np.exp(-(((depth + 0.003) / 0.009) ** 2 +
                                     ((height + 0.023) / 0.0075) ** 2))
-        out[index] = points + np.stack([side * relief,
-                                        height * 0.10 * outline,
-                                        depth * -0.06 * outline], axis=1)
+        moved = points + np.stack([side * relief,
+                                   height * 0.10 * outline,
+                                   depth * -0.06 * outline], axis=1)
+        # V4: tuck the shells ~5.5 mm inboard - they rode at x = +/-76 mm, clear of
+        # the skull's silhouette, which is half of why they read as buttons - and
+        # compress their x-spread so the helix keeps its relief over the smaller step.
+        moved[:, 0] = side * 0.0705 + (moved[:, 0] - side * 0.076) * 0.85
+        out[index] = moved
     return out
 
 
@@ -634,12 +748,21 @@ def _morph_targets(positions: np.ndarray, deltas: list[dict[str, np.ndarray]]) -
     return built
 
 
-IRIS_RADIUS = 0.0084
+IRIS_RADIUS = 0.0074
+# The dome's falloff radius: covers the V4 enlarged iris disc (5.95 mm -> 7.4 mm).
+DOME_RADIUS = 0.0078
+# V4: the iris disc is enlarged 1.24x and re-centred on the eye's axis - V1's iris sat
+# 1.6 mm low, which with the wide V2 aperture is what made the eye read as a bead floating
+# in a white ring. The pupil keeps its V1 ratio under the same treatment.
+IRIS_SCALE = 1.24
+PUPIL_SCALE = 1.12
 # The iris is one flat colour in V1. Its own vertex colour — which the look's material already
 # knows how to multiply in (`use_vertex_paint`) — carries a limbal ring and a lighter centre,
 # the two gradients that make an iris read as one rather than as a brown disc.
-IRIS_EDGE = 0.52
-IRIS_CORE = 1.06
+IRIS_EDGE = 0.42
+IRIS_CORE = 1.10
+# The sclera is warmed off pure white so the visible white reads as painted, not plastic.
+SCLERA_TINT = (0.915, 0.895, 0.868)
 
 
 def iris_vertex_colour(positions: np.ndarray) -> np.ndarray:
@@ -666,14 +789,42 @@ def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
     sclera = glb.primitive_arrays(document, binary,
                                   document['meshes'][EYE_MESH]['primitives'][0])['POSITION']
     offsets = eye_offsets(sclera.astype(np.float64))
-    eye_plans = {0: (0.0, 0.0), 1: (0.0009, 0.0002), 2: (0.0009, 0.0004)}
+    eye_plans = {0: (0.0, 0.0), 1: (0.0008, 0.0002), 2: (0.0006, 0.0004)}
+    eye_scales = {0: None, 1: IRIS_SCALE, 2: PUPIL_SCALE}
     for primitive_index, (bulge, lift) in eye_plans.items():
         primitive = document['meshes'][EYE_MESH]['primitives'][primitive_index]
         arrays = glb.primitive_arrays(document, binary, primitive)
         positions = level_eyes(arrays['POSITION'].astype(np.float64), offsets)
         normals = arrays['NORMAL'].astype(np.float64)
+        if primitive_index == 0:
+            # V4: widen the sclera caps 4 % in x so eye width keeps its share of the
+            # face after the cheeks widen; warm the white off pure paper.
+            for side in (1.0, -1.0):
+                selected = np.sign(positions[:, 0]) == side
+                points = positions[selected]
+                centre = np.array([side * EYE_X, EYE_Y])
+                points[:, 0] = centre[0] + (points[:, 0] - centre[0]) * SCLERA_SCALE_X
+                positions[selected] = points
+        scale = eye_scales[primitive_index]
+        if scale is not None:
+            # V4: recentre the disc on the eye's axis (V1's sat 1.6 mm low) and
+            # scale it in its own plane - the larger iris the painted look asks for.
+            # The gaze sits straight ahead: a 0.4 mm outward bias keeps the pair from
+            # converging now that the eyes ride 2.6 mm inboard.
+            for side in (1.0, -1.0):
+                selected = np.sign(positions[:, 0]) == side
+                points = positions[selected]
+                centre = points.mean(axis=0)
+                target = np.array([side * (EYE_X + 0.0004), EYE_Y])
+                points[:, 0] = target[0] + (points[:, 0] - centre[0]) * scale
+                points[:, 1] = target[1] + (points[:, 1] - centre[1]) * scale
+                positions[selected] = points
         if bulge > 0.0:
             positions, normals = dome_iris(positions, bulge, lift)
+        if primitive_index == 2:
+            # The pupil rides above the iris dome (they are separate discs; without
+            # this offset their domes intersect and draw a ring at the pupil's rim).
+            positions[:, 2] += 0.00035
         attributes = {
             'POSITION': (positions.astype(np.float32), 5126, 'VEC3'),
             'NORMAL': (np.round(normals * 32767).astype(np.int16), 5122, 'VEC3', True),
@@ -681,6 +832,9 @@ def build_face_parts(document: dict, binary: bytes, skin: np.ndarray,
         if primitive_index == 1:
             attributes['COLOR_0'] = (np.round(iris_vertex_colour(positions) * 255).astype(np.uint8),
                                      5121, 'VEC4', True)
+        if primitive_index == 0:
+            tint = np.tile(np.array(SCLERA_TINT + (1.0,)), (len(positions), 1))
+            attributes['COLOR_0'] = (np.round(tint * 255).astype(np.uint8), 5121, 'VEC4', True)
         attributes.update(carry_attributes(document, binary, primitive, ('JOINTS_0', 'WEIGHTS_0')))
         replacements[(EYE_MESH, primitive_index)] = {
             'attributes': attributes,
@@ -837,8 +991,10 @@ def refine_locks(positions: np.ndarray, triangles: np.ndarray) -> tuple[np.ndarr
 # The V2 hair envelope, pinned. Every V3 displacement is clamped inside it, so the
 # approved silhouette - the tips, the cap edge, the model height the tests measure -
 # cannot drift even where the reshaping bends a shaft.
-HAIR_BBOX_MIN = np.array([-0.1085, 1.5175, -0.1198])
-HAIR_BBOX_MAX = np.array([0.1575, 1.7669, 0.1817])
+# The redesigned V4 envelope (measured on the built lock mesh, pinned so a rebuild
+# cannot silently inflate the hairstyle).
+HAIR_BBOX_MIN = np.array([-0.08540000021457672, 1.5056164264678955, -0.07209999859333038])
+HAIR_BBOX_MAX = np.array([0.08210666477680206, 1.708299994468689, 0.13680000603199005])
 SCALP = np.array([0.0, 1.565, 0.040])
 # Root burial: how far a root ring dives back along its own lock axis (the skull clamp
 # keeps every vertex 1.2 mm off the skin, so the burial never pierces the head).
@@ -985,107 +1141,169 @@ def _lock_frame(root: np.ndarray, axis: np.ndarray) -> tuple[np.ndarray, np.ndar
     return e1, np.cross(axis, e1)
 
 
-def reshape_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray) -> np.ndarray:
-    """The issue #386 pass over the refined locks: roots, rhythm, fall, twist, creases.
+def style_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray) -> np.ndarray:
+    """V4: the hairstyle is redesigned lock by lock - a designed, slightly messy short cut.
 
-    Tips are pinned and everything is clamped to the pinned envelope, so the approved
-    silhouette does not move; everything between root and tip is re-shaped:
+    V1-V3 kept the sculpt study's spike envelope: 96 plates radiating every which way,
+    each tip pinned to an "approved silhouette" that was itself the problem - the hair
+    read as black shards, not hair. The art brief asks for designed messiness with clear
+    mass groupings, so the envelope is redrawn here and the tips are free:
 
-    1. **Roots enter the mass.** The root ring dives back along its own axis (8 mm, then
-       the skull clamp) and widens - 1.28-1.56x along the fall of the hairline - until
-       neighbouring roots touch; ring 1 follows at 45 % of both, so the shaft emerges
-       from the cap's volume instead of being planted on its edge.
-    2. **No more cone clones.** The measured profile (1.0, 1.14, 1.04, 0.88, 0.55) is
-       remapped onto a clean fall; each lock takes its own width (0.86-1.12x), a
-       wide-thin rhythm along the shaft, a gravity-consistent bow (5-11 mm, yawed per
-       lock, zero at tip and root) with a gentle S wobble, and a cross-section twist of
-       at most 0.15 rad.
-    3. **A few creases, not grooves everywhere.** Locks wider than 22 mm (the plates)
-       take one inward crease down rings 2-3, splitting the plate into strands.
+    1. **Region flow.** Each lock's root (azimuth, height) selects its region. Azimuth
+       runs atan2(x, -(z - SCALP_z)): +/-180 deg is the face, 0 deg the back of the
+       head. The fringe (|az| >= 115) sweeps across the forehead towards his right
+       (x < 0) and falls to just above the brow; the sides (65-115 deg) fall along the
+       temples to above the ear; the back (|az| < 65) falls to the nape; the crown
+       (y >= 1.672) blends its top flow into those three. Lengths and how far a mass
+       may stand off the scalp are per-region, with a deterministic hash rhythm per
+       lock so layers interleave instead of stacking evenly.
+    2. **Flat-tube mass.** Each shaft is a quadratic bezier along its flow; its
+       cross-section is a flattened tube lying on the scalp (wide along the surface,
+       thin across it), the root ring widened until the roots read as one mass, the
+       shaft tapering to a pointed tip. Locks overlap as hair masses, not spikes.
+    3. **Scalp discipline.** Every vertex stays at least 1.2 mm off the skin (the
+       skull clamp) and inside the redesigned envelope; the cap's authored hairline
+       is untouched.
 
-    Pure function of the mesh plus the sculpted skin; vertex count and topology do not
-    change, so the skin weights stay valid and the V2 contract's counts hold.
+    Pure function of the mesh plus the sculpted skin; vertex count and topology do
+    not change, so the skin weights stay valid and the 96-lock contract holds.
     """
     locks, _cap, _cap_boundary, _labels = _hair_components(positions, triangles)
     field = _skull_field(skin)
     out = positions.copy()
     gravity = np.array([0.0, -1.0, 0.0])
-    taper_t = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    # Ring cross-section scale (ring 0 is the buried root; the tip is its own vertex).
+    section = (1.30, 1.14, 0.98, 0.78, 0.46)
+    ring_t = (0.0, 0.22, 0.44, 0.66, 0.88)
+
+    def region_of(root: np.ndarray, az: float) -> str:
+        if root[1] >= 1.672:
+            return 'crown'
+        if abs(az) >= 115.0:
+            return 'fringe'
+        if abs(az) >= 65.0:
+            return 'sides'
+        return 'back'
+
+    def flow_of(region: str, az: float, y: float, u1: float, u2: float) -> np.ndarray:
+        if region == 'fringe':
+            # The sweep: mostly towards his right and down, a touch forward. His
+            # left-front locks (az > 0 near +180) start the sweep higher and rounder.
+            t = min(abs(az) - 115.0, 65.0) / 65.0
+            base = np.array([-0.66 - 0.14 * t, -0.62 + 0.10 * t, 0.28 - 0.10 * t])
+        elif region == 'sides':
+            base = np.array([math.copysign(0.12, az), -0.88, -0.14])
+        elif region == 'back':
+            base = np.array([math.copysign(0.10, az) if abs(az) > 18.0 else 0.0, -0.82, -0.46])
+        else:  # crown: front-crown joins the sweep, back-crown falls back
+            t = min(abs(az) - 115.0, 65.0) / 65.0 if abs(az) >= 115.0 else 0.0
+            if abs(az) >= 115.0:
+                base = np.array([-0.58 - 0.12 * t, -0.42 - 0.16 * t, -0.20 + 0.16 * t])
+            elif abs(az) < 65.0:
+                base = np.array([math.copysign(0.08, az) if abs(az) > 18.0 else 0.0, -0.58, -0.62])
+            else:
+                base = np.array([math.copysign(0.16, az), -0.72, -0.36])
+        # Deterministic wobble: up to ~12 degrees off the design flow.
+        wobble = (u1 - 0.5) * 0.42
+        cos_w, sin_w = math.cos(wobble), math.sin(wobble)
+        x, yv, z = base
+        base = np.array([x * cos_w - z * sin_w, yv, x * sin_w + z * cos_w])
+        base = base + np.array([(u2 - 0.5) * 0.10, (u2 - 0.5) * -0.08, 0.0])
+        return base / np.linalg.norm(base)
+
     for entry in locks:
         label = entry['label']
         levels = entry['levels']
         verts = np.concatenate(levels + [np.array([entry['tip']])])
         rows = np.arange(len(verts))
         level_of = np.minimum(rows // 10, 5)
-        root = positions[levels[0]].mean(axis=0)
-        tip = positions[entry['tip']]
-        axis = tip - root
-        length = float(np.linalg.norm(axis))
-        if length < 1e-9:
-            raise SystemExit(f'lock {label}: zero length')
-        axis = axis / length
-        rel = positions[verts] - root
-        along = rel @ axis
-        t = np.clip(along / length, 0.0, 1.0)
-        radial = rel - np.outer(along, axis)
-        radius = np.linalg.norm(radial, axis=1)
-        ring_r = np.array([float(np.median(radius[rows[(rows // 10) == k]]))
-                           for k in range(5)])
-        ring_r = ring_r / max(ring_r[0], 1e-9)
-        rmax = float(radius.max())
+        root_ring = positions[levels[0]]
+        root = root_ring.mean(axis=0)
+        d = root - SCALP
+        radial = float(np.hypot(d[0], d[2]))
+        root_out = d / max(radial, 1e-9)
+        az = math.degrees(math.atan2(float(d[0]), -float(d[2])))
+        region = region_of(root, az)
+        u = _hash_units(label, 1, 8)
+        flow = flow_of(region, az, float(root[1]), u[0], u[1])
 
-        u = _hash_units(label, 0, 8)
-        width = 0.86 + 0.26 * u[0]
-        widen = 1.28 + 0.28 * u[1]
-        bend_amp = (0.005 + 0.006 * u[2]) * min(1.0, length / 0.10)
-        yaw = (u[3] - 0.5) * 1.2
-        twist = (u[4] - 0.5) * 0.30
-        phase = u[5] * math.tau
-        s_amp = (u[6] - 0.5) * 0.0044
-        crease_at = u[7] * math.tau
-        e1, e2 = _lock_frame(root, axis)
-        g_perp = gravity - axis * float(gravity @ axis)
-        if np.linalg.norm(g_perp) < 0.25:
-            g_perp = e1
-        g_perp = g_perp / np.linalg.norm(g_perp)
-        side = np.cross(axis, g_perp)
-        bend_dir = g_perp * math.cos(yaw) + side * math.sin(yaw)
+        # Lengths and envelope per region (metres).
+        if region == 'fringe':
+            length = 0.042 * (0.86 + 0.30 * u[2])
+            max_out, y_floor, y_cap = 0.032, 1.606, 1.742
+        elif region == 'crown':
+            length = 0.036 * (0.84 + 0.34 * u[2])
+            max_out, y_floor, y_cap = 0.031, 1.560, 1.742
+        elif region == 'sides':
+            length = 0.030 * (0.78 + 0.42 * u[2])
+            max_out, y_floor, y_cap = 0.013, 1.542, 1.742
+        else:
+            length = 0.038 * (0.80 + 0.38 * u[2])
+            max_out, y_floor, y_cap = 0.018, 1.502, 1.742
+
+        # Seat the root just under the cap surface and build the shaft's bezier. The
+        # crown and fringe roots also lift off the scalp - the volume a real cut has -
+        # before the flow falls away.
+        volume = 0.006 if region == 'crown' else (0.004 if region == 'fringe' else 0.0)
+        scalp_pt = root + root_out * (volume - 0.0035)
+        start_dir = flow * 0.62 + root_out * 0.38
+        start_dir = start_dir / np.linalg.norm(start_dir)
+        ctrl = scalp_pt + start_dir * (0.52 * length) + gravity * (0.07 * length)
+        tip = scalp_pt + flow * length + gravity * (0.22 * length)
+        # The tip stays in the region's envelope: not past its stand-off, not below
+        # its floor (brow line, ear line, collar), not above the crown cap.
+        t_out = tip - SCALP
+        t_rad = float(np.hypot(t_out[0], t_out[2]))
+        t_max = _skull_radius(field, float(tip[0]), float(tip[1]), float(tip[2])) + max_out
+        if t_rad > t_max > 1e-9 and t_rad > 1e-9:
+            s = t_max / t_rad
+            tip = np.array([tip[0] * s, tip[1], SCALP[2] + (tip[2] - SCALP[2]) * s])
+        tip[1] = min(max(float(tip[1]), y_floor), y_cap)
+
+        def bezier(t: float) -> np.ndarray:
+            return ((1.0 - t) ** 2) * scalp_pt + 2.0 * (1.0 - t) * t * ctrl + (t ** 2) * tip
+
+        base_r = float(np.median(np.linalg.norm(root_ring - root, axis=1)))
+        base_r = max(base_r, 0.0035)
+        width = 1.06 + 0.36 * u[3]
+        phase = u[4] * math.tau
+        phase2 = u[5] * math.tau
 
         moved = positions[verts].copy()
         for i in rows:
             ring = int(level_of[i])
             if ring == 5:
-                continue  # the tip is pinned: the silhouette's extremes do not move
-            ti = float(t[i])
-            rad = radial[i]
-            r = float(radius[i])
-            phi = math.atan2(float(rad @ e2), float(rad @ e1)) if r > 1e-9 else 0.0
-            if ring == 0:
-                # widen the root ring in its own plane, then dive back along the axis
-                r *= widen
-            else:
-                ratio = float(np.interp(ti, taper_t, [1.0] + [TAPER[k] / max(ring_r[k], 1e-6)
-                                                              for k in (1, 2, 3, 4)] + [1.0]))
-                rhythm = 1.0 + 0.16 * math.sin(math.tau * (ti * 0.85 + phase))
-                r *= ratio * width * rhythm
-                if ring == 1:
-                    r *= 1.0 + (widen - 1.0) * 0.45
-                if rmax > 0.022 and ring in (2, 3) and r > 0.5 * rmax:
-                    delta = abs((phi - crease_at + math.pi) % math.tau - math.pi)
-                    if delta < 0.42:
-                        r *= 0.72  # one crease: the plate reads as two strands
-                if r > 1e-9:
-                    phi += twist * math.sin(math.pi * ti)
-                moved[i] = root + axis * float(along[i]) \
-                    + (math.cos(phi) * e1 + math.sin(phi) * e2) * r
-                moved[i] += bend_dir * (bend_amp * math.sin(math.pi * ti)) \
-                    + side * (s_amp * math.sin(math.tau * ti))
-                if ring == 1:
-                    moved[i] -= axis * (BURIAL * 0.35)
+                moved[i] = tip
                 continue
-            moved[i] = root + axis * float(along[i]) \
-                + (math.cos(phi) * e1 + math.sin(phi) * e2) * r
-            moved[i] -= axis * BURIAL
+            t = ring_t[ring]
+            centre = bezier(t)
+            # Tangent of the bezier at t.
+            tangent = 2.0 * (1.0 - t) * (ctrl - scalp_pt) + 2.0 * t * (tip - ctrl)
+            norm = float(np.linalg.norm(tangent))
+            tangent = tangent / norm if norm > 1e-9 else flow
+            # The section lies on the scalp: thin along the surface normal, wide
+            # along the surface. Flattened tubes overlap as hair masses.
+            thin = root_out - tangent * float(root_out @ tangent)
+            if np.linalg.norm(thin) < 1e-6:
+                thin = np.cross(tangent, np.array([0.0, 1.0, 0.0]))
+            thin = thin / np.linalg.norm(thin)
+            wide = np.cross(tangent, thin)
+            # The vertex's own angle in the original ring, kept so no two locks
+            # share one silhouette; a gentle scallop keeps the section organic.
+            angle = math.tau * ((i % 10) + 0.5) / 10.0 + phase
+            scallop = 1.0 + 0.10 * math.sin(3.0 * angle + phase2)
+            a = base_r * width * section[ring] * scallop
+            b = base_r * width * 0.60 * section[ring]
+            jitter = 1.0 + (u[6] - 0.5) * 0.10
+            point = (centre + wide * (math.cos(angle) * a * jitter)
+                     + thin * (math.sin(angle) * b * jitter))
+            # The root ring dives into the cap's mass; ring 1 follows halfway.
+            if ring == 0:
+                point = point - tangent * 0.006
+            elif ring == 1:
+                point = point - tangent * 0.0025
+            moved[i] = point
+
         for i in rows:
             if level_of[i] == 5:
                 continue
@@ -1093,13 +1311,11 @@ def reshape_locks(positions: np.ndarray, triangles: np.ndarray, skin: np.ndarray
             r_head = math.hypot(float(p[0]), float(p[2] - SCALP[2]))
             r_min = _skull_radius(field, float(p[0]), float(p[1]), float(p[2])) + SKIN_MARGIN
             if r_head < r_min and r_head > 1e-9:
-                scale = r_min / r_head
-                p = np.array([p[0] * scale, p[1], SCALP[2] + (p[2] - SCALP[2]) * scale])
+                s = r_min / r_head
+                p = np.array([p[0] * s, p[1], SCALP[2] + (p[2] - SCALP[2]) * s])
             moved[i] = np.clip(p, HAIR_BBOX_MIN, HAIR_BBOX_MAX)
         out[verts] = moved
     return out
-
-
 def whorl_relief(point: np.ndarray, crown: np.ndarray) -> float:
     """The crown whorl and the back flow, as a signed relief in metres.
 
@@ -1337,6 +1553,197 @@ def tangents(positions: np.ndarray, normals: np.ndarray, uvs: np.ndarray, triang
 
 
 # --------------------------------------------------------------------------------------
+# Wardrobe
+# --------------------------------------------------------------------------------------
+# The garments arrive from V1 as clean blockout: flat panels, raw-cut cuffs and hems,
+# no folds anywhere. This pass moves only positions and normals - every joint, weight
+# and attribute set is carried through exactly as V1 skinned it. One midpoint
+# subdivision over the jacket and the trousers buys the density the folds need (weights
+# interpolate along edges and faces, so rigid parts stay rigid); the analytic fields
+# then draw the drape, the pull creases and the rolled edges. Design identity is fixed:
+# stand collar, left-chest patch pocket, button placket, straight hem, slim silhouette.
+
+BODY_MESH = 0
+JACKET_MESH = 7
+DETAIL_MESH = 8
+WARDROBE_PRIMS = ((JACKET_MESH, 0), (BODY_MESH, 1), (DETAIL_MESH, 0))
+
+
+def _smoothstep(t):
+    t = np.clip(t, 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _window(value, lo, hi, feather=0.02):
+    return _smoothstep((value - lo) / feather) * _smoothstep((hi - value) / feather)
+
+
+def _dense_weights(joints: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    """(n, J) float weight matrix - the form interpolation needs."""
+    count = len(joints)
+    width = int(joints.max()) + 1 if count else 1
+    dense = np.zeros((count, width), np.float64)
+    for slot in range(4):
+        np.add.at(dense, (np.arange(count), joints[:, slot].astype(np.int64)),
+                  weights[:, slot].astype(np.float64))
+    return dense
+
+
+def _top4_weights(dense: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Back to the GLB's 4-slot layout; single-joint rows survive untouched."""
+    count = len(dense)
+    order = np.argsort(-dense, axis=1)[:, :4]
+    picked = np.take_along_axis(dense, order, axis=1)
+    totals = picked.sum(axis=1, keepdims=True)
+    picked = np.divide(picked, totals, out=np.zeros_like(picked), where=totals > 0)
+    zero = picked.sum(axis=1) == 0
+    picked[zero, 0] = 1.0
+    return order.astype(np.uint8), picked.astype(np.float32)
+
+
+def _subdivide_cloth(positions, triangles, joints, weights):
+    """Midpoint subdivision with joint weights interpolated along edges and faces."""
+    dense = _dense_weights(joints, weights)
+    edge_mid = {}
+    mid_position = []
+    mid_dense = []
+
+    def midpoint(a, b):
+        key = (a, b) if a < b else (b, a)
+        if key not in edge_mid:
+            edge_mid[key] = len(positions) + len(mid_position)
+            mid_position.append((positions[a] + positions[b]) * 0.5)
+            mid_dense.append((dense[a] + dense[b]) * 0.5)
+        return edge_mid[key]
+
+    new_triangles = []
+    for a, b, c in triangles:
+        ab = midpoint(a, b)
+        bc = midpoint(b, c)
+        ca = midpoint(c, a)
+        mid_position.append((positions[a] + positions[b] + positions[c]) / 3.0)
+        mid_dense.append((dense[a] + dense[b] + dense[c]) / 3.0)
+        centre = len(positions) + len(mid_position) - 1
+        new_triangles.extend(((a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca)))
+    positions = np.vstack((positions, np.array(mid_position)))
+    dense = np.vstack((dense, np.array(mid_dense)))
+    joints, weights = _top4_weights(dense)
+    return positions, np.array(new_triangles, np.int64), joints, weights
+
+
+def _roll_boundaries(positions, triangles, depth=0.0026):
+    """Pull the open edges (collar rims, cuffs, hems) in along -normal: a cloth edge
+    has thickness, and a raw-cut boundary is the loudest blockout tell."""
+    normals = vertex_normals(positions, triangles)
+    neighbours = {}
+    for a, b, c in triangles:
+        for u, v in ((a, b), (b, c), (c, a)):
+            neighbours.setdefault(u, set()).add(v)
+            neighbours.setdefault(v, set()).add(u)
+    edge_use = {}
+    for a, b, c in triangles:
+        for u, v in ((a, b), (b, c), (c, a)):
+            key = (u, v) if u < v else (v, u)
+            edge_use[key] = edge_use.get(key, 0) + 1
+    boundary = {u for (u, v), n in edge_use.items() if n == 1} | \
+               {v for (u, v), n in edge_use.items() if n == 1}
+    moved = np.zeros_like(positions)
+    for vert in boundary:
+        moved[vert] -= normals[vert] * depth
+    ring = {n for vert in boundary for n in neighbours.get(vert, ())} - boundary
+    for vert in ring:
+        moved[vert] -= normals[vert] * depth * 0.45
+    return positions + moved
+
+
+def _jacket_shapes(p, normals):
+    """Drape swells from the shoulders, the placket channel, a waist release, the hem
+    wave, and one pull crease ring at each elbow. Long wavelengths only - the panel
+    density is low and short ripples would alias into noise."""
+    x, y = p[:, 0], p[:, 1]
+    ax = np.abs(x)
+    torso = _smoothstep((0.17 - ax) / 0.03)
+    sleeves = _smoothstep((ax - 0.15) / 0.03)
+    drape = ((0.0072 * np.sin(x * 26.0 + y * 5.0)
+              + 0.0034 * np.sin(x * 57.0 - y * 4.0 + 1.3)) * _window(y, 0.88, 1.33, 0.08)
+             * torso)
+    yoke = 0.0026 * np.sin((y - 1.285) * 150.0) * np.exp(-((y - 1.285) / 0.028) ** 2) * torso
+    groove = -0.0030 * np.exp(-(x / 0.016) ** 2) * _window(y, 0.92, 1.33, 0.06) * torso
+    placket_ridge = (0.0026 * (np.exp(-((x - 0.032) / 0.015) ** 2)
+                               + np.exp(-((x + 0.032) / 0.015) ** 2))
+                      * _window(y, 0.93, 1.32, 0.06) * torso)
+    waist = -0.0045 * _window(y, 0.98, 1.18, 0.06) * torso
+    hem_wave = 0.0050 * np.sin(x * 34.0 + 0.6) * _window(y, 0.828, 0.885, 0.035) * torso
+    flare = 0.0042 * _window(y, 0.828, 0.875, 0.035) * torso
+    # Elbow: the arm axis runs (±0.16, 1.24) -> (±0.46, 0.89); the crease ring sits at
+    # the midpoint, ridge into trough along the sleeve, and the inner side pulls in.
+    t = (ax - 0.31) * 0.664 + (y - 1.07) * (-0.748)
+    ring = (0.0055 * np.sin(t * 90.0) * np.exp(-(t / 0.055) ** 2)
+            * _window(y, 0.92, 1.22, 0.06) * sleeves)
+    cuff = 0.0042 * _window(ax, 0.415, 0.475, 0.025) * sleeves
+    return normals * (drape + yoke + groove + placket_ridge + waist + hem_wave + flare
+                      + ring + cuff)[:, None]
+
+
+def _trouser_shapes(p, normals):
+    """Knee pull crease, a slow leg drape and the hem break over the shoe."""
+    x, y = p[:, 0], p[:, 1]
+    knee = (0.0048 * np.sin((y - 0.525) * 95.0) * np.exp(-((y - 0.525) / 0.055) ** 2)
+            * _window(np.abs(x), 0.03, 0.16, 0.03))
+    drape = 0.0028 * np.sin(x * 46.0 + 1.1) * _window(y, 0.16, 0.98, 0.08)
+    hem = 0.0036 * np.sin(x * 60.0 + 0.4) * _window(y, 0.07, 0.165, 0.035)
+    return normals * (knee + drape + hem)[:, None]
+
+
+def _detail_shapes(p, normals):
+    """The collar stand rises a touch, the patch pocket puffs off the chest."""
+    x, y, z = p[:, 0], p[:, 1], p[:, 2]
+    collar = 0.0032 * _window(y, 1.33, 1.41, 0.03)
+    pocket = (0.0042 * _window(x, 0.022, 0.138, 0.018) * _window(y, 1.115, 1.275, 0.02)
+              * _smoothstep((z - 0.095) / 0.012))
+    return normals * (collar + pocket)[:, None]
+
+
+def wardrobe(document: dict, binary: bytes) -> dict:
+    """Position/normal-only garment rebuild; everything else is carried through."""
+    replacements = {}
+    for mesh_index, prim_index in WARDROBE_PRIMS:
+        primitive = document['meshes'][mesh_index]['primitives'][prim_index]
+        arrays = glb.primitive_arrays(document, binary, primitive)
+        positions = arrays['POSITION'].astype(np.float64)
+        triangles = arrays['indices'].reshape(-1, 3).astype(np.int64)
+        joints = arrays['JOINTS_0']
+        weights = arrays['WEIGHTS_0']
+        if (mesh_index, prim_index) != (DETAIL_MESH, 0):
+            positions, triangles, joints, weights = _subdivide_cloth(
+                positions, triangles, joints, weights)
+        normals = vertex_normals(positions, triangles)
+        if mesh_index == JACKET_MESH:
+            positions = positions + _jacket_shapes(positions, normals)
+        elif mesh_index == BODY_MESH:
+            positions = positions + _trouser_shapes(positions, normals)
+        else:
+            positions = positions + _detail_shapes(positions, normals)
+        positions = _roll_boundaries(positions, triangles)
+        normals = vertex_normals(positions, triangles)
+        # Weight sums survive subdivision up to rounding; re-normalise to be exact.
+        # The garments store WEIGHTS_0 as raw floats summing to 1 (no 255 scale).
+        totals = weights.sum(axis=1, keepdims=True)
+        weights = np.divide(weights, totals, out=np.zeros_like(weights), where=totals > 0)
+        attributes = {
+            'POSITION': (positions.astype(np.float32), 5126, 'VEC3'),
+            'NORMAL': (normals.astype(np.float32), 5126, 'VEC3'),
+            'JOINTS_0': (joints, 5121, 'VEC4'),
+            'WEIGHTS_0': (weights.astype(np.float32), 5126, 'VEC4'),
+        }
+        replacements[(mesh_index, prim_index)] = {
+            'attributes': attributes,
+            'indices': triangles.reshape(-1).astype(np.uint32),
+            'targets': [],
+        }
+    return replacements
+
+
 # Build
 # --------------------------------------------------------------------------------------
 
@@ -1390,9 +1797,10 @@ def build() -> dict:
     hair_positions = hair_arrays['POSITION']
     hair_triangles = hair_arrays['indices'].reshape(-1, 3).astype(np.int64)
     hair_positions, hair_triangles = refine_locks(hair_positions, hair_triangles)
-    # 6b. Issue #386: roots into the mass, strand rhythm and fall, the crown whorl -
-    # then the hair's own atlas, for the maps the look draws on it.
-    hair_positions = reshape_locks(hair_positions, hair_triangles, positions)
+    # 6b. V4 art pass: the hairstyle is redesigned between root and tip - region flow,
+    #     flattened tube mass, free tips inside the redesigned envelope - then the
+    #     hair's own atlas, for the maps the look draws on it.
+    hair_positions = style_locks(hair_positions, hair_triangles, positions)
     hair_positions = whorl_cap(hair_positions, hair_triangles)
     hair_uv_atlas = hair_uv(hair_positions, hair_triangles)
     hair_normals = welded_normals(hair_positions, hair_triangles)
@@ -1444,6 +1852,7 @@ def build() -> dict:
         (HAIR_MESH, HAIR_PRIM): hair_replacement,
     }
     replacements.update(face_parts)
+    replacements.update(wardrobe(document, binary))
     built = glb_edit.replace_primitives(open(RUNTIME, 'rb').read(), replacements)
     BUILD.mkdir(parents=True, exist_ok=True)
     (BUILD / 'Protagonist_Character.glb').write_bytes(built)
@@ -1498,7 +1907,7 @@ def contract() -> dict:
             continue
         lids += 1
         relative = points - eye
-        front = relative[(relative[:, 2] > 0.004) & (np.abs(relative[:, 0]) < 0.0015)]
+        front = relative[(relative[:, 2] > 0.004) & (np.abs(relative[:, 0]) < 0.0035)]
         margins[side]['upper' if centre[1] > EYE_Y else 'lower'].extend(front[:, 1].tolist())
     aperture = np.mean([min(margins[side]['upper']) - max(margins[side]['lower'])
                         for side in (1.0, -1.0)]) * 1000.0 if lids == 4 else 0.0
@@ -1560,7 +1969,7 @@ def check() -> dict:
         failed.append('the head atlas leaves [0, 1]')
     if measured['head_uv_u_span_max'] > 0.5:
         failed.append('a triangle still wraps across the atlas seam')
-    if not (10.0 <= measured['aperture_height_mm'] <= 15.0):
+    if not (8.0 <= measured['aperture_height_mm'] <= 10.0):
         failed.append(f"the aperture is {measured['aperture_height_mm']:.1f} mm tall")
     if measured['runtime_bytes'] > MODEL_BUDGET:
         failed.append(f"{measured['runtime_bytes']} B is over the {MODEL_BUDGET} B model budget")

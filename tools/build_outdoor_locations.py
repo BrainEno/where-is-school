@@ -158,7 +158,7 @@ class Scene:
     def __init__(self, root_name, location_id):
         self.root_name = root_name
         self.location_id = location_id
-        self.boxes = []      # (name, pos, size, mat, group, body, collision_layer)
+        self.boxes = []      # (name, pos, size, mat, group, body, collision_layer, rotation, shadow)
         self.extras = []     # literal node blocks
         self.env = None
         self.sun = None
@@ -171,8 +171,12 @@ class Scene:
         self.shapes = []     # (name, body, pos, size) - an extra shape-only collider on a box
 
 
-    def box(self, name, pos, size, mat, group=None, body=True, collision_layer=1):
-        self.boxes.append((name, pos, size, mat, group, body, collision_layer))
+    def box(self, name, pos, size, mat, group=None, body=True, collision_layer=1,
+            rotation=None, shadow=True):
+        """One box, square to the scene. `rotation` (degrees) turns the node for a staged
+        piece that must face the fixed camera; `shadow` False keeps a glow card from
+        shading the ground (emits `cast_shadow = 0`)."""
+        self.boxes.append((name, pos, size, mat, group, body, collision_layer, rotation, shadow))
 
     def shape(self, name, body, pos, size):
         """An extra collider on a body `box()` already declared, with no mesh of its own.
@@ -190,7 +194,7 @@ class Scene:
 
     def emit(self):
         used = []
-        for _, _, _, mat, _, _, _ in self.boxes:
+        for _, _, _, mat, *_ in self.boxes:
             if mat not in used:
                 used.append(mat)
         for item in self.interactables + self.exits:
@@ -242,7 +246,7 @@ class Scene:
         # sub resources: one shape + one mesh per box
         subs = []
         sub_ids = []
-        for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
+        for index, (name, pos, size, mat, group, body, collision_layer, _rotation, _shadow) in enumerate(self.boxes):
             shape_id = f'BoxShape3D_{index}' if body else None
             mesh_id = f'BoxMesh_{index}'
             if body:
@@ -304,12 +308,14 @@ class Scene:
         for index, (name, body, pos, size) in enumerate(self.shapes):
             shapes_of_body.setdefault(body, []).append((name, pos, shape_subs[index]))
 
-        for index, (name, pos, size, mat, group, body, collision_layer) in enumerate(self.boxes):
+        for index, (name, pos, size, mat, group, body, collision_layer, rotation, shadow) in enumerate(self.boxes):
             shape_id, mesh_id = sub_ids[index]
             group_text = f' groups=[{", ".join(chr(34) + g + chr(34) for g in group)}]' if group else ''
             if body:
                 lines.append(f'[node name="{name}" type="StaticBody3D" parent="."{group_text}]')
                 lines.append('position = %s' % v3(pos))
+                if rotation is not None:
+                    lines.append('rotation_degrees = %s' % v3(rotation))
                 if collision_layer != 1:
                     lines.append(f'collision_layer = {collision_layer}')
                 lines.append('')
@@ -324,11 +330,17 @@ class Scene:
                 lines.append(f'[node name="MeshInstance3D" type="MeshInstance3D" parent="{name}"]')
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
+                if not shadow:
+                    lines.append('cast_shadow = 0')
             else:
                 lines.append(f'[node name="{name}" type="MeshInstance3D" parent="."{group_text}]')
                 lines.append('position = %s' % v3(pos))
+                if rotation is not None:
+                    lines.append('rotation_degrees = %s' % v3(rotation))
                 lines.append(f'mesh = SubResource("{mesh_id}")')
                 lines.append(f'material_override = ExtResource("{mat_res[mat]}")')
+                if not shadow:
+                    lines.append('cast_shadow = 0')
             lines.append('')
 
         for index, (name, pos, size, rotation, collision_layer) in enumerate(self.ramps):
@@ -1314,7 +1326,15 @@ def build_alley():
          "scene": "res://scenes/locations/playground/playground.tscn", "spawn": "FromAlley",
          "id_dest": "playground"},
     ]
-    s.spawns = [("FromCourtyard", (0.0, 0, 10.5)), ("FromPlayground", (0.0, 0, -20.0))]
+    s.spawns = [
+        ("FromCourtyard", (0.0, 0, 10.5)),
+        # Round 36: the yard gate is a doorway arrival: the body takes the lane's heading
+        # (+Z, into the alley) and walks 2 m clear of the gate before control returns,
+        # whatever heading the moment of pressing E left. The pair's other end (the court's
+        # FromAlley) declares its entry the same way.
+        ("FromPlayground", (0.0, 0, -20.0),
+         {"rotation": (0, 180, 0), "entry_facing": True, "entry_walk": 2.0}),
+    ]
     return s
 
 
@@ -1396,7 +1416,14 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("SouthGatePostWest", (-2.0, 1.25, 19.6), (0.2, 2.5, 0.2), "metal", None, False)
     s.box("SouthGatePostEast", (2.0, 1.25, 19.6), (0.2, 2.5, 0.2), "metal", None, False)
     s.box("SouthGateLintel", (0.0, 2.45, 19.6), (4.2, 0.12, 0.12), "metal", None, False)
-    s.box("SouthGateLight", (0.0, 1.6, 21.9), (3.6, 3.2, 0.1), "dusk", None, False)
+    # Round 36: the lane's light is a staged glow card, not a slab. It sat square to the
+    # fence and close behind it, so the fixed camera (which looks along -X-Z and only
+    # catches this gate at the frame's left edge) stretched it into a leaning board bigger
+    # than the gate itself. The card now faces the camera like the painted distance
+    # (45 deg), sits just past the posts at gate height, casts no shadow on the lane, and
+    # is no longer traced by the exit's outline (its alley-side twin never is).
+    s.box("SouthGateLight", (0.0, 1.4, 21.2), (3.2, 2.8, 0.06), "dusk", None, False,
+          rotation=(0, 45, 0), shadow=False)
     # east side: the flats (the hedge that hides what is under the shed moved with it, round 20)
     s.box("EstateBlockEast", (24, 6.0, -2), (8, 12, 40), "brick", ["camera_occluder"])
     # Round 21: the yard's open edges, closed. The owner could walk off the west side (and
@@ -1550,7 +1577,9 @@ def build_playground(for_courtyard_view: bool = False):
     s.exits = [
         {"name": "BackToAlley", "pos": (0.0, 0.9, 18.2), "id": "pg_back_to_alley",
          "prompt_key": "prompt.alley_gate", "radius": 1.8,
-         "outline": ("SouthGatePostWest", "SouthGatePostEast", "SouthGateLintel", "SouthGateLight"),
+         # Round 36: the glow card is not outlined (its alley-side twin never is) - the
+         # highlight traced a floating board at the frame edge instead of the gate.
+         "outline": ("SouthGatePostWest", "SouthGatePostEast", "SouthGateLintel"),
          "scene": "res://scenes/locations/alley/alley.tscn", "spawn": "FromPlayground",
          "id_dest": "alley"},
         {"name": "BackToCorridor", "pos": (-3.0, 0.9, -19.2), "id": "pg_to_corridor",
@@ -1597,7 +1626,9 @@ def build_playground(for_courtyard_view: bool = False):
     s.box("GroveStubTree", (19.55, 1.0, -19.7), (0.42, 2.0, 0.42), "soil", None, False)
     s.box("GroveStubRail", (19.9, 0.6, -19.7), (0.5, 1.2, 0.1), "metal", None, False)
     s.spawns = [
-        ("FromAlley", (0.0, 0, 16.0)),
+        # Round 36: entering the court from the alley is a doorway arrival too: the body
+        # faces into the court (-Z, the marker's own heading) and walks 2 m off the gate.
+        ("FromAlley", (0.0, 0, 16.0), {"entry_facing": True, "entry_walk": 2.0}),
         # The walkway's end door: this is the intended way into the yard, so the
         # player arrives from the school side rather than from the estate gate.
         # Round 24: arriving from the teaching block, the player walks out from under the fire

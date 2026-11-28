@@ -9,6 +9,7 @@ const CORRIDOR := "res://scenes/locations/corridor/corridor.tscn"
 const FRONT_YARD := "res://scenes/locations/front_yard/front_yard.tscn"
 const PLAYGROUND := "res://scenes/locations/playground/playground.tscn"
 const NORTH_GROVE := "res://scenes/locations/north_grove/north_grove.tscn"
+const ALLEY := "res://scenes/locations/alley/alley.tscn"
 const SCHOOL := ^"TeachingBlock"
 const ENTRANCE := ^"TeachingBlock/GroundFloor/GlassEntrance"
 const DIRECTORY := &"corridor_folded_directory"
@@ -206,7 +207,7 @@ func _check_structure(corridor: LocationRoot, nav: LocationNavigation) -> void:
 
 ## The formerly identical faces were visible from the follow camera. The
 ## neighbouring boxes can meet or have a rebate, but cannot draw the same face.
-## The four doorway arrivals that carry an explicit heading (entry_facing). Each must face
+## The doorway arrivals that carry an explicit heading (entry_facing). Each must face
 ## the way the doorway needs: into the block when entering, away from the door when leaving.
 func _check_entry_headings() -> void:
 	var cases := [
@@ -219,6 +220,11 @@ func _check_entry_headings() -> void:
 		# of that door onto the strip's walk, away from the door it came through.
 		[NORTH_GROVE, &"FromFrontYard", Vector3.BACK],
 		[NORTH_GROVE, &"FromPlayground", Vector3.RIGHT],
+		# The court-to-alley gate declares both arrivals (round 36): the alley's FromPlayground
+		# faces down the lane, the court's FromAlley faces into the court, so no carried heading
+		# from the moment of pressing E can strand the player facing a wall.
+		[ALLEY, &"FromPlayground", Vector3.BACK],
+		[PLAYGROUND, &"FromAlley", Vector3.FORWARD],
 	]
 	for case in cases:
 		var scene := (load(case[0]) as PackedScene).instantiate() as Node3D
