@@ -120,10 +120,13 @@ def protagonist_charcoal(base: dict) -> dict:
             "pigment_a": "#3A3550",
             "pigment_b": "#4A3A30",
             "pigment_mix": 0.5,
-            "pigment_value": 0.3,
-            "pigment_scale": 11.0,
+            # r40: the mop's padded crown shaded the old 0.3-value blocks as dark
+            # blotches under the key. Quieter, smaller blocks, lighter shade floor;
+            # the strand rhythm lives in the locks and the normal map now.
+            "pigment_value": 0.12,
+            "pigment_scale": 18.0,
             "shade_tint": "#7C7C9C",
-            "shadow_fill": 0.45,
+            "shadow_fill": 0.52,
             "light_strength": 0.85,
             "outline": True,
         },
