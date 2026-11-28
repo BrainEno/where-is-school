@@ -897,7 +897,7 @@ HAIR_BBOX_MAX = np.array([0.1575, 1.7669, 0.1817])
 # to the skull -- no strand reaches further than ~55 mm from the scalp centre -- so
 # the mop's own envelope is much tighter than the V1 plates' one above.
 MOP_BBOX_MIN = np.array([-0.1085, 1.5175, -0.0946])
-MOP_BBOX_MAX = np.array([0.1075, 1.7390, 0.1616])
+MOP_BBOX_MAX = np.array([0.1075, 1.7175, 0.1616])
 SCALP = np.array([0.0, 1.565, 0.040])
 # Root burial: how far a root ring dives back along its own lock axis (the skull clamp
 # keeps every vertex 1.2 mm off the skin, so the burial never pierces the head).
