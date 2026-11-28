@@ -274,6 +274,16 @@ func _check_dev_override(check: Harness.Checker, settings: Node) -> void:
 	# The staged authoring app reaches live through `isolated_author()`, not this gate.
 	check.expect(not StoryEditorEntry.live_editing_allowed(),
 		"A scripted harness run may attach the live line editor")
+	# Assert contexts this scripted harness cannot itself inhabit, including the allowed desktop window.
+	var rows := [
+		[false, false, false, false, false, true], [false, false, false, false, false, true],
+		[true, false, false, false, false, false], [false, true, false, false, false, false],
+		[false, false, true, false, false, false], [false, false, false, true, false, false],
+		[false, false, false, false, true, false],
+	]
+	for row: Array in rows:
+		check.expect(StoryEditorEntry.development_window_allows(row[0], row[1], row[2], row[3], row[4]) == row[5],
+			"The live editing gate misclassified a launch context")
 	# What each outcome reads as on the row, and the step inside it: `saved` is the file, `moved`
 	# is the switch, and the two come apart in a development run - which is why one sentence cannot
 	# serve both. The tables have to carry the placeholder, or the sentence arrives with "{step}"

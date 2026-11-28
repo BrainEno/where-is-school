@@ -45,44 +45,79 @@ static func development_run() -> bool:
 	return debug_run and scripts_present()
 
 
+## Whether a window and launch of this shape may carry live editing (#395 follow-up), as a
+## rule over named facts so every context it was written for can be asserted without
+## launching it - a harness can only ever be its own context, and a test that only ever
+## saw `false` would be claiming a gate it never opened. The rows:
+## - an ordinary desktop development run and the Windows developer pack (the same window,
+##   double-clicked): allowed;
+## - the iPhone player pack ships these scripts and stays opt-in, and the Android pack is
+##   smoke-launched as a player - both are mobile shapes even as debug builds: refused;
+## - a headless run is an import or a batch job with nobody at it, CI renders the player's
+##   view on purpose so a screenshot never carries the author's launcher, and `--script`
+##   is the harness that has to be able to speak as a player's copy: refused.
+static func development_window_allows(
+	ios: bool, android: bool, headless: bool, ci: bool, scripted: bool
+) -> bool:
+	return not (ios or android or headless or ci or scripted)
+
+
+## This process's own reading of those facts.
+static func development_window() -> bool:
+	return development_window_allows(
+		OS.has_feature("ios"),
+		OS.has_feature("android"),
+		DisplayServer.get_name() == "headless",
+		OS.get_environment("GITHUB_ACTIONS") == "true",
+		"--script" not in OS.get_cmdline_args(),
+	)
+
+
+## The window this run actually has. `-1` reads the process through `development_window()`;
+## `0` and `1` are the seam `tests/authoring_live_classroom_test.gd` uses to boot a world as
+## an ordinary desktop development run from a `--script` harness whose own facts say
+## otherwise - the same reason `debug_run` is a static var, with the same rule: nothing
+## else assigns it, and a player's package never carries the test that would.
+static var window_forced: int = -1
+
+
+static func _test_window_override_allowed() -> bool:
+	# This seam only exists for the scripted, debug-only classroom harness. A normal
+	# desktop run - and every released player build - always reads its real platform,
+	# display, CI and command-line facts; no user setting can turn those gates off.
+	return (
+		debug_run
+		and "--script" in OS.get_cmdline_args()
+		and "--dev-run" in OS.get_cmdline_user_args()
+	)
+
+
 ## Whether a development run boots with the editor already on, with nothing to press, save or
 ## launch differently (#395): during development the tool is wanted in every run, so a
 ## preferences file a machine refuses must not be the thing that decides whether it exists.
-## `development_run()` is the first line, and the rest is who else that description also
-## happens to fit and must not be dragged in along with the author:
-## - the iPhone player pack carries `scripts/story_editor/` too, and the normal app there is
-##   opt-in from the settings row - this default stays off that platform;
-## - a windowless run is an import, a batch job or a capture step with nobody at it;
-## - CI renders the player's view on purpose, so a screenshot never carries the author's
-##   launcher (the capture workflows run the real project windowed on a runner);
-## - `--script` is the test harness, which has to be able to speak as a player's copy -
-##   `tests/story_editor_setting_test.gd` reads this file as the off-by-default contract.
-## The desktop and Android player exports leave the scripts out entirely, so they fail the
-## first line; the Windows developer preset keeps them in, and that double-click run is
-## exactly who this default is for. The switch still stores whatever the author last chose -
-## this decides only what a development run starts at, and F9 or the settings row can still
-## close the editor for the session.
+## `development_run()` is the first line - the desktop and Android player exports leave the
+## scripts out entirely, so they fail it - and `development_window()` is who else that
+## description also happens to fit and must not be dragged in along with the author, per the
+## rows on `development_window_allows()`. The Windows developer preset keeps the scripts in,
+## and that double-click run is exactly who this default is for. The switch still stores
+## whatever the author last chose - this decides only what a development run starts at, and
+## F9 or the settings row can still close the editor for the session.
 static func development_default() -> bool:
 	if not development_run():
 		return false
-	# Mobile packs are player-shaped artifacts even as debug builds: the iPhone pack
-	# ships these scripts and stays opt-in (#394), and the Android preview APK is
-	# smoke-launched as a player on an emulator. The author-at-a-window run this
-	# default exists for is a desktop one.
-	if OS.has_feature("ios") or OS.has_feature("android"):
-		return false
-	if DisplayServer.get_name() == "headless":
-		return false
-	if OS.get_environment("GITHUB_ACTIONS") == "true":
-		return false
-	return "--script" not in OS.get_cmdline_args()
+	if _test_window_override_allowed() and window_forced >= 0:
+		return window_forced == 1
+	return development_window()
 
 
 ## True when this run asked for the editor on its own terms. Read-only by design: the file keeps
 ## saying whatever it said, so a player's copy is unaffected by how the project was launched.
 static func development_override() -> bool:
-	return scripts_present() and development_requested(
-		OS.get_cmdline_user_args(), OS.get_environment(DEVELOPMENT_ENVIRONMENT)
+	return (
+		scripts_present()
+		and development_requested(
+			OS.get_cmdline_user_args(), OS.get_environment(DEVELOPMENT_ENVIRONMENT)
+		)
 	)
 
 
@@ -113,8 +148,13 @@ static func hotkey_pressed(event: InputEvent) -> bool:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return false
-	return key.keycode == HOTKEY and not key.ctrl_pressed and not key.alt_pressed \
-		and not key.shift_pressed and not key.meta_pressed
+	return (
+		key.keycode == HOTKEY
+		and not key.ctrl_pressed
+		and not key.alt_pressed
+		and not key.shift_pressed
+		and not key.meta_pressed
+	)
 
 
 ## Whether this run may answer the key at all. `development_run()` keeps a released export out -
@@ -167,16 +207,26 @@ static func handle_shortcut_input(host: Node, event: InputEvent) -> void:
 			push_warning("StoryEditor: F9 could not store the switch (%s)" % String(report["step"]))
 		return
 	host.get_viewport().set_input_as_handled()
-	print("StoryEditor: F9 %s the story editor - %s" % [
-		"opened" if bool(report["enabled"]) else "closed",
-		"the preference file took it" if bool(report["saved"])
-		else "this run only (%s)" % String(report["step"]),
-	])
+	print(
+		(
+			"StoryEditor: F9 %s the story editor - %s"
+			% [
+				"opened" if bool(report["enabled"]) else "closed",
+				(
+					"the preference file took it"
+					if bool(report["saved"])
+					else "this run only (%s)" % String(report["step"])
+				),
+			]
+		)
+	)
 
 
 static func _is_on(settings: Node) -> bool:
-	return settings.has_method("is_story_editor_enabled") \
+	return (
+		settings.has_method("is_story_editor_enabled")
 		and bool(settings.call("is_story_editor_enabled"))
+	)
 
 
 ## The step `Settings` refused its last write over, or "" when it has none to report. Read through
@@ -192,11 +242,15 @@ static func _refusal_step(settings: Node) -> String:
 
 ## Settings calls this deferred, after the autoload/scene change that read the preference.
 ## The standalone author app already owns its editor and is not affected by this setting.
+## `release_overlay()` answers whether the world was handed back; when it says no - a file
+## exchange is running, or the live editor's input would not save - nothing here frees the
+## bootstrap either. The editor keeps the author's input on screen and finishes the release
+## itself once it really closes (`bootstrap.gd`'s pending release), so a refused save can
+## never be papered over by destroying the widget that still holds the text.
 static func reconcile(root: Window, enabled: bool) -> void:
 	var editor := installed(root)
 	if not enabled or not available(root):
-		if editor != null:
-			editor.call("release_overlay")
+		if editor != null and bool(editor.call("release_overlay")):
 			editor.queue_free()
 			root.remove_child(editor)
 		return
@@ -207,6 +261,10 @@ static func reconcile(root: Window, enabled: bool) -> void:
 		editor = bootstrap.new() as Node
 		editor.name = NODE_NAME
 		root.add_child(editor)
+	else:
+		# The switch came back on before a deferred release finished: the author wants
+		# the tool, so the pending teardown is dropped rather than finishing under them.
+		editor.call("cancel_release")
 
 
 static func installed(root: Window) -> Node:
@@ -216,8 +274,10 @@ static func installed(root: Window) -> Node:
 ## The live editor is never a mid-run switch. Staging sets a new project identity
 ## before Godot opens user://, so progress, read log and drafts are isolated from boot.
 static func isolated_author(root: Window) -> Node:
-	if ProjectSettings.get_setting("application/config/name") != AUTHOR_PROJECT_NAME \
-			or bool(ProjectSettings.get_setting("application/config/use_custom_user_dir", false)):
+	if (
+		ProjectSettings.get_setting("application/config/name") != AUTHOR_PROJECT_NAME
+		or bool(ProjectSettings.get_setting("application/config/use_custom_user_dir", false))
+	):
 		return null
 	return root.get_node_or_null(AUTHOR_APP)
 
