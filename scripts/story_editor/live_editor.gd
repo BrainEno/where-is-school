@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## Paused editing of the actual presented line, not a second panel or a trial runner.
-## Staged author apps only: the entire run started in a different user data directory.
+## The staged author app (whose whole run started in a different user data directory)
+## and an ordinary desktop development run (`Entry.live_editing_allowed()`).
 
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const Store := preload("res://scripts/story_editor/draft_store.gd")
@@ -9,6 +10,11 @@ const RoundForm := preload("res://scripts/story_editor/live_round_form.gd")
 const Form := preload("res://scripts/story_editor/author_form.gd")
 const KeyboardArea := preload("res://scripts/story_editor/keyboard_area.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+
+## Emitted whenever this editor really stops editing - a successful close, or the world
+## taking it away in `_exit_tree()` - so the bootstrap can finish a release it refused to
+## fake while an exchange ran or the input would not save.
+signal closed
 
 var store: Store
 var controller: DialogueController
@@ -24,6 +30,7 @@ var _timer: Timer
 var _buttons: Dictionary[String, Button] = {}
 var _form := {}
 var _open := false
+var _release_when_clear := false
 var _native_target: TextEdit
 var _export_warning := ""
 
@@ -56,7 +63,7 @@ func _ready() -> void:
 	_exchange.name = "Exchange"
 	_root.add_child(_exchange)
 	_exchange.edited.connect(_native_result)
-	_exchange.notice.connect(_notice)
+	_exchange.notice.connect(_exchange_notice)
 	_exchange.exported.connect(_exported)
 	_timer = Timer.new()
 	_timer.one_shot = true
@@ -68,9 +75,15 @@ func _ready() -> void:
 
 
 func can_open() -> bool:
-	return not _open and _panel.is_visible_in_tree() and not ui.fade.visible \
-		and not ui.backlog.is_open() and not ui.end_card.visible and not ui.check_overlay.visible \
+	return (
+		not _open
+		and _panel.is_visible_in_tree()
+		and not ui.fade.visible
+		and not ui.backlog.is_open()
+		and not ui.end_card.visible
+		and not ui.check_overlay.visible
 		and not _address().is_empty()
+	)
 
 
 func is_editing() -> bool:
@@ -95,10 +108,20 @@ func open_editor() -> bool:
 func close_editor() -> bool:
 	if not _open:
 		return true
-	if _exchange.is_busy() or not _save_input():
+	if _exchange.is_busy():
+		# Defined behaviour while a file exchange owns this editor: nothing is freed,
+		# and the release that asked for the close completes itself once the exchange
+		# settles (`_maybe_release` from the exchange's three outcomes).
+		_notice("文件窗口还没结束；结束后现场编辑会自动收起。")
+		return false
+	if not _save_input():
+		# `_save_input` already put the write problem and "输入仍在画面中" on screen;
+		# the text stays in this widget until a save really takes it, so a refused
+		# close keeps the input instead of destroying it.
 		return false
 	_finish_form()
 	_open = false
+	_release_when_clear = false
 	_root.hide()
 	set_process(false)
 	if is_instance_valid(_panel):
@@ -106,21 +129,57 @@ func close_editor() -> bool:
 	if is_instance_valid(controller):
 		controller.set_author_editing(false)
 	get_tree().paused = false
+	closed.emit()
 	return true
+
+
+## The editor switch went off while this editor holds the world. Closes now when that is
+## safe (the input saves, no file exchange is running) and returns true. Otherwise keeps
+## the world and the author's input exactly as they are, remembers the request, and
+## returns false: the close then completes itself when its blocker clears - the exchange
+## settling (`_maybe_release`) or the author's next successful close. Freeing this editor
+## at that moment would drop input that never saved and abandon a file dialog mid-flight.
+func begin_release() -> bool:
+	_release_when_clear = true
+	return close_editor()
+
+
+## The switch came back on before that deferred close ran: the author wants the tool.
+func cancel_release() -> void:
+	_release_when_clear = false
+
+
+## A blocker may have cleared while a release waits on this editor. The close re-checks
+## both blockers itself, so this can only finish the release or leave the notice up.
+func _maybe_release() -> void:
+	if _release_when_clear and _open:
+		close_editor()
 
 
 func _address(choice: String = "") -> Dictionary:
 	var runtime := controller.get_runtime()
 	var displayed := controller.get_current_line()
-	if runtime == null or not runtime.is_active() or runtime.get_current_node_id() == &"" \
-			or displayed.get("node_id") != runtime.get_current_node_id() \
-			or displayed.get("conversation_id") != runtime.get_active_conversation_id():
+	if (
+		runtime == null
+		or not runtime.is_active()
+		or runtime.get_current_node_id() == &""
+		or displayed.get("node_id") != runtime.get_current_node_id()
+		or displayed.get("conversation_id") != runtime.get_active_conversation_id()
+	):
 		return {}
 	var conversation := String(runtime.get_active_conversation_id())
 	var chapter := store.chapter_for(conversation)
-	if chapter.is_empty() or (not choice.is_empty() and StringName(choice) not in runtime.get_available_choice_ids()):
+	if (
+		chapter.is_empty()
+		or (not choice.is_empty() and StringName(choice) not in runtime.get_available_choice_ids())
+	):
 		return {}
-	return {"chapter": chapter, "conversation": conversation, "node": String(runtime.get_current_node_id()), "choice": choice}
+	return {
+		"chapter": chapter,
+		"conversation": conversation,
+		"node": String(runtime.get_current_node_id()),
+		"choice": choice
+	}
 
 
 func _begin(choice: String = "") -> void:
@@ -149,8 +208,15 @@ func _begin(choice: String = "") -> void:
 
 func _begin_body(address: Dictionary, saved: Dictionary) -> void:
 	var before := store.live_body_anchor(address)
-	var initial := store.editable_text(address["chapter"], address["conversation"], address["node"], "")
-	_form = {"address": address, "kind": "body", "before": saved.get("before", before), "initial": initial}
+	var initial := store.editable_text(
+		address["chapter"], address["conversation"], address["node"], ""
+	)
+	_form = {
+		"address": address,
+		"kind": "body",
+		"before": saved.get("before", before),
+		"initial": initial
+	}
 	_body.text = String(saved.get("text", initial))
 	_body.clear_undo_history()
 	_body.show()
@@ -179,7 +245,9 @@ func _begin_round(address: Dictionary, saved: Dictionary) -> void:
 	var option := store.editable_text(chapter, conversation, address["node"], address["choice"])
 	_form = {"address": address, "kind": "round", "anchor": anchor}
 	var speaker := String(controller.get_current_line().get("speaker_id", ""))
-	_round.prepare(_snippet(option), speakers, speaker, targets, anchor["before"], saved.get("values", {}))
+	_round.prepare(
+		_snippet(option), speakers, speaker, targets, anchor["before"], saved.get("values", {})
+	)
 	_round.show()
 	_notice("先填对白和选项，再一次接入；未应用的输入不影响游戏。")
 
@@ -204,8 +272,7 @@ func _apply() -> void:
 		return
 	var refreshed := controller.refresh_author_dialogue()
 	_finish_form()
-	_notice("已保存并应用。点「继续游戏」后沿现场对白走。" if refreshed
-		else "已保存草稿，但无法刷新当前对白。请重新进入会话后再试。")
+	_notice("已保存并应用。点「继续游戏」后沿现场对白走。" if refreshed else "已保存草稿，但无法刷新当前对白。请重新进入会话后再试。")
 
 
 func _restore_input() -> void:
@@ -280,6 +347,7 @@ func _native_result(field: String, text: String) -> void:
 		_native_target.text = text
 		_changed()
 	_native_target = null
+	_maybe_release()
 
 
 func _export() -> void:
@@ -299,6 +367,16 @@ func _export() -> void:
 
 func _exported(digest: String, note: String) -> void:
 	_notice(note + (" " + _export_warning if not digest.is_empty() else ""))
+	_maybe_release()
+
+
+## The exchange's own notices (a cancelled or refused dialog) settle it too, so a release
+## waiting behind the dialog finishes here. `_notice` itself stays free of `_maybe_release`
+##: it also reports save failures from inside `close_editor`, and retrying there would
+## recurse instead of waiting for the author.
+func _exchange_notice(text: String) -> void:
+	_notice(text)
+	_maybe_release()
 
 
 func _chinese() -> void:
@@ -322,8 +400,7 @@ func _notice(note: String) -> void:
 	_buttons["DiscardInput"].visible = body or (buffered and not writing)
 	_buttons["ExportChapter"].disabled = not store.blocked.is_empty()
 	if note.is_empty():
-		note = "双击原对白框改字，或点原选项旁「编辑」接下一轮。" if chinese \
-			else "现场只编辑简中主稿。英文保留现有译文，先切到简中再改。"
+		note = "双击原对白框改字，或点原选项旁「编辑」接下一轮。" if chinese else "现场只编辑简中主稿。英文保留现有译文，先切到简中再改。"
 	_status.text = note
 	_status.tooltip_text = note
 
@@ -403,10 +480,14 @@ func _fit() -> void:
 		var bounds := body.get_global_rect().intersection(area)
 		_body.position = bounds.position
 		_body.size = bounds.size
-		_body.add_theme_font_size_override(&"font_size", body.get_theme_font_size(&"normal_font_size"))
+		_body.add_theme_font_size_override(
+			&"font_size", body.get_theme_font_size(&"normal_font_size")
+		)
 	if _round.visible:
 		var top := _toolbar.position.y + _toolbar.size.y + 8.0
-		var width := minf(area.size.x, maxf(400.0, area.size.x * (0.61 if MobileLayout.enabled else 0.39)))
+		var width := minf(
+			area.size.x, maxf(400.0, area.size.x * (0.61 if MobileLayout.enabled else 0.39))
+		)
 		_round.position = Vector2(area.end.x - width, top)
 		_round.size = Vector2(width, maxf(0.0, area.end.y - top))
 
@@ -429,18 +510,34 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _notification(what: int) -> void:
 	if what in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST] and _open:
-		_save_input()
+		if not _save_input():
+			push_warning("StoryEditor: live input was not saved before leaving the background")
 
 
 func _exit_tree() -> void:
 	if not _open:
 		return
-	_save_input()
+	# Abnormal teardown: the world is going away with this editor on it. The save is
+	# best effort and its failure is said out loud - the widget holding the text dies
+	# with this node, so a silent failure would be a fake success. Everything the pause
+	# borrowed is returned either way, and `closed` lets a release that is waiting on
+	# this editor finish itself now that the editor can never close normally again.
+	if not _save_input():
+		push_warning(
+			(
+				"StoryEditor: live input was not saved while leaving the tree (%s)"
+				% store.save_problem()
+			)
+		)
+	_open = false
+	_finish_form()
 	if is_instance_valid(_panel) and _panel.is_inside_tree():
 		_panel.set_author_controls()
 	if is_instance_valid(controller):
 		controller.set_author_editing(false)
-	get_tree().paused = false
+	if get_tree() != null:
+		get_tree().paused = false
+	closed.emit()
 
 
 func _snippet(text: String) -> String:

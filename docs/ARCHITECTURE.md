@@ -962,14 +962,18 @@ package apart" is a checked property of the export filters and not a habit (`scr
 
 **Live author session.** The staged author app has a different project/user directory
 from boot (and a different bundle ID on iPhone), so its actual gameplay progress and
-read log never go into the player profile. From a paused, visible conversation, in any
-chapter and any room, the pause entry hands off to `live_editor.gd` - the address is the
-running cursor looked up in the store's index of every shipped chapter, so a corridor line
-hands off exactly like a prologue one and the drawer is what remains only when no dialogue
-is on screen (#395). The staged app also boots into the Simplified Chinese master: a fresh
-author profile would otherwise open in the fallback language and ask for a switch before
-the first line can be edited. `live_editor.gd` uses `DialoguePanel` itself for input and
-text redraw, not the drawer's detached panel. The controller opts into validated shadow
+read log never go into the player profile. An ordinary development run of this project
+attaches the same live editor when the switch is on and `StoryEditorEntry.live_editing_allowed()`
+is true - the same window as `development_default()`: desktop, not headless, not CI's
+player view, not `--script`, not a mobile pack - so the author edits where the game
+actually runs without staging a copy (#395 follow-up). From a paused, visible conversation,
+in any chapter and any room, the pause entry hands off to `live_editor.gd` - the address is
+the running cursor looked up in the store's index of every shipped chapter, so a corridor
+line hands off exactly like a prologue one and the drawer is what remains only when no
+dialogue is on screen (#395). The staged app also boots into the Simplified Chinese master:
+a fresh author profile would otherwise open in the fallback language and ask for a switch
+before the first line can be edited. `live_editor.gd` uses `DialoguePanel` itself for input
+and text redraw, not the drawer's detached panel. The controller opts into validated shadow
 chapter graphs only in this session. A silent `DialogueRuntime.rebind_graph()` keeps
 its current cursor and any resolved check; no line, camera or check event is replayed.
 New rounds are one guarded draft transaction; invalid/unapplied input stays in the

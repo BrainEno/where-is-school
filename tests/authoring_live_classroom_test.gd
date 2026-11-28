@@ -6,6 +6,8 @@ const Harness := preload("res://tests/test_harness.gd")
 const Main := preload("res://scenes/main/main.tscn")
 const Patch := preload("res://scripts/story_editor/dialogue_patch.gd")
 const MobileLayout := preload("res://scripts/ui/mobile_layout.gd")
+const StoryEditorEntry := preload("res://scripts/ui/story_editor_entry.gd")
+const Store := preload("res://scripts/story_editor/draft_store.gd")
 const BODY := "现场测试：当前句已应用。\n验证换行与原画面。"
 const FIRST := "现场测试：新增对白一。"
 const HUB := "现场测试：新增对白二和四个选项。"
@@ -31,7 +33,8 @@ var _events := {"lines": 0, "camera": 0, "checks": 0}
 
 
 func _initialize() -> void:
-	Harness.arm_watchdog(self, 130.0, "authoring_live_classroom_test.gd")
+	var dev_run := "--dev-run" in OS.get_cmdline_user_args()
+	Harness.arm_watchdog(self, 240.0 if dev_run else 130.0, "authoring_live_classroom_test.gd")
 	call_deferred("_run")
 
 
@@ -39,14 +42,21 @@ func _run() -> void:
 	var arguments := OS.get_cmdline_user_args()
 	var imported := "--imported-chapter" in arguments
 	var recovered := "--recovered" in arguments
+	var dev_run := "--dev-run" in arguments
 	var archive := OS.get_environment("WIS_TEST_NATIVE_ZIP")
 	var profile := OS.get_environment("XDG_DATA_HOME")
 	var author := root.get_node_or_null(^"Authoring")
 	if not _check.expect(profile.is_absolute_path() and OS.get_user_data_dir().begins_with(profile + "/")
-			and (imported or recovered or archive.is_absolute_path()), "Use the staged projects and an isolated test data directory") \
-			or not _check.expect((author == null) == imported, "Wrong project variant for classroom test"):
+			and (imported or recovered or dev_run or archive.is_absolute_path()), "Use the staged projects and an isolated test data directory") \
+			or not _check.expect((author == null) == (imported or dev_run), "Wrong project variant for classroom test"):
 		Harness.finish(self, _check.failures, "")
 		return
+	if dev_run:
+		if not _check.expect(not StoryEditorEntry.live_editing_allowed(), "Harness window should be refused"):
+			Harness.finish(self, _check.failures, "")
+			return
+		StoryEditorEntry.window_forced = 1
+		(root.get_node(^"Settings") as Node).call("set_story_editor_enabled", true)
 	if author != null:
 		# Before this file ever sets a locale itself: the staged author profile is new at boot,
 		# and #395 is that it starts in the Chinese master without anyone pressing 「切到简中」.
@@ -58,7 +68,10 @@ func _run() -> void:
 	(root.get_node(^"Loc") as Node).call("set_locale", "zh-CN")
 	await _boot()
 	var verdict: String
-	if imported:
+	if dev_run:
+		await _verify_development_live_editor()
+		verdict = "ordinary development run installs, edits and releases the live line editor"
+	elif imported:
 		await _verify_replacement()
 		verdict = "native chapter loads with authoring off"
 	elif recovered:
@@ -188,8 +201,7 @@ func _verify_restart() -> void:
 	if not _check.expect(_editor != null, "Author editor did not reattach on restart") or not await _start_student():
 		return
 	_check.expect(_panel.get_body_text() == BODY, "Real dialogue did not use the recovered text")
-	if not await _open_editor():
-		return
+	if not await _open_editor(): return
 	_press("ResumeInput")
 	if not _check.expect(_button("ApplyRound").is_visible_in_tree(), "Unapplied option form did not recover after restart"):
 		return
@@ -262,8 +274,7 @@ func _verify_live_beyond_prologue() -> void:
 		push_error("TEST FAILURE: corridor panel layout never settled (stage=%s revealing=%s edit_line_valid=%s)"
 			% [str(_panel._layout_stage), str(_panel.is_revealing()),
 				str(_panel._edit_line.is_valid())])
-	if not await _open_editor():
-		return
+	if not await _open_editor(): return
 	var drawer := _world.get_node_or_null(^"AuthorOverlay/AuthorDrawer")
 	var live_open := bool(_editor.call("is_editing"))
 	_check.expect(live_open and paused,
@@ -301,6 +312,66 @@ func _verify_live_beyond_prologue() -> void:
 		_check.expect(_store.save_live_buffer(kept_input),
 			"The corridor visit could not put the classroom's kept input back for the "
 			+ "recovery run")
+
+
+func _verify_development_live_editor() -> void:
+	if not _check.expect(root.get_node_or_null(^"StoryEditor") != null and _world.has_node(^"LiveStoryEditor"), "Development window did not install live editor"): return
+	_editor = _world.get_node(^"LiveStoryEditor")
+	_store = _editor.get("store")
+	if not await _start_student() or not await _open_editor() or not await _edit_line():
+		return
+	var before := _world_snapshot()
+	if not await _edit_first_round(_choice(&"leave").duplicate(true)):
+		return
+	_check.expect(_world_snapshot() == before,
+		"Adding the next dialogue round changed the running story cursor or effects")
+	_press("ContinueGame")
+	if not await _open_editor():
+		return
+	_press("EditLine")
+	var live: Node = _world.get_node(^"LiveStoryEditor")
+	var body := live.find_child("InlineBody", true, false) as TextEdit
+	body.text = "release failure keeps this text"
+	var saved_store: Variant = live.get("store")
+	var refusing := Store.new("user://story_editor/release-refusal", true)
+	refusing.blocked = "fixture refuses journal writes"
+	live.set("store", refusing)
+	(root.get_node(^"Settings") as Node).call("set_story_editor_enabled", false)
+	await process_frame
+	_check.expect(root.get_node_or_null(^"StoryEditor") != null and _world.has_node(^"LiveStoryEditor")
+			and _world.has_node(^"AuthorOverlay") and paused and bool(live.call("is_editing"))
+			and body.text == "release failure keeps this text",
+		"A refused live-buffer save destroyed the editor or its unsaved text")
+	live.set("store", saved_store)
+	_press("ContinueGame")
+	if not await Harness.wait_until(func() -> bool: return root.get_node_or_null(^"StoryEditor") == null and not _world.has_node(^"LiveStoryEditor"), 4.0):
+		_check.expect(false, "A successful retry did not finish the deferred mode-off release")
+		return
+	_check.expect(String(saved_store.get("live_buffer").get("text", "")) == "release failure keeps this text",
+		"The pending input did not survive the refused close and successful retry")
+	_check.expect(not paused and not _controller._author_editing and not _panel._edit_line.is_valid(),
+		"Mode off did not restore world controls")
+	(root.get_node(^"Settings") as Node).call("set_story_editor_enabled", true)
+	if not await Harness.wait_until(func() -> bool: return root.get_node_or_null(^"StoryEditor") != null and _world.has_node(^"LiveStoryEditor") and _world.has_node(^"AuthorOverlay"), 4.0):
+		_check.expect(false, "Re-enabling the setting did not install the editor again")
+		return
+	if not await _open_editor(): return
+	_editor = _world.get_node(^"LiveStoryEditor")
+	_press("ExportChapter")
+	if not _check.expect(bool(_editor.get("_exchange").call("is_busy")), "Chapter export did not open a file exchange"): return
+	(root.get_node(^"Settings") as Node).call("set_story_editor_enabled", false)
+	_check.expect(root.get_node_or_null(^"StoryEditor") != null and _world.has_node(^"LiveStoryEditor")
+			and paused and bool(_editor.call("is_editing")),
+		"Mode off destroyed the editor during a file exchange")
+	var dialog: FileDialog = _editor.get("_exchange").get("_file_dialog")
+	dialog.hide()
+	dialog.canceled.emit()
+	if not await Harness.wait_until(func() -> bool: return root.get_node_or_null(^"StoryEditor") == null and not _world.has_node(^"LiveStoryEditor"), 4.0):
+		_check.expect(false, "Cancelling the exchange did not finish the pending release")
+		return
+	_check.expect(not paused and not _controller._author_editing and not _panel._edit_line.is_valid(),
+		"Exchange cancellation did not restore game input state")
+	StoryEditorEntry.window_forced = -1
 
 
 func _edit_line(expected: StringName = SAME) -> bool:
